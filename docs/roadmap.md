@@ -749,15 +749,24 @@ table + `const` XIP `tables:` + `model`-enum dispatch (P2-8 follow-up, with
 `scaffold`/`add` in P3); WASM (emscripten) + target (JieLi clang) builds need
 P1-2/P3-2. **Layer: host.**
 
-**P2-9 — UI base + panel generator.** Implement the context runtime (stack,
-global fallthrough, entry/exit hooks, boot screen, home), the abstract widget set
-(`label`/`value`/`bar`/`param_row`/`param_column`/`list`/`grid`), the retained-mode
-dirty/redraw engine (`LCD_IDLE`-integrated, rate-bounded, safe-failure screen), and
-the panel generator (`panel.json` → app UI wiring). *Acceptance:* a panel with
-`home`/`edit`/`step` contexts and `KEY → note_on` (global) overridden by
-`KEY → set_step` (step) compiles and passes scripted host UI tests; redraw touches
-only dirty widgets; no display/flash in the audio callback (lint + disasm); the
-`cv_*` canvas escape hatch works for a custom page. **Layer: host.**
+**P2-9 — UI base + panel generator.** — **done (host), blocked (target/device)**
+— Shipped `firmware/src/ui.c`/`ui.h` (the context-stack runtime: push/pop/pop_home,
+global binding fallthrough, entry/exit hooks, the 7 widget renderers + the
+`UI_CUSTOM` canvas escape hatch, the binding resolver + action dispatch, and the
+retained-mode dirty/redraw engine — rate-bounded ~30 Hz, redraw touches only dirty
+widgets, `LCD_IDLE`-integrated, a `ui_safe_fail` screen). The tables are `const`
+(XIP); the only mutable state is the param array, the stack, the cursor, and one
+last-drawn value per widget. `umetate/_panel.py` generates the tables from
+`panel.json` (param/source/action/behavior names resolved to the fixed `ui.h` ids;
+an unknown name is a GenError; deterministic). `rib.c`'s demo screen is rebuilt on
+the kit (the keyboard stays app code, drawn directly). *Verified:* `python3 -m
+umetate.test_panel` (determinism + compile + unknown-name rejection) and the
+`ui_test` host target (home/edit/step, `KEY → note_on` overridden by `KEY →
+set_step`, a relative param write) pass; `mypy --strict` + `ruff` clean; the host
+build plays notes and shifts octaves through the bindings, and the screen redraws
+differently between captures. *Deferred:* the `boot` screen (a transient pre-context
+page) and the `on_enter`/`on_exit` hooks (emitted as `0` for now); the log curve.
+**Layer: host.**
 
 **Exit P2:** RIB is the dual-core, integer-by-default runtime for FM-1 + SMK-37;
 the generator compiles patches to the invariant `<synth>_dsp_*` seam. Every device

@@ -184,6 +184,8 @@ void ui_handle(uint16_t source, int32_t value)
         ui_act_note_on((uint8_t)value, 100u);
     else if (b->action == UI_ACT_NOTE_OFF && value >= 0)
         ui_act_note_off((uint8_t)value);
+    else if (b->action == UI_ACT_SET_STEP && value >= 0)
+        ui_act_set_step((uint8_t)value);
     else
         ui_do_action(b->action, b->arg);
 }

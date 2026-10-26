@@ -111,6 +111,14 @@ add_custom_target(bootguard_test
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     DEPENDS src/bootguard.h tests/bootguard_test.c
     USES_TERMINAL VERBATIM)
+add_custom_target(ui_test
+    COMMAND "${UMETATE_HOST_CC}" -std=c11 -Wall -Wextra -Werror -Wno-unused-function
+        -Ihal -Isrc -Igen -Itests
+        -o "${UMETATE_HOST_DIR}/ui_test" "${CMAKE_SOURCE_DIR}/tests/ui_test.c"
+    COMMAND "${UMETATE_HOST_DIR}/ui_test"
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    DEPENDS src/ui.c src/ui.h src/gfx.c gen/felucca_font.h tests/ui_test.c tests/accept.h
+    USES_TERMINAL VERBATIM)
 
 if(UMETATE_BOARD STREQUAL "smk37")
     add_custom_target(test-host
@@ -137,6 +145,7 @@ add_custom_target(test_all
     COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target math_test
     COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target uac_test
     COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target bootguard_test
+    COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target ui_test
     COMMAND "${CMAKE_COMMAND}" -E env "UMETATE_TEST_BUILD=${CMAKE_BINARY_DIR}/test-artifacts" "CC=${UMETATE_HOST_CC}" "BOARD=smk37"
         "${CMAKE_SOURCE_DIR}/tests/run_host.sh" "${CMAKE_SOURCE_DIR}/tests/scripts/smk37.txt"
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
