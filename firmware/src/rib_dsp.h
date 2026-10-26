@@ -18,3 +18,5 @@ UMETATE_DSP_API void rib_dsp_note_off(uint32_t note);
 UMETATE_DSP_API void rib_dsp_set_bend_q16(uint32_t bend);
 UMETATE_DSP_API uint32_t rib_dsp_lit(uint32_t base_note);
 UMETATE_DSP_API int rib_dsp_quiet(void);
+void rib_dsp_all_off(void);
+void rib_render_block(uint32_t arg);   /* the core-1 render job (fm1_cpu1.h) */

@@ -24,15 +24,52 @@ static void app_idle(void);
 #include "smk_wheel.h"
 #endif
 #include "rib_dsp.h"
+#include "fm1_ipc.h"
 
 /* ---- audio callback; the kernel is a distinct translation unit */
-static void app_audio(int32_t *out, uint32_t n) { rib_dsp_render(out, n); }
+static void app_audio(int32_t *out, uint32_t n)
+{
+#if FM1_CPU1_USED
+    if (fm1_c1_on && fm1_cpu1_run(rib_render_block, (uint32_t)(uintptr_t)out) && fm1_cpu1_wait() == 0)
+        return;
+    rib_render_block((uint32_t)(uintptr_t)out);  /* single-core, or core 1 gave up */
+#else
+    rib_dsp_render(out, n);
+#endif
+}
 
 /* ---- notes (main loop) */
 static uint32_t last_note = 255;
-static void play(uint32_t note, uint32_t vel) { rib_dsp_note_on(note, vel); last_note = note; }
-static void stop(uint32_t note) { rib_dsp_note_off(note); }
-static int quiet(void) { return rib_dsp_quiet(); }
+static void play(uint32_t note, uint32_t vel)
+{
+#if FM1_CPU1_USED
+    if (fm1_c1_on) {
+        dsp_cmd_push(UMETATE_DSP_CMD_NOTE_ON, (uint16_t)note, (uint16_t)vel);
+        last_note = note;
+        return;
+    }
+#endif
+    rib_dsp_note_on(note, vel);
+    last_note = note;
+}
+static void stop(uint32_t note)
+{
+#if FM1_CPU1_USED
+    if (fm1_c1_on) {
+        dsp_cmd_push(UMETATE_DSP_CMD_NOTE_OFF, (uint16_t)note, 0);
+        return;
+    }
+#endif
+    rib_dsp_note_off(note);
+}
+static int quiet(void)
+{
+#if FM1_CPU1_USED
+    return (int)dsp_status.quiet;
+#else
+    return rib_dsp_quiet();
+#endif
+}
 
 /* ---- the screen: the name, the last note big, the keyboard with what sounds, the octave */
 #define C_ACC RGB(180, 140, 255)                /* lilac, as the logo */
@@ -149,6 +186,16 @@ static void app_main(void)
     smk_pad_events = 1;                         /* the pads as events (smk_pad_take): they play here, lit while they sound */
 #endif
     rib_dsp_reset();
+#if FM1_CPU1_USED
+    {   /* the boot-time core-1 probe: open the PC limits (it boots through ROM), start it,
+         * re-apply the limits. On failure fm1_c1_on stays 0 and everything runs on core 0. */
+        fm1_guard_unlock_top();
+        fm1_guard_pc_open();
+        (void)fm1_cpu1_start();
+        fm1_guard_enable(FM1_GUARD_PC);
+        fm1_guard_lock_top();
+    }
+#endif
     if (settings_load(&set, sizeof set) || (int8_t)set.oct < -2 || (int8_t)set.oct > 2 || set.ch > 16u)
         set.oct = 0, set.ch = 0;
 
@@ -209,7 +256,12 @@ static void app_main(void)
 
         oct = (int8_t)set.oct;
         base = (uint32_t)((int32_t)KEY0 + 12 * oct);
+#if FM1_CPU1_USED
+        lit_base = base;
+        lit = dsp_status.lit;                 /* what sounds, published by core 1 */
+#else
         lit = rib_dsp_lit(base);              /* what sounds, on the keys of this octave */
+#endif
         for (k = 0; k < 27u; k++)
             fm1_led_key(KEY_LED(k), lit >> k & 1u);
         fm1_led_key(BTN_OCT_DOWN, oct < 0);

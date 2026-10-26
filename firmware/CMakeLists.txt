@@ -80,6 +80,13 @@ add_custom_target(dsp_test
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     DEPENDS src/rib_dsp.c src/rib_dsp.h tests/dsp_test.c
     USES_TERMINAL VERBATIM)
+add_custom_target(ipc_test
+    COMMAND "${UMETATE_HOST_CC}" -std=c11 -Wall -Wextra -Werror -Ihal -Isrc
+        -o "${UMETATE_HOST_DIR}/ipc_test" "${CMAKE_SOURCE_DIR}/tests/ipc_test.c"
+    COMMAND "${UMETATE_HOST_DIR}/ipc_test"
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    DEPENDS hal/fm1_ipc.h tests/ipc_test.c
+    USES_TERMINAL VERBATIM)
 add_custom_target(uac_test
     COMMAND "${UMETATE_HOST_CC}" -std=c11 -Wall -Wextra -Werror -Isrc
         -o "${UMETATE_HOST_DIR}/uac_test" "${CMAKE_SOURCE_DIR}/tests/uac_test.c"
@@ -116,6 +123,7 @@ endif()
 add_custom_target(test_all
     COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target test-host
     COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target dsp_test
+    COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target ipc_test
     COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target uac_test
     COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target bootguard_test
     COMMAND "${CMAKE_COMMAND}" -E env "UMETATE_TEST_BUILD=${CMAKE_BINARY_DIR}/test-artifacts" "CC=${UMETATE_HOST_CC}" "BOARD=smk37"

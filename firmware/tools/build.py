@@ -144,7 +144,7 @@ def build_loader():
 
 
 def build_app():
-    flags = [*CFLAGS, *BOARD_DEFS[BOARD], "-Ihal", "-Isrc", "-Igen",
+    flags = [*CFLAGS, *BOARD_DEFS[BOARD], "-DFM1_CPU1_USED=1", "-Ihal", "-Isrc", "-Igen",
              f'-DFELUCCA_ID="{PRODUCT}"', f'-DAPP_VER="{VERSION or "0.0"}"']
     if BOARD == "smk37":
         if not re.fullmatch(r"[A-Z0-9]{1,7}", DATA_FAMILY):
@@ -154,6 +154,7 @@ def build_app():
     commands = [("cc", "-c", FW / "crt0.S", "-o", OUT / "crt0.o"),
                 ("cc", "-c", FW / "hal" / "fm1_vec.S", "-o", OUT / "fm1_vec.o"),
                 ("cc", "-c", FW / "hal" / "fm1_isr.S", "-o", OUT / "fm1_isr.o"),
+                ("cc", "-c", FW / "hal" / "fm1_cpu1.S", "-o", OUT / "fm1_cpu1.o"),
                 ("cc", *flags, "-c", FW / "src" / "rib.c", "-o", OUT / "rib.o")]
     if DSP_PROFILE == "performance":
         dsp_flags = [*flags, "-O3", "-mcpu=r3", "-mfprev1", "-DUMETATE_TARGET_DSP=1",
@@ -172,13 +173,14 @@ def build_app():
         linker = OUT / "app.ld"
         linker.write_text(text.replace("LENGTH = 0x8DFBC", f"LENGTH = {APP_SLOT:#x}"))
     tc("pi32v2/bin/ld", "--Map", OUT / "rib.link.map", "--gc-sections", "-e", "_start", "-T", linker,
-       OUT / "crt0.o", OUT / "fm1_vec.o", OUT / "fm1_isr.o", OUT / "rib.o", OUT / "rib_dsp.o", "-o", elf)
-    for section in ("text.bin", "data.bin", "ramtext.bin", "dsp.bin"):
+       OUT / "crt0.o", OUT / "fm1_vec.o", OUT / "fm1_isr.o", OUT / "fm1_cpu1.o", OUT / "rib.o", OUT / "rib_dsp.o", "-o", elf)
+    for section in ("text.bin", "data.bin", "ramtext.bin", "c1.bin", "dsp.bin"):
         (OUT / section).unlink(missing_ok=True)
     *_, symbols, disassembly, ram_disassembly = tc_all(
         ("common/bin/objcopy", "-O", "binary", "-j", ".text", elf, OUT / "text.bin"),
         ("common/bin/objcopy", "-O", "binary", "-j", ".data", elf, OUT / "data.bin"),
         ("common/bin/objcopy", "-O", "binary", "-j", ".ram_text", elf, OUT / "ramtext.bin"),
+        ("common/bin/objcopy", "-O", "binary", "-j", ".c1_text", elf, OUT / "c1.bin"),
         ("common/bin/objcopy", "-O", "binary", "-j", ".dsp_text", elf, OUT / "dsp.bin"),
         ("common/bin/objdump", "-t", elf), ("common/bin/objdump", "-d", elf),
         ("common/bin/objdump", "-d", "-j", ".ram_text", elf))
@@ -199,7 +201,7 @@ def build_app():
         return int(match.group(1), 16)
 
     image = bytearray((OUT / "text.bin").read_bytes())
-    for section, load_symbol in (("ramtext.bin", "_rt_load"), ("dsp.bin", "_dsp_load"), ("data.bin", "_data_load")):
+    for section, load_symbol in (("ramtext.bin", "_rt_load"), ("c1.bin", "_c1_load"), ("dsp.bin", "_dsp_load"), ("data.bin", "_data_load")):
         load = symbol_value(load_symbol)
         if load % 4:
             raise SystemExit(f"{load_symbol} {load:#x} is not word aligned")

@@ -29,6 +29,53 @@
 
 static uint32_t fm1_p33_timeouts;
 
+/* ------------------------------------------------------- second core --- */
+/* FM1_CPU1_USED (build.py passes -DFM1_CPU1_USED=1; fm1_cpu1.h): the second core may be running. Every
+ * reset below holds it first: its waiting loop sits in RAM that the ROM, the SPL and the update loader use at boot,
+ * and a core left running there would execute whatever they put in it. Hold: C1_CON bit 1 set, then bit 3 (enable)
+ * cleared; registers only, safe when it never ran. Without FM1_CPU1_USED none of this is built.
+ *
+ * The bus-invalid traps are off around the hold. Holding core 1 cuts the read it has on the bus (its waiting loop
+ * reads the mailbox all the time), and the chip flags that a few instructions later as an AXI read invalid
+ * (DBG_MSG bit 4): with the traps on (fm1_guard.h FM1_GUARD_BUS) core 0 took the exception, so 1 in 6 updates
+ * with 2ND CORE ON ended in a crash report and a plain reboot before the update record was written, and the SPL
+ * started the app instead of the update loader. So: traps off, hold, wait for the flag, clear it, traps back. */
+#ifndef FM1_CPU1_USED
+#define FM1_CPU1_USED 0
+#endif
+#if FM1_CPU1_USED
+#define FM1_C1_CON (*(volatile uint32_t *)0x1EEE004u)
+#define FM1__DBG_WR_EN (*(volatile uint32_t *)0x1EEE240u)  /* (fm1_irq.h FM1_DBG_*: this header comes first) */
+#define FM1__DBG_MSG_CLR (*(volatile uint32_t *)0x1EEE248u)
+#define FM1__DBG_EN (*(volatile uint32_t *)0x1EEE340u)
+#define FM1__DBG_BUS 0x003F0030u                 /* bus-invalid traps: AXI rd/wr (4, 5), C0/C1 fetch/rd/wr (16..21) */
+FM1_INLINE void fm1_cpu1_halt(void)
+{
+    uint32_t locked = !(FM1__DBG_WR_EN & 1u), en, bus = FM1__DBG_BUS;
+    volatile uint32_t n;
+    __asm__("" : "+r"(bus));                     /* (~bus as a constant is 0xFFC0FFCF: build.py's stock-helper check) */
+    if (locked)
+        FM1__DBG_WR_EN = 0xE7u;                  /* unlock (as fm1_guard.h) */
+    en = FM1__DBG_EN;
+    FM1__DBG_EN = en & ~bus;
+    __asm__ volatile("csync" ::: "memory");
+    FM1_C1_CON |= 0x2u;
+    FM1_C1_CON &= ~0x8u;
+    __asm__ volatile("csync" ::: "memory");
+    for (n = 0; n < 256u; n++)                   /* the flag comes some instructions after the hold */
+        ;
+    FM1__DBG_MSG_CLR = FM1__DBG_BUS;
+    __asm__ volatile("csync" ::: "memory");
+    FM1__DBG_EN = en;
+    if (locked && (FM1__DBG_WR_EN & 1u))
+        FM1__DBG_WR_EN = 0xE7u;                  /* lock again */
+    __asm__ volatile("csync" ::: "memory");
+}
+#define FM1_RESET_PREP() fm1_cpu1_halt()
+#else
+#define FM1_RESET_PREP() ((void)0)
+#endif
+
 static uint8_t fm1__p33_xfer(uint8_t b)
 {
     uint32_t n = 100000u;
@@ -109,6 +156,7 @@ static void fm1_reset_reason(void)
 static void fm1_reboot(void)
 {
     __asm__ volatile("cli");
+    FM1_RESET_PREP();
     fm1_p33_or(FM1_P3_PR_PWR, 0x10);
     for (;;)
         ;
@@ -119,6 +167,7 @@ static void fm1_enter_uboot(void)
     static const char k[16] = "usb_update_mode";
     uint32_t i;
     __asm__ volatile("cli");
+    FM1_RESET_PREP();
     /* CPU0 write limits (fm1_guard.h) may cover the mailbox: drop them all */
     if (!(*(volatile uint32_t *)0x1EEE240u & 1u))
         *(volatile uint32_t *)0x1EEE240u = 0xE7u;
@@ -132,6 +181,7 @@ static void fm1_enter_uboot(void)
 
 FM1_INLINE void fm1_core_reset(void)
 {
+    FM1_RESET_PREP();
     FM1_PWR_CON |= 0x10u;
     for (;;)
         ;
@@ -141,6 +191,7 @@ FM1_INLINE void fm1_enter_update(const uint8_t *parm)
 {
     uint32_t i;
     __asm__ volatile("cli");
+    FM1_RESET_PREP();                                   /* (again in fm1_core_reset: before the record is written) */
     if (!(*(volatile uint32_t *)0x1EEE240u & 1u))       /* drop CPU0 write limits, as fm1_enter_uboot */
         *(volatile uint32_t *)0x1EEE240u = 0xE7u;
     *(volatile uint32_t *)0x1EEE348u = 0;

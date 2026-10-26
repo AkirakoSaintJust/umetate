@@ -648,12 +648,18 @@ spots that carried the wrong `SMK-37 MKE-P37_99` prefix — `tools/cmake_target.
 and `tests/run_tests.sh:57` — so the package identity now matches the on-device
 `SMK_MODEL` value the installer recognizes). **Layer: source/host.**
 
-**P2-2 — Dual-core bring-up (default).** CPU0/CPU1 split (§4.2): core-1 boot,
-`irq_info_table`, `cpu1_main` DSP worker in RAM/SDRAM, SPSC rings + barriers, spin
-lock, flash-park. Add the boot-time core-1 probe + runtime fallback. *Acceptance:*
-ring host tests; no OS symbols in the CPU1 object; `--profile perf` builds a
-dual-core package; simulated core-1 failure falls back. Device probe `blocked`.
-**Layer: source/host/target.**
+**P2-2 — Dual-core bring-up (default).** — **done (source/host), blocked (target/device)**
+— Imported Felucca's proven core-1 layer verbatim (`hal/fm1_cpu1.h` + `hal/fm1_cpu1.S`,
+lineage X0X/Melodee/Jangada via Felucca): the synchronous one-job mailbox (`fn(arg)`
++ a check word that is itself the `0x00200000` boot probe) and the built-in fallback
+(bad check / 4 ms stall → hold core 1 → single core). Restored the dropped core-1
+bits to `hal/fm1_sys.h` (`FM1_C1_CON`, `fm1_cpu1_halt`, `FM1_RESET_PREP`) and
+`hal/fm1_guard.h` (`.c1_text` PC window, `fm1_guard_pc_open`); added `.c1_text` to
+`app.ld`; `build.py` compiles `fm1_cpu1.S` + `-DFM1_CPU1_USED=1`. Wired the csync-only
+note queue (`hal/fm1_ipc.h`), the `rib_render_block` job, and the dual-core↔fallback
+branches in `app_audio`/`play`/`stop`/`quiet`. *Verified:* host build green; `dsp_test`
++ `ipc_test` (FIFO / wrap-around / overrun / no-lost-note-off) pass. *Blocked:* the
+target package and the device probe need the JieLi toolchain + hardware. **Layer: source/host.**
 
 **P2-3 — Hardware acceleration HAL.** `hal/fm1_math.h` wrapping `jl_fft.c`/
 `vc_hw_fft()`, `flfft_core_pi32v2.c`, `nn_function_vec.c`, `jl_math.c`, with a
@@ -902,13 +908,20 @@ pending-event queue).
 
 **Dual-core transport (runtime-owned).**
 
+> **P2-2 status.** P2-2 implements the *synchronous* subset of this contract: the
+> `dsp_cmd` note queue, the `bend_q16`/`lit_base` shared values, and the
+> `quiet`/`lit` status words (all in plain aligned `.bss`, csync-guarded). The
+> ping-pong `dsp_blocks[2][512]` + `ready[2]`/`done[2]` handshake below is the
+> **P2-8** asynchronous design (no ISR wait), not yet built. The one-job mailbox
+> itself is Felucca `fm1_cpu1.h`, not this struct.
+
 ```c
 typedef struct { uint8_t kind;      /* NOTE_ON | NOTE_OFF | ALL_OFF  (events only) */
                  uint8_t pad; uint16_t note; uint16_t vel; } dsp_cmd;   /* command-ring entry */
 
 /* params & bend are shared VALUES, not ring commands — CPU0 writes, both read */
-extern volatile int32_t param_values[NUM_PARAMS];   /* in .shared */
-extern volatile int32_t bend_q16;                    /* in .shared */
+extern volatile int32_t param_values[NUM_PARAMS];   /* in shared SRAM */
+extern volatile int32_t bend_q16;                    /* in shared SRAM */
 
 typedef struct { volatile uint32_t quiet;   /* 1 = all voices silent   (CPU1 → CPU0) */
                  volatile uint32_t lit;     /* sounding note keys, 27-bit (FM-1; unused on SMK) */
@@ -1032,9 +1045,11 @@ exceeded):**
 Total internal RAM must fit the usable ~511 KB (0x1c00000+). **The indicative sizes
 above sum to ~520 KB — over budget by ~9 KB.** Trim at P2-1/P2-2 (e.g. `.pool` ≤
 327 KB, or `.dsp_text` ≤ 24 KB); the linker report is the authority and must never
-be silently exceeded. The `.shared` region is mapped **uncached** (MMU attribute or
-an uncached address alias, pinned at P2-2), because both cores access it — a cached
-ring/status would let each core see stale data.
+be silently exceeded. The shared state (mailbox, note queue, status) lives in
+plain aligned `.bss` — **no `.shared` section or uncached alias is used** (none is
+sourced on this chip). The two cores **share the caches** (Felucca `fm1_cpu1.h`),
+so ordering is enforced with `csync` barriers only; `flushinv` is reserved for the
+flash/XIP cache (`hal/fm1_flash.h`), never for the inter-core transport.
 
 #### 12.2.4 Emission rules (what the generator may emit)
 
@@ -1086,20 +1101,31 @@ section macro `FM1TK_DSP_API` → `UMETATE_DSP`.
 
 **Dual-core bring-up (the divergence from Dinghy).**
 
-- CPU1 boot (AC79 §7.40): `CPU_CORE_NUM 1` + single-core `system.a` +
-  `irq_info_table`; CPU1 runs `cpu1_main`, never OS APIs (incl. `printf`).
-- core-1 start (fm1tk platform-facts §3): interrupt bank off, entry address into
-  `0x01C7FFF8`, bit 3 of `0x10008` held while starting, `C1_CON` (`0x1EEE004`) bit
-  3 set / bit 1 cleared; hold = bit 1 set then bit 3 cleared.
-- **boot probe:** CPU0 writes a known pattern to shared SRAM, releases CPU1, reads
-  it back (detects the `0x00200000` misread). On failure → single-core fallback.
-- **IPC:** the §12.1 `dsp_cmd` ring (SPSC), the `dsp_blocks` ping-pong, the
-  `dsp_status` word — all in `.shared` (uncached).
-- **flash-park:** a flash write parks CPU1 (`cpu1_run_flag = 0` after
-  `EnableOtherCpu()`), drains the ring, writes, resumes; CPU1 code in RAM/SDRAM.
-- **audio wiring:** dual-core → `app_audio` copies `dsp_blocks[p]` (the §12.1
-  `ready`/`done` handshake); single-core → `app_audio` calls `rib_dsp_render(out, n)`
-  directly. The engine is unaware of the mode.
+- **Core-1 start (the only model this firmware uses).** RIB is bare-metal (it links
+  no `system.a`), so the AC79 §7.40 SDK-OS model (`CPU_CORE_NUM 1` + `system.a` +
+  `irq_info_table`) does **not** apply; it is recorded as a vendor fact only. The
+  implemented sequence is Felucca `fm1_cpu1.h` (platform-facts §3): interrupt bank
+  off (`0x1EEF300..`), entry address into `0x01C7FFF8`, bit 3 of `0x10008` held
+  while starting, `C1_CON` (`0x1EEE004`) bit 3 set / bit 1 cleared; hold = bit 1
+  set then bit 3 cleared. **No register writes beyond this recorded sequence.**
+  Core 1 runs the bare-metal `fm1_c1_main`, never OS APIs (incl. `printf`).
+- **Transport is the synchronous one-job mailbox** (imported `fm1_cpu1.h`, the
+  proven Felucca/X0X/Melodee/Jangada layer): core 0 hands `fn(arg)` + a check word
+  (`fn ^ arg ^ job*0x9E3779B1`) and waits for `done`; core 1 verifies the check
+  before running. The check word **is** the boot probe — it detects the
+  `0x00200000` misread; a bad check or a 4 ms stall holds core 1 and core 0 does
+  the work (single-core fallback).
+- **Notes travel on a csync-guarded SPSC queue** (`hal/fm1_ipc.h`, plain aligned
+  `.bss` — the cores share the caches, so ordering is the only concern); params/bend
+  are shared single-writer values; core 1 publishes `quiet`/`lit` status each block.
+- **flash-park** is `fm1_cpu1_halt()` (bus traps off, `C1_CON` bit 1 set then bit 3
+  cleared), called first thing in `fm1_cstart` and in every reset path
+  (`FM1_RESET_PREP`); core 1's waiting loop sits in RAM (`.c1_text`).
+- **audio wiring:** dual-core → `app_audio` hands `rib_render_block(out)` as the job
+  and waits; on fallback it runs the same block locally. The engine is unaware of
+  the mode.
+- **Deferred to P2-8:** the §12.1 ping-pong `dsp_blocks[2][512]` + `ready`/`done`
+  handshake (asynchronous, no ISR wait).
 
 **Key structs (grounded in the imported code).** `fm1_in` (input matrix,
 `hal/fm1_input.h`: notes/buttons/edges/encoders/LED layers, debounced, 10 kHz

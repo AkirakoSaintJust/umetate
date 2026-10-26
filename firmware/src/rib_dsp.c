@@ -2,6 +2,7 @@
  * Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments */
 #include <stdint.h>
 #include "rib_dsp.h"
+#include "fm1_ipc.h"
 
 #define NV UMETATE_DSP_VOICES
 #define DSP_FN UMETATE_DSP_API
@@ -13,8 +14,16 @@ static struct {
     uint32_t ph, age;
     uint8_t note;
 } voice[NV];
-static volatile uint32_t bend_q16 = 65536;
 static uint32_t ages;
+
+/* ---- shared transport (docs/roadmap.md §12.1): defined once, both cores use it.
+ * The voice state above is owned by core 1 (it drains the queue, renders, and
+ * publishes status); core 0 only writes the queue, the bend, and reads the status. */
+volatile dsp_cmd dsp_cmd_buf[UMETATE_DSP_CMD_CAP] __attribute__((aligned(64)));
+volatile uint32_t dsp_cmd_head, dsp_cmd_tail, dsp_cmd_overrun, dsp_all_off_pending;
+volatile dsp_status_t dsp_status __attribute__((aligned(64)));
+volatile int32_t bend_q16 = 65536;
+volatile uint32_t lit_base;                     /* core 0 writes the octave's base note */
 
 static DSP_FN int32_t sine(uint32_t phase)
 {
@@ -109,4 +118,36 @@ int rib_dsp_quiet(void)
         if (voice[v].gate || voice[v].amp)
             return 0;
     return 1;
+}
+
+void rib_dsp_all_off(void)
+{
+    uint32_t v;
+    for (v = 0; v < NV; v++)
+        voice[v].gate = 0;
+}
+
+/* The core-1 render job (handed over through fm1_cpu1.h): drain the note queue,
+ * render one block into the ISR's buffer, then publish the reverse status. Core 0
+ * owns the queue and reads the status; the voice state stays on core 1. */
+void rib_render_block(uint32_t arg)
+{
+    int32_t *out = (int32_t *)(uintptr_t)arg;
+    dsp_cmd c;
+    if (dsp_all_off_pending) {
+        rib_dsp_all_off();
+        dsp_all_off_pending = 0;
+    }
+    while (dsp_cmd_pop(&c)) {
+        if (c.kind == UMETATE_DSP_CMD_NOTE_ON)
+            rib_dsp_note_on(c.note, c.vel);
+        else if (c.kind == UMETATE_DSP_CMD_NOTE_OFF)
+            rib_dsp_note_off(c.note);
+        else
+            rib_dsp_all_off();
+    }
+    rib_dsp_render(out, UMETATE_DSP_BLOCK_FRAMES);
+    dsp_status.lit = rib_dsp_lit(lit_base);
+    dsp_status.quiet = (uint32_t)rib_dsp_quiet();
+    FM1_CSYNC();
 }

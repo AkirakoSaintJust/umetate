@@ -21,6 +21,8 @@ SECTIONS
     .text : { KEEP(*(.text.crt0)) *(.text*) *(.rodata*) . = ALIGN(4); _etext = .; } > XIP
     .ram_text : { _rt_start = .; KEEP(*(.ram_text*)) . = ALIGN(4); _rt_end = .; } > RAMTEXT AT > XIP
     _rt_load = LOADADDR(.ram_text);
+    .c1_text : { _c1_start = .; KEEP(*(.c1_text*)) . = ALIGN(4); _c1_end = .; } > RAMTEXT AT > XIP
+    _c1_load = LOADADDR(.c1_text);
     /* Only UMETATE_PROFILE=performance marks hand-written DSP entry points here; reset/cold code stays XIP. */
     .dsp_text : { _dsp_start = .; KEEP(*(.dsp_text*)) . = ALIGN(4); _dsp_end = .; } > RAM AT > XIP
     _dsp_load = LOADADDR(.dsp_text);
