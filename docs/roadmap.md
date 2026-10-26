@@ -723,20 +723,24 @@ chord, custom loader (`ota-<identity>` + resume + model check), single-bank-OTA
 `bootguard` test; `lint --c` encodes SEC-1/SEC-2 + flash allow-list. Device `blocked`.
 **Layer: source/host.**
 
-**P2-8 — Patch generator (the AOT compiler).** — **done (host core), blocked (WASM/target)**
-— `umetate/generate.py` (pure Python): reads the patch + the node library
-(`umetate/nodes.py`: phasor, osc, env, vca, mix, delay1, one_pole, delayN, noise),
-expands macros (dots→underscores for C ids, port/state bindings resolved through the
-hierarchy), type-checks wires (rejects `audio→event` + unknown ports), cycle-checks
-with `delay1`/`delayN` as breakers (the register read/write is split so FM feedback is
-1-sample), allocates SoA state, and emits one fused monomorphic `render` + the §12.1
-seam (`render`/`note_on`/`note_off`/`all_notes_off`/`lit`/`quiet`/`reset`/`set_bend_q16`)
-+ the note→inc allocator (ratio via a note-derived state binding). *Verified:* the
-pocket-drone two-op FM example (the `op` macro + delay1 feedback + global chain)
-compiles for host; a delay-free env/vca patch renders non-silent then silent; an
-`audio→event` edge is rejected with a type error. *Deferred:* the flattened
-`params.json` table + `const` XIP `tables:` + `model`-enum dispatch (P2-8 follow-up,
-with `scaffold`/`add` in P3); WASM (emscripten) + target (JieLi clang) builds need
+**P2-8 — Patch generator (the AOT compiler).** — **done (host, strict-typed), blocked (WASM/target)**
+— A compiler pipeline (the §12.4 spec): `_ir.py` (Port/Edge/PortSpec NamedTuples,
+`NodeSpec`, `NodeInstance`, `CompiledGraph`, `GenError`), `_frontend.py` (parse →
+macro expand → wire resolve → type-check → cycle-check + topo), `_backend.py` (rate
+split → state alloc → allocator → emission), and `generate.py` (the thin pure entry).
+The node library lives in `modules/<node>/node.json + node.c` (§12.5): a manifest +
+a per-sample C template with `${in.*}`/`${out.*}`/`${state.*}`/`${param.*}`
+placeholders (zone-agnostic auto-wrap) and `@@read@@`/`@@write@@` cycle breakers;
+a leftover placeholder is a `GenError`. It type-checks wires (rejects `audio→event`
++ Q-format mismatches), cycle-checks with `delay1`/`delayN` removed as breakers, and
+emits the **rate split** (control prologue every `CONTROL_BLOCK`=32, audio loop per
+sample) + the §12.1 seam + the note→inc allocator (`ratio` via a note-derived state
+binding). *Verified:* the pocket-drone two-op FM example (op macro + delay1 feedback
++ global chain) compiles; a delay-free env/vca patch renders non-silent then silent;
+an `audio→event` edge is rejected; `mypy --strict` + `ruff check` + `ruff format
+--check` are clean over the owned Python. *Deferred:* the flattened `params.json`
+table + `const` XIP `tables:` + `model`-enum dispatch (P2-8 follow-up, with
+`scaffold`/`add` in P3); WASM (emscripten) + target (JieLi clang) builds need
 P1-2/P3-2. **Layer: host.**
 
 **P2-9 — UI base + panel generator.** Implement the context runtime (stack,
