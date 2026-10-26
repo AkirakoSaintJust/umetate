@@ -457,7 +457,9 @@ or an explicit gate. Owns the device-write gate (§8).
   Ninja, a C compiler, Pillow, Emscripten 6.0.13.
 - Volume (`umetate-target`): JieLi pi32v2 toolchain + AC79 SDK assets
   (`uboot.boot`, `cfg_tool.bin`, `eq_cfg_hw.bin`), mounted read-only at `/opt/jieli`.
-  **Not** baked into the image (vendor-terms compliance). `umetate setup` populates it.
+  **Not** baked into the image (vendor-terms compliance). `umetate setup` populates it:
+  auto-fetch (toolchain from `pkgman.jieliapp.com`, SDK from gitee, both with opt-in
+  consent) or a user-supplied path; version- + hash-verified against `env.lock`.
 - Windows: everything through WSL2 → Docker.
 
 ### 6.5 RIB starter firmware
@@ -649,9 +651,13 @@ first command; identity and doc set are frozen.
 **Layer: host.**
 
 **P1-2 — Target volume + setup.** — **blocked** (deferred to P3-2) — `umetate setup`
-installs the JieLi Linux pi32v2 toolchain into the volume at `/opt/jieli`, verifies
-SDK asset hashes, records the `--clock` choice. `--dry-run` changes nothing. Needs
-the user-supplied toolchain; cannot run in this session. **Layer: host.**
+installs the JieLi Linux pi32v2 toolchain + the three SDK assets into the volume at
+`/opt/jieli`. Auto-fetch with opt-in consent (`--toolchain auto` → `pkgman.jieliapp.com`,
+`--sdk auto` → gitee) or a user-supplied path; the toolchain's version string and the
+SDK asset SHA-256s are verified against `env.lock` (mismatch aborts unless `--force`);
+records the `--clock` choice to `.local-env`. `--dry-run` changes nothing; idempotent.
+Needs the toolchain tarball hash (filled at P3-2); cannot run in this session.
+**Layer: host.**
 
 ### Phase 2 — RIB runtime + generator (P2)
 
@@ -1530,7 +1536,7 @@ shim; `generate.py` is a pure function.
 | --- | --- | --- |
 | `cli.py` | dispatch | `argparse` subparsers; `help CMD` documents every option |
 | `doctor.py` | `doctor` | read-only env report (native/host/target/device/repo); `--json`, `--strict` |
-| `setup.py` | `setup` | opt-in, non-silent toolchain install into the Docker volume; `--dry-run`, `--clock 240\|320` |
+| `setup.py` | `setup` | opt-in, non-silent toolchain+SDK install into the Docker volume; `--toolchain auto\|PATH`, `--sdk auto\|PATH`, `--clock 240\|320`, `--dry-run`, `--json`, `--yes`; version- + hash-verifies against `env.lock` (mismatch aborts unless `--force`) |
 | `build.py` | `build` | `generate.py` + the target build (Docker); `--board/--model/--dsp/--clock/--profile` |
 | `generate.py` | (internal) | patch + panel → `dsp.c` + `ui.c` + `params.json` + `tables.c` |
 | `check.py` | `check` | host/web/safety/links/skill checks |
