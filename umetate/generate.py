@@ -40,6 +40,10 @@ class NodeInstance:
     def state(self, name: str) -> str:
         return f"{self.c}_{name}"
 
+    def state_ref(self, name: str, v: str) -> str:
+        """Zone-aware state access: SoA `name[v]` for voice, scalar `name` for global."""
+        return f"{self.c}_{name}[{v}]" if self.zone == "voice" else f"{self.c}_{name}"
+
     def param_expr(self, name: str) -> str:
         return f"{self.c}_{name}"
 
@@ -50,64 +54,47 @@ class NodeInstance:
         return self.in_expr.get(port, default)
 
 
-def _expand(patch: dict, nodes: dict, zone: str, macro_inst: dict,
-            instances: list, wires: list, macros: dict) -> str:
-    """Expand one node/macro instance. Returns the node id (or None for a wire-only)."""
-    typ = macro_inst["type"]
-    if typ in macros:
-        # ---- macro instance: expand its inner nodes with the prefix ----
-        m = macros[typ]
-        prefix = macro_inst["id"]
-        inner_params = dict(macro_inst.get("params", {}))
-        # map the macro's own ports/params to its inner nodes:
-        #   wires of the form `from: <macro-port> to: <inner>` and
-        #   `from: <inner> to: <macro-port>` are port/state renames.
-        port_map = {}      # macro port name -> (inner node, inner port)  [port->port]
-        state_map = {}     # macro port name -> (inner node, inner state) [port->state, note-derived]
-        out_map = {}       # macro out name -> (inner node, inner port)
-        for w in m.get("wires", []):
-            frm, to = w["from"], w["to"]
-            if not _is_inner(frm, m) and _is_inner(to, m):
-                # macro input -> inner port/state
-                tgt = _resolve_inner(to, m, prefix)
-                if tgt[0] == "state":
-                    state_map[frm] = tgt[1:]
-                else:
-                    port_map[frm] = tgt[1:]
-            elif _is_inner(frm, m) and not _is_inner(to, m):
-                out_map[to] = _resolve_inner(frm, m, prefix)[1:]
-            else:
-                # inner wire
-                wires.append((_join(_prefix_port(frm, prefix)), _join(_prefix_port(to, prefix))))
-        # emit the inner nodes
-        for n in m.get("nodes", []):
-            _expand(patch, nodes, zone, {**n, "id": f"{prefix}.{n['id']}"},
-                    instances, wires, macros)
-        # params: map macro params (ratio -> ph.ratio) to inner state/params
-        for mp, tgt in m.get("params", {}).items():
-            kind, node_id, field = _resolve_inner(tgt, m, prefix)
-            val = inner_params.get(mp)
-            if kind == "state":
-                # a note-derived state target: handled at allocator time
-                inst = next(i for i in instances if i.id == node_id)
-                inst.params[f"_notederived_{field}"] = val if val is not None else 1
-            else:
-                inst = next(i for i in instances if i.id == node_id)
-                inst.params[field] = val
-        # record the port maps on the first inner node (or a dict keyed by macro id)
-        return prefix
-    else:
+def _expand(patch, nodes, zone, inst_dict, instances, wires, bindings, macros):
+    """Recursively expand a node/macro instance into leaf instances + wires + bindings.
+
+    `bindings` maps (macro_id, port) -> (kind, node_id, field): kind "state" for a
+    note-derived state target, "port" for a graph-edge rename.
+    """
+    typ = inst_dict["type"]
+    if typ not in macros:
         spec = nodes.get(typ)
         if spec is None:
-            raise GenError(f"unknown node type {typ!r} (instance {macro_inst['id']!r})")
-        inst = NodeInstance(id=macro_inst["id"], type=typ, zone=zone,
-                            params=dict(macro_inst.get("params", {})), spec=spec)
-        instances.append(inst)
-        return macro_inst["id"]
+            raise GenError(f"unknown node type {typ!r} (instance {inst_dict['id']!r})")
+        instances.append(NodeInstance(id=inst_dict["id"], type=typ, zone=zone,
+                                      params=dict(inst_dict.get("params", {})), spec=spec))
+        return
+    m = macros[typ]
+    prefix = inst_dict["id"]
+    inner_params = dict(inst_dict.get("params", {}))
+    for w in m.get("wires", []):
+        frm, to = w["from"], w["to"]
+        f_inner = _is_inner(frm, m)
+        t_inner = _is_inner(to, m)
+        if not f_inner and t_inner:
+            bindings[(prefix, frm)] = _resolve_inner(to, m, prefix)     # macro in -> inner
+        elif f_inner and not t_inner:
+            bindings[(prefix, to)] = ("port",) + _resolve_inner(frm, m, prefix)[1:]  # inner -> macro out
+        else:
+            wires.append((_split(_prefix_port(frm, prefix)), _split(_prefix_port(to, prefix))))   # inner wire
+    for n in m.get("nodes", []):
+        _expand(patch, nodes, zone, {**n, "id": f"{prefix}.{n['id']}"}, instances, wires, bindings, macros)
+    for mp, tgt in m.get("params", {}).items():
+        kind, nid, field = _resolve_inner(tgt, m, prefix)
+        inst = next(i for i in instances if i.id == nid)
+        val = inner_params.get(mp)
+        if kind == "state":
+            inst.params["_note_field"] = field                          # note-derived, set at note-on
+            inst.params["_note_ratio"] = val if val is not None else 1
+        else:
+            inst.params[field] = val
 
 
 def _is_inner(port: str, m: dict) -> bool:
-    # a macro wire source/target that names one of the macro's inner node ids
     first = port.split(".")[0]
     return any(n["id"] == first for n in m.get("nodes", []))
 
@@ -129,58 +116,83 @@ def _resolve_inner(port: str, m: dict, prefix: str) -> tuple:
     return ("port", nid, field)
 
 
-def _join(src: tuple, dst: tuple) -> tuple:
-    return (src, dst)
+def _resolve_port(port: tuple, bindings: dict) -> tuple:
+    """Resolve a (node_id, port_name) through the macro bindings -> (kind, id, field)."""
+    key = port
+    while key in bindings:
+        kind, nid, field = bindings[key]
+        if kind == "state":
+            return ("state", nid, field)
+        key = (nid, field)
+    return ("port", key[0], key[1])
 
 
 def generate(patch: dict, nodes: dict[str, NodeSpec] = None) -> str:
     nodes = nodes or NODES
-    name = patch["name"]
+    name = _cid(patch["name"])        # sanitize for C identifiers (dots/hyphens -> _)
     voices = int(patch.get("voices", 1))
     macros = patch.get("macros", {})
 
     instances: list[NodeInstance] = []
-    wires: list[tuple] = []          # ((src_id, src_port), (dst_id, dst_port))
+    wires: list[tuple] = []
+    bindings: dict = {}
     zones: dict = {}
 
     for zone in ("voice", "global"):
         z = patch.get(zone, {})
         zones[zone] = z
         for n in z.get("nodes", []):
-            _expand(patch, nodes, zone, n, instances, wires, macros)
+            _expand(patch, nodes, zone, n, instances, wires, bindings, macros)
         for w in z.get("wires", []):
             wires.append((_split(w["from"]), _split(w["to"])))
 
-    # ---- type-check + input resolution ----
+    # ---- type-check + input resolution (resolved through the macro bindings) ----
     by_id = {i.id: i for i in instances}
     for e in wires:
-        src_id, src_port = e[0]
-        dst_id, dst_port = e[1]
+        src = _resolve_port(e[0], bindings)
+        dst = _resolve_port(e[1], bindings)
+        if src[0] == "state" or dst[0] == "state":
+            continue                       # note-derived state: handled by the allocator
+        src_id, src_port = src[1], src[2]
+        dst_id, dst_port = dst[1], dst[2]
+        if src_id == "voice":
+            by_id[dst_id].in_expr[dst_port] = "bus"      # the voice-zone mix
+            continue
+        if dst_id == "out":
+            continue                                     # the final output (last global node)
         if src_id in RESERVED or dst_id in RESERVED:
-            continue                       # allocator bindings
-        src = by_id.get(src_id)
-        dst = by_id.get(dst_id)
-        if src is None or dst is None:
+            continue                       # allocator binding
+        src_inst = by_id.get(src_id)
+        dst_inst = by_id.get(dst_id)
+        if src_inst is None or dst_inst is None:
             raise GenError(f"wire to/from unknown node: {src_id}.{src_port} -> {dst_id}.{dst_port}")
-        if src_port not in src.spec.outs:
+        if src_port not in src_inst.spec.outs:
             raise GenError(f"{src_id} has no output port {src_port!r}")
-        if dst_port not in dst.spec.ins:
+        if dst_port not in dst_inst.spec.ins:
             raise GenError(f"{dst_id} has no input port {dst_port!r}")
-        sk, dk = src.spec.outs[src_port], dst.spec.ins[dst_port]
+        sk, dk = src_inst.spec.outs[src_port], dst_inst.spec.ins[dst_port]
         if sk == KIND_AUDIO and dk == KIND_EVENT:
             raise GenError(f"type error: audio->event {src_id}.{src_port} -> {dst_id}.{dst_port}")
         if sk != dk and not ({sk, dk} <= {KIND_AUDIO, KIND_CONTROL}):
             raise GenError(f"type error: {sk}->{dk} {src_id}.{src_port} -> {dst_id}.{dst_port}")
-        dst.in_expr[dst_port] = f"{src.c}_{src_port}_x"   # the upstream output local
+        dst_inst.in_expr[dst_port] = f"{src_inst.c}_{src_port}_x"   # the upstream output local
 
     order = _topo(instances, wires)
 
-    return _emit(name, voices, instances, order, zones)
+    # resolve the voice_out (a named voice-zone signal) through the bindings
+    voice_out = zones["voice"].get("voice_out")
+    if voice_out:
+        k, nid, field = _resolve_port(_split(voice_out), bindings)
+        voice_out_expr = f"{_cid(nid)}_{field}_x"
+    else:
+        voice_out_expr = None
+
+    return _emit(name, voices, instances, order, zones, voice_out_expr)
 
 
 def _split(port: str) -> tuple:
     if "." in port:
-        a, b = port.split(".", 1)
+        a, b = port.rsplit(".", 1)
         return a, b
     return port, ""
 
@@ -209,7 +221,7 @@ def _topo(instances, wires):
     return order
 
 
-def _emit(name, voices, instances, order, zones):
+def _emit(name, voices, instances, order, zones, voice_out_expr=None):
     c = []
     c.append(f"/* GENERATED by umetate — do not edit. name={name} voices={voices} */")
     c.append('#include "fm1_math.h"')
@@ -228,8 +240,12 @@ def _emit(name, voices, instances, order, zones):
 
     # ---- state (SoA for voice, scalar for global) ----
     for i in instances:
-        for sname, _kind in i.spec.state.items():
-            if i.zone == "voice":
+        for sname, kind in i.spec.state.items():
+            if kind == "pool":
+                c.append(f"#define {i.state(sname)}_len 8192")
+                c.append(f"#define {i.c}_delay_mask 8191")
+                c.append(f"static int16_t {i.state(sname)}[{i.state(sname)}_len] UMETATE_POOL;")
+            elif i.zone == "voice":
                 c.append(f"static uint32_t {i.state(sname)}[NVOICE] UMETATE_CPU1;")
             else:
                 c.append(f"static uint32_t {i.state(sname)} UMETATE_CPU1;")
@@ -249,38 +265,41 @@ def _emit(name, voices, instances, order, zones):
     c.append("        int32_t bus = 0;")
     c.append("        for (uint32_t v = 0; v < NVOICE; v++) {")
     c.append("            if (!voice_gate[v]) continue;")
-    voice_out = zones["voice"].get("voice_out")
-    voice_last = None
+    # collect read/write statements; delay1/delayN writes are ordered last (cycle-breakers)
+    reads, writes, voice_last = [], [], None
     for iid in order:
         i = next(x for x in instances if x.id == iid)
         if i.zone != "voice":
             continue
-        outs, stmts = i.spec.emit(i, "v")
-        for s in stmts:
-            c.append("            " + s)
+        outs, read, write = i.spec.emit(i, "v")
+        reads.extend(read)
+        writes.extend(write)
         for pname, expr in outs.items():
-            if pname == "audio":
+            if pname in ("audio", "out"):
                 voice_last = expr
+    for s in reads:
+        c.append("            " + s)
     # the voice-zone mix into the bus
-    if voice_out:
-        src = _resolve_out(voice_out, instances)
-        c.append(f"            bus = fm1_sat_add32(bus, {src});")
+    if voice_out_expr:
+        c.append(f"            bus = fm1_sat_add32(bus, {voice_out_expr});")
     elif voice_last:
         c.append(f"            bus = fm1_sat_add32(bus, {voice_last});")
+    for s in writes:
+        c.append("            " + s)
     c.append("        }")
-    # global-zone nodes
+    # global-zone nodes (chained via `bus`; inputs resolved through the wires)
     for iid in order:
         i = next(x for x in instances if x.id == iid)
         if i.zone != "global":
             continue
-        for port in i.spec.ins:
-            i.in_expr[port] = "bus"
-        outs, stmts = i.spec.emit(i, "0")
-        for s in stmts:
+        outs, read, write = i.spec.emit(i, "0")
+        for s in read:
             c.append("        " + s)
-        if "audio" in outs:
-            bus_expr = outs["audio"]
-            c.append(f"        bus = {bus_expr};")
+        out_port = "out" if "out" in outs else "audio"
+        if out_port in outs:
+            c.append(f"        bus = {outs[out_port]};")
+        for s in write:
+            c.append("        " + s)
     c.append("        out[f * 2] = bus; out[f * 2 + 1] = bus;")
     c.append("    }")
     c.append("}")
@@ -322,7 +341,7 @@ def _seam(name, instances):
     c.append("    voice_gate[pick] = 1;")
     for i in instances:
         if i.type == "phasor" and i.zone == "voice":
-            ratio = i.params.get("_notederived_inc", i.params.get("ratio", 1))
+            ratio = i.params.get("_note_ratio", 1)
             c.append(f"    {i.state('inc')}[pick] = note_to_inc(note) * {ratio}u;")
     c.append("}")
     c.append("")
