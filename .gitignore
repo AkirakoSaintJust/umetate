@@ -30,3 +30,6 @@ docs/local-environment.md
 # OS
 .DS_Store
 Thumbs.db
+
+# editor / local tooling (user-owned)
+.vscode/
