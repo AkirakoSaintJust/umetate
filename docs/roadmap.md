@@ -565,6 +565,11 @@ vocabulary as an `Enum`. I/O-bound: optimize only measured hot paths.
   module boundaries (avoids import cycles), `NamedTuple` for tiny value types.
 - **Lint + format** — `ruff check` + `ruff format --check` (88 cols, py311), clean
   in the build. No hand-styled whitespace.
+- **Packaging** — `setuptools` (PEP 621 `[project]` + `[build-system]` +
+  `[project.scripts] umetate = "umetate.cli:main"`). Version authority is
+  `pyproject.toml`, read via `importlib.metadata.version("umetate")` with a
+  `PackageNotFoundError` fallback for a raw checkout (the firmware's `APP_VER` is a
+  separate thing).
 - **Clarity over cleverness** — names read as sentences, one-line docstrings state
   the *why* of every public function/module, and the generator is a *compiler*
   (§12.4): typed IR, ordered passes, deterministic output, `GenError(message)`
@@ -782,12 +787,17 @@ lists all commands; no import side effects. **Layer: host.**
 *Acceptance:* each has `--help`; `build`/`check` never write a device; `--clock
 360|396` rejected; `--dsp float` stays opt-in. **Layer: host/target.**
 
-**P3-3 — `scaffold`/`add`/`lib`, `lint`, `fmt`.** Scaffold default node/macro/patch
-(`ng generate`); `add` instantiates a library feature (params + dispatch + test +
-evidence row); `lib` lists/installs the library; lint encodes the standing checks;
-fmt is clang-format. *Acceptance:* `scaffold patch --name X` builds; `add oscillator`
+**P3-3 — `scaffold`/`add`/`lib`, `lint`, `fmt` + the param table.** Scaffold default
+node/macro/patch (`ng generate`); `add` instantiates a library feature (params +
+dispatch + test + evidence row); `lib` lists/installs the library; lint encodes the
+standing checks; fmt is clang-format. Also the **flattened param namespace**
+(`params.json`): unify the DSP's node params, the panel's `param` names, and the
+§12.1 `set_param`/`get_param`/`param_count` seam into one id space (emitted by the
+generator), and the user-defined `const` XIP `tables.c` (wavetables/segments/
+phase_maps). *Acceptance:* `scaffold patch --name X` builds; `add oscillator`
 registers a node and passes `make test` + `lint`; `lib list` shows shipped nodes;
-`lint --c` fails on a crafted MAXP/ROM/MMIO violation. **Layer: host.**
+`lint --c` fails on a crafted MAXP/ROM/MMIO violation; `params.json` maps a named
+param to the `set_param` id the panel writes. **Layer: host.**
 
 **P3-4 — `install`, `flash`, `debrick` (direct, gated).** Per §6.1 and §8; install
 parses identity/CRC/model; debrick routes name their prerequisite. *Acceptance:* no
@@ -1547,7 +1557,7 @@ shim; `generate.py` is a pure function.
 | `doctor.py` | `doctor` | read-only env report (native/host/target/device/repo); `--json`, `--strict` |
 | `setup.py` | `setup` | opt-in, non-silent toolchain+SDK install into the Docker volume; `--toolchain auto\|PATH`, `--sdk auto\|PATH`, `--clock 240\|320`, `--dry-run`, `--json`, `--yes`; version- + hash-verifies against `env.lock` (mismatch aborts unless `--force`) |
 | `build.py` | `build` | `generate.py` + the target build (Docker); `--board/--model/--dsp/--clock/--profile` |
-| `generate.py` | (internal) | patch + panel → `dsp.c` + `ui.c` + `params.json` + `tables.c` |
+| `generate.py` | (internal) | patch + panel → `dsp.c` + `panel.h` (UI tables); `params.json` + `tables.c` are P3-3 |
 | `check.py` | `check` | host/web/safety/links/skill checks |
 | `package.py` | `package` | inspect a `.fwsc` (identity/CRC/model) without a device |
 | `install.py`/`flash.py`/`debrick.py` | `install`/`flash`/`debrick` | the three device-writing commands (host-side, §8 gates) |
@@ -1564,7 +1574,7 @@ shim; `generate.py` is a pure function.
 patch.json + panel.json + node manifests
         │  generate.py  (host, pure Python)
         ▼
-dsp.c (engine) + ui.c (UI) + params.json + tables.c
+dsp.c (engine) + panel.h (UI tables)          (+ params.json + tables.c in P3-3)
         │
         ├──▶ host   (container gcc/clang): dsp.c + test_harness.c  →  host_test  → vectors
         ├──▶ WASM   (container emscripten): dsp.c + js adapter     →  dsp.wasm   (no import section)
