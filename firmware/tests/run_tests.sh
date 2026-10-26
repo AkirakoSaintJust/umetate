@@ -54,7 +54,7 @@ done
 $CC -DBOARD_SMK37=1 -o "$OUT/ldr_test_smk" tests/ldr_test.c
 run "update loader, SMK-37: app area 0x4000-0x9CFFF, protected ranges untouched" "$OUT/ldr_test_smk" "$OUT/smk_old.fwsc" "$OUT/smk_new.fwsc"
 found=0
-for spec in "pro:SMK-37 Pro_99" "elite:SMK-37 Elite_99" "mke:SMK-37 MKE-P37_99"; do
+for spec in "pro:SMK-37 Pro_99" "elite:SMK-37 Elite_99" "mke:MKE-P37_99"; do
     model=${spec%%:*}
     identity=${spec#*:}
     for f in build/umetate-smk37-"$model"*.fwsc; do

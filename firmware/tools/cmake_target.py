@@ -58,7 +58,7 @@ def main():
         parser.error("non-pro models require --board smk37")
     if args.model != "pro":
         model_name = build_module.MODELS[args.model]
-        build_module.BOARD_PREFIX[args.board] = "SMK-37 Elite_99" if args.model == "elite" else "SMK-37 MKE-P37_99"
+        build_module.BOARD_PREFIX[args.board] = "SMK-37 Elite_99" if args.model == "elite" else "MKE-P37_99"
         build_module.BOARD_DEFS[args.board] = ["-DBOARD_SMK37=1", f'-DSMK_MODEL="{model_name}"']
     if args.release:
         match = re.fullmatch(r"(\d)\.(\d)(\.\d)?(-[A-Za-z0-9]+)?", args.release)

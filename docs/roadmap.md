@@ -643,7 +643,10 @@ shims (5 files); no `FM1TK`/`fm1tk`/`DINGHY_`/`dinghy-` identifiers remain. *Ver
 host test builds and runs green in the container (`rib.wav` 286464 frames + screen
 PNGs, zero warnings). *Blocked:* the four target packages need the JieLi toolchain
 (P1-2). Identities frozen as `FM-1_990`, `SMK-37 Pro_990`, `SMK-37 Elite_990`,
-`MKE-P37_990` (D6 corrected to the code's authoritative value). **Layer: source/host.**
+`MKE-P37_990` (D6 corrected to the code's authoritative value; also fixed the two
+spots that carried the wrong `SMK-37 MKE-P37_99` prefix — `tools/cmake_target.py:61`
+and `tests/run_tests.sh:57` — so the package identity now matches the on-device
+`SMK_MODEL` value the installer recognizes). **Layer: source/host.**
 
 **P2-2 — Dual-core bring-up (default).** CPU0/CPU1 split (§4.2): core-1 boot,
 `irq_info_table`, `cpu1_main` DSP worker in RAM/SDRAM, SPSC rings + barriers, spin
