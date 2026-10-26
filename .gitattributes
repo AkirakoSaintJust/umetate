@@ -1,0 +1,5 @@
+# LF everywhere — the firmware's byte-identical builds depend on stable line endings.
+*       text=auto eol=lf
+*.S     text eol=lf
+*.ld    text eol=lf
+*.sh    text eol=lf

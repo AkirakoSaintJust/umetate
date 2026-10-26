@@ -1,0 +1,12 @@
+# Optional convenience wrapper: an interactive container with the repo mounted
+# read-write and the target toolchain volume mounted read-only at /opt/jieli.
+services:
+  host:
+    image: umetate-host-build:latest
+    volumes:
+      - ..:/work
+      - umetate-target:/opt/jieli:ro
+    working_dir: /work
+
+volumes:
+  umetate-target:

@@ -1,0 +1,9 @@
+.git
+old-reference
+firmware/build
+build
+dist
+__pycache__
+*.pyc
+.venv
+venv

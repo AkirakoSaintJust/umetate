@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://umetate.dev/schema/node.schema.json",
+  "title": "umetate node manifest",
+  "description": "A reusable DSP primitive: typed ports, a params interface, a state manifest, and a static-inline dsp core. One node = one algorithm; shape/spectrum/envelope = data. Ports may carry a numeric format (q15/q16/q32/phase) alongside the rate, so the generator can reject e.g. Q16 control -> Q32 phase. See docs/roadmap.md §3.1, §12.5.",
+  "type": "object",
+  "required": ["name", "outs"],
+  "additionalProperties": false,
+  "properties": {
+    "name": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+    "summary": { "type": "string" },
+    "ins": { "type": "object", "additionalProperties": { "$ref": "#/$defs/port" } },
+    "outs": { "type": "object", "minProperties": 1, "additionalProperties": { "$ref": "#/$defs/port" } },
+    "params": {
+      "type": "array",
+      "items": { "$ref": "params.schema.json#/$defs/param" }
+    },
+    "state": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "type"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+          "type": { "enum": ["q12", "q15", "q16", "q32", "phase", "int16", "int32", "uint32"] }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "port": {
+      "oneOf": [
+        { "type": "string", "enum": ["event", "control", "audio"] },
+        {
+          "type": "object",
+          "required": ["rate"],
+          "additionalProperties": false,
+          "properties": {
+            "rate": { "enum": ["event", "control", "audio"] },
+            "format": { "enum": ["q15", "q16", "q32", "phase"] }
+          }
+        }
+      ]
+    }
+  }
+}

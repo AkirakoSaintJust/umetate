@@ -1,0 +1,59 @@
+# umetate C formatting contract.
+# Applied by `umetate fmt`. Keep in sync with firmware/README.md §4.
+---
+BasedOnStyle: LLVM
+Language: Cpp
+Standard: c11
+
+# Indentation / width
+IndentWidth: 4
+ContinuationIndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 100
+
+# Braces (Allman, matching the app contract examples)
+BreakBeforeBraces: Allman
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
+AllowShortEnumsOnASingleLine: false
+
+# Spacing / pointers
+SpaceBeforeParens: ControlStatements
+PointerAlignment: Right
+DerivePointerAlignment: false
+ReferenceAlignment: Right
+
+# Alignment (minimal, to avoid churn in hot loops)
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignOperands: Align
+AlignTrailingComments: false
+
+# Line breaking
+BinPackArguments: true
+BinPackParameters: true
+BreakBeforeBinaryOperators: None
+BreakBeforeTernaryOperators: true
+PenaltyBreakBeforeFirstCallParameter: 1
+PenaltyExcessCharacter: 1
+
+# Includes
+SortIncludes: CaseSensitive
+IncludeBlocks: Preserve
+IncludeCategories:
+  - Regex: '^"'
+    Priority: 1
+  - Regex: '^<'
+    Priority: 2
+
+# Miscellaneous
+IndentCaseLabels: false
+IndentCaseBlocks: false
+MaxEmptyLinesToKeep: 1
+SpacesInCStyleCastParentheses: false
+...

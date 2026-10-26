@@ -1,0 +1,50 @@
+# umetate clang-tidy contract.
+# Run by `umetate lint --c` against the portable C (hal/, src/, board/).
+# Target-specific checks (MAXP bounds, ROM-address constants, HAL-only MMIO,
+# flash-busy call graph, image/RAM/pool budget) live in `umetate/lint.py`.
+#
+# Curated for embedded C11: bug/UB/portability/readability/perf, minus the
+# checks that fight fixed-point DSP (e.g. no integer-promotion churn noise).
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-reserved-identifier,
+  -bugprone-narrowing-conversions,
+  clang-analyzer-*,
+  performance-*,
+  -performance-avoid-endl,
+  portability-*,
+  -portability-restrict-system-includes,
+  readability-*,
+  -readability-magic-numbers,
+  -readability-identifier-length,
+  -readability-function-cognitive-complexity,
+  -readability-else-after-return,
+  -readability-implicit-bool-conversion,
+  -readability-uppercase-literal-suffix,
+  -readability-named-parameter,
+  misc-*,
+  -misc-include-cleaner,
+  -misc-const-correctness,
+  -misc-non-private-member-variables-in-classes,
+  cert-*,
+  -cert-err33-c,
+  -cert-dcl03-c,
+  -cert-dcl37-c,
+  -cert-dcl51-cpp
+
+WarningsAsErrors: '*'
+
+HeaderFilterRegex: '.*'
+
+FormatStyle: file
+
+CheckOptions:
+  - key: readability-function-size.LineThreshold
+    value: 80
+  - key: readability-function-size.StatementThreshold
+    value: 100
+  - key: bugprone-assert-side-effect.AssertMacros
+    value: ''
+...

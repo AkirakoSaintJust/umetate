@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://umetate.dev/schema/patch.schema.json",
+  "title": "umetate patch (instrument)",
+  "description": "The declarative synth: macros + node instances + wires + voice/global zones + a tables section. The generator AOT-compiles this to SoA state and one fused monomorphic render. Reserved voice-zone source names: `gate` (event) and `velocity` (control) are wireable allocator outputs; `note` is an allocator binding (note x ratio -> phasor inc via a note_derived macro param). See docs/roadmap.md §3.1, §12.4.",
+  "type": "object",
+  "required": ["name", "voices"],
+  "additionalProperties": false,
+  "properties": {
+    "name": { "type": "string", "minLength": 1 },
+    "voices": { "type": "integer", "minimum": 1, "maximum": 64 },
+    "sample_rate": { "type": "integer", "minimum": 8000, "maximum": 96000 },
+    "tables": { "type": "object", "additionalProperties": { "$ref": "#/$defs/table" } },
+    "macros": { "type": "object", "additionalProperties": { "$ref": "#/$defs/macro" } },
+    "voice": { "$ref": "#/$defs/zone" },
+    "global": { "$ref": "#/$defs/zone" }
+  },
+  "$defs": {
+    "table": {
+      "type": "object",
+      "required": ["kind"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "enum": ["wavetable", "segments", "spectrum", "phase_map"] },
+        "source": { "type": "string", "description": "file or inline spec" },
+        "size": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "zone": {
+      "type": "object",
+      "required": ["nodes"],
+      "additionalProperties": false,
+      "properties": {
+        "nodes": { "type": "array", "items": { "$ref": "#/$defs/instance" } },
+        "wires": { "type": "array", "items": { "$ref": "#/$defs/wire" } },
+        "voice_out": {
+          "type": "string",
+          "description": "the voice-zone signal (by <instance>.<port>) summed into the global bus (voice zone only)"
+        }
+      }
+    },
+    "instance": {
+      "type": "object",
+      "required": ["id", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "type": { "type": "string", "description": "a node name or a macro name" },
+        "params": { "type": "object", "additionalProperties": { "type": "integer" } }
+      }
+    },
+    "wire": {
+      "type": "object",
+      "required": ["from", "to"],
+      "additionalProperties": false,
+      "properties": {
+        "from": { "type": "string", "description": "a port, <instance>.<port>, or a reserved voice source (gate, velocity)" },
+        "to": { "type": "string", "description": "<instance>.<port>" }
+      }
+    },
+    "param_target": {
+      "type": "object",
+      "required": ["target"],
+      "additionalProperties": false,
+      "properties": {
+        "target": { "type": "string", "description": "inner <instance>.<param> (port param) or <instance>.<state> (state, set at note-on)" },
+        "note_derived": { "type": "boolean", "description": "multiply by note_to_inc(note) at note-on (phasor inc)" }
+      }
+    },
+    "macro": {
+      "type": "object",
+      "required": ["ins", "outs", "nodes", "wires"],
+      "additionalProperties": false,
+      "properties": {
+        "ins": { "type": "object", "additionalProperties": { "enum": ["event", "control", "audio"] } },
+        "outs": { "type": "object", "additionalProperties": { "enum": ["event", "control", "audio"] } },
+        "params": {
+          "type": "object",
+          "additionalProperties": {
+            "oneOf": [
+              { "type": "string", "description": "macro param name -> inner <instance>.<param>" },
+              { "$ref": "#/$defs/param_target" }
+            ]
+          }
+        },
+        "nodes": { "type": "array", "items": { "$ref": "#/$defs/instance" } },
+        "wires": { "type": "array", "items": { "$ref": "#/$defs/wire" } }
+      }
+    }
+  }
+}

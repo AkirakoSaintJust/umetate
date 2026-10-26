@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://umetate.dev/schema/params.schema.json",
+  "title": "umetate synth parameter manifest",
+  "description": "Single source for the generated synth_params.h and params.js. Edit this, never the generated views. See firmware/README.md and templates/feature-contract.md.",
+  "type": "object",
+  "required": ["name", "sample_rate", "voices", "params"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z][A-Za-z0-9 _-]*$",
+      "description": "Synth name; becomes the <synth>_ DSP prefix."
+    },
+    "sample_rate": {
+      "type": "integer",
+      "minimum": 8000,
+      "maximum": 96000,
+      "description": "Nominal render rate in Hz."
+    },
+    "voices": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 64,
+      "description": "Maximum simultaneous voices (bounds the SoA arrays)."
+    },
+    "params": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/param" }
+    }
+  },
+  "$defs": {
+    "param": {
+      "type": "object",
+      "required": ["id", "name", "min", "max", "default"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Stable numeric id; the generated table indexes by it."
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "C identifier; becomes SYNTH_PARAM_<NAME>."
+        },
+        "min": { "type": "integer" },
+        "max": { "type": "integer" },
+        "default": { "type": "integer", "description": "Must fall within [min, max]." },
+        "curve": { "enum": ["linear", "log"], "default": "linear" },
+        "unit": { "type": "string", "description": "Display unit, e.g. 'Hz', '%', 'cents'." },
+        "rate": {
+          "enum": ["sample", "block"],
+          "default": "block",
+          "description": "sample = re-derived per frame; block = derived every 16-32 frames."
+        },
+        "modulatable": { "type": "boolean", "default": false }
+      }
+    }
+  }
+}

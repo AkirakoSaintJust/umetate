@@ -1,0 +1,32 @@
+# The dead fm1tk reference (removed after P2-1; ignored until then)
+/old-reference
+
+# OpenCode agent configuration
+.agents/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# firmware / build artifacts
+firmware/build/
+build/
+dist/
+*.o
+*.elf
+*.map
+
+# local environment (per-checkout, written by `umetate setup`)
+.env
+.local-env
+docs/local-environment.md
+
+# OS
+.DS_Store
+Thumbs.db
