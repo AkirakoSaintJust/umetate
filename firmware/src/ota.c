@@ -12,7 +12,7 @@
  * Nothing is committed before the host's "success"; any failure erases the
  * staging area and Felucca carries on.
  *
- * The firmware (felucca.c) and the host test supply these hooks:
+ * The firmware (rib.c) and the host test supply these hooks:
  *   ota_wire_send(p, n)        one complete F0..F7 message to the host
  *   ota_frame_get(&p, &n)      next received SysEx (7-bit bytes between F0/F7), 0 if none
  *   ota_frame_done()           release it

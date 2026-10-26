@@ -224,15 +224,19 @@ param tables) are produced by a generator, never hand-edited.
 | CPU0 | boot, OS/runtime, USB (MIDI + UAC), MIDI UART, panel/UI, display, storage/flash, watchdog, update installer, recovery | long DSP work; FP when CPU1 owns the FPU |
 | CPU1 | DSP render: voice state, block production | OS calls (incl. `printf`), allocation, flash, USB, blocking |
 
-- **CPU1 code lives in internal RAM or SDRAM**, never flash XIP (AC79 §7.40).
-- **IPC:** single-producer/single-consumer rings — a command ring (CPU0→CPU1) and
-  an audio-block ring (CPU1→CPU0); 32-bit indices, acquire/release barriers,
-  overrun counters. `volatile` is never a multi-field atomic protocol.
-- **Inter-core exclusion:** `spin_lock` (AC79 §7.40).
-- **Flash park:** a flash write parks CPU1, drains the ring, writes, resumes; if
-  CPU1 does not park, the write aborts.
-- **Boot probe + fallback:** a boot-time core-1 memory-integrity probe; on failure
-  the same firmware renders DSP on CPU0 — a stability fallback, not a second build.
+- **CPU1 code lives in RAM** (`.c1_text`, its waiting loop) so it never fetches
+  from flash while flash is busy (AC79 §7.40).
+- **IPC:** the one-job mailbox (`fm1_c1_mb`, Felucca `fm1_cpu1.h`) for the render
+  job; a SPSC note queue (`hal/fm1_ipc.h`, csync-guarded) for events; shared
+  single-writer values for params/bend. `volatile` is never a multi-field atomic
+  protocol.
+- **Inter-core exclusion:** single-writer/single-reader mailbox + queue; no OS
+  `spin_lock` (the SDK-OS model, AC79 §7.40, does not apply — RIB is bare-metal).
+- **Flash park:** `fm1_cpu1_halt()` holds CPU1 before a flash write and in every
+  reset path; it is not auto-resumed.
+- **Boot probe + fallback:** a boot-time core-1 memory-integrity probe (the mailbox
+  check word, which detects the `0x00200000` misread); on failure the same firmware
+  renders DSP on CPU0 — a stability fallback, not a second build.
 
 ### 4.3 Build profiles (collapsed)
 
@@ -309,9 +313,12 @@ is a canonical governance/status doc. Templates are fillable forms; skill
   passed a two-core 30-minute soak; 360 failed under load on one V15 unit; **396
   has no FM-1 evidence**. A soft reset keeps the PLL; power-cycle returns to the
   bootloader clock. `community-measured`.
-- **Dual-core split (AC79 §7.40):** `CPU_CORE_NUM 1` + single-core `system.a` +
-  explicit `irq_info_table`; CPU1 runs `cpu1_main`, may not call OS APIs; `spin_lock`
-  for exclusion; flash write suspends CPU1 unless its code is in RAM/SDRAM. `vendor`.
+- **Dual-core split (AC79 §7.40, SDK-OS model — a vendor fact only):** `CPU_CORE_NUM 1`
+  + single-core `system.a` + explicit `irq_info_table`; CPU1 runs `cpu1_main`, may
+  not call OS APIs; `spin_lock` for exclusion; flash write suspends CPU1 unless its
+  code is in RAM/SDRAM. **RIB does not use this** — it is bare-metal (links no
+  `system.a`): core 1 runs `fm1_c1_main` via the Felucca `fm1_cpu1.h` raw-register
+  start. `vendor`.
 - **FPU (AC79 §7.22):** single-precision hardware only. FM-1 enable/ABI/context is
   `not-run` until the target probe (P2-4). `vendor`.
 
@@ -924,43 +931,38 @@ pending-event queue).
 
 **Dual-core transport (runtime-owned).**
 
-> **P2-2 status.** P2-2 implements the *synchronous* subset of this contract: the
-> `dsp_cmd` note queue, the `bend_q16`/`lit_base` shared values, and the
-> `quiet`/`lit` status words (all in plain aligned `.bss`, csync-guarded). The
-> ping-pong `dsp_blocks[2][512]` + `ready[2]`/`done[2]` handshake below is the
-> **P2-8** asynchronous design (no ISR wait), not yet built. The one-job mailbox
-> itself is Felucca `fm1_cpu1.h`, not this struct.
-
 ```c
 typedef struct { uint8_t kind;      /* NOTE_ON | NOTE_OFF | ALL_OFF  (events only) */
-                 uint8_t pad; uint16_t note; uint16_t vel; } dsp_cmd;   /* command-ring entry */
+                 uint8_t pad; uint16_t note; uint16_t vel; } dsp_cmd;   /* note-queue entry */
 
-/* params & bend are shared VALUES, not ring commands — CPU0 writes, both read */
-extern volatile int32_t param_values[NUM_PARAMS];   /* in shared SRAM */
-extern volatile int32_t bend_q16;                    /* in shared SRAM */
+/* params & bend are shared VALUES, not queue commands — CPU0 writes, both read */
+extern volatile int32_t param_values[NUM_PARAMS];   /* in aligned .bss (shared) */
+extern volatile int32_t bend_q16;                    /* in aligned .bss (shared) */
 
 typedef struct { volatile uint32_t quiet;   /* 1 = all voices silent   (CPU1 → CPU0) */
                  volatile uint32_t lit;     /* sounding note keys, 27-bit (FM-1; unused on SMK) */
-                 volatile uint32_t ready[2];/* CPU1: buf[i] is rendered */
-                 volatile uint32_t done[2]; /* CPU0: buf[i] was consumed */
-               } dsp_status;                /* in shared SRAM */
+               } dsp_status;                /* in aligned .bss (shared) */
 ```
 
-- **command ring** (CPU0→CPU1): SPSC, 64 entries, 32-bit indices, acquire/release
-  barriers, overrun counter. `note_on`/`note_off`/`all_notes_off` (main loop)
-  enqueue events; CPU1 drains at block start.
+- **one-job mailbox** (CPU0→CPU1): Felucca `fm1_cpu1.h` — core 0 hands `fn(arg)` +
+  a check word and waits (`fm1_cpu1_run`/`fm1_cpu1_wait`); core 1 verifies the check
+  before running. The check word **is** the boot probe; a bad check or a 4 ms stall
+  holds core 1 (single-core from then on).
+- **note queue** (CPU0→CPU1): SPSC, 64 entries, 32-bit indices, csync
+  acquire/release, overrun counter. `note_on`/`note_off`/`all_notes_off` (main loop)
+  enqueue events; the render job drains the queue at block start.
 - **params & bend** (shared values): `set_param`/`set_bend_q16` (main loop) write
   `param_values[]`/`bend_q16` directly (single writer = CPU0); CPU1 reads them at
-  block start, CPU0 reads them for display. No ring command, no reverse channel.
-- **audio blocks** (CPU1→CPU0): ping-pong `int32_t dsp_blocks[2][512]`, per-buffer
-  handshake. CPU1 renders `buf[p]`, sets `ready[p]`, toggles `p`; before reusing
-  `buf[p]` it waits for `done[p]`, then clears it. CPU0's `app_audio` copies
-  `buf[p]`, sets `done[p]`, clears `ready[p]`. The wait is bounded — it only stalls
-  if CPU0 misses its block deadline.
-- **reverse status:** CPU1 writes `quiet`/`lit` each block; CPU0's `quiet()`/
-  `lit()` read them (single-word, atomic).
-- **fallback** (probe fail / host / single-core): `app_audio` calls `render(out, n)`
-  directly; the ring and status are unused; the engine is unaware of the mode.
+  block start, CPU0 reads them for display. No queue command, no reverse channel.
+- **reverse status:** CPU1 writes `quiet`/`lit` each block; CPU0's `quiet()`/`lit()`
+  read them (single-word, atomic).
+- **fallback** (probe fail / host / single-core): `app_audio` runs `rib_render_block`
+  locally; the mailbox and queue are unused; the engine is unaware of the mode.
+
+The shared state (mailbox, note queue, params, status) lives in **plain aligned
+`.bss`** — no `.shared` section, no uncached alias (none is sourced). The two cores
+share the caches (Felucca `fm1_cpu1.h`), so ordering is `csync` only; `flushinv` is
+for the flash/XIP cache (`hal/fm1_flash.h`), never for the inter-core transport.
 
 **Memory placement.**
 
@@ -969,7 +971,13 @@ typedef struct { volatile uint32_t quiet;   /* 1 = all voices silent   (CPU1 →
 | `render` + callees | `.dsp_text` (SRAM) — `UMETATE_TARGET_DSP` |
 | engine voice state | `.cpu1_bss` (internal RAM) / `.bss` (host, single-core) |
 | param table | `const` → XIP |
-| command ring + audio blocks + params + status | shared SRAM, uncached window |
+| mailbox + note queue + params + status | aligned `.bss` (shared, csync) |
+
+**P2-8 (future): asynchronous ping-pong.** To drop the ISR wait, core 1 renders
+ahead into `int32_t dsp_blocks[2][512]` with a per-buffer `ready[2]`/`done[2]`
+handshake (CPU1 sets `ready[p]`, toggles `p`; CPU0's `app_audio` copies `buf[p]`,
+sets `done[p]`, clears `ready[p]`); the render job becomes a continuous core-1
+worker instead of a one-shot job. Not built — the synchronous mailbox above ships.
 
 **Verification (must pass).** host parity (silence → note → silence; param clamp;
 bad-id rejection; `quiet()` toggles); ring host tests (wrap-around, overrun, no
@@ -1036,10 +1044,9 @@ the build's linker report verifies every budget (the fm1tk image/RAM/pool checks
 | --- | --- | --- | --- |
 | `.text` / `.rodata` | platform + app code, `const` tables (params, wavetables) | runtime + generator | XIP flash (`0x02000000+`) |
 | `.dsp_text` | hot DSP code (`render` + callees) | generator | internal RAM, copied at boot |
-| `.data` / `.bss` | CPU0 platform/app state (`fm1_in`, UI, MIDI) | runtime | internal RAM |
+| `.data` / `.bss` | CPU0 platform/app state (`fm1_in`, UI, MIDI) **+ the shared mailbox, note queue, params, status** | runtime | internal RAM |
 | `.cpu1_bss` | CPU1 engine state (SoA voice + global) | generator | internal RAM |
 | `.pool` | big buffers (delay lines), zeroed at boot | generator | internal RAM |
-| `.shared` | command ring + audio blocks + reverse status + handshake flags + param values + bend | runtime | internal RAM, **uncached window** |
 
 Hot per-sample tables (wavetables read every sample) may need a `.cpu1_rodata` RAM
 section copied at boot instead of XIP — XIP reads route through the SFC and depend
@@ -1051,21 +1058,22 @@ exceeded):**
 | Region | Budget | Notes |
 | --- | --- | --- |
 | XIP code + const | ≤ 568 KB | flash `0x02000000+`; `const` costs no RAM |
-| CPU0 `.data`/`.bss` | ≤ 96 KB | platform/app |
+| CPU0 `.data`/`.bss` | ≤ 96 KB | platform/app **+ the shared mailbox/queue/params/status + core-1 stack** |
 | CPU1 `.cpu1_bss` | ≤ 16 KB | engine voice/global state (SoA) |
 | `.dsp_text` | ≤ 32 KB | hot DSP code in SRAM |
 | `.pool` | ≤ 336 KB | big buffers |
-| `.shared` | ≤ 8 KB | ring (64×6 B) + blocks (2×512×4 B) + params/status, uncached |
 | stack | 24 KB CPU0 + 8 KB CPU1 | separate stacks |
 
-Total internal RAM must fit the usable ~511 KB (0x1c00000+). **The indicative sizes
-above sum to ~520 KB — over budget by ~9 KB.** Trim at P2-1/P2-2 (e.g. `.pool` ≤
-327 KB, or `.dsp_text` ≤ 24 KB); the linker report is the authority and must never
-be silently exceeded. The shared state (mailbox, note queue, status) lives in
-plain aligned `.bss` — **no `.shared` section or uncached alias is used** (none is
-sourced on this chip). The two cores **share the caches** (Felucca `fm1_cpu1.h`),
-so ordering is enforced with `csync` barriers only; `flushinv` is reserved for the
-flash/XIP cache (`hal/fm1_flash.h`), never for the inter-core transport.
+Total internal RAM must fit the usable ~511 KB (0x1c00000+). The indicative sizes
+above sum to ~512 KB — at the limit, so the **linker report is the authority and
+the build fails on overage, never silently.** Reconcile at P2-8 (when the generator
+first emits `.cpu1_bss`/`.dsp_text`), before the first target package — e.g. trim
+`.pool` (delay lines are the discretionary budget) or `.dsp_text`. The shared state
+(mailbox, note queue, status) lives in plain aligned `.bss` — **no `.shared` section
+or uncached alias is used** (none is sourced on this chip). The two cores **share the
+caches** (Felucca `fm1_cpu1.h`), so ordering is enforced with `csync` barriers only;
+`flushinv` is reserved for the flash/XIP cache (`hal/fm1_flash.h`), never for the
+inter-core transport.
 
 #### 12.2.4 Emission rules (what the generator may emit)
 
@@ -1154,10 +1162,10 @@ magic + CRC); the flash map (`fm1_flash_map.h` allow-list + `_Static_assert`s).
 fm1_input_init → (dual-core: release CPU1 + probe) → app_init (engine_init) →
 app_main` loop.
 
-**Memory reconciliation (closes the §12.2 overage).** The budget sums ~520 KB vs
-~511 KB. At P2-1, trim `.pool` 336→320 KB (delay lines are the discretionary
-budget), or `.dsp_text` 32→24 KB. The linker report is the authority; the build
-fails on overage, never silently.
+**Memory reconciliation (closes the §12.2 budget).** Reconcile at P2-8, when the
+generator first emits `.cpu1_bss`/`.dsp_text` — e.g. trim `.pool` (delay lines are
+the discretionary budget) or `.dsp_text`. The linker report is the authority; the
+build fails on overage, never silently.
 
 **Kept imported unchanged (the "working hardware layer").** input matrix + encoder
 decoder + LED layers, the RAM flash driver + allow-list, USB (UAC + MIDI) + SysEx,
@@ -1330,14 +1338,14 @@ finding", §6.3).
 **Where it runs.** CPU0, in `app_main`. Cold code, but bounded: rate-limited redraw,
 `LCD_IDLE` integration, no display in the audio callback.
 
-**Params live in `.shared` (the UI-read requirement).** The UI must both *set* and
+**Params live in shared `.bss` (the UI-read requirement).** The UI must both *set* and
 *display* params, so params are a shared, single-writer array — CPU0 writes
 (`set_param`/`set_bend_q16`), CPU0 reads (display/`get_param`), CPU1 reads (render,
-block start). This refines §12.1: the command ring carries **events only** (notes);
-params and bend are shared values, not ring commands.
+block start). This refines §12.1: the note queue carries **events only** (notes);
+params and bend are shared values, not queue commands.
 
 ```c
-/* in .shared (uncached); single writer = CPU0 */
+/* in aligned .bss (shared, csync); single writer = CPU0 */
 extern volatile int32_t param_values[NUM_PARAMS];
 extern volatile int32_t bend_q16;
 ```
@@ -1376,7 +1384,7 @@ for (;;) {
     for (each event) {
         b = resolve(top_context.bindings, else ui_global, by source);
         if (b.kind == BIND_PARAM) param_values[b.target] = scale(v, b.curve);  /* → CPU1 next block */
-        else                      do_action(b.action, b.arg);   /* push/pop/next_page/note_on(→ring)/… */
+        else                      do_action(b.action, b.arg);   /* push/pop/next_page/note_on(→queue)/… */
     }
     /* retained-mode redraw, rate-bounded ~30 Hz: */
     if (now - last_draw >= 33 ms)

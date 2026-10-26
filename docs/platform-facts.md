@@ -19,9 +19,12 @@ primary source). A lower-confidence tag never overrides a higher one.
   passed a two-core 30-minute soak; 360 failed under load on one V15 unit; **396
   has no FM-1 evidence**. A soft reset keeps the PLL; power-cycle returns to the
   bootloader clock. `community-measured`
-- **Dual-core split (AC79 §7.40):** `CPU_CORE_NUM 1` + single-core `system.a` +
-  explicit `irq_info_table`; CPU1 runs `cpu1_main`, may not call OS APIs; `spin_lock`
-  for exclusion; flash write suspends CPU1 unless its code is in RAM/SDRAM. `vendor`
+- **Dual-core split (AC79 §7.40, SDK-OS model — a vendor fact only):** `CPU_CORE_NUM 1`
+  + single-core `system.a` + explicit `irq_info_table`; CPU1 runs `cpu1_main`, may
+  not call OS APIs; `spin_lock` for exclusion; flash write suspends CPU1 unless its
+  code is in RAM/SDRAM. **RIB does not use this** — it is bare-metal (links no
+  `system.a`): core 1 runs `fm1_c1_main` via the Felucca `fm1_cpu1.h` raw-register
+  start. `vendor`
 - **FPU (AC79 §7.22):** single-precision hardware only. FM-1 enable/ABI/context is
   `not-run` until the target probe (P2-4). `vendor`
 
