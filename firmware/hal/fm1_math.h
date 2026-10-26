@@ -86,6 +86,21 @@ static inline int32_t fm1_cos(uint32_t phase) { return fm1_sin(phase + 0x4000000
 /* fm1_exp2_q16[i] = 2^(-i/256) in Q16  (exponential decay: envelopes, note-to-inc).
  * fm1_log2_q16[i] = log2(1 + i/256) in Q16  (log-domain FM). Both indexed directly. */
 
+/* ------------------------------------------------------ ROM transcendentals */
+/* The pi32v2's on-chip ROM math (driver/cpu/wl82/asm/math.h, Apache-2.0): hardware
+ * routines, NOT lookup tables. JieLi Q-notation — `aQ` is the input Q-format, `rQ`
+ * the output's. The angle unit + exact Q mapping are the JieLi convention, pinned
+ * when P2-8 emits coefficient computation (it has the SDK docs). Control-rate /
+ * accuracy-sensitive use; the LUT fm1_sin above stays the per-sample hot loop. */
+#if defined(UMETATE_TARGET)
+#include "jieli/math.h"
+#define fm1_cos_sin(a, aQ, rsin, rcos, rQ)  math_cos_sin(a, aQ, rsin, rcos, rQ)
+#define fm1_atan2(y, x, r, rQ)              math_atan2(y, x, r, rQ)
+#define fm1_exp(a, aQ, r, rQ)               math_exp(a, aQ, r, rQ)
+#define fm1_log(a, aQ, r, rQ)               math_log(a, aQ, r, rQ)
+#define fm1_sqrt(a, aQ, r, rQ)              math_sqrt(a, aQ, r, rQ)
+#endif
+
 /* ------------------------------------------------------- FFT (float, opt-in) */
 #ifdef FM1_MATH_FFT
 #include "kiss_fft/kiss_fft.h"

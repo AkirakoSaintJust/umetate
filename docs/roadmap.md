@@ -665,18 +665,22 @@ target package and the device probe need the JieLi toolchain + hardware. **Layer
 — `hal/fm1_math.h`: saturating Q arithmetic (`fm1_q15_mul`/`q16_mul`/`q31_mul`,
 `fm1_sat_add32`/`sat_sub32`, `fm1_madd_sat`, `fm1_shr_round`) + the transcendental
 tables (`fm1_sin`/`fm1_cos` from a 256-entry quarter-sine, `fm1_exp2_q16`,
-`fm1_log2_q16`) + an opt-in FFT wrapper (`FM1_MATH_FFT` → kiss_fft). Generated
-`gen/math_tables.h` (tools/gen_math_tables.py, checked in). Vendored the
-self-contained SDK math: `vendor/kiss_fft/` (BSD-3, the SW FFT) and
-`vendor/jieli/` (`fftvec_math_drv.h` + `flfft_core_pi32v2.c`, Apache-2.0, the HW
-FFT driver + float wrapper). `rib_dsp.c` now routes its hot-loop multiply/accumulate
-through `fm1_q15_mul`/`fm1_sat_add32`. *Verified:* host build green; `math_test`
-(24 checks: Q arithmetic, sine/exp/log vs libm, kiss_fft round-trip), `dsp_test`,
-`ipc_test` pass. *Deferred:* the SDK-entangled `jl_fft.c`/`nn_function_vec.c`/
-`jl_math.c` (they depend on `system/includes.h`/`os/os_api.h`/`generic/typedef.h`
-and the `libFFT_pi32v2_OnChip.a`; the saturating Q arithmetic is portable C and the
-transcendentals are tables, so they add only a perf layer). *Blocked:* target link +
-emulator hw-vs-sw parity need the JieLi toolchain + fm1-emu. **Layer: source/host.**
+`fm1_log2_q16`) + the ROM transcendental passthrough (`fm1_cos_sin`/`fm1_exp`/
+`fm1_log`/`fm1_atan2`/`fm1_sqrt` → `math_cos_sin`/`math_exp`/… on target) + an
+opt-in FFT wrapper (`FM1_MATH_FFT` → kiss_fft). Generated `gen/math_tables.h`
+(tools/gen_math_tables.py, checked in). Vendored the self-contained SDK math:
+`vendor/kiss_fft/` (BSD-3, the SW FFT) and `vendor/jieli/` (`math.h` — the ROM
+hardware transcendentals, `fftvec_math_drv.h` — the hw FFT/vector driver,
+`flfft_core_pi32v2.c` — the float-FFT wrapper; Apache-2.0). `rib_dsp.c` routes its
+hot-loop multiply/accumulate through `fm1_q15_mul`/`fm1_sat_add32`. *Verified:* host
+build green; `math_test` (24 checks), `dsp_test`, `ipc_test` pass. *Read-from-SDK at
+target link (not vendored):* the `jl_fft.c`/`nn_function_vec.c`/`jl_math.c` bodies
+and the `libFFT_pi32v2_OnChip.a` — they include `cpu.h` → `WL82.h` (the whole CPU
+register header) + the OS (`system/includes.h`, `os/os_api.h`), so only their
+self-contained *declarations* are vendored; the implementations are read from the SDK
+checkout like the binary assets. The hardware FFT (`hwfft_*`) and vector DSP
+(`vector_*`) are wired in P2-8. *Blocked:* target link + emulator hw-vs-sw parity
+need the JieLi toolchain + fm1-emu. **Layer: source/host.**
 
 **P2-4 — FPU opt-in (`--dsp float`).** DSP-TU-only FPU; no `double`; prove context
 ownership. *Acceptance:* no soft-float helpers in DSP; no FP outside the DSP object;
