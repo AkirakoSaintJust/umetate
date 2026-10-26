@@ -74,7 +74,7 @@ add_custom_target(host_test
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     USES_TERMINAL VERBATIM)
 add_custom_target(dsp_test
-    COMMAND "${UMETATE_HOST_CC}" -std=c11 -Wall -Wextra -Werror
+    COMMAND "${UMETATE_HOST_CC}" -std=c11 -Wall -Wextra -Werror -Ihal -Isrc -Igen
         -o "${UMETATE_HOST_DIR}/dsp_test" "${CMAKE_SOURCE_DIR}/tests/dsp_test.c" "${CMAKE_SOURCE_DIR}/src/rib_dsp.c"
     COMMAND "${UMETATE_HOST_DIR}/dsp_test"
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
@@ -86,6 +86,16 @@ add_custom_target(ipc_test
     COMMAND "${UMETATE_HOST_DIR}/ipc_test"
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     DEPENDS hal/fm1_ipc.h tests/ipc_test.c
+    USES_TERMINAL VERBATIM)
+add_custom_target(math_test
+    COMMAND "${UMETATE_HOST_CC}" -std=c11 -Wno-comment -Ivendor
+        -c "${CMAKE_SOURCE_DIR}/vendor/kiss_fft/kiss_fft.c" -o "${UMETATE_HOST_DIR}/kiss_fft.o"
+    COMMAND "${UMETATE_HOST_CC}" -std=c11 -Wall -Wextra -Werror -DFM1_MATH_FFT -Ihal -Igen -Ivendor
+        -c "${CMAKE_SOURCE_DIR}/tests/math_test.c" -o "${UMETATE_HOST_DIR}/math_test.o"
+    COMMAND "${UMETATE_HOST_CC}" -o "${UMETATE_HOST_DIR}/math_test" "${UMETATE_HOST_DIR}/math_test.o" "${UMETATE_HOST_DIR}/kiss_fft.o" -lm
+    COMMAND "${UMETATE_HOST_DIR}/math_test"
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    DEPENDS hal/fm1_math.h gen/math_tables.h tests/math_test.c vendor/kiss_fft/kiss_fft.c vendor/kiss_fft/kiss_fft.h
     USES_TERMINAL VERBATIM)
 add_custom_target(uac_test
     COMMAND "${UMETATE_HOST_CC}" -std=c11 -Wall -Wextra -Werror -Isrc
@@ -124,6 +134,7 @@ add_custom_target(test_all
     COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target test-host
     COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target dsp_test
     COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target ipc_test
+    COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target math_test
     COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target uac_test
     COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target bootguard_test
     COMMAND "${CMAKE_COMMAND}" -E env "UMETATE_TEST_BUILD=${CMAKE_BINARY_DIR}/test-artifacts" "CC=${UMETATE_HOST_CC}" "BOARD=smk37"

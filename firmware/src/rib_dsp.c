@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "rib_dsp.h"
 #include "fm1_ipc.h"
+#include "fm1_math.h"
 
 #define NV UMETATE_DSP_VOICES
 #define DSP_FN UMETATE_DSP_API
@@ -64,9 +65,9 @@ void rib_dsp_render(int32_t *out, uint32_t frames)
             if (amp < gate) { amp += 48; if (amp > gate) amp = gate; }
             else if (amp > gate) { amp -= 6; if (amp < gate) amp = gate; }
             phase += step;
-            sample = (sine(phase) * amp) >> 15;
-            out[2u * i] += sample;
-            out[2u * i + 1u] += sample;
+            sample = fm1_q15_mul(sine(phase), amp);
+            out[2u * i] = fm1_sat_add32(out[2u * i], sample);
+            out[2u * i + 1u] = fm1_sat_add32(out[2u * i + 1u], sample);
         }
         voice[v].ph = phase;
         voice[v].amp = amp;
