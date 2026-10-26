@@ -66,7 +66,7 @@ The non-negotiable safety rules are preserved in full (§5.4, §8).
 
 ```text
 umetate
-├─ 1. CLI (`umetate`)              one entry point: doctor, setup, build, check,
+├─ 1. CLI (`umetate`)              one entry point: quick-check, setup, build, deep-check,
 │                                  inspect, flash, debrick, scaffold
 │                                  (node|macro|patch), add, lib, lint, fmt, web, status
 ├─ 2. Skill: development           interview → brief → plan → scaffold/author →
@@ -182,7 +182,7 @@ umetate/
 ├─ pyproject.toml           # `umetate` CLI package
 ├─ umetate/                 # CLI implementation (Python >=3.11)
 │  ├─ cli.py                #   arg parsing, dispatch, help
-│  ├─ doctor.py setup.py build.py check.py inspect.py
+│  ├─ quick_check.py setup.py build.py deep_check.py inspect.py
 │  ├─ flash.py debrick.py scaffold.py add.py lib.py
 │  ├─ lint.py fmt.py web.py status.py evidence.py generate.py
 │  └─ runner.py             #   WSL2/Docker POSIX shim
@@ -397,11 +397,11 @@ Power on
 ### 6.1 CLI (`umetate`, Python)
 
 ```text
-umetate doctor     [--json] [--strict]      verify environment per evidence layer
+umetate quick-check [--json] [--strict]        verify environment per evidence layer
 umetate setup      [--dry-run] [--clock 240|320] [--json]   opt-in; installs toolchain into the Docker volume
 umetate build      --board fm1|smk37 [--model pro|elite|mke]
                    [--dsp integer|float] [--clock 240|320] [--profile baseline|perf]
-umetate check      [--host|--web|--safety|--links|--all]
+umetate deep-check  [--host|--web|--safety|--links|--all]
 umetate inspect    PACKAGE                   inspect a .fwsc without a device
 umetate flash      PACKAGE [--port NAME] [--device] [--yes]   flash; identity + CRC + model checked; resumes a device in update mode
 umetate debrick    [--route app-rescue|update-loader|mask-rom] [--device]   recovery write (mask-rom: blocked, needs the USB_KEY dongle)
@@ -415,7 +415,7 @@ umetate status                              per-layer claim ledger parsed from d
 umetate help [CMD]                           documents every option (component 1 requirement)
 ```
 
-- `doctor` is read-only; missing target toolchain is `blocked`, not `fail`;
+- `quick-check` is read-only; missing target toolchain is `blocked`, not `fail`;
   `--strict` turns non-device `blocked` into a failure exit.
 - `setup` is opt-in, interactive, hash-pinned, never silent; records the clock choice.
 - `scaffold` generates a **default** node/macro/patch (from the schemas), which the
@@ -473,7 +473,7 @@ statement (§4.2, §4.3). Integer-first by default; FPU opt-in; hardware math vi
 
 1. What umetate is; RIB as the runtime; the framework on top of it.
 2. Safety before hardware (hard-brick risk, backup limits, recovery, approval).
-3. Verify the environment (`umetate doctor`); Docker/WSL2 model.
+3. Verify the environment (`umetate quick-check`); Docker/WSL2 model.
 4. Build untouched RIB; host tests; browser lab; first sound.
 5. The firmware contract (`app_audio`, `app_main`, `platform_poll`, HAL).
 6. Design the instrument (brief, feature contracts, supported-load profile).
@@ -489,7 +489,7 @@ statement (§4.2, §4.3). Integer-first by default; FPU opt-in; hardware math vi
 ### 6.7 Start guide
 
 `README.md` — what umetate is, the seven components, the first three commands
-(`doctor`, `setup --dry-run`, `check`), the repository map, and the status line.
+(`quick-check`, `setup --dry-run`, `deep-check`), the repository map, and the status line.
 
 ### 6.8 Maintainability & readability contract
 
@@ -779,11 +779,11 @@ and panels to the shipped UI kit. Every device gate is explicitly `blocked`/`not
 ### Phase 3 — CLI (P3)
 
 **P3-1 — CLI skeleton.** `pyproject.toml` + `umetate/` package; `--help`/`help CMD`;
-`doctor`, `status`, `version`. *Acceptance:* `pip install -e .`; `umetate --help`
+`quick-check`, `status`, `version`. *Acceptance:* `pip install -e .`; `umetate --help`
 lists all commands; no import side effects. **Layer: host.**
 
-**P3-2 — Env + build orchestration.** `setup`, `build`, `check`, `inspect`.
-*Acceptance:* each has `--help`; `build`/`check` never write a device; `--clock
+**P3-2 — Env + build orchestration.** `setup`, `build`, `deep-check`, `inspect`.
+*Acceptance:* each has `--help`; `build`/`deep-check` never write a device; `--clock
 360|396` rejected; `--dsp float` stays opt-in. **Layer: host/target.**
 
 **P3-3 — `scaffold`/`add`/`lib`, `lint`, `fmt` + the param table.** Scaffold default
@@ -817,7 +817,7 @@ section); `evidence` validates a matrix. **Layer: host/browser.**
 
 **P4-1 — WASM parity lab.** Compile the generated DSP (the same sources as
 firmware/host) to standalone WASM; AudioWorklet adapter; versioned message protocol;
-explicit rate/block conversion; gesture-gated start. *Acceptance:* `check --web`
+explicit rate/block conversion; gesture-gated start. *Acceptance:* `deep-check --web`
 passes; browser matches host within tolerance. **Layer: browser.**
 
 **P4-2 — fm1-emu as model layer.** Run the `.fwsc` in fm1-emu where supported as a
@@ -829,11 +829,11 @@ regression row exists for supported firmwares; no device-acceptance claim. **Lay
 **P5-1 — umetate-development skill.** `SKILL.md` + offline `references/` (AC79
 facts, flash maps, port-kit patterns, the node/macro/patch schemas, recovery
 taxonomy, evidence vocabulary, code conventions) + `assets/` (copies of `templates/`).
-*Acceptance:* `check --skill` passes; it drives `scaffold`/`add`/patch authoring and
+*Acceptance:* `deep-check --skill` passes; it drives `scaffold`/`add`/patch authoring and
 refuses device writes without §8 gates. **Layer: docs.**
 
 **P5-2 — umetate-safety skill.** `SKILL.md` + offline `references/` (threat model,
-audit checklist, device gates, recovery taxonomy). *Acceptance:* `check --skill`
+audit checklist, device gates, recovery taxonomy). *Acceptance:* `deep-check --skill`
 passes; maps every surface to code/test/gate; preserves "not security-clean while
 SEC-1 device validation is blocked." **Layer: docs.**
 
@@ -842,7 +842,7 @@ SEC-1 device validation is blocked." **Layer: docs.**
 **P6-1 — Tutorial.** Fill §6.6 with real commands, per-source flags, the
 dual-core/FPU/clock facts, the framework authoring flow, the recovery taxonomy, and
 evidence levels. *Acceptance:* a reader follows the no-hardware path to a target
-package; device steps `blocked`; `check --links` passes. **Layer: docs.**
+package; device steps `blocked`; `deep-check --links` passes. **Layer: docs.**
 
 **P6-2 — Start guide.** Finalize `README.md`. *Acceptance:* a new reader names the
 toolkit, the firmware component, and the first command. **Layer: docs.**
@@ -851,7 +851,7 @@ toolkit, the firmware component, and the first command. **Layer: docs.**
 
 **P7-1 — Baseline tag + provenance.** Tag `umetate-baseline-YYYY-MM-DD`; record
 commit, tag, package hashes, identities, toolchain/SDK hashes, per-claim status.
-*Acceptance:* clean clone → `check --all` → four target builds; no "security-clean"/
+*Acceptance:* clean clone → `deep-check --all` → four target builds; no "security-clean"/
 "device-accepted" wording while blocked. **Layer: release.**
 
 **P7-2 — Publish only on request.** Nothing pushed/published by default. **Layer: release.**
@@ -911,7 +911,7 @@ side effect of any other task.
 - [ ] Five canonical docs + `firmware/README.md` + the three schemas exist;
       `docs/roadmap.md` is the only status authority.
 - [ ] `umetate` is the only entry point; every command has `--help`/`help`.
-- [ ] `umetate doctor`/`setup` are opt-in, non-silent, dry-runnable, hash-pinned.
+- [ ] `umetate quick-check`/`setup` are opt-in, non-silent, dry-runnable, hash-pinned.
 - [ ] `umetate build` produces `umetate-<board>-<model>[-<release>].fwsc` for FM-1
       and SMK-37 Pro/Elite/MKE, dual-core by default, identities `_990` frozen.
 - [ ] `--dsp float` (single-precision, opt-in) and `--clock 240|320` work; `double`
@@ -926,11 +926,11 @@ side effect of any other task.
       generator — tested by scripted host UI tests, with no display/flash in the
       audio callback.
 - [ ] The WASM parity lab and fm1-emu model layer are first-class targets.
-- [ ] Two offline skills (development, safety) pass `check --skill`.
+- [ ] Two offline skills (development, safety) pass `deep-check --skill`.
 - [ ] The tutorial teaches design, authoring, testing, installation, recovery, and
       evidence, with explicit hard-brick risk; device steps `blocked` until hardware.
 - [ ] Device writes are gated (§8); no write as a build/test side effect.
-- [ ] `check --all` passes on a clean clone; four target builds pass through the
+- [ ] `deep-check --all` passes on a clean clone; four target builds pass through the
       Docker route; the baseline is not described as security-clean or
       device-accepted while blocked.
 
@@ -1552,18 +1552,18 @@ note_on`); no display in the audio callback (lint + disasm).
 #### 12.7.1 CLI module contracts
 
 One module per command; each exposes `main(argv) -> int`. **Exit codes:** `0` ok,
-`1` error, `2` usage, `6` wrong-model (flash). `doctor`/`check` report the §5.5
+`1` error, `2` usage, `6` wrong-model (flash). `quick-check`/`deep-check` report the §5.5
 status vocabulary. No import side effects; `runner.py` is the WSL2/Docker POSIX
 shim; `generate.py` is a pure function.
 
 | Module | Command | Contract |
 | --- | --- | --- |
 | `cli.py` | dispatch | `argparse` subparsers; `help CMD` documents every option |
-| `doctor.py` | `doctor` | read-only env report (native/host/target/device/repo); `--json`, `--strict` |
+| `quick_check.py` | `quick-check` | read-only env report (native/host/target/device/repo); `--json`, `--strict` |
 | `setup.py` | `setup` | opt-in, non-silent toolchain+SDK install into the Docker volume; `--toolchain auto\|PATH`, `--sdk auto\|PATH`, `--clock 240\|320`, `--dry-run`, `--json`, `--yes`; version- + hash-verifies against `env.lock` (mismatch aborts unless `--force`) |
 | `build.py` | `build` | `generate.py` + the target build (Docker); `--board/--model/--dsp/--clock/--profile` |
 | `generate.py` | (internal) | patch + panel → `dsp.c` + `panel.h` (UI tables); `params.json` + `tables.c` are P3-3 |
-| `check.py` | `check` | host/web/safety/links/skill checks |
+| `deep_check.py` | `deep-check` | host/web/safety/links/skill checks |
 | `inspect.py` | `inspect` | read a `.fwsc` (identity/CRC/model/damage) without a device |
 | `flash.py`/`debrick.py` | `flash`/`debrick` | the two device-writing commands (host-side, §8 gates) |
 | `scaffold.py` | `scaffold node\|macro\|patch` | generate a default node/macro/patch |
@@ -1636,7 +1636,7 @@ umetate/
   config.py     evidence.py               # BuildConfig/EnvConfig; Status/Layer Enum
   runner.py     generate.py               # container exec; the patch generator (pure)
   _ir.py        _frontend.py  _backend.py # generator internals (§12.4): IR, passes, emission
-  doctor.py setup.py build.py check.py inspect.py
+  quick_check.py setup.py build.py deep_check.py inspect.py
   flash.py debrick.py                       # device writes (host-side, §8)
   scaffold.py add.py lib.py               # the schematic engine
   lint.py fmt.py web.py status.py evidence.py
@@ -1662,7 +1662,7 @@ class BuildConfig:
     board: str = "fm1"; model: str | None = None
     dsp: str = "integer"; clock: int = 320; profile: str = "perf"
 @dataclass(frozen=True)
-class DoctorReport:
+class QuickCheckReport:
     layers: tuple[LayerReport, ...]; summary: dict[Status, int]
 ```
 
@@ -1705,20 +1705,20 @@ None of these use the runner.
 | --- | --- |
 | `build` | `generate.py` (pure) → `runner.run` (target build) → the packager → `.fwsc` |
 | `inspect` | read a `.fwsc` (identity/CRC/model/damage) — pure, no runner, no device |
-| `doctor` | `runner.probe()` + a host USB probe → `DoctorReport` (read-only) |
+| `quick-check` | `runner.probe()` + a host USB probe → `QuickCheckReport` (read-only) |
 | `flash` | host-side **MIDI SysEx** (mido + python-rtmidi, §8 gates) — not the runner |
 | `debrick` | USB_KEY dongle → mask-ROM UBOOT → `jl-uboot-tool` (delegated), §8 gates |
 | `scaffold`/`add`/`lib` | pure Python over templates/schemas — no runner |
-| `check` | `runner.run` (host tests) + `_checks/` (lint/wasm/skill/links) |
+| `deep-check` | `runner.run` (host tests) + `_checks/` (lint/wasm/skill/links) |
 | `lint`/`fmt` | clang-tidy/clang-format via the runner + the custom `_checks/` |
 
 **Config & exit model.** Committed `env.lock` (toolchain/SDK pins + hashes); an
 ignored per-checkout env file (toolchain/SDK paths + the `--clock` choice). Build
-options are flags. Exit: `0` ok, `1` error, `2` usage, `6` wrong-model; `doctor`/
-`check` return non-zero on a `fail` layer (and on a non-device `blocked` under
+options are flags. Exit: `0` ok, `1` error, `2` usage, `6` wrong-model; `quick-check`/
+`deep-check` return non-zero on a `fail` layer (and on a non-device `blocked` under
 `--strict`).
 
 **The CLI's own tests.** `umetate/test_cli.py` — contract tests: every command has
-`--help`; `doctor --json` validates against the §5.5 layer/status shape; a fake
+`--help`; `quick-check --json` validates against the §5.5 layer/status shape; a fake
 device exercises `flash`/`resume` without hardware; `scaffold` output builds and
 passes `make test`.
