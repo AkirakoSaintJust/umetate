@@ -411,7 +411,7 @@ umetate lib        [list|install NAME]        the module library
 umetate lint       [--c]                     C lint + static checks (bounds, ROM, MMIO, flash-busy)
 umetate fmt        [--check]                 clang-format over the repo
 umetate web-build  / web-serve               WASM parity lab
-umetate status                              claim ledger from docs/roadmap.md
+umetate status                              per-layer claim ledger parsed from docs/roadmap.md
 umetate help [CMD]                           documents every option (component 1 requirement)
 ```
 
@@ -1571,7 +1571,7 @@ shim; `generate.py` is a pure function.
 | `lib.py` | `lib` | list/install the module library |
 | `lint.py` / `fmt.py` | `lint --c` / `fmt` | the custom safety checks / clang-format |
 | `web.py` | `web-build` / `web-serve` | emscripten WASM build / loopback serve |
-| `status.py` / `evidence.py` | `status` / `evidence` | claim ledger / validate an evidence matrix |
+| `status.py` / `evidence.py` | `status` / `evidence` | parse the roadmap's per-layer claim ledger / validate an evidence matrix |
 
 #### 12.7.2 The build pipeline (one generated `dsp.c`, three targets)
 
@@ -1665,6 +1665,19 @@ class BuildConfig:
 class DoctorReport:
     layers: tuple[LayerReport, ...]; summary: dict[Status, int]
 ```
+
+**The status ledger (`status.py`).** The roadmap is the single status authority; `status`
+parses its step/phase headers and renders a per-layer summary. The convention it reads
+(tolerant — a non-matching header is skipped, never an error):
+
+- a step: `**P<n>-<m> — <name>.** — <per-layer status>… **Layer: <layer>.**`
+- a phase: `### Phase <n> — <name> (P<n>) — <per-layer status>`
+
+`<per-layer status>` is a comma list of `done|blocked|in progress (<layer>)` pairs,
+mapped onto the §5.5 `Layer`/`Status` enums above (e.g. `done (host), blocked
+(target/device)` → `HOST=pass, TARGET=blocked, DEVICE=blocked`). Unknown layers and
+unparseable headers degrade to a `not-run`/skipped row, so a prose reword never breaks
+the command.
 
 **The runner (the platform abstraction).** Everything POSIX — the target build, the
 host DSP tests, the WASM build, clang tooling — runs in the pinned container:
