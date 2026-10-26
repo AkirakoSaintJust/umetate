@@ -1,0 +1,28 @@
+{
+  "name": "rib",
+  "home": "home",
+  "global": [
+    { "source": "KEY", "action": "note_on" }
+  ],
+  "contexts": {
+    "home": {
+      "pages": [
+        {
+          "id": "home",
+          "widgets": [
+            { "type": "label", "row": 1, "span": 2, "text": "RIB" },
+            { "type": "label", "row": 3, "text": "a sine to build on" },
+            { "type": "value", "row": 4, "span": 2, "param": "note" },
+            { "type": "param_row", "row": 7, "param": "octave", "text": "OCT" },
+            { "type": "param_row", "row": 8, "param": "channel", "text": "MIDI" }
+          ]
+        }
+      ],
+      "bindings": [
+        { "source": "BTN_OCT_DOWN", "target": "octave", "behavior": "relative" },
+        { "source": "BTN_OCT_UP", "target": "octave", "behavior": "relative" },
+        { "source": "ENC_PRESETS", "target": "channel", "behavior": "relative" }
+      ]
+    }
+  }
+}

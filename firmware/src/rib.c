@@ -66,14 +66,12 @@ static int quiet(void)
 #endif
 }
 
-/* ---- the screen: the keyboard is a UI_CUSTOM canvas widget (the cv_* escape hatch) */
+/* ---- the screen: the keyboard is drawn directly (the instrument; the UI kit renders the panel's widgets) */
 #define C_ACC RGB(180, 140, 255)                /* lilac, as the logo */
-#define C_KEY RGB(210, 210,210)
+#define C_KEY RGB(210, 210, 210)
 #define C_OFF RGB(90, 90, 90)
 #define KEY0 53u                                /* key 0 = F3 */
-#define UI_SLOT_KEYBOARD 5u                     /* the keyboard's slot on the home page */
 static int black(uint32_t note) { return (0x54Au >> (note % 12u)) & 1u; }
-static uint32_t ui_lit;                         /* the lit-key mask (set by app_main, drawn by the custom widget) */
 
 static void draw_keys(uint32_t lit)             /* bit k: key k sounds */
 {
@@ -89,13 +87,7 @@ static void draw_keys(uint32_t lit)             /* bit k: key k sounds */
             cv_rect(8 + (int32_t)w * 14 - 5, 0, 9, 30, lit >> k & 1u ? C_ACC : C_BLACK);
         else
             w++;
-    cv_blit(0, 140);
-}
-
-void ui_draw_custom(const ui_widget *w)         /* the one custom widget: the keyboard */
-{
-    (void)w;
-    draw_keys(ui_lit);
+    cv_blit(0, 152);
 }
 
 /* ---- the app's action hooks (called by ui.c) */
@@ -106,6 +98,7 @@ void ui_act_panic(void) { rib_dsp_all_off(); }
 void ui_act_play(void) { }
 void ui_act_stop(void) { }
 void ui_act_save(void) { }
+void ui_draw_custom(const ui_widget *w) { (void)w; }   /* no custom widgets in the demo panel */
 
 #include "ui.c"
 
@@ -146,7 +139,7 @@ static void app_idle(void)
 
 static void app_main(void)
 {
-    uint32_t prev = 0, k, dirty = 0, t_change = 0;
+    uint32_t prev = 0, k, dirty = 0, t_change = 0, lit_drawn = ~0u;
     uint8_t held[27] = {0};                     /* the note each key plays */
 #if BOARD_SMK37
     static const uint8_t WHITE[16] = {0, 2, 4, 6, 7, 9, 11, 12, 14, 16, 18, 19, 21, 23, 24, 26};
@@ -168,9 +161,9 @@ static void app_main(void)
         set.oct = 0, set.ch = 0;
 
     ui_init(&PANEL);
-    ui_params()[P_OCTAVE] = (int8_t)set.oct;
-    ui_params()[P_CHANNEL] = set.ch;
-    ui_params()[P_NOTE] = -1;
+    ui_params()[P_octave] = (int8_t)set.oct;
+    ui_params()[P_channel] = set.ch;
+    ui_params()[P_note] = -1;
 
     for (;;) {
         uint32_t keys, down, up, b, rel, lit = 0, out_ch = set.ch ? set.ch - 1u : 0u;
@@ -182,7 +175,7 @@ static void app_main(void)
         down = keys & ~prev;
         up = prev & ~keys;
         prev = keys;
-        oct = ui_params()[P_OCTAVE];
+        oct = ui_params()[P_octave];
         base = (uint32_t)((int32_t)KEY0 + 12 * oct);
         for (k = 0; k < 27u; k++) {
 #if BOARD_SMK37
@@ -219,14 +212,14 @@ static void app_main(void)
 
         /* clamp the octave/channel params, then mirror into the persisted struct */
         {
-            int32_t o = ui_params()[P_OCTAVE], c = ui_params()[P_CHANNEL];
+            int32_t o = ui_params()[P_octave], c = ui_params()[P_channel];
             if (o < -2) o = -2;
             if (o > 2) o = 2;
             if (c < 0) c = 0;
             if (c > 16) c = 16;
-            if (o != ui_params()[P_OCTAVE] || c != ui_params()[P_CHANNEL]) {
-                ui_params()[P_OCTAVE] = o;
-                ui_params()[P_CHANNEL] = c;
+            if (o != ui_params()[P_octave] || c != ui_params()[P_channel]) {
+                ui_params()[P_octave] = o;
+                ui_params()[P_channel] = c;
                 set.oct = (uint8_t)(int8_t)o;
                 set.ch = (uint8_t)c;
                 dirty = 1;
@@ -237,7 +230,7 @@ static void app_main(void)
         midi_in();
         if (clk_bpm && fm1_ms - clk_t0 > 2000u) clk_bpm = 0, clk_run = 0;
 
-        ui_params()[P_NOTE] = (int32_t)last_note;
+        ui_params()[P_note] = (int32_t)last_note;
 #if FM1_CPU1_USED
         lit_base = base;
         lit = dsp_status.lit;
@@ -258,9 +251,8 @@ static void app_main(void)
 #endif
 
         idle_ok = 1;
-        ui_lit = lit;                                /* the keyboard's lit mask */
-        ui_custom_set(UI_SLOT_KEYBOARD, (int32_t)lit);   /* redraw the keyboard when it changes */
         ui_redraw(fm1_ms);
+        if (lit != lit_drawn) { lit_drawn = lit; draw_keys(lit); }   /* the keyboard (the instrument) */
         idle_ok = 0;
 
         if (dirty && quiet() && fm1_ms - t_change > 2000u) {
