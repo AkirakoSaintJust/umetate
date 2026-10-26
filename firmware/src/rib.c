@@ -3,20 +3,13 @@
  * This is the file to change. Everything below it (platform.c) is done: updates, the USB rescue,
  * MIDI (USB, the TRS jack), USB audio, keys, knobs, LEDs, the screen, flash storage; the FM-1 and the SMK-37.
  *
- *   keys       play sines, 4 voices; the notes go out over USB-MIDI too, on the MIDI channel
- *   OCT- OCT+  the octave (kept in flash)
- *   PRESETS    the MIDI channel: OMNI (in: all, out: 1) or 1..16 (kept in flash)
- *   MASTER     the volume (platform.c)
- *   MIDI in    notes from USB or the TRS jack play the sines, with their velocity; a MIDI clock shows its tempo
- *              and blinks PLAY on the beat, START / STOP light it
- *   SMK-37     the keys with velocity, the outer keys too, the pads (white keys F3..G5, lit while they sound), the
- *              pitch wheel bends +-2 semitones
+ * The screen is the shipped UI kit (ui.c) rendering the panel in panel.h: a `home` context with the
+ * app name, the last note, the octave/channel, and the keyboard (a UI_CUSTOM canvas widget). The
+ * keys play sines through the global KEY -> note_on binding; OCT-/OCT+ and the PRESETS encoder write
+ * the octave/channel params through the home context's bindings.
  *
  * The audio callback is compiled as a separate translation unit so its optimization can be isolated from
- * USB/MIDI/platform code. The optional DSP performance profile changes only that unit; exact target compiler and
- * device behavior still require their own checks. The current kernel uses integer arithmetic.
- * tests/host.c runs this file on a computer: the screen as a PNG, the sound as a WAV.
- * What platform.c offers: docs/API.md. The target limits: docs/RULES.md. */
+ * USB/MIDI/platform code. tests/host.c runs this file on a computer: the screen as a PNG, the sound as a WAV. */
 static void app_idle(void);
 #define LCD_IDLE app_idle                       /* while the screen's DMA runs: MIDI in (platform.c) */
 #include "platform.c"
@@ -25,6 +18,8 @@ static void app_idle(void);
 #endif
 #include "rib_dsp.h"
 #include "fm1_ipc.h"
+#include "ui.h"
+#include "panel.h"
 
 /* ---- audio callback; the kernel is a distinct translation unit */
 static void app_audio(int32_t *out, uint32_t n)
@@ -38,7 +33,7 @@ static void app_audio(int32_t *out, uint32_t n)
 #endif
 }
 
-/* ---- notes (main loop) */
+/* ---- notes (the UI action hooks route here) */
 static uint32_t last_note = 255;
 static void play(uint32_t note, uint32_t vel)
 {
@@ -71,76 +66,51 @@ static int quiet(void)
 #endif
 }
 
-/* ---- the screen: the name, the last note big, the keyboard with what sounds, the octave */
+/* ---- the screen: the keyboard is a UI_CUSTOM canvas widget (the cv_* escape hatch) */
 #define C_ACC RGB(180, 140, 255)                /* lilac, as the logo */
-#define C_KEY RGB(210, 210, 210)
+#define C_KEY RGB(210, 210,210)
 #define C_OFF RGB(90, 90, 90)
 #define KEY0 53u                                /* key 0 = F3 */
+#define UI_SLOT_KEYBOARD 5u                     /* the keyboard's slot on the home page */
 static int black(uint32_t note) { return (0x54Au >> (note % 12u)) & 1u; }
-
-static void draw_note(void)
-{
-    static const char *const NAME[12] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
-    char s[8] = "-";
-    if (last_note < 128u) {
-        const char *p = NAME[last_note % 12u];
-        uint32_t i = 0;
-        while (*p) s[i++] = *p++;
-        if (last_note >= 12u) s[i++] = (char)('0' + last_note / 12u - 1u);
-        s[i] = 0;
-    }
-    draw_text_box(0, 82, 240, &FONT_L, s, C_WHITE, 1);
-}
+static uint32_t ui_lit;                         /* the lit-key mask (set by app_main, drawn by the custom widget) */
 
 static void draw_keys(uint32_t lit)             /* bit k: key k sounds */
 {
     uint32_t k, w = 0;
-    cv_begin(240, 56, C_BLACK);
+    cv_begin(240, 48, C_BLACK);
     for (k = 0; k < 27u; k++)                   /* 16 white keys of 14 px from x = 8 */
         if (!black(KEY0 + k)) {
-            cv_rect(8 + (int32_t)w * 14, 0, 13, 56, lit >> k & 1u ? C_ACC : C_KEY);
+            cv_rect(8 + (int32_t)w * 14, 0, 13, 48, lit >> k & 1u ? C_ACC : C_KEY);
             w++;
         }
     for (k = 0, w = 0; k < 27u; k++)            /* the black ones on the line between two white */
         if (black(KEY0 + k))
-            cv_rect(8 + (int32_t)w * 14 - 5, 0, 9, 34, lit >> k & 1u ? C_ACC : C_BLACK);
+            cv_rect(8 + (int32_t)w * 14 - 5, 0, 9, 30, lit >> k & 1u ? C_ACC : C_BLACK);
         else
             w++;
     cv_blit(0, 140);
 }
 
-static void draw_status(int32_t oct, uint32_t ch)
+void ui_draw_custom(const ui_widget *w)         /* the one custom widget: the keyboard */
 {
-    char s[24] = "OCT +0  MIDI OMNI";
-    s[4] = oct < 0 ? '-' : '+';
-    s[5] = (char)('0' + (oct < 0 ? -oct : oct));
-    if (ch) {
-        s[13] = 'C'; s[14] = 'H'; s[15] = (char)(ch < 10u ? ' ' : '1'); s[16] = (char)('0' + ch % 10u);
-    }
-    draw_text_box(0, 212, 240, &FONT_S, s, C_OFF, 1);
+    (void)w;
+    draw_keys(ui_lit);
 }
 
-static void draw_midi(uint32_t src, uint32_t bpm, uint32_t running)   /* where notes came from last, the clock */
-{
-    char s[32] = "", *p = s;
-    const char *a = src == 2u ? "TRS IN" : src == 1u ? "USB IN" : "";
-    while (*a) *p++ = *a++;
-    if (bpm) {
-        if (p != s) { *p++ = ' '; *p++ = ' '; }
-        a = running ? "CLOCK " : "clock ";
-        while (*a) *p++ = *a++;
-        if (bpm >= 100u) *p++ = (char)('0' + bpm / 100u);
-        *p++ = (char)('0' + bpm / 10u % 10u);
-        *p++ = (char)('0' + bpm % 10u);
-        a = " BPM";
-        while (*a) *p++ = *a++;
-    }
-    *p = 0;
-    draw_text_box(0, 120, 240, &FONT_S, s, C_OFF, 1);
-}
+/* ---- the app's action hooks (called by ui.c) */
+void ui_act_note_on(uint8_t note, uint8_t vel) { play(note, vel); }
+void ui_act_note_off(uint8_t note) { stop(note); }
+void ui_act_set_step(uint8_t step) { (void)step; }
+void ui_act_panic(void) { rib_dsp_all_off(); }
+void ui_act_play(void) { }
+void ui_act_stop(void) { }
+void ui_act_save(void) { }
+
+#include "ui.c"
 
 /* ---- MIDI in: from the main loop, and from app_idle while the screen draws (idle_ok) */
-static struct { uint8_t oct, ch; } set = {0, 0};   /* what survives a power-off (add yours, up to SECTOR_MAX bytes) */
+static struct { uint8_t oct, ch; } set = {0, 0};   /* what survives a power-off */
 static uint32_t idle_ok, midi_src, clk_n, clk_t0, clk_bpm, clk_run, clk_beat_ms;
 
 static void midi_in(void)
@@ -152,7 +122,7 @@ static void midi_in(void)
         if (st == 0xF8u) {                      /* clock: 24 a quarter note */
             if (clk_n % 24u == 0u) {
                 if (clk_n) {
-                    uint32_t ms = fm1_ms - clk_t0;   /* a quarter's length */
+                    uint32_t ms = fm1_ms - clk_t0;
                     clk_bpm = ms ? (60000u + ms / 2u) / ms : 0;
                 }
                 clk_t0 = fm1_ms;
@@ -161,7 +131,7 @@ static void midi_in(void)
             clk_n++;
             continue;
         }
-        if (st == 0xFAu) { clk_run = 1; clk_n = 0; continue; }   /* START: the next clock is beat 1 */
+        if (st == 0xFAu) { clk_run = 1; clk_n = 0; continue; }   /* START */
         if (st == 0xFBu) { clk_run = 1; continue; }              /* CONTINUE */
         if (st == 0xFCu) { clk_run = 0; continue; }              /* STOP */
         if (set.ch && (st & 15u) != set.ch - 1u) continue;      /* not our channel */
@@ -176,19 +146,17 @@ static void app_idle(void)
 
 static void app_main(void)
 {
-    uint32_t prev = 0, k, t_change = 0, dirty = 0, lit_drawn = ~0u, note_drawn = ~0u, status_drawn = ~0u;
-    uint32_t midi_drawn = ~0u;
+    uint32_t prev = 0, k, dirty = 0, t_change = 0;
     uint8_t held[27] = {0};                     /* the note each key plays */
 #if BOARD_SMK37
-    static const uint8_t WHITE[16] = {0, 2, 4, 6, 7, 9, 11, 12, 14, 16, 18, 19, 21, 23, 24, 26};   /* white key -> key */
+    static const uint8_t WHITE[16] = {0, 2, 4, 6, 7, 9, 11, 12, 14, 16, 18, 19, 21, 23, 24, 26};
     uint8_t pad_note[16] = {0}, ext_note[FM1_NKEY] = {0};
     smk_pw_t wheel = {0};
-    smk_pad_events = 1;                         /* the pads as events (smk_pad_take): they play here, lit while they sound */
+    smk_pad_events = 1;
 #endif
     rib_dsp_reset();
 #if FM1_CPU1_USED
-    {   /* the boot-time core-1 probe: open the PC limits (it boots through ROM), start it,
-         * re-apply the limits. On failure fm1_c1_on stays 0 and everything runs on core 0. */
+    {
         fm1_guard_unlock_top();
         fm1_guard_pc_open();
         (void)fm1_cpu1_start();
@@ -199,90 +167,103 @@ static void app_main(void)
     if (settings_load(&set, sizeof set) || (int8_t)set.oct < -2 || (int8_t)set.oct > 2 || set.ch > 16u)
         set.oct = 0, set.ch = 0;
 
-    lcd_fill(0, 0, 240, 240, C_BLACK);
-    draw_text_box(0, 18, 240, &FONT_L, APP_NAME, C_ACC, 1);
-    draw_text_box(0, 52, 240, &FONT_S, "a sine to build on  v" APP_VER, C_OFF, 1);
+    ui_init(&PANEL);
+    ui_params()[P_OCTAVE] = (int8_t)set.oct;
+    ui_params()[P_CHANNEL] = set.ch;
+    ui_params()[P_NOTE] = -1;
 
     for (;;) {
-        uint32_t keys, down, up, rel, b, lit = 0, out_ch = set.ch ? set.ch - 1u : 0u, st;
-        int32_t oct = (int8_t)set.oct, e;
-        uint32_t base = (uint32_t)((int32_t)KEY0 + 12 * oct);
+        uint32_t keys, down, up, b, rel, lit = 0, out_ch = set.ch ? set.ch - 1u : 0u;
+        int32_t oct, e;
+        uint32_t base;
         platform_poll();
 
-        keys = fm1_in.notes;                    /* bit k: key k (0 = F3 .. 26 = G5) */
+        keys = fm1_in.notes;
         down = keys & ~prev;
         up = prev & ~keys;
         prev = keys;
-        for (k = 0; k < 27u; k++) {                 /* (a key stops the note it started: the octave may change meanwhile) */
+        oct = ui_params()[P_OCTAVE];
+        base = (uint32_t)((int32_t)KEY0 + 12 * oct);
+        for (k = 0; k < 27u; k++) {
 #if BOARD_SMK37
-            uint32_t vel = fm1_in.key_vel[SMK_KEY_F3 + k];   /* the SMK's keys feel the velocity */
+            uint32_t vel = fm1_in.key_vel[SMK_KEY_F3 + k];
 #else
             uint32_t vel = 100;
 #endif
-            if (down >> k & 1u) { held[k] = (uint8_t)(base + k); play(held[k], vel); midi_send(0x90u | out_ch, held[k], vel); }
-            if (up >> k & 1u) { stop(held[k]); midi_send(0x80u | out_ch, held[k], 0); }
+            if (down >> k & 1u) { held[k] = (uint8_t)(base + k); ui_handle(UI_SRC_KEY, held[k]); midi_send(0x90u | out_ch, held[k], vel); }
+            if (up >> k & 1u) { ui_act_note_off(held[k]); midi_send(0x80u | out_ch, held[k], 0); }
         }
 #if BOARD_SMK37
-        while ((e = smk_extkey_take()) >= 0) {  /* the keys left and right of the FM-1's 27: key << 8 | velocity */
+        while ((e = smk_extkey_take()) >= 0) {
             uint32_t key = (uint32_t)e >> 8, vel = (uint32_t)e & 0x7Fu;
             if (key >= FM1_NKEY) continue;
-            if (vel) { ext_note[key] = (uint8_t)(base + key - SMK_KEY_F3); play(ext_note[key], vel); midi_send(0x90u | out_ch, ext_note[key], vel); }
-            else if (ext_note[key]) { stop(ext_note[key]); midi_send(0x80u | out_ch, ext_note[key], 0); ext_note[key] = 0; }
+            if (vel) { ext_note[key] = (uint8_t)(base + key - SMK_KEY_F3); ui_handle(UI_SRC_KEY, ext_note[key]); midi_send(0x90u | out_ch, ext_note[key], vel); }
+            else if (ext_note[key]) { ui_act_note_off(ext_note[key]); midi_send(0x80u | out_ch, ext_note[key], 0); ext_note[key] = 0; }
         }
-        while ((e = smk_pad_take()) >= 0) {     /* a pad: hardware pad << 8 | velocity (0 = let go) */
+        while ((e = smk_pad_take()) >= 0) {
             uint32_t pad = ((uint32_t)e >> 8) & 15u, vel = (uint32_t)e & 0x7Fu;
-            uint32_t w = pad < 8u ? pad + 8u : pad - 8u;   /* bottom row = white keys 1-8, top row 9-16 */
-            if (vel) { pad_note[pad] = (uint8_t)(base + WHITE[w]); play(pad_note[pad], vel); midi_send(0x90u | out_ch, pad_note[pad], vel); }
-            else if (pad_note[pad]) { stop(pad_note[pad]); midi_send(0x80u | out_ch, pad_note[pad], 0); pad_note[pad] = 0; }
+            uint32_t w = pad < 8u ? pad + 8u : pad - 8u;
+            if (vel) { pad_note[pad] = (uint8_t)(base + WHITE[w]); ui_handle(UI_SRC_KEY, pad_note[pad]); midi_send(0x90u | out_ch, pad_note[pad], vel); }
+            else if (pad_note[pad]) { ui_act_note_off(pad_note[pad]); midi_send(0x80u | out_ch, pad_note[pad], 0); pad_note[pad] = 0; }
         }
         {
-            int32_t bd = smk_pw_bend(&wheel, fm1_in.wheel[0], fm1_ms);   /* 1/4096 semitone */
-            rib_dsp_set_bend_q16((uint32_t)(65536 + (bd * 3785 >> 12) + (((bd * bd) >> 12) * 109 >> 12)));   /* ~2^(s/12) */
+            int32_t bd = smk_pw_bend(&wheel, fm1_in.wheel[0], fm1_ms);
+            rib_dsp_set_bend_q16((uint32_t)(65536 + (bd * 3785 >> 12) + (((bd * bd) >> 12) * 109 >> 12)));
         }
 #endif
 
-        b = fm1_input_edges(&rel);              /* buttons pressed since the last call (bit = button id) */
-        if (b & (1u << BTN_OCT_DOWN) && oct > -2) { set.oct = (uint8_t)(oct - 1); dirty = 1; t_change = fm1_ms; }
-        if (b & (1u << BTN_OCT_UP) && oct < 2) { set.oct = (uint8_t)(oct + 1); dirty = 1; t_change = fm1_ms; }
-        if ((e = fm1_enc_take(ENC_PRESETS)) != 0) {   /* detents turned since the last call */
-            int32_t c = (int32_t)set.ch + e;
-            set.ch = (uint8_t)(c < 0 ? 0 : c > 16 ? 16 : c);
-            dirty = 1;
-            t_change = fm1_ms;
+        b = fm1_input_edges(&rel);
+        if (b & (1u << BTN_OCT_DOWN)) ui_handle(UI_SRC_BTN_OCT_DOWN, -1);
+        if (b & (1u << BTN_OCT_UP)) ui_handle(UI_SRC_BTN_OCT_UP, +1);
+        if ((e = fm1_enc_take(ENC_PRESETS)) != 0) ui_handle(UI_SRC_ENC_PRESETS, e);
+
+        /* clamp the octave/channel params, then mirror into the persisted struct */
+        {
+            int32_t o = ui_params()[P_OCTAVE], c = ui_params()[P_CHANNEL];
+            if (o < -2) o = -2;
+            if (o > 2) o = 2;
+            if (c < 0) c = 0;
+            if (c > 16) c = 16;
+            if (o != ui_params()[P_OCTAVE] || c != ui_params()[P_CHANNEL]) {
+                ui_params()[P_OCTAVE] = o;
+                ui_params()[P_CHANNEL] = c;
+                set.oct = (uint8_t)(int8_t)o;
+                set.ch = (uint8_t)c;
+                dirty = 1;
+                t_change = fm1_ms;
+            }
         }
 
         midi_in();
-        if (clk_bpm && fm1_ms - clk_t0 > 2000u) clk_bpm = 0, clk_run = 0;   /* the clock has stopped coming */
+        if (clk_bpm && fm1_ms - clk_t0 > 2000u) clk_bpm = 0, clk_run = 0;
 
-        oct = (int8_t)set.oct;
-        base = (uint32_t)((int32_t)KEY0 + 12 * oct);
+        ui_params()[P_NOTE] = (int32_t)last_note;
 #if FM1_CPU1_USED
         lit_base = base;
-        lit = dsp_status.lit;                 /* what sounds, published by core 1 */
+        lit = dsp_status.lit;
 #else
-        lit = rib_dsp_lit(base);              /* what sounds, on the keys of this octave */
+        lit = rib_dsp_lit(base);
 #endif
         for (k = 0; k < 27u; k++)
             fm1_led_key(KEY_LED(k), lit >> k & 1u);
         fm1_led_key(BTN_OCT_DOWN, oct < 0);
         fm1_led_key(BTN_OCT_UP, oct > 0);
-        fm1_led_key(BTN_PLAY, clk_run || (clk_bpm && fm1_ms - clk_beat_ms < 80u));   /* lit: running; a blink a beat */
+        fm1_led_key(BTN_PLAY, clk_run || (clk_bpm && fm1_ms - clk_beat_ms < 80u));
 #if BOARD_SMK37
-        for (k = 0; k < 16u; k++) {             /* a pad glows lilac while its key sounds */
+        for (k = 0; k < 16u; k++) {
             uint32_t w = k < 8u ? k + 8u : k - 8u, on = lit >> WHITE[w] & 1u;
             padled_set(k, on ? 90 : 4, on ? 60 : 2, on ? 128 : 8);
         }
-        padled_flush();                         /* (sends only what changed) */
+        padled_flush();
 #endif
 
-        idle_ok = 1;                            /* the drawing below may read MIDI meanwhile (LCD_IDLE) */
-        if (lit != lit_drawn) { lit_drawn = lit; draw_keys(lit); }   /* redraw only what changed */
-        if (last_note != note_drawn) { note_drawn = last_note; draw_note(); }
-        if ((st = (uint32_t)(oct + 2) | (uint32_t)set.ch << 4) != status_drawn) { status_drawn = st; draw_status(oct, set.ch); }
-        if ((st = midi_src | clk_bpm << 2 | clk_run << 12) != midi_drawn) { midi_drawn = st; draw_midi(midi_src, clk_bpm, clk_run); }
+        idle_ok = 1;
+        ui_lit = lit;                                /* the keyboard's lit mask */
+        ui_custom_set(UI_SLOT_KEYBOARD, (int32_t)lit);   /* redraw the keyboard when it changes */
+        ui_redraw(fm1_ms);
         idle_ok = 0;
 
-        if (dirty && quiet() && fm1_ms - t_change > 2000u) {   /* 2 s after the change, when silent (an erase stalls the sound) */
+        if (dirty && quiet() && fm1_ms - t_change > 2000u) {
             settings_save(&set, sizeof set);
             dirty = 0;
         }
