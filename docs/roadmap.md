@@ -1561,7 +1561,7 @@ shim; `generate.py` is a pure function.
 | `cli.py` | dispatch | `argparse` subparsers; `help CMD` documents every option |
 | `quick_check.py` | `quick-check` | read-only env report (native/host/target/device/repo); `--json`, `--strict` |
 | `setup.py` | `setup` | opt-in, non-silent toolchain+SDK install into the Docker volume; `--toolchain auto\|PATH`, `--sdk auto\|PATH`, `--clock 240\|320`, `--dry-run`, `--json`, `--yes`; version- + hash-verifies against `env.lock` (mismatch aborts unless `--force`) |
-| `build.py` | `build` | `generate.py` + the target build (Docker); `--board/--model/--dsp/--clock/--profile` |
+| `build.py` | `build` | generate + target compile + packager → `.fwsc` (Docker); `blocked` without the toolchain; `--board/--model/--dsp/--clock/--profile` |
 | `generate.py` | (internal) | patch + panel → `dsp.c` + `panel.h` (UI tables); `params.json` + `tables.c` are P3-3 |
 | `deep_check.py` | `deep-check` | host/web/safety/links/skill checks |
 | `inspect.py` | `inspect` | read a `.fwsc` (identity/CRC/model/damage) without a device |
@@ -1581,10 +1581,14 @@ patch.json + panel.json + node manifests
         ▼
 dsp.c (engine) + panel.h (UI tables)          (+ params.json + tables.c in P3-3)
         │
-        ├──▶ host   (container gcc/clang): dsp.c + test_harness.c  →  host_test  → vectors
-        ├──▶ WASM   (container emscripten): dsp.c + js adapter     →  dsp.wasm   (no import section)
-        └──▶ target (container + JieLi volume): dsp.c (TU B) + RIB runtime  →  .fwsc
+        ├──▶ host   → `deep-check --host`  (gcc/clang + test harness  →  vectors)
+        ├──▶ WASM   → `web-build`          (emscripten + js adapter   →  dsp.wasm, no import section)
+        └──▶ target → `build`              (JieLi clang + RIB runtime →  .fwsc)
 ```
+
+The three branches are **separate commands**: `build` owns the target branch (and is
+`blocked` without the toolchain), `deep-check --host` is the no-toolchain iteration
+loop, `web-build` the WASM lab.
 
 The **same** `dsp.c` is the input to all three; the §12.2.2 portability macro makes
 it compile everywhere. `generate.py` is deterministic (same inputs → byte-identical).
