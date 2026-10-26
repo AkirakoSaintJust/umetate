@@ -21,7 +21,7 @@ context, leaving nothing to chance. Spare prose; one fact lives in one place.
 | D4 | FPU | **Opt-in** (`--dsp float`). Single-precision only; `double` prohibited; only the DSP translation unit uses FP. |
 | D5 | Clock | Setup offers **240 MHz or 320 MHz**. 360 MHz and 396 MHz are not offered (see §5.1). Firmware reports the measured clock; never assumes. |
 | D6 | On-device identity | **Frozen**: `FM-1_990`, `SMK-37 Pro_990`, `SMK-37 Elite_990`, `MKE-P37_990`. Rename artifacts freely; never rename identity. |
-| D7 | CLI device writes | The CLI drives flash/debrick **directly** (`install`, `flash`, `debrick`), always behind explicit approval + recovery/backup gates; never as a build/test side effect. |
+| D7 | CLI device writes | The CLI drives flash/debrick **directly** (`flash`, `debrick`), always behind explicit approval + recovery/backup gates; never as a build/test side effect. |
 | D8 | Document set | **Five canonical docs** (see §4.6) + one firmware-internal `firmware/README.md` + JSON schemas (artifacts). |
 | D9 | Skills | Two skills (development, safety); each **bundles its references offline**. |
 | D10 | Web target | A **WASM parity lab** (web-synth style) + **fm1-emu** as the separate pre-hardware model layer. |
@@ -67,7 +67,7 @@ The non-negotiable safety rules are preserved in full (§5.4, §8).
 ```text
 umetate
 ├─ 1. CLI (`umetate`)              one entry point: doctor, setup, build, check,
-│                                  inspect, install, flash, debrick, scaffold
+│                                  inspect, flash, debrick, scaffold
 │                                  (node|macro|patch), add, lib, lint, fmt, web, status
 ├─ 2. Skill: development           interview → brief → plan → scaffold/author →
 │                                  verify (interactive loop, offline refs)
@@ -183,7 +183,7 @@ umetate/
 ├─ umetate/                 # CLI implementation (Python >=3.11)
 │  ├─ cli.py                #   arg parsing, dispatch, help
 │  ├─ doctor.py setup.py build.py check.py inspect.py
-│  ├─ install.py flash.py debrick.py scaffold.py add.py lib.py
+│  ├─ flash.py debrick.py scaffold.py add.py lib.py
 │  ├─ lint.py fmt.py web.py status.py evidence.py generate.py
 │  └─ runner.py             #   WSL2/Docker POSIX shim
 ├─ firmware/                # component 5: RIB runtime (single firmware root)
@@ -355,7 +355,7 @@ is a canonical governance/status doc. Templates are fillable forms; skill
   | Boot-time `OCT−` | held at power-on | source; did not fire on MD-One's unit |
   | Running `OCT−`+`OCT+` held 5 s | running firmware servicing `platform_poll()` | source + host test; device `blocked` |
   | Update loader (`ota-<identity>`) | app accepted package, record written | resumes interrupted write |
-  | Mask-ROM UBOOT / USB_KEY dongle | USB enumeration / RP2040 dongle | community-reported; last resort |
+  | Mask-ROM UBOOT / USB_KEY dongle | USB enumeration / RP2040 dongle | community-reported; last resort; `blocked` (dongle at hand, pending a USB solder) |
 - **No full-flash backup** is a documented FM-1 capability; rollback = verified
   stock `.fwsc` + the applicable route.
 - **No "three short flashes."** No primary source supports it.
@@ -403,9 +403,8 @@ umetate build      --board fm1|smk37 [--model pro|elite|mke]
                    [--dsp integer|float] [--clock 240|320] [--profile baseline|perf]
 umetate check      [--host|--web|--safety|--links|--all]
 umetate inspect    PACKAGE                   inspect a .fwsc without a device
-umetate install    PACKAGE [--device] [--yes]   install; identity + CRC + model checked
-umetate flash      PACKAGE [--port NAME] [--device] [--yes]   direct flash (update mode)
-umetate debrick    [--route app-rescue|update-loader|mask-rom] [--device]   direct recovery write
+umetate flash      PACKAGE [--port NAME] [--device] [--yes]   flash; identity + CRC + model checked; resumes a device in update mode
+umetate debrick    [--route app-rescue|update-loader|mask-rom] [--device]   recovery write (mask-rom: blocked, needs the USB_KEY dongle)
 umetate scaffold   <node|macro|patch> --name NAME [--out DIR]   Angular `ng generate`: default or custom
 umetate add        <feature> [--name NAME]    oscillator|filter|envelope|lfo|effect|midi-map|sequencer
 umetate lib        [list|install NAME]        the module library
@@ -423,7 +422,7 @@ umetate help [CMD]                           documents every option (component 1
   user customizes — DSP core, params, graph — **by hand or agentically**. `add`
   instantiates a library feature (params + dispatch + test + evidence row); `lib`
   manages the library. All of it can also be written by hand against the schemas.
-- `install`/`flash`/`debrick` are the only device-writing commands, gated by §8,
+- `flash`/`debrick` are the only device-writing commands, gated by §8,
   run on the **host** (USB CDC), never in the container.
 - `lint` encodes the standing checks: MAXP bounds (`SEC-1`), UAC access (`SEC-2`),
   ROM-address constants, HAL-only MMIO, flash-busy call graph, no `double`/
@@ -799,10 +798,16 @@ registers a node and passes `make test` + `lint`; `lib list` shows shipped nodes
 `lint --c` fails on a crafted MAXP/ROM/MMIO violation; `params.json` maps a named
 param to the `set_param` id the panel writes. **Layer: host.**
 
-**P3-4 — `install`, `flash`, `debrick` (direct, gated).** Per §6.1 and §8; install
-parses identity/CRC/model; debrick routes name their prerequisite. *Acceptance:* no
-write without `--device` + confirmation; wrong-model exits 6; resume checks the
-model; a fake device exercises install/resume without hardware. **Layer: host.**
+**P3-4 — `flash`, `debrick` (direct, gated).** Per §6.1 and §8. `flash` wraps the
+inherited `fm1_install.py` (strangler-fig, not a rewrite — the clean `umetate/flash.py`
+stays after device verification): parses identity/CRC/model, switches to update mode,
+and resumes a device already in update mode; `debrick` names the recovery routes and
+their prerequisites. `mask-rom` debrick is **blocked** (needs the USB_KEY dongle +
+`jl-uboot-tool`; the dongle is at hand but pending a USB solder, and the FM-1 is
+unreachable for ~10 days). *Acceptance:* no write without `--device` + confirmation;
+wrong-model exits 6; resume checks the model; a fake device (the inherited
+`install_test.py`'s `backend` seam) exercises flash/resume without hardware.
+**Layer: host.**
 
 **P3-5 — `web-build`/`web-serve` + `evidence`.** Wire the WASM lab + evidence
 validator. *Acceptance:* `web-build` produces a standalone WASM module (no import
@@ -855,7 +860,7 @@ commit, tag, package hashes, identities, toolchain/SDK hashes, per-claim status.
 
 ## 8. Device-safety gates (non-negotiable)
 
-Every `install`/`flash`/`debrick` write requires, before the command:
+Every `flash`/`debrick` write requires, before the command:
 
 1. explicit operator request for that exact action;
 2. exact board/revision + current firmware identity recorded;
@@ -1547,7 +1552,7 @@ note_on`); no display in the audio callback (lint + disasm).
 #### 12.7.1 CLI module contracts
 
 One module per command; each exposes `main(argv) -> int`. **Exit codes:** `0` ok,
-`1` error, `2` usage, `6` wrong-model (install). `doctor`/`check` report the §5.5
+`1` error, `2` usage, `6` wrong-model (flash). `doctor`/`check` report the §5.5
 status vocabulary. No import side effects; `runner.py` is the WSL2/Docker POSIX
 shim; `generate.py` is a pure function.
 
@@ -1560,7 +1565,7 @@ shim; `generate.py` is a pure function.
 | `generate.py` | (internal) | patch + panel → `dsp.c` + `panel.h` (UI tables); `params.json` + `tables.c` are P3-3 |
 | `check.py` | `check` | host/web/safety/links/skill checks |
 | `inspect.py` | `inspect` | read a `.fwsc` (identity/CRC/model/damage) without a device |
-| `install.py`/`flash.py`/`debrick.py` | `install`/`flash`/`debrick` | the three device-writing commands (host-side, §8 gates) |
+| `flash.py`/`debrick.py` | `flash`/`debrick` | the two device-writing commands (host-side, §8 gates) |
 | `scaffold.py` | `scaffold node\|macro\|patch` | generate a default node/macro/patch |
 | `add.py` | `add` | instantiate a library feature (node + params + dispatch + test + evidence row) |
 | `lib.py` | `lib` | list/install the module library |
@@ -1632,7 +1637,7 @@ umetate/
   runner.py     generate.py               # container exec; the patch generator (pure)
   _ir.py        _frontend.py  _backend.py # generator internals (§12.4): IR, passes, emission
   doctor.py setup.py build.py check.py inspect.py
-  install.py flash.py debrick.py          # device writes (host-side, §8)
+  flash.py debrick.py                       # device writes (host-side, §8)
   scaffold.py add.py lib.py               # the schematic engine
   lint.py fmt.py web.py status.py evidence.py
   _checks/                                # lint checks, budget, wasm, skill, links
@@ -1674,7 +1679,7 @@ Model: a **persistent container** (started once, `docker exec` per command), the
 `umetate-target` volume mounted read-only at `/opt/jieli`, the repo mounted
 read-write. One-shot `docker run` is rejected (too slow per build); the exact
 WSL2→Docker bridging is pinned at P3-1. **Device writes are the exception** —
-`install`/`flash` run on the *host* over **USB-MIDI SysEx** (mido + python-rtmidi);
+`flash` runs on the *host* over **USB-MIDI SysEx** (mido + python-rtmidi);
 `debrick`'s mask-ROM route is the USB_KEY dongle + `jl-uboot-tool` (delegated).
 None of these use the runner.
 
@@ -1685,7 +1690,7 @@ None of these use the runner.
 | `build` | `generate.py` (pure) → `runner.run` (target build) → the packager → `.fwsc` |
 | `inspect` | read a `.fwsc` (identity/CRC/model/damage) — pure, no runner, no device |
 | `doctor` | `runner.probe()` + a host USB probe → `DoctorReport` (read-only) |
-| `install`/`flash` | host-side **MIDI SysEx** (mido + python-rtmidi, §8 gates) — not the runner |
+| `flash` | host-side **MIDI SysEx** (mido + python-rtmidi, §8 gates) — not the runner |
 | `debrick` | USB_KEY dongle → mask-ROM UBOOT → `jl-uboot-tool` (delegated), §8 gates |
 | `scaffold`/`add`/`lib` | pure Python over templates/schemas — no runner |
 | `check` | `runner.run` (host tests) + `_checks/` (lint/wasm/skill/links) |
@@ -1699,5 +1704,5 @@ options are flags. Exit: `0` ok, `1` error, `2` usage, `6` wrong-model; `doctor`
 
 **The CLI's own tests.** `umetate/test_cli.py` — contract tests: every command has
 `--help`; `doctor --json` validates against the §5.5 layer/status shape; a fake
-device exercises `install`/`resume` without hardware; `scaffold` output builds and
+device exercises `flash`/`resume` without hardware; `scaffold` output builds and
 passes `make test`.
