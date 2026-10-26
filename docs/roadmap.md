@@ -1671,14 +1671,17 @@ host DSP tests, the WASM build, clang tooling — runs in the pinned container:
 
 ```python
 def ensure_container() -> None                        # start umetate-host-build if absent
-def run(cmd: list[str], *, cwd: str, env: dict) -> int   # docker exec (via WSL2 on Windows)
+def run(cmd: list[str], *, cwd: str, env: dict) -> int   # docker exec
 def probe() -> HostProbe                              # container + toolchain volume present?
 ```
 
 Model: a **persistent container** (started once, `docker exec` per command), the
 `umetate-target` volume mounted read-only at `/opt/jieli`, the repo mounted
-read-write. One-shot `docker run` is rejected (too slow per build); the exact
-WSL2→Docker bridging is pinned at P3-1. **Device writes are the exception** —
+read-write. One-shot `docker run` is rejected (too slow per build). On Windows the
+runner uses native **`docker.exe`** (Docker Desktop; its WSL2 backend is transparent
+to the CLI), falling back to `wsl docker` for WSL-only setups; the docker binary is
+overridable via `$UMETATE_DOCKER`, and Windows↔container path translation lives in
+one place (`_to_container_path()`). **Device writes are the exception** —
 `flash` runs on the *host* over **USB-MIDI SysEx** (mido + python-rtmidi);
 `debrick`'s mask-ROM route is the USB_KEY dongle + `jl-uboot-tool` (delegated).
 None of these use the runner.
