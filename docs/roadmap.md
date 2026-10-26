@@ -659,7 +659,7 @@ records the `--clock` choice to `.local-env`. `--dry-run` changes nothing; idemp
 Needs the toolchain tarball hash (filled at P3-2); cannot run in this session.
 **Layer: host.**
 
-### Phase 2 — RIB runtime + generator (P2)
+### Phase 2 — RIB runtime + generator (P2) — **done (host), blocked (target/device)**
 
 **P2-1 — Import the Dinghy/Felucca baseline and flatten.** — **done (import + host),
 blocked (target packages)** — Imported source-owned C (app `rib.c`/`rib_dsp.c`,
@@ -768,9 +768,9 @@ differently between captures. *Deferred:* the `boot` screen (a transient pre-con
 page) and the `on_enter`/`on_exit` hooks (emitted as `0` for now); the log curve.
 **Layer: host.**
 
-**Exit P2:** RIB is the dual-core, integer-by-default runtime for FM-1 + SMK-37;
-the generator compiles patches to the invariant `<synth>_dsp_*` seam. Every device
-gate is explicitly `blocked`/`not-run`.
+**Exit P2:** **met (host)** — RIB is the dual-core, integer-by-default runtime for
+FM-1 + SMK-37; the generator compiles patches to the invariant `<synth>_dsp_*` seam
+and panels to the shipped UI kit. Every device gate is explicitly `blocked`/`not-run`.
 
 ### Phase 3 — CLI (P3)
 
