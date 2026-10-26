@@ -550,10 +550,24 @@ validated by `params.schema.json`; the patch's per-node params are its source.
 **Naming.** `fm1_` = board/HAL, `rib_` = reference app, `<synth>_` = user synth;
 frozen identity strings (`_990`); one prefix per layer.
 
-**CLI (Python) conventions.** One module per command, thin `cli.py` dispatcher,
-`argparse` subparsers, `dataclasses` for config, full type hints (pyright), no side
-effects on import, the evidence vocabulary as an `Enum`. I/O-bound: optimize only
-measured hot paths.
+**Python conventions.** One module per command, thin `cli.py` dispatcher, `argparse`
+subparsers, `dataclasses` for config, no side effects on import, the evidence
+vocabulary as an `Enum`. I/O-bound: optimize only measured hot paths.
+
+- **Strict typing** — `mypy --strict` over the owned Python (`umetate/` +
+  `firmware/tools/gen_math_tables.py`), enforced in the build. Every public
+  function/module is annotated; the fm1tk-lineage `firmware/tools/` + `tests/`
+  are excluded (strangler-fig'd, not typed in place). Modern style: PEP 585
+  (`list[int]`), PEP 604 (`int | None`), `from __future__ import annotations`,
+  `TypeAlias` for callable/union aliases, `Protocol` for structural typing across
+  module boundaries (avoids import cycles), `NamedTuple` for tiny value types.
+- **Lint + format** — `ruff check` + `ruff format --check` (88 cols, py311), clean
+  in the build. No hand-styled whitespace.
+- **Clarity over cleverness** — names read as sentences, one-line docstrings state
+  the *why* of every public function/module, and the generator is a *compiler*
+  (§12.4): typed IR, ordered passes, deterministic output, `GenError(message)`
+  diagnostics carrying the reason + location (never a bare assert or a silent
+  fallback).
 
 **Generated files.** `gen/`, generated `dsp.c` + param tables, `synth_params.h`,
 `params.js`, skill `references/`, `web-synth` artifacts carry `// GENERATED — do not
@@ -1178,15 +1192,41 @@ decoder + LED layers, the RAM flash driver + allow-list, USB (UAC + MIDI) + SysE
 MIDI UART + TRS, the OTA parser + update loader, recovery + boot guard, the SMK-37
 board layer, `app.ld`/`crt0.S`.
 
+**The fm1tk tooling is strangler-fig'd (not kept).** `firmware/tools/` (the
+fm1tk-lineage `build.py`, `cmake_target.py`, `fm1pkg_make.py`, `lz4blk.py`,
+`fm1_install.py`) and `firmware/tests/` are inherited build/package/install tooling.
+The CLI wraps each and replaces it incrementally from zero behind `umetate/`
+(P3, §12.7) — `build`/`package`/`lz4blk` first, the **installer last**, and only
+after the clean replacement is device-verified (§8 gates). The inherited versions
+stay until each replacement is proven; typing effort goes into the replacements,
+not the throwaway lineage. The one exception is `firmware/tools/gen_math_tables.py`,
+which is **umetate-owned** (written in P2-3) and fully strict-typed.
+
 ### 12.4 The generator (patch → engine)
 
 **Purpose.** Compile `patch.json` + node manifests + `tables:` into
 `<synth>_dsp.c` implementing the §12.1 seam. AOT: everything resolves at build time
 to one fused, monomorphic `render`. (The panel→UI generator is §12.6.)
 
-**Location & nature.** `umetate/generate.py` (Python). A **pure function**: schemas
+**Location & nature.** `umetate/generate.py` (Python) — a **pure function**: schemas
 + patch in → `<synth>_dsp.c` + `<synth>_dsp_params` out. No device, no toolchain.
 Deterministic: same inputs → byte-identical output, marked `// GENERATED — do not edit`.
+
+**Module structure (the compiler pipeline).** `generate.py` is the thin public
+entry; the passes live in underscore-internal modules (roadmap §12.8), each a pure,
+separately-testable stage:
+
+```text
+umetate/
+  generate.py     # the public entry: generate(patch, nodes) -> str
+  _ir.py          # Port/Edge NamedTuples, NodeInstance, NodeSpec, EmitCtx Protocol,
+                  #   Emitter TypeAlias, CompiledGraph (the typed IR)
+  _frontend.py    # parse -> macro expand -> binding resolve -> type-check ->
+                  #   cycle-check -> topo -> CompiledGraph
+  _backend.py     # rate split -> state allocation -> allocator -> C emission
+  test_generate.py
+modules/<node>/   # node.json (manifest) + node.c (per-sample body template)
+```
 
 **Inputs.** node manifests (`node.schema.json`, from `modules/` + user nodes); the
 patch (`patch.schema.json`); the `tables:` data (wavetables/segments/spectra/
@@ -1199,37 +1239,69 @@ SoA state); the `dsp_param` table (flattened from node params); `tables.c`/`.h`
 **IR — a typed graph:**
 
 ```python
+# _ir.py
+class Port(NamedTuple):  node: str; port: str
+class Edge(NamedTuple):  src: Port; dst: Port          # src -> dst
+
 @dataclass
-class Node:  id: str; type: str; zone: Zone            # VOICE | GLOBAL
-             ins: dict[str, Kind]; outs: dict[str, Kind]   # Kind: EVENT|CONTROL|AUDIO
-             params: dict[str, int]; state: list[StateField]
+class NodeInstance:
+    id: str; type: str; zone: Zone                     # Zone: VOICE | GLOBAL
+    spec: NodeSpec; params: dict[str, str]
+    in_expr: dict[str, str]                            # input port -> C expr (resolved)
+
 @dataclass
-class Edge:  src: tuple[str, str]; dst: tuple[str, str]    # (node, port)
+class NodeSpec:                                        # the compiled node.json (§12.5)
+    name: str
+    ins: dict[str, Kind]; outs: dict[str, Kind]        # Kind: EVENT | CONTROL | AUDIO
+    params: dict[str, Q]; state: dict[str, Q]          # Q: q15 | q16 | q32 | phase | pool
+    body: str                                          # the node.c per-sample template
+
+class EmitCtx(Protocol):                               # what an emitter may touch
+    c: str                                             # C identifier
+    def state_ref(self, name: str, v: str) -> str: ...
+    def input(self, port: str, default: str) -> str: ...
+    def param_expr(self, name: str) -> str: ...
+
+@dataclass
+class CompiledGraph:                                   # frontend -> backend
+    name: str; voices: int
+    instances: list[NodeInstance]; order: list[str]    # topo order of instance ids
+    voice_out: Port | None; control_block: int
 ```
 
 **Passes (in order):**
 
 1. **Parse & expand.** Load the patch; expand each macro instance into its nodes
    (prefixing ids `op1.ph`, `op1.osc`, …), mapping the macro's ports/params to its
-   inner nodes. Validate every wire (real ports, matching kind). *Reject
-   `audio→event` and other kind mismatches with a type error.*
+   inner nodes. A macro's `freq → ph.inc` is a note-derived **state** binding,
+   `fm → ph.fm` an edge, `vca.audio → audio` an output rename. Validate every wire
+   (real ports, matching kind). *Reject `audio→event` and other kind/Q-format
+   mismatches with a type error.*
 
 2. **Cycle check.** Treat `delay1`/`delayN` as cycle-breakers — each contributes a
    *source* (register read, ordered first) and a *sink* (register write, ordered
    last) instead of an in→out edge. Topologically sort; a remaining cycle is an
    error. (FM feedback = an explicit `delay1` edge, so it compiles.)
 
-3. **Rate split.** A node is **audio-rate** if any port is `audio`, else
+3. **Template validation.** Every `${in.*}`/`${out.*}`/`${state.*}`/`${param.*}`
+   placeholder in a `node.c` is checked against that node's `node.json`; an unknown
+   placeholder (e.g. a typo `${in.phsae}`) is a `GenError`, never a silently-wrong
+   `.c`.
+
+4. **Rate split.** A node is **audio-rate** if any port is `audio`, else
    **control-rate**. Control-rate nodes run once per **sub-block** (every
-   `CONTROL_BLOCK` = 16..32 frames, the prologue); audio-rate nodes run per sample
-   (the loop). `<param>_mod` inputs are control-rate. `CONTROL_BLOCK` is a
-   compile-time generator choice (see `docs/dsp-study.md` §7).
+   `CONTROL_BLOCK` frames, the prologue); audio-rate nodes run per sample (the loop).
+   `<param>_mod` inputs are control-rate. `CONTROL_BLOCK` is a compile-time generator
+   choice defaulting to **32** (~1.4 kHz control rate — zipper-free at ~5% of the
+   audio cost; see `docs/dsp-study.md` §7); `16` is an option for fast sweeps, never
+   larger than 64.
 
-4. **State allocation.** Emit `static <type> <instance>_<field>[NVOICE] UMETATE_CPU1`
+5. **State allocation.** Emit `static <type> <instance>_<field>[NVOICE] UMETATE_CPU1`
    (voice SoA) or `static <type> <instance>_<field> UMETATE_CPU1` (global); params
-   as `static int32_t <instance>_<param>`.
+   as `static int32_t <instance>_<param>`; `pool` state as a `static <type> _buf[]
+   UMETATE_POOL` ring buffer.
 
-5. **Voice-allocator synthesis.** The voice zone's reserved **allocator inputs** —
+6. **Voice-allocator synthesis.** The voice zone's reserved **allocator inputs** —
    `note` (a MIDI note → `inc = note_to_inc(note) × ratio`, stored in each phasor's
    `inc` state), `gate` (event → the `env` nodes), `velocity` (control → the `vca`
    levels) — drive the allocator. These are **bindings, not graph edges** (the
@@ -1238,7 +1310,8 @@ class Edge:  src: tuple[str, str]; dst: tuple[str, str]    # (node, port)
    `gate`), `all_notes_off`, `quiet`, `lit`, `set_bend_q16` (the shared slot), and
    the `set_param`/`get_param` shared-array accessors.
 
-6. **Code emission** — the fused `render`:
+7. **Code emission** — the fused `render` (inlines each node's `node.c` body with
+   placeholders substituted — flat, monomorphic, no per-sample dispatch):
 
 ```c
 void <synth>_dsp_render(int32_t *out, uint32_t frames) {
@@ -1256,10 +1329,15 @@ void <synth>_dsp_render(int32_t *out, uint32_t frames) {
 }
 ```
 
-Each node's body is **inlined per sample** (its `static inline` step, §12.5)
+Each node's body is **inlined per sample** from its `node.c` template (§12.5)
 — monomorphic, no per-sample dispatch. `delay1` emits a `static int32_t` register
 (1-sample, so FM feedback is correct); `delayN` a `static` `.pool` buffer. The
 voice→global boundary is an emitted `mix` that sums the `NVOICE` voice streams.
+The placeholder substitution is **zone-agnostic** — a template writes `${state.x}`
+once; the generator emits `x[v]` in the voice zone and `x` in the global zone
+(auto-wrap). `@@read@@`/`@@write@@` markers in a template split a delay node's
+register read (ordered first) from its write (ordered last), which is what makes
+FM feedback exactly 1-sample.
 
 **Schema note** (see `examples/pocket-drone/README.md` §5): the `voice` zone's
 reserved allocator inputs `gate`/`note`/`velocity` are **bindings, not wires**; a
@@ -1276,21 +1354,40 @@ byte-identical output.
 ### 12.5 The node library
 
 The shipped DSP primitives — the framework's "batteries." Each node =
-`node.json` (manifest) + `node.c` (the `static inline` process + its ctx) + a host
-vector. The generator composes nodes into the §12.1 seam.
+`node.json` (manifest) + `node.c` (the per-sample body **template**, inlined by the
+generator) + a host parity test. The generator composes nodes into the §12.1 seam.
 
-**Node contract (the six-part base shape, concretized).**
+**Node contract (concretized).**
 
-- **Ctx** (`<node>_ctx`): fields named per the manifest — `audio` ports →
-  `int32_t*` (n samples); `control` ports → `int32_t` (scalar); `event` ports →
-  `note_event`; params → `int32_t`; state → `uint32_t*`/`int32_t*` (SoA, allocated
-  by the generator) or scalar. Manifest and ctx must agree; a host parity test
-  checks this.
-- **`static inline void <node>_process(<node>_ctx *c, uint32_t n)`** — the block
-  form (loops `n` over audio ports), used standalone for host tests. In the fused
-  render the generator **inlines the per-sample body** (see the correction below).
-- **Rate:** a node is audio-rate if any port is `audio`; control-rate nodes compute
-  once (their control outs are scalars), audio-rate nodes loop `n`.
+- **`node.json`** (manifest, `node.schema.json`): `name`, `ins`/`outs`
+  (port → `event|control|audio` plus a Q-format `q15|q16|q32|phase` on control/audio),
+  `params`/`state` (name → Q-format, or `pool` for a ring buffer). This is the single
+  source of truth the generator validates against.
+- **`node.c`** (the per-sample body template): regular C with placeholders the
+  generator substitutes — `${in.<port>}` (input value), `${out.<port>}` (output
+  local), `${state.<name>}` (state; **zone-agnostic** — auto-wrapped `[v]` for voice,
+  plain for global), `${param.<name>}` (param value), `${v}` (voice index).
+  `delay1`/`delayN` split with `@@read@@`/`@@write@@` markers (register read ordered
+  first, write last — the sample-level cycle breaker). Example:
+
+  ```c
+  /* modules/osc/node.c */
+  ${out.audio} = fm1_sin(${in.phase});
+  ```
+  ```c
+  /* modules/delay1/node.c */
+  @@read@@
+  ${out.out} = ${state.prev};
+  @@write@@
+  ${state.prev} = ${in.in};
+  ```
+
+  Every placeholder is validated against the manifest at generation time (a typo is
+  a `GenError`); a host parity test proves the template's per-sample form matches the
+  scalar reference, so the inlining cannot silently diverge.
+- **Rate:** a node is audio-rate if any port is `audio`; control-rate nodes run once
+  per sub-block (their control outs are scalars), audio-rate nodes loop per sample
+  (§12.4 pass 4).
 - **Rules:** pure (no I/O/alloc/blocking), monomorphic, bounded; the ten rules and
   §12.2.4 emission rules apply.
 
@@ -1326,9 +1423,9 @@ a numeric format (Q15/Q16/Q32) alongside the rate, letting the generator reject
 processing would turn it into 1-block (~5.8 ms) and sound wrong. The generator's
 audio loop is therefore **sample-fused** (the §12.4 outer `for f` loop), with each
 node's per-sample body inlined and `delay1`'s register breaking the cycle at sample
-level. The block `process(n)` is only the standalone host-test form; the host
-parity test proves the inlined per-sample form matches it, so the generator's
-inlining cannot silently diverge.
+level via its `@@read@@`/`@@write@@` split. The host parity test proves the inlined
+per-sample form matches the scalar reference, so the generator's inlining cannot
+silently diverge.
 
 **The FM "algorithm" is a macro.** Dexed/ymfm's 32 algorithms are 32 routings of N
 operators, where an operator = phasor + osc + env + vca + `delay1` feedback
@@ -1502,12 +1599,14 @@ umetate/
   __init__.py   cli.py                    # dispatch, help, exit mapping
   config.py     evidence.py               # BuildConfig/EnvConfig; Status/Layer Enum
   runner.py     generate.py               # container exec; the patch generator (pure)
+  _ir.py        _frontend.py  _backend.py # generator internals (§12.4): IR, passes, emission
   doctor.py setup.py build.py check.py package.py
   install.py flash.py debrick.py          # device writes (host-side, §8)
   scaffold.py add.py lib.py               # the schematic engine
   lint.py fmt.py web.py status.py evidence.py
   _checks/                                # lint checks, budget, wasm, skill, links
-  test_cli.py                             # the CLI's own contract tests
+  test_cli.py  test_generate.py           # the CLI + generator contract tests
+modules/<node>/node.json + node.c         # the node library (§12.5)
 ```
 
 **The data model.**
