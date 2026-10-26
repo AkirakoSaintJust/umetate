@@ -13,9 +13,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         nodejs npm curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Python packages for the host checks
+# Python packages for the host checks (lint/type-check pins in env.lock)
 RUN pip3 install --no-cache-dir --break-system-packages \
-        pillow==13.0.0 jsonschema==4.26.0
+        pillow==13.0.0 jsonschema==4.26.0 \
+        ruff==0.17.2 mypy==2.4.0
 
 # Emscripten (version pinned in env.lock)
 ARG EMSDK_VERSION=6.0.13

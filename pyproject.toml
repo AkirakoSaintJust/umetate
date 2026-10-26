@@ -1,0 +1,19 @@
+[project]
+name = "umetate"
+version = "0.0.0"
+description = "An opinionated toolkit for building custom M-VAVE FM-1 / SMK-37 firmware."
+requires-python = ">=3.11"
+
+# ---- lint + format (ruff; see docs/roadmap.md §12 Python conventions) ----
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "C4"]
+
+# ---- strict typing (mypy) ----
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["umetate", "firmware/tools/gen_math_tables.py"]
