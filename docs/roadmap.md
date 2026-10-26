@@ -1666,6 +1666,16 @@ class QuickCheckReport:
     layers: tuple[LayerReport, ...]; summary: dict[Status, int]
 ```
 
+**`quick-check` vs `deep-check`.** `quick-check` is a fast, read-only presence/version
+probe (per §5.5 layer): `source` = git repo + clean tree + `mypy --strict`/`ruff` +
+schemas; `host` = container up + `cc`/`cmake`/`ninja`/`python3`/`node`/`emcc` resolve;
+`browser` = emscripten present; `target` = `/opt/jieli` toolchain version + SDK asset
+hashes vs `env.lock`; `emulator` = fm1-emu present; `timing`/`device` = a host USB
+probe + the device identity; `release` = tag + package hashes. `deep-check` is the
+deep one (runs the host tests + `_checks/`). `--json` emits
+`{"layers":[{"layer","status","detail"}],"summary":{…}}`; `--strict` turns a
+non-device `blocked` into a non-zero exit.
+
 **The status ledger (`status.py`).** The roadmap is the single status authority; `status`
 parses its step/phase headers and renders a per-layer summary. The convention it reads
 (tolerant — a non-matching header is skipped, never an error):
