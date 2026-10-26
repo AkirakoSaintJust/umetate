@@ -1,0 +1,293 @@
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 P1Onken (umetate)
+"""The generator's front-end (docs/roadmap.md §12.4): patch -> CompiledGraph.
+
+Pure passes in order: parse, macro expansion, wire resolution, type-check,
+cycle-check + topological sort. Everything is deterministic; errors raise GenError
+with a reason, never a silent fallback.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from ._ir import (
+    AUDIO,
+    CONTROL,
+    EVENT,
+    OUT_SINK,
+    RESERVED_INPUTS,
+    VOICE_SOURCE,
+    CompiledGraph,
+    Edge,
+    GenError,
+    NodeInstance,
+    NodeSpec,
+    Port,
+    PortSpec,
+    to_c_identifier,
+)
+
+
+def compile(patch: Mapping[str, Any], nodes: Mapping[str, NodeSpec]) -> CompiledGraph:
+    """Compile a patch into a CompiledGraph (parse -> expand -> check -> topo)."""
+    name = to_c_identifier(str(patch["name"]))
+    voices = int(patch.get("voices", 1))
+    macros = dict(patch.get("macros") or {})
+
+    instances: list[NodeInstance] = []
+    raw_wires: list[tuple[str, str]] = []
+    bindings: dict[tuple[str, str], tuple[str, str]] = {}
+
+    voice_zone = dict(patch.get("voice") or {})
+    global_zone = dict(patch.get("global") or {})
+
+    for zone, zone_dict in (("voice", voice_zone), ("global", global_zone)):
+        for inst_dict in zone_dict.get("nodes", []):
+            _expand(
+                dict(inst_dict), zone, nodes, macros, instances, raw_wires, bindings
+            )
+        for wire in zone_dict.get("wires", []):
+            raw_wires.append((str(wire["from"]), str(wire["to"])))
+
+    edges = [
+        Edge(_resolve_ref(frm, bindings), _resolve_ref(to, bindings))
+        for frm, to in raw_wires
+    ]
+    by_id = {i.id: i for i in instances}
+
+    voice_out_ref = voice_zone.get("voice_out")
+    voice_out, global_out = _typecheck(
+        edges, by_id, str(voice_out_ref) if voice_out_ref else None, bindings
+    )
+
+    return CompiledGraph(
+        name=name,
+        voices=voices,
+        instances=instances,
+        voice_order=_topo([i for i in instances if i.zone == "voice"], edges),
+        global_order=_topo([i for i in instances if i.zone == "global"], edges),
+        voice_out=voice_out,
+        global_out=global_out,
+    )
+
+
+# --------------------------------------------------------------- expansion ---
+
+
+def _expand(
+    inst_dict: dict[str, Any],
+    zone: str,
+    nodes: Mapping[str, NodeSpec],
+    macros: Mapping[str, Any],
+    instances: list[NodeInstance],
+    raw_wires: list[tuple[str, str]],
+    bindings: dict[tuple[str, str], tuple[str, str]],
+) -> None:
+    """Expand a node/macro instance into leaf instances, wires, and bindings."""
+    type_ = str(inst_dict["type"])
+    id_ = str(inst_dict["id"])
+    if type_ not in macros:
+        spec = nodes.get(type_)
+        if spec is None:
+            raise GenError(f"unknown node type {type_!r} (instance {id_!r})")
+        instances.append(
+            NodeInstance(
+                id=id_,
+                type=type_,
+                zone=zone,
+                spec=spec,
+                params=_str_params(inst_dict.get("params")),
+            )
+        )
+        return
+
+    macro = macros[type_]
+    for inner in macro.get("nodes", []):
+        _expand(
+            {**inner, "id": f"{id_}.{inner['id']}"},
+            zone,
+            nodes,
+            macros,
+            instances,
+            raw_wires,
+            bindings,
+        )
+
+    for wire in macro.get("wires", []):
+        frm, to = str(wire["from"]), str(wire["to"])
+        f_inner = _is_inner(frm, macro)
+        t_inner = _is_inner(to, macro)
+        if not f_inner and t_inner:
+            bindings[(id_, frm)] = _inner_ref(to, macro, id_)
+        elif f_inner and not t_inner:
+            bindings[(id_, to)] = _inner_ref(frm, macro, id_)
+        else:
+            raw_wires.append((_prefix(frm, id_), _prefix(to, id_)))
+
+    instance_params = _str_params(inst_dict.get("params"))
+    for pname, target in macro.get("params", {}).items():
+        target_str, note_derived = _parse_param_target(target)
+        inner_id, field = target_str.split(".", 1)
+        inst = _find(instances, f"{id_}.{inner_id}")
+        if inst is None:
+            raise GenError(f"macro param {pname!r} targets unknown node {inner_id!r}")
+        value = instance_params.get(pname)
+        if note_derived:
+            if inst.note_derived is None:
+                inst.note_derived = {}
+            inst.note_derived[field] = value if value is not None else "1"
+        elif value is not None:
+            inst.params[field] = value
+
+
+def _str_params(params: Any) -> dict[str, str]:
+    if not params:
+        return {}
+    return {str(k): str(v) for k, v in dict(params).items()}
+
+
+def _is_inner(port: str, macro: Mapping[str, Any]) -> bool:
+    first = port.split(".", 1)[0]
+    return any(str(n["id"]) == first for n in macro.get("nodes", []))
+
+
+def _inner_ref(port: str, macro: Mapping[str, Any], prefix: str) -> tuple[str, str]:
+    node_id, field = port.split(".", 1)
+    return (f"{prefix}.{node_id}", field)
+
+
+def _prefix(port: str, prefix: str) -> str:
+    return f"{prefix}.{port}"
+
+
+def _parse_param_target(target: object) -> tuple[str, bool]:
+    if isinstance(target, str):
+        return target, False
+    if isinstance(target, dict):
+        return str(target["target"]), bool(target.get("note_derived", False))
+    raise GenError(f"bad macro param target {target!r}")
+
+
+def _find(instances: list[NodeInstance], id_: str) -> NodeInstance | None:
+    for i in instances:
+        if i.id == id_:
+            return i
+    return None
+
+
+# --------------------------------------------------------------- resolution ---
+
+
+def _resolve_ref(ref: str, bindings: Mapping[tuple[str, str], tuple[str, str]]) -> Port:
+    """Resolve a wire reference through the macro port/state bindings."""
+    node, port = _split(ref)
+    while (node, port) in bindings:
+        node, port = bindings[(node, port)]
+    return Port(node, port)
+
+
+def _split(ref: str) -> tuple[str, str]:
+    if "." in ref:
+        node, port = ref.rsplit(".", 1)
+        return node, port
+    return ref, ""
+
+
+def _typecheck(
+    edges: list[Edge],
+    by_id: dict[str, NodeInstance],
+    voice_out_ref: str | None,
+    bindings: Mapping[tuple[str, str], tuple[str, str]],
+) -> tuple[Port | None, Port | None]:
+    """Type-check every edge, resolve inputs, and locate the zone boundaries."""
+    global_out: Port | None = None
+    for edge in edges:
+        src, dst = edge.src, edge.dst
+        if src.node == VOICE_SOURCE:
+            dst_inst = by_id.get(dst.node)
+            if dst_inst is not None:
+                dst_inst.in_expr[dst.port] = "bus"
+            continue
+        if dst.node == OUT_SINK:
+            global_out = src
+            continue
+        if src.node in RESERVED_INPUTS or dst.node in RESERVED_INPUTS:
+            continue  # allocator binding, not a graph edge
+
+        src_inst = by_id.get(src.node)
+        dst_inst = by_id.get(dst.node)
+        if src_inst is None or dst_inst is None:
+            raise GenError(
+                f"wire to/from unknown node: "
+                f"{src.node}.{src.port} -> {dst.node}.{dst.port}"
+            )
+        src_port = src_inst.spec.outs.get(src.port)
+        dst_port = dst_inst.spec.ins.get(dst.port)
+        if src_port is None:
+            raise GenError(f"{src.node} has no output port {src.port!r}")
+        if dst_port is None:
+            raise GenError(f"{dst.node} has no input port {dst.port!r}")
+        _check_edge(src, dst, src_port, dst_port)
+        dst_inst.in_expr[dst.port] = src_inst.out_local(src.port)
+
+    voice_out = _resolve_ref(voice_out_ref, bindings) if voice_out_ref else None
+    return voice_out, global_out
+
+
+def _check_edge(src: Port, dst: Port, src_port: PortSpec, dst_port: PortSpec) -> None:
+    """Enforce the port-kind + fixed-point-format rules (§12.4 pass 1)."""
+    if src_port.kind == AUDIO and dst_port.kind == EVENT:
+        raise GenError(
+            f"type error: audio->event {src.node}.{src.port} -> {dst.node}.{dst.port}"
+        )
+    if src_port.kind != dst_port.kind and not (
+        {src_port.kind, dst_port.kind} <= {AUDIO, CONTROL}
+    ):
+        raise GenError(
+            f"type error: {src_port.kind}->{dst_port.kind} "
+            f"{src.node}.{src.port} -> {dst.node}.{dst.port}"
+        )
+    if src_port.fmt and dst_port.fmt and src_port.fmt != dst_port.fmt:
+        raise GenError(
+            f"format mismatch: {src_port.fmt}->{dst_port.fmt} "
+            f"{src.node}.{src.port} -> {dst.node}.{dst.port}"
+        )
+
+
+# --------------------------------------------------------------- topo sort ---
+
+
+def _topo(zone_instances: list[NodeInstance], edges: list[Edge]) -> list[str]:
+    """Topologically sort a zone; delay1/delayN are removed (read/write hoisted)."""
+    ids = {i.id for i in zone_instances}
+    breakers = {i.id for i in zone_instances if i.is_breaker()}
+    deps: dict[str, set[str]] = {i.id: set() for i in zone_instances}
+    for edge in edges:
+        src, dst = edge.src.node, edge.dst.node
+        if src not in ids or dst not in ids or src == dst:
+            continue
+        if src in breakers or dst in breakers:
+            continue  # delay read (source) and write (sink) are hoisted
+        deps[dst].add(src)
+
+    order: list[str] = []
+    ready = [i.id for i in zone_instances if not deps[i.id]]
+    remaining = set(ids)
+    while ready:
+        node = ready.pop()
+        if node in remaining:
+            order.append(node)
+            remaining.discard(node)
+        for candidate in sorted(remaining):
+            deps[candidate].discard(node)
+            if (
+                not deps[candidate]
+                and candidate not in ready
+                and candidate not in order
+            ):
+                ready.append(candidate)
+    if remaining:
+        raise GenError(f"cycle not broken by delay1/delayN: {sorted(remaining)}")
+    return order

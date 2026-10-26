@@ -1,0 +1,8 @@
+{
+  "name": "env",
+  "summary": "Linear attack/release envelope (Q15). `gate` defaults to the allocator's per-voice gate.",
+  "ins": { "gate": { "rate": "event", "default": "voice_gate[v]" } },
+  "outs": { "cv": "control" },
+  "params": { "attack": "q16", "release": "q16" },
+  "state": { "level": "q15" }
+}

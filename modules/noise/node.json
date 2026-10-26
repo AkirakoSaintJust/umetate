@@ -1,0 +1,8 @@
+{
+  "name": "noise",
+  "summary": "White noise source (xorshift LFSR).",
+  "ins": {},
+  "outs": { "audio": "audio" },
+  "params": {},
+  "state": { "lfsr": "uint32" }
+}

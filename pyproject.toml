@@ -4,13 +4,33 @@ version = "0.0.0"
 description = "An opinionated toolkit for building custom M-VAVE FM-1 / SMK-37 firmware."
 requires-python = ">=3.11"
 
-# ---- lint + format (ruff; see docs/roadmap.md §12 Python conventions) ----
+# ---- lint + format (ruff; see docs/roadmap.md §6.8 Python conventions) ----
 [tool.ruff]
 target-version = "py311"
 line-length = 88
+# the fm1tk-lineage tooling + tests are strangler-fig'd (replaced, not typed in
+# place); gen_math_tables.py is umetate-owned and stays checked. docs/ is prose,
+# not linted source (its code blocks are illustrative).
+extend-exclude = [
+    "old-reference",
+    "docs",
+    "firmware/tests",
+    "firmware/tools/build.py",
+    "firmware/tools/cmake_target.py",
+    "firmware/tools/_cmake_target_check.py",
+    "firmware/tools/fm1_install.py",
+    "firmware/tools/fm1pkg_make.py",
+    "firmware/tools/lz4blk.py",
+    "firmware/tools/refresh_wsl_copy.py",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM", "C4"]
+
+[tool.ruff.lint.per-file-ignores]
+# the emitter's string literals hold generated C lines (formatted per .clang-format,
+# not the 88-col Python rule).
+"umetate/_backend.py" = ["E501"]
 
 # ---- strict typing (mypy) ----
 [tool.mypy]

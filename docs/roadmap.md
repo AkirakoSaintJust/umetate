@@ -1243,30 +1243,32 @@ SoA state); the `dsp_param` table (flattened from node params); `tables.c`/`.h`
 class Port(NamedTuple):  node: str; port: str
 class Edge(NamedTuple):  src: Port; dst: Port          # src -> dst
 
-@dataclass
-class NodeInstance:
-    id: str; type: str; zone: Zone                     # Zone: VOICE | GLOBAL
-    spec: NodeSpec; params: dict[str, str]
-    in_expr: dict[str, str]                            # input port -> C expr (resolved)
+class PortSpec(NamedTuple):
+    kind: str            # EVENT | CONTROL | AUDIO
+    fmt: str | None      # q15 | q16 | q32 | phase (None = unannotated)
 
 @dataclass
 class NodeSpec:                                        # the compiled node.json (§12.5)
     name: str
-    ins: dict[str, Kind]; outs: dict[str, Kind]        # Kind: EVENT | CONTROL | AUDIO
-    params: dict[str, Q]; state: dict[str, Q]          # Q: q15 | q16 | q32 | phase | pool
+    ins: dict[str, PortSpec]; outs: dict[str, PortSpec]
+    params: dict[str, str]; state: dict[str, str]      # name -> q-format / pool
     body: str                                          # the node.c per-sample template
 
-class EmitCtx(Protocol):                               # what an emitter may touch
-    c: str                                             # C identifier
-    def state_ref(self, name: str, v: str) -> str: ...
-    def input(self, port: str, default: str) -> str: ...
-    def param_expr(self, name: str) -> str: ...
+@dataclass
+class NodeInstance:
+    id: str; type: str; zone: str                      # zone: "voice" | "global"
+    spec: NodeSpec; params: dict[str, str]
+    in_expr: dict[str, str]                            # input port -> C expr (resolved)
+    note_derived: dict[str, str] | None = None         # state -> macro ratio (note-on)
 
 @dataclass
 class CompiledGraph:                                   # frontend -> backend
     name: str; voices: int
-    instances: list[NodeInstance]; order: list[str]    # topo order of instance ids
-    voice_out: Port | None; control_block: int
+    instances: list[NodeInstance]
+    voice_order: list[str]; global_order: list[str]    # topo order per zone
+    voice_out: Port | None                             # voice signal summed into bus
+    global_out: Port | None                            # global node feeding `out`
+    control_block: int = CONTROL_BLOCK_DEFAULT
 ```
 
 **Passes (in order):**

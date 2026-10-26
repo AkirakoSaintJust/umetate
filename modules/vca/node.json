@@ -1,0 +1,8 @@
+{
+  "name": "vca",
+  "summary": "Gain cell: Q15 multiply of audio by a control cv (default unity).",
+  "ins": { "audio": "audio", "cv": { "rate": "control", "default": "32768" } },
+  "outs": { "audio": "audio" },
+  "params": {},
+  "state": {}
+}

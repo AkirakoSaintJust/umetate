@@ -1,0 +1,8 @@
+{
+  "name": "mix",
+  "summary": "Summer: adds its two audio inputs.",
+  "ins": { "in0": "audio", "in1": "audio" },
+  "outs": { "audio": "audio" },
+  "params": {},
+  "state": {}
+}

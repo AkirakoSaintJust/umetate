@@ -1,0 +1,8 @@
+{
+  "name": "delayN",
+  "summary": "Fixed-size ring-buffer delay with feedback (Q15, pool buffer).",
+  "ins": { "in": "audio" },
+  "outs": { "out": "audio" },
+  "params": { "fb": "q15" },
+  "state": { "buf": "pool", "idx": "uint32" }
+}

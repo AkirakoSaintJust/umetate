@@ -1,0 +1,8 @@
+{
+  "name": "phasor",
+  "summary": "Q32 phase accumulator; `mod` (control) and `fm` (audio) are additive offsets.",
+  "ins": { "mod": "control", "fm": "audio" },
+  "outs": { "phase": { "rate": "audio", "format": "phase" } },
+  "params": {},
+  "state": { "inc": "q32", "phase": "phase" }
+}

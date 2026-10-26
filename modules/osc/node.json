@@ -1,0 +1,8 @@
+{
+  "name": "osc",
+  "summary": "Sine wave reader via the pi32v2 ROM/hardware transcendental (fm1_sin).",
+  "ins": { "phase": { "rate": "audio", "format": "phase" } },
+  "outs": { "audio": "audio" },
+  "params": {},
+  "state": {}
+}

@@ -2,28 +2,32 @@
 # Copyright (C) 2026 P1Onken (umetate)
 """Host tests for the generator (docs/roadmap.md §12.4 verification).
 
-- pocket-drone (two-op FM, with the `op` macro + delay1 feedback + global chain)
-  must *compile* for host (the acceptance is "compiles to a dsp.c that builds").
-- a delay-free patch must render non-silent then silent (the seam contract).
-- an audio->event edge must be rejected with a type error.
+- the pocket-drone two-op FM example (op macro + delay1 feedback + global chain)
+  must *compile* for host;
+- a delay-free env/vca patch must render non-silent then silent (the seam contract);
+- an `audio->event` edge must be rejected with a type error.
 Run: python3 -m umetate.test_generate
 """
+
+from __future__ import annotations
+
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from typing import Any
 
-from .generate import generate, GenError
+from ._ir import GenError
+from .generate import generate
 
-POCKET_DRONE = {
+POCKET_DRONE: dict[str, Any] = {
     "name": "pocket-drone",
     "voices": 8,
-    "sample_rate": 44100,
     "macros": {
         "op": {
-            "ins": {"gate": "event", "freq": "control", "fm": "audio"},
+            "ins": {"fm": "audio"},
             "outs": {"audio": "audio"},
-            "params": {"ratio": "ph.inc", "level": "vca.level"},
+            "params": {"ratio": {"target": "ph.inc", "note_derived": True}},
             "nodes": [
                 {"id": "ph", "type": "phasor"},
                 {"id": "osc", "type": "osc"},
@@ -31,11 +35,9 @@ POCKET_DRONE = {
                 {"id": "vca", "type": "vca"},
             ],
             "wires": [
-                {"from": "freq", "to": "ph.inc"},
                 {"from": "fm", "to": "ph.fm"},
                 {"from": "ph.phase", "to": "osc.phase"},
                 {"from": "osc.audio", "to": "vca.audio"},
-                {"from": "gate", "to": "env.gate"},
                 {"from": "env.cv", "to": "vca.cv"},
                 {"from": "vca.audio", "to": "audio"},
             ],
@@ -48,10 +50,6 @@ POCKET_DRONE = {
             {"id": "d1", "type": "delay1"},
         ],
         "wires": [
-            {"from": "note", "to": "carrier.freq"},
-            {"from": "note", "to": "mod.freq"},
-            {"from": "gate", "to": "carrier.gate"},
-            {"from": "gate", "to": "mod.gate"},
             {"from": "mod.audio", "to": "carrier.fm"},
             {"from": "mod.audio", "to": "d1.in"},
             {"from": "d1.out", "to": "mod.fm"},
@@ -67,8 +65,7 @@ POCKET_DRONE = {
     },
 }
 
-# a delay-free voice for the sound check (phasor -> osc -> env -> vca)
-SINE_ENV = {
+SINE_ENV: dict[str, Any] = {
     "name": "sine_env",
     "voices": 4,
     "voice": {
@@ -88,7 +85,7 @@ SINE_ENV = {
     "global": {"nodes": [], "wires": []},
 }
 
-SOUND_HARNESS = r"""
+SOUND_HARNESS = """\
 #include <stdio.h>
 #include <stdint.h>
 static int32_t out[1024];
@@ -97,71 +94,105 @@ int main(void) {
     __NAME___dsp_note_on(69, 100);
     __NAME___dsp_render(out, 512);
     int64_t e = 0; for (int i = 0; i < 1024; i++) e += (int64_t)out[i] * out[i];
-    if (e < 1000000) { printf("FAIL: silent\n"); return 1; }
+    if (e < 1000000) { printf("FAIL: silent\\n"); return 1; }
     __NAME___dsp_all_notes_off();
     __NAME___dsp_render(out, 512);
     int64_t t = 0; for (int i = 0; i < 1024; i++) t += (int64_t)out[i] * out[i];
-    if (t != 0) { printf("FAIL: not silent after off (tail=%lld)\n", (long long)t); return 1; }
-    printf("ok: __NAME__ renders non-silent then silent\n");
+    if (t != 0) {
+        printf("FAIL: not silent after off (tail=%lld)\\n", (long long)t);
+        return 1;
+    }
+    printf("ok: __NAME__ renders non-silent then silent\\n");
     return 0;
 }
 """
 
 
-def _compile(patch):
+def _include_args() -> list[str]:
+    root = Path(__file__).resolve().parents[1]
+    return ["-I", str(root / "firmware" / "hal"), "-I", str(root / "firmware" / "gen")]
+
+
+def _compile(patch: dict[str, Any]) -> tuple[bool, str]:
+    """Generate + compile the patch's dsp.c for host (object check only)."""
     src = generate(patch)
-    with tempfile.TemporaryDirectory() as d:
-        d = Path(d)
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
         (d / "dsp.c").write_text(src)
-        (d / "empty.c").write_text("int main(void){return 0;}\n")
-        root = Path(__file__).resolve().parents[1]
-        inc = str(root / "firmware" / "hal")
-        gen = str(root / "firmware" / "gen")
-        p = subprocess.run(["cc", "-std=c11", "-c", "-I", inc, "-I", gen,
-                            "-o", str(d / "dsp.o"), str(d / "dsp.c")],
-                           capture_output=True, text=True)
-        return p.returncode == 0, p.stderr
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-c",
+                "-o",
+                str(d / "dsp.o"),
+                str(d / "dsp.c"),
+            ],
+            capture_output=True,
+            text=True,
+        )
+        return proc.returncode == 0, proc.stderr
 
 
-def _sound(patch):
+def _sound(patch: dict[str, Any]) -> tuple[bool, str]:
+    """Generate, compile, and run the sound contract (non-silent then silent)."""
     src = generate(patch)
-    with tempfile.TemporaryDirectory() as d:
-        d = Path(d)
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
         (d / "dsp.c").write_text(src)
         cname = patch["name"].replace("-", "_").replace(".", "_")
         (d / "harness.c").write_text(SOUND_HARNESS.replace("__NAME__", cname))
-        root = Path(__file__).resolve().parents[1]
-        inc = str(root / "firmware" / "hal")
-        gen = str(root / "firmware" / "gen")
-        p = subprocess.run(["cc", "-std=c11", "-I", inc, "-I", gen, "-o", str(d / "t"),
-                            str(d / "harness.c"), str(d / "dsp.c"), "-lm"],
-                           capture_output=True, text=True)
-        if p.returncode != 0:
-            return False, "compile failed:\n" + p.stderr
-        r = subprocess.run([str(d / "t")], capture_output=True, text=True)
-        return r.returncode == 0, r.stdout.strip()
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            return False, "compile failed:\n" + proc.stderr
+        run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+        return run.returncode == 0, run.stdout.strip()
 
 
-def main():
+def main() -> int:
     failures = 0
 
     ok, msg = _compile(POCKET_DRONE)
-    print(("ok: " if ok else "FAIL: ") + ("pocket-drone (two-op FM) compiles" if ok else msg))
-    if not ok:
-        failures += 1
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + ("pocket-drone (two-op FM) compiles" if ok else msg)
+    )
+    failures += 0 if ok else 1
 
     ok, msg = _sound(SINE_ENV)
-    print(("ok: " if ok else "FAIL: ") + (msg or "sine_env renders non-silent then silent"))
-    if not ok:
-        failures += 1
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "sine_env renders non-silent then silent")
+    )
+    failures += 0 if ok else 1
 
-    bad = {
-        "name": "bad", "voices": 1,
+    bad: dict[str, Any] = {
+        "name": "bad",
+        "voices": 1,
         "voice": {
-            "nodes": [{"id": "ph", "type": "phasor"}, {"id": "osc", "type": "osc"},
-                      {"id": "env", "type": "env"}],
-            "wires": [{"from": "ph.phase", "to": "osc.phase"},
-                      {"from": "osc.audio", "to": "env.gate"}],   # audio -> event
+            "nodes": [
+                {"id": "ph", "type": "phasor"},
+                {"id": "osc", "type": "osc"},
+                {"id": "env", "type": "env"},
+            ],
+            "wires": [
+                {"from": "ph.phase", "to": "osc.phase"},
+                {"from": "osc.audio", "to": "env.gate"},  # audio -> event
+            ],
         },
         "global": {"nodes": [], "wires": []},
     }
@@ -169,8 +200,8 @@ def main():
         generate(bad)
         print("FAIL: audio->event edge not rejected")
         failures += 1
-    except GenError as e:
-        print(f"ok: audio->event edge rejected ({e})")
+    except GenError as exc:
+        print(f"ok: audio->event edge rejected ({exc})")
 
     print("generator tests " + ("FAILED" if failures else "passed"))
     return 1 if failures else 0

@@ -11,26 +11,26 @@ Tables (all `const`, XIP):
   fm1_exp2_q16[256]  exp2 decay 2^(-i/256), Q16  (envelopes / note-to-inc)
   fm1_log2_q16[256]  log2(1 + i/256), Q16        (log-domain FM)
 """
+
 import math
-import sys
 from pathlib import Path
 
 OUT = Path(__file__).resolve().parents[1] / "gen" / "math_tables.h"
 
 
-def q15(x):
+def q15(x: float) -> int:
     v = int(round(x * 32768.0))
     return max(-32768, min(32767, v))
 
 
-def q16(x):
+def q16(x: float) -> int:
     v = int(round(x * 65536.0))
     return max(-2147483648, min(2147483647, v))
 
 
-def c_array(ctype, name, values, width):
+def c_array(ctype: str, name: str, values: list[int], width: int) -> list[str]:
     lines = [f"static const {ctype} {name}[{len(values)}] = {{"]
-    row = []
+    row: list[str] = []
     for v in values:
         row.append(f"{v:>6d}")
         if len(row) == width:
@@ -42,7 +42,7 @@ def c_array(ctype, name, values, width):
     return lines
 
 
-def main():
+def main() -> None:
     N = 256
     sin_q15 = [q15(math.sin(math.pi / 2.0 * i / N)) for i in range(N)]
     exp2_q16 = [q16(2.0 ** (-i / N)) for i in range(N)]

@@ -1,0 +1,8 @@
+{
+  "name": "delay1",
+  "summary": "1-sample delay. Its register read (source) is ordered before, write (sink) after the graph, so FM feedback is exactly 1 sample.",
+  "ins": { "in": "audio" },
+  "outs": { "out": "audio" },
+  "params": {},
+  "state": { "prev": "q15" }
+}
