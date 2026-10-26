@@ -67,7 +67,7 @@ The non-negotiable safety rules are preserved in full (§5.4, §8).
 ```text
 umetate
 ├─ 1. CLI (`umetate`)              one entry point: doctor, setup, build, check,
-│                                  package, install, flash, debrick, scaffold
+│                                  inspect, install, flash, debrick, scaffold
 │                                  (node|macro|patch), add, lib, lint, fmt, web, status
 ├─ 2. Skill: development           interview → brief → plan → scaffold/author →
 │                                  verify (interactive loop, offline refs)
@@ -182,7 +182,7 @@ umetate/
 ├─ pyproject.toml           # `umetate` CLI package
 ├─ umetate/                 # CLI implementation (Python >=3.11)
 │  ├─ cli.py                #   arg parsing, dispatch, help
-│  ├─ doctor.py setup.py build.py check.py package.py
+│  ├─ doctor.py setup.py build.py check.py inspect.py
 │  ├─ install.py flash.py debrick.py scaffold.py add.py lib.py
 │  ├─ lint.py fmt.py web.py status.py evidence.py generate.py
 │  └─ runner.py             #   WSL2/Docker POSIX shim
@@ -402,7 +402,7 @@ umetate setup      [--dry-run] [--clock 240|320] [--json]   opt-in; installs too
 umetate build      --board fm1|smk37 [--model pro|elite|mke]
                    [--dsp integer|float] [--clock 240|320] [--profile baseline|perf]
 umetate check      [--host|--web|--safety|--links|--all]
-umetate package    PACKAGE                   inspect a .fwsc without a device
+umetate inspect    PACKAGE                   inspect a .fwsc without a device
 umetate install    PACKAGE [--device] [--yes]   install; identity + CRC + model checked
 umetate flash      PACKAGE [--port NAME] [--device] [--yes]   direct flash (update mode)
 umetate debrick    [--route app-rescue|update-loader|mask-rom] [--device]   direct recovery write
@@ -783,7 +783,7 @@ and panels to the shipped UI kit. Every device gate is explicitly `blocked`/`not
 `doctor`, `status`, `version`. *Acceptance:* `pip install -e .`; `umetate --help`
 lists all commands; no import side effects. **Layer: host.**
 
-**P3-2 — Env + build orchestration.** `setup`, `build`, `check`, `package`.
+**P3-2 — Env + build orchestration.** `setup`, `build`, `check`, `inspect`.
 *Acceptance:* each has `--help`; `build`/`check` never write a device; `--clock
 360|396` rejected; `--dsp float` stays opt-in. **Layer: host/target.**
 
@@ -859,7 +859,7 @@ Every `install`/`flash`/`debrick` write requires, before the command:
 
 1. explicit operator request for that exact action;
 2. exact board/revision + current firmware identity recorded;
-3. package identity + CRC integrity verified (`umetate package`);
+3. package identity + CRC integrity verified (`umetate inspect`);
 4. rollback image named (verified stock `.fwsc`);
 5. recovery route named, with its prerequisite (§5.4);
 6. `--device` + interactive confirmation (or `--yes`).
@@ -1225,7 +1225,7 @@ board layer, `app.ld`/`crt0.S`.
 fm1tk-lineage `build.py`, `cmake_target.py`, `fm1pkg_make.py`, `lz4blk.py`,
 `fm1_install.py`) and `firmware/tests/` are inherited build/package/install tooling.
 The CLI wraps each and replaces it incrementally from zero behind `umetate/`
-(P3, §12.7) — `build`/`package`/`lz4blk` first, the **installer last**, and only
+(P3, §12.7) — `build.py`/`fm1pkg_make.py`/`lz4blk.py` first, the **installer last**, and only
 after the clean replacement is device-verified (§8 gates). The inherited versions
 stay until each replacement is proven; typing effort goes into the replacements,
 not the throwaway lineage. The one exception is `firmware/tools/gen_math_tables.py`,
@@ -1559,7 +1559,7 @@ shim; `generate.py` is a pure function.
 | `build.py` | `build` | `generate.py` + the target build (Docker); `--board/--model/--dsp/--clock/--profile` |
 | `generate.py` | (internal) | patch + panel → `dsp.c` + `panel.h` (UI tables); `params.json` + `tables.c` are P3-3 |
 | `check.py` | `check` | host/web/safety/links/skill checks |
-| `package.py` | `package` | inspect a `.fwsc` (identity/CRC/model) without a device |
+| `inspect.py` | `inspect` | read a `.fwsc` (identity/CRC/model/damage) without a device |
 | `install.py`/`flash.py`/`debrick.py` | `install`/`flash`/`debrick` | the three device-writing commands (host-side, §8 gates) |
 | `scaffold.py` | `scaffold node\|macro\|patch` | generate a default node/macro/patch |
 | `add.py` | `add` | instantiate a library feature (node + params + dispatch + test + evidence row) |
@@ -1631,7 +1631,7 @@ umetate/
   config.py     evidence.py               # BuildConfig/EnvConfig; Status/Layer Enum
   runner.py     generate.py               # container exec; the patch generator (pure)
   _ir.py        _frontend.py  _backend.py # generator internals (§12.4): IR, passes, emission
-  doctor.py setup.py build.py check.py package.py
+  doctor.py setup.py build.py check.py inspect.py
   install.py flash.py debrick.py          # device writes (host-side, §8)
   scaffold.py add.py lib.py               # the schematic engine
   lint.py fmt.py web.py status.py evidence.py
@@ -1682,7 +1682,8 @@ None of these use the runner.
 
 | command | flow |
 | --- | --- |
-| `build` | `generate.py` (pure) → `runner.run` (target build) → `package` |
+| `build` | `generate.py` (pure) → `runner.run` (target build) → the packager → `.fwsc` |
+| `inspect` | read a `.fwsc` (identity/CRC/model/damage) — pure, no runner, no device |
 | `doctor` | `runner.probe()` + a host USB probe → `DoctorReport` (read-only) |
 | `install`/`flash` | host-side **MIDI SysEx** (mido + python-rtmidi, §8 gates) — not the runner |
 | `debrick` | USB_KEY dongle → mask-ROM UBOOT → `jl-uboot-tool` (delegated), §8 gates |
