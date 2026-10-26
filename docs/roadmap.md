@@ -1238,8 +1238,8 @@ separately-testable stage:
 ```text
 umetate/
   generate.py     # the public entry: generate(patch, nodes) -> str
-  _ir.py          # Port/Edge NamedTuples, NodeInstance, NodeSpec, EmitCtx Protocol,
-                  #   Emitter TypeAlias, CompiledGraph (the typed IR)
+  _ir.py          # Port/Edge/PortSpec NamedTuples, NodeSpec, NodeInstance,
+                  #   CompiledGraph, GenError, load_library (the typed IR)
   _frontend.py    # parse -> macro expand -> binding resolve -> type-check ->
                   #   cycle-check -> topo -> CompiledGraph
   _backend.py     # rate split -> state allocation -> allocator -> C emission
