@@ -74,10 +74,21 @@ def _phase_map(spec: dict[str, Any]) -> list[int]:
 
 
 def _spectrum(spec: dict[str, Any]) -> list[int]:
-    harmonics = spec.get("harmonics")
+    """A wavetable from harmonic amplitudes via additive synthesis — the inverse
+    FFT: `table[i] = sum_k a_k * sin(2*pi*k*i/size) / N`, normalized to Q15."""
+    harmonics = [int(h) for h in spec.get("harmonics") or []]
     if not harmonics:
         raise GenError("tables: spectrum needs inline `harmonics`")
-    return [int(h) for h in harmonics]
+    size = int(spec.get("size", 256))
+    if size < 1 or size > 65536:
+        raise GenError("tables: bad spectrum size")
+    n = len(harmonics)
+    values: list[int] = []
+    for i in range(size):
+        ph = 2.0 * math.pi * i / size
+        total = sum(a * math.sin(k * ph) for k, a in enumerate(harmonics, start=1))
+        values.append(round(total / n))
+    return values
 
 
 def _segments(spec: dict[str, Any]) -> list[int]:

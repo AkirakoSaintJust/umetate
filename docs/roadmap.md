@@ -615,9 +615,10 @@ test + a budget annotation; shipped macros in `modules/macros/`, each =
 | `mix` / `add` | summer | N audio ins → 1 out |
 | `svf` / `one_pole` | filter | state-variable (LP/BP/HP) / one-pole; modulatable cutoff/res |
 | `wavefolder` | nonlinear | sine fold: input → sin(π·x) crossfaded by `amount` |
+| `lpg` | vactrol gate | one-pole + VCA, cutoff/gain coupled to a fast-attack/slow-decay envelope |
 | `delay1` / `delayN` | delay | 1-sample (feedback) / N-sample (echo); the DAG cycle-breakers |
 | `noise` | source | white / pink |
-| `ifft` / `add` | spectral | spectral bins → audio (additive) |
+| spectral osc | data | `tables:` `spectrum` (harmonic amplitudes → wavetable via additive/IFFT) + `osc` |
 
 `umetate lib list` shows the library; `umetate scaffold --template` starts from a shipped template; user
 nodes conform to `node.schema.json`, patches to `patch.schema.json`.
@@ -634,16 +635,15 @@ planned half of each shipped node; the full follow-up, classified by the "one no
 | high-pass | — | the `svf` high-pass output |
 | `comb` | macro | `delayN` + feedback |
 | `pitched_noise` | macro | `noise` + note-tracking band-pass |
-| `fm_op` | macro | promote the `op` macro (phasor + osc + env + vca) |
 | `apc` / `dual_apc` | macro | square + env / two cross-modulated squares |
 | `vps` | macro | DAFx-11 (Kleimola et al.): 2-D inflection point `p=(d,v)`, multi-breakpoint, audio-rate modulation — dynamic phase distortion, generalizes `phase_map` |
-| `lpg` | node | vactrol filter+VCA (credit MI *Streams*; don't copy) |
 | `formant` (K5000-style) | macro | bank of `svf` band-passes + vowel presets |
 | `granulator` (Xenakis) | node(s) | phase-granular (no audio buffer) + a separate stochastic/GENDYN node |
 
-`svf`, `wavefolder`, and `fm_op` shipped first (the "batch 1" build). Shipped
-macros live in `modules/macros/`; a patch's own `macros:` section shadows them.
-Next in the macro backlog: `comb`, `pitched_noise`, `apc`/`dual_apc`, `vps`,
+`svf`, `wavefolder`, and `fm_op` shipped first (the "batch 1" build); `lpg` and
+the spectral oscillator (`tables: spectrum`, the "ifft osc") followed (batch 2).
+Shipped macros live in `modules/macros/`; a patch's own `macros:` section shadows
+them. Next in the macro backlog: `comb`, `pitched_noise`, `apc`/`dual_apc`, `vps`,
 `formant`.
 
 Build order: `fm_op` + `svf` + `wavefolder` → `ifft` + `lpg` → `formant` + the

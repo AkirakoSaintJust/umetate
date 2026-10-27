@@ -1,0 +1,8 @@
+{
+  "name": "lpg",
+  "summary": "Vactrol low-pass gate: one-pole LP + VCA, cutoff and gain coupled to a fast-attack/slow-decay envelope.",
+  "ins": { "audio": "audio", "gate": { "rate": "event", "default": "voice_gate[v]" } },
+  "outs": { "audio": "audio" },
+  "params": { "attack": "q16", "release": "q16" },
+  "state": { "level": "q15", "z1": "q15" }
+}

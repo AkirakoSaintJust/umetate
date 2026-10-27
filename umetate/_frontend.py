@@ -58,6 +58,12 @@ def compile(
 
     for zone, zone_dict in (("voice", voice_zone), ("global", global_zone)):
         for inst_dict in zone_dict.get("nodes", []):
+            id_ = str(inst_dict["id"])
+            if id_ in RESERVED_INPUTS:
+                raise GenError(
+                    f"node id {id_!r} collides with the reserved allocator input "
+                    f"{id_!r} (use a different id)"
+                )
             _expand(
                 dict(inst_dict),
                 zone,

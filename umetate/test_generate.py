@@ -124,6 +124,24 @@ FM_OP: dict[str, Any] = {
     "global": {"nodes": [], "wires": []},
 }
 
+LPG_TEST: dict[str, Any] = {
+    "name": "lpg_test",
+    "voices": 4,
+    "voice": {
+        "nodes": [
+            {"id": "ph", "type": "phasor"},
+            {"id": "osc", "type": "osc"},
+            {"id": "lg", "type": "lpg", "params": {"release": 65536}},
+        ],
+        "wires": [
+            {"from": "ph.phase", "to": "osc.phase"},
+            {"from": "osc.audio", "to": "lg.audio"},
+        ],
+        "voice_out": "lg.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
 TABLE_DEMO: dict[str, Any] = {
     "name": "table_demo",
     "voices": 4,
@@ -316,6 +334,25 @@ def main() -> int:
     )
     failures += 0 if ok else 1
 
+    ok, msg = _sound(LPG_TEST)
+    print(("ok: " if ok else "FAIL: ") + (msg or "lpg renders non-silent then silent"))
+    failures += 0 if ok else 1
+
+    # a single-harmonic spectrum must generate a pure-sine wavetable (the IFFT)
+    from ._tables import build_tables
+
+    sine = build_tables({"s": {"kind": "spectrum", "harmonics": [32767]}})[0]
+    if sine.values[0] != 0 or not 32000 <= sine.values[64] <= 32767:
+        print(
+            f"FAIL: spectrum table is not a sine ({sine.values[0]}, {sine.values[64]})"
+        )
+        failures += 1
+    else:
+        print(
+            f"ok: spectrum table is an IFFT sine "
+            f"(peak {sine.values[64]} at index 64, size {sine.size})"
+        )
+
     bad: dict[str, Any] = {
         "name": "bad",
         "voices": 1,
@@ -338,6 +375,24 @@ def main() -> int:
         failures += 1
     except GenError as exc:
         print(f"ok: audio->event edge rejected ({exc})")
+
+    # a node id colliding with a reserved allocator input is a GenError (not a
+    # silently-skipped wire).
+    reserved_id = {
+        "name": "reserved_id",
+        "voices": 1,
+        "voice": {
+            "nodes": [{"id": "gate", "type": "osc"}],
+            "wires": [],
+        },
+        "global": {"nodes": [], "wires": []},
+    }
+    try:
+        generate(reserved_id)
+        print("FAIL: reserved node id 'gate' not rejected")
+        failures += 1
+    except GenError as exc:
+        print(f"ok: reserved node id rejected ({exc})")
 
     # the flattened param table maps a named param to its set_param id
     params = generate_params(POCKET_DRONE)["params"]
