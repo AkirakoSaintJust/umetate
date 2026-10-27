@@ -27,6 +27,9 @@ dist/
 .local-env
 docs/local-environment.md
 
+# the JieLi toolchain + SDK (user-downloaded; not redistributed, not committed)
+.jieli/
+
 # OS
 .DS_Store
 Thumbs.db

@@ -646,7 +646,7 @@ per-dependency licences + the non-redistribution rule. **Layer: docs.**
 **Exit P0:** **met** — a reader names the toolkit, the firmware component, and the
 first command; identity and doc set are frozen.
 
-### Phase 1 — Docker image + volume (P1) — **in progress**
+### Phase 1 — Docker image + volume (P1) — **done (local checkout)**
 
 **P1-1 — Pinned Linux dev container.** — **done** (2026-10-26) — `docker/Dockerfile`
 (Emscripten 6.0.13 pinned), `.dockerignore`, `build.sh`, compose + `.env.example`.
@@ -654,30 +654,31 @@ first command; identity and doc set are frozen.
 `node`, `emcc`, Pillow all resolve; the firmware host test runs green inside it.
 **Layer: host.**
 
-**P1-2 — Target volume + setup.** — **blocked** (deferred to P3-2) — `umetate setup`
-installs the JieLi Linux pi32v2 toolchain + the three SDK assets into the volume at
-`/opt/jieli`. Auto-fetch with opt-in consent (`--toolchain auto` → `pkgman.jieliapp.com`,
-`--sdk auto` → gitee) or a user-supplied path; the toolchain's version string and the
-SDK asset SHA-256s are verified against `env.lock` (mismatch aborts unless `--force`);
-records the `--clock` choice to `.local-env`. `--dry-run` changes nothing; idempotent.
-Needs the toolchain tarball hash (filled at P3-2); cannot run in this session.
-**Layer: host.**
+**P1-2 — Target volume + setup.** — **done (obtained + hash-verified, local `.jieli/`)** —
+The JieLi Linux pi32v2 toolchain (`jieli-linux-toolchains-20260730.1`, SHA-256
+`a1545cdd…`) and the AC79 SDK (`AC79NN_SDK_V1.2.1_2023-12-13`) are downloaded and
+installed into the git-ignored `.jieli/`; the three SDK assets (`uboot.boot`,
+`cfg_tool.bin`, `cfg/eq_cfg_hw.bin`) hash-verify against `env.lock`, and `clang 4.0.1`
+runs. The `umetate setup` → Docker-volume flow (P3-2) is the remaining piece; for now
+the build points at `.jieli/` directly. **Layer: host.**
 
 ### Phase 2 — RIB runtime + generator (P2) — **done (host), blocked (target/device)**
 
-**P2-1 — Import the Dinghy/Felucca baseline and flatten.** — **done (import + host),
-blocked (target packages)** — Imported source-owned C (app `rib.c`/`rib_dsp.c`,
+**P2-1 — Import the Dinghy/Felucca baseline and flatten.** — **done (import + host +
+target packages)** — Imported source-owned C (app `rib.c`/`rib_dsp.c`,
 platform, HAL, loader, `crt0.S`, `app.ld`, SMK board layer) into `firmware/`;
 CMake/Ninja with a **separate DSP TU**; platform/USB/loader at `-Os`. Renamed
 `FM1TK`→`UMETATE` / `fm1tk`→`umetate` (15 files) and removed the Dinghy migration
 shims (5 files); no `FM1TK`/`fm1tk`/`DINGHY_`/`dinghy-` identifiers remain. *Verified:*
 host test builds and runs green in the container (`rib.wav` 286464 frames + screen
-PNGs, zero warnings). *Blocked:* the four target packages need the JieLi toolchain
-(P1-2). Identities frozen as `FM-1_990`, `SMK-37 Pro_990`, `SMK-37 Elite_990`,
-`MKE-P37_990` (D6 corrected to the code's authoritative value; also fixed the two
-spots that carried the wrong `SMK-37 MKE-P37_99` prefix — `tools/cmake_target.py:61`
-and `tests/run_tests.sh:57` — so the package identity now matches the on-device
-`SMK_MODEL` value the installer recognizes). **Layer: source/host.**
+PNGs, zero warnings); the target packages build once the JieLi toolchain + SDK are
+present (P1-2) — `umetate-fm1-pro.fwsc` and `umetate-smk37-pro.fwsc` produced with
+the SDK assets hash-verified. Identities frozen as `FM-1_990`, `SMK-37 Pro_990`,
+`SMK-37 Elite_990`, `MKE-P37_990` (D6 corrected to the code's authoritative value;
+also fixed the two spots that carried the wrong `SMK-37 MKE-P37_99` prefix —
+`tools/cmake_target.py:61` and `tests/run_tests.sh:57` — so the package identity now
+matches the on-device `SMK_MODEL` value the installer recognizes).
+**Layer: source/host/target.**
 
 **P2-2 — Dual-core bring-up (default).** — **done (source/host), blocked (target/device)**
 — Imported Felucca's proven core-1 layer verbatim (`hal/fm1_cpu1.h` + `hal/fm1_cpu1.S`,
