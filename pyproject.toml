@@ -1,8 +1,18 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "umetate"
 version = "0.0.0"
 description = "An opinionated toolkit for building custom M-VAVE FM-1 / SMK-37 firmware."
 requires-python = ">=3.11"
+
+[project.scripts]
+umetate = "umetate.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["umetate*"]
 
 # ---- lint + format (ruff; see docs/roadmap.md §6.8 Python conventions) ----
 [tool.ruff]

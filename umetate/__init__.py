@@ -2,8 +2,12 @@
 # Copyright (C) 2026 P1Onken (umetate)
 """umetate — the toolkit package."""
 
-from ._ir import GenError, NodeSpec, load_library
-from .generate import generate
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _version
 
-__version__ = "0.0.0"
-__all__ = ["generate", "GenError", "NodeSpec", "load_library", "__version__"]
+try:
+    __version__ = _version("umetate")
+except PackageNotFoundError:  # running from a raw checkout, not installed
+    __version__ = "0.0.0"
+
+__all__ = ["__version__"]

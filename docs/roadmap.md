@@ -778,9 +778,14 @@ and panels to the shipped UI kit. Every device gate is explicitly `blocked`/`not
 
 ### Phase 3 — CLI (P3)
 
-**P3-1 — CLI skeleton.** `pyproject.toml` + `umetate/` package; `--help`/`help CMD`;
-`quick-check`, `status`, `version`. *Acceptance:* `pip install -e .`; `umetate --help`
-lists all commands; no import side effects. **Layer: host.**
+**P3-1 — CLI skeleton.** — **done** — `pyproject.toml` (`[build-system]` setuptools +
+`[project.scripts] umetate = "umetate.cli:main"`), the `umetate/` package, `cli.py`
+(dispatch, `--help`/`help CMD`, no import side effects), `evidence.py` (the §5.5
+`Status`/`Layer` enums), `version.py`, `status.py` (the per-layer roadmap parser),
+`quick_check.py` (the presence probe). The other commands are registered and report
+their phase. *Verified:* `pip install -e .`; `umetate --help` lists all commands;
+`umetate status` parses the roadmap; `python3 -m umetate.test_cli` + `mypy --strict`
++ `ruff` green. **Layer: host.**
 
 **P3-2 — Env + build orchestration.** `setup`, `build`, `deep-check`, `inspect`.
 *Acceptance:* each has `--help`; `build`/`deep-check` never write a device; `--clock
@@ -1655,10 +1660,10 @@ modules/<node>/node.json + node.c         # the node library (§12.5)
 
 ```python
 # evidence.py — the vocabulary, one place (§5.5)
-class Status(str, Enum):
+class Status(StrEnum):
     PASS="pass"; FAIL="fail"; BLOCKED="blocked"
     NOT_APPLICABLE="not-applicable"; NOT_RUN="not-run"
-class Layer(str, Enum):
+class Layer(StrEnum):
     SOURCE="source"; HOST="host"; BROWSER="browser"; TARGET="target"
     EMULATOR="emulator"; TIMING="timing"; DEVICE="device"; RELEASE="release"
 
