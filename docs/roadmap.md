@@ -798,17 +798,20 @@ reports `blocked` without the toolchain; `deep-check --host` runs the full host 
 (DSP + UI + SMK-37) and passes. *Blocked:* the target build needs the JieLi
 toolchain (P1-2 `setup`). **Layer: host/target.**
 
-**P3-3 — `scaffold`/`lib`, `lint`, `fmt` + the param table.** `scaffold` generates a
-default node/macro/patch (or `--template` copies a shipped one); `lib list` shows the
-shipped nodes + templates (local only — no remote registry); lint encodes the
-standing checks; fmt is clang-format. Also the **flattened param namespace**
-(`params.json`): unify the DSP's node params, the panel's `param` names, and the
-§12.1 `set_param`/`get_param`/`param_count` seam into one id space (emitted by the
-generator), and the user-defined `const` XIP `tables.c` (wavetables/segments/
-phase_maps). *Acceptance:* `scaffold patch --name X` builds; `scaffold patch --name Y
---template two-op-fm` copies the template and builds; `lib list` shows the shipped
-nodes + templates; `lint --c` fails on a crafted MAXP/ROM/MMIO violation; `params.json`
-maps a named param to the `set_param` id the panel writes. **Layer: host.**
+**P3-3 — `scaffold`/`lib`, `lint`, `fmt` + the param table.** — **done (host)** —
+`scaffold.py` (generate a node/macro/patch skeleton; `--template` copies a shipped
+example, e.g. `pocket-drone`; a generated patch is verified to build), `lib.py`
+(`lib list` — the 9 nodes + 2 templates, local only), `lint.py` (`lint --c` — the
+grep-based standing checks: SEC-1 MAXP bounds, HAL-only MMIO, hardcoded flash
+addresses, no double/alloc in the DSP TU), `fmt.py` (clang-format), and the
+**flattened param namespace**: the generator now emits the §12.1
+`set_param`/`get_param`/`param_count` seam + `params.json` (a named node param → its
+`set_param` id). *Verified:* `scaffold patch` (minimal and `--template pocket-drone`)
+builds; `lib list` lists the nodes + templates; `lint --c` passes on the firmware and
+flags a crafted MAXP/MMIO violation; `params.json` maps `lp.cutoff` → id 4; `mypy
+--strict` + `ruff` + `test_cli`/`test_generate` green. *Deferred:* the user-facing
+name → node-param binding (the `params.schema.json` manifest) and the `const` XIP
+`tables.c` (wavetables/segments/phase_maps). **Layer: host.**
 
 **P3-4 — `flash`, `debrick` (direct, gated).** Per §6.1 and §8. `flash` wraps the
 inherited `fm1_install.py` (strangler-fig, not a rewrite — the clean `umetate/flash.py`
