@@ -1,8 +1,8 @@
 {
   "name": "vca",
-  "summary": "Gain cell: Q15 multiply of audio by a control cv (default unity).",
+  "summary": "Gain cell: Q15 multiply of audio × control cv × a `level` param (default unity) — the FM operator's output amplitude / FM index.",
   "ins": { "audio": "audio", "cv": { "rate": "control", "default": "32768" } },
   "outs": { "audio": "audio" },
-  "params": {},
+  "params": { "level": "q15" },
   "state": {}
 }

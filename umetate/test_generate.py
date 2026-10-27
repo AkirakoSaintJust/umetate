@@ -703,11 +703,10 @@ def main() -> int:
     params = generate_params(POCKET_DRONE)["params"]
     by_name = {p["name"]: p for p in params}
     lp = by_name.get("lp.cutoff")
-    # id 6: each `osc` now contributes a `waveform` param (carrier.osc.waveform,
-    # carrier.env.attack/release, mod.osc.waveform, mod.env.attack/release, then
-    # lp.cutoff).
-    if lp is None or lp["id"] != 6:
-        print("FAIL: params.json does not map lp.cutoff to id 6")
+    # `lp` is the last node in pocket-drone's graph, so its cutoff is the last id
+    # (robust against param additions to earlier nodes — e.g. osc.waveform, vca.level).
+    if lp is None or lp["id"] != len(params) - 1:
+        print("FAIL: params.json does not map lp.cutoff to the last id")
         failures += 1
     else:
         print(f"ok: params.json maps lp.cutoff -> id {lp['id']}")
