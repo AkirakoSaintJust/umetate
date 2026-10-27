@@ -16,7 +16,6 @@ import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 _ROADMAP = Path(__file__).resolve().parents[1] / "docs" / "roadmap.md"
 
@@ -105,7 +104,7 @@ def _render(phases: list[Claim], steps: list[Claim], exits: list[Claim]) -> str:
 
 
 def _to_json(phases: list[Claim], steps: list[Claim], exits: list[Claim]) -> str:
-    def one(c: Claim) -> dict[str, Any]:
+    def one(c: Claim) -> dict[str, str | dict[str, str]]:
         return {"id": c.id, "name": c.name, "status": c.status, "layers": c.layers}
 
     return json.dumps(

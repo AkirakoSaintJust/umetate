@@ -28,12 +28,12 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     try:
-        product = str(fm1.product_of(raw))
+        product = fm1.product_of(raw)
     except Exception as exc:  # InstallError ("too short", ...)
         print(f"inspect: {exc}", file=sys.stderr)
         return 2
 
-    model = str(fm1.model_of(product))
+    model = fm1.model_of(product)
     has_loader = bool(fm1.LOADER_MARK in raw)
     try:
         image, blocks = fm1.deinterleave(raw)

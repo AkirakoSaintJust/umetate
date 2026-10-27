@@ -577,12 +577,22 @@ subparsers, `dataclasses` for config, no side effects on import, the evidence
 vocabulary as an `Enum`. I/O-bound: optimize only measured hot paths.
 
 - **Strict typing** — `mypy --strict` over the owned Python (`umetate/` +
-  `firmware/tools/gen_math_tables.py`), enforced in the build. Every public
-  function/module is annotated; the fm1tk-lineage `firmware/tools/` + `tests/`
-  are excluded (strangler-fig'd, not typed in place). Modern style: PEP 585
+  `firmware/tools/gen_math_tables.py`), enforced in the build, plus
+  `disallow_any_explicit` + `disallow_any_unimported` — **`Any` is banned**. Every
+  public function/module is annotated; the fm1tk-lineage `firmware/tools/` +
+  `tests/` are excluded (strangler-fig'd, not typed in place). Modern style: PEP 585
   (`list[int]`), PEP 604 (`int | None`), `from __future__ import annotations`,
   `TypeAlias` for callable/union aliases, `Protocol` for structural typing across
   module boundaries (avoids import cycles), `NamedTuple` for tiny value types.
+- **Manifests are typed, not `Any`.** Every JSON manifest (`patch`, `macro`,
+  `node`, `panel`, `tables`, `params`, `env.lock`, the evidence matrix) is a
+  `TypedDict` in `umetate/_schema.py` mirroring its `templates/scaffold/*.schema.json`.
+  The JSON boundary (a `json.loads` result) is narrowed by one `as_*` loader per
+  manifest — an `isinstance` check on the required keys, then a single `cast` to the
+  concrete `TypedDict` — so downstream code is fully checked. The fm1tk boundary
+  (`firmware/tools/fm1_install.py`) is the one trusted `cast` to the `Installer`
+  `Protocol` (in `_installer.py`); the raw module stays available as
+  `load_installer_module()` for the package-synthesis tests.
 - **Lint + format** — `ruff check` + `ruff format --check` (88 cols, py311), clean
   in the build. No hand-styled whitespace.
 - **Packaging** — `setuptools` (PEP 621 `[project]` + `[build-system]` +

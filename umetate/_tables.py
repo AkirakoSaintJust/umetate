@@ -11,9 +11,9 @@ from __future__ import annotations
 
 import math
 from collections.abc import Mapping
-from typing import Any
 
 from ._ir import GenError, Table, to_c_identifier
+from ._schema import TableSpec
 
 _TABLE_KINDS = ("wavetable", "segments", "spectrum", "phase_map")
 _WAVE_SHAPES = ("sine", "triangle", "square", "saw")
@@ -24,17 +24,17 @@ def table_cname(name: str) -> str:
     return f"table_{to_c_identifier(name)}"
 
 
-def build_tables(raw: Mapping[str, Any]) -> list[Table]:
+def build_tables(raw: Mapping[str, TableSpec]) -> list[Table]:
     """Parse + generate every `tables:` entry into a `Table` (deterministic)."""
-    return [_build_table(str(name), dict(spec)) for name, spec in raw.items()]
+    return [_build_table(name, spec) for name, spec in raw.items()]
 
 
-def _build_table(name: str, spec: dict[str, Any]) -> Table:
-    kind = str(spec.get("kind", "wavetable"))
+def _build_table(name: str, spec: TableSpec) -> Table:
+    kind = spec["kind"]
     if kind not in _TABLE_KINDS:
         raise GenError(f"tables.{name}: unknown kind {kind!r}")
     if kind == "wavetable":
-        values = _wave(str(spec.get("shape", "sine")), int(spec.get("size", 256)))
+        values = _wave(spec.get("shape", "sine"), spec.get("size", 256))
     elif kind == "phase_map":
         values = _phase_map(spec)
     elif kind == "spectrum":
@@ -66,20 +66,20 @@ def _wave(shape: str, size: int) -> list[int]:
     return [round(f(i / size) * 32767) for i in range(size)]
 
 
-def _phase_map(spec: dict[str, Any]) -> list[int]:
-    size = int(spec.get("size", 256))
+def _phase_map(spec: TableSpec) -> list[int]:
+    size = spec.get("size", 256)
     if size < 1 or size > 65536:
         raise GenError(f"tables: bad phase_map size {size}")
     return [round(32767 * i / max(size - 1, 1)) for i in range(size)]
 
 
-def _spectrum(spec: dict[str, Any]) -> list[int]:
+def _spectrum(spec: TableSpec) -> list[int]:
     """A wavetable from harmonic amplitudes via additive synthesis — the inverse
     FFT: `table[i] = sum_k a_k * sin(2*pi*k*i/size) / N`, normalized to Q15."""
-    harmonics = [int(h) for h in spec.get("harmonics") or []]
+    harmonics = spec.get("harmonics") or []
     if not harmonics:
         raise GenError("tables: spectrum needs inline `harmonics`")
-    size = int(spec.get("size", 256))
+    size = spec.get("size", 256)
     if size < 1 or size > 65536:
         raise GenError("tables: bad spectrum size")
     n = len(harmonics)
@@ -91,7 +91,7 @@ def _spectrum(spec: dict[str, Any]) -> list[int]:
     return values
 
 
-def _segments(spec: dict[str, Any]) -> list[int]:
+def _segments(spec: TableSpec) -> list[int]:
     """A breakpoint envelope as flattened `[t_ms, level, ...]` pairs (ADSR default)."""
     points = spec.get("points")
     if points is None:
@@ -99,8 +99,8 @@ def _segments(spec: dict[str, Any]) -> list[int]:
     flat: list[int] = []
     for point in points:
         t, level = point
-        flat.append(int(t))
-        flat.append(int(level))
+        flat.append(t)
+        flat.append(level)
     return flat
 
 

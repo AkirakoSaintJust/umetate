@@ -11,7 +11,9 @@ from __future__ import annotations
 import importlib
 import sys
 from collections.abc import Callable, Sequence
-from typing import cast
+from typing import TypeGuard
+
+_Main = Callable[[list[str]], int]
 
 # command -> (one-line description, module name or "module:function")
 COMMANDS: dict[str, tuple[str, str]] = {
@@ -44,14 +46,24 @@ def _usage() -> None:
         print(f"  {name:<{width}}  {desc}")
 
 
-def _dispatch(name: str, argv: list[str]) -> int:
+def _is_main(fn: object) -> TypeGuard[_Main]:
+    return callable(fn)
+
+
+def _entry(name: str) -> _Main:
     _desc, module = COMMANDS[name]
     if ":" in module:
         mod_name, func_name = module.split(":", 1)
-        mod = importlib.import_module(f"umetate.{mod_name}")
-        return cast(Callable[[list[str]], int], getattr(mod, func_name))(argv)
-    mod = importlib.import_module(f"umetate.{module}")
-    return cast(Callable[[list[str]], int], mod.main)(argv)
+        fn: object = getattr(importlib.import_module(f"umetate.{mod_name}"), func_name)
+    else:
+        fn = importlib.import_module(f"umetate.{module}").main
+    if not _is_main(fn):
+        raise RuntimeError(f"umetate: {name!r} entry is not callable")
+    return fn
+
+
+def _dispatch(name: str, argv: list[str]) -> int:
+    return _entry(name)(argv)
 
 
 def main(argv: Sequence[str] | None = None) -> int:

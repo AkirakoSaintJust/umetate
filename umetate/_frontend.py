@@ -10,7 +10,6 @@ with a reason, never a silent fallback.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any
 
 from ._ir import (
     AUDIO,
@@ -32,41 +31,50 @@ from ._ir import (
     param_default,
     to_c_identifier,
 )
+from ._schema import (
+    Instance,
+    Macro,
+    NoteKind,
+    ParamBinding,
+    ParamTarget,
+    Patch,
+    Zone,
+)
 from ._tables import build_tables
 
 
 def compile(
-    patch: Mapping[str, Any],
+    patch: Patch,
     nodes: Mapping[str, NodeSpec],
-    macros: Mapping[str, Any] | None = None,
+    macros: Mapping[str, Macro] | None = None,
 ) -> CompiledGraph:
     """Compile a patch into a CompiledGraph (parse -> expand -> check -> topo).
 
     `macros` is the shipped macro library (`modules/macros`); the patch's own
     `macros:` section shadows it.
     """
-    name = to_c_identifier(str(patch["name"]))
-    voices = int(patch.get("voices", 1))
+    name = to_c_identifier(patch["name"])
+    voices = patch["voices"]
     merged_macros = dict(macros or {})
-    merged_macros.update(dict(patch.get("macros") or {}))
+    merged_macros.update(patch.get("macros") or {})
 
     instances: list[NodeInstance] = []
     raw_wires: list[tuple[str, str]] = []
     bindings: dict[tuple[str, str], tuple[str, str]] = {}
 
-    voice_zone = dict(patch.get("voice") or {})
-    global_zone = dict(patch.get("global") or {})
+    voice_zone: Zone = patch.get("voice") or {"nodes": []}
+    global_zone: Zone = patch.get("global") or {"nodes": []}
 
     for zone, zone_dict in (("voice", voice_zone), ("global", global_zone)):
-        for inst_dict in zone_dict.get("nodes", []):
-            id_ = str(inst_dict["id"])
+        for inst_dict in zone_dict["nodes"]:
+            id_ = inst_dict["id"]
             if id_ in RESERVED_INPUTS:
                 raise GenError(
                     f"node id {id_!r} collides with the reserved allocator input "
                     f"{id_!r} (use a different id)"
                 )
             _expand(
-                dict(inst_dict),
+                inst_dict,
                 zone,
                 nodes,
                 merged_macros,
@@ -75,7 +83,7 @@ def compile(
                 bindings,
             )
         for wire in zone_dict.get("wires", []):
-            raw_wires.append((str(wire["from"]), str(wire["to"])))
+            raw_wires.append((wire["from"], wire["to"]))
 
     edges = [
         Edge(_resolve_ref(frm, bindings), _resolve_ref(to, bindings))
@@ -84,9 +92,7 @@ def compile(
     by_id = {i.id: i for i in instances}
 
     voice_out_ref = voice_zone.get("voice_out")
-    voice_out, global_out = _typecheck(
-        edges, by_id, str(voice_out_ref) if voice_out_ref else None, bindings
-    )
+    voice_out, global_out = _typecheck(edges, by_id, voice_out_ref, bindings)
 
     return CompiledGraph(
         name=name,
@@ -96,13 +102,13 @@ def compile(
         global_order=_topo([i for i in instances if i.zone == "global"], edges),
         voice_out=voice_out,
         global_out=global_out,
-        params=_build_params(instances, dict(patch.get("params") or {})),
-        tables=build_tables(dict(patch.get("tables") or {})),
+        params=_build_params(instances, patch.get("params") or {}),
+        tables=build_tables(patch.get("tables") or {}),
     )
 
 
 def _build_params(
-    instances: list[NodeInstance], manifest: Mapping[str, Any]
+    instances: list[NodeInstance], manifest: Mapping[str, ParamBinding]
 ) -> list[ParamEntry]:
     """Flatten node params (in expansion order) and merge the `params:` manifest."""
     flat: list[tuple[str, str, int, str]] = []
@@ -120,15 +126,15 @@ def _build_params(
             )
 
     by_target: dict[str, str] = {}
-    meta: dict[str, dict[str, Any]] = {}
+    meta: dict[str, ParamBinding] = {}
     for name, spec in manifest.items():
-        target = str(spec["target"])
+        target = spec["target"]
         if target in by_target:
             raise GenError(
                 f"params: {by_target[target]!r} and {name!r} both target {target!r}"
             )
         by_target[target] = name
-        meta[target] = dict(spec)
+        meta[target] = spec
 
     flat_targets = {target for _, target, _, _ in flat}
     for target, name in by_target.items():
@@ -138,21 +144,21 @@ def _build_params(
     entries: list[ParamEntry] = []
     for idx, (cname, target, default, kind) in enumerate(flat):
         name = by_target.get(target, target)
-        m = meta.get(target, {})
         lo, hi = param_bounds(kind)
+        m = meta.get(target)
         entries.append(
             ParamEntry(
                 id=idx,
                 name=name,
                 target=target,
                 cname=cname,
-                min=int(m.get("min", lo)),
-                max=int(m.get("max", hi)),
+                min=m.get("min", lo) if m else lo,
+                max=m.get("max", hi) if m else hi,
                 default=default,
-                curve=str(m.get("curve", "linear")),
-                unit=str(m.get("unit", "")),
-                rate=str(m.get("rate", "block")),
-                modulatable=bool(m.get("modulatable", False)),
+                curve=m.get("curve", "linear") if m else "linear",
+                unit=m.get("unit", "") if m else "",
+                rate=m.get("rate", "block") if m else "block",
+                modulatable=m.get("modulatable", False) if m else False,
             )
         )
     return entries
@@ -162,17 +168,17 @@ def _build_params(
 
 
 def _expand(
-    inst_dict: dict[str, Any],
+    inst_dict: Instance,
     zone: str,
     nodes: Mapping[str, NodeSpec],
-    macros: Mapping[str, Any],
+    macros: Mapping[str, Macro],
     instances: list[NodeInstance],
     raw_wires: list[tuple[str, str]],
     bindings: dict[tuple[str, str], tuple[str, str]],
 ) -> None:
     """Expand a node/macro instance into leaf instances, wires, and bindings."""
-    type_ = str(inst_dict["type"])
-    id_ = str(inst_dict["id"])
+    type_ = inst_dict["type"]
+    id_ = inst_dict["id"]
     if type_ not in macros:
         spec = nodes.get(type_)
         if spec is None:
@@ -202,9 +208,10 @@ def _expand(
         return
 
     macro = macros[type_]
-    for inner in macro.get("nodes", []):
+    for inner in macro["nodes"]:
+        child: Instance = {**inner, "id": f"{id_}.{inner['id']}"}
         _expand(
-            {**inner, "id": f"{id_}.{inner['id']}"},
+            child,
             zone,
             nodes,
             macros,
@@ -213,14 +220,14 @@ def _expand(
             bindings,
         )
 
-    for wire in macro.get("wires", []):
-        frm, to = str(wire["from"]), str(wire["to"])
+    for wire in macro["wires"]:
+        frm, to = wire["from"], wire["to"]
         f_inner = _is_inner(frm, macro)
         t_inner = _is_inner(to, macro)
         if not f_inner and t_inner:
-            bindings[(id_, frm)] = _inner_ref(to, macro, id_)
+            bindings[(id_, frm)] = _inner_ref(to, id_)
         elif f_inner and not t_inner:
-            bindings[(id_, to)] = _inner_ref(frm, macro, id_)
+            bindings[(id_, to)] = _inner_ref(frm, id_)
         else:
             raw_wires.append((_prefix(frm, id_), _prefix(to, id_)))
 
@@ -240,18 +247,18 @@ def _expand(
             inst.params[field] = value
 
 
-def _str_params(params: Any) -> dict[str, str]:
+def _str_params(params: Mapping[str, int | str] | None) -> dict[str, str]:
     if not params:
         return {}
-    return {str(k): str(v) for k, v in dict(params).items()}
+    return {k: str(v) for k, v in params.items()}
 
 
-def _is_inner(port: str, macro: Mapping[str, Any]) -> bool:
+def _is_inner(port: str, macro: Macro) -> bool:
     first = port.split(".", 1)[0]
-    return any(str(n["id"]) == first for n in macro.get("nodes", []))
+    return any(n["id"] == first for n in macro["nodes"])
 
 
-def _inner_ref(port: str, macro: Mapping[str, Any], prefix: str) -> tuple[str, str]:
+def _inner_ref(port: str, prefix: str) -> tuple[str, str]:
     node_id, field = port.split(".", 1)
     return (f"{prefix}.{node_id}", field)
 
@@ -260,19 +267,17 @@ def _prefix(port: str, prefix: str) -> str:
     return f"{prefix}.{port}"
 
 
-def _parse_param_target(target: object) -> tuple[str, str | None]:
+def _parse_param_target(target: str | ParamTarget) -> tuple[str, NoteKind | None]:
     """A macro param target: `'inner.field'`, `{target, note_derived}`, or
     `{target, note_cutoff}`. Returns (target, note-kind) where kind is
     `"inc"`, `"cutoff"`, or `None` (a plain param)."""
     if isinstance(target, str):
         return target, None
-    if isinstance(target, dict):
-        if target.get("note_cutoff"):
-            return str(target["target"]), "cutoff"
-        if target.get("note_derived"):
-            return str(target["target"]), "inc"
-        return str(target["target"]), None
-    raise GenError(f"bad macro param target {target!r}")
+    if target.get("note_cutoff"):
+        return target["target"], "cutoff"
+    if target.get("note_derived"):
+        return target["target"], "inc"
+    return target["target"], None
 
 
 def _find(instances: list[NodeInstance], id_: str) -> NodeInstance | None:

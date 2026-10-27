@@ -12,7 +12,9 @@ import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, NamedTuple
+from typing import NamedTuple
+
+from ._schema import Macro, NodeManifest, PortDict, as_macro, as_node_manifest
 
 # ---- signal kinds (ports) ----
 EVENT = "event"
@@ -242,7 +244,9 @@ def load_library(root: str | Path) -> dict[str, NodeSpec]:
     """Load every `modules/nodes/<name>/node.json` + `node.c` into a NodeSpec map."""
     nodes: dict[str, NodeSpec] = {}
     for manifest_path in sorted(Path(root).glob("*/node.json")):
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest = as_node_manifest(
+            json.loads(manifest_path.read_text(encoding="utf-8"))
+        )
         body_path = manifest_path.with_name("node.c")
         body = body_path.read_text(encoding="utf-8") if body_path.exists() else ""
         spec = node_spec_from_manifest(manifest, body)
@@ -250,60 +254,40 @@ def load_library(root: str | Path) -> dict[str, NodeSpec]:
     return nodes
 
 
-def load_macros(root: str | Path) -> dict[str, dict[str, Any]]:
+def load_macros(root: str | Path) -> dict[str, Macro]:
     """Load every `modules/macros/<name>/macro.json` into a name -> macro map.
 
     The macro's name is its directory name; the manifest is the same shape as a
     patch's inline `macros:` entry (`ins`/`outs`/`params`/`nodes`/`wires`), plus a
     `summary` for `umetate lib`.
     """
-    macros: dict[str, dict[str, Any]] = {}
+    macros: dict[str, Macro] = {}
     for manifest_path in sorted(Path(root).glob("*/macro.json")):
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest = as_macro(json.loads(manifest_path.read_text(encoding="utf-8")))
         macros[manifest_path.parent.name] = manifest
     return macros
 
 
-def node_spec_from_manifest(manifest: dict[str, Any], body: str) -> NodeSpec:
-    """Build a NodeSpec from a node.json dict + its node.c body."""
-    name = str(manifest["name"])
-    ins = {str(p): _parse_port(v) for p, v in dict(manifest.get("ins", {})).items()}
-    outs = {str(p): _parse_port(v) for p, v in dict(manifest.get("outs", {})).items()}
-    params = {str(k): str(v) for k, v in dict(manifest.get("params", {})).items()}
-    state = {str(k): str(v) for k, v in dict(manifest.get("state", {})).items()}
-    note_derived = {
-        str(k): str(v) for k, v in dict(manifest.get("note_derived", {})).items()
-    }
-    note_cutoff = {
-        str(k): str(v) for k, v in dict(manifest.get("note_cutoff", {})).items()
-    }
-    reciprocals = {
-        str(k): str(v) for k, v in dict(manifest.get("note_reciprocal", {})).items()
-    }
+def node_spec_from_manifest(manifest: NodeManifest, body: str) -> NodeSpec:
+    """Build a NodeSpec from a node.json manifest + its node.c body."""
+    name = manifest["name"]
+    ins = {p: _parse_port(v) for p, v in manifest.get("ins", {}).items()}
+    outs = {p: _parse_port(v) for p, v in manifest["outs"].items()}
     return NodeSpec(
         name=name,
         ins=ins,
         outs=outs,
-        params=params,
-        state=state,
-        note_derived=note_derived,
-        note_cutoff=note_cutoff,
-        reciprocals=reciprocals,
+        params=dict(manifest.get("params", {})),
+        state=dict(manifest.get("state", {})),
+        note_derived=dict(manifest.get("note_derived", {})),
+        note_cutoff=dict(manifest.get("note_cutoff", {})),
+        reciprocals=dict(manifest.get("note_reciprocal", {})),
         body=body,
     )
 
 
-def _parse_port(value: object) -> PortSpec:
+def _parse_port(value: str | PortDict) -> PortSpec:
     """Parse a node.json port: a bare kind or a `{rate, format, default}` object."""
     if isinstance(value, str):
         return PortSpec(value)
-    if isinstance(value, dict):
-        rate = str(value["rate"])
-        fmt = value.get("format")
-        default = value.get("default")
-        return PortSpec(
-            rate,
-            str(fmt) if fmt is not None else None,
-            str(default) if default is not None else None,
-        )
-    raise GenError(f"bad port spec: {value!r}")
+    return PortSpec(value["rate"], value.get("format"), value.get("default"))

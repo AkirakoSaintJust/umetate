@@ -64,7 +64,7 @@
       "properties": {
         "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
         "type": { "type": "string", "description": "a node name or a macro name" },
-        "params": { "type": "object", "additionalProperties": { "type": "integer" } }
+        "params": { "type": "object", "additionalProperties": { "type": ["integer", "string"] }, "description": "an integer value, or a string naming a `tables:` entry (the `table` param kind)" }
       }
     },
     "wire": {
@@ -82,7 +82,8 @@
       "additionalProperties": false,
       "properties": {
         "target": { "type": "string", "description": "inner <instance>.<param> (port param) or <instance>.<state> (state, set at note-on)" },
-        "note_derived": { "type": "boolean", "description": "multiply by note_to_inc(note) at note-on (phasor inc)" }
+        "note_derived": { "type": "boolean", "description": "multiply by note_to_inc(note) at note-on (phasor inc)" },
+        "note_cutoff": { "type": "boolean", "description": "set to 2*sin(pi * note_to_inc * ratio / 2^32) at note-on (a note-tracked filter coefficient)" }
       }
     },
     "macro": {

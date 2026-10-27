@@ -16,12 +16,12 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any
 
 from ._ir import GenError
+from ._schema import Patch
 from .generate import generate, generate_params, generate_tables, param_ids
 
-POCKET_DRONE: dict[str, Any] = {
+POCKET_DRONE: Patch = {
     "name": "pocket-drone",
     "voices": 8,
     "macros": {
@@ -66,7 +66,7 @@ POCKET_DRONE: dict[str, Any] = {
     },
 }
 
-SINE_ENV: dict[str, Any] = {
+SINE_ENV: Patch = {
     "name": "sine_env",
     "voices": 4,
     "voice": {
@@ -86,7 +86,7 @@ SINE_ENV: dict[str, Any] = {
     "global": {"nodes": [], "wires": []},
 }
 
-SVF_WF: dict[str, Any] = {
+SVF_WF: Patch = {
     "name": "svf_wf",
     "voices": 4,
     "voice": {
@@ -111,7 +111,7 @@ SVF_WF: dict[str, Any] = {
 }
 
 # uses the *shipped* fm_op macro (modules/macros), no inline macros: section.
-FM_OP: dict[str, Any] = {
+FM_OP: Patch = {
     "name": "fm_op_test",
     "voices": 4,
     "voice": {
@@ -125,7 +125,7 @@ FM_OP: dict[str, Any] = {
     "global": {"nodes": [], "wires": []},
 }
 
-LPG_TEST: dict[str, Any] = {
+LPG_TEST: Patch = {
     "name": "lpg_test",
     "voices": 4,
     "voice": {
@@ -145,7 +145,7 @@ LPG_TEST: dict[str, Any] = {
 
 # the `table` node reading a square wavetable + an IFFT spectrum, linked with
 # tables.c (the `table` node is what makes `tables:` shapes actually audible).
-TABLE_OSC: dict[str, Any] = {
+TABLE_OSC: Patch = {
     "name": "table_osc",
     "voices": 4,
     "tables": {
@@ -171,7 +171,7 @@ TABLE_OSC: dict[str, Any] = {
 
 # the `saw` node uses the note-on reciprocal (inv_inc = 2^32/inc) via an inline
 # macro that sets the note-derived `inc`.
-SAW_TEST: dict[str, Any] = {
+SAW_TEST: Patch = {
     "name": "saw_test",
     "voices": 4,
     "macros": {
@@ -195,7 +195,7 @@ SAW_TEST: dict[str, Any] = {
 }
 
 # the `pitched_noise` macro uses the note-derived cutoff (f = 2*sin(pi*f_note/fs)).
-PITCHED_NOISE: dict[str, Any] = {
+PITCHED_NOISE: Patch = {
     "name": "pn_test",
     "voices": 4,
     "voice": {
@@ -206,7 +206,7 @@ PITCHED_NOISE: dict[str, Any] = {
     "global": {"nodes": [], "wires": []},
 }
 
-TABLE_DEMO: dict[str, Any] = {
+TABLE_DEMO: Patch = {
     "name": "table_demo",
     "voices": 4,
     "tables": {
@@ -293,7 +293,7 @@ def _include_args() -> list[str]:
     return ["-I", str(root / "firmware" / "hal"), "-I", str(root / "firmware" / "gen")]
 
 
-def _compile(patch: dict[str, Any]) -> tuple[bool, str]:
+def _compile(patch: Patch) -> tuple[bool, str]:
     """Generate + compile the patch's dsp.c for host (object check only)."""
     src = generate(patch)
     with tempfile.TemporaryDirectory() as tmp:
@@ -315,7 +315,7 @@ def _compile(patch: dict[str, Any]) -> tuple[bool, str]:
         return proc.returncode == 0, proc.stderr
 
 
-def _sound(patch: dict[str, Any]) -> tuple[bool, str]:
+def _sound(patch: Patch) -> tuple[bool, str]:
     """Generate, compile, and run the sound contract (non-silent then silent)."""
     src = generate(patch)
     with tempfile.TemporaryDirectory() as tmp:
@@ -343,7 +343,7 @@ def _sound(patch: dict[str, Any]) -> tuple[bool, str]:
         return run.returncode == 0, run.stdout.strip()
 
 
-def _sound_tables(patch: dict[str, Any]) -> tuple[bool, str]:
+def _sound_tables(patch: Patch) -> tuple[bool, str]:
     """Generate + compile (with tables.c) + run the sound contract for a table patch."""
     src = generate(patch)
     hdr, impl = generate_tables(patch)
@@ -589,7 +589,7 @@ def main() -> int:
             f"(peak {sine.values[64]} at index 64, size {sine.size})"
         )
 
-    bad: dict[str, Any] = {
+    bad: Patch = {
         "name": "bad",
         "voices": 1,
         "voice": {
@@ -614,7 +614,7 @@ def main() -> int:
 
     # a node id colliding with a reserved allocator input is a GenError (not a
     # silently-skipped wire).
-    reserved_id = {
+    reserved_id: Patch = {
         "name": "reserved_id",
         "voices": 1,
         "voice": {
@@ -633,11 +633,12 @@ def main() -> int:
     # the flattened param table maps a named param to its set_param id
     params = generate_params(POCKET_DRONE)["params"]
     by_name = {p["name"]: p for p in params}
-    if by_name.get("lp.cutoff", {}).get("id") != 4:
+    lp = by_name.get("lp.cutoff")
+    if lp is None or lp["id"] != 4:
         print("FAIL: params.json does not map lp.cutoff to id 4")
         failures += 1
     else:
-        print(f"ok: params.json maps lp.cutoff -> id {by_name['lp.cutoff']['id']}")
+        print(f"ok: params.json maps lp.cutoff -> id {lp['id']}")
 
     # the params: manifest binds a friendly name to a flattened param + metadata
     params = generate_params(TABLE_DEMO)["params"]
@@ -674,7 +675,7 @@ def main() -> int:
     failures += 0 if ok else 1
 
     # a params: target that does not resolve is a GenError
-    bad_params = dict(TABLE_DEMO, params={"ghost": {"target": "nope.x"}})
+    bad_params: Patch = {**TABLE_DEMO, "params": {"ghost": {"target": "nope.x"}}}
     try:
         generate(bad_params)
         print("FAIL: unknown params: target not rejected")

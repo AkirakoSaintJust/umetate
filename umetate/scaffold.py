@@ -14,8 +14,8 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any
 
+from ._schema import PanelManifest, Patch, as_panel, as_patch
 from .generate import generate
 
 _ROOT = Path(__file__).resolve().parents[1]
@@ -27,7 +27,7 @@ int32_t ${out.audio} = ${in.in};
 """
 
 
-def _minimal_patch(name: str) -> dict[str, Any]:
+def _minimal_patch(name: str) -> Patch:
     return {
         "name": name,
         "voices": 4,
@@ -49,7 +49,7 @@ def _minimal_patch(name: str) -> dict[str, Any]:
     }
 
 
-def _minimal_panel(name: str) -> dict[str, Any]:
+def _minimal_panel(name: str) -> PanelManifest:
     return {
         "name": name,
         "home": "home",
@@ -66,12 +66,12 @@ def _minimal_panel(name: str) -> dict[str, Any]:
     }
 
 
-def _write(directory: Path, name: str, data: dict[str, Any]) -> None:
+def _write(directory: Path, name: str, data: object) -> None:
     directory.mkdir(parents=True, exist_ok=True)
     (directory / name).write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 
 
-def _builds(patch: dict[str, Any]) -> bool:
+def _builds(patch: Patch) -> bool:
     """Does the patch generate + compile on the host?"""
     src = generate(patch)
     with tempfile.TemporaryDirectory() as tmp:
@@ -140,8 +140,8 @@ def _patch(name: str, out: Path, template: str | None) -> int:
                 file=sys.stderr,
             )
             return 2
-        patch = json.loads((src / "patch.json").read_text(encoding="utf-8"))
-        panel = json.loads((src / "panel.json").read_text(encoding="utf-8"))
+        patch = as_patch(json.loads((src / "patch.json").read_text(encoding="utf-8")))
+        panel = as_panel(json.loads((src / "panel.json").read_text(encoding="utf-8")))
         patch["name"] = name
         panel["name"] = name
     else:

@@ -19,9 +19,9 @@ import shlex
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, cast
 
 from . import _emu, runner
+from ._schema import Lock, as_lock
 
 _ROOT = Path(__file__).resolve().parents[1]
 _ENV_LOCK = _ROOT / "env.lock"
@@ -32,11 +32,11 @@ _TC_DIR = f"{_VOLUME}/toolchain"
 _SDK_DIR = f"{_VOLUME}/sdk"
 
 
-def _lock() -> dict[str, Any]:
-    return cast(dict[str, Any], json.loads(_ENV_LOCK.read_text(encoding="utf-8")))
+def _lock() -> Lock:
+    return as_lock(json.loads(_ENV_LOCK.read_text(encoding="utf-8")))
 
 
-def _plan(args: argparse.Namespace, lock: dict[str, Any]) -> list[str]:
+def _plan(args: argparse.Namespace, lock: Lock) -> list[str]:
     """The actions `setup` will take (for `--dry-run` and the consent prompt)."""
     tc = lock["jieli_toolchain"]
     sdk = lock["ac79_sdk"]
@@ -57,7 +57,7 @@ def _plan(args: argparse.Namespace, lock: dict[str, Any]) -> list[str]:
     return steps
 
 
-def _emulator_steps(lock: dict[str, Any]) -> list[str]:
+def _emulator_steps(lock: Lock) -> list[str]:
     """The fm1-emu (host) actions, for the plan."""
     commit = lock["fm1_emu"]["commit"][:12]
     return [
@@ -67,7 +67,7 @@ def _emulator_steps(lock: dict[str, Any]) -> list[str]:
     ]
 
 
-def _script(args: argparse.Namespace, lock: dict[str, Any]) -> str:
+def _script(args: argparse.Namespace, lock: Lock) -> str:
     """The POSIX script the writable container runs (fetch + verify + install)."""
     tc = lock["jieli_toolchain"]
     sdk = lock["ac79_sdk"]
@@ -150,7 +150,7 @@ def _ensure_rust() -> None:
         raise SystemExit("setup: rust installed but cargo not found")
 
 
-def _ensure_checkout(lock: dict[str, Any]) -> None:
+def _ensure_checkout(lock: Lock) -> None:
     """Clone fm1-emu at the pinned commit (recurse submodules) into .tools/fm1-emu."""
     source = lock["fm1_emu"]["source"]
     commit = lock["fm1_emu"]["commit"]
@@ -177,7 +177,7 @@ def _ensure_checkout(lock: dict[str, Any]) -> None:
     )
 
 
-def _build_emulator(lock: dict[str, Any]) -> None:
+def _build_emulator(lock: Lock) -> None:
     """`cargo build --release -p fm1-emu -p fm1-live` (the batch runner + the GUI)."""
     cargo = _emu.find_cargo()
     if cargo is None:
@@ -189,7 +189,7 @@ def _build_emulator(lock: dict[str, Any]) -> None:
     subprocess.run(cmd, cwd=_emu.EMU_DIR, check=True)
 
 
-def _run_emulator(lock: dict[str, Any]) -> None:
+def _run_emulator(lock: Lock) -> None:
     """Install Rust, fetch + build fm1-emu (idempotent)."""
     _ensure_rust()
     _ensure_checkout(lock)

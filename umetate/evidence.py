@@ -10,10 +10,10 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from collections.abc import Mapping
 from enum import StrEnum
 from pathlib import Path
-from typing import Any
+
+from ._schema import EvidenceMatrix, as_evidence
 
 
 class Status(StrEnum):
@@ -39,17 +39,14 @@ class Layer(StrEnum):
     RELEASE = "release"
 
 
-def validate(matrix: Mapping[str, Any]) -> list[str]:
+def validate(matrix: EvidenceMatrix) -> list[str]:
     """Validate an evidence matrix (`{"layers": [{"layer", "status", "detail"}]}`).
 
     Returns the list of errors (empty = valid). `blocked`/`not-run` are never `pass`.
     """
-    layers = matrix.get("layers")
-    if not isinstance(layers, list):
-        return ["'layers' must be a list"]
     errors: list[str] = []
     seen: set[str] = set()
-    for i, entry in enumerate(layers):
+    for i, entry in enumerate(matrix["layers"]):
         if not isinstance(entry, dict):
             errors.append(f"layers[{i}]: not an object")
             continue
@@ -77,16 +74,14 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        matrix = json.loads(args.matrix.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+        matrix = as_evidence(json.loads(args.matrix.read_text(encoding="utf-8")))
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
         print(f"evidence: cannot read {args.matrix}: {exc}", file=sys.stderr)
         return 1
 
     errors = validate(matrix)
     if args.strict:
-        present = {
-            e.get("layer") for e in matrix.get("layers", []) if isinstance(e, dict)
-        }
+        present = {e.get("layer") for e in matrix["layers"] if isinstance(e, dict)}
         for layer in Layer:
             if layer.value not in present:
                 errors.append(f"missing layer {layer.value!r}")
@@ -95,7 +90,7 @@ def main(argv: list[str] | None = None) -> int:
         for error in errors:
             print(f"evidence: {error}", file=sys.stderr)
         return 1
-    print(f"evidence: {args.matrix} valid ({len(matrix.get('layers', []))} layers)")
+    print(f"evidence: {args.matrix} valid ({len(matrix['layers'])} layers)")
     return 0
 
 

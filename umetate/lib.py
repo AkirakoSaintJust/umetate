@@ -9,6 +9,8 @@ import json
 import sys
 from pathlib import Path
 
+from ._schema import as_macro, as_node_manifest
+
 _ROOT = Path(__file__).resolve().parents[1]
 _NODES = _ROOT / "modules" / "nodes"
 _MACROS = _ROOT / "modules" / "macros"
@@ -19,7 +21,9 @@ def _list_nodes() -> list[str]:
     lines: list[str] = []
     for manifest in sorted(_NODES.glob("*/node.json")):
         name = manifest.parent.name
-        summary = json.loads(manifest.read_text(encoding="utf-8")).get("summary", "")
+        summary = as_node_manifest(
+            json.loads(manifest.read_text(encoding="utf-8"))
+        ).get("summary", "")
         lines.append(f"node     {name:<12} {summary}")
     return lines
 
@@ -28,7 +32,9 @@ def _list_macros() -> list[str]:
     lines: list[str] = []
     for manifest in sorted(_MACROS.glob("*/macro.json")):
         name = manifest.parent.name
-        summary = json.loads(manifest.read_text(encoding="utf-8")).get("summary", "")
+        summary = as_macro(json.loads(manifest.read_text(encoding="utf-8"))).get(
+            "summary", ""
+        )
         lines.append(f"macro    {name:<12} {summary}")
     return lines
 

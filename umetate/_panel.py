@@ -11,9 +11,9 @@ an unknown name is a GenError, never a silently-wrong table.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any
 
 from ._ir import GenError, to_c_identifier
+from ._schema import Context, PanelBinding, PanelManifest, Widget
 
 # ---- the fixed input-source vocabulary (ui.h) ----
 _SOURCES = {
@@ -88,18 +88,18 @@ _WIDGETS = {
 
 
 def generate_panel(
-    panel: Mapping[str, Any], param_ids: Mapping[str, int] | None = None
+    panel: PanelManifest, param_ids: Mapping[str, int] | None = None
 ) -> str:
     """Compile a panel.json dict into the generated `panel.h` C source.
 
     `param_ids` (optional) maps a param name to its DSP `set_param` id; when given,
     the panel's `P_x` enum shares that id space, so a knob writes the right param.
     """
-    name = str(panel["name"])
-    contexts = {str(k): v for k, v in dict(panel["contexts"]).items()}
+    name = panel["name"]
+    contexts = panel["contexts"]
     ctx_names = list(contexts.keys())
     ctx_ids = {n: i for i, n in enumerate(ctx_names)}
-    ids = {str(k): int(v) for k, v in dict(param_ids or {}).items()}
+    ids = dict(param_ids or {})
     params: dict[str, int] = {}
 
     def param_id(pname: str) -> int:
@@ -140,34 +140,34 @@ def generate_panel(
     def cstr(value: str | None) -> str:
         return f'"{value}"' if value else "0"
 
-    def binding_line(b: Mapping[str, Any]) -> str:
-        source = source_expr(str(b["source"]))
-        behavior = _BEHAVIORS.get(str(b.get("behavior", "absolute")), "UI_ABS")
-        if b.get("target"):
-            kind, target = "UI_BIND_PARAM", param_sym(str(b["target"]))
+    def binding_line(b: PanelBinding) -> str:
+        source = source_expr(b["source"])
+        behavior = _BEHAVIORS.get(b.get("behavior", "absolute"), "UI_ABS")
+        target = b.get("target")
+        if target:
+            kind, param = "UI_BIND_PARAM", param_sym(target)
             action, arg = "0", "0"
         else:
+            action_name = b["action"]
             kind = "UI_BIND_ACTION"
-            target = "0"
-            action = action_expr(str(b["action"]))
-            arg = arg_expr(
-                str(b.get("arg")) if b.get("arg") is not None else None,
-                str(b["action"]),
-            )
-        return f"    {{ {kind}, {source}, {target}, {action}, {arg}, {behavior}, 0 }},"
+            param = "0"
+            action = action_expr(action_name)
+            arg = arg_expr(b.get("arg"), action_name)
+        return f"    {{ {kind}, {source}, {param}, {action}, {arg}, {behavior}, 0 }},"
 
-    def widget_line(w: Mapping[str, Any]) -> str:
-        typ = _WIDGETS.get(str(w["type"]))
+    def widget_line(w: Widget) -> str:
+        typ = _WIDGETS.get(w["type"])
         if typ is None:
             raise GenError(f"unknown widget type {w['type']!r}")
-        row = int(w.get("row", 0))
-        col = int(w.get("col", 0))
-        span = int(w.get("span", 1))
-        param = param_sym(str(w["param"])) if w.get("param") else "UI_NO_PARAM"
+        row = w.get("row", 0)
+        col = w.get("col", 0)
+        span = w.get("span", 1)
+        wparam = w.get("param")
+        param = param_sym(wparam) if wparam else "UI_NO_PARAM"
         text = cstr(w.get("text"))
         unit = cstr(w.get("unit"))
         fmt = cstr(w.get("fmt"))
-        items = [str(i) for i in w.get("items", [])]
+        items = w.get("items", [])
         if items:
             items_field = (
                 "(const char *const[]){" + ", ".join(f'"{i}"' for i in items) + "}"
@@ -180,17 +180,20 @@ def generate_panel(
         )
 
     # ---- pre-pass: assign param ids (widgets, then bindings) ----
-    for ctx in contexts.values():
-        for page in ctx.get("pages", []):
+    for context in contexts.values():
+        for page in context.get("pages", []):
             for w in page.get("widgets", []):
-                if w.get("param"):
-                    param_id(str(w["param"]))
-        for b in ctx.get("bindings", []):
-            if b.get("target"):
-                param_id(str(b["target"]))
+                wparam = w.get("param")
+                if wparam:
+                    param_id(wparam)
+        for b in context.get("bindings", []):
+            target = b.get("target")
+            if target:
+                param_id(target)
     for b in panel.get("global", []):
-        if b.get("target"):
-            param_id(str(b["target"]))
+        target = b.get("target")
+        if target:
+            param_id(target)
 
     lines = [
         "/* SPDX-License-Identifier: GPL-3.0-only",
@@ -256,7 +259,7 @@ def generate_panel(
     lines.append("};")
     lines.append("")
 
-    home = str(ctx_ids[str(panel.get("home", "home"))])
+    home = str(ctx_ids[panel.get("home", "home")])
     n_params = (
         (max(ids.values()) + 1 if ids else 0) if param_ids is not None else len(params)
     )
@@ -270,7 +273,7 @@ def generate_panel(
 
 
 def _referenced_params(
-    panel: Mapping[str, Any], contexts: Mapping[str, Any]
+    panel: PanelManifest, contexts: Mapping[str, Context]
 ) -> list[str]:
     """The distinct param names the panel references, in first-seen order."""
     refs: list[str] = []
@@ -282,12 +285,15 @@ def _referenced_params(
     for ctx in contexts.values():
         for page in ctx.get("pages", []):
             for w in page.get("widgets", []):
-                if w.get("param"):
-                    note(str(w["param"]))
+                wparam = w.get("param")
+                if wparam:
+                    note(wparam)
         for b in ctx.get("bindings", []):
-            if b.get("target"):
-                note(str(b["target"]))
+            target = b.get("target")
+            if target:
+                note(target)
     for b in panel.get("global", []):
-        if b.get("target"):
-            note(str(b["target"]))
+        target = b.get("target")
+        if target:
+            note(target)
     return refs

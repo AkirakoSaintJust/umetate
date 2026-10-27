@@ -45,7 +45,8 @@
           "additionalProperties": false,
           "properties": {
             "rate": { "enum": ["event", "control", "audio"] },
-            "format": { "enum": ["q15", "q16", "q32", "phase"] }
+            "format": { "enum": ["q15", "q16", "q32", "phase"] },
+            "default": { "type": "string", "description": "a C expression for an unconnected input (e.g. voice_gate[v])" }
           }
         }
       ]

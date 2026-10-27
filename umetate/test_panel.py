@@ -16,15 +16,15 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any
 
 from ._ir import GenError
 from ._panel import generate_panel
+from ._schema import PanelManifest, as_panel
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def _compile(panel: dict[str, Any]) -> tuple[bool, str]:
+def _compile(panel: PanelManifest) -> tuple[bool, str]:
     """Compile the generated panel.h against ui.h (object check only)."""
     src = generate_panel(panel)
     with tempfile.TemporaryDirectory() as tmp:
@@ -52,7 +52,9 @@ def _compile(panel: dict[str, Any]) -> tuple[bool, str]:
 
 def main() -> int:
     failures = 0
-    panel = json.loads((ROOT / "firmware" / "panel.json").read_text(encoding="utf-8"))
+    panel = as_panel(
+        json.loads((ROOT / "firmware" / "panel.json").read_text(encoding="utf-8"))
+    )
     src = generate_panel(panel)
 
     # determinism: the checked-in header is exactly what panel.json produces
@@ -70,7 +72,7 @@ def main() -> int:
     )
     failures += 0 if ok else 1
 
-    bad: dict[str, Any] = {
+    bad: PanelManifest = {
         "name": "bad",
         "contexts": {
             "home": {"pages": [{"id": "home", "widgets": []}]},
@@ -85,7 +87,7 @@ def main() -> int:
         print(f"ok: unknown action rejected ({exc})")
 
     # generate_panel(panel, param_ids) shares the DSP set_param id space
-    bound = {
+    bound: PanelManifest = {
         "name": "demo",
         "contexts": {
             "home": {

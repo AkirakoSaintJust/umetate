@@ -13,9 +13,10 @@ import argparse
 import sys
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, TextIO, cast
+from typing import TextIO
 
 from ._installer import load_installer
+from ._schema import Installer
 
 # §8 gates 4/5: the named recovery routes (docs/platform-facts.md §5.4).
 _ROUTES = (
@@ -25,7 +26,7 @@ _ROUTES = (
 )
 
 
-def _verify(fm1: Any, path: Path) -> tuple[str, str] | None:
+def _verify(fm1: Installer, path: Path) -> tuple[str, str] | None:
     """Verify a package's identity + CRC; return (product, model) or None."""
     try:
         raw = path.read_bytes()
@@ -33,7 +34,7 @@ def _verify(fm1: Any, path: Path) -> tuple[str, str] | None:
         print(f"flash: cannot read {path}: {exc}", file=sys.stderr)
         return None
     try:
-        product = str(fm1.product_of(raw))
+        product = fm1.product_of(raw)
         image, _blocks = fm1.deinterleave(raw)
         damage = fm1.package_damage(image)
     except Exception as exc:
@@ -42,12 +43,12 @@ def _verify(fm1: Any, path: Path) -> tuple[str, str] | None:
     if damage is not None:
         print(f"flash: damaged package: {damage}", file=sys.stderr)
         return None
-    return product, str(fm1.model_of(product))
+    return product, fm1.model_of(product)
 
 
 def flash(
     argv: list[str] | None = None,
-    backend: Any = None,
+    backend: object | None = None,
     out: TextIO = sys.stdout,
     ask: Callable[[str], bool] | None = None,
 ) -> int:
@@ -86,7 +87,7 @@ def flash(
         install_argv += ["--yes"]
     if ask is None:
         ask = fm1.ask_tty  # the interactive confirmation (§8 gate 6)
-    return cast(int, fm1.main(install_argv, backend=backend, out=out, ask=ask))
+    return fm1.main(install_argv, backend=backend, out=out, ask=ask)
 
 
 def main(argv: list[str] | None = None) -> int:

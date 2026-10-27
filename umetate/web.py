@@ -20,11 +20,10 @@ import shutil
 import socketserver
 import subprocess
 import sys
-from collections.abc import Mapping
 from pathlib import Path
-from typing import Any
 
 from . import runner
+from ._schema import Patch, as_patch
 from .generate import generate, generate_tables
 
 _ROOT = Path(__file__).resolve().parents[1]
@@ -232,7 +231,7 @@ def _emcc_args(name: str, host: bool, out: Path) -> list[str]:
     ]
 
 
-def build(patch: Mapping[str, Any], out: Path, name: str) -> int:
+def build(patch: Patch, out: Path, name: str) -> int:
     """Generate + emscripten-compile `dsp.c` -> `dsp.wasm`, write the harness.
 
     Returns 0 on success (dsp.wasm is standalone, no import section).
@@ -343,12 +342,12 @@ def build_main(argv: list[str] | None = None) -> int:
         print(f"web-build: {args.patch} not found", file=sys.stderr)
         return 1
     try:
-        patch = json.loads(args.patch.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+        patch = as_patch(json.loads(args.patch.read_text(encoding="utf-8")))
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
         print(f"web-build: cannot read {args.patch}: {exc}", file=sys.stderr)
         return 1
 
-    name = str(patch["name"]).replace("-", "_").replace(".", "_")
+    name = patch["name"].replace("-", "_").replace(".", "_")
     print(f"web-build: {name} -> {args.out}")
     return build(patch, args.out, name)
 

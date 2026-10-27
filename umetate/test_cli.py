@@ -15,10 +15,11 @@ import sys
 import tempfile
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from types import ModuleType
 
 import umetate.cli as cli
 from umetate import __version__
+from umetate._schema import EvidenceMatrix
 
 _Tests = list[tuple[str, Callable[[], None]]]
 
@@ -139,7 +140,7 @@ def _emu_paths() -> None:
 def _evidence_validates() -> None:
     from . import evidence
 
-    good = {
+    good: EvidenceMatrix = {
         "layers": [
             {"layer": "source", "status": "pass", "detail": "x"},
             {"layer": "device", "status": "blocked", "detail": "x"},
@@ -147,7 +148,7 @@ def _evidence_validates() -> None:
     }
     assert evidence.validate(good) == []
     assert evidence.validate({"layers": [{"layer": "wobble", "status": "pass"}]})
-    dup = {
+    dup: EvidenceMatrix = {
         "layers": [
             {"layer": "source", "status": "pass", "detail": "x"},
             {"layer": "source", "status": "blocked", "detail": "x"},
@@ -167,7 +168,7 @@ def _wasm_import_parser() -> None:
 
 
 def _synthetic_package(
-    fm1: Any, product: str = "FM-1_900", size: int = 0x2000
+    fm1: ModuleType, product: str = "FM-1_900", size: int = 0x2000
 ) -> bytes:
     """A valid 20-block .fwsc (as fm1_install's own test builds it)."""
     img = bytearray((i * 7) & 0xFF for i in range(size))
@@ -202,7 +203,7 @@ def _synthetic_package(
 class _WrongBackend:
     """A MIDI backend whose one device answers with a wrong identity."""
 
-    def __init__(self, fm1: Any, identity: str) -> None:
+    def __init__(self, fm1: ModuleType, identity: str) -> None:
         self._fm1 = fm1
         self._identity = identity.encode()
 
@@ -251,9 +252,9 @@ def _flash_gates() -> None:
     assert F.flash(["missing.fwsc", "--device", "--yes"]) == 2
 
     # a damaged/garbage package
-    from ._installer import load_installer
+    from ._installer import load_installer_module
 
-    fm1 = load_installer()
+    fm1 = load_installer_module()
     with tempfile.TemporaryDirectory() as tmp:
         bad = Path(tmp) / "bad.fwsc"
         bad.write_bytes(b"\x00" * 100)
@@ -270,9 +271,9 @@ def _flash_gates() -> None:
 def _flash_confirms() -> None:
     """The interactive path: a custom `ask` that says no cancels (no crash)."""
     from . import flash as F
-    from ._installer import load_installer
+    from ._installer import load_installer_module
 
-    fm1 = load_installer()
+    fm1 = load_installer_module()
     with tempfile.TemporaryDirectory() as tmp:
         ok = Path(tmp) / "ok.fwsc"
         ok.write_bytes(_synthetic_package(fm1))
