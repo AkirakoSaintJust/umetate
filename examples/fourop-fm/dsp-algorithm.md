@@ -196,9 +196,9 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
 ## Component: `fm_op` (the DX-style operator)
 
 - **Purpose:** one FM operator = `phasor → osc → dx_env → vca`, with 1-sample
-  self-feedback, a note-derived `ratio`, a per-op amplitude LFO (tremolo), and a
-  `pitch` input (the shared vibrato LFO). The complete DX-style building block; an
-  N-operator voice is N `fm_op` wired by the routing matrix (§`route`).
+  self-feedback, a q16 `ratio`, a per-op amplitude LFO (tremolo), a per-op `mute`
+  gate, and a `pitch` input (the shared vibrato LFO). The complete DX-style building
+  block; an N-operator voice is N `fm_op` wired by the routing matrix (§`route`).
 
 - **Algorithm** (fixed-point, exactly):
   ```
@@ -210,6 +210,7 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   sine   = fm1_sin_wave(phase, waveform)          (12-wave OPZ+OPL union)
   out    = sine · eg_t · level                     (Q15)
   feedback_prev = (out · feedback) delayed 1 sample
+  audio  = mute ? 0 : out                          (the per-op mute gate)
   ```
   `inc = note_to_inc(note) · ratio >> 16` (a q16 frequency multiplier, runtime —
   `ratio` 65536 = 1.0, 131072 = 2.0, 32768 = 0.5, so non-integer ratios stay in
@@ -218,7 +219,9 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   (`eg · (1 + lfo)`) so it is gated — no bleed during release. Pitch *scales the
   increment* (`inc · (1 + pitch/32768)`) — relative pitch, so vibrato is constant
   cents across the keyboard, and it too is silenced with the envelope (the output
-  is gated, not the phase).
+  is gated, not the phase). `mute` gates the operator's *output* (after the feedback
+  tap), so a muted operator contributes nothing to the routing while its feedback
+  loop still runs internally.
 
 - **Inputs / outputs:** `fm` (audio, external modulation), `pitch` (control, the
   shared vibrato LFO) → `audio` (audio).
@@ -226,8 +229,9 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
 - **Parameters** (mapped inward):
   `ratio` (q16, the frequency multiplier — runtime), `waveform` (uint32 0–11),
   `level` (q15, the FM index / output amplitude), `feedback` (q15,
-  self-modulation), `trem_rate` (q32, the per-op LFO increment), `trem_depth` (q15,
-  the tremolo depth), and the `dx_env` params `r1..r4, l1..l3`.
+  self-modulation), `mute` (uint32, 0/1 — the output gate), `trem_rate` (q32, the
+  per-op LFO increment), `trem_depth` (q15, the tremolo depth), and the `dx_env`
+  params `r1..r4, l1..l3`.
 
 - **Coefficients / precompute:** none; `inc` is note-derived at note-on (from the
   runtime `ratio`), the feedback is a `delay1` register, the LFO is a control-rate

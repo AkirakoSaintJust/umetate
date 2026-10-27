@@ -156,6 +156,26 @@ LFO_TEST: Patch = {
     "global": {"nodes": [], "wires": []},
 }
 
+# the `mute` node: an oscillator gated by a runtime `mute` param (0 = pass, 1 = 0).
+MUTE_TEST: Patch = {
+    "name": "mute_test",
+    "voices": 1,
+    "params": {"m": {"target": "g.mute", "min": 0, "max": 1, "curve": "linear"}},
+    "voice": {
+        "nodes": [
+            {"id": "ph", "type": "phasor"},
+            {"id": "osc", "type": "osc"},
+            {"id": "g", "type": "mute"},
+        ],
+        "wires": [
+            {"from": "ph.phase", "to": "osc.phase"},
+            {"from": "osc.audio", "to": "g.audio"},
+        ],
+        "voice_out": "g.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
 SVF_WF: Patch = {
     "name": "svf_wf",
     "voices": 4,
@@ -712,6 +732,65 @@ def _wave_shapes() -> tuple[bool, str]:
         return run.returncode == 0, run.stdout.strip()
 
 
+_MUTE_HARNESS = """\
+#include <stdio.h>
+#include <stdint.h>
+void __NAME___dsp_reset(void);
+void __NAME___dsp_note_on(uint32_t note, uint32_t velocity);
+void __NAME___dsp_set_param(uint32_t id, int32_t value);
+void __NAME___dsp_render(int32_t *out, uint32_t frames);
+static int32_t out[1024];
+int main(void) {
+    __NAME___dsp_reset();
+    __NAME___dsp_note_on(69, 100);
+    __NAME___dsp_render(out, 512);
+    int64_t e = 0; for (int i = 0; i < 1024; i++) e += (int64_t)out[i] * out[i];
+    if (e < 1000000) { printf("FAIL: unmuted silent\\n"); return 1; }
+    __NAME___dsp_set_param(__MUTE_ID__, 1);
+    __NAME___dsp_render(out, 512);
+    int64_t t = 0; for (int i = 0; i < 1024; i++) t += (int64_t)out[i] * out[i];
+    if (t != 0) {
+        printf("FAIL: muted not silent (tail=%lld)\\n", (long long)t);
+        return 1;
+    }
+    printf("ok: mute gates the output\\n");
+    return 0;
+}
+"""
+
+
+def _mute_gates(patch: Patch) -> tuple[bool, str]:
+    """Generate + compile + run: the `mute` param silences the output."""
+    src = generate(patch)
+    mute_id = str(param_ids(patch)["g.mute"])
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        cname = patch["name"].replace("-", "_").replace(".", "_")
+        harness = _MUTE_HARNESS.replace("__NAME__", cname).replace(
+            "__MUTE_ID__", mute_id
+        )
+        (d / "harness.c").write_text(harness)
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            return False, "compile failed:\n" + proc.stderr
+        run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+        return run.returncode == 0, run.stdout.strip()
+
+
 def _goertzel(sig: list[int], freq: float, fs: float) -> float:
     """DFT magnitude at an arbitrary (possibly non-bin) frequency."""
     c = 2.0 * math.cos(2.0 * math.pi * freq / fs)
@@ -920,6 +999,10 @@ def main() -> int:
 
     ok, msg = _wave_shapes()
     print(("ok: " if ok else "FAIL: ") + (msg or "waveforms have the right shapes"))
+    failures += 0 if ok else 1
+
+    ok, msg = _mute_gates(MUTE_TEST)
+    print(("ok: " if ok else "FAIL: ") + (msg or "mute gates the output"))
     failures += 0 if ok else 1
 
     ok, msg = _sound(FM_OP)

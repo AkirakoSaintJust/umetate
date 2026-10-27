@@ -84,6 +84,7 @@
 | op1_level … op4_level | opN.vca.level | 0 | 32767 | linear | |
 | op1_waveform … op4_waveform | opN.osc.waveform | 0 | 11 | linear | |
 | op1_ratio … op4_ratio | opN.ph.inc_ratio | 32768 | 1048576 | linear | × |
+| op1_mute … op4_mute | opN.mute.mute | 0 | 1 | linear | |
 | op1_trem_rate … op4_trem_rate | opN.lfo.rate | 0 | 20000000 | log | |
 | op1_trem_depth … op4_trem_depth | opN.lfo.depth | 0 | 32767 | linear | |
 

@@ -13,6 +13,7 @@
   - `modules/nodes/route4/` — the general routing-matrix row mixer.
   - `modules/nodes/route/` — the 4-op FM router (one `algorithm` param, 4 rows).
   - `modules/nodes/lfo/` — the control-rate low-frequency oscillator.
+  - `modules/nodes/mute/` — the output gate (per-operator mute).
   - `modules/macros/fm_op/` — the operator (`macro.json`).
   - `examples/fourop-fm/{patch.json,panel.json,synth-brief.md,dsp-algorithm.md,code-structure.md,control-map.md,README.md}`.
 - **Modified**:
@@ -49,6 +50,9 @@ No hand-written `dsp.c`: `generate(patch)` emits `<synth>_dsp_*` from the patch
   `params { rate(q32), depth(q15) }`, `state { phase(phase) }`. `node.c`:
   `phase += rate * CONTROL_BLOCK` (the emitted macro) then `cv = fm1_sin(phase) ×
   depth`. Host test: `test_generate.py` `LFO_TEST` (oscillates, non-constant).
+- **`mute`** — `node.json`: `ins { audio }`, `outs { audio }`,
+  `params { mute(uint32) }`. `node.c`: `mute ? 0 : in`. Host test:
+  `test_generate.py` `MUTE_TEST` (`_mute_gates`: unmuted non-silent, muted silent).
 
 ### HAL helpers (`firmware/hal/fm1_math.h`)
 

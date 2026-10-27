@@ -1,0 +1,8 @@
+{
+  "name": "mute",
+  "summary": "Output gate: passes the input through, or outputs 0 when `mute` is set (a per-operator mute for auditioning the algorithm).",
+  "ins": { "audio": "audio" },
+  "outs": { "audio": "audio" },
+  "params": { "mute": "uint32" },
+  "state": {}
+}
