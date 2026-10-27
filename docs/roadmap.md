@@ -787,9 +787,16 @@ their phase. *Verified:* `pip install -e .`; `umetate --help` lists all commands
 `umetate status` parses the roadmap; `python3 -m umetate.test_cli` + `mypy --strict`
 + `ruff` green. **Layer: host.**
 
-**P3-2 — Env + build orchestration.** `setup`, `build`, `deep-check`, `inspect`.
-*Acceptance:* each has `--help`; `build`/`deep-check` never write a device; `--clock
-360|396` rejected; `--dsp float` stays opt-in. **Layer: host/target.**
+**P3-2 — Env + build orchestration.** — **done (host), blocked (target)** — `runner.py`
+(the persistent-container docker shim: `ensure_container`/`run`/`probe`, native
+`docker.exe` on Windows), `setup.py` (auto/manual toolchain+SDK fetch, version/hash
+verify vs `env.lock`, `--dry-run`/`--clock`), `build.py` (the target branch →
+`.fwsc`, wraps `cmake_target.py`, rejects `--clock 360|396`), `deep_check.py`
+(`--host` runs the host tests), `inspect.py` (the `.fwsc` reader). *Verified:* `mypy
+--strict` + `ruff` + `test_cli` green; `setup --dry-run` prints the plan; `build`
+reports `blocked` without the toolchain; `deep-check --host` runs the full host suite
+(DSP + UI + SMK-37) and passes. *Blocked:* the target build needs the JieLi
+toolchain (P1-2 `setup`). **Layer: host/target.**
 
 **P3-3 — `scaffold`/`lib`, `lint`, `fmt` + the param table.** `scaffold` generates a
 default node/macro/patch (or `--template` copies a shipped one); `lib list` shows the
