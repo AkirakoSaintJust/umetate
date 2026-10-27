@@ -646,7 +646,7 @@ per-dependency licences + the non-redistribution rule. **Layer: docs.**
 **Exit P0:** **met** — a reader names the toolkit, the firmware component, and the
 first command; identity and doc set are frozen.
 
-### Phase 1 — Docker image + volume (P1) — **done (local checkout)**
+### Phase 1 — Docker image + volume (P1) — **done**
 
 **P1-1 — Pinned Linux dev container.** — **done** (2026-10-26) — `docker/Dockerfile`
 (Emscripten 6.0.13 pinned), `.dockerignore`, `build.sh`, compose + `.env.example`.
@@ -654,13 +654,13 @@ first command; identity and doc set are frozen.
 `node`, `emcc`, Pillow all resolve; the firmware host test runs green inside it.
 **Layer: host.**
 
-**P1-2 — Target volume + setup.** — **done (obtained + hash-verified, local `.jieli/`)** —
-The JieLi Linux pi32v2 toolchain (`jieli-linux-toolchains-20260730.1`, SHA-256
-`a1545cdd…`) and the AC79 SDK (`AC79NN_SDK_V1.2.1_2023-12-13`) are downloaded and
-installed into the git-ignored `.jieli/`; the three SDK assets (`uboot.boot`,
-`cfg_tool.bin`, `cfg/eq_cfg_hw.bin`) hash-verify against `env.lock`, and `clang 4.0.1`
-runs. The `umetate setup` → Docker-volume flow (P3-2) is the remaining piece; for now
-the build points at `.jieli/` directly. **Layer: host.**
+**P1-2 — Target volume + setup.** — **done** — `umetate setup` installs the JieLi Linux
+pi32v2 toolchain (`jieli-linux-toolchains-20260730.1`, SHA-256 `a1545cdd…`, `clang
+4.0.1`) and the AC79 SDK (`AC79NN_SDK_V1.2.1_2023-12-13`) into the `umetate-target`
+volume at `/opt/jieli/toolchain` + `/opt/jieli/sdk`. The toolchain tarball SHA-256 and
+the three SDK assets (`uboot.boot`, `cfg_tool.bin`, `cfg/eq_cfg_hw.bin`) are verified
+against `env.lock`; `--force` accepts a mismatch; `--dry-run`/`--json` print the plan.
+A git-ignored `.jieli/` checkout remains as a per-checkout fallback. **Layer: host.**
 
 ### Phase 2 — RIB runtime + generator (P2) — **done (host), blocked (target/device)**
 
@@ -788,16 +788,20 @@ their phase. *Verified:* `pip install -e .`; `umetate --help` lists all commands
 `umetate status` parses the roadmap; `python3 -m umetate.test_cli` + `mypy --strict`
 + `ruff` green. **Layer: host.**
 
-**P3-2 — Env + build orchestration.** — **done (host), blocked (target)** — `runner.py`
-(the persistent-container docker shim: `ensure_container`/`run`/`probe`, native
-`docker.exe` on Windows), `setup.py` (auto/manual toolchain+SDK fetch, version/hash
-verify vs `env.lock`, `--dry-run`/`--clock`), `build.py` (the target branch →
-`.fwsc`, wraps `cmake_target.py`, rejects `--clock 360|396`), `deep_check.py`
-(`--host` runs the host tests), `inspect.py` (the `.fwsc` reader). *Verified:* `mypy
---strict` + `ruff` + `test_cli` green; `setup --dry-run` prints the plan; `build`
-reports `blocked` without the toolchain; `deep-check --host` runs the full host suite
-(DSP + UI + SMK-37) and passes. *Blocked:* the target build needs the JieLi
-toolchain (P1-2 `setup`). **Layer: host/target.**
+**P3-2 — Env + build orchestration.** — **done (host + target)** — `runner.py`
+(the persistent-container docker shim: `ensure_container`/`run`/`run_writable`/
+`probe`, native `docker.exe` on Windows), `setup.py` (auto/manual toolchain+SDK fetch,
+SHA-256 verify vs `env.lock`, smoke-test, `--dry-run`/`--clock`/`--force`), `build.py`
+(the target branch → `.fwsc`, wraps `cmake_target.py`, resolves the toolchain/SDK as
+`$JIELI_TOOLCHAIN`/`$AC79_SDK` → the `umetate-target` volume → the `.jieli/` checkout,
+rejects `--clock 360|396`), `deep_check.py` (`--host` runs the host tests),
+`inspect.py` (the `.fwsc` reader). *Verified:* `mypy --strict` + `ruff` + `test_cli`
+green; `setup --dry-run` prints the plan; `umetate setup --yes` downloads the
+toolchain (SHA-256 `a1545cdd…`), clones the SDK (`AC79NN_SDK_V1.2.1_2023-12-13`), and
+installs both into the `umetate-target` volume with all three SDK assets hash-verified;
+`umetate build` then builds from `/opt/jieli/toolchain` + `/opt/jieli/sdk` and produces
+`umetate-fm1-pro.fwsc` (FM-1_990) and `umetate-smk37-pro.fwsc` (SMK-37 Pro_990);
+`umetate quick-check` reports the TARGET layer as the volume. **Layer: host/target.**
 
 **P3-3 — `scaffold`/`lib`, `lint`, `fmt` + the param table.** — **done (host)** —
 `scaffold.py` (generate a node/macro/patch skeleton; `--template` copies a shipped

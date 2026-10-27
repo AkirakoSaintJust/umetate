@@ -11,11 +11,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
+from . import runner
 from .evidence import Layer, Status
 
 _ROOT = Path(__file__).resolve().parents[1]
@@ -73,14 +75,23 @@ def _probe() -> list[tuple[Layer, Status, str]]:
 
     # ---- everything above host is not probe-able without the toolchain/device ----
     out.append((Layer.BROWSER, Status.BLOCKED, "emscripten wasm (P4-1)"))
-    out.append(
-        (Layer.TARGET, Status.BLOCKED, "JieLi toolchain not set up (`umetate setup`)")
-    )
+    out.append((Layer.TARGET, *_target_layer()))
     out.append((Layer.EMULATOR, Status.BLOCKED, "fm1-emu (P4-2)"))
     out.append((Layer.TIMING, Status.NOT_RUN, "physical, device-only"))
     out.append((Layer.DEVICE, Status.BLOCKED, "no device connected"))
     out.append((Layer.RELEASE, Status.NOT_RUN, "release-only"))
     return out
+
+
+def _target_layer() -> tuple[Status, str]:
+    """The TARGET presence probe: env var, the volume, or the `.jieli/` checkout."""
+    if os.environ.get("JIELI_TOOLCHAIN"):
+        return Status.PASS, "$JIELI_TOOLCHAIN set"
+    if runner.probe().toolchain_volume:
+        return Status.PASS, "umetate-target volume present (toolchain + SDK)"
+    if (_ROOT / ".jieli" / "jieli-linux-toolchains-20260730.1").is_dir():
+        return Status.PASS, "local .jieli/ toolchain checkout"
+    return Status.BLOCKED, "JieLi toolchain not set up (`umetate setup`)"
 
 
 def _render(results: list[tuple[Layer, Status, str]]) -> str:

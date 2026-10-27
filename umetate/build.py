@@ -19,18 +19,40 @@ from pathlib import Path
 from . import runner
 
 _ROOT = Path(__file__).resolve().parents[1]
-# container-side paths (the runner mounts the repo at /work); the local .jieli/ install
-_TC_CONTAINER = "/work/.jieli/jieli-linux-toolchains-20260730.1"
-_SDK_CONTAINER = "/work/.jieli/sdk"
+# container-side paths: the runner mounts the repo at /work, the volume at /opt/jieli
+_TC_VOLUME = "/opt/jieli/toolchain"
+_SDK_VOLUME = "/opt/jieli/sdk"
+_TC_CHECKOUT = "/work/.jieli/jieli-linux-toolchains-20260730.1"
+_SDK_CHECKOUT = "/work/.jieli/sdk"
 
 
-def _toolchain_available() -> bool:
-    """Is a toolchain reachable (env var, the .jieli/ checkout, or the volume)?"""
-    if os.environ.get("JIELI_TOOLCHAIN"):
-        return True
+def _volume_populated() -> bool:
+    """Does the `umetate-target` volume hold the toolchain + SDK (`setup` ran)?"""
+    if not runner.probe().docker:
+        return (
+            Path(f"{_TC_VOLUME}/pi32v2/bin/clang").is_file()
+            and Path(f"{_SDK_VOLUME}/cpu/wl82/tools/uboot.boot").is_file()
+        )
+    return (
+        runner.run(["test", "-x", f"{_TC_VOLUME}/pi32v2/bin/clang"]) == 0
+        and runner.run(["test", "-f", f"{_SDK_VOLUME}/cpu/wl82/tools/uboot.boot"]) == 0
+    )
+
+
+def _resolve() -> tuple[str, str] | None:
+    """The (toolchain, sdk) container-side paths, or `None` when nothing is set up.
+
+    Precedence: explicit `$JIELI_TOOLCHAIN`/`$AC79_SDK`, then the `umetate-target`
+    volume (the canonical `setup` location), then the local `.jieli/` checkout.
+    """
+    tc_env, sdk_env = os.environ.get("JIELI_TOOLCHAIN"), os.environ.get("AC79_SDK")
+    if tc_env and sdk_env:
+        return tc_env, sdk_env
+    if _volume_populated():
+        return _TC_VOLUME, _SDK_VOLUME
     if (_ROOT / ".jieli" / "jieli-linux-toolchains-20260730.1").is_dir():
-        return True
-    return runner.probe().toolchain_volume
+        return _TC_CHECKOUT, _SDK_CHECKOUT
+    return None
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -51,15 +73,14 @@ def main(argv: list[str] | None = None) -> int:
     if args.model != "pro" and args.board != "smk37":
         parser.error("non-pro models require --board smk37")
 
-    if not _toolchain_available():
+    resolved = _resolve()
+    if resolved is None:
         print(
             "build: blocked — JieLi toolchain not set up (`umetate setup`)",
             file=sys.stderr,
         )
         return 1
-
-    toolchain = os.environ.get("JIELI_TOOLCHAIN") or _TC_CONTAINER
-    sdk = os.environ.get("AC79_SDK") or _SDK_CONTAINER
+    toolchain, sdk = resolved
     profile = "performance" if args.profile == "perf" else args.profile
     cmd = [
         "python3",

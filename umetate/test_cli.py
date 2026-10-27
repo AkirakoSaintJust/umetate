@@ -115,6 +115,23 @@ def _lint_catches_violation() -> None:
     assert rc == 1, "a MAXP-bounds violation must fail lint --c"
 
 
+def _setup_dry_run_plans() -> None:
+    from . import setup
+
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        rc = setup.main(["--dry-run"])
+    assert rc == 0
+    out = buf.getvalue()
+    assert "extract to /opt/jieli/toolchain" in out
+    assert "verify SDK asset" in out
+
+    data_buf = io.StringIO()
+    with contextlib.redirect_stdout(data_buf):
+        assert setup.main(["--dry-run", "--json"]) == 0
+    assert "steps" in json.loads(data_buf.getvalue())
+
+
 def main() -> int:
     tests: _Tests = [
         ("no import side effects", _no_import_side_effects),
@@ -126,6 +143,7 @@ def main() -> int:
         ("lib list shows nodes + templates", _lib_lists),
         ("scaffold patch builds", _scaffold_builds),
         ("lint --c catches a MAXP violation", _lint_catches_violation),
+        ("setup --dry-run plans the install", _setup_dry_run_plans),
     ]
     failures = 0
     for name, test in tests:

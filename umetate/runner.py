@@ -74,6 +74,7 @@ def ensure_container() -> None:
                 "infinity",
             ],
             check=True,
+            stdout=subprocess.DEVNULL,
         )
         return
     running = subprocess.run(
@@ -95,6 +96,34 @@ def run(
     ensure_container()
     full = docker.split() + ["exec", "-w", cwd, CONTAINER] + cmd
     return subprocess.run(full, env=env).returncode
+
+
+def run_writable(cmd: list[str]) -> int:
+    """Run `cmd` in a throwaway container with `umetate-target` mounted read-write.
+
+    `umetate setup` is the only legitimate writer to the volume; the persistent
+    container (and every build) keeps it read-only. The repo is mounted at `/work`
+    so a `--toolchain/--sdk` path under the checkout stays visible.
+    """
+    docker = _docker()
+    if docker is None:
+        raise RuntimeError("docker not found; is Docker Desktop running?")
+    full = (
+        docker.split()
+        + [
+            "run",
+            "--rm",
+            "-v",
+            f"{_to_mount(REPO_ROOT)}:/work",
+            "-v",
+            "umetate-target:/opt/jieli",
+            "-w",
+            "/work",
+            IMAGE,
+        ]
+        + cmd
+    )
+    return subprocess.run(full).returncode
 
 
 def probe() -> HostProbe:
