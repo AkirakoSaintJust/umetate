@@ -84,6 +84,8 @@ def flash(
         install_argv += ["--port", args.port]
     if args.yes:
         install_argv += ["--yes"]
+    if ask is None:
+        ask = fm1.ask_tty  # the interactive confirmation (§8 gate 6)
     return cast(int, fm1.main(install_argv, backend=backend, out=out, ask=ask))
 
 

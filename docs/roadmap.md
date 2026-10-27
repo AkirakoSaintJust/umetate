@@ -405,7 +405,7 @@ umetate emu        [--board fm1|smk37] [--persist] [--midi NAME] [--check]   run
 umetate deep-check  [--host|--web|--safety|--skill|--links|--all]
 umetate inspect    PACKAGE                   inspect a .fwsc without a device
 umetate flash      PACKAGE [--port NAME] [--device] [--yes]   flash; identity + CRC + model checked; resumes a device in update mode
-umetate debrick    [--route app-rescue|update-loader|mask-rom] [--device]   recovery write (mask-rom: blocked, needs the USB_KEY dongle)
+umetate debrick    [--route app-rescue|update-loader|mask-rom]   name a recovery route + its procedure (mask-rom: blocked, needs the USB_KEY dongle)
 umetate scaffold   <node|macro|patch> --name NAME [--template T] [--out DIR]   generate a skeleton (optionally from a shipped template)
 umetate lib        [list]                     list the shipped nodes + templates (local only)
 umetate lint       [--c]                     C lint + static checks (bounds, ROM, MMIO, flash-busy)
@@ -1620,7 +1620,7 @@ shim; `generate.py` is a pure function.
 | `generate.py` | (internal) | patch + panel → `dsp.c` + `panel.h` (UI tables); `params.json` + `tables.c` are P3-3 |
 | `deep_check.py` | `deep-check` | host/web/safety/links/skill checks |
 | `inspect.py` | `inspect` | read a `.fwsc` (identity/CRC/model/damage) without a device |
-| `flash.py`/`debrick.py` | `flash`/`debrick` | the two device-writing commands (host-side, §8 gates) |
+| `flash.py`/`debrick.py` | `flash`/`debrick` | `flash` writes a `.fwsc` (§8 gates, wrong-model exits 6); `debrick` names the recovery routes (mask-rom blocked) |
 | `scaffold.py` | `scaffold node\|macro\|patch` | generate a skeleton; `--template` copies a shipped template |
 | `lib.py` | `lib list` | list the shipped nodes + templates (local only) |
 | `lint.py` / `fmt.py` | `lint --c` / `fmt` | the custom safety checks / clang-format |

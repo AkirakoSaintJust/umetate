@@ -9,6 +9,7 @@ loader. Pure data + pure functions; no side effects.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, NamedTuple
@@ -176,8 +177,18 @@ class CompiledGraph:
 
 
 def to_c_identifier(name: str) -> str:
-    """A patch/synth id (dots, hyphens) -> a C identifier (underscores)."""
-    return name.replace(".", "_").replace("-", "_")
+    """A patch/synth id (dots, hyphens) -> a C identifier (underscores).
+
+    The result must be a valid C identifier; anything else is a `GenError` (never a
+    silently-corrupt `.c`), so a crafted name cannot inject code into the output.
+    """
+    result = name.replace(".", "_").replace("-", "_")
+    if not _IDENTIFIER_RE.fullmatch(result):
+        raise GenError(f"{name!r} is not a valid C identifier")
+    return result
+
+
+_IDENTIFIER_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 
 
 def param_default(kind: str, value: str | None) -> int:

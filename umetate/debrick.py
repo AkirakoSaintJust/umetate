@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
-"""`umetate debrick` — name the recovery routes + prerequisites (docs §5.4, §8).
+"""`umetate debrick` — name the recovery routes and their actual procedures.
 
-A route selector, not a writer: each route's prerequisite is stated, and `mask-rom`
-is `blocked` (the USB_KEY dongle is at hand but pending a USB solder). The actual
-writes are `umetate flash` (update loader) or the firmware's own boot guard.
+A route dispatcher, not a writer: `app-rescue`/`update-loader` recover through the
+boot chord + `umetate flash` (the `.fwsc` installer), so there is no separate host
+write here. The one distinct recovery write — `mask-rom`, a raw-NOR write over the
+USB_KEY dongle + `jl-uboot-tool` — is `blocked` (the dongle needs a USB solder).
 """
 
 from __future__ import annotations
@@ -12,17 +13,19 @@ from __future__ import annotations
 import argparse
 import sys
 
+# route -> (the actual procedure, blocked)
 _ROUTES: dict[str, tuple[str, bool]] = {
     "app-rescue": (
-        "app-level USB rescue (OCT- at boot, or OCT- + OCT+ 5 s while running)",
+        "boot the chord (OCT- at boot, or OCT- + OCT+ held 5 s) to enter USB rescue, "
+        "then `umetate flash`",
         False,
     ),
     "update-loader": (
-        "update loader (ota-<identity>): resumes via `umetate flash`",
+        "the device is in update mode; `umetate flash` finishes the interrupted write",
         False,
     ),
     "mask-rom": (
-        "mask-ROM UBOOT — needs the USB_KEY dongle + jl-uboot-tool",
+        "raw-NOR write via the USB_KEY dongle + jl-uboot-tool (uboot.boot + app.bin)",
         True,
     ),
 }
@@ -31,25 +34,21 @@ _ROUTES: dict[str, tuple[str, bool]] = {
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="umetate debrick", description=__doc__)
     parser.add_argument("--route", choices=tuple(_ROUTES), help="name one route")
-    parser.add_argument("--device", action="store_true", help="the actual write")
     args = parser.parse_args(argv)
 
     if args.route is None:
-        for route, (prereq, blocked) in _ROUTES.items():
+        for route, (procedure, blocked) in _ROUTES.items():
             mark = " [blocked]" if blocked else ""
-            print(f"debrick: {route:<14}{mark}  {prereq}")
+            print(f"debrick: {route:<14}{mark}  {procedure}")
         return 0
 
-    prereq, blocked = _ROUTES[args.route]
+    procedure, blocked = _ROUTES[args.route]
+    print(f"debrick: {args.route} — {procedure}")
     if blocked:
         print(
-            f"debrick: {args.route} is blocked — {prereq} (pending a USB solder)",
+            "debrick: mask-rom is blocked (the USB_KEY dongle needs a USB solder)",
             file=sys.stderr,
         )
-        return 1
-    print(f"debrick: {args.route} — {prereq}")
-    if not args.device:
-        print("debrick: pass --device to write hardware (§8)", file=sys.stderr)
         return 1
     return 0
 

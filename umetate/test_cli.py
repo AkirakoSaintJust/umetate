@@ -267,6 +267,26 @@ def _flash_gates() -> None:
         assert rc == 6
 
 
+def _flash_confirms() -> None:
+    """The interactive path: a custom `ask` that says no cancels (no crash)."""
+    from . import flash as F
+    from ._installer import load_installer
+
+    fm1 = load_installer()
+    with tempfile.TemporaryDirectory() as tmp:
+        ok = Path(tmp) / "ok.fwsc"
+        ok.write_bytes(_synthetic_package(fm1))
+        # a matching identity: find() succeeds, then the confirmation is asked
+        backend = _WrongBackend(fm1, "FM-1_900")
+        rc = F.flash(
+            [str(ok), "--device"],
+            backend=backend,
+            out=io.StringIO(),
+            ask=lambda _p: False,
+        )
+        assert rc == 1  # cancelled (the ask was threaded, not None)
+
+
 def _debrick_routes() -> None:
     from . import debrick
 
@@ -296,6 +316,7 @@ def main() -> int:
         ("evidence validates a matrix", _evidence_validates),
         ("the wasm import parser counts imports", _wasm_import_parser),
         ("flash gates + wrong-model exit 6", _flash_gates),
+        ("flash asks before writing", _flash_confirms),
         ("debrick names the routes", _debrick_routes),
     ]
     failures = 0

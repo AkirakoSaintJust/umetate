@@ -10,13 +10,15 @@ firmware derived from Dinghy/Felucca.
 
 ## The seven components
 
-1. **CLI (`umetate`)** — one entry point: `doctor`, `setup`, `build`, `check`,
-   `package`, `install`, `flash`, `debrick`, `scaffold node|macro|patch`, `add`,
-   `lib`, `lint`, `fmt`, `web-build`, `web-serve`, `status`, `help`.
+1. **CLI (`umetate`)** — one entry point: `quick-check`, `setup`, `build`, `emu`,
+   `deep-check`, `inspect`, `flash`, `debrick`, `scaffold node|macro|patch`, `lib`,
+   `lint`, `fmt`, `web-build`, `web-serve`, `evidence`, `status`, `version`, `help`.
 2. **Skill: development** — an agentic design → build loop (offline references).
 3. **Skill: safety** — threat model, attack surfaces, device-write gates.
 4. **Docker image + volume** — a pinned Linux container; the JieLi toolchain lives
-   in a Docker volume at `/opt/jieli` (vendor-terms compliance).
+   in a Docker volume at `/opt/jieli` (vendor-terms compliance). It is mounted
+   **read-only** for every build/test, and **read-write only for `umetate setup`**
+   (the one command that installs the toolchain + SDK).
 5. **RIB starter firmware** — dual-core by default, FPU opt-in, SMK-37 out of the
    box, hardware-accelerated DSP, the `app_audio`/`app_main` contract.
 6. **Tutorial** ([`docs/tutorial.md`](docs/tutorial.md)) — the learner path.
@@ -29,9 +31,9 @@ and the **WASM parity lab**.
 
 ```sh
 python -m pip install -e .
-umetate doctor            # verify the environment per evidence layer (read-only)
-umetate setup --dry-run   # see exactly what would be installed (opt-in)
-umetate check             # run the host-side checks
+umetate quick-check      # verify the environment per evidence layer (read-only)
+umetate setup --dry-run  # see exactly what would be installed (opt-in)
+umetate deep-check       # run the host-side checks
 ```
 
 ## Repository map
@@ -40,7 +42,7 @@ umetate check             # run the host-side checks
 umetate/       the CLI (Python)
 firmware/      RIB starter firmware (hardware layer + reference engine)
 modules/       the node library (reviewed DSP primitives)
-web-synth/     the WASM parity lab
+web-synth/     the WASM parity lab (built into build/web/ by `web-build`)
 skills/        the two installable skills
 templates/     fillable forms + the four schemas
 docker/        the pinned build container
