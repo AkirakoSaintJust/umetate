@@ -62,10 +62,15 @@ float poly_blep(float t, float dt) {          /* t = phase in [0,1), dt = inc */
     return 0.0f;
 }
 /* saw:    out = 2*t - 1 - poly_blep(t, dt);
-   square: out = (t < 0.5f ? 1 : -1) + poly_blep(t, dt) - poly_blep(fract(t+0.5f), dt); */
+   square: out = (t < 0.5f ? 1 : -1) + poly_blep(t, dt) - poly_blep(fract(t+0.5f), dt);
+   pulse:  the same two-BLEP square, but the second BLEP sits at `width` (0..1) — PWM;
+   triangle: a polyBLEP'd square through a leaky integrator (y += k·(x−y)), one extra state. */
 ```
 
-The fixed-point equivalent keeps the same polynomial in Q15/Q16. This is the
+The fixed-point equivalent keeps the same polynomial in Q15/Q16. One subtlety for
+fixed point: `poly_blep` divides by `dt` (`t /= dt`), which is a 32/32 divide —
+hoist `1/dt` to **note-on** (it's constant per note), so the per-sample cost is a
+multiply, not a divide. This is the
 default "analog-ish" oscillator; the polynomial is the only magic.
 
 ### 2.3 Wavetable morphing (MI `VariableSawOscillator`)
@@ -91,27 +96,30 @@ bend). In umetate this is `osc` + a `phase_map` table — **data, not a new node
 
 ### 2.5 Vector Phaseshaping (dynamic phase distortion)
 
-VPS (Lazzarini & Timoney, DAFx-11 — the technique behind FAW's Circle²) extends
-classic PD by making **both** the distortion depth `d` and the bending point `v`
-modulatable. Classic PD only bends the transfer along the x-axis; VPS opens the
-y-axis too. Concretely, the transfer function is **two sine segments "glued"
-together at the bending point `v`**, with `d` controlling how far the segments
-differ — so the waveform morphs in a 2D `(d, v)` space, both ordinary (modulatable)
-params:
+VPS (Kleimola, Lazzarini, Timoney & Välimäki, DAFx-11 — the technique behind FAW's
+Circle²) extends classic PD with three changes: (1) the inflection point is a
+**2-D vector `p = (d, v)`** — `d` is the x-position of the bend and `v` its
+y-position, where classic PD *fixes* `v = 0.5`; (2) the transfer has **multiple
+inflection points** (piecewise); (3) the inflection points can be **modulated at
+audio rate**. So VPS turns the *static* phase-distortion curve into a *dynamic,
+multi-breakpoint* phase shaper:
 
 ```c
-/* phase 0..1 → a "bent" sine: segments glued at v, depth d */
-uint32_t ph = phase >> (32 - LOG2_TF);        /* 0..1 index */
-uint32_t bend = glue(ph, v);                   /* the bend point, shaped by v */
-out = sin_table[(ph + d * shape(bend)) & MASK];/* d = distortion depth */
+/* phase p in [0,1) -> a "bent" phase, then the sine. One inflection point (d,v):
+   classic PD is the v = 0.5 fixed case; VPS frees both and adds breakpoints. */
+/* control rate: s0 = v/d, s1 = (1-v)/(1-d)  — the two segment slopes, Q16 */
+uint32_t p = phase >> 16;                                   /* Q16, 0..1 */
+uint32_t q = p < d ? (p * s0) >> 16 : v + (((p - d) * s1) >> 16);
+out = fm1_sin(q << 16);                                     /* shaped phase -> sine */
 ```
 
 The essential point for umetate: VPS turns the *static* `phase_map` table into a
-**parameterized phase shaper** — the transfer depends on `d` and `v`, which are
+**parameterized phase shaper** — the transfer depends on `(d, v)`, which are
 ordinary params (modulatable through a `<param>_mod` input). This is the one place
 the "shape = data" rule needs a nuance: a *static* shape is a table, a *dynamic*
-shape is a parameterized transfer (a node with `d`/`v` params, not a fixed table).
-The exact equations are in the paper (Lazzarini & Timoney, DAFx-11); the FAW
+shape is a parameterized transfer (a macro/`osc` with `d`/`v` params, not a fixed
+table). The exact equations are in the paper (Kleimola, Lazzarini, Timoney &
+Välimäki, DAFx-11); the FAW
 write-up also stresses that dynamic phase shaping needs band-limiting (the §2.2
 polyBLEP care), which is why the VPS oscillators are built on §2.1/§2.2.
 
@@ -170,6 +178,33 @@ The fixes, in order:
 The one case where cache genuinely matters is a *morphing wavetable* (two tables
 cross-faded per sample): keep both tables small and in `.cpu1_rodata` and they both
 fit.
+
+### 2.9 Wavefolding (nonlinear waveshaping)
+
+A wavefolder is a **memoryless** non-linear transfer function — the input
+amplitude drives the fold, adding harmonics. Unlike a filter (stateful) or an
+oscillator (self-contained), it is a per-sample function of the input. Transfer
+functions (all fixed-point, no state):
+
+- **Sine fold** — `out = sin(π·gain·x)`: for Q15 `x`, scale `gain·x` to a Q32
+  phase and use `fm1_sin` (one LUT read + one multiply). The cheapest fold.
+- **Triangle fold** — fold `x` back into [−1,1] past the rails
+  (`out = 2·|2·(x·f + 0.25) − 1| − 1`-style); linear, no trig.
+- **Polynomial / Chebyshev** — `T_n(cos θ) = cos(nθ)`, so a weighted sum
+  `Σ c_n·T_n(x)` adds exact harmonics (T₃ = 4x³−3x, T₅ = 16x⁵−20x³+5x); a few
+  multiplies via Horner.
+- **Buchla 259** — five parallel op-amp folding stages + a dry path, summed; the
+  "timbre" knob controls the fold amount. Parallel stages = a weighted sum of
+  progressively-folded copies.
+
+The lesson: a wavefolder is **one node = one algorithm; the transfer function =
+data** (a shape enum or a Chebyshev-coefficient set). The node is the "apply the
+transfer" reader; the shape is a param.
+
+In umetate: a `wavefolder` node — `ins {audio}`, `params {amount (modulatable),
+shape (sine | triangle | cheby)}`, `outs {audio}`, no state. Sine-fold uses
+`fm1_sin`; polynomial folds use `fm1_madd_sat`/`fm1_sat_add32` (a fold can
+overrange).
 
 ---
 
@@ -247,6 +282,52 @@ Four one-pole stages in series + negative feedback from the last stage to the fi
 (the "ladder"): `stage1 += (in - stage4 * res) * g; stage2 += (stage1 - stage2) * g; …`.
 The classic character filter; `res` is the feedback, `g` the tan-based cutoff.
 
+### 4.5 Low-pass gate (vactrol)
+
+The Buchla 292 LPG couples a one-pole low-pass and a VCA, both driven by the
+**same** control — a vactrol (LED + LDR), whose non-linear decay is the character:
+
+- fast attack (~1–3 ms);
+- a "plucky" decay that is *not* a simple exponential — the LDR dims quickly then
+  slowly (its "memory"/"ring"), so the gate closes with a distinctive tail;
+- because cutoff and gain are coupled, the sound gets *quieter and darker
+  together* — the "woody" pluck.
+
+The vactrol response is usually modeled as a sum of two exponentials (fast LED +
+slow LDR) or a one-pole with a knee; MI *Streams* models it digitally (SHAPE = the
+vactrol on/off response times, MOD = damping — study its source for the exact
+curve, MIT-licensed; credit, don't copy).
+
+In umetate: an `lpg` **node** — `ins {audio, gate}`, `params {response (on/off
+time), damping}`, `outs {audio}`; state = one-pole + the vactrol envelope. It is
+*not* just `one_pole` + `env` as a macro: the vactrol envelope's non-linear decay
+plus the cutoff/gain coupling are the algorithm.
+
+### 4.6 Formant filter (vowel formants)
+
+A bank of band-pass filters at the vowel formant frequencies shapes a
+harmonically-rich source (saw/pulse) into a vowel. F1/F2 (and F3 for naturalness)
+are **data**:
+
+| Vowel | F1 | F2 | F3 |
+| --- | --- | --- | --- |
+| a (father) | 660–850 | 1610–1700 | 2400 |
+| i (heed) | 240–270 | 2300–2400 | 3000 |
+| u (boot) | 250–300 | 595–870 | 2250 |
+| e (bet) | 390–400 | 2000–2300 | 2550 |
+
+In umetate: a `formant` **macro** — 3–4 `svf` band-passes in parallel, a `vowel`
+param indexing an F1/F2/F3 `tables:` table. All fixed-point (N × `svf`). The Kawai
+K5000's "formant filter" is this idea.
+
+### 4.7 Comb filter
+
+A delay line with feedback (`out = in + fb·delay`) gives the comb response
+(peaks/notches at multiples of 1/delay). umetate's `delayN` node *is* the comb —
+it already has `time` and `fb` params (§6.9) and is the DAG cycle-breaker — so no
+new node: a "comb" is a short `delayN` with feedback, and flanger / chorus /
+resonator / Karplus–Strong are all `delayN` uses.
+
 ---
 
 ## 5. Spectral oscillators (IFFT additive)
@@ -310,3 +391,87 @@ frames) causes audible **zipper/stepping** on fast filter sweeps and LFOs, while
 **compile-time generator choice** (from the patch's modulation), and it can be
 coarser for a static patch. Sub-block control is the correct, cheap default —
 MI, Pd, and SC all do finer-than-audio-block control for exactly this reason.
+
+---
+
+## 8. Granulation (phase-granular, Xenakis-inspired)
+
+The one genuinely novel piece of the backlog. It is a **wavetable granulator**: a
+"phase map" (a `const` XIP table — any table, including one generated by the
+§5 `ifft`) is read in *slices* under stochastic control. No audio buffer, no `.pool`
+cost.
+
+### 8.1 The model
+
+- a **grain** = a phase interval `[p0, p0+length)` read at a rate (`pitch`);
+- `p0` (start), `length` (slice length, in **phase**), and `pitch` (read rate) are
+  all **params**, all **modulatable**;
+- the grain's *time* duration = `length / pitch` — a fixed phase-slice read faster
+  is higher *and* shorter (the "reading a tape faster" behavior), which is what
+  makes granulation feel organic;
+- the stochastic part is **separate nodes** (below), patched into those mod inputs.
+
+### 8.2 The pipeline order (the crux)
+
+Pitch modulation happens **before** the map; windowing **after**:
+
+```c
+per sample, per grain:
+    inc   = base_inc + pitch_mod(n);   /* (1) pitch mod — phase-domain, BEFORE the map */
+    p    += inc;                        /* advance the phase pointer */
+    w     = map[p];                     /* (2) sample the phase map (a table read) */
+    out  += w * window(progress);       /* (3) amplitude window — signal-domain, AFTER */
+```
+
+Pitch modulation *before* the map is pure phase/frequency modulation (one
+multiply-add, no resampling, no extra aliasing). Windowing *after* is the grain
+envelope — it must be **aligned to the grain**, so it needs the grain *progress*,
+which only the phase generator owns.
+
+### 8.3 The shape: three nodes, not a loop
+
+The window needs the grain progress, so the phase generator and the window cannot
+be one node that *loops* through an external oscillator (that would be a graph
+cycle, which the DAG generator rejects). Instead it is a linear chain:
+
+```text
+gran_phase.phase    ->  osc.phase             (any oscillator reads the map at the stochastic phase)
+gran_phase.progress ->  gran_window.progress  (the window is aligned to the grain)
+osc.audio           ->  gran_window.audio
+```
+
+- **`gran_phase`** (node): the stochastic slicer. Outs `phase` (Q32) and `progress`
+  (Q16, 0…1 within each grain). Params `p0`, `length`, `pitch`, `density`; all
+  modulatable. `progress = (phase − p0) / length` is **phase-based**, so it stays
+  correct even under per-sample pitch modulation (a grain ends exactly at
+  `p0 + length`, however the rate jitters). `p0` and `p0+length` wrap modulo the
+  map length (no overflow).
+- **`osc`** (existing): already has a `phase` input — this is exactly what it's for;
+  swap in `saw`, `fm_op`, or an `ifft`-generated table to change the grain timbre.
+- **`gran_window`** (node): `audio × window(progress)`, `window` ∈ {trapezoid,
+  Hann, rect}. A trapezoid is the cheapest (linear ramps, no `cos`); "genuinely
+  Xenakis" is the degenerate `rect` case (no windowing at all — he used abrupt
+  grains).
+
+### 8.4 The stochastic component (its own nodes)
+
+The "genuinely Xenakis" core is GENDYN (*Formalized Music*): a waveform is a
+polygon whose **breakpoints each do a bounded random walk** between ±32768
+barriers, with samples by **linear interpolation** between breakpoints. That is
+*already integer* (Q15 ±32767), so it fits the fixed-point baseline exactly. The
+stochastic engine is therefore control-rate nodes, patched into `gran_phase`'s
+mod inputs:
+
+- **`rand_walk`** — a bounded random walk (`x += step·(rand − ½)`, clamped to
+  `[lo, hi]`); Xenakis's barrier model.
+- **`distribution`** — a random draw per control tick (uniform / Gaussian /
+  Cauchy — Xenakis's ST/Free-Stochastic vocabulary).
+- **`drift`** — a low-passed random walk (slow wander).
+
+### 8.5 Fixed-point and cost
+
+`p0`/`length`/`pitch` Q32, map `const` XIP Q15, `progress` Q16, window Q15.
+Per-sample cost = active grains × (one add + one table read + one window multiply
++ one saturating accumulate); everything stochastic is block-rate. So a grain is
+~4 integer ops + 2 table reads, and the `.pool` budget is untouched (the map is
+XIP, the window is a table or a cheap ramp).
