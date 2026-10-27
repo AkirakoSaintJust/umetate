@@ -1,0 +1,151 @@
+# Synth brief — fourop-fm
+
+> One brief as the source of truth. `patch.json` + `panel.json` are the
+> translation of this brief; `dsp-algorithm.md` holds the math.
+
+## 1. Instrument and player
+
+- **Working name:** fourop-fm (a 4-operator Yamaha FM synth).
+- **Who plays it and in what setting:** a desktop/tabletop FM voice in the
+  OPZ/DX21 lineage — pads, bells, EPs, basses. Played from the keys or MIDI.
+- **What should it feel like to play:** immediate, bright-but-tameable; the
+  algorithm knob should be the headline gesture, the filter + wavefolder the
+  softening stage.
+- **Three reference sounds:** (1) a DX7-style E-piano (algorithm 4, two
+  2-operator stacks); (2) a clangorous bell (algorithm 0, deep stack + feedback);
+  (3) an additive organ pad (algorithm 7, all four carriers).
+- **Explicit non-goals:** no LFO (the OPZ's two are deferred), no patch
+  persistence/MIDI sysex, no effects beyond filter + wavefolder, no velocity
+  scaling (deferred; see README).
+
+## 2. Sound and voice architecture
+
+- **Synthesis method(s):** 4-operator phase-modulation FM, per-operator
+  self-feedback, 8 waveforms per operator (the OPZ bit trick), rate/level
+  envelopes.
+- **Polyphony and voice stealing:** 8 voices; oldest-steal on overflow.
+- **Pitch range and tuning:** 12-TET, full MIDI note range; per-op `ratio`
+  (note-derived, non-integer ratios stay in tune).
+- **Oscillators / operators / noise:** 4 operators, each `phasor → osc →
+  dx_env → vca` with 1-sample self-feedback (`fm_op` macro).
+- **Filter(s) and resonance:** one global `svf` low-pass, `q` = damping.
+- **Envelopes and velocity:** DX rate/level (`dx_env`, 4 rates + 3 levels); no
+  velocity scaling (deferred).
+- **Modulation:** the routing matrix (7 algorithms) selects which operator
+  phase-modulates which; feedback = self-modulation.
+- **Effects and output stage:** carrier sum → `svf` LP → `wavefolder` → master
+  `vca`.
+
+### 2.1 Voice architecture (the node/macro graph)
+
+- **Voice-zone graph** (8 voices): four `fm_op` instances `op1..op4`, four
+  `delay1` instances `d1..d4`, one `route` instance:
+  ```
+  op1.audio → d1.in      op2.audio → d2.in
+  op3.audio → d3.in      op4.audio → d4.in
+  d1.out → route.a   d2.out → route.b   d3.out → route.c   d4.out → route.d
+  route.mod2 → op2.fm   route.mod3 → op3.fm   route.mod4 → op4.fm
+  voice_out = route.car
+  ```
+  The four `delay1` make the graph acyclic for *every* algorithm (all modulation
+  reads the 1-sample-delayed output of its sources).
+- **Global-zone graph:** `lp` (`svf`) → `wf` (`wavefolder`) → `master` (`vca`):
+  `voice → lp.audio`, `lp.low → wf.audio`, `wf.audio → master.audio`,
+  `master.audio → out`.
+- **Macros:** `fm_op` (shipped, `modules/macros/fm_op/`) — the operator, with
+  params `ratio` (note-derived), `waveform`, `level`, `feedback`, `r1..r4`,
+  `l1..l3` mapped inward.
+- **Voice count / sample rate:** 8 voices / 44100 Hz (the default).
+- **Feedback paths:** each operator's self-feedback is one `delay1` (out ×
+  feedback → sum with external fm → `ph.fm`).
+
+### 2.2 Parameter manifest
+
+> The 16 friendly names below are what the panel exposes; the generator also
+> auto-exposes the remaining 29 flattened operator-envelope params (per-op
+> `r2/r3/l1/l2/l3` × 4, plus op2–4's `feedback`/`r1`/`r4`) by their
+> `<instance>.<param>` target path (settable via `set_param`, not on the panel).
+
+| Param (name) | Target | Min | Max | Curve | Unit |
+| --- | --- | --- | --- | --- | --- |
+| algorithm | route.algorithm | 0 | 6 | linear | |
+| cutoff | lp.f | 0 | 65535 | log | Hz |
+| res | lp.q | 0 | 65535 | linear | |
+| fold | wf.amount | 0 | 32767 | linear | |
+| master | master.level | 0 | 32767 | linear | |
+| feedback | op1.fb.level | 0 | 32767 | linear | |
+| attack | op1.eg.r1 | 0 | 65535 | log | |
+| release | op1.eg.r4 | 0 | 65535 | log | |
+| op1_level … op4_level | opN.vca.level | 0 | 32767 | linear | |
+| op1_waveform … op4_waveform | opN.osc.waveform | 0 | 7 | linear | |
+
+(`level` is both the output amplitude and the FM index; `feedback` is op1's
+self-modulation depth. All block rate.)
+
+### 2.3 Tables
+
+- **`routing` → kind `routing`** — the 7-algorithm 4-op FM matrix (7 rows × 5
+  sub-rows × 4 Q15 0/1 weights = 140 entries), ymfm's `s_algorithm_ops`
+  {0,1,2,4,5,6,7} (algorithm 3 dropped as algorithm 2's mirror).
+
+## 3. Controls and display
+
+- **Keys, buttons, encoders, MASTER:** keys = notes; ENC_KNOB1–7 + ENC_SELECT =
+  the 8 home/op params; BTN_EDIT pushes the `op` context; BTN_HOME pops home.
+- **Performance and navigation modes:** `home` (algorithm + output chain +
+  op1 envelope) and `op` (per-operator level/waveform).
+- **Screen content and update rules:** retained-mode, ~30 Hz redraw; no display
+  in the audio callback.
+- **LED feedback:** none specific.
+- **What must remain playable while the screen redraws:** held notes (redraw is
+  rate-bounded and DMA-integrated).
+
+## 4. MIDI and connectivity
+
+- **MIDI in / out / thru:** MIDI in (notes); no out/thru.
+- **Channels, velocity-zero note-off, sustain, panic:** omni; velocity-zero =
+  note-off; `all_notes_off` panic.
+- **Clock and transport:** none.
+- **USB roles:** MIDI (update via the normal flash path).
+- **Overflow and back-pressure:** voice stealing (oldest) on >8 voices.
+
+## 5. State and persistence
+
+- **What survives reboot:** nothing (the patch + panel are compile-time; params
+  are RAM).
+- **Patch/sequence format and version:** N/A.
+- **Storage budget and CRC/commit rule:** N/A.
+- **Backup, import/export, migration, rollback:** N/A.
+
+## 6. Browser prototype
+
+- **What you want to hear or compare locally:** the 7 algorithms side-by-side;
+  confirm the routing matrix sounds like the DX algorithm family.
+- **Which parameters and MIDI controls the page needs:** algorithm + the 5
+  output-chain params; keys via mouse/MIDI.
+- **Supported browsers and offline expectation:** any WebAudio browser; offline
+  once built.
+- **What the browser must not be used to claim:** device performance — the WASM
+  build is the parity lab, not the device.
+
+## 7. Acceptance and evidence
+
+- **Must-have features:** 7 runtime algorithms; 8 waveforms; per-op feedback;
+  rate/level envelopes; the filter + wavefolder output chain; a panel.
+- **Optional features:** velocity scaling, LFO, patch persistence.
+- **Host tests:** `umetate.test_generate` renders the patch (non-silent → decays)
+  and resolves the panel; the routing table is the 7-algorithm matrix.
+- **Target package checks:** `lint.c_checks` clean; the emitted DSP compiles
+  under the JieLi clang.
+- **Physical timing and device checks:** device acceptance is `blocked`
+  (hardware ~10 days out).
+- **Known unknowns:** the OPZ's exact 8-waveform mask table (vs the OPL's,
+  recorded as a follow-up in `dsp-algorithm.md`); the `svf` sub-LSB limit cycle
+  (recorded in the roadmap, benign).
+
+## 8. Confirmation
+
+- **Brief owner:** P1Onken.
+- **Date confirmed:** 2026-10-27.
+- **Open questions that still change architecture:** none — the 7-algorithm
+  collapse (algorithm 2 ≡ 3) is locked in `dsp-algorithm.md`.

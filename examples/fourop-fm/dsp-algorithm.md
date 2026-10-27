@@ -24,7 +24,7 @@
 | maximilian | https://github.com/micknoise/Maximilian | see LICENSE |
 | music dsp archives | https://www.musicdsp.org/en/latest/ | per-snippet (see each) |
 
-In-repo study: [`docs/dsp-study.md`](../docs/dsp-study.md).
+In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
 
 ---
 
