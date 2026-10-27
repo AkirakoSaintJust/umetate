@@ -1,13 +1,16 @@
 # Control map (UI plan)
 
 > Fill this in during the UI interview; it becomes the `panel.json`. Delete
-> rejected options. One control map per project.
+> rejected options. One control map per project. The voice architecture and
+> parameter manifest (in `synth-brief.md`) are upstream of this: bind only
+> parameters that exist there.
 
 ## 1. Surface inventory
 
 - **Board / revision:**
 - **Controls and their kinds** (momentary / latch / absolute / relative / pot / pad / fader / wheel / key / MIDI):
 - **Display / fonts / LEDs available:**
+- **Controls explicitly unmapped (and why):**
 
 ## 2. Player model
 
@@ -15,18 +18,36 @@
 - **Menu depth tolerance:**
 - **What must stay playable during any interaction** (held notes, transport):
 
-## 3. Contexts (modes)
+## 3. Contexts (modes) and their bindings
 
-| Context | Entered by | Pages | Key bindings (what changes here) | on-enter / on-exit |
-| --- | --- | --- | --- | --- |
-| home | boot | | keys = notes | |
-| | | | | |
+> A context owns both its view and its control meaning. For **each** context,
+> fill a table like the one below — one row per control/MIDI source that does
+> something here, and a row for every on-enter/on-exit side effect.
 
-## 4. Global bindings (always-on)
+### Context: `home`
+
+| Source | Target param / action | Behavior / curve | Note |
+| --- | --- | --- | --- |
+| KEY | note_on | | keys play notes |
+| MASTER | master.volume | absolute | global fallthrough |
+| | | | |
+
+- **Pages:** (list page ids + their widgets)
+- **on-enter:** **on-exit:**
+
+### Context: `___` (add one block per context)
+
+| Source | Target param / action | Behavior / curve | Note |
+| --- | --- | --- | --- |
+
+- **Pages:** **on-enter:** **on-exit:**
+
+## 4. Global bindings (always-on, resolved last)
 
 | Source | Target / action | Behavior / curve |
 | --- | --- | --- |
 | MASTER | master.volume | absolute |
+| | | |
 
 ## 5. Display pages
 
@@ -43,9 +64,16 @@
 - **Needed?** (only if boot is slow)
 - **Content:**
 
-## 8. Navigation
+## 8. Control flow (the state machine)
 
-- **Page → page, context → context, and the combos:**
+> A fresh reader must trace every control through every context with no
+> ambiguity. Enumerate the transitions explicitly.
+
+- **Context transitions:** who pushes/pops what, and to where (`push` / `pop` /
+  `pop_home` / `set_page` / `next_page` / `prev_page` / `bank_next` / `bank_prev`):
+- **The full context stack, worst case** (how deep, and the unwind):
+- **Per-control meaning across contexts** (the same knob/button in every context):
+- **Unresolved / ambiguous bindings** (none is the goal):
 
 ## 9. Acceptance
 

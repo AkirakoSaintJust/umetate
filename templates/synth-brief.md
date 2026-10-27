@@ -23,6 +23,34 @@
 - **Modulation (LFO, envelopes, macros):**
 - **Effects and output stage:**
 
+### 2.1 Voice architecture (the node/macro graph)
+
+> The graph that `patch.json` will express. A fresh reader must be able to draw
+> it from this section alone. Feedback only via `delay1`/`delayN` (the graph is a
+> DAG).
+
+- **Voice-zone graph** (instance ids, node/macro types, wires, `voice_out`):
+- **Global-zone graph** (single-instance: filter, effects, master):
+- **Macros** (name, ins/outs, inner graph, params mapped inward):
+- **Voice count / sample rate:**
+- **Feedback paths** (only `delay1`/`delayN`):
+
+### 2.2 Parameter manifest
+
+> The source of the generated `params.json`. List **every** parameter; the GUI and
+> MIDI map can only expose what is listed here (or marked internal).
+
+| Param (name) | Target `<instance>.<param>` | Min | Max | Default | Curve | Unit | Rate | Modulatable |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| | | | | | | | | |
+
+### 2.3 Tables
+
+> Any wavetable / segments / spectrum / phase-map data (`tables:` → `const` XIP).
+
+- **Table name → kind, shape/size/points:**
+
+
 ## 3. Controls and display
 
 - **Keys, buttons, encoders, MASTER:**

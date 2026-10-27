@@ -1,7 +1,7 @@
 ---
 name: umetate-development
-description: Design, plan, build, and safely validate a custom M-VAVE FM-1 or SMK-37 synthesizer on the umetate framework — interview the player, author nodes/macros/patches, prove each evidence layer, and never write the device without an explicit, gated request. Use for authoring a synth, the first audible slice, DSP work, panel/controls, or evidence verification.
-version: 1.0.0
+description: Design, plan, build, and safely validate a custom M-VAVE FM-1 or SMK-37 synthesizer on the umetate framework. Before any code, a gated interview fully specifies the synth design + voice architecture, the GUI design + control flow, and the implementation plan, and checks them for consistency. Code is then mechanical translation. Never write the device without an explicit, gated request.
+version: 1.1.0
 license: GPL-3.0-only
 compatibility: OpenCode and Agent Skills-compatible loaders
 allowed-tools: read, grep, glob, edit, shell
@@ -27,18 +27,36 @@ over every device write.
    `references/code-conventions.md` (the app contract + numeric rules) before
    touching source.
 
+## The prime directive: design before code
+
+No code is written until **three artifacts are complete, mutually consistent, and
+user-confirmed**:
+
+1. **Synth design + architecture** — the voice graph, the parameter manifest, and
+   the tables (`templates/synth-brief.md`).
+2. **GUI design + architecture + control flow** — the context stack, pages,
+   bindings, navigation, and per-context control meaning
+   (`templates/control-map.md`).
+3. **Implementation plan** — milestones, feature contracts, resource budget, and
+   the verification ladder (`templates/project-plan.md`,
+   `templates/feature-contract.md`, `templates/supported-load-profile.md`,
+   `templates/evidence-matrix.md`).
+
+These map **one-to-one** onto `patch.json`, `panel.json`, and the plan/evidence
+artifacts. Step 5 (authoring) is *mechanical translation*, not design. If the
+translation forces a design decision you have not already made, stop and ask —
+never improvise in the code.
+
 ## Operating contract
 
 - Ask what the user wants to make. Do not assume a fixed voice architecture.
-- Do not start broad implementation until the brief and plan are confirmed.
-  After that, work in small audible increments without re-asking settled questions.
-- Keep one brief, one plan, one load profile, and one evidence matrix. Update
-  them in place; delete superseded text instead of adding another spec.
 - Treat source/static, host, browser/WASM, target package, emulator, physical
   timing, and device acceptance as separate evidence layers. A lower layer never
   proves a higher one.
 - Use `pass`, `fail`, `blocked`, `not-applicable`, or `not-run` for every layer.
   `blocked` is a recorded limitation, not a pass.
+- Keep one brief, one plan, one load profile, and one evidence matrix. Update
+  them in place; delete superseded text instead of adding another spec.
 - Never flash, erase, force, or run a device-writing command unless the user
   explicitly requests that exact action and the §8 gates pass. A build, test, or
   edit is not permission to write hardware.
@@ -47,105 +65,154 @@ over every device write.
 
 ## Workflow
 
-### 0. Orient
+### 0. Orient — read the authoritative inventory
 
-Confirm the board/model, firmware commit, available tools, and which evidence
-layers are possible. Record what is blocked and why.
+Before interviewing, read (do not trust memory):
+
+- `references/platform-facts.md` — SoC, clock, cores, FPU, flash, recovery.
+- `references/code-conventions.md` §2 — the platform input API (keys, buttons,
+  encoders, MASTER, MIDI, storage) and §3 the numeric rules.
+- `firmware/src/platform.c` — the exact `BTN_*`/`ENC_*` enums per board
+  (`BOARD_SMK37` vs the FM-1 branch).
+- `firmware/src/ui.h` — the binding-source vocabulary and the action verbs.
+- `templates/scaffold/patch.schema.json`, `panel.schema.json`, `node.schema.json`,
+  `params.schema.json` — what the generator can express.
+- `umetate lib list` — the shipped node library.
+
+Record the board (`--board fm1|smk37`), the **exact control inventory** (every
+named button/encoder/key/pad/fader/wheel), and what each source can express. The
+FM-1 has 27 keys, two octave buttons, a MASTER pot, and its button/encoder set;
+the SMK-37 adds velocity, 16 pads, 4 faders, 8 encoders (+bank), and pitch/mod
+wheels — always read the enum, never assume a name.
+
+### 1. Design interview — the synth architecture
+
+Interview in focused rounds; write the result into `templates/synth-brief.md`.
+Cover: instrument/player + non-goals; sound + voice architecture; the parameter
+manifest; tables; MIDI; persistence; acceptance. Inspect repository facts instead
+of asking the user to repeat them.
+
+- **Voice architecture** must name, concretely: the node/macro graph (ids, types,
+  wires), the `voice` vs `global` zones, the `voice_out` signal, the voice count,
+  the sample rate, and any feedback (only `delay1`/`delayN` break cycles — the
+  graph is a DAG).
+- **Parameter manifest** must list every parameter: its flattened
+  `<instance>.<param>` target, min/max/default, curve, unit, rate
+  (`sample`/`block`), and whether it is `modulatable`. This is the source of the
+  generated `params.json`.
+- **Tables** must name any wavetable/segments/spectrum/phase-map data (the
+  `tables:` section → `const` XIP).
+
+**Exit:** the brief + architecture + manifest are complete, internally consistent,
+and user-confirmed. Do not proceed to the GUI until the voice architecture is
+stable (it determines which parameters the GUI can expose).
+
+### 2. GUI interview — the control map
+
+Write into `templates/control-map.md`. Map **only** sources that exist (from
+orient). Cover: surface inventory (exact controls + kinds); the context stack
+(modes); each context's pages + widgets + bindings; global bindings; the boot
+screen; LED/pad feedback; and the full control flow.
+
+- **Contexts:** every mode is a context with pages, bindings, and optional
+  `on_enter`/`on_exit` hooks (save-on-exit, reset-on-entry).
+- **Control flow:** name every transition — `push`/`pop`/`pop_home`/`next_page`/
+  `prev_page`/`set_page`/`bank_next`/`bank_prev` — and which control triggers it.
+  A fresh agent must be able to trace every button/encoder/key through every
+  context with no ambiguity.
+- **Global bindings** are resolved last: `KEY → note_on`, `MASTER → volume`,
+  transport, panic.
+- **Widgets** are abstract (`label`, `value`, `bar`, `param_row`, `param_column`,
+  `list`, `grid`) — no skeuomorphic knobs on a 240×240 screen.
+
+**Exit:** every control is mapped to a param or action, or explicitly marked
+unmapped; every binding target is a param from the manifest; the control flow is
+complete and user-confirmed.
+
+### 3. Implementation plan
+
+Turn the two designs into one living plan:
+
+- `templates/project-plan.md` — milestones ordered by audible value: first slice
+  → polyphony/filter → panel/display → MIDI/persistence → target/device.
+- `templates/feature-contract.md` — one per milestone: params/events, bounds,
+  files, verification, risks, fallback.
+- `templates/supported-load-profile.md` — the simultaneous maxima and the worst
+  case. Hard limits: audio callback ≤ 2.9 ms (50% of 5.8 ms), RAM ≤ 96 KiB,
+  pool ≤ 336 KiB, code ≤ 568 KiB, stack ≤ 24 KiB.
+- `templates/evidence-matrix.md` — one row per layer, exact command/artifact.
+
+Record file ownership: which files may change, and the forbidden ones (HAL
+registers, `platform.c` services, the loader, `uboot.boot`/`isd_config.ini`).
+
+**Exit:** the user confirms interfaces, milestone order, measurable limits, and
+the verification plan.
+
+### 4. The consistency gate (fully green before any code)
+
+Cross-check the three artifacts against each other. A failure means *fix the
+artifact*, never the code. Walk every item; do not skip:
+
+- [ ] Every GUI binding target is a parameter in the manifest, or a reserved
+      action verb from `panel.schema.json`.
+- [ ] Every parameter is reachable (bound by a control or MIDI CC) or explicitly
+      marked internal-only.
+- [ ] Every control in the inventory is mapped or explicitly unmapped — no
+      silent gaps.
+- [ ] Every node/macro type in the voice architecture resolves: a shipped node
+      (`umetate lib list`) or a macro defined in the patch.
+- [ ] Every wire connects real ports; `voice_out` names a real voice-zone signal;
+      `gate`/`velocity` reserved sources are used correctly.
+- [ ] The voice count × architecture fits the supported-load profile (voice SoA
+      × nodes × per-sample work within the callback budget).
+- [ ] The MIDI map (`cc:N`, `note:N`) targets only defined parameters.
+- [ ] Persistence fields correspond to defined parameters/tables.
+- [ ] Non-goals are respected; no feature was added "because the platform can".
+
+Then restate the whole plan to the user, in one message, and require explicit
+confirmation before writing code.
+
+### 5. Author the synth — mechanical translation
+
+Now translate, do not design:
 
 ```sh
-umetate quick-check          # read-only presence/version probe per layer
-umetate status               # the roadmap's per-phase claim ledger
-```
-
-### 1. Design interview
-
-Run focused rounds covering instrument/player, synthesis, controls/display,
-MIDI, persistence, browser use, constraints, feature contracts, and the
-supported-load profile. Write the confirmed result into
-`templates/synth-brief.md`. Exit when the user confirms one internally
-consistent brief and acceptance criteria.
-
-### 2. Plan
-
-Turn the brief into one living plan with `templates/project-plan.md`,
-`templates/feature-contract.md`, and `templates/supported-load-profile.md`.
-Exit when the user confirms interfaces, milestone order, measurable limits, and
-the verification plan. Start with the smallest audible vertical slice.
-
-### 3. Author the synth
-
-Author the instrument as nodes/macros/patches. Inspect the shipped node library,
-scaffold a starter, then replace one element at a time:
-
-```sh
-umetate lib                  # the shipped nodes + templates (local only)
 umetate scaffold patch --name "My Synth" --out examples/my-synth
 ```
 
-The generator AOT-compiles `patch.json` (+ `panel.json`) to the invariant
-`<synth>_dsp_*` seam (`references/code-conventions.md` §4). A power user may hand-
-write `dsp.c` against that same seam as an escape hatch. The patch's `params:`
-section binds friendly names to flattened `<instance>.<param>` ids; `tables:` adds
-`const` XIP tables. Keep the parameter API and bounds; change the sound
-deliberately.
+- Fill `patch.json` from the voice architecture + parameter manifest + tables.
+- Fill `panel.json` from the control map.
+- Add a node to `modules/` only when a shipped node is genuinely insufficient
+  (conform to `node.schema.json`; add its host test + budget annotation).
+- After each increment, prove it: `umetate deep-check --host`.
 
-### 4. First audible slice
+### 6. Share DSP, panel, MIDI, persistence
 
-The slice is one oscillator, one envelope, one control, one MIDI note. Run the
-host check after each change. Exit when a host test produces bounded, non-silent
-output and a release to silence.
+- Share pure DSP across host/browser/firmware; keep scheduling/display/DMA/flash
+  behind adapters. The device callback is 256 frames @ 44.1 kHz; an AudioWorklet
+  quantum is ~128 frames. Prove parity: `umetate web-build` then
+  `umetate deep-check --web`.
+- Keep the audio callback free of display, flash, logging, blocking, allocation.
+- Bound queues and define overflow; velocity-zero is note-off; persist versioned
+  records with CRC/commit, saving when silent.
 
-```sh
-umetate deep-check --host    # the host DSP/UI tests
-```
-
-### 5. Share DSP without pretending runtimes are equal
-
-Share pure DSP and deterministic event/state logic; keep scheduling, input,
-display, DMA, flash, and buffer conversion behind adapters. The device callback
-is 256 frames at nominally 44.1 kHz; an AudioWorklet quantum is usually 128
-frames and its context rate may differ. Handle rate/block differences explicitly.
-Prove host == wasm with the parity check (P4-1):
-
-```sh
-umetate web-build           # emscripten -> standalone dsp.wasm
-umetate deep-check --web    # build + prove host == wasm parity
-umetate web-serve           # loopback static server
-```
-
-### 6. Panel, display, controls
-
-Map only controls the hardware actually exposes. Plan with
-`templates/control-map.md`, then fill `panel.json`; the generator wires the UI.
-Keep the audio callback free of display, flash, logging, blocking, and unbounded
-work. Publish shared state with one writer or a snapshot protocol; `volatile`
-alone is not atomicity. Draw only what changed.
-
-### 7. MIDI, persistence, chosen features
-
-Implement MIDI in small, testable pieces: channel filter, velocity-zero
-note-off, sustain, panic, clock/transport if requested. Bound queues and define
-overflow behaviour. Persist versioned records with CRC/commit and a rollback
-path; save when silent. Do not add a feature just because the platform exposes a
-peripheral.
-
-### 8. Verify and report
+### 7. Verify and report
 
 Run the narrowest checks first, then widen:
 
 ```sh
-umetate lint --c            # the C standing checks
-umetate deep-check --host   # host tests
-umetate deep-check --web    # wasm parity
-umetate emu --check         # the emulator headless shot (model layer)
-umetate build --board fm1 --model pro   # a target package (no flash)
+umetate lint --c
+umetate deep-check --host
+umetate deep-check --web
+umetate emu --check
+umetate build --board fm1 --model pro      # a target package, no flash
 ```
 
-Record each layer in `templates/evidence-matrix.md` and validate it with
+Record each layer in `templates/evidence-matrix.md` and validate with
 `umetate evidence --strict`. A target package is not physical timing; a host test
 is not device acceptance.
 
-### 9. Recovery and handoff
+### 8. Recovery and handoff
 
 Before any write, confirm the exact board/revision, current firmware, package
 identity, backup, power/cable, rollback, and recovery route. Require explicit
@@ -154,12 +221,12 @@ approval for that write (`umetate flash --device`, `umetate debrick`). See
 
 ## Handoff to a fresh agent
 
-A fresh agent should read, in order: the project brief and plan; the feature
-contract for the current milestone; the supported-load profile and evidence
-matrix; the current source and the relevant reference file. It must not "clean
-up" unrelated user edits, change the platform/HAL without a written contract and
-approval, weaken a test to make a build pass, or describe a blocked layer as
-passed.
+A fresh agent should read, in order: the project brief + architecture + manifest;
+the control map; the plan + current feature contract; the load profile and
+evidence matrix; then the current source. It must not "clean up" unrelated user
+edits, change the platform/HAL without a written contract and approval, weaken a
+test to make a build pass, or describe a blocked layer as passed. Its first action
+is read-only inspection, then a one-line statement of the next safe increment.
 
 ## Licence
 

@@ -432,13 +432,20 @@ umetate help [CMD]                           documents every option (component 1
 
 ### 6.2 Skill: umetate-development
 
-Offline-bundled interactive loop. Workflow: orient → design interview (player,
-synthesis, controls, MIDI, persistence, browser, acceptance) → one brief → one plan
-(feature contracts + supported-load profile) → environment/baseline → **author the
-synth as nodes/macros/patches** (via `scaffold`, by hand or driven by the
-agent) → first audible slice → shared DSP (host/browser/firmware adapters) →
-panel/display → MIDI/persistence → verify (evidence matrix) → handoff. Refuses
-device writes unless the user explicitly requests that action and §8 gates pass.
+Offline-bundled interactive loop with a **design-first gate**: no code is written
+until three artifacts are complete, mutually consistent, and user-confirmed — the
+**synth design + voice architecture** (node/macro graph, parameter manifest,
+tables), the **GUI design + control flow** (context stack, pages, bindings,
+navigation, per-context control meaning), and the **implementation plan**
+(milestones, feature contracts, supported-load profile, evidence matrix). A
+consistency gate cross-checks them (every binding → a defined param, every control
+mapped or explicitly unmapped, the voice count × architecture within budget) before
+authoring begins; authoring is then mechanical translation into `patch.json` +
+`panel.json`. Workflow: orient → design interview → GUI interview → plan →
+consistency gate → author (nodes/macros/patches via `scaffold`) → first slice →
+shared DSP → panel/display → MIDI/persistence → verify (evidence matrix) →
+handoff. Refuses device writes unless the user explicitly requests that action and
+§8 gates pass.
 
 `references/` (generated, offline — byte-for-byte copies of the canonical docs,
 verified by `deep-check --skill`): AC79 facts, flash maps + protected ranges, the
@@ -883,16 +890,19 @@ runs unchanged in the emulator. No device-acceptance claim. **Layer: emulator.**
 
 ### Phase 5 — Skills (P5) — **done**
 
-**P5-1 — umetate-development skill.** **done** — `SKILL.md` (the full workflow
-prose: orient → design interview → plan → author nodes/macros/patches via
-`scaffold` → first slice → shared DSP → panel → MIDI/persistence → verify →
-recovery/handoff) + generated offline `references/` (AC79 facts, flash maps,
-recovery taxonomy, evidence vocabulary, code conventions from
-`firmware/README.md`, and the node/macro/patch schemas). The 5 synth-project
-templates (`synth-brief`/`project-plan`/`feature-contract`/`supported-load-profile`/
-`evidence-matrix`) now live in `templates/` and are referenced by repo path (not
-copied into the bundle). *Acceptance:* `deep-check --skill` passes; it drives
-`scaffold`/patch authoring and refuses device writes without §8 gates. **Layer: docs.**
+**P5-1 — umetate-development skill.** **done** — `SKILL.md` (a **design-first**
+workflow: orient → design interview (voice architecture + parameter manifest +
+tables) → GUI interview (context stack + pages + bindings + control flow) →
+implementation plan → a **consistency gate** cross-checking the three artifacts →
+then mechanical authoring of nodes/macros/patches via `scaffold` → first slice →
+shared DSP → panel → MIDI/persistence → verify → recovery/handoff) + generated
+offline `references/` (AC79 facts, flash maps, recovery taxonomy, evidence
+vocabulary, code conventions from `firmware/README.md`, and the node/macro/patch
+schemas). The 5 synth-project templates (`synth-brief`/`project-plan`/
+`feature-contract`/`supported-load-profile`/`evidence-matrix`) + `control-map.md`
+now live in `templates/` and are referenced by repo path (not copied into the
+bundle). *Acceptance:* `deep-check --skill` passes; it drives `scaffold`/patch
+authoring and refuses device writes without §8 gates. **Layer: docs.**
 
 **P5-2 — umetate-safety skill.** **done** — `SKILL.md` (the threat model + surface
 map, memory-safety + attack-surface workflow, package identity, the §8 device-write
