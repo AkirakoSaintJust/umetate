@@ -74,7 +74,7 @@ def _probe() -> list[tuple[Layer, Status, str]]:
     )
 
     # ---- everything above host is not probe-able without the toolchain/device ----
-    out.append((Layer.BROWSER, Status.BLOCKED, "emscripten wasm (P4-1)"))
+    out.append((Layer.BROWSER, *_browser_layer()))
     out.append((Layer.TARGET, *_target_layer()))
     out.append((Layer.EMULATOR, *_emulator_layer()))
     out.append((Layer.TIMING, Status.NOT_RUN, "physical, device-only"))
@@ -99,6 +99,15 @@ def _emulator_layer() -> tuple[Status, str]:
     if _emu.emulator_built():
         return Status.PASS, "fm1-emu built (fm1-emu + fm1-live)"
     return Status.BLOCKED, "fm1-emu not set up (`umetate setup`)"
+
+
+def _browser_layer() -> tuple[Status, str]:
+    """The BROWSER presence probe: the pinned container emcc, else a host emcc."""
+    if runner.probe().docker:
+        return Status.PASS, "emcc in the container (emscripten 6.0.13)"
+    if shutil.which("emcc"):
+        return Status.PASS, "emcc present"
+    return Status.BLOCKED, "emscripten not set up (`umetate setup`)"
 
 
 def _render(results: list[tuple[Layer, Status, str]]) -> str:

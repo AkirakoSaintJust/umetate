@@ -840,13 +840,17 @@ wrong-model exits 6; resume checks the model; a fake device (the inherited
 `install_test.py`'s `backend` seam) exercises flash/resume without hardware.
 **Layer: host.**
 
-**P3-5 — `web-build`/`web-serve` + `evidence`.** `web-build` emscripten-compiles the
-generated `dsp.c` to a standalone `dsp.wasm` (no import section) + a minimal
-`index.html`/JS harness (a manual browser poke); `web-serve` is a loopback static
-server over that output; `evidence` validates an evidence matrix. The real parity
-lab (AudioWorklet + message protocol + the automated host↔browser check) is **P4-1**.
-*Acceptance:* `web-build` produces a standalone WASM module and the harness serves in
-a browser; `evidence` validates a matrix. **Layer: host/browser.**
+**P3-5 — `web-build`/`web-serve` + `evidence`.** — **done (host/browser)** —
+`web.py` (`web-build` emscripten-compiles the generated `dsp.c` to a standalone
+`dsp.wasm` — no import section — + a minimal `index.html`/`app.js` harness (a manual
+browser poke); `web-serve` is a loopback static server), `evidence.py` (validate an
+evidence matrix: per-layer status, `blocked`/`not-run` never `pass`, `--strict`
+requires every layer), and the `deep-check --web` wasm check (standalone, no imports).
+*Verified:* `web-build` produces `dsp.wasm` (no import section) that renders in a
+browser (peak 32765 on note-on, silent after off); `web-serve` serves the harness;
+`deep-check --web` passes; `quick-check` reports the `browser` layer; `mypy --strict`
++ `ruff` + `test_cli` green. The real parity lab (AudioWorklet + the automated
+host↔browser check) is **P4-1**. **Layer: host/browser.**
 
 ### Phase 4 — Web lab + emulator (P4) — **in progress**
 

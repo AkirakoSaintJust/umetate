@@ -75,9 +75,9 @@ def _quick_check_json() -> None:
 def _stub_reports_phase() -> None:
     buf = io.StringIO()
     with contextlib.redirect_stderr(buf):
-        rc = cli.main(["scaffold"])
+        rc = cli.main(["flash"])
     assert rc == 1
-    assert "P3-3" in buf.getvalue()
+    assert "P3-4" in buf.getvalue()
 
 
 def _lib_lists() -> None:
@@ -143,6 +143,36 @@ def _emu_paths() -> None:
     assert isinstance(_emu.emulator_built(), bool)
 
 
+def _evidence_validates() -> None:
+    from . import evidence
+
+    good = {
+        "layers": [
+            {"layer": "source", "status": "pass", "detail": "x"},
+            {"layer": "device", "status": "blocked", "detail": "x"},
+        ]
+    }
+    assert evidence.validate(good) == []
+    assert evidence.validate({"layers": [{"layer": "wobble", "status": "pass"}]})
+    dup = {
+        "layers": [
+            {"layer": "source", "status": "pass", "detail": "x"},
+            {"layer": "source", "status": "blocked", "detail": "x"},
+        ]
+    }
+    assert evidence.validate(dup)
+
+
+def _wasm_import_parser() -> None:
+    from . import web
+
+    header = b"\x00\x61\x73\x6d\x01\x00\x00\x00"
+    assert web.wasm_import_count(header) == 0  # no import section
+    assert web.wasm_import_count(header + b"\x02\x01\x00") == 0  # empty import section
+    one_import = header + b"\x02\x07\x01\x01\x6d\x01\x66\x00\x00"
+    assert web.wasm_import_count(one_import) == 1
+
+
 def main() -> int:
     tests: _Tests = [
         ("no import side effects", _no_import_side_effects),
@@ -156,6 +186,8 @@ def main() -> int:
         ("lint --c catches a MAXP violation", _lint_catches_violation),
         ("setup --dry-run plans the install", _setup_dry_run_plans),
         ("the fm1-emu binary paths resolve", _emu_paths),
+        ("evidence validates a matrix", _evidence_validates),
+        ("the wasm import parser counts imports", _wasm_import_parser),
     ]
     failures = 0
     for name, test in tests:

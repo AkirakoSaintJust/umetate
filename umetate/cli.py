@@ -28,10 +28,10 @@ COMMANDS: dict[str, tuple[str, str | None, str]] = {
     "lib": ("list the shipped nodes + templates", "lib", "P3-3"),
     "lint": ("the C standing checks", "lint", "P3-3"),
     "fmt": ("clang-format the repo", "fmt", "P3-3"),
-    "web-build": ("emscripten -> dsp.wasm + a minimal harness", None, "P3-5"),
-    "web-serve": ("loopback static server", None, "P3-5"),
+    "web-build": ("emscripten -> standalone dsp.wasm", "web:build_main", "P3-5"),
+    "web-serve": ("loopback static server", "web:serve_main", "P3-5"),
     "status": ("the per-layer claim ledger from the roadmap", "status", "P3-1"),
-    "evidence": ("validate an evidence matrix", None, "P3-5"),
+    "evidence": ("validate an evidence matrix", "evidence", "P3-5"),
     "version": ("print the CLI version", "version", "P3-1"),
 }
 
@@ -50,6 +50,10 @@ def _dispatch(name: str, argv: list[str]) -> int:
     if module is None:
         print(f"umetate {name}: not implemented yet ({phase})", file=sys.stderr)
         return 1
+    if ":" in module:
+        mod_name, func_name = module.split(":", 1)
+        mod = importlib.import_module(f"umetate.{mod_name}")
+        return cast(Callable[[list[str]], int], getattr(mod, func_name))(argv)
     mod = importlib.import_module(f"umetate.{module}")
     return cast(Callable[[list[str]], int], mod.main)(argv)
 

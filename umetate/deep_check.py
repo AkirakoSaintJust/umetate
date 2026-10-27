@@ -18,7 +18,6 @@ from . import runner
 _NOT_YET = {
     "safety": "P3-3",
     "skill": "P3-3",
-    "web": "P3-5",
     "links": "P6-1",
 }
 
@@ -30,6 +29,21 @@ def _host() -> int:
         cmd = ["sh", "tests/run_cmake_host.sh"]
         return subprocess.run(cmd, cwd=runner.REPO_ROOT / "firmware").returncode
     return runner.run(["sh", "tests/run_cmake_host.sh"], cwd="/work/firmware")
+
+
+def _web() -> int:
+    """Build the standalone `dsp.wasm` (web-build) and verify no import section."""
+    import json
+
+    from . import web
+
+    try:
+        patch = json.loads(web._DEFAULT_PATCH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"deep-check --web: {exc}", file=sys.stderr)
+        return 1
+    name = str(patch["name"]).replace("-", "_").replace(".", "_")
+    return web.build(patch, web._OUT, name)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -50,7 +64,11 @@ def main(argv: list[str] | None = None) -> int:
         rc = _host()
         print(f"deep-check --host: {'ok' if rc == 0 else 'failed'}")
         failures += 0 if rc == 0 else 1
-    for flag in ("safety", "web", "skill", "links"):
+    if args.web or args.all:
+        rc = _web()
+        print(f"deep-check --web: {'ok' if rc == 0 else 'failed'}")
+        failures += 0 if rc == 0 else 1
+    for flag in ("safety", "skill", "links"):
         if getattr(args, flag) or args.all:
             print(
                 f"deep-check --{flag}: not implemented yet ({_NOT_YET[flag]})",
