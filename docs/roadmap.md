@@ -406,7 +406,7 @@ umetate setup      [--no-emulator] [--dry-run] [--clock 240|320] [--json]   opt-
 umetate build      --board fm1|smk37 [--model pro|elite|mke]
                    [--dsp integer|float] [--clock 240|320] [--profile baseline|perf]
 umetate emu        [--board fm1|smk37] [--persist] [--midi NAME] [--check]   run your firmware in the fm1-emu GUI (or headless)
-umetate deep-check  [--host|--web|--safety|--skill|--links|--all]
+umetate deep-check  [--host|--web|--safety|--skill|--links|--pyright|--all]
 umetate inspect    PACKAGE                   inspect a .fwsc without a device
 umetate flash      PACKAGE [--port NAME] [--device] [--yes]   flash; identity + CRC + model checked; resumes a device in update mode
 umetate debrick    [--route app-rescue|update-loader|mask-rom]   name a recovery route + its procedure (mask-rom: blocked, needs the USB_KEY dongle)
@@ -474,7 +474,7 @@ generated recovery taxonomy + code conventions (same drift-checked copies).
 ### 6.4 Docker image + volume
 
 - Image (`umetate-host-build:latest`): Python 3.11+, Node 20+, Git, CMake 3.20+,
-  Ninja, a C compiler, Pillow, Emscripten 6.0.13.
+  Ninja, a C compiler, Pillow, jsonschema, ruff, mypy, pyright, Emscripten 6.0.13.
 - Volume (`umetate-target`): JieLi pi32v2 toolchain + AC79 SDK assets
   (`uboot.boot`, `cfg_tool.bin`, `eq_cfg_hw.bin`), mounted read-only at `/opt/jieli`.
   **Not** baked into the image (vendor-terms compliance). `umetate setup` populates it:
@@ -584,6 +584,11 @@ vocabulary as an `Enum`. I/O-bound: optimize only measured hot paths.
   (`list[int]`), PEP 604 (`int | None`), `from __future__ import annotations`,
   `TypeAlias` for callable/union aliases, `Protocol` for structural typing across
   module boundaries (avoids import cycles), `NamedTuple` for tiny value types.
+  **Pyright (Pylance) checks the same files in strict mode** (`[tool.pyright]` in
+  `pyproject.toml`, run by `deep-check --pyright`) — a second engine that catches the
+  "partially unknown" cases `mypy`'s flags can't see (an `argparse` attribute in a
+  `list[str]`, `field(default_factory=dict)`, a `NotRequired` key indexed with `[]`),
+  so the editor and CI agree.
 - **Manifests are typed, not `Any`.** Every JSON manifest (`patch`, `macro`,
   `node`, `panel`, `tables`, `params`, `env.lock`, the evidence matrix) is a
   `TypedDict` in `umetate/_schema.py` mirroring its `templates/scaffold/*.schema.json`.
@@ -1907,9 +1912,13 @@ requested layers; each reports per the §5.5 vocabulary:
   (byte-for-byte; drift is a hard failure).
 - `links` (source) — `_links.check`: the docs' cross-references resolve (no dead
   Markdown links; file paths, `#anchor`/URLs skipped).
+- `pyright` (source) — the strict Python type-check (`[tool.pyright]`, §6.8):
+  `Any` is banned and the "partially unknown" diagnostics (e.g. an `argparse`
+  attribute in a `list[str]`) are errors; run alongside `mypy --strict` + `ruff`.
 
 Flags: `--host` (host vectors + UI tests), `--safety` (lint), `--web` (wasm),
-`--skill`, `--links`, `--all`; `lint --c` runs the `lint` check standalone.
+`--skill`, `--links`, `--pyright`, `--all`; `lint --c` runs the `lint` check
+standalone.
 
 **Config & exit model.** Committed `env.lock` (toolchain/SDK pins + hashes); an
 ignored per-checkout env file (toolchain/SDK paths + the `--clock` choice). Build

@@ -49,3 +49,13 @@ strict = true
 disallow_any_explicit = true
 disallow_any_unimported = true
 files = ["umetate", "firmware/tools/gen_math_tables.py"]
+
+# ---- strict typing (pyright / Pylance) ----
+# The same discipline, checked by a second engine: `Any` is banned (mypy enforces
+# it; pyright adds the "partially unknown" diagnostics mypy's disallow_any_* can't
+# see — e.g. an `argparse` attribute flowing into a `list[str]`). Pylance reads this
+# section, so the editor and `deep-check --pyright` agree.
+[tool.pyright]
+pythonVersion = "3.11"
+typeCheckingMode = "strict"
+include = ["umetate", "firmware/tools/gen_math_tables.py"]

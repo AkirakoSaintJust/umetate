@@ -5,7 +5,7 @@
 `--host` (the default) runs the host DSP/UI/unit tests; `--safety` runs the C
 standing checks (lint); `--web` builds the standalone wasm + proves host == wasm
 (P4-1); `--skill` verifies the offline skill bundles (P5); `--links` checks the
-docs' cross-references (P6).
+docs' cross-references (P6); `--pyright` runs the strict Python type-check.
 """
 
 from __future__ import annotations
@@ -73,6 +73,13 @@ def _safety() -> int:
     return 0
 
 
+def _pyright() -> int:
+    """The Python type-check (pyright strict, §6.8; reads `[tool.pyright]`)."""
+    if runner.probe().docker:
+        return runner.run(["pyright"], cwd="/work")
+    return subprocess.run(["pyright"], cwd=runner.REPO_ROOT).returncode
+
+
 def _links() -> int:
     """The docs' cross-references resolve (no dead Markdown links)."""
     from . import _links
@@ -93,10 +100,21 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--web", action="store_true", help="the standalone-wasm check")
     parser.add_argument("--skill", action="store_true", help="the offline skills")
     parser.add_argument("--links", action="store_true", help="docs cross-references")
+    parser.add_argument("--pyright", action="store_true", help="the strict type-check")
     parser.add_argument("--all", action="store_true", help="everything available")
     args = parser.parse_args(argv)
 
-    if not any((args.host, args.safety, args.web, args.skill, args.links, args.all)):
+    if not any(
+        (
+            args.host,
+            args.safety,
+            args.web,
+            args.skill,
+            args.links,
+            args.pyright,
+            args.all,
+        )
+    ):
         args.host = True
 
     failures = 0
@@ -119,6 +137,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.links or args.all:
         rc = _links()
         print(f"deep-check --links: {'ok' if rc == 0 else 'failed'}")
+        failures += 0 if rc == 0 else 1
+    if args.pyright or args.all:
+        rc = _pyright()
+        print(f"deep-check --pyright: {'ok' if rc == 0 else 'failed'}")
         failures += 0 if rc == 0 else 1
     return 1 if failures else 0
 
