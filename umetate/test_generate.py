@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from ._ir import GenError
-from .generate import generate
+from .generate import generate, generate_params
 
 POCKET_DRONE: dict[str, Any] = {
     "name": "pocket-drone",
@@ -202,6 +202,15 @@ def main() -> int:
         failures += 1
     except GenError as exc:
         print(f"ok: audio->event edge rejected ({exc})")
+
+    # the flattened param table maps a named param to its set_param id
+    params = generate_params(POCKET_DRONE)["params"]
+    by_name = {p["name"]: p for p in params}
+    if by_name.get("lp.cutoff", {}).get("id") != 4:
+        print("FAIL: params.json does not map lp.cutoff to id 4")
+        failures += 1
+    else:
+        print(f"ok: params.json maps lp.cutoff -> id {by_name['lp.cutoff']['id']}")
 
     print("generator tests " + ("FAILED" if failures else "passed"))
     return 1 if failures else 0

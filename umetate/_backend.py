@@ -48,6 +48,7 @@ def emit(graph: CompiledGraph) -> str:
     lines.append("static uint32_t voice_age[NVOICE] UMETATE_CPU1;")
     lines.append("static uint32_t ages;")
     lines.extend(_param_decls(graph))
+    lines.extend(_param_table(_flat_params(graph)))
     lines.append("")
     lines.extend(_render(graph, by_id))
     lines.extend(_seam(graph, by_id))
@@ -110,6 +111,30 @@ def _default(kind: str, value: str | None) -> str:
         "int32": "0",
         "uint32": "0",
     }.get(kind, "0")
+
+
+def _flat_params(graph: CompiledGraph) -> list[tuple[str, str, str]]:
+    """The flattened param list (C name, display name, default) in a stable order."""
+    flat: list[tuple[str, str, str]] = []
+    for i in graph.instances:
+        for pname, kind in i.spec.params.items():
+            flat.append(
+                (
+                    i.param_expr(pname),
+                    f"{i.id}.{pname}",
+                    _default(kind, i.params.get(pname)),
+                )
+            )
+    return flat
+
+
+def _param_table(flat: list[tuple[str, str, str]]) -> list[str]:
+    """The param slot table (model-as-data: set/get_param are a table lookup)."""
+    slots = ", ".join(f"&{cname}" for cname, _, _ in flat) if flat else "0"
+    return [
+        f"#define PARAM_COUNT {len(flat)}",
+        f"static int32_t *const synth_param_slots[{len(flat) or 1}] = {{ {slots} }};",
+    ]
 
 
 # ----------------------------------------------------------------- render ----
@@ -338,6 +363,16 @@ def _seam(graph: CompiledGraph, by_id: dict[str, NodeInstance]) -> list[str]:
             "    for (uint32_t v = 0; v < NVOICE; v++) if (voice_gate[v]) return 0;",
             "    return 1;",
             "}",
+            "",
+            f"void {name}_dsp_set_param(uint32_t id, int32_t value) {{",
+            "    if (id < PARAM_COUNT) *synth_param_slots[id] = value;",
+            "}",
+            "",
+            f"int32_t {name}_dsp_get_param(uint32_t id) {{",
+            "    return id < PARAM_COUNT ? *synth_param_slots[id] : 0;",
+            "}",
+            "",
+            f"uint32_t {name}_dsp_param_count(void) {{ return PARAM_COUNT; }}",
             "",
         ]
     )
