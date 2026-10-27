@@ -24,6 +24,7 @@ enum {
     UI_LIST,           /* a list of items (the cursor selects) */
     UI_GRID,           /* a grid of cells (span lines tall) */
     UI_OP_ROW,         /* a param row resolved through the selected operator */
+    UI_ENVELOPE,       /* the DX rate/level curve (straight-line approximation) */
     UI_CUSTOM,         /* the cv_* canvas escape hatch: ui_draw_custom() draws it */
 };
 

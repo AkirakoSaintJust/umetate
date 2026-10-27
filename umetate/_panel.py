@@ -87,6 +87,7 @@ _WIDGETS = {
     "param_column": "UI_PARAM_COLUMN",
     "list": "UI_LIST",
     "grid": "UI_GRID",
+    "envelope": "UI_ENVELOPE",
 }
 
 
@@ -179,7 +180,7 @@ def generate_panel(
         if rest is not None:
             if rest not in op_names:
                 op_names.append(rest)
-            typ = "UI_OP_ROW"
+            typ = "UI_ENVELOPE" if w["type"] == "envelope" else "UI_OP_ROW"
             param = str(op_names.index(rest))
         else:
             raw_typ = _WIDGETS.get(w["type"])

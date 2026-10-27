@@ -144,7 +144,7 @@ static uint16_t ui_slot_param(uint8_t slot)
     const ui_page *p = ui_cur_page();
     uint32_t i, n = 0;
     for (i = 0; i < p->n; i++) {
-        if (p->w[i].param != UI_NO_PARAM) {
+        if (p->w[i].param != UI_NO_PARAM && p->w[i].type != UI_ENVELOPE) {
             if (n == slot)
                 return ui_widget_param(&p->w[i]);
             n++;
@@ -247,10 +247,11 @@ static void ui_draw_label(const ui_widget *w)
     draw_text_box(x, y, wd, f, w->text, w->span >= 2u ? C_HI : C_GRAY, 0);
 }
 
-/* the param id a widget reads: UI_OP_ROW resolves through the selected operator */
+/* the param id a widget reads: UI_OP_ROW/UI_ENVELOPE resolve through the operator */
 static uint16_t ui_widget_param(const ui_widget *w)
 {
-    if (w->type == UI_OP_ROW && ui_t->op_param && w->param < ui_t->n_op_param)
+    if ((w->type == UI_OP_ROW || w->type == UI_ENVELOPE) && ui_t->op_param
+        && w->param < ui_t->n_op_param)
         return ui_t->op_param[(uint32_t)ui_selected_op * ui_t->n_op_param + w->param];
     return w->param;
 }
@@ -329,6 +330,52 @@ static void ui_draw_grid(const ui_widget *w)
     cv_blit(x, y);
 }
 
+/* the DX rate/level envelope as straight line segments: 7 consecutive params
+ * (r1..r4, l1..l3) from the widget's base param. Stage length = 65536/rate (the
+ * one-pole time constant, clamped); a short flat sustain segment. No stage cursor. */
+static void ui_draw_envelope(const ui_widget *w)
+{
+    uint32_t x, y, wd, ht, i, cx;
+    uint32_t len[5], total = 0;
+    int32_t lvl[5], px[6], py[6];
+    uint16_t base = ui_widget_param(w);
+
+    ui_region(w, &x, &y, &wd, &ht);
+    if (base + 6u >= ui_t->n_params)
+        return;
+    for (i = 0; i < 4; i++) {
+        int32_t r = ui_param_v[base + i];
+        uint32_t t = r <= 0 ? 60u : (uint32_t)(65536u / (uint32_t)r);
+        len[i] = t < 2u ? 2u : (t > 60u ? 60u : t);
+        total += len[i];
+    }
+    len[4] = 8u;                                    /* sustain: a short flat segment */
+    total += len[4];
+    if (!total)
+        total = 1u;
+    lvl[0] = ui_param_v[base + 4];                  /* l1 */
+    lvl[1] = ui_param_v[base + 5];                  /* l2 */
+    lvl[2] = ui_param_v[base + 6];                  /* l3 (sustain) */
+    lvl[3] = lvl[2];
+    lvl[4] = 0;
+    for (i = 0; i < 5; i++) {
+        if (lvl[i] < 0) lvl[i] = 0;
+        if (lvl[i] > 32767) lvl[i] = 32767;
+    }
+    px[0] = 0;
+    py[0] = (int32_t)ht;
+    cx = 0;
+    for (i = 0; i < 5; i++) {
+        cx += (len[i] * wd) / total;
+        px[i + 1] = (int32_t)cx;
+        py[i + 1] = (int32_t)ht - (lvl[i] * (int32_t)ht) / 32768;
+    }
+    cv_begin(wd, ht, C_BLACK);
+    for (i = 0; i < 5; i++)
+        cv_line(px[i], py[i], px[i + 1], py[i + 1], C_HI);
+    cv_blit(x, y);
+}
+
 static void ui_draw_widget(const ui_widget *w)
 {
     switch (w->type) {
@@ -340,6 +387,7 @@ static void ui_draw_widget(const ui_widget *w)
     case UI_PARAM_COLUMN: ui_draw_list(w); break;   /* stacked name/value rows */
     case UI_LIST: ui_draw_list(w); break;
     case UI_GRID: ui_draw_grid(w); break;
+    case UI_ENVELOPE: ui_draw_envelope(w); break;
     case UI_CUSTOM: ui_draw_custom(w); break;
     default: break;
     }
@@ -353,6 +401,14 @@ static int32_t ui_widget_value(const ui_widget *w, uint32_t slot)
     case UI_CUSTOM: return ui_custom_v[slot];
     case UI_LIST:
     case UI_GRID: return ui_cursor;
+    case UI_ENVELOPE: {                             /* redraw when any of the 7 change */
+        uint16_t b = ui_widget_param(w);
+        int32_t sum = 0;
+        uint32_t i;
+        if (b + 6u < ui_t->n_params)
+            for (i = 0; i < 7; i++) sum += ui_param_v[b + i];
+        return sum;
+    }
     default:                                       /* VALUE/BAR/PARAM_ROW/COLUMN/OP_ROW */
         return ui_widget_param(w) < ui_t->n_params ? ui_param_v[ui_widget_param(w)] : 0;
     }

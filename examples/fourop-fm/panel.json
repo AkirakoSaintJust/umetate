@@ -54,7 +54,8 @@
             { "type": "param_row", "row": 4, "param": "op1.eg.r1", "text": "ATK" },
             { "type": "param_row", "row": 5, "param": "op1.eg.r2", "text": "DCY1" },
             { "type": "param_row", "row": 6, "param": "op1.eg.r3", "text": "DCY2" },
-            { "type": "param_row", "row": 7, "param": "op1.eg.r4", "text": "REL" }
+            { "type": "param_row", "row": 7, "param": "op1.eg.r4", "text": "REL" },
+            { "type": "envelope", "row": 9, "span": 5, "param": "op1.eg.r1" }
           ]
         },
         {
@@ -63,7 +64,8 @@
             { "type": "label", "row": 1, "span": 2, "text": "OP - ENV LEVELS" },
             { "type": "param_row", "row": 4, "param": "op1.eg.l1", "text": "L1" },
             { "type": "param_row", "row": 5, "param": "op1.eg.l2", "text": "L2" },
-            { "type": "param_row", "row": 6, "param": "op1.eg.l3", "text": "SUS" }
+            { "type": "param_row", "row": 6, "param": "op1.eg.l3", "text": "SUS" },
+            { "type": "envelope", "row": 8, "span": 5, "param": "op1.eg.r1" }
           ]
         },
         {

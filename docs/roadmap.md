@@ -726,12 +726,12 @@ four encoders (`ENC_KNOB4–7`) edit the four on-screen params, `ENC_SELECT` cyc
 sub-pages (pitch → env-rates → env-levels → tremolo), buttons navigate contexts,
 `BTN_OCT_UP`/`BTN_OCT_DOWN` select the operator, and `BTN_STOP` mutes the selected
 operator. The pages are operator-relative (`operators` + `OP_ROW`/`OP_PARAM`). The
-**envelope graph** (the remaining piece) is a new `envelope` widget that draws the DX
-rate/level curve as **straight line segments** (an approximation — no curve fitting)
-and deliberately has **no "now-playing" stage cursor**: tracking live envelope state
-from CPU1 is CPU-heavy and unsafe for the audio core. `ratio` is the operator's
-**frequency multiplier** — a q16 runtime param (`inc = note_to_inc(note) · ratio
->> 16`, so 65536 = 1.0), not a raw increment.
+**envelope graph** is an `envelope` widget that draws the DX rate/level curve as
+**straight line segments** (an approximation — no curve fitting), with stage length
+= the one-pole time constant `65536/rate`, and deliberately **no "now-playing" stage
+cursor**: tracking live envelope state from CPU1 is CPU-heavy and unsafe for the
+audio core. `ratio` is the operator's **frequency multiplier** — a q16 runtime param
+(`inc = note_to_inc(note) · ratio >> 16`, so 65536 = 1.0), not a raw increment.
 
 ---
 
@@ -1718,9 +1718,9 @@ static const ui_binding ui_global[];            /* always-on, resolved last */
 
 typedef struct { uint8_t type, row, col, span;  /* LABEL/VALUE/BAR/PARAM_ROW/
                                                    PARAM_COLUMN/LIST/GRID/OP_ROW/
-                                                   CUSTOM */
+                                                   ENVELOPE/CUSTOM */
                  uint16_t param; const char *text, *unit;
-                 int32_t last; } ui_widget;     /* OP_ROW's `param` is an op-param slot */
+                 int32_t last; } ui_widget;     /* OP_ROW/ENVELOPE `param` is an op-param slot */
 typedef struct { const ui_widget *w; uint8_t n; const char *title; } ui_page;
 ```
 
