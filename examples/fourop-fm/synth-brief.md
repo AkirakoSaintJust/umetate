@@ -20,7 +20,7 @@
 ## 2. Sound and voice architecture
 
 - **Synthesis method(s):** 4-operator phase-modulation FM, per-operator
-  self-feedback, 8 waveforms per operator (the OPZ bit trick), rate/level
+  self-feedback, 8 waveforms per operator (the OPZ set), rate/level
   envelopes.
 - **Polyphony and voice stealing:** 8 voices; oldest-steal on overflow.
 - **Pitch range and tuning:** 12-TET, full MIDI note range; per-op `ratio`
@@ -152,9 +152,8 @@ for `trem_depth` (~16000 ≈ ±50%). All block rate.)
   under the JieLi clang.
 - **Physical timing and device checks:** device acceptance is `blocked`
   (hardware ~10 days out).
-- **Known unknowns:** the OPZ's exact 8-waveform mask table (vs the OPL's,
-  recorded as a follow-up in `dsp-algorithm.md`); the `svf` sub-LSB limit cycle
-  (recorded in the roadmap, benign).
+- **Known unknowns:** the `svf` sub-LSB limit cycle (recorded in the roadmap,
+  benign).
 
 ## 8. Confirmation
 

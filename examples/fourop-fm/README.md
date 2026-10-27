@@ -31,7 +31,7 @@ envelopes**, **8 operator waveforms**, one **global pitch LFO**, and one
 
 The dogfood shipped library code in `modules/nodes/` (`dx_env`, `mix4`, `route4`,
 `route`, `lfo`), `modules/macros/fm_op/`, and two helpers in
-`firmware/hal/fm1_math.h` (`fm1_sin_ws`, `fm1_route4`).
+`firmware/hal/fm1_math.h` (`fm1_sin_opz`, `fm1_route4`).
 
 ## 3. Run
 
@@ -72,6 +72,7 @@ The dogfood did its job — it surfaced two bugs (fixed) and several gaps
    phase:** the `phasor` gained a `pitch` input (`inc × (1 + pitch/32768)`), so
    vibrato is *relative* — constant cents across the keyboard — rather than the
    absolute-Hz wobble you'd get by reusing `fm`.
-7. **The OPZ's exact 8-waveform mask (deferred).** `fm1_sin_ws` implements the
-   OPL/OPZ bit-trick scheme with the OPL's mask table; the OPZ's exact 8 are a
-   documented follow-up in `dsp-algorithm.md`.
+7. **The OPZ's exact 8 waveforms (shipped).** `fm1_sin_opz` implements the YM2414
+   set from ymfm's `opz_registers` — sine, the "trianglish" sin², and their
+   half/double/rectified derivatives — which differ from the OPL2/OPL3 bit-trick
+   set (`docs/dsp-study.md` §2.7). See `dsp-algorithm.md` §`osc.waveform`.

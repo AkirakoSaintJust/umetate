@@ -154,11 +154,11 @@ non-integer ratios like 2.5 stay in tune), and optional **1-sample feedback** vi
 small fixed offset added to `inc`. So an N-operator FM voice is N `fm_op` macros
 wired by the algorithm, not new C.
 
-### 2.7 The 8-waveform bit trick (OPZ / OPL)
+### 2.7 The 8-waveform bit trick (OPL) vs the OPZ's 8
 
-The TX81Z/DX11 (YM2414 "OPZ") and the OPL2/OPL3 get their 8 selectable waveforms
-from **one quarter-sine table + a 3-bit "waveform select" that bitwise-manipulates
-the phase index** before the lookup — no extra tables, a few bit ops per sample:
+The OPL2/OPL3 get their 8 selectable waveforms from **one quarter-sine table + a
+3-bit "waveform select" that bitwise-manipulates the phase index** before the
+lookup — no extra tables, a few bit ops per sample:
 
 ```c
 uint32_t idx = phase >> (32 - LOG2_QUARTER);   /* quarter-sine index */
@@ -170,10 +170,18 @@ out = quarter_sine[idx];
 
 So 8 waveforms = all combinations of {sign-invert, half-mute, period-mute}. The
 "waveform" is a 3-bit value, and the mechanism is **phase distortion in disguise**
-(a stepwise transfer function). (The OPZ's 8 differ from the OPL's 8, but both are
-the same bitwise scheme.) In umetate this is `osc` with a `phase_map` that is a tiny
-bitwise function (or an 8-entry table of mask/XOR patterns) — the same
+(a stepwise transfer function). In umetate this is `osc` + a `phase_map` that is a
+tiny bitwise function (or an 8-entry table of mask/XOR patterns) — the same
 `osc` + `phase_map` concept, with the map being bits rather than a full table.
+
+The **OPZ (YM2414, TX81Z/DX11) 8 are a *different* list**, built from the sine and
+its square (`sin·|sin|`, the "trianglish" wave) plus the half / double-frequency /
+rectified derivatives — not the OPL's bit-mask combinations. ymfm's `opz_registers`
+enumerates them (sine, triangle, half-sine, half-triangle, double-sine,
+double-triangle, double-half-sine, double-half-triangle); umetate implements them
+in `fm1_sin_opz` (`hal/fm1_math.h`), documented in the fourop-fm
+`dsp-algorithm.md` §`osc.waveform`. So "8 selectable waveforms" is the shared idea;
+the exact set and mechanism differ by chip.
 
 ### 2.8 Wavetables and cache
 

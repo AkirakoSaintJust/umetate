@@ -1,6 +1,6 @@
 {
   "name": "osc",
-  "summary": "Wave reader: the 8 FM-chip waveforms (sine/rectified/half/square/saw/triangle) via fm1_sin_ws, selected by a `waveform` param (0 = sine).",
+  "summary": "Wave reader: the 8 OPZ (YM2414) waveforms (sine/triangle/half/double and their rectified/sin² derivatives) via fm1_sin_opz, selected by a `waveform` param (0 = sine).",
   "ins": { "phase": { "rate": "audio", "format": "phase" } },
   "outs": { "audio": "audio" },
   "params": { "waveform": "uint32" },

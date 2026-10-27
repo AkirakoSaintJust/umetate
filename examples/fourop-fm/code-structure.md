@@ -21,7 +21,7 @@
   - `modules/nodes/phasor/` — the `fm` input now scales `<<16` (full-scale = ±π
     phase swing), and a `pitch` input scales the increment (`inc × (1 + pitch/32768)`,
     full-scale = ±1 octave) for relative-pitch vibrato.
-  - `firmware/hal/fm1_math.h` — `fm1_sin_ws` (the 8-waveform bit trick),
+  - `firmware/hal/fm1_math.h` — `fm1_sin_opz` (the OPZ 8 waveforms),
     `fm1_route4` (the 4-weight Q15 dot product).
   - `umetate/_tables.py` — the `routing` table kind (the 7-algorithm matrix).
 - **Forbidden to touch:** HAL registers, `platform.c` services, the loader,
@@ -52,9 +52,9 @@ No hand-written `dsp.c`: `generate(patch)` emits `<synth>_dsp_*` from the patch
 
 ### HAL helpers (`firmware/hal/fm1_math.h`)
 
-- `FM1_MATH_INLINE int32_t fm1_sin_ws(uint32_t phase, uint32_t ws)` — the
-  quarter-sine bit trick. `FM1_MATH_INLINE`, so a `.dsp_text` call never goes
-  XIP.
+- `FM1_MATH_INLINE int32_t fm1_sin_opz(uint32_t phase, uint32_t ws)` — the OPZ
+  (YM2414) 8 waveforms (sine/triangle/half/double + derivatives).
+  `FM1_MATH_INLINE`, so a `.dsp_text` call never goes XIP.
 - `FM1_MATH_INLINE int32_t fm1_route4(const int16_t *w, int32_t a, int32_t b,
   int32_t c, int32_t d)` — `Σ a·w0 + b·w1 + c·w2 + d·w3` via `fm1_q15_mul`.
 

@@ -88,7 +88,7 @@ SINE_ENV: Patch = {
     "global": {"nodes": [], "wires": []},
 }
 
-# `osc` with a non-sine waveform (6 = square) — exercises the fm1_sin_ws bit trick.
+# `osc` with a non-sine OPZ waveform (6 = double half sine) — exercises fm1_sin_opz.
 WAVEFORM: Patch = {
     "name": "waveform_test",
     "voices": 4,
@@ -643,6 +643,67 @@ def _lfo_varies(patch: Patch) -> tuple[bool, str]:
     return True, ""
 
 
+# the OPZ waveform shapes: a small C probe against the HAL directly (no patch).
+_OPZ_PROBE = r"""
+#include <stdio.h>
+#include <stdint.h>
+#include "fm1_math.h"
+int main(void) {
+    int32_t sine_max = 0, sine_min = 0, half_min = 0, dhs_min = 0;
+    int half_nonzero_second = 0;
+    for (uint32_t n = 0; n < 1024; n++) {
+        uint32_t ph = n << 22;                       /* one full cycle */
+        int32_t s = fm1_sin_opz(ph, 0);              /* sine */
+        int32_t h = fm1_sin_opz(ph, 2);              /* half sine */
+        int32_t d = fm1_sin_opz(ph, 6);              /* double half sine */
+        if (s > sine_max) sine_max = s;
+        if (s < sine_min) sine_min = s;
+        if (h < half_min) half_min = h;
+        if (d < dhs_min) dhs_min = d;
+        if (ph >= 0x80000000u && h != 0) half_nonzero_second = 1;
+    }
+    if (sine_max < 32000 || sine_min > -32000) {
+        printf("FAIL: sine not full-scale (%d, %d)\n", sine_max, sine_min);
+        return 1;
+    }
+    if (half_min < 0) { printf("FAIL: half sine has negative values\n"); return 1; }
+    if (half_nonzero_second) {
+        printf("FAIL: half sine non-zero in 2nd half\n");
+        return 1;
+    }
+    if (dhs_min < 0) {
+        printf("FAIL: double half sine has negative values\n");
+        return 1;
+    }
+    printf("ok: OPZ waveforms (sine bipolar, half/double-half non-negative)\n");
+    return 0;
+}
+"""
+
+
+def _opz_waveforms() -> tuple[bool, str]:
+    """Compile + run the OPZ-waveform shape probe against the HAL."""
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "t.c").write_text(_OPZ_PROBE)
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-o",
+                str(d / "t"),
+                str(d / "t.c"),
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            return False, "compile failed:\n" + proc.stderr
+        run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+        return run.returncode == 0, run.stdout.strip()
+
+
 def _goertzel(sig: list[int], freq: float, fs: float) -> float:
     """DFT magnitude at an arbitrary (possibly non-bin) frequency."""
     c = 2.0 * math.cos(2.0 * math.pi * freq / fs)
@@ -780,7 +841,7 @@ def main() -> int:
     ok, msg = _sound(WAVEFORM)
     print(
         ("ok: " if ok else "FAIL: ")
-        + (msg or "osc waveform (square) renders non-silent then silent")
+        + (msg or "osc waveform (double half sine) renders non-silent then silent")
     )
     failures += 0 if ok else 1
 
@@ -847,6 +908,10 @@ def main() -> int:
         ("ok: " if ok else "FAIL: ")
         + (msg or "lfo oscillates (non-constant control output)")
     )
+    failures += 0 if ok else 1
+
+    ok, msg = _opz_waveforms()
+    print(("ok: " if ok else "FAIL: ") + (msg or "OPZ waveforms have the right shapes"))
     failures += 0 if ok else 1
 
     ok, msg = _sound(FM_OP)
