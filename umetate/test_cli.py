@@ -125,11 +125,22 @@ def _setup_dry_run_plans() -> None:
     out = buf.getvalue()
     assert "extract to /opt/jieli/toolchain" in out
     assert "verify SDK asset" in out
+    assert "cargo build --release -p fm1-emu -p fm1-live" in out
 
     data_buf = io.StringIO()
     with contextlib.redirect_stdout(data_buf):
         assert setup.main(["--dry-run", "--json"]) == 0
     assert "steps" in json.loads(data_buf.getvalue())
+
+
+def _emu_paths() -> None:
+    from . import _emu
+
+    assert _emu.EMU_BIN.name.startswith("fm1-emu")
+    assert _emu.LIVE_BIN.name.startswith("fm1-live")
+    if sys.platform == "win32":
+        assert _emu.EMU_BIN.suffix == ".exe"
+    assert isinstance(_emu.emulator_built(), bool)
 
 
 def main() -> int:
@@ -144,6 +155,7 @@ def main() -> int:
         ("scaffold patch builds", _scaffold_builds),
         ("lint --c catches a MAXP violation", _lint_catches_violation),
         ("setup --dry-run plans the install", _setup_dry_run_plans),
+        ("the fm1-emu binary paths resolve", _emu_paths),
     ]
     failures = 0
     for name, test in tests:

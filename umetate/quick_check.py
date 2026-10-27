@@ -17,7 +17,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from . import runner
+from . import _emu, runner
 from .evidence import Layer, Status
 
 _ROOT = Path(__file__).resolve().parents[1]
@@ -76,7 +76,7 @@ def _probe() -> list[tuple[Layer, Status, str]]:
     # ---- everything above host is not probe-able without the toolchain/device ----
     out.append((Layer.BROWSER, Status.BLOCKED, "emscripten wasm (P4-1)"))
     out.append((Layer.TARGET, *_target_layer()))
-    out.append((Layer.EMULATOR, Status.BLOCKED, "fm1-emu (P4-2)"))
+    out.append((Layer.EMULATOR, *_emulator_layer()))
     out.append((Layer.TIMING, Status.NOT_RUN, "physical, device-only"))
     out.append((Layer.DEVICE, Status.BLOCKED, "no device connected"))
     out.append((Layer.RELEASE, Status.NOT_RUN, "release-only"))
@@ -92,6 +92,13 @@ def _target_layer() -> tuple[Status, str]:
     if (_ROOT / ".jieli" / "jieli-linux-toolchains-20260730.1").is_dir():
         return Status.PASS, "local .jieli/ toolchain checkout"
     return Status.BLOCKED, "JieLi toolchain not set up (`umetate setup`)"
+
+
+def _emulator_layer() -> tuple[Status, str]:
+    """The EMULATOR presence probe: the built fm1-emu binaries."""
+    if _emu.emulator_built():
+        return Status.PASS, "fm1-emu built (fm1-emu + fm1-live)"
+    return Status.BLOCKED, "fm1-emu not set up (`umetate setup`)"
 
 
 def _render(results: list[tuple[Layer, Status, str]]) -> str:

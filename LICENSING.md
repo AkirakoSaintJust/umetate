@@ -24,7 +24,7 @@ lineage, not the product boundary.
 | Felucca platform (hal/, loader/, crt0.S, app.ld) | @kurogedelic / Hügelton Instruments | GPL-3.0-only |
 | Core-1 bring-up (`hal/fm1_cpu1.h`, `hal/fm1_cpu1.S`) | X0X (charlesvestal/fm1-x0x), Melodee (keremimo/melodee), Jangada (zednaked/jangada), via Felucca | GPL-3.0-only |
 | SLOOP platform changes | isod89 | GPL-3.0-only |
-| FM-1 emu | joakimeriksson | GPL-3.0-only |
+| FM-1 emu | joakimeriksson | MIT |
 | SMK-37 board layer + fm1-to-smk37 port kit | M. Geisler (genkigenki/makkuro) | GPL-3.0-only |
 | TRS MIDI IN ring read | Felucca / sloopDX / ChanceTheMaker | GPL-3.0-only |
 | Update loader screen | zvenson / illuminus5 (Skiff) | GPL-3.0-only |

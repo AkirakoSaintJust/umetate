@@ -398,9 +398,10 @@ Power on
 
 ```text
 umetate quick-check [--json] [--strict]        verify environment per evidence layer
-umetate setup      [--dry-run] [--clock 240|320] [--json]   opt-in; installs toolchain into the Docker volume
+umetate setup      [--no-emulator] [--dry-run] [--clock 240|320] [--json]   opt-in; toolchain+SDK into the volume, Rust + fm1-emu on the host
 umetate build      --board fm1|smk37 [--model pro|elite|mke]
                    [--dsp integer|float] [--clock 240|320] [--profile baseline|perf]
+umetate emu        [--board fm1|smk37] [--persist] [--midi NAME] [--check]   run your firmware in the fm1-emu GUI (or headless)
 umetate deep-check  [--host|--web|--safety|--skill|--links|--all]
 umetate inspect    PACKAGE                   inspect a .fwsc without a device
 umetate flash      PACKAGE [--port NAME] [--device] [--yes]   flash; identity + CRC + model checked; resumes a device in update mode
@@ -416,7 +417,8 @@ umetate help [CMD]                           documents every option (component 1
 
 - `quick-check` is read-only; missing target toolchain is `blocked`, not `fail`;
   `--strict` turns non-device `blocked` into a failure exit.
-- `setup` is opt-in, interactive, hash-pinned, never silent; records the clock choice.
+- `setup` is opt-in, interactive, hash-pinned, never silent; records the clock choice;
+  installs Rust + fm1-emu on the host (`--no-emulator` skips that).
 - `scaffold` generates a **default** node/macro/patch (from the schemas, or
   `--template` copies a shipped template), which the user customizes — DSP core,
   params, graph — **by hand or agentically**. `lib list` shows the shipped nodes +
@@ -841,16 +843,21 @@ lab (AudioWorklet + message protocol + the automated host↔browser check) is **
 *Acceptance:* `web-build` produces a standalone WASM module and the harness serves in
 a browser; `evidence` validates a matrix. **Layer: host/browser.**
 
-### Phase 4 — Web lab + emulator (P4)
+### Phase 4 — Web lab + emulator (P4) — **in progress**
 
 **P4-1 — WASM parity lab.** Compile the generated DSP (the same sources as
 firmware/host) to standalone WASM; AudioWorklet adapter; versioned message protocol;
 explicit rate/block conversion; gesture-gated start. *Acceptance:* `deep-check --web`
 passes; browser matches host within tolerance. **Layer: browser.**
 
-**P4-2 — fm1-emu as model layer.** Run the `.fwsc` in fm1-emu where supported as a
-pre-hardware regression; record it as a model layer. *Acceptance:* emulator
-regression row exists for supported firmwares; no device-acceptance claim. **Layer: emulator.**
+**P4-2 — fm1-emu as model layer.** — **done (emulator)** — `umetate setup` (no flags)
+now installs Rust (rustup) and builds fm1-emu at the pinned commit — the `fm1-emu`
+batch interpreter *and* the `fm1-live` GUI. `umetate emu` runs the GUI (`--fwsc`,
+`--persist`, `--midi`, `--mhz`) or `--check` (headless `fm1-live --shot` → panel +
+audio peak). *Verified:* `umetate emu --check` boots `umetate-fm1-pro.fwsc` (audio peak
+10378, chord LEDs lit, no halt) and `umetate-smk37-pro.fwsc` (SMK-37 pads rendered,
+audio peak 6720, no halt); `quick-check` reports the `emulator` layer as `pass`. RIB
+runs unchanged in the emulator. No device-acceptance claim. **Layer: emulator.**
 
 ### Phase 5 — Skills (P5)
 
@@ -1588,8 +1595,9 @@ shim; `generate.py` is a pure function.
 | --- | --- | --- |
 | `cli.py` | dispatch | `argparse` subparsers; `help CMD` documents every option |
 | `quick_check.py` | `quick-check` | read-only env report (native/host/target/device/repo); `--json`, `--strict` |
-| `setup.py` | `setup` | opt-in, non-silent toolchain+SDK install into the Docker volume; `--toolchain auto\|PATH`, `--sdk auto\|PATH`, `--clock 240\|320`, `--dry-run`, `--json`, `--yes`; version- + hash-verifies against `env.lock` (mismatch aborts unless `--force`) |
+| `setup.py` | `setup` | opt-in, non-silent toolchain+SDK install into the Docker volume + Rust + fm1-emu on the host; `--toolchain auto\|PATH`, `--sdk auto\|PATH`, `--clock 240\|320`, `--no-emulator`, `--dry-run`, `--json`, `--yes`; version- + hash-verifies against `env.lock` (mismatch aborts unless `--force`) |
 | `build.py` | `build` | generate + target compile + packager → `.fwsc` (Docker); `blocked` without the toolchain; `--board/--model/--dsp/--clock/--profile` |
+| `emu.py` | `emu` | run your firmware in fm1-emu: the GUI (`fm1-live --fwsc`, `--persist`, `--midi`) or headless (`--check` → `fm1-emu` WAV/regression); `_emu.py` holds the shared paths |
 | `generate.py` | (internal) | patch + panel → `dsp.c` + `panel.h` (UI tables); `params.json` + `tables.c` are P3-3 |
 | `deep_check.py` | `deep-check` | host/web/safety/links/skill checks |
 | `inspect.py` | `inspect` | read a `.fwsc` (identity/CRC/model/damage) without a device |

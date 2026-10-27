@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
-"""`umetate setup` — install the JieLi toolchain + SDK into the `/opt/jieli` volume.
+"""`umetate setup` — the full bootstrap: target toolchain + SDK, and fm1-emu.
 
-Auto-fetch with opt-in consent (`--toolchain auto` → pkgman.jieliapp.com, `--sdk
-auto` → gitee) or a user-supplied, container-visible path. The toolchain tarball
-SHA-256 and the three SDK asset SHA-256s are verified against `env.lock` (a mismatch
-aborts unless `--force`); the toolchain is smoke-tested (`clang --version`).
-`--dry-run` changes nothing; re-running overwrites the volume. Runs in a throwaway
-container with `umetate-target` mounted read-write (the only legitimate writer).
+1. The JieLi toolchain + SDK into the `/opt/jieli` volume (fetch with opt-in consent,
+   SHA-256-verified vs `env.lock`; runs in a throwaway container with `umetate-target`
+   mounted read-write — the only legitimate volume writer).
+2. Rust (rustup) + fm1-emu on the host: clone `joakimeriksson/fm1-emu` at the pinned
+   commit and `cargo build --release -p fm1-emu -p fm1-live` (the batch runner + GUI).
+
+`--no-emulator` skips step 2; `--dry-run` changes nothing; each step is idempotent.
 """
 
 from __future__ import annotations
@@ -15,11 +16,12 @@ from __future__ import annotations
 import argparse
 import json
 import shlex
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any, cast
 
-from . import runner
+from . import _emu, runner
 
 _ROOT = Path(__file__).resolve().parents[1]
 _ENV_LOCK = _ROOT / "env.lock"
@@ -49,8 +51,20 @@ def _plan(args: argparse.Namespace, lock: dict[str, Any]) -> list[str]:
         else f"use SDK checkout {args.sdk}",
     ]
     steps.extend(f"verify SDK asset {name} SHA-256" for name in sdk["assets"])
+    if not args.no_emulator:
+        steps.extend(_emulator_steps(lock))
     steps.append(f"record --clock {args.clock} to .local-env")
     return steps
+
+
+def _emulator_steps(lock: dict[str, Any]) -> list[str]:
+    """The fm1-emu (host) actions, for the plan."""
+    commit = lock["fm1_emu"]["commit"][:12]
+    return [
+        "install Rust (rustup) if `cargo` is missing",
+        f"clone fm1-emu @ {commit} into .tools/fm1-emu",
+        "cargo build --release -p fm1-emu -p fm1-live",
+    ]
 
 
 def _script(args: argparse.Namespace, lock: dict[str, Any]) -> str:
@@ -103,11 +117,95 @@ def _script(args: argparse.Namespace, lock: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
+# --------------------------------------------------------------- emulator (host) ----
+
+
+def _ensure_rust() -> None:
+    """Install Rust (rustup) if `cargo` is not already reachable."""
+    if _emu.find_cargo() is not None:
+        print("setup: rust: cargo present")
+        return
+    _emu.EMU_DIR.parent.mkdir(parents=True, exist_ok=True)
+    if sys.platform == "win32":
+        init = _emu.EMU_DIR.parent / "rustup-init.exe"
+        subprocess.run(
+            ["curl", "-fsSL", "https://win.rustup.rs/x86_64", "-o", str(init)],
+            check=True,
+        )
+        subprocess.run(
+            [str(init), "-y", "--default-toolchain", "stable", "--profile", "minimal"],
+            check=True,
+        )
+    else:
+        subprocess.run(
+            [
+                "sh",
+                "-c",
+                "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | "
+                "sh -s -- -y --default-toolchain stable --profile minimal",
+            ],
+            check=True,
+        )
+    if _emu.find_cargo() is None:
+        raise SystemExit("setup: rust installed but cargo not found")
+
+
+def _ensure_checkout(lock: dict[str, Any]) -> None:
+    """Clone fm1-emu at the pinned commit (recurse submodules) into .tools/fm1-emu."""
+    source = lock["fm1_emu"]["source"]
+    commit = lock["fm1_emu"]["commit"]
+    _emu.EMU_DIR.parent.mkdir(parents=True, exist_ok=True)
+    if not _emu.EMU_DIR.is_dir():
+        subprocess.run(
+            ["git", "clone", "--recurse-submodules", source, str(_emu.EMU_DIR)],
+            check=True,
+        )
+    subprocess.run(
+        ["git", "-C", str(_emu.EMU_DIR), "checkout", "--quiet", commit], check=True
+    )
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(_emu.EMU_DIR),
+            "submodule",
+            "update",
+            "--init",
+            "--recursive",
+        ],
+        check=True,
+    )
+
+
+def _build_emulator(lock: dict[str, Any]) -> None:
+    """`cargo build --release -p fm1-emu -p fm1-live` (the batch runner + the GUI)."""
+    cargo = _emu.find_cargo()
+    if cargo is None:
+        raise SystemExit("setup: cargo not found")
+    cmd = [str(cargo), "build", "--release"]
+    for package in lock["fm1_emu"]["packages"]:
+        cmd += ["-p", package]
+    print(f"setup: {' '.join(cmd)}")
+    subprocess.run(cmd, cwd=_emu.EMU_DIR, check=True)
+
+
+def _run_emulator(lock: dict[str, Any]) -> None:
+    """Install Rust, fetch + build fm1-emu (idempotent)."""
+    _ensure_rust()
+    _ensure_checkout(lock)
+    _build_emulator(lock)
+    if not _emu.emulator_built():
+        raise SystemExit("setup: fm1-emu build finished without its binaries")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="umetate setup", description=__doc__)
     parser.add_argument("--toolchain", default="auto", metavar="auto|PATH")
     parser.add_argument("--sdk", default="auto", metavar="auto|PATH")
     parser.add_argument("--clock", type=int, choices=(240, 320), default=320)
+    parser.add_argument(
+        "--no-emulator", action="store_true", help="skip the Rust + fm1-emu step"
+    )
     parser.add_argument(
         "--dry-run", action="store_true", help="print the plan, change nothing"
     )
@@ -130,8 +228,9 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if not args.yes:
-        print("umetate setup downloads the JieLi toolchain + SDK from their vendors")
-        print("(never redistributed by umetate; see LICENSING.md).")
+        print("umetate setup downloads the JieLi toolchain + SDK from their vendors,")
+        print("and (unless --no-emulator) installs Rust + builds fm1-emu from GitHub.")
+        print("None are redistributed by umetate; see LICENSING.md.")
         print("Continue? [y/N] ", end="")
         if input().strip().lower() != "y":
             return 1
@@ -144,8 +243,20 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 1
 
+    if not args.no_emulator:
+        try:
+            _run_emulator(lock)
+        except (subprocess.SubprocessError, OSError, SystemExit) as exc:
+            print(
+                f"setup: blocked — the emulator install failed: {exc}",
+                file=sys.stderr,
+            )
+            return 1
+
     _LOCAL_ENV.write_text(f"clock={args.clock}\n", encoding="utf-8")
     print(f"setup: done (toolchain + SDK in {_VOLUME}, clock={args.clock})")
+    if not args.no_emulator:
+        print("setup: fm1-emu ready — `umetate emu` opens the GUI, `--check` headless")
     return 0
 
 

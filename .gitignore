@@ -30,6 +30,9 @@ docs/local-environment.md
 # the JieLi toolchain + SDK (user-downloaded; not redistributed, not committed)
 .jieli/
 
+# the fm1-emu checkout + Rust build (fetched/built by `umetate setup`)
+.tools/
+
 # OS
 .DS_Store
 Thumbs.db
