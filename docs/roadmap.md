@@ -409,7 +409,7 @@ umetate scaffold   <node|macro|patch> --name NAME [--template T] [--out DIR]   g
 umetate lib        [list]                     list the shipped nodes + templates (local only)
 umetate lint       [--c]                     C lint + static checks (bounds, ROM, MMIO, flash-busy)
 umetate fmt        [--check]                 clang-format over the repo
-umetate web-build  / web-serve               WASM parity lab
+umetate web-build  / web-serve               WASM build + a minimal manual browser harness
 umetate status                              per-layer claim ledger parsed from docs/roadmap.md
 umetate help [CMD]                           documents every option (component 1 requirement)
 ```
@@ -809,9 +809,13 @@ wrong-model exits 6; resume checks the model; a fake device (the inherited
 `install_test.py`'s `backend` seam) exercises flash/resume without hardware.
 **Layer: host.**
 
-**P3-5 — `web-build`/`web-serve` + `evidence`.** Wire the WASM lab + evidence
-validator. *Acceptance:* `web-build` produces a standalone WASM module (no import
-section); `evidence` validates a matrix. **Layer: host/browser.**
+**P3-5 — `web-build`/`web-serve` + `evidence`.** `web-build` emscripten-compiles the
+generated `dsp.c` to a standalone `dsp.wasm` (no import section) + a minimal
+`index.html`/JS harness (a manual browser poke); `web-serve` is a loopback static
+server over that output; `evidence` validates an evidence matrix. The real parity
+lab (AudioWorklet + message protocol + the automated host↔browser check) is **P4-1**.
+*Acceptance:* `web-build` produces a standalone WASM module and the harness serves in
+a browser; `evidence` validates a matrix. **Layer: host/browser.**
 
 ### Phase 4 — Web lab + emulator (P4)
 
@@ -1569,7 +1573,7 @@ shim; `generate.py` is a pure function.
 | `scaffold.py` | `scaffold node\|macro\|patch` | generate a skeleton; `--template` copies a shipped template |
 | `lib.py` | `lib list` | list the shipped nodes + templates (local only) |
 | `lint.py` / `fmt.py` | `lint --c` / `fmt` | the custom safety checks / clang-format |
-| `web.py` | `web-build` / `web-serve` | emscripten WASM build / loopback serve |
+| `web.py` | `web-build` / `web-serve` | emscripten → `dsp.wasm` + a minimal harness / loopback serve |
 | `status.py` / `evidence.py` | `status` / `evidence` | parse the roadmap's per-layer claim ledger / validate an evidence matrix |
 
 #### 12.7.2 The build pipeline (one generated `dsp.c`, three targets)
