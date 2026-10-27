@@ -401,7 +401,7 @@ umetate quick-check [--json] [--strict]        verify environment per evidence l
 umetate setup      [--dry-run] [--clock 240|320] [--json]   opt-in; installs toolchain into the Docker volume
 umetate build      --board fm1|smk37 [--model pro|elite|mke]
                    [--dsp integer|float] [--clock 240|320] [--profile baseline|perf]
-umetate deep-check  [--host|--web|--safety|--links|--all]
+umetate deep-check  [--host|--web|--safety|--skill|--links|--all]
 umetate inspect    PACKAGE                   inspect a .fwsc without a device
 umetate flash      PACKAGE [--port NAME] [--device] [--yes]   flash; identity + CRC + model checked; resumes a device in update mode
 umetate debrick    [--route app-rescue|update-loader|mask-rom] [--device]   recovery write (mask-rom: blocked, needs the USB_KEY dongle)
@@ -1727,6 +1727,23 @@ None of these use the runner.
 | `scaffold`/`lib` | pure Python over templates/schemas — no runner |
 | `deep-check` | `runner.run` (host tests) + `_checks/` (lint/wasm/skill/links) |
 | `lint`/`fmt` | clang-tidy/clang-format via the runner + the custom `_checks/` |
+
+**The checks (`_checks/`, one module each).** `deep-check` runs the checks for the
+requested layers; each reports per the §5.5 vocabulary:
+
+- `lint` (source) — the C standing checks: SEC-1 MAXP bounds, SEC-2 UAC access,
+  ROM-address constants, HAL-only MMIO, the flash-busy call graph, no `double`/
+  64-bit-div/allocation in the DSP TU (`.clang-tidy` + the custom checks).
+- `budget` (target) — the link report: `.dsp_text`/`.pool`/`.cpu1_bss` fit the
+  §12.2 flash/RAM map; run by `build`, fails on overage (never silent).
+- `wasm` (browser) — `dsp.wasm` is standalone (no import section); P4-1 adds the
+  host↔browser parity within tolerance.
+- `skill` (source) — the two offline skills (development, safety) have `SKILL.md` +
+  `references/` present and valid.
+- `links` (source) — the docs' cross-references resolve (no dead links).
+
+Flags: `--host` (host vectors + UI tests), `--safety` (lint), `--web` (wasm),
+`--skill`, `--links`, `--all`; `lint --c` runs the `lint` check standalone.
 
 **Config & exit model.** Committed `env.lock` (toolchain/SDK pins + hashes); an
 ignored per-checkout env file (toolchain/SDK paths + the `--clock` choice). Build
