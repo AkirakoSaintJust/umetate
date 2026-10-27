@@ -9,24 +9,10 @@ rewrite): `product_of` / `model_of` / `deinterleave` / `package_damage`.
 from __future__ import annotations
 
 import argparse
-import importlib.util
 import sys
 from pathlib import Path
-from types import ModuleType
 
-_FM1_INSTALL = (
-    Path(__file__).resolve().parents[1] / "firmware" / "tools" / "fm1_install.py"
-)
-
-
-def _load() -> ModuleType:
-    """Load the fm1tk-lineage installer as a module (its parsing functions only)."""
-    spec = importlib.util.spec_from_file_location("_fm1_install", _FM1_INSTALL)
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"cannot load {_FM1_INSTALL}")
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
+from ._installer import load_installer
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -34,7 +20,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("package", help="the .fwsc to inspect")
     args = parser.parse_args(argv)
 
-    fm1 = _load()
+    fm1 = load_installer()
     try:
         raw = Path(args.package).read_bytes()
     except OSError as exc:

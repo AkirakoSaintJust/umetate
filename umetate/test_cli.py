@@ -251,7 +251,9 @@ def _flash_gates() -> None:
     assert F.flash(["missing.fwsc", "--device", "--yes"]) == 2
 
     # a damaged/garbage package
-    fm1 = F._load()
+    from ._installer import load_installer
+
+    fm1 = load_installer()
     with tempfile.TemporaryDirectory() as tmp:
         bad = Path(tmp) / "bad.fwsc"
         bad.write_bytes(b"\x00" * 100)

@@ -10,16 +10,12 @@ installer's own confirmation still applies. Wrong model exits 6.
 from __future__ import annotations
 
 import argparse
-import importlib.util
 import sys
 from collections.abc import Callable
 from pathlib import Path
-from types import ModuleType
 from typing import Any, TextIO, cast
 
-_FM1_INSTALL = (
-    Path(__file__).resolve().parents[1] / "firmware" / "tools" / "fm1_install.py"
-)
+from ._installer import load_installer
 
 # §8 gates 4/5: the named recovery routes (docs/platform-facts.md §5.4).
 _ROUTES = (
@@ -29,17 +25,7 @@ _ROUTES = (
 )
 
 
-def _load() -> ModuleType:
-    """Load the fm1tk-lineage installer as a module."""
-    spec = importlib.util.spec_from_file_location("_fm1_install", _FM1_INSTALL)
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"cannot load {_FM1_INSTALL}")
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
-
-
-def _verify(fm1: ModuleType, path: Path) -> tuple[str, str] | None:
+def _verify(fm1: Any, path: Path) -> tuple[str, str] | None:
     """Verify a package's identity + CRC; return (product, model) or None."""
     try:
         raw = path.read_bytes()
@@ -80,7 +66,7 @@ def flash(
         )
         return 1
 
-    fm1 = _load()
+    fm1 = load_installer()
     path = Path(args.package)
     if not path.is_file():
         print(f"flash: {path} not found", file=sys.stderr)

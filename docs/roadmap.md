@@ -668,7 +668,7 @@ the three SDK assets (`uboot.boot`, `cfg_tool.bin`, `cfg/eq_cfg_hw.bin`) are ver
 against `env.lock`; `--force` accepts a mismatch; `--dry-run`/`--json` print the plan.
 A git-ignored `.jieli/` checkout remains as a per-checkout fallback. **Layer: host.**
 
-### Phase 2 — RIB runtime + generator (P2) — **done (host), blocked (target/device)**
+### Phase 2 — RIB runtime + generator (P2) — **done (host + target), blocked (device)**
 
 **P2-1 — Import the Dinghy/Felucca baseline and flatten.** — **done (import + host +
 target packages)** — Imported source-owned C (app `rib.c`/`rib_dsp.c`,
@@ -686,7 +686,7 @@ also fixed the two spots that carried the wrong `SMK-37 MKE-P37_99` prefix —
 matches the on-device `SMK_MODEL` value the installer recognizes).
 **Layer: source/host/target.**
 
-**P2-2 — Dual-core bring-up (default).** — **done (source/host), blocked (target/device)**
+**P2-2 — Dual-core bring-up (default).** — **done (source/host/target), blocked (device)**
 — Imported Felucca's proven core-1 layer verbatim (`hal/fm1_cpu1.h` + `hal/fm1_cpu1.S`,
 lineage X0X/Melodee/Jangada via Felucca): the synchronous one-job mailbox (`fn(arg)`
 + a check word that is itself the `0x00200000` boot probe) and the built-in fallback
@@ -697,9 +697,9 @@ bits to `hal/fm1_sys.h` (`FM1_C1_CON`, `fm1_cpu1_halt`, `FM1_RESET_PREP`) and
 note queue (`hal/fm1_ipc.h`), the `rib_render_block` job, and the dual-core↔fallback
 branches in `app_audio`/`play`/`stop`/`quiet`. *Verified:* host build green; `dsp_test`
 + `ipc_test` (FIFO / wrap-around / overrun / no-lost-note-off) pass. *Blocked:* the
-target package and the device probe need the JieLi toolchain + hardware. **Layer: source/host.**
+device probe needs hardware. **Layer: source/host/target.**
 
-**P2-3 — Hardware acceleration HAL.** — **done (source/host), blocked (target/device)**
+**P2-3 — Hardware acceleration HAL.** — **done (source/host/target), blocked (device)**
 — `hal/fm1_math.h`: saturating Q arithmetic (`fm1_q15_mul`/`q16_mul`/`q31_mul`,
 `fm1_sat_add32`/`sat_sub32`, `fm1_madd_sat`, `fm1_shr_round`) + the transcendental
 tables (`fm1_sin`/`fm1_cos` from a 256-entry quarter-sine, `fm1_exp2_q16`,
@@ -717,30 +717,34 @@ and the `libFFT_pi32v2_OnChip.a` — they include `cpu.h` → `WL82.h` (the whol
 register header) + the OS (`system/includes.h`, `os/os_api.h`), so only their
 self-contained *declarations* are vendored; the implementations are read from the SDK
 checkout like the binary assets. The hardware FFT (`hwfft_*`) and vector DSP
-(`vector_*`) are wired in P2-8. *Blocked:* target link + emulator hw-vs-sw parity
-need the JieLi toolchain + fm1-emu. **Layer: source/host.**
+(`vector_*`) are wired in P2-8. *Blocked:* the hw FFT/vector DSP + hw-vs-sw parity
+(the target link now works; the device acceptance is `blocked`). **Layer: source/host/target.**
 
-**P2-4 — FPU opt-in (`--dsp float`).** DSP-TU-only FPU; no `double`; prove context
-ownership. *Acceptance:* no soft-float helpers in DSP; no FP outside the DSP object;
-host integer-vs-float parity; device `blocked`. **Layer: source/host/target.**
+**P2-4 — FPU opt-in (`--dsp float`).** — **blocked** (the flag is accepted but the
+float DSP TU is unwired; the DSP is integer-only) — DSP-TU-only FPU; no `double`;
+prove context ownership. *Acceptance:* no soft-float helpers in DSP; no FP outside
+the DSP object; host integer-vs-float parity; device `blocked`. **Layer: source/host/target.**
 
-**P2-5 — Clock profiles (240/320).** Report measured clock; implement the 240/320
-selection with the `fm1-clk320-probe` ordering; power-cycle semantics. *Acceptance:*
+**P2-5 — Clock profiles (240/320).** — **done (CLI), blocked (device)** — the CLI
+rejects 360/396 (`--clock 240|320`); the app reports the bootloader's clock and never
+sets it. *Acceptance:*
 `status`/screen reports measured clock + revision; 360/396 rejected at the CLI.
 Device soak `blocked`. **Layer: source/target.**
 
-**P2-6 — SMK-37 board layer.** Velocity keybed, 16 RGB pads, 4 faders, 8 encoders,
+**P2-6 — SMK-37 board layer.** — **done (builds), blocked (device)** — Velocity keybed,
+16 RGB pads, 4 faders, 8 encoders,
 wheels, outer keys, per-model identities, SMK flash map + owner tag; FM-1
 byte-identical (`BOARD_SMK37`). *Acceptance:* all three SMK models build; FM-1
 byte-identical; flash-map test covers every object. **Layer: source/host/target.**
 
-**P2-7 — Recovery & safety in firmware.** App-level rescue, boot guard, running
+**P2-7 — Recovery & safety in firmware.** — **done (host), blocked (device)** —
+App-level rescue, boot guard, running
 chord, custom loader (`ota-<identity>` + resume + model check), single-bank-OTA
 `uboot.boot`, protected-range guards, `SEC-1`/`SEC-2` fixes. *Acceptance:* host
 `bootguard` test; `lint --c` encodes SEC-1/SEC-2 + flash allow-list. Device `blocked`.
 **Layer: source/host.**
 
-**P2-8 — Patch generator (the AOT compiler).** — **done (host, strict-typed), blocked (WASM/target)**
+**P2-8 — Patch generator (the AOT compiler).** — **done (host + WASM + target)**
 — A compiler pipeline (the §12.4 spec): `_ir.py` (Port/Edge/PortSpec NamedTuples,
 `NodeSpec`, `NodeInstance`, `CompiledGraph`, `GenError`), `_frontend.py` (parse →
 macro expand → wire resolve → type-check → cycle-check + topo), `_backend.py` (rate
@@ -755,12 +759,12 @@ sample) + the §12.1 seam + the note→inc allocator (`ratio` via a note-derived
 binding). *Verified:* the pocket-drone two-op FM example (op macro + delay1 feedback
 + global chain) compiles; a delay-free env/vca patch renders non-silent then silent;
 an `audio→event` edge is rejected; `mypy --strict` + `ruff check` + `ruff format
---check` are clean over the owned Python. *Deferred:* the flattened `params.json`
-table + `const` XIP `tables:` + `model`-enum dispatch (P2-8 follow-up, with
-`scaffold` in P3); WASM (emscripten) + target (JieLi clang) builds need
-P1-2/P3-2. **Layer: host.**
+--check` are clean over the owned Python. *Followed up:* the flattened `params.json`
+table + `const` XIP `tables:` landed in P3-3, the WASM build in P4-1, the target build
+in P3-2 (the `model`-enum dispatch idea was superseded by the monomorphic inlining —
+no dispatch at all). **Layer: host/WASM/target.**
 
-**P2-9 — UI base + panel generator.** — **done (host), blocked (target/device)**
+**P2-9 — UI base + panel generator.** — **done (host + target), blocked (device)**
 — Shipped `firmware/src/ui.c`/`ui.h` (the context-stack runtime: push/pop/pop_home,
 global binding fallthrough, entry/exit hooks, the 7 widget renderers + the
 `UI_CUSTOM` canvas escape hatch, the binding resolver + action dispatch, and the
@@ -779,11 +783,12 @@ differently between captures. *Deferred:* the `boot` screen (a transient pre-con
 page) and the `on_enter`/`on_exit` hooks (emitted as `0` for now); the log curve.
 **Layer: host.**
 
-**Exit P2:** **met (host)** — RIB is the dual-core, integer-by-default runtime for
-FM-1 + SMK-37; the generator compiles patches to the invariant `<synth>_dsp_*` seam
-and panels to the shipped UI kit. Every device gate is explicitly `blocked`/`not-run`.
+**Exit P2:** **met (host + target)** — RIB is the dual-core, integer-by-default runtime
+for FM-1 + SMK-37; the generator compiles patches to the invariant `<synth>_dsp_*`
+seam and panels to the shipped UI kit. Every device gate is explicitly
+`blocked`/`not-run`.
 
-### Phase 3 — CLI (P3)
+### Phase 3 — CLI (P3) — **done (host/browser/target), blocked (device)**
 
 **P3-1 — CLI skeleton.** — **done** — `pyproject.toml` (`[build-system]` setuptools +
 `[project.scripts] umetate = "umetate.cli:main"`), the `umetate/` package, `cli.py`
@@ -1676,24 +1681,27 @@ state kinds. All at P0-1. See `examples/pocket-drone/README.md` §5.
 1. **Dispatch** — `cli.py`: `argparse` subparsers, `help CMD`, maps a command to its
    module's `main(argv) -> int` and the return to an exit code.
 2. **Commands** — one module per command, each `main(argv: list[str]) -> int`.
-3. **Services** — `config.py` (dataclasses), `evidence.py` (the Status/Layer
-   vocabulary), `runner.py` (container exec), `generate.py` (the pure generator),
-   and `_checks/` (the internal lint/budget/wasm/skill/link checks).
+3. **Services** — `evidence.py` (the Status/Layer vocabulary), `runner.py` (container
+   exec), `generate.py` (the pure generator), the internal `_ir`/`_frontend`/
+   `_backend`/`_tables`/`_panel`/`_installer`/`_emu` helpers, and `_checks/` (the
+   planned lint/budget/wasm/skill/link checks).
 
 **Package layout.**
 
 ```text
 umetate/
   __init__.py   cli.py                    # dispatch, help, exit mapping
-  config.py     evidence.py               # BuildConfig/EnvConfig; Status/Layer Enum
+  evidence.py   version.py                # Status/Layer Enum; the __version__ authority
   runner.py     generate.py               # container exec; the patch generator (pure)
   _ir.py        _frontend.py  _backend.py # generator internals (§12.4): IR, passes, emission
+  _tables.py    _panel.py                 # the table/panel generators
+  _installer.py _emu.py                   # the fm1_install loader; the fm1-emu paths
   quick_check.py setup.py build.py deep_check.py inspect.py
   flash.py debrick.py                       # device writes (host-side, §8)
   scaffold.py lib.py                        # the schematic engine
-  lint.py fmt.py web.py status.py evidence.py
-  _checks/                                # lint checks, budget, wasm, skill, links
-  test_cli.py  test_generate.py           # the CLI + generator contract tests
+  lint.py fmt.py web.py status.py emu.py
+  _checks/                                # lint checks, budget, wasm, skill, links (planned)
+  test_cli.py  test_generate.py test_panel.py test_web.py
 modules/<node>/node.json + node.c         # the node library (§12.5)
 ```
 
