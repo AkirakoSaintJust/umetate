@@ -1,0 +1,8 @@
+{
+  "name": "wavefolder",
+  "summary": "Sine wavefolder: crossfades the input into sin(pi*x) by `amount` (Q15).",
+  "ins": { "audio": "audio" },
+  "outs": { "audio": "audio" },
+  "params": { "amount": "q15" },
+  "state": {}
+}

@@ -89,6 +89,9 @@ class NodeInstance:
     params: dict[str, str] = field(default_factory=dict)
     in_expr: dict[str, str] = field(default_factory=dict, repr=False)
     note_derived: dict[str, str] | None = None  # state -> macro ratio (note-on)
+    consumed: set[str] = field(
+        default_factory=set, repr=False
+    )  # output ports wired down-stream
 
     @property
     def c(self) -> str:

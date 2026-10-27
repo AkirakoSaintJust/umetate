@@ -115,7 +115,7 @@ def _param_tables(graph: CompiledGraph) -> list[str]:
         "",
         "typedef struct { uint32_t id; const char *name; int32_t min, max, def;",
         "                 uint8_t curve; uint8_t rate; const char *unit; } dsp_param;",
-        f"static const dsp_param {graph.name}_dsp_params[{len(params) or 1}] = {{",
+        f"const dsp_param {graph.name}_dsp_params[{len(params) or 1}] = {{",
     ]
     if not params:
         lines.append('    { 0, "", 0, 0, 0, 0, 0, 0 },')
@@ -253,11 +253,19 @@ def _final_out(graph: CompiledGraph, by_id: dict[str, NodeInstance]) -> str:
 def _emit_body(
     inst: NodeInstance, v: str, indent: str, table_names: set[str]
 ) -> list[str]:
-    """Emit a node's full body (read + write parts) at the given indent."""
+    """Emit a node's full body (read + write parts) at the given indent.
+
+    Unwired outputs are `(void)`-ed so a multi-output node (e.g. `svf` with
+    low/band/high) doesn't leave unused locals under `-Wall`.
+    """
     read, write = _split_template(inst.spec.body)
-    return _emit_lines(read, inst, v, indent, table_names) + _emit_lines(
+    lines = _emit_lines(read, inst, v, indent, table_names) + _emit_lines(
         write, inst, v, indent, table_names
     )
+    for port in inst.spec.outs:
+        if port not in inst.consumed:
+            lines.append(f"{indent}(void){inst.out_local(port)};")
+    return lines
 
 
 def _emit_lines(

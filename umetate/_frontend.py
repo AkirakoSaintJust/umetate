@@ -292,8 +292,12 @@ def _typecheck(
             raise GenError(f"{dst.node} has no input port {dst.port!r}")
         _check_edge(src, dst, src_port, dst_port)
         dst_inst.in_expr[dst.port] = src_inst.out_local(src.port)
+        src_inst.consumed.add(src.port)
 
     voice_out = _resolve_ref(voice_out_ref, bindings) if voice_out_ref else None
+    for port in (voice_out, global_out):
+        if port is not None and port.node in by_id:
+            by_id[port.node].consumed.add(port.port)
     return voice_out, global_out
 
 

@@ -85,6 +85,30 @@ SINE_ENV: dict[str, Any] = {
     "global": {"nodes": [], "wires": []},
 }
 
+SVF_WF: dict[str, Any] = {
+    "name": "svf_wf",
+    "voices": 4,
+    "voice": {
+        "nodes": [
+            {"id": "ph", "type": "phasor"},
+            {"id": "osc", "type": "osc"},
+            {"id": "flt", "type": "svf", "params": {"f": 10000, "q": 4000}},
+            {"id": "fold", "type": "wavefolder", "params": {"amount": 8000}},
+            {"id": "env", "type": "env"},
+            {"id": "vca", "type": "vca"},
+        ],
+        "wires": [
+            {"from": "ph.phase", "to": "osc.phase"},
+            {"from": "osc.audio", "to": "flt.audio"},
+            {"from": "flt.low", "to": "fold.audio"},
+            {"from": "fold.audio", "to": "vca.audio"},
+            {"from": "env.cv", "to": "vca.cv"},
+        ],
+        "voice_out": "vca.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
 TABLE_DEMO: dict[str, Any] = {
     "name": "table_demo",
     "voices": 4,
@@ -260,6 +284,13 @@ def main() -> int:
     print(
         ("ok: " if ok else "FAIL: ")
         + (msg or "sine_env renders non-silent then silent")
+    )
+    failures += 0 if ok else 1
+
+    ok, msg = _sound(SVF_WF)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "svf + wavefolder renders non-silent then silent")
     )
     failures += 0 if ok else 1
 

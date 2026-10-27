@@ -610,7 +610,8 @@ test + a budget annotation:
 | `env` / `seg` | segment generator | gate event→control via breakpoint segments (data) |
 | `vca` / `mul` | gain | audio×control (modulatable level) |
 | `mix` / `add` | summer | N audio ins → 1 out |
-| `svf` / `one_pole` | filter | state-variable / one-pole; modulatable cutoff/res |
+| `svf` / `one_pole` | filter | state-variable (LP/BP/HP) / one-pole; modulatable cutoff/res |
+| `wavefolder` | nonlinear | sine fold: input → sin(π·x) crossfaded by `amount` |
 | `delay1` / `delayN` | delay | 1-sample (feedback) / N-sample (echo); the DAG cycle-breakers |
 | `noise` | source | white / pink |
 | `ifft` / `add` | spectral | spectral bins → audio (additive) |
@@ -633,10 +634,14 @@ planned half of each shipped node; the full follow-up, classified by the "one no
 | `fm_op` | macro | promote the `op` macro (phasor + osc + env + vca) |
 | `apc` / `dual_apc` | macro | square + env / two cross-modulated squares |
 | `vps` | macro | DAFx-11 (Kleimola et al.): 2-D inflection point `p=(d,v)`, multi-breakpoint, audio-rate modulation — dynamic phase distortion, generalizes `phase_map` |
-| `wavefolder` | node | per-sample non-linear transfer function |
 | `lpg` | node | vactrol filter+VCA (credit MI *Streams*; don't copy) |
 | `formant` (K5000-style) | macro | bank of `svf` band-passes + vowel presets |
 | `granulator` (Xenakis) | node(s) | phase-granular (no audio buffer) + a separate stochastic/GENDYN node |
+
+`svf` and `wavefolder` shipped first (the "batch 1" build); `fm_op` is next, and it
+needs the **shipped-macro** mechanism (macros currently live only inline in a
+patch's `macros:` section — there is no `modules/`-style macro library yet), so it
+is deferred until that is added.
 
 Build order: `fm_op` + `svf` + `wavefolder` → `ifft` + `lpg` → `formant` + the
 cheap macros → `granulator` last (research-driven). Band-limited oscillators and

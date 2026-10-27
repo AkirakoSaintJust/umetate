@@ -1,0 +1,8 @@
+{
+  "name": "svf",
+  "summary": "Chamberlin state-variable filter (LP/BP/HP). `f` = 2*sin(pi*fc/fs) (Q16), `q` = damping (Q16).",
+  "ins": { "audio": "audio" },
+  "outs": { "low": "audio", "band": "audio", "high": "audio" },
+  "params": { "f": "q16", "q": "q16" },
+  "state": { "low": "q15", "band": "q15" }
+}
