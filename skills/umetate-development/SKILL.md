@@ -37,13 +37,14 @@ user-confirmed**:
 2. **GUI design + architecture + control flow** — the context stack, pages,
    bindings, navigation, and per-context control meaning
    (`templates/control-map.md`).
-3. **Implementation plan** — milestones, feature contracts, resource budget, and
-   the verification ladder (`templates/project-plan.md`,
-   `templates/feature-contract.md`, `templates/supported-load-profile.md`,
-   `templates/evidence-matrix.md`).
+3. **Implementation plan** — milestones, feature contracts, resource budget,
+   architecture, exact granular structure and interface of any custom code that
+   needs to be written, DSP algorithms, and the verification ladder
+   (`templates/project-plan.md`, `templates/feature-contract.md`,
+   `templates/supported-load-profile.md`, `templates/evidence-matrix.md`).
 
 These map **one-to-one** onto `patch.json`, `panel.json`, and the plan/evidence
-artifacts. Step 5 (authoring) is *mechanical translation*, not design. If the
+artifacts. Step 5 (authoring) is _mechanical translation_, not design. If the
 translation forces a design decision you have not already made, stop and ask —
 never improvise in the code.
 
@@ -153,8 +154,8 @@ the verification plan.
 
 ### 4. The consistency gate (fully green before any code)
 
-Cross-check the three artifacts against each other. A failure means *fix the
-artifact*, never the code. Walk every item; do not skip:
+Cross-check the three artifacts against each other. A failure means _fix the
+artifact_, never the code. Walk every item; do not skip:
 
 - [ ] Every GUI binding target is a parameter in the manifest, or a reserved
       action verb from `panel.schema.json`.
