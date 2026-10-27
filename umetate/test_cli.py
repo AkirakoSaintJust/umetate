@@ -12,7 +12,9 @@ import importlib
 import io
 import json
 import sys
+import tempfile
 from collections.abc import Callable
+from pathlib import Path
 
 import umetate.cli as cli
 from umetate import __version__
@@ -78,6 +80,27 @@ def _stub_reports_phase() -> None:
     assert "P3-3" in buf.getvalue()
 
 
+def _lib_lists() -> None:
+    from . import lib
+
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        rc = lib.main(["list"])
+    assert rc == 0
+    out = buf.getvalue()
+    assert "phasor" in out and "pocket-drone" in out
+
+
+def _scaffold_builds() -> None:
+    from . import scaffold
+
+    with tempfile.TemporaryDirectory() as tmp:
+        rc = scaffold.main(["patch", "--name", "t", "--out", tmp])
+        assert rc == 0
+        assert (Path(tmp) / "patch.json").exists()
+        assert (Path(tmp) / "panel.json").exists()
+
+
 def main() -> int:
     tests: _Tests = [
         ("no import side effects", _no_import_side_effects),
@@ -86,6 +109,8 @@ def main() -> int:
         ("status parses the roadmap", _status_parses),
         ("quick-check --json emits the layer/status shape", _quick_check_json),
         ("a stub reports its phase", _stub_reports_phase),
+        ("lib list shows nodes + templates", _lib_lists),
+        ("scaffold patch builds", _scaffold_builds),
     ]
     failures = 0
     for name, test in tests:
