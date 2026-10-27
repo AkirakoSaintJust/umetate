@@ -393,7 +393,7 @@ def _goertzel(sig: list[int], freq: float, fs: float) -> float:
 def _naive_saw(n: int, inc: int) -> list[int]:
     """The un-corrected saw (same phase accumulator, no polyBLEP)."""
     ph = 0
-    out = []
+    out: list[int] = []
     for _ in range(n):
         ph = (ph + inc) & 0xFFFFFFFF
         out.append((ph >> 16) - 32768)
@@ -481,14 +481,14 @@ def _compile_tables(hdr: str, impl: str) -> tuple[bool, str]:
 
 def _table_placeholder_resolves() -> None:
     """`${table.<name>}` resolves to the table's C name; unknown -> GenError."""
-    from ._backend import _substitute
+    from ._backend import substitute
     from ._ir import NodeInstance, NodeSpec
 
     inst = NodeInstance(id="w", type="wt", zone="voice", spec=NodeSpec(name="wt"))
-    out = _substitute(inst, "int32_t x = ${table.sine}[0];", "v", {"sine"})
+    out = substitute(inst, "int32_t x = ${table.sine}[0];", "v", {"sine"})
     assert "table_sine" in out and "${" not in out
     try:
-        _substitute(inst, "int32_t x = ${table.nope}[0];", "v", {"sine"})
+        substitute(inst, "int32_t x = ${table.nope}[0];", "v", {"sine"})
         raise AssertionError("unknown table not rejected")
     except GenError:
         pass

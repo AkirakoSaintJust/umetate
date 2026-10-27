@@ -148,7 +148,7 @@ def generate_panel(
             kind, param = "UI_BIND_PARAM", param_sym(target)
             action, arg = "0", "0"
         else:
-            action_name = b["action"]
+            action_name = b.get("action", "")
             kind = "UI_BIND_ACTION"
             param = "0"
             action = action_expr(action_name)

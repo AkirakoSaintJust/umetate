@@ -74,16 +74,20 @@ class NodeSpec:
     """A compiled node.json manifest + its node.c body template (§12.5)."""
 
     name: str
-    ins: dict[str, PortSpec] = field(default_factory=dict)
-    outs: dict[str, PortSpec] = field(default_factory=dict)
-    params: dict[str, str] = field(default_factory=dict)  # param -> q-format
-    state: dict[str, str] = field(default_factory=dict)  # state -> type (or "pool")
-    note_derived: dict[str, str] = field(default_factory=dict)  # default field -> ratio
+    ins: dict[str, PortSpec] = field(default_factory=lambda: {})
+    outs: dict[str, PortSpec] = field(default_factory=lambda: {})
+    params: dict[str, str] = field(default_factory=lambda: {})  # param -> q-format
+    state: dict[str, str] = field(
+        default_factory=lambda: {}
+    )  # state -> type (or "pool")
+    note_derived: dict[str, str] = field(
+        default_factory=lambda: {}
+    )  # default field -> ratio
     note_cutoff: dict[str, str] = field(
-        default_factory=dict
+        default_factory=lambda: {}
     )  # default field -> ratio (2*sin filter coeff)
     reciprocals: dict[str, str] = field(
-        default_factory=dict
+        default_factory=lambda: {}
     )  # field -> source (2^32/src at note-on)
     body: str = ""  # the per-sample template
 
@@ -96,17 +100,17 @@ class NodeInstance:
     type: str  # the node/macro type name
     zone: str  # "voice" | "global"
     spec: NodeSpec
-    params: dict[str, str] = field(default_factory=dict)
-    in_expr: dict[str, str] = field(default_factory=dict, repr=False)
+    params: dict[str, str] = field(default_factory=lambda: {})
+    in_expr: dict[str, str] = field(default_factory=lambda: {}, repr=False)
     note_derived: dict[str, str] = field(
-        default_factory=dict, repr=False
+        default_factory=lambda: {}, repr=False
     )  # state -> macro ratio (note-on)
     consumed: set[str] = field(
-        default_factory=set, repr=False
+        default_factory=lambda: set(), repr=False
     )  # output ports wired down-stream
     table: str | None = None  # the selected table name (a "table"-kind param)
     note_cutoff: dict[str, str] = field(
-        default_factory=dict, repr=False
+        default_factory=lambda: {}, repr=False
     )  # field -> ratio (the 2*sin filter coeff)
 
     @property
@@ -190,8 +194,8 @@ class CompiledGraph:
     global_order: list[str]  # topo order of global-zone instance ids
     voice_out: Port | None  # the voice-zone signal summed into the bus
     global_out: Port | None  # the global node feeding `out` (else the bus)
-    params: list[ParamEntry] = field(default_factory=list)
-    tables: list[Table] = field(default_factory=list)
+    params: list[ParamEntry] = field(default_factory=lambda: [])
+    tables: list[Table] = field(default_factory=lambda: [])
     control_block: int = CONTROL_BLOCK_DEFAULT
 
 

@@ -27,8 +27,8 @@ from ._schema import Patch, as_patch
 from .generate import generate, generate_tables
 
 _ROOT = Path(__file__).resolve().parents[1]
-_DEFAULT_PATCH = _ROOT / "examples" / "pocket-drone" / "patch.json"
-_OUT = _ROOT / "build" / "web"
+DEFAULT_PATCH = _ROOT / "examples" / "pocket-drone" / "patch.json"
+OUT = _ROOT / "build" / "web"
 
 # the §12.1 seam functions the harness calls (exported from dsp.wasm)
 _SEAM_FUNCS = (
@@ -332,10 +332,10 @@ def build_main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--patch",
         type=Path,
-        default=_DEFAULT_PATCH,
+        default=DEFAULT_PATCH,
         help="a patch.json (default: examples/pocket-drone)",
     )
-    parser.add_argument("--out", type=Path, default=_OUT, help="output directory")
+    parser.add_argument("--out", type=Path, default=OUT, help="output directory")
     args = parser.parse_args(argv)
 
     if not args.patch.is_file():
@@ -354,7 +354,7 @@ def build_main(argv: list[str] | None = None) -> int:
 
 def serve_main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="umetate web-serve", description=__doc__)
-    parser.add_argument("--dir", type=Path, default=_OUT, help="the web-build output")
+    parser.add_argument("--dir", type=Path, default=OUT, help="the web-build output")
     parser.add_argument("--port", type=int, default=8000, help="loopback port")
     args = parser.parse_args(argv)
 

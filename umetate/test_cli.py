@@ -98,7 +98,7 @@ def _scaffold_builds() -> None:
 def _lint_catches_violation() -> None:
     from . import lint
 
-    violation = lint._FW / "src" / "_viol.c"
+    violation = lint.FW / "src" / "_viol.c"
     violation.write_text(
         "void f(void){ int b[MAXP]; b[MAXP] = 1; }\n", encoding="utf-8"
     )
@@ -204,8 +204,8 @@ class _WrongBackend:
     """A MIDI backend whose one device answers with a wrong identity."""
 
     def __init__(self, fm1: ModuleType, identity: str) -> None:
-        self._fm1 = fm1
-        self._identity = identity.encode()
+        self.fm1 = fm1
+        self.identity = identity.encode()
 
     def input_names(self) -> list[str]:
         return ["FM-1"]
@@ -224,9 +224,9 @@ class _WrongLink:
         return True
 
     def read(self, timeout: float) -> bytes:
-        t = self._b._identity
+        t = self._b.identity
         body = bytes([0, 0x59, 0x11, 0, 0, 0]) + t + bytes(28 - len(t))
-        return b"\xf0" + bytes(self._b._fm1.pack7(body)) + b"\xf7"
+        return b"\xf0" + bytes(self._b.fm1.pack7(body)) + b"\xf7"
 
     def drain(self) -> None:
         pass

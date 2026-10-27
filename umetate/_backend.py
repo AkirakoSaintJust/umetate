@@ -278,7 +278,7 @@ def _emit_lines(
             continue
         leading = len(line) - len(line.lstrip())
         lines.append(
-            indent + " " * leading + _substitute(inst, stripped, v, table_names)
+            indent + " " * leading + substitute(inst, stripped, v, table_names)
         )
     return lines
 
@@ -300,7 +300,7 @@ def _split_template(body: str) -> tuple[str, str]:
     return "\n".join(read_lines), "\n".join(write_lines)
 
 
-def _substitute(inst: NodeInstance, line: str, v: str, table_names: set[str]) -> str:
+def substitute(inst: NodeInstance, line: str, v: str, table_names: set[str]) -> str:
     """Substitute the documented placeholders; a leftover is a GenError."""
     out = line.replace("${v}", v)
     for port in inst.spec.ins:

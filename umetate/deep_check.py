@@ -31,16 +31,17 @@ def _web() -> int:
     import json
 
     from . import web
+    from ._schema import as_patch
 
     try:
-        patch = json.loads(web._DEFAULT_PATCH.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+        patch = as_patch(json.loads(web.DEFAULT_PATCH.read_text(encoding="utf-8")))
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
         print(f"deep-check --web: {exc}", file=sys.stderr)
         return 1
-    name = str(patch["name"]).replace("-", "_").replace(".", "_")
-    if web.build(patch, web._OUT, name) != 0:
+    name = patch["name"].replace("-", "_").replace(".", "_")
+    if web.build(patch, web.OUT, name) != 0:
         return 1
-    ok, msg = web.check_parity(web._OUT, name)
+    ok, msg = web.check_parity(web.OUT, name)
     print(f"deep-check --web parity: {'ok' if ok else 'FAIL'} ({msg})")
     return 0 if ok else 1
 

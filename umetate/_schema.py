@@ -270,7 +270,7 @@ class Installer(Protocol):
 def _obj(raw: object, what: str) -> dict[str, object]:
     if not isinstance(raw, dict):
         raise ValueError(f"{what}: expected a JSON object, got {type(raw).__name__}")
-    return raw
+    return cast(dict[str, object], raw)
 
 
 def as_patch(raw: object) -> Patch:

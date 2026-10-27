@@ -12,8 +12,9 @@ import json
 import sys
 from enum import StrEnum
 from pathlib import Path
+from typing import cast
 
-from ._schema import EvidenceMatrix, as_evidence
+from ._schema import as_evidence
 
 
 class Status(StrEnum):
@@ -39,29 +40,44 @@ class Layer(StrEnum):
     RELEASE = "release"
 
 
-def validate(matrix: EvidenceMatrix) -> list[str]:
-    """Validate an evidence matrix (`{"layers": [{"layer", "status", "detail"}]}`).
+def validate(matrix: object, *, strict: bool = False) -> list[str]:
+    """Validate an untrusted evidence matrix (`{"layers": [{"layer", "status"}]}`).
 
-    Returns the list of errors (empty = valid). `blocked`/`not-run` are never `pass`.
+    Returns the list of errors (empty = valid); `strict` also requires every layer.
+    `blocked`/`not-run` are never `pass`.
     """
+    if not isinstance(matrix, dict):
+        return ["not an object"]
+    obj = cast(dict[str, object], matrix)
+    raw_layers = obj.get("layers")
+    if not isinstance(raw_layers, list):
+        return ["'layers' must be a list"]
+    layers = cast(list[object], raw_layers)
     errors: list[str] = []
     seen: set[str] = set()
-    for i, entry in enumerate(matrix["layers"]):
+    present: set[object] = set()
+    for i, entry in enumerate(layers):
         if not isinstance(entry, dict):
             errors.append(f"layers[{i}]: not an object")
             continue
+        e = cast(dict[str, object], entry)
+        present.add(e.get("layer"))
         try:
-            layer = Layer(str(entry.get("layer")))
+            layer = Layer(str(e.get("layer")))
         except ValueError:
-            errors.append(f"layers[{i}]: unknown layer {entry.get('layer')!r}")
+            errors.append(f"layers[{i}]: unknown layer {e.get('layer')!r}")
             continue
         if layer.value in seen:
             errors.append(f"layers[{i}]: duplicate layer {layer.value!r}")
         seen.add(layer.value)
         try:
-            Status(str(entry.get("status")))
+            Status(str(e.get("status")))
         except ValueError:
-            errors.append(f"layers[{i}]: unknown status {entry.get('status')!r}")
+            errors.append(f"layers[{i}]: unknown status {e.get('status')!r}")
+    if strict:
+        for layer in Layer:
+            if layer.value not in present:
+                errors.append(f"missing layer {layer.value!r}")
     return errors
 
 
@@ -74,23 +90,19 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        matrix = as_evidence(json.loads(args.matrix.read_text(encoding="utf-8")))
-    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        matrix = json.loads(args.matrix.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
         print(f"evidence: cannot read {args.matrix}: {exc}", file=sys.stderr)
         return 1
 
-    errors = validate(matrix)
-    if args.strict:
-        present = {e.get("layer") for e in matrix["layers"] if isinstance(e, dict)}
-        for layer in Layer:
-            if layer.value not in present:
-                errors.append(f"missing layer {layer.value!r}")
-
+    errors = validate(matrix, strict=args.strict)
     if errors:
         for error in errors:
             print(f"evidence: {error}", file=sys.stderr)
         return 1
-    print(f"evidence: {args.matrix} valid ({len(matrix['layers'])} layers)")
+    print(
+        f"evidence: {args.matrix} valid ({len(as_evidence(matrix)['layers'])} layers)"
+    )
     return 0
 
 
