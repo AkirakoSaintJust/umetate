@@ -11,6 +11,7 @@
     "voices": { "type": "integer", "minimum": 1, "maximum": 64 },
     "sample_rate": { "type": "integer", "minimum": 8000, "maximum": 96000 },
     "tables": { "type": "object", "additionalProperties": { "$ref": "#/$defs/table" } },
+    "params": { "type": "object", "additionalProperties": { "$ref": "#/$defs/param_binding" } },
     "macros": { "type": "object", "additionalProperties": { "$ref": "#/$defs/macro" } },
     "voice": { "$ref": "#/$defs/zone" },
     "global": { "$ref": "#/$defs/zone" }
@@ -22,8 +23,25 @@
       "additionalProperties": false,
       "properties": {
         "kind": { "enum": ["wavetable", "segments", "spectrum", "phase_map"] },
-        "source": { "type": "string", "description": "file or inline spec" },
-        "size": { "type": "integer", "minimum": 1 }
+        "shape": { "enum": ["sine", "triangle", "square", "saw"], "description": "wavetable only" },
+        "size": { "type": "integer", "minimum": 1, "maximum": 65536 },
+        "harmonics": { "type": "array", "items": { "type": "integer" }, "description": "spectrum only" },
+        "points": { "type": "array", "items": { "type": "array", "items": { "type": "integer" } }, "description": "segments/phase_map inline spec" }
+      }
+    },
+    "param_binding": {
+      "type": "object",
+      "required": ["target"],
+      "additionalProperties": false,
+      "properties": {
+        "target": { "type": "string", "description": "flattened <instance>.<param> path" },
+        "min": { "type": "integer" },
+        "max": { "type": "integer" },
+        "default": { "type": "integer" },
+        "curve": { "enum": ["linear", "log"] },
+        "unit": { "type": "string" },
+        "rate": { "enum": ["sample", "block"] },
+        "modulatable": { "type": "boolean" }
       }
     },
     "zone": {

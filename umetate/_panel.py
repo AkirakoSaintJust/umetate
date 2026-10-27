@@ -87,15 +87,26 @@ _WIDGETS = {
 }
 
 
-def generate_panel(panel: Mapping[str, Any]) -> str:
-    """Compile a panel.json dict into the generated `panel.h` C source."""
+def generate_panel(
+    panel: Mapping[str, Any], param_ids: Mapping[str, int] | None = None
+) -> str:
+    """Compile a panel.json dict into the generated `panel.h` C source.
+
+    `param_ids` (optional) maps a param name to its DSP `set_param` id; when given,
+    the panel's `P_x` enum shares that id space, so a knob writes the right param.
+    """
     name = str(panel["name"])
     contexts = {str(k): v for k, v in dict(panel["contexts"]).items()}
     ctx_names = list(contexts.keys())
     ctx_ids = {n: i for i, n in enumerate(ctx_names)}
+    ids = {str(k): int(v) for k, v in dict(param_ids or {}).items()}
     params: dict[str, int] = {}
 
     def param_id(pname: str) -> int:
+        if param_ids is not None:
+            if pname not in ids:
+                raise GenError(f"unknown param {pname!r}")
+            return ids[pname]
         if pname not in params:
             params[pname] = len(params)
         return params[pname]
@@ -190,7 +201,15 @@ def generate_panel(panel: Mapping[str, Any]) -> str:
         "",
     ]
 
-    if params:
+    if param_ids is not None:
+        refs = _referenced_params(panel, contexts)
+        names = ", ".join(f"P_{to_c_identifier(n)} = {ids[n]}" for n in refs)
+        n_params = max(ids.values()) + 1 if ids else 0
+        if names:
+            lines.append(f"enum {{ {names}, N_PARAMS = {n_params} }};")
+        else:
+            lines.append(f"enum {{ N_PARAMS = {n_params} }};")
+    elif params:
         names = ", ".join(
             f"P_{to_c_identifier(n)} = {i}"
             for n, i in sorted(params.items(), key=lambda kv: kv[1])
@@ -238,10 +257,37 @@ def generate_panel(panel: Mapping[str, Any]) -> str:
     lines.append("")
 
     home = str(ctx_ids[str(panel.get("home", "home"))])
+    n_params = (
+        (max(ids.values()) + 1 if ids else 0) if param_ids is not None else len(params)
+    )
     lines.append("static const ui_tables PANEL = {")
     lines.append(
         f'    "{name}", {home}, CTX, {len(ctx_names)}, GLOBAL_BIND, '
-        f"{len(panel.get('global', []))}, {len(params)}, {widget_count},"
+        f"{len(panel.get('global', []))}, {n_params}, {widget_count},"
     )
     lines.append("};")
     return "\n".join(lines) + "\n"
+
+
+def _referenced_params(
+    panel: Mapping[str, Any], contexts: Mapping[str, Any]
+) -> list[str]:
+    """The distinct param names the panel references, in first-seen order."""
+    refs: list[str] = []
+
+    def note(pname: str) -> None:
+        if pname not in refs:
+            refs.append(pname)
+
+    for ctx in contexts.values():
+        for page in ctx.get("pages", []):
+            for w in page.get("widgets", []):
+                if w.get("param"):
+                    note(str(w["param"]))
+        for b in ctx.get("bindings", []):
+            if b.get("target"):
+                note(str(b["target"]))
+    for b in panel.get("global", []):
+        if b.get("target"):
+            note(str(b["target"]))
+    return refs

@@ -24,10 +24,14 @@ from ._ir import (
     GenError,
     NodeInstance,
     NodeSpec,
+    ParamEntry,
     Port,
     PortSpec,
+    param_bounds,
+    param_default,
     to_c_identifier,
 )
+from ._tables import build_tables
 
 
 def compile(patch: Mapping[str, Any], nodes: Mapping[str, NodeSpec]) -> CompiledGraph:
@@ -70,7 +74,64 @@ def compile(patch: Mapping[str, Any], nodes: Mapping[str, NodeSpec]) -> Compiled
         global_order=_topo([i for i in instances if i.zone == "global"], edges),
         voice_out=voice_out,
         global_out=global_out,
+        params=_build_params(instances, dict(patch.get("params") or {})),
+        tables=build_tables(dict(patch.get("tables") or {})),
     )
+
+
+def _build_params(
+    instances: list[NodeInstance], manifest: Mapping[str, Any]
+) -> list[ParamEntry]:
+    """Flatten node params (in expansion order) and merge the `params:` manifest."""
+    flat: list[tuple[str, str, int, str]] = []
+    for i in instances:
+        for pname, kind in i.spec.params.items():
+            flat.append(
+                (
+                    i.param_expr(pname),
+                    f"{i.id}.{pname}",
+                    param_default(kind, i.params.get(pname)),
+                    kind,
+                )
+            )
+
+    by_target: dict[str, str] = {}
+    meta: dict[str, dict[str, Any]] = {}
+    for name, spec in manifest.items():
+        target = str(spec["target"])
+        if target in by_target:
+            raise GenError(
+                f"params: {by_target[target]!r} and {name!r} both target {target!r}"
+            )
+        by_target[target] = name
+        meta[target] = dict(spec)
+
+    flat_targets = {target for _, target, _, _ in flat}
+    for target, name in by_target.items():
+        if target not in flat_targets:
+            raise GenError(f"params: {name!r} targets unknown param {target!r}")
+
+    entries: list[ParamEntry] = []
+    for idx, (cname, target, default, kind) in enumerate(flat):
+        name = by_target.get(target, target)
+        m = meta.get(target, {})
+        lo, hi = param_bounds(kind)
+        entries.append(
+            ParamEntry(
+                id=idx,
+                name=name,
+                target=target,
+                cname=cname,
+                min=int(m.get("min", lo)),
+                max=int(m.get("max", hi)),
+                default=default,
+                curve=str(m.get("curve", "linear")),
+                unit=str(m.get("unit", "")),
+                rate=str(m.get("rate", "block")),
+                modulatable=bool(m.get("modulatable", False)),
+            )
+        )
+    return entries
 
 
 # --------------------------------------------------------------- expansion ---

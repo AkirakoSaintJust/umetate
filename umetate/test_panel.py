@@ -84,6 +84,57 @@ def main() -> int:
     except GenError as exc:
         print(f"ok: unknown action rejected ({exc})")
 
+    # generate_panel(panel, param_ids) shares the DSP set_param id space
+    bound = {
+        "name": "demo",
+        "contexts": {
+            "home": {
+                "pages": [
+                    {
+                        "id": "home",
+                        "widgets": [{"type": "param_row", "row": 1, "param": "cutoff"}],
+                    }
+                ],
+                "bindings": [
+                    {"source": "ENC_KNOB1", "target": "cutoff", "behavior": "absolute"}
+                ],
+            }
+        },
+        "global": [],
+    }
+    ids = {"env.attack": 0, "env.release": 1, "lp.cutoff": 2, "cutoff": 2}
+    bound_src = generate_panel(bound, ids)
+    if "P_cutoff = 2" in bound_src and "N_PARAMS = 3" in bound_src:
+        print("ok: the panel shares the DSP set_param id space (P_cutoff = 2)")
+    else:
+        print("FAIL: the panel did not bind to the DSP set_param id")
+        failures += 1
+
+    try:
+        generate_panel(
+            {
+                "name": "demo",
+                "contexts": {
+                    "home": {
+                        "pages": [
+                            {
+                                "id": "home",
+                                "widgets": [
+                                    {"type": "param_row", "row": 1, "param": "ghost"}
+                                ],
+                            }
+                        ]
+                    }
+                },
+                "global": [],
+            },
+            ids,
+        )
+        print("FAIL: unknown panel param not rejected")
+        failures += 1
+    except GenError as exc:
+        print(f"ok: unknown panel param rejected ({exc})")
+
     print("panel tests " + ("FAILED" if failures else "passed"))
     return 1 if failures else 0
 

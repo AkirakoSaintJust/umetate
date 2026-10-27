@@ -12,8 +12,8 @@
     "ins": { "type": "object", "additionalProperties": { "$ref": "#/$defs/port" } },
     "outs": { "type": "object", "minProperties": 1, "additionalProperties": { "$ref": "#/$defs/port" } },
     "params": {
-      "type": "array",
-      "items": { "$ref": "params.schema.json#/$defs/param" }
+      "type": "object",
+      "additionalProperties": { "enum": ["q12", "q15", "q16", "q32", "phase", "int16", "int32", "uint32"] }
     },
     "state": {
       "type": "array",

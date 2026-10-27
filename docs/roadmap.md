@@ -820,9 +820,14 @@ addresses, no double/alloc in the DSP TU), `fmt.py` (clang-format), and the
 `set_param` id). *Verified:* `scaffold patch` (minimal and `--template pocket-drone`)
 builds; `lib list` lists the nodes + templates; `lint --c` passes on the firmware and
 flags a crafted MAXP/MMIO violation; `params.json` maps `lp.cutoff` → id 4; `mypy
---strict` + `ruff` + `test_cli`/`test_generate` green. *Deferred:* the user-facing
-name → node-param binding (the `params.schema.json` manifest) and the `const` XIP
-`tables.c` (wavetables/segments/phase_maps). **Layer: host.**
+--strict` + `ruff` + `test_cli`/`test_generate`/`test_panel` green. The **name →
+node-param binding** (the patch `params:` section, `params.schema.json`) and the
+**`const` XIP `tables.c`** landed as a follow-up: `params:` binds a friendly name +
+display metadata (min/max/curve/unit/rate/modulatable) to a flattened
+`<instance>.<param>`; the generator emits the `dsp_param` metadata table + the full
+`params.json`; `generate_panel` shares that set_param id space; `generate_tables`
+emits `tables.c`/`.h` (built-in shapes + inline spec, referenceable by
+`${table.<name>}`). **Layer: host.**
 
 **P3-4 — `flash`, `debrick` (direct, gated).** Per §6.1 and §8. `flash` wraps the
 inherited `fm1_install.py` (strangler-fig, not a rewrite — the clean `umetate/flash.py`

@@ -129,6 +129,37 @@ class NodeInstance:
 
 
 @dataclass
+class ParamEntry:
+    """One flattened DSP param: set_param id, C backing name, and its binding.
+
+    `name` is the manifest key when the patch's `params:` section binds this param,
+    else its flattened `target` path (`<instance>.<param>`). Both resolve to `id`.
+    """
+
+    id: int
+    name: str  # user-facing name (manifest key, else the target path)
+    target: str  # "<instance>.<param>" (the flattened path)
+    cname: str  # the C backing variable (e.g. "lp_cutoff")
+    min: int
+    max: int
+    default: int  # the DSP initial value (from the node param)
+    curve: str  # "linear" | "log"
+    unit: str  # display unit ("" = none)
+    rate: str  # "sample" | "block"
+    modulatable: bool
+
+
+@dataclass
+class Table:
+    """A `tables:` entry: a name + kind + its `const` XIP values (Q15 int16)."""
+
+    name: str
+    kind: str  # "wavetable" | "segments" | "spectrum" | "phase_map"
+    size: int
+    values: list[int]
+
+
+@dataclass
 class CompiledGraph:
     """The front-end's output: everything the back-end needs to emit C."""
 
@@ -139,12 +170,44 @@ class CompiledGraph:
     global_order: list[str]  # topo order of global-zone instance ids
     voice_out: Port | None  # the voice-zone signal summed into the bus
     global_out: Port | None  # the global node feeding `out` (else the bus)
+    params: list[ParamEntry] = field(default_factory=list)
+    tables: list[Table] = field(default_factory=list)
     control_block: int = CONTROL_BLOCK_DEFAULT
 
 
 def to_c_identifier(name: str) -> str:
     """A patch/synth id (dots, hyphens) -> a C identifier (underscores)."""
     return name.replace(".", "_").replace("-", "_")
+
+
+def param_default(kind: str, value: str | None) -> int:
+    """The DSP initial value for a param of `kind`, or an explicit integer override."""
+    if value is not None:
+        return int(value)
+    return {
+        "q12": 4096,
+        "q15": 32768,
+        "q16": 65536,
+        "q32": 0,
+        "phase": 0,
+        "int16": 0,
+        "int32": 0,
+        "uint32": 0,
+    }.get(kind, 0)
+
+
+def param_bounds(kind: str) -> tuple[int, int]:
+    """The [min, max] display range for a param's fixed-point kind."""
+    return {
+        "q12": (-4096, 4095),
+        "q15": (-32768, 32767),
+        "q16": (-65536, 65535),
+        "q32": (0, 0x7FFFFFFF),
+        "phase": (0, 0xFFFFFFFF),
+        "int16": (-32768, 32767),
+        "int32": (-0x80000000, 0x7FFFFFFF),
+        "uint32": (0, 0xFFFFFFFF),
+    }.get(kind, (0, 0x7FFFFFFF))
 
 
 def load_library(root: str | Path) -> dict[str, NodeSpec]:
