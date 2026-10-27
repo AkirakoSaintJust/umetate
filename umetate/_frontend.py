@@ -195,6 +195,7 @@ def _expand(
                 spec=spec,
                 params=params,
                 note_derived=dict(spec.note_derived),
+                note_cutoff=dict(spec.note_cutoff),
                 table=table,
             )
         )
@@ -225,16 +226,16 @@ def _expand(
 
     instance_params = _str_params(inst_dict.get("params"))
     for pname, target in macro.get("params", {}).items():
-        target_str, note_derived = _parse_param_target(target)
+        target_str, note_kind = _parse_param_target(target)
         inner_id, field = target_str.split(".", 1)
         inst = _find(instances, f"{id_}.{inner_id}")
         if inst is None:
             raise GenError(f"macro param {pname!r} targets unknown node {inner_id!r}")
         value = instance_params.get(pname)
-        if note_derived:
-            if inst.note_derived is None:
-                inst.note_derived = {}
+        if note_kind == "inc":
             inst.note_derived[field] = value if value is not None else "1"
+        elif note_kind == "cutoff":
+            inst.note_cutoff[field] = value if value is not None else "1"
         elif value is not None:
             inst.params[field] = value
 
@@ -259,11 +260,18 @@ def _prefix(port: str, prefix: str) -> str:
     return f"{prefix}.{port}"
 
 
-def _parse_param_target(target: object) -> tuple[str, bool]:
+def _parse_param_target(target: object) -> tuple[str, str | None]:
+    """A macro param target: `'inner.field'`, `{target, note_derived}`, or
+    `{target, note_cutoff}`. Returns (target, note-kind) where kind is
+    `"inc"`, `"cutoff"`, or `None` (a plain param)."""
     if isinstance(target, str):
-        return target, False
+        return target, None
     if isinstance(target, dict):
-        return str(target["target"]), bool(target.get("note_derived", False))
+        if target.get("note_cutoff"):
+            return str(target["target"]), "cutoff"
+        if target.get("note_derived"):
+            return str(target["target"]), "inc"
+        return str(target["target"]), None
     raise GenError(f"bad macro param target {target!r}")
 
 

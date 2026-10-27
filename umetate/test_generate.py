@@ -11,6 +11,7 @@ Run: python3 -m umetate.test_generate
 
 from __future__ import annotations
 
+import math
 import subprocess
 import sys
 import tempfile
@@ -193,6 +194,18 @@ SAW_TEST: dict[str, Any] = {
     "global": {"nodes": [], "wires": []},
 }
 
+# the `pitched_noise` macro uses the note-derived cutoff (f = 2*sin(pi*f_note/fs)).
+PITCHED_NOISE: dict[str, Any] = {
+    "name": "pn_test",
+    "voices": 4,
+    "voice": {
+        "nodes": [{"id": "pn", "type": "pitched_noise"}],
+        "wires": [],
+        "voice_out": "pn.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
 TABLE_DEMO: dict[str, Any] = {
     "name": "table_demo",
     "voices": 4,
@@ -256,6 +269,20 @@ int main(void) {
         return 1;
     }
     printf("ok: __NAME__ renders non-silent then silent\\n");
+    return 0;
+}
+"""
+
+DUMP_HARNESS = """\
+#include <stdio.h>
+#include <stdint.h>
+void __NAME___dsp_note_on(uint32_t note, uint32_t velocity);
+void __NAME___dsp_render(int32_t *out, uint32_t frames);
+static int32_t out[4096];
+int main(void) {
+    __NAME___dsp_note_on(69, 100);
+    __NAME___dsp_render(out, 2048);
+    for (int i = 0; i < 2048; i++) printf("%d\\n", out[2 * i]);   /* left channel */
     return 0;
 }
 """
@@ -348,6 +375,85 @@ def _sound_tables(patch: dict[str, Any]) -> tuple[bool, str]:
             return False, "compile failed:\n" + proc.stderr
         run = subprocess.run([str(d / "t")], capture_output=True, text=True)
         return run.returncode == 0, run.stdout.strip()
+
+
+def _goertzel(sig: list[int], freq: float, fs: float) -> float:
+    """DFT magnitude at an arbitrary (possibly non-bin) frequency."""
+    c = 2.0 * math.cos(2.0 * math.pi * freq / fs)
+    s0 = 0.0
+    s1 = 0.0
+    s2 = 0.0
+    for x in sig:
+        s0 = x + c * s1 - s2
+        s2 = s1
+        s1 = s0
+    return math.sqrt(s1 * s1 + s2 * s2 - c * s1 * s2)
+
+
+def _naive_saw(n: int, inc: int) -> list[int]:
+    """The un-corrected saw (same phase accumulator, no polyBLEP)."""
+    ph = 0
+    out = []
+    for _ in range(n):
+        ph = (ph + inc) & 0xFFFFFFFF
+        out.append((ph >> 16) - 32768)
+    return out
+
+
+def _saw_antialias() -> None:
+    """The polyBLEP saw removes the wrap discontinuity and attenuates high
+    harmonics vs a naive saw (the anti-aliasing claim, verified spectrally)."""
+    src = generate(SAW_TEST)
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        (d / "harness.c").write_text(DUMP_HARNESS.replace("__NAME__", "saw_test"))
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            raise AssertionError("compile failed:\n" + proc.stderr)
+        run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+        samples = [int(x) for x in run.stdout.split()]
+
+    n = len(samples)
+    inc = 42852281  # note_to_inc(69) at 44.1 kHz (A4 = 440 Hz)
+    naive = _naive_saw(n, inc)
+
+    def max_jump(x: list[int]) -> int:
+        return max(abs(x[i] - x[i - 1]) for i in range(1, len(x)))
+
+    pj = max_jump(samples)
+    nj = max_jump(naive)
+    assert pj < nj * 0.85, f"polyBLEP saw max jump {pj} is not below naive {nj}"
+    print(f"ok: polyBLEP saw max jump {pj} < naive {nj} (no full-scale wrap)")
+
+    # near-Nyquist harmonic energy (relative to the fundamental) is attenuated
+    fs = 44100.0
+    f0 = fs * inc / (1 << 32)
+    for h in (40, 50):
+        f = f0 * h
+        if f >= fs / 2:
+            continue
+        blep = _goertzel(samples, f, fs) / _goertzel(samples, f0, fs)
+        naive_h = _goertzel(naive, f, fs) / _goertzel(naive, f0, fs)
+        assert blep < naive_h * 0.75, (
+            f"polyBLEP harmonic {h} not attenuated ({blep:.3f} vs {naive_h:.3f})"
+        )
+        print(
+            f"ok: polyBLEP harmonic {h} attenuated ({blep:.3f} vs naive {naive_h:.3f})"
+        )
 
 
 def _compile_tables(hdr: str, impl: str) -> tuple[bool, str]:
@@ -444,6 +550,29 @@ def main() -> int:
         failures += 1
     else:
         print("ok: the note-on reciprocal (2^32/inc) is emitted")
+
+    # the polyBLEP removes the wrap discontinuity: verify the max sample-to-sample
+    # jump is slope-bounded, not the ~65535 full-scale jump of a naive saw.
+    try:
+        _saw_antialias()
+    except AssertionError as exc:
+        print(f"FAIL: polyBLEP anti-aliasing: {exc}")
+        failures += 1
+
+    ok, msg = _sound(PITCHED_NOISE)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "pitched_noise renders non-silent then silent")
+    )
+    failures += 0 if ok else 1
+
+    # the note-derived cutoff must be emitted as 2*sin(pi*inc/2^32)
+    src = generate(PITCHED_NOISE)
+    if "fm1_sin((note_to_inc(note)" not in src:
+        print("FAIL: the note-derived cutoff (2*sin) was not emitted")
+        failures += 1
+    else:
+        print("ok: the note-derived cutoff (2*sin) is emitted")
 
     # a single-harmonic spectrum must generate a pure-sine wavetable (the IFFT)
     from ._tables import build_tables

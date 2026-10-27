@@ -358,11 +358,16 @@ def _seam(graph: CompiledGraph, by_id: dict[str, NodeInstance]) -> list[str]:
         "    voice_gate[pick] = 1;",
     ]
     for i in graph.instances:
-        if i.zone != "voice" or not i.note_derived:
+        if i.zone != "voice":
             continue
         for field, ratio in i.note_derived.items():
             lines.append(
                 f"    {i.state_ref(field, 'pick')} = note_to_inc(note) * {ratio}u;"
+            )
+        for field, ratio in i.note_cutoff.items():
+            lines.append(
+                f"    {i.state_ref(field, 'pick')} = "
+                f"(uint32_t)(fm1_sin((note_to_inc(note) * {ratio}u) >> 1) << 1);"
             )
         for field, src in i.spec.reciprocals.items():
             lines.append(

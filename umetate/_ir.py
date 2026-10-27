@@ -77,6 +77,9 @@ class NodeSpec:
     params: dict[str, str] = field(default_factory=dict)  # param -> q-format
     state: dict[str, str] = field(default_factory=dict)  # state -> type (or "pool")
     note_derived: dict[str, str] = field(default_factory=dict)  # default field -> ratio
+    note_cutoff: dict[str, str] = field(
+        default_factory=dict
+    )  # default field -> ratio (2*sin filter coeff)
     reciprocals: dict[str, str] = field(
         default_factory=dict
     )  # field -> source (2^32/src at note-on)
@@ -93,11 +96,16 @@ class NodeInstance:
     spec: NodeSpec
     params: dict[str, str] = field(default_factory=dict)
     in_expr: dict[str, str] = field(default_factory=dict, repr=False)
-    note_derived: dict[str, str] | None = None  # state -> macro ratio (note-on)
+    note_derived: dict[str, str] = field(
+        default_factory=dict, repr=False
+    )  # state -> macro ratio (note-on)
     consumed: set[str] = field(
         default_factory=set, repr=False
     )  # output ports wired down-stream
     table: str | None = None  # the selected table name (a "table"-kind param)
+    note_cutoff: dict[str, str] = field(
+        default_factory=dict, repr=False
+    )  # field -> ratio (the 2*sin filter coeff)
 
     @property
     def c(self) -> str:
@@ -266,6 +274,9 @@ def node_spec_from_manifest(manifest: dict[str, Any], body: str) -> NodeSpec:
     note_derived = {
         str(k): str(v) for k, v in dict(manifest.get("note_derived", {})).items()
     }
+    note_cutoff = {
+        str(k): str(v) for k, v in dict(manifest.get("note_cutoff", {})).items()
+    }
     reciprocals = {
         str(k): str(v) for k, v in dict(manifest.get("note_reciprocal", {})).items()
     }
@@ -276,6 +287,7 @@ def node_spec_from_manifest(manifest: dict[str, Any], body: str) -> NodeSpec:
         params=params,
         state=state,
         note_derived=note_derived,
+        note_cutoff=note_cutoff,
         reciprocals=reciprocals,
         body=body,
     )

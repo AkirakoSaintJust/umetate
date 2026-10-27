@@ -24,6 +24,11 @@
       "description": "default field -> frequency ratio; at note-on, field = note_to_inc(note) * ratio (a macro param overrides it).",
       "additionalProperties": { "type": "string" }
     },
+    "note_cutoff": {
+      "type": "object",
+      "description": "field -> ratio; at note-on, field = 2*sin(pi * note_to_inc * ratio / 2^32), the Q16 SVF coefficient for a note-tracked filter.",
+      "additionalProperties": { "type": "string" }
+    },
     "note_reciprocal": {
       "type": "object",
       "description": "field -> source state; at note-on, field = 2^32 / source (the note-derived increment's reciprocal, for polyBLEP).",

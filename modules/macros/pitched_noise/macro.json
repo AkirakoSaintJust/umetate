@@ -1,0 +1,14 @@
+{
+  "summary": "Pitched noise: white noise through a note-tracked band-pass (a resonant noise pitched to the note).",
+  "ins": {},
+  "outs": { "audio": "audio" },
+  "params": { "ratio": { "target": "bp.f", "note_cutoff": true } },
+  "nodes": [
+    { "id": "nz", "type": "noise" },
+    { "id": "bp", "type": "track_bp", "params": { "res": 12000 } }
+  ],
+  "wires": [
+    { "from": "nz.audio", "to": "bp.audio" },
+    { "from": "bp.audio", "to": "audio" }
+  ]
+}

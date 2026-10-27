@@ -618,7 +618,8 @@ test + a budget annotation; shipped macros in `modules/macros/`, each =
 | `wavefolder` | nonlinear | sine fold: input → sin(π·x) crossfaded by `amount` |
 | `lpg` | vactrol gate | one-pole + VCA, cutoff/gain coupled to a fast-attack/slow-decay envelope |
 | `delay1` / `delayN` | delay | 1-sample (feedback) / N-sample (echo); the DAG cycle-breakers |
-| `noise` | source | white / pink |
+| `noise` | source | white (xorshift, Q15) |
+| `track_bp` | note-tracked filter | state-variable band-pass whose `f` = 2·sin(π·f_note/fs) (the `note_cutoff` feature) |
 
 `umetate lib list` shows the library; `umetate scaffold --template` starts from a shipped template; user
 nodes conform to `node.schema.json`, patches to `patch.schema.json`.
@@ -637,24 +638,28 @@ planned half of each shipped node; the full follow-up, classified by the "one no
 | ring mod | — | already `vca` with an audio-rate CV |
 | high-pass | — | the `svf` high-pass output |
 | `comb` | — | `delayN` with feedback (already shipped); no macro needed |
-| `pitched_noise` | macro | `noise` + note-tracking `svf` band-pass — needs a note-derived cutoff feature |
-| `apc` / `dual_apc` | macro | square `table` + env / two cross-modulated squares (needs `tables: {square: …}`) |
+| `pulse` (band-limited) | node | the `saw` polyBLEP with a `width` param (two BLEPs, PWM) |
+| `apc` / `dual_apc` | macro | square `table` + env / two cross-modulated squares |
 | `vps` | macro | DAFx-11 (Kleimola et al.): 2-D inflection point `p=(d,v)`, multi-breakpoint, audio-rate modulation — dynamic phase distortion, generalizes `phase_map` |
 | `formant` (K5000-style) | macro | bank of `svf` band-passes + vowel presets |
 | `granulator` (Xenakis) | node(s) | phase-granular (no audio buffer) + a separate stochastic/GENDYN node |
 
 `svf`, `wavefolder`, and `fm_op` shipped first (the "batch 1" build); `lpg`, the
-spectral oscillator, the `table` reader, and the band-limited `saw` (with the
-**note-on reciprocal** feature: `note_reciprocal` in a node manifest, `field =
-2^32/source` at note-on) followed. Shipped macros live in `modules/macros/`; a
-patch's own `macros:` section shadows them. The one deferred generator feature is a
-**note-derived cutoff** (note → `svf` frequency) for `pitched_noise`'s tracking
-filter.
+spectral oscillator, the `table` reader, and the band-limited `saw` followed. The
+`saw` is a 2nd-order polyBLEP: `note_derived` sets its `inc` and `note_reciprocal`
+sets `inv_inc = 2^32/inc` at note-on (a Q32 reciprocal, so `ph·inv_inc` is the Q32
+fractional phase `ph/inc` with no per-sample divide); its anti-aliasing is verified
+host-side by a spectral test (the near-Nyquist harmonic is ~2.5× lower than a naive
+saw, and the full-scale wrap jump is gone). The **note-derived cutoff** feature
+(`note_cutoff`, `field = 2·sin(π·note_to_inc·ratio/2^32)`) and its consumer
+`track_bp` + the `pitched_noise` macro (`noise` → note-tracked band-pass) closed
+out the generator feature list. Shipped macros live in `modules/macros/`; a
+patch's own `macros:` section shadows them.
 
-Build order: `fm_op` + `svf` + `wavefolder` → `ifft` + `lpg` → `formant` + the
-cheap macros → `granulator` last (research-driven). Band-limited oscillators and
-the Xenakis stochastic engine are the two research-heavy items; credit sources and
-honour licences per the development skill.
+Build order: `fm_op` + `svf` + `wavefolder` → `ifft` + `lpg` → `pitched_noise` +
+`formant` + the cheap macros → `granulator` last (research-driven). Band-limited
+oscillators and the Xenakis stochastic engine are the two research-heavy items;
+credit sources and honour licences per the development skill.
 
 ### 6.10 UI kit (the panel base)
 
@@ -1427,6 +1432,9 @@ class NodeSpec:                                        # the compiled node.json 
     name: str
     ins: dict[str, PortSpec]; outs: dict[str, PortSpec]
     params: dict[str, str]; state: dict[str, str]      # name -> q-format / pool
+    note_derived: dict[str, str]                       # field -> ratio (note_to_inc·r at note-on)
+    note_cutoff: dict[str, str]                        # field -> ratio (2·sin(π·inc·r/2^32))
+    reciprocals: dict[str, str]                        # field -> source (2^32/src at note-on)
     body: str                                          # the node.c per-sample template
 
 @dataclass
@@ -1434,7 +1442,7 @@ class NodeInstance:
     id: str; type: str; zone: str                      # zone: "voice" | "global"
     spec: NodeSpec; params: dict[str, str]
     in_expr: dict[str, str]                            # input port -> C expr (resolved)
-    note_derived: dict[str, str] | None = None         # state -> macro ratio (note-on)
+    note_derived: dict[str, str]                       # state -> macro ratio (note-on)
 
 @dataclass
 class CompiledGraph:                                   # frontend -> backend
@@ -1582,6 +1590,10 @@ generator) + a host parity test. The generator composes nodes into the §12.1 se
 | `delay1` | 1-sample delay | `audio`(a) | `audio`(a) | — | `prev`(q15) |
 | `delayN` | N-sample delay | `audio`(a) | `audio`(a) | `time`, `fb` | `buf`[`.pool`], `idx` |
 | `noise` | source | — | `audio`(a) | `color` | `lfsr` |
+| `wavefolder` | nonlinear | `audio`(a) | `audio`(a) | `amount` | — |
+| `lpg` | vactrol gate | `audio`(a), `gate`(e) | `audio`(a) | `attack`, `release` | `level`(q15), `z1`(q15) |
+| `saw` | band-limited osc | `mod`(c), `fm`(a) | `audio`(a) | — | `inc`(q32), `inv_inc`(q32), `phase`(phase) |
+| `track_bp` | note-tracked filter | `audio`(a) | `audio`(a) | `res` | `f`(q16), `low`(q15), `band`(q15) |
 | `ifft` / `add` | spectral | `bins`(c) | `audio`(a) | — | `buf` |
 
 `env`/`seg` takes its shape as **data** (a `segments` table); an ADSR is one

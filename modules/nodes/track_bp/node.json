@@ -1,0 +1,9 @@
+{
+  "name": "track_bp",
+  "summary": "Note-tracked band-pass: a state-variable BP whose `f` = 2*sin(pi*f_note/fs) (note_cutoff).",
+  "ins": { "audio": "audio" },
+  "outs": { "audio": "audio" },
+  "params": { "res": "q16" },
+  "state": { "f": "q16", "low": "q15", "band": "q15" },
+  "note_cutoff": { "f": "1" }
+}
