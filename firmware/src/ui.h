@@ -23,6 +23,7 @@ enum {
     UI_PARAM_COLUMN,   /* a vertical block of param rows (span lines) */
     UI_LIST,           /* a list of items (the cursor selects) */
     UI_GRID,           /* a grid of cells (span lines tall) */
+    UI_OP_ROW,         /* a param row resolved through the selected operator */
     UI_CUSTOM,         /* the cv_* canvas escape hatch: ui_draw_custom() draws it */
 };
 
@@ -91,6 +92,9 @@ typedef struct {
     const ui_context *ctx; uint8_t n_ctx;
     const ui_binding *global; uint8_t n_global;
     const uint16_t *mute;                        /* the selected-operator mute params (4) */
+    const uint16_t *op_param;                    /* n_op * n_op_param operator-relative params */
+    uint8_t n_op;                                /* the number of operators (0 = none) */
+    uint8_t n_op_param;                          /* op-relative params per operator */
     uint16_t n_params;                           /* ui_params[] size */
     uint16_t n_widgets;                          /* ui_dirty[] size (across all pages) */
 } ui_tables;

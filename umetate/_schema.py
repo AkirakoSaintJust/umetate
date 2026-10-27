@@ -172,6 +172,7 @@ PanelManifest = TypedDict(
         "home": NotRequired[str],
         "global": NotRequired[list[PanelBinding]],
         "mute": NotRequired[list[str]],
+        "operators": NotRequired[list[str]],
         "contexts": dict[str, Context],
     },
 )

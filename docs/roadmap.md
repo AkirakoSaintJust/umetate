@@ -721,16 +721,17 @@ The shipped, tested UI base every project builds on:
 The panel schema is `templates/scaffold/panel.schema.json`; the interview fills
 `templates/control-map.md`.
 
-**fourop-fm panel (planned).** The operator edit uses a **4-param page** model: the
-rightmost four encoders (`ENC_KNOB4–7`) edit the four on-screen params, `ENC_SELECT`
-cycles sub-pages, buttons navigate contexts, and `BTN_OCT_UP`/`BTN_OCT_DOWN` select
-the operator. The **envelope graph** is a new `envelope` widget that draws the DX
+**fourop-fm panel.** The operator editor is a **4-param page** model: the rightmost
+four encoders (`ENC_KNOB4–7`) edit the four on-screen params, `ENC_SELECT` cycles
+sub-pages (pitch → env-rates → env-levels → tremolo), buttons navigate contexts,
+`BTN_OCT_UP`/`BTN_OCT_DOWN` select the operator, and `BTN_STOP` mutes the selected
+operator. The pages are operator-relative (`operators` + `OP_ROW`/`OP_PARAM`). The
+**envelope graph** (the remaining piece) is a new `envelope` widget that draws the DX
 rate/level curve as **straight line segments** (an approximation — no curve fitting)
 and deliberately has **no "now-playing" stage cursor**: tracking live envelope state
 from CPU1 is CPU-heavy and unsafe for the audio core. `ratio` is the operator's
 **frequency multiplier** — a q16 runtime param (`inc = note_to_inc(note) · ratio
->> 16`, so 65536 = 1.0), not a raw increment; note-derived ratios are now
-runtime-editable.
+>> 16`, so 65536 = 1.0), not a raw increment.
 
 ---
 
@@ -1699,11 +1700,11 @@ extern volatile int32_t bend_q16;
 **Data structures.**
 
 ```c
-typedef struct { uint8_t kind;      /* BIND_PARAM | BIND_ACTION */
+typedef struct { uint8_t kind;      /* BIND_PARAM | BIND_ACTION | BIND_PAGE_SLOT */
                  uint16_t source;   /* control/MIDI id: BTN_*, ENC_*, KEY, pad, fader, wheel, cc, note */
                  uint16_t target;   /* param id (BIND_PARAM) */
                  uint8_t action;    /* verb (BIND_ACTION) */
-                 uint8_t arg;       /* action arg (context/page id) */
+                 uint8_t arg;       /* action arg (context/page id), or the slot (BIND_PAGE_SLOT) */
                  uint8_t behavior;  /* absolute/relative/momentary/latch/toggle */
                  uint8_t curve; } ui_binding;
 
@@ -1712,14 +1713,25 @@ typedef struct { const ui_page *pages; uint8_t n_pages;
                  void (*on_enter)(void); void (*on_exit)(void); } ui_context;
 
 static uint8_t ui_stack[UI_MAX_DEPTH], ui_sp;   /* context stack; top = active */
+static uint8_t ui_selected_op;                  /* 0..3, for op_next/op_prev/op_mute */
 static const ui_binding ui_global[];            /* always-on, resolved last */
 
 typedef struct { uint8_t type, row, col, span;  /* LABEL/VALUE/BAR/PARAM_ROW/
-                                                   PARAM_COLUMN/LIST/GRID */
+                                                   PARAM_COLUMN/LIST/GRID/OP_ROW/
+                                                   CUSTOM */
                  uint16_t param; const char *text, *unit;
-                 int32_t last; } ui_widget;     /* last = drawn value (dirty check) */
+                 int32_t last; } ui_widget;     /* OP_ROW's `param` is an op-param slot */
 typedef struct { const ui_widget *w; uint8_t n; const char *title; } ui_page;
 ```
+
+**Two binding extensions** (added for the fourop-fm operator editor): `BIND_PAGE_SLOT`
+maps a source to *the Nth param-bearing widget on the current page* (so the rightmost
+four encoders follow the sub-page), and an operator group — `op_next`/`op_prev`
+cycle `ui_selected_op` (0..3), `op_mute` toggles the selected operator's mute param
+(the panel's top-level `mute: [opN_mute, …]` → a `MUTE_TBL`). An `OP_ROW` widget's
+`param` is an index into an `OP_PARAM[n_op × n_op_param]` table, resolved through
+`ui_selected_op` — so the operator-relative pages show the *selected* operator's
+params (`operators: [op1..op4]`, a widget param `opN.<rest>` is operator-relative).
 
 **Main loop (resolution + dispatch + redraw).**
 

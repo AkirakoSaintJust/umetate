@@ -146,7 +146,7 @@ static uint16_t ui_slot_param(uint8_t slot)
     for (i = 0; i < p->n; i++) {
         if (p->w[i].param != UI_NO_PARAM) {
             if (n == slot)
-                return p->w[i].param;
+                return ui_widget_param(&p->w[i]);
             n++;
         }
     }
@@ -247,11 +247,19 @@ static void ui_draw_label(const ui_widget *w)
     draw_text_box(x, y, wd, f, w->text, w->span >= 2u ? C_HI : C_GRAY, 0);
 }
 
+/* the param id a widget reads: UI_OP_ROW resolves through the selected operator */
+static uint16_t ui_widget_param(const ui_widget *w)
+{
+    if (w->type == UI_OP_ROW && ui_t->op_param && w->param < ui_t->n_op_param)
+        return ui_t->op_param[(uint32_t)ui_selected_op * ui_t->n_op_param + w->param];
+    return w->param;
+}
+
 /* format a param value into `out`: fmt is a printf-style hint; only "%d" (or empty)
  * and a trailing unit are supported. */
 static void ui_format(const ui_widget *w, char *out, uint32_t n)
 {
-    int32_t v = w->param < ui_t->n_params ? ui_param_v[w->param] : 0;
+    int32_t v = ui_widget_param(w) < ui_t->n_params ? ui_param_v[ui_widget_param(w)] : 0;
     out[0] = 0;
     if (w->text)
         ui_strcat(out, w->text);
@@ -280,7 +288,7 @@ static void ui_draw_value(const ui_widget *w)
 static void ui_draw_bar(const ui_widget *w)
 {
     uint32_t x, y, wd, ht;
-    int32_t v = w->param < ui_t->n_params ? ui_param_v[w->param] : 0;
+    int32_t v = ui_widget_param(w) < ui_t->n_params ? ui_param_v[ui_widget_param(w)] : 0;
     int32_t frac;
     uint32_t bw;
     char s[32];
@@ -326,7 +334,8 @@ static void ui_draw_widget(const ui_widget *w)
     switch (w->type) {
     case UI_LABEL: ui_draw_label(w); break;
     case UI_VALUE:
-    case UI_PARAM_ROW: ui_draw_value(w); break;
+    case UI_PARAM_ROW:
+    case UI_OP_ROW: ui_draw_value(w); break;
     case UI_BAR: ui_draw_bar(w); break;
     case UI_PARAM_COLUMN: ui_draw_list(w); break;   /* stacked name/value rows */
     case UI_LIST: ui_draw_list(w); break;
@@ -344,8 +353,8 @@ static int32_t ui_widget_value(const ui_widget *w, uint32_t slot)
     case UI_CUSTOM: return ui_custom_v[slot];
     case UI_LIST:
     case UI_GRID: return ui_cursor;
-    default:                                       /* VALUE/BAR/PARAM_ROW/COLUMN */
-        return w->param < ui_t->n_params ? ui_param_v[w->param] : 0;
+    default:                                       /* VALUE/BAR/PARAM_ROW/COLUMN/OP_ROW */
+        return ui_widget_param(w) < ui_t->n_params ? ui_param_v[ui_widget_param(w)] : 0;
     }
 }
 

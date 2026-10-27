@@ -21,6 +21,11 @@
       "description": "the selected-operator mute params (op_mute toggles the selected one)",
       "items": { "type": "string" }
     },
+    "operators": {
+      "type": "array",
+      "description": "the operator instance prefixes (opN); a widget param `opN.<rest>` is operator-relative",
+      "items": { "type": "string" }
+    },
     "contexts": {
       "type": "object",
       "minProperties": 1,
