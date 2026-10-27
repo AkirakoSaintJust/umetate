@@ -20,7 +20,7 @@ COMMANDS: dict[str, tuple[str, str | None, str]] = {
     "setup": ("install the JieLi toolchain + SDK into the Docker volume", None, "P3-2"),
     "build": ("generate + target compile + package -> .fwsc", None, "P3-2"),
     "deep-check": ("run the host tests + the checks", None, "P3-2"),
-    "inspect": ("read a .fwsc (identity/CRC/model)", None, "P3-2"),
+    "inspect": ("read a .fwsc (identity/CRC/model)", "inspect", "P3-2"),
     "flash": ("write a .fwsc to a device (gated)", None, "P3-4"),
     "debrick": ("recovery write (mask-rom blocked)", None, "P3-4"),
     "scaffold": ("generate a node/macro/patch skeleton", None, "P3-3"),
