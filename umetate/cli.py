@@ -3,8 +3,7 @@
 """The `umetate` CLI dispatcher (docs/roadmap.md §12.8).
 
 One entry point, no import side effects. Each command is a module with
-`main(argv) -> int`; the commands not yet implemented are registered here (so
-`umetate --help` lists them) and report the phase they land in.
+`main(argv) -> int` (or a named function for the `web:` pair).
 """
 
 from __future__ import annotations
@@ -14,25 +13,25 @@ import sys
 from collections.abc import Callable, Sequence
 from typing import cast
 
-# command -> (one-line description, module name or None, phase)
-COMMANDS: dict[str, tuple[str, str | None, str]] = {
-    "quick-check": ("verify the environment per evidence layer", "quick_check", "P3-1"),
-    "setup": ("install the toolchain + SDK, Rust + fm1-emu", "setup", "P3-2"),
-    "build": ("generate + target compile + package -> .fwsc", "build", "P3-2"),
-    "emu": ("run your firmware in the fm1-emu GUI", "emu", "P4-2"),
-    "deep-check": ("run the host tests + the checks", "deep_check", "P3-2"),
-    "inspect": ("read a .fwsc (identity/CRC/model)", "inspect", "P3-2"),
-    "flash": ("write a .fwsc to a device (gated)", "flash", "P3-4"),
-    "debrick": ("recovery write (mask-rom blocked)", "debrick", "P3-4"),
-    "scaffold": ("generate a node/macro/patch skeleton", "scaffold", "P3-3"),
-    "lib": ("list the shipped nodes + templates", "lib", "P3-3"),
-    "lint": ("the C standing checks", "lint", "P3-3"),
-    "fmt": ("clang-format the repo", "fmt", "P3-3"),
-    "web-build": ("emscripten -> standalone dsp.wasm", "web:build_main", "P3-5"),
-    "web-serve": ("loopback static server", "web:serve_main", "P3-5"),
-    "status": ("the per-layer claim ledger from the roadmap", "status", "P3-1"),
-    "evidence": ("validate an evidence matrix", "evidence", "P3-5"),
-    "version": ("print the CLI version", "version", "P3-1"),
+# command -> (one-line description, module name or "module:function")
+COMMANDS: dict[str, tuple[str, str]] = {
+    "quick-check": ("verify the environment per evidence layer", "quick_check"),
+    "setup": ("install the toolchain + SDK, Rust + fm1-emu", "setup"),
+    "build": ("generate + target compile + package -> .fwsc", "build"),
+    "emu": ("run your firmware in the fm1-emu GUI", "emu"),
+    "deep-check": ("run the host tests + the checks", "deep_check"),
+    "inspect": ("read a .fwsc (identity/CRC/model)", "inspect"),
+    "flash": ("write a .fwsc to a device (gated)", "flash"),
+    "debrick": ("recovery write (mask-rom blocked)", "debrick"),
+    "scaffold": ("generate a node/macro/patch skeleton", "scaffold"),
+    "lib": ("list the shipped nodes + templates", "lib"),
+    "lint": ("the C standing checks", "lint"),
+    "fmt": ("clang-format the repo", "fmt"),
+    "web-build": ("emscripten -> standalone dsp.wasm", "web:build_main"),
+    "web-serve": ("loopback static server", "web:serve_main"),
+    "status": ("the per-layer claim ledger from the roadmap", "status"),
+    "evidence": ("validate an evidence matrix", "evidence"),
+    "version": ("print the CLI version", "version"),
 }
 
 
@@ -41,15 +40,12 @@ def _usage() -> None:
     print("usage: umetate COMMAND [ARGS]")
     print()
     print("commands:")
-    for name, (desc, _, _) in COMMANDS.items():
+    for name, (desc, _) in COMMANDS.items():
         print(f"  {name:<{width}}  {desc}")
 
 
 def _dispatch(name: str, argv: list[str]) -> int:
-    desc, module, phase = COMMANDS[name]
-    if module is None:
-        print(f"umetate {name}: not implemented yet ({phase})", file=sys.stderr)
-        return 1
+    _desc, module = COMMANDS[name]
     if ":" in module:
         mod_name, func_name = module.split(":", 1)
         mod = importlib.import_module(f"umetate.{mod_name}")

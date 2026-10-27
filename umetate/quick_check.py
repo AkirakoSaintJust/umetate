@@ -3,8 +3,7 @@
 """`umetate quick-check` — a fast, read-only presence/version probe (§12.8).
 
 Reports each §5.5 layer; a missing toolchain is `blocked`, not `fail`. The deep
-verification (host tests + `_checks/`) is `deep-check`, not here. The full container
-probe (`runner.probe()`) lands with the runner in P3-2.
+verification (host tests + the checks) is `deep-check`, not here.
 """
 
 from __future__ import annotations
@@ -63,15 +62,7 @@ def _probe() -> list[tuple[Layer, Status, str]]:
     )
 
     # ---- host ----
-    tools = ("cc", "cmake", "ninja", "python3", "node", "docker", "emcc")
-    present = [t for t in tools if shutil.which(t)]
-    out.append(
-        (
-            Layer.HOST,
-            Status.PASS if len(present) == len(tools) else Status.BLOCKED,
-            f"present: {', '.join(present)}" if present else "no host tools found",
-        )
-    )
+    out.append((Layer.HOST, *_host_layer()))
 
     # ---- everything above host is not probe-able without the toolchain/device ----
     out.append((Layer.BROWSER, *_browser_layer()))
@@ -92,6 +83,24 @@ def _target_layer() -> tuple[Status, str]:
     if (_ROOT / ".jieli" / "jieli-linux-toolchains-20260730.1").is_dir():
         return Status.PASS, "local .jieli/ toolchain checkout"
     return Status.BLOCKED, "JieLi toolchain not set up (`umetate setup`)"
+
+
+def _host_layer() -> tuple[Status, str]:
+    """The HOST presence probe: the pinned container (tools inside), else a native
+    POSIX host with the same tools (§12.8: `host` = container up + tools resolve)."""
+    probe = runner.probe()
+    if probe.docker:
+        if probe.container_running:
+            return Status.PASS, "container up (cc/cmake/ninja/python3/node/emcc inside)"
+        return (
+            Status.BLOCKED,
+            "docker present; container not started (`umetate deep-check` starts it)",
+        )
+    tools = ("cc", "cmake", "ninja", "python3", "node")
+    present = [t for t in tools if shutil.which(t)]
+    if len(present) == len(tools):
+        return Status.PASS, f"native host tools: {', '.join(present)}"
+    return Status.BLOCKED, "no container and no native host tools (`umetate setup`)"
 
 
 def _emulator_layer() -> tuple[Status, str]:

@@ -1659,6 +1659,7 @@ shim; `generate.py` is a pure function.
 | `lint.py` / `fmt.py` | `lint --c` / `fmt` | the custom safety checks / clang-format |
 | `web.py` | `web-build` / `web-serve` | emscripten → `dsp.wasm` + a minimal harness / loopback serve |
 | `status.py` / `evidence.py` | `status` / `evidence` | parse the roadmap's per-layer claim ledger / validate an evidence matrix |
+| `version.py` | `version` | print the installed `__version__` (authority: `pyproject.toml`) |
 
 #### 12.7.2 The build pipeline (one generated `dsp.c`, three targets)
 
