@@ -73,9 +73,9 @@ def _quick_check_json() -> None:
 def _stub_reports_phase() -> None:
     buf = io.StringIO()
     with contextlib.redirect_stderr(buf):
-        rc = cli.main(["build"])
+        rc = cli.main(["scaffold"])
     assert rc == 1
-    assert "P3-2" in buf.getvalue()
+    assert "P3-3" in buf.getvalue()
 
 
 def main() -> int:

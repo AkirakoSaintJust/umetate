@@ -17,9 +17,9 @@ from typing import cast
 # command -> (one-line description, module name or None, phase)
 COMMANDS: dict[str, tuple[str, str | None, str]] = {
     "quick-check": ("verify the environment per evidence layer", "quick_check", "P3-1"),
-    "setup": ("install the JieLi toolchain + SDK into the Docker volume", None, "P3-2"),
-    "build": ("generate + target compile + package -> .fwsc", None, "P3-2"),
-    "deep-check": ("run the host tests + the checks", None, "P3-2"),
+    "setup": ("install the JieLi toolchain + SDK into the volume", "setup", "P3-2"),
+    "build": ("generate + target compile + package -> .fwsc", "build", "P3-2"),
+    "deep-check": ("run the host tests + the checks", "deep_check", "P3-2"),
     "inspect": ("read a .fwsc (identity/CRC/model)", "inspect", "P3-2"),
     "flash": ("write a .fwsc to a device (gated)", None, "P3-4"),
     "debrick": ("recovery write (mask-rom blocked)", None, "P3-4"),
