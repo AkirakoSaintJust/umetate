@@ -88,7 +88,7 @@ SINE_ENV: Patch = {
     "global": {"nodes": [], "wires": []},
 }
 
-# `osc` with a non-sine OPZ waveform (6 = double half sine) — exercises fm1_sin_opz.
+# `osc` with a non-sine waveform (6 = double half sine) — exercises fm1_sin_wave.
 WAVEFORM: Patch = {
     "name": "waveform_test",
     "voices": 4,
@@ -643,49 +643,57 @@ def _lfo_varies(patch: Patch) -> tuple[bool, str]:
     return True, ""
 
 
-# the OPZ waveform shapes: a small C probe against the HAL directly (no patch).
-_OPZ_PROBE = r"""
+# the waveform shapes (OPZ + OPL union): a small C probe against the HAL directly.
+_WAVE_PROBE = r"""
 #include <stdio.h>
 #include <stdint.h>
 #include "fm1_math.h"
 int main(void) {
-    int32_t sine_max = 0, sine_min = 0, half_min = 0, dhs_min = 0;
-    int half_nonzero_second = 0;
+    int32_t sine_max = 0, sine_min = 0, sq_max = 0, sq_min = 0;
+    int32_t half_min = 0, dhs_min = 0, rect_min = 0, pulse_min = 0;
+    int half_nonzero_second = 0, pulse_nonzero_q2 = 0;
     for (uint32_t n = 0; n < 1024; n++) {
-        uint32_t ph = n << 22;                       /* one full cycle */
-        int32_t s = fm1_sin_opz(ph, 0);              /* sine */
-        int32_t h = fm1_sin_opz(ph, 2);              /* half sine */
-        int32_t d = fm1_sin_opz(ph, 6);              /* double half sine */
+        uint32_t ph = n << 22;
+        int32_t s = fm1_sin_wave(ph, 0);    /* sine */
+        int32_t h = fm1_sin_wave(ph, 2);    /* half sine */
+        int32_t d = fm1_sin_wave(ph, 6);    /* double half sine */
+        int32_t r = fm1_sin_wave(ph, 8);    /* rectified */
+        int32_t p = fm1_sin_wave(ph, 9);    /* pulse */
+        int32_t sq = fm1_sin_wave(ph, 10);  /* square */
         if (s > sine_max) sine_max = s;
         if (s < sine_min) sine_min = s;
+        if (sq > sq_max) sq_max = sq;
+        if (sq < sq_min) sq_min = sq;
         if (h < half_min) half_min = h;
         if (d < dhs_min) dhs_min = d;
+        if (r < rect_min) rect_min = r;
+        if (p < pulse_min) pulse_min = p;
         if (ph >= 0x80000000u && h != 0) half_nonzero_second = 1;
+        if ((ph & 0x40000000u) && p != 0) pulse_nonzero_q2 = 1;
     }
     if (sine_max < 32000 || sine_min > -32000) {
         printf("FAIL: sine not full-scale (%d, %d)\n", sine_max, sine_min);
         return 1;
     }
-    if (half_min < 0) { printf("FAIL: half sine has negative values\n"); return 1; }
-    if (half_nonzero_second) {
-        printf("FAIL: half sine non-zero in 2nd half\n");
+    if (half_min < 0 || half_nonzero_second) { printf("FAIL: half sine\n"); return 1; }
+    if (dhs_min < 0) { printf("FAIL: double half sine negative\n"); return 1; }
+    if (rect_min < 0) { printf("FAIL: rectified negative\n"); return 1; }
+    if (pulse_min < 0 || pulse_nonzero_q2) { printf("FAIL: pulse\n"); return 1; }
+    if (sq_max < 32000 || sq_min > -32000) {
+        printf("FAIL: square not full-scale (%d, %d)\n", sq_max, sq_min);
         return 1;
     }
-    if (dhs_min < 0) {
-        printf("FAIL: double half sine has negative values\n");
-        return 1;
-    }
-    printf("ok: OPZ waveforms (sine bipolar, half/double-half non-negative)\n");
+    printf("ok: 12 waveforms (OPZ + OPL shapes correct)\n");
     return 0;
 }
 """
 
 
-def _opz_waveforms() -> tuple[bool, str]:
-    """Compile + run the OPZ-waveform shape probe against the HAL."""
+def _wave_shapes() -> tuple[bool, str]:
+    """Compile + run the waveform-shape probe against the HAL."""
     with tempfile.TemporaryDirectory() as tmp:
         d = Path(tmp)
-        (d / "t.c").write_text(_OPZ_PROBE)
+        (d / "t.c").write_text(_WAVE_PROBE)
         proc = subprocess.run(
             [
                 "cc",
@@ -910,8 +918,8 @@ def main() -> int:
     )
     failures += 0 if ok else 1
 
-    ok, msg = _opz_waveforms()
-    print(("ok: " if ok else "FAIL: ") + (msg or "OPZ waveforms have the right shapes"))
+    ok, msg = _wave_shapes()
+    print(("ok: " if ok else "FAIL: ") + (msg or "waveforms have the right shapes"))
     failures += 0 if ok else 1
 
     ok, msg = _sound(FM_OP)

@@ -88,19 +88,19 @@ FM1_MATH_INLINE int32_t fm1_sin(uint32_t phase)
 
 FM1_MATH_INLINE int32_t fm1_cos(uint32_t phase) { return fm1_sin(phase + 0x40000000u); }
 
-/* The OPZ (YM2414) 8 waveforms, from ymfm's `opz_registers` constructor
-   (BSD-3-Clause, re-implemented in linear Q15). `phase` is Q32 (full cycle);
-   `ws` is 0..7. The base is the sine and its "triangle" (sin·|sin|); the rest are
-   the "half" (mute the second half), the double-frequency forms, and their
-   rectified/`sin²` derivatives:
-     0 sine, 1 triangle, 2 half sine, 3 half triangle, 4 double sine,
-     5 double triangle, 6 double half sine, 7 double half triangle. */
-FM1_MATH_INLINE int32_t fm1_sin_opz(uint32_t phase, uint32_t ws)
+/* The 12-waveform union of the OPZ (YM2414) and OPL2/OPL3 (YM3812) sets, from
+   ymfm's `opz_registers` and `opl_registers_base` constructors (BSD-3-Clause,
+   re-implemented in linear Q15). `phase` is Q32 (full cycle); `ws` is 0..11.
+   0-7 are the OPZ set (sine, triangle, half sine, half triangle, double sine,
+   double triangle, double half sine, double half triangle); 8-11 are the OPL-only
+   shapes (rectified |sin|, pulse, square, saw). A bad `ws` degrades to sine. */
+FM1_MATH_INLINE int32_t fm1_sin_wave(uint32_t phase, uint32_t ws)
 {
     int32_t s = fm1_sin(phase);
     int32_t a = s < 0 ? -s : s;                        /* |sin|, Q15 */
-    int32_t half = (int32_t)(phase >> 31);             /* the "half" bit: mute 2nd half */
-    switch (ws & 7u) {
+    int32_t half = (int32_t)(phase >> 31);             /* mute the 2nd half */
+    uint32_t q = phase >> 30;                          /* quadrant 0..3 */
+    switch (ws & 15u) {
         case 0u: return s;                             /* sine */
         case 1u: return fm1_q15_mul(s, a);             /* triangle (sin·|sin|) */
         case 2u: return half ? 0 : a;                  /* half sine */
@@ -114,10 +114,15 @@ FM1_MATH_INLINE int32_t fm1_sin_opz(uint32_t phase, uint32_t ws)
             int32_t s2 = fm1_sin(phase << 1);
             return half ? 0 : (s2 < 0 ? -s2 : s2);
         }
-        default: {                                     /* double half triangle (sin² 2x) */
+        case 7u: {                                     /* double half triangle (sin² 2x) */
             int32_t s2 = fm1_sin(phase << 1);
             return half ? 0 : fm1_q15_mul(s2, s2);
         }
+        case 8u: return a;                             /* rectified |sin| (OPL) */
+        case 9u: return (q & 1u) ? 0 : a;              /* pulse / half-rectified (OPL) */
+        case 10u: return half ? -32767 : 32767;        /* square (OPL) */
+        case 11u: return (int32_t)(phase >> 16) - 32768; /* saw (OPL) */
+        default: return s;                             /* out of range -> sine */
     }
 }
 

@@ -624,7 +624,7 @@ test + a budget annotation; shipped macros in `modules/macros/`, each =
 | Node | Kind | Purpose |
 | --- | --- | --- |
 | `phasor` | phase accumulator | pitch→phase ramp; reset/sync/mod; `fm` (audio) scaled `<<16` → ±π phase swing (the FM index); `pitch` (control) scales the increment → ±1 octave (the vibrato input, relative pitch) |
-| `osc` / `table` | wave reader | `osc` = the 8 OPZ (YM2414) waveforms (`fm1_sin_opz`, a `waveform` param); `table` = wavetable reader (a `tables:` shape selected by a `which` param) |
+| `osc` / `table` | wave reader | `osc` = the 12-waveform OPZ+OPL union (`fm1_sin_wave`, a `waveform` param: 0–7 OPZ, 8–11 OPL-only square/saw/rectified/pulse); `table` = wavetable reader (a `tables:` shape selected by a `which` param) |
 | `saw` | band-limited osc | 2nd-order polyBLEP saw; `inv_inc` = 2^32/inc (note-on reciprocal) |
 | `env` / `seg` | segment generator | gate event→control via breakpoint segments (data) |
 | `dx_env` | rate/level envelope | DX-style 4-rate/3-level exponential envelope (attack/decay1/decay2/sustain/release) — the fourop-fm operator envelope |

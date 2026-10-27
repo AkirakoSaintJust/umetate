@@ -86,51 +86,57 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
 
 ---
 
-## Component: `osc.waveform` (the OPZ 8 waveforms)
+## Component: `osc.waveform` (the 12-wave OPZ + OPL union)
 
-- **Purpose:** give each operator one of the **OPZ (YM2414)** 8 waveforms, from one
+- **Purpose:** give each operator one of 12 waveforms — the **OPZ (YM2414)** 8 plus
+  the **OPL2/OPL3 (YM3812)** shapes the OPZ doesn't already produce — from one
   quarter-sine table + a `waveform` select. Waveform 0 is the plain sine, so the
-  `osc` node stays backward-compatible. (These differ from the OPL2/OPL3 set — see
-  the credit note below.)
+  `osc` node stays backward-compatible.
 
-- **Algorithm** (fixed-point, exactly): `phase` is Q32 (full cycle); `s = fm1_sin(phase)`
-  and `a = |s|`. The `ws` selects:
+- **Algorithm** (fixed-point, exactly): `phase` is Q32 (full cycle); `s = fm1_sin(phase)`,
+  `a = |s|`, `half = phase>>31`, `q = phase>>30`. The `ws` selects:
 
-  | ws | name | formula (`half` = `phase>>31`) |
-  | --- | --- | --- |
-  | 0 | sine | `s` |
-  | 1 | triangle | `s·a >> 15` (sin·\|sin\|, the "trianglish" sin²) |
-  | 2 | half sine | `half ? 0 : a` |
-  | 3 | half triangle | `half ? 0 : s·a>>15` |
-  | 4 | double sine | `half ? 0 : fm1_sin(phase<<1)` |
-  | 5 | double triangle | `half ? 0 : s2·\|s2\|>>15`, `s2 = fm1_sin(phase<<1)` |
-  | 6 | double half sine | `half ? 0 : \|s2\|` (rectified 2× sine) |
-  | 7 | double half triangle | `half ? 0 : s2²>>15` (sin² of 2×, always +) |
+  | ws | name | source | formula |
+  | --- | --- | --- | --- |
+  | 0 | sine | both | `s` |
+  | 1 | triangle | OPZ | `s·a >> 15` (sin·\|sin\|, the "trianglish" sin²) |
+  | 2 | half sine | both | `half ? 0 : a` |
+  | 3 | half triangle | OPZ | `half ? 0 : s·a>>15` |
+  | 4 | double sine | both | `half ? 0 : fm1_sin(phase<<1)` |
+  | 5 | double triangle | OPZ | `half ? 0 : s2·\|s2\|>>15`, `s2 = fm1_sin(phase<<1)` |
+  | 6 | double half sine | both | `half ? 0 : \|s2\|` (rectified 2× sine) |
+  | 7 | double half triangle | OPZ | `half ? 0 : s2²>>15` (sin² of 2×, always +) |
+  | 8 | rectified | OPL | `a` (\|sin\| at 1×) |
+  | 9 | pulse | OPL | `(q&1) ? 0 : a` (half-rectified) |
+  | 10 | square | OPL | `half ? −32767 : 32767` |
+  | 11 | saw | OPL | `(phase>>16) − 32768` |
 
 - **Inputs / outputs:** `phase` (audio, Q32 `phase`), `audio` (audio, Q15).
 
-- **Parameters:** `waveform` (uint32, 0…7, default 0).
+- **Parameters:** `waveform` (uint32, 0…11, default 0).
 
 - **Coefficients / precompute:** none — the quarter-sine table is the existing
   `fm1_sin_q15`; the select is a few multiplies and one switch, inlined via
-  `fm1_sin_opz` in `hal/fm1_math.h`.
+  `fm1_sin_wave` in `hal/fm1_math.h`.
 
 - **State:** none (memoryless).
 
-- **Edge cases:** `ws` is masked `&7` (a bad value degrades to the sine/triangle
-  cases); `phase<<1` wraps naturally in Q32; the triangle's `s·a>>15` peaks at
-  `32766` (sin², one LSB under full scale).
+- **Edge cases:** `ws` is masked `&15` (a bad value degrades to sine); `phase<<1`
+  wraps naturally in Q32; the triangle's `s·a>>15` peaks at `32766` (sin², one LSB
+  under full scale).
 
-- **Reference + credit:** the exact 8 waveforms from **ymfm**'s `opz_registers`
-  constructor (`ymfm_opz.cpp`, BSD-3-Clause) — waveform 0 = sine, waveform 1 = the
-  "trianglish" sin² (ymfm's log-domain `2×value` = linear sin²), waveforms 2–7 =
-  the half/double/rectified derivatives. **Re-implemented in linear Q15 from the
-  definitions, not copied.** Note the OPL2/OPL3 set (the `docs/dsp-study.md` §2.7
-  bit trick) is a *different* 8 — the OPZ borrows the "8 selectable waveforms"
-  idea but uses this custom list.
+- **Reference + credit:** 0–7 from **ymfm**'s `opz_registers` constructor and 8–11
+  from its `opl_registers_base` constructor (`ymfm_opz.cpp`/`ymfm_opl.cpp`,
+  BSD-3-Clause) — waveform 1 = the "trianglish" sin² (ymfm's log-domain `2×value`
+  = linear sin²); the OPL's `wf2/wf3/wf6/wf7` are the rectified / pulse / square /
+  saw appended here. **Re-implemented in linear Q15 from the definitions, not
+  copied.** Two deliberate choices: the saw is a clean linear ramp (the OPL's exact
+  form is a log-domain quantized ramp), and the pulse uses the OPL's bit-8 (quarter)
+  mute exactly. The OPL set itself (the `docs/dsp-study.md` §2.7 bit trick) is
+  distinct from the OPZ's — the union dedupes the 4 shared waves.
 
 - **Performance note:** per-sample, memoryless, a few branches — one `fm1_sin`
-  (one LUT read) for ws 0–3, two LUT reads for ws 4–7, plus at most one
+  (one LUT read) for ws 0–3 and 8–11, two LUT reads for ws 4–7, plus at most one
   `fm1_q15_mul`.
 
 ---
@@ -201,7 +207,7 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   sum    = external_fm + feedback_prev             (Q15)
   inc_eff = inc · (32768 + pitch) >> 15            (relative pitch; pitch = vibrato)
   phase += inc_eff + (sum << 16)                   (FM index: full-scale = ±π phase)
-  sine   = fm1_sin_opz(phase, waveform)           (8 OPZ waveforms)
+  sine   = fm1_sin_wave(phase, waveform)          (12-wave OPZ+OPL union)
   out    = sine · eg_t · level                     (Q15)
   feedback_prev = (out · feedback) delayed 1 sample
   ```
@@ -217,7 +223,7 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   shared vibrato LFO) → `audio` (audio).
 
 - **Parameters** (mapped inward):
-  `ratio` (note-derived), `waveform` (uint32 0–7), `level` (q15, the FM index /
+  `ratio` (note-derived), `waveform` (uint32 0–11), `level` (q15, the FM index /
   output amplitude), `feedback` (q15, self-modulation), `trem_rate` (q32, the
   per-op LFO increment), `trem_depth` (q15, the tremolo depth), and the `dx_env`
   params `r1..r4, l1..l3`.

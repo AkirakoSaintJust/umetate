@@ -1,3 +1,3 @@
-/* 8-waveform oscillator: fm1_sin_opz applies the OPZ (YM2414) waveform set to the
-   phase — sine, triangle, half/double derivatives, selected by a `waveform` param. */
-int32_t ${out.audio} = fm1_sin_opz(${in.phase}, ${param.waveform});
+/* 12-waveform oscillator: fm1_sin_wave applies the OPZ + OPL waveform union to the
+   phase (0-7 OPZ, 8-11 OPL-only), selected by a `waveform` param. */
+int32_t ${out.audio} = fm1_sin_wave(${in.phase}, ${param.waveform});

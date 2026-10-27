@@ -20,7 +20,7 @@
 ## 2. Sound and voice architecture
 
 - **Synthesis method(s):** 4-operator phase-modulation FM, per-operator
-  self-feedback, 8 waveforms per operator (the OPZ set), rate/level
+  self-feedback, 12 waveforms per operator (the OPZ + OPL union), rate/level
   envelopes.
 - **Polyphony and voice stealing:** 8 voices; oldest-steal on overflow.
 - **Pitch range and tuning:** 12-TET, full MIDI note range; per-op `ratio`
@@ -82,7 +82,7 @@
 | pitch_rate | plfo.rate | 0 | 20000000 | log | |
 | pitch_depth | plfo.depth | 0 | 32767 | linear | |
 | op1_level … op4_level | opN.vca.level | 0 | 32767 | linear | |
-| op1_waveform … op4_waveform | opN.osc.waveform | 0 | 7 | linear | |
+| op1_waveform … op4_waveform | opN.osc.waveform | 0 | 11 | linear | |
 | op1_trem_rate … op4_trem_rate | opN.lfo.rate | 0 | 20000000 | log | |
 | op1_trem_depth … op4_trem_depth | opN.lfo.depth | 0 | 32767 | linear | |
 
@@ -141,7 +141,7 @@ for `trem_depth` (~16000 ≈ ±50%). All block rate.)
 
 ## 7. Acceptance and evidence
 
-- **Must-have features:** 7 runtime algorithms; 8 waveforms; per-op feedback;
+- **Must-have features:** 7 runtime algorithms; 12 waveforms; per-op feedback;
   rate/level envelopes; a global pitch LFO + per-op amplitude LFO; the filter +
   wavefolder output chain; a panel.
 - **Optional features:** velocity scaling, patch persistence.

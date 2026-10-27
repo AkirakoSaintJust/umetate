@@ -178,8 +178,10 @@ The **OPZ (YM2414, TX81Z/DX11) 8 are a *different* list**, built from the sine a
 its square (`sin·|sin|`, the "trianglish" wave) plus the half / double-frequency /
 rectified derivatives — not the OPL's bit-mask combinations. ymfm's `opz_registers`
 enumerates them (sine, triangle, half-sine, half-triangle, double-sine,
-double-triangle, double-half-sine, double-half-triangle); umetate implements them
-in `fm1_sin_opz` (`hal/fm1_math.h`), documented in the fourop-fm
+double-triangle, double-half-sine, double-half-triangle). The two sets overlap on 4
+(sine, half-sine, double-sine, double-half-sine), so umetate ships the **12-wave
+union** in `fm1_sin_wave` (`hal/fm1_math.h`): 0–7 = the OPZ set, 8–11 = the OPL-only
+shapes (rectified `|sin|`, pulse, square, saw), documented in the fourop-fm
 `dsp-algorithm.md` §`osc.waveform`. So "8 selectable waveforms" is the shared idea;
 the exact set and mechanism differ by chip.
 
