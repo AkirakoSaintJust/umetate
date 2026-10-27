@@ -19,34 +19,39 @@
 #include <stdint.h>
 #include "math_tables.h"                       /* fm1_sin_q15 / fm1_exp2_q16 / fm1_log2_q16 */
 
+/* These helpers must inline into the hot loop: `.dsp_text` (SRAM) may not call into
+ * XIP flash (a flash write would hang the core). `always_inline` makes the intent
+ * non-negotiable — a `static inline` alone was not enough for the pi32v2 clang. */
+#define FM1_MATH_INLINE static inline __attribute__((always_inline))
+
 /* --------------------------------------------------- saturating Q arithmetic */
 
 /* Q15 x Q15 -> Q15, rounded. The per-sample multiply for Q15 signals/levels. */
-static inline int32_t fm1_q15_mul(int32_t a, int32_t b)
+FM1_MATH_INLINE int32_t fm1_q15_mul(int32_t a, int32_t b)
 {
     return (int32_t)(((int64_t)a * b + (1 << 14)) >> 15);
 }
 
 /* Q16 x Q16 -> Q16, rounded (gains, coefficients). */
-static inline int32_t fm1_q16_mul(int32_t a, int32_t b)
+FM1_MATH_INLINE int32_t fm1_q16_mul(int32_t a, int32_t b)
 {
     return (int32_t)(((int64_t)a * b + (1 << 15)) >> 16);
 }
 
 /* Q31 x Q31 -> Q31, rounded. */
-static inline int32_t fm1_q31_mul(int32_t a, int32_t b)
+FM1_MATH_INLINE int32_t fm1_q31_mul(int32_t a, int32_t b)
 {
     return (int32_t)(((int64_t)a * b + (1 << 30)) >> 31);
 }
 
 /* Rounding right shift (the SDK's PSHR). */
-static inline int32_t fm1_shr_round(int32_t x, int shift)
+FM1_MATH_INLINE int32_t fm1_shr_round(int32_t x, int shift)
 {
     return (x + (1 << (shift - 1))) >> shift;
 }
 
 /* Saturating 32-bit add/sub (accumulation never wraps). */
-static inline int32_t fm1_sat_add32(int32_t a, int32_t b)
+FM1_MATH_INLINE int32_t fm1_sat_add32(int32_t a, int32_t b)
 {
     int32_t r = (int32_t)((uint32_t)a + (uint32_t)b);
     if (((a ^ r) & (b ^ r)) < 0)
@@ -54,7 +59,7 @@ static inline int32_t fm1_sat_add32(int32_t a, int32_t b)
     return r;
 }
 
-static inline int32_t fm1_sat_sub32(int32_t a, int32_t b)
+FM1_MATH_INLINE int32_t fm1_sat_sub32(int32_t a, int32_t b)
 {
     int32_t r = (int32_t)((uint32_t)a - (uint32_t)b);
     if (((a ^ b) & (a ^ r)) < 0)
@@ -63,7 +68,7 @@ static inline int32_t fm1_sat_sub32(int32_t a, int32_t b)
 }
 
 /* Saturating multiply-accumulate: acc += (a * b) >> shift. */
-static inline int32_t fm1_madd_sat(int32_t acc, int32_t a, int32_t b, int shift)
+FM1_MATH_INLINE int32_t fm1_madd_sat(int32_t acc, int32_t a, int32_t b, int shift)
 {
     int32_t p = (int32_t)(((int64_t)a * b + ((int64_t)1 << (shift - 1))) >> shift);
     return fm1_sat_add32(acc, p);
@@ -73,7 +78,7 @@ static inline int32_t fm1_madd_sat(int32_t acc, int32_t a, int32_t b, int shift)
 
 /* Full-cycle sine, Q15, from the quarter table (fm1_sin_q15, midpoint-sampled).
  * `phase` is Q32 (wrapping accumulator: inc = f * 2^32 / FS). */
-static inline int32_t fm1_sin(uint32_t phase)
+FM1_MATH_INLINE int32_t fm1_sin(uint32_t phase)
 {
     uint32_t q = phase >> 30;                 /* quadrant 0..3 */
     uint32_t i = (phase >> 22) & 255u;        /* 8-bit index into the 256-entry table */
@@ -81,7 +86,7 @@ static inline int32_t fm1_sin(uint32_t phase)
     return (q & 2u) ? -v : v;
 }
 
-static inline int32_t fm1_cos(uint32_t phase) { return fm1_sin(phase + 0x40000000u); }
+FM1_MATH_INLINE int32_t fm1_cos(uint32_t phase) { return fm1_sin(phase + 0x40000000u); }
 
 /* fm1_exp2_q16[i] = 2^(-i/256) in Q16  (exponential decay: envelopes, note-to-inc).
  * fm1_log2_q16[i] = log2(1 + i/256) in Q16  (log-domain FM). Both indexed directly. */

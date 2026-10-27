@@ -268,8 +268,13 @@ def check(image, symbols, disassembly, ram_disassembly):
                 continue
             if not re.search(r"\b(?:call|goto)\b", match.group(3)):
                 continue
-            targets = re.findall(r"(?:call|goto)\s+(-?\d+)\s+<", match.group(3))
-            if any(not dsp_start <= (int(target) & 0xFFFFFFFF) < dsp_end for target in targets):
+            # the branch target's *absolute* address (`<sym+off : 1c08102 >`), not the
+            # relative offset (`goto 180 <`); comparing the offset to absolute bounds
+            # flags every intra-section branch as a false positive.
+            targets = re.findall(
+                r"(?:call|goto)\s+-?\d+\s+<[^:>]*:\s*([0-9a-f]+)\s*>", match.group(3)
+            )
+            if any(not dsp_start <= (int(target, 16) & 0xFFFFFFFF) < dsp_end for target in targets):
                 dsp_calls.append(line)
             elif not targets and re.search(r"\bcall\b", match.group(3)):
                 dsp_calls.append(line)
