@@ -57,6 +57,7 @@ static uint8_t ui_pagei[UI_MAX_DEPTH];          /* the page within each context 
 static int32_t ui_last[UI_MAX_WIDGETS];         /* last-drawn value per widget slot */
 static int32_t ui_custom_v[UI_MAX_WIDGETS];     /* UI_CUSTOM widgets' dirty values (app-set) */
 static int32_t ui_cursor;                        /* list/grid selection */
+static uint8_t ui_selected_op;                   /* the selected operator (0..3) for OP_* */
 
 static const ui_context *ui_ctx(void) { return &ui_t->ctx[ui_stack[ui_sp]]; }
 static const ui_page *ui_cur_page(void) { return &ui_ctx()->pages[ui_pagei[ui_sp]]; }
@@ -137,6 +138,21 @@ static int32_t ui_scale(int32_t v, uint8_t curve)
     return v;
 }
 
+/* the param of the current page's Nth param-bearing widget (UI_BIND_PAGE_SLOT) */
+static uint16_t ui_slot_param(uint8_t slot)
+{
+    const ui_page *p = ui_cur_page();
+    uint32_t i, n = 0;
+    for (i = 0; i < p->n; i++) {
+        if (p->w[i].param != UI_NO_PARAM) {
+            if (n == slot)
+                return p->w[i].param;
+            n++;
+        }
+    }
+    return UI_NO_PARAM;
+}
+
 static void ui_do_action(uint8_t action, uint8_t arg)
 {
     switch (action) {
@@ -163,6 +179,21 @@ static void ui_do_action(uint8_t action, uint8_t arg)
         if (arg < ui_t->n_params)
             ui_param_v[arg] = ui_param_v[arg] ? 0 : 1;
         break;
+    case UI_ACT_OP_NEXT:
+        if (ui_selected_op < 3u)
+            ui_selected_op++;
+        break;
+    case UI_ACT_OP_PREV:
+        if (ui_selected_op)
+            ui_selected_op--;
+        break;
+    case UI_ACT_OP_MUTE:
+        if (ui_t->mute && ui_selected_op < 4u) {
+            uint16_t p = ui_t->mute[ui_selected_op];
+            if (p < ui_t->n_params)
+                ui_param_v[p] = ui_param_v[p] ? 0 : 1;
+        }
+        break;
     default: break;                              /* BANK_*, LOAD, LATCH: no-op for now */
     }
 }
@@ -179,6 +210,14 @@ void ui_handle(uint16_t source, int32_t value)
                 ui_param_v[b->target] += ui_scale(value, b->curve);
             else
                 ui_param_v[b->target] = ui_scale(value, b->curve);
+        }
+    } else if (b->kind == UI_BIND_PAGE_SLOT) {
+        uint16_t p = ui_slot_param(b->arg);
+        if (p < ui_t->n_params) {
+            if (b->behavior == UI_REL)
+                ui_param_v[p] += ui_scale(value, b->curve);
+            else
+                ui_param_v[p] = ui_scale(value, b->curve);
         }
     } else if (b->action == UI_ACT_NOTE_ON && value >= 0)
         ui_act_note_on((uint8_t)value, 100u);

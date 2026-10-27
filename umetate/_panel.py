@@ -66,6 +66,9 @@ _ACTIONS = {
     "panic": "UI_ACT_PANIC",
     "play": "UI_ACT_PLAY",
     "stop": "UI_ACT_STOP",
+    "op_next": "UI_ACT_OP_NEXT",
+    "op_prev": "UI_ACT_OP_PREV",
+    "op_mute": "UI_ACT_OP_MUTE",
 }
 
 _BEHAVIORS = {
@@ -143,8 +146,11 @@ def generate_panel(
     def binding_line(b: PanelBinding) -> str:
         source = source_expr(b["source"])
         behavior = _BEHAVIORS.get(b.get("behavior", "absolute"), "UI_ABS")
+        slot = b.get("slot")
         target = b.get("target")
-        if target:
+        if slot is not None:
+            kind, param, action, arg = "UI_BIND_PAGE_SLOT", "0", "0", str(slot)
+        elif target:
             kind, param = "UI_BIND_PARAM", param_sym(target)
             action, arg = "0", "0"
         else:
@@ -263,10 +269,15 @@ def generate_panel(
     n_params = (
         (max(ids.values()) + 1 if ids else 0) if param_ids is not None else len(params)
     )
+    mute = panel.get("mute") or []
+    mute_ids = [str(param_id(p)) for p in mute[:4]]
+    mute_ids += ["0xFFFF"] * (4 - len(mute_ids))
+    lines.append(f"static const uint16_t MUTE_TBL[4] = {{ {', '.join(mute_ids)} }};")
+    lines.append("")
     lines.append("static const ui_tables PANEL = {")
     lines.append(
         f'    "{name}", {home}, CTX, {len(ctx_names)}, GLOBAL_BIND, '
-        f"{len(panel.get('global', []))}, {n_params}, {widget_count},"
+        f"{len(panel.get('global', []))}, MUTE_TBL, {n_params}, {widget_count},"
     )
     lines.append("};")
     return "\n".join(lines) + "\n"

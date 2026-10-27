@@ -160,6 +160,7 @@ class PanelBinding(TypedDict):
     arg: NotRequired[str]
     behavior: NotRequired[str]
     curve: NotRequired[str]
+    slot: NotRequired[int]
 
 
 # `global` is a Python keyword, so this one uses the functional form.
@@ -170,6 +171,7 @@ PanelManifest = TypedDict(
         "boot": NotRequired[Page],
         "home": NotRequired[str],
         "global": NotRequired[list[PanelBinding]],
+        "mute": NotRequired[list[str]],
         "contexts": dict[str, Context],
     },
 )

@@ -27,7 +27,7 @@ enum {
 };
 
 /* ---- binding kinds ---- */
-enum { UI_BIND_PARAM = 0, UI_BIND_ACTION };
+enum { UI_BIND_PARAM = 0, UI_BIND_ACTION, UI_BIND_PAGE_SLOT };
 
 /* ---- binding behaviors ---- */
 enum { UI_ABS = 0, UI_REL, UI_MOMENTARY, UI_LATCH, UI_TOGGLE };
@@ -38,6 +38,7 @@ enum {
     UI_ACT_POP_HOME, UI_ACT_NEXT_PAGE, UI_ACT_PREV_PAGE, UI_ACT_SET_PAGE,
     UI_ACT_BANK_NEXT, UI_ACT_BANK_PREV, UI_ACT_TOGGLE, UI_ACT_LATCH, UI_ACT_SAVE,
     UI_ACT_LOAD, UI_ACT_PANIC, UI_ACT_PLAY, UI_ACT_STOP,
+    UI_ACT_OP_NEXT, UI_ACT_OP_PREV, UI_ACT_OP_MUTE,   /* the selected-operator group */
 };
 
 /* ---- the fixed input-source vocabulary (the generator maps panel strings to these) ---- */
@@ -89,6 +90,7 @@ typedef struct {
     uint8_t home;                                /* the base context id (booted into) */
     const ui_context *ctx; uint8_t n_ctx;
     const ui_binding *global; uint8_t n_global;
+    const uint16_t *mute;                        /* the selected-operator mute params (4) */
     uint16_t n_params;                           /* ui_params[] size */
     uint16_t n_widgets;                          /* ui_dirty[] size (across all pages) */
 } ui_tables;

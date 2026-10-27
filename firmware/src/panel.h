@@ -29,6 +29,8 @@ static const ui_context CTX[] = {
     { PG_0, 1, BIND_0, 3, 0, 0 },
 };
 
+static const uint16_t MUTE_TBL[4] = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
+
 static const ui_tables PANEL = {
-    "rib", 0, CTX, 1, GLOBAL_BIND, 1, 3, 5,
+    "rib", 0, CTX, 1, GLOBAL_BIND, 1, MUTE_TBL, 3, 5,
 };

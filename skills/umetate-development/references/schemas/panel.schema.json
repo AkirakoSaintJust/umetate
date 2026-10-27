@@ -15,6 +15,12 @@
       "description": "always-on bindings, resolved last (MASTER, transport, panic, notes)",
       "items": { "$ref": "#/$defs/binding" }
     },
+    "mute": {
+      "type": "array",
+      "maxItems": 4,
+      "description": "the selected-operator mute params (op_mute toggles the selected one)",
+      "items": { "type": "string" }
+    },
     "contexts": {
       "type": "object",
       "minProperties": 1,
@@ -68,15 +74,17 @@
         "target": { "type": "string", "description": "param path to write" },
         "action": {
           "type": "string",
-          "enum": ["note_on", "note_off", "set_step", "push", "pop", "pop_home", "next_page", "prev_page", "set_page", "bank_next", "bank_prev", "toggle", "latch", "save", "load", "panic", "play", "stop"]
+          "enum": ["note_on", "note_off", "set_step", "push", "pop", "pop_home", "next_page", "prev_page", "set_page", "bank_next", "bank_prev", "toggle", "latch", "save", "load", "panic", "play", "stop", "op_next", "op_prev", "op_mute"]
         },
         "arg": { "type": "string", "description": "argument for the action (context id, page id, step, ...)" },
+        "slot": { "type": "integer", "minimum": 0, "maximum": 3, "description": "the page's Nth param (UI_BIND_PAGE_SLOT)" },
         "behavior": { "enum": ["absolute", "relative", "momentary", "latch", "toggle"] },
         "curve": { "enum": ["linear", "log"] }
       },
       "oneOf": [
         { "required": ["target"] },
-        { "required": ["action"] }
+        { "required": ["action"] },
+        { "required": ["slot"] }
       ]
     }
   }
