@@ -720,6 +720,17 @@ The shipped, tested UI base every project builds on:
 The panel schema is `templates/scaffold/panel.schema.json`; the interview fills
 `templates/control-map.md`.
 
+**fourop-fm panel (planned).** The operator edit uses a **4-param page** model: the
+rightmost four encoders (`ENC_KNOB4–7`) edit the four on-screen params, `ENC_SELECT`
+cycles sub-pages, buttons navigate contexts, and `BTN_OCT_UP`/`BTN_OCT_DOWN` select
+the operator. The **envelope graph** is a new `envelope` widget that draws the DX
+rate/level curve as **straight line segments** (an approximation — no curve fitting)
+and deliberately has **no "now-playing" stage cursor**: tracking live envelope state
+from CPU1 is CPU-heavy and unsafe for the audio core. `ratio` is the operator's
+**frequency multiplier** (`inc = note_to_inc(note) × ratio`), not a raw increment;
+exposing it on the panel requires making note-derived params runtime-editable (a
+generator follow-up).
+
 ---
 
 ## 7. Implementation roadmap (ordered)
