@@ -1,19 +1,33 @@
 {
-  "summary": "FM operator: phasor + osc + env + vca, with a note-derived `ratio` and 1-sample `fm` in.",
+  "summary": "The complete DX-style FM operator: phasor + osc(8 waveforms) + dx_env(rate/level) + vca(level), with 1-sample self-feedback and a note-derived `ratio`.",
   "ins": { "fm": "audio" },
   "outs": { "audio": "audio" },
-  "params": { "ratio": { "target": "ph.inc", "note_derived": true } },
+  "params": {
+    "ratio": { "target": "ph.inc", "note_derived": true },
+    "waveform": "osc.waveform",
+    "level": "vca.level",
+    "feedback": "fb.level",
+    "r1": "eg.r1", "r2": "eg.r2", "r3": "eg.r3", "r4": "eg.r4",
+    "l1": "eg.l1", "l2": "eg.l2", "l3": "eg.l3"
+  },
   "nodes": [
     { "id": "ph", "type": "phasor" },
     { "id": "osc", "type": "osc" },
-    { "id": "env", "type": "env" },
-    { "id": "vca", "type": "vca" }
+    { "id": "eg", "type": "dx_env" },
+    { "id": "vca", "type": "vca" },
+    { "id": "fb", "type": "vca" },
+    { "id": "d1", "type": "delay1" },
+    { "id": "sum", "type": "mix" }
   ],
   "wires": [
-    { "from": "fm", "to": "ph.fm" },
+    { "from": "fm", "to": "sum.in0" },
+    { "from": "d1.out", "to": "sum.in1" },
+    { "from": "sum.audio", "to": "ph.fm" },
     { "from": "ph.phase", "to": "osc.phase" },
     { "from": "osc.audio", "to": "vca.audio" },
-    { "from": "env.cv", "to": "vca.cv" },
+    { "from": "eg.cv", "to": "vca.cv" },
+    { "from": "vca.audio", "to": "fb.audio" },
+    { "from": "fb.audio", "to": "d1.in" },
     { "from": "vca.audio", "to": "audio" }
   ]
 }

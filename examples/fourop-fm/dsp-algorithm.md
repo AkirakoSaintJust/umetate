@@ -174,4 +174,51 @@ In-repo study: [`docs/dsp-study.md`](../docs/dsp-study.md).
   sample (per destination); 5 `route4` instances per voice + the `mix4`-equivalent
   carrier row. Memoryless, no branching.
 
+---
+
+## Component: `fm_op` (the DX-style operator)
+
+- **Purpose:** one FM operator = `phasor → osc → dx_env → vca`, with 1-sample
+  self-feedback and a note-derived `ratio`. The complete DX-style building block;
+  an N-operator voice is N `fm_op` wired by the routing matrix (§`route4`).
+
+- **Algorithm** (fixed-point, exactly):
+  ```
+  sum   = external_fm + feedback_prev        (Q15)
+  phase += inc + (sum << 16)                  (FM index: full-scale = ±π phase)
+  sine  = fm1_sin_ws(phase, waveform)         (8 waveforms)
+  out   = sine · eg · level                   (Q15; eg = the dx_env gain)
+  feedback_prev = (out · feedback) delayed 1 sample
+  ```
+  `inc = note_to_inc(note) · ratio` (note-derived, so non-integer ratios stay in
+  tune). Feedback taps the *enveloped, leveled* output (matching ymfm, which feeds
+  back `compute_volume` = sine × envelope).
+
+- **Inputs / outputs:** `fm` (audio, external modulation) → `audio` (audio).
+
+- **Parameters** (mapped inward):
+  `ratio` (note-derived), `waveform` (uint32 0–7), `level` (q15, the FM index /
+  output amplitude), `feedback` (q15, self-modulation), and the `dx_env` params
+  `r1..r4, l1..l3`.
+
+- **Coefficients / precompute:** none; `inc` is note-derived at note-on, the
+  feedback is a `delay1` register.
+
+- **State:** per-op `phase` (q32), `stage`/`level` (the dx_env), `prev` (delay1).
+
+- **Edge cases:** feedback = 0 → no self-modulation; `sum` = external fm only. The
+  `(sum << 16)` scale keeps a full-scale modulator at a ±π phase swing, so the
+  modulator's `level` is the FM depth.
+
+- **Reference + credit:** operator decomposition (phasor/osc/env/vca) from
+  ymfm/Dexed (dsp-study §2.6); feedback tap + 1-sample delay from ymfm
+  (`output_4op`). The `<<16` FM-index scale is umetate's own fixed-point choice
+  (ymfm scales by `>>1` on a 10.10 phase — a different range for a different phase
+  width).
+
+- **Performance note:** audio rate; per sample = 1 phase add + 1 LUT read + 1
+  envelope multiply + 2 gain multiplies + the feedback multiply. The `delay1` is
+  the cycle-breaker (read first, write last).
+
+
 
