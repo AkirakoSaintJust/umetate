@@ -49,23 +49,38 @@ note (or per control tick for pitch mod), never per sample.** Table size 512–2
 (linear interpolation ≈ 0.1% THD at 512 — inaudible). This is the *only* oscillator
 form that needs no anti-aliasing (a sine table has no harmonics to fold).
 
-### 2.2 PolyBLEP (band-limited saw/square, cheap anti-aliasing)
+### 2.2 PolyBLEP (band-limited saw/square/pulse, cheap anti-aliasing)
 
 MI's `PolyblepOscillator` and every modern synth use the **polyBLEP** correction —
-a 4th-order polynomial patched around the discontinuity, ~4 extra ops/sample, no
+a 2nd-order polynomial patched around each discontinuity, ~4 extra ops/sample, no
 oversampling:
 
 ```c
 float poly_blep(float t, float dt) {          /* t = phase in [0,1), dt = inc */
-    if (t < dt)      { t /= dt;       return t + t - t * t - 1.0f; }
-    if (t > 1 - dt)  { t = (t - 1)/dt; return t * t + t + t + 1.0f; }
+    if (t < dt)      { t /= dt;       return t + t - t * t - 1.0f; }   /* = 2t - t² - 1 */
+    if (t > 1 - dt)  { t = (t - 1)/dt; return t * t + t + t + 1.0f; } /* = t² + 2t + 1 */
     return 0.0f;
 }
 /* saw:    out = 2*t - 1 - poly_blep(t, dt);
    square: out = (t < 0.5f ? 1 : -1) + poly_blep(t, dt) - poly_blep(fract(t+0.5f), dt);
-   pulse:  the same two-BLEP square, but the second BLEP sits at `width` (0..1) — PWM;
    triangle: a polyBLEP'd square through a leaky integrator (y += k·(x−y)), one extra state. */
 ```
+
+The residual is the **same function regardless of where the discontinuity sits**;
+only its position moves. So a **pulse (PWM)** is the square with the second
+correction moved to the width `pw`:
+
+```c
+/* pulse: v = (ph < pw ? 1 : -1); p2 = (ph + 1 - pw) mod 1;
+   out = v + poly_blep(ph, dt) - poly_blep(p2, dt); */
+```
+
+Clamp `pw` away from 0/1 so the two BLEPs don't overlap (the narrow-pulse
+artifact). **Order matters:** the 2nd-order form above is aliasing-free only up to
+~2 kHz fundamental (it covers the musical range); 3rd/4th-order (Lagrange /
+B-spline) extend that, with a 2-tap EQ FIR `b0 + b1·z⁻¹ + b0·z⁻²` to flatten the
+passband (Välimäki et al.). So "band-limited" is a 2nd-order default plus an
+optional higher-order tier, not one fixed thing.
 
 The fixed-point equivalent keeps the same polynomial in Q15/Q16. One subtlety for
 fixed point: `poly_blep` divides by `dt` (`t /= dt`), which is a 32/32 divide —
@@ -131,6 +146,13 @@ sine and the attenuation in the **log domain** (a phase→sine table and a
 level→gain table), so the whole operator is integer table lookups. This is exactly
 umetate's `phasor` + `osc` + `env` + `vca` decomposition, and it is why the FM-chip
 authors and umetate independently chose the same primitives.
+
+umetate's `fm_op` macro is that decomposition plus the two FM-specific knobs: a
+**`ratio`** param that is `note_derived` (`inc = note_to_inc(note)·ratio`, so
+non-integer ratios like 2.5 stay in tune), and optional **1-sample feedback** via
+`delay1` (operator self-modulation — the DX/TX "feedback" knob). `detune` is a
+small fixed offset added to `inc`. So an N-operator FM voice is N `fm_op` macros
+wired by the algorithm, not new C.
 
 ### 2.7 The 8-waveform bit trick (OPZ / OPL)
 
@@ -250,10 +272,12 @@ increment (or rate) is precomputed; the per-tick work is one or two ops.
 
 ## 4. Filters
 
-### 4.1 SVF (Chamberlin / MI `Svf`)
+### 4.1 SVF (Chamberlin / MI `Svf`, and Simper's TDF2)
+
+The **Chamberlin** form (MI's `Svf`) is the classic two-integrator topology:
 
 ```c
-f = 2 * sinf(pi * cutoff / FS);          /* or tan approx; recompute at control rate */
+f = 2 * sinf(pi * cutoff / FS);          /* recompute at control rate */
 q = 1.0f / resonance;
 low  += f * band;
 high  = in - low - q * band;
@@ -261,9 +285,29 @@ band += f * high;
 /* low / band / high are the LP/BP/HP outputs; notch = low + high */
 ```
 
-Two state variables (`band`, `low`), one coefficient recompute per control tick.
-MI's `Svf` is exactly this. It is the best "one filter for all modes" primitive,
-and matches umetate's `svf` node (`z1`/`z2` state).
+It is simple but loses stability at high resonance. **Simper's TDF2 form** is the
+production one — stable under modulation and at high resonance, same LP/BP/HP via
+mix coefficients (`m0,m1,m2`):
+
+```c
+g  = tanf(pi * cutoff / FS);            /* k = 1/Q */
+a1 = 1.0f / (1.0f + g * (g + k));
+a2 = g * a1;
+a3 = g * a2;
+/* per sample: */
+v3 = in - ic2eq;
+v1 = a1 * ic1eq + a2 * v3;
+v2 = ic2eq + a2 * ic1eq + a3 * v3;
+ic1eq = 2 * v1 - ic1eq;
+ic2eq = 2 * v2 - ic2eq;
+out   = m0 * in + m1 * v1 + m2 * v2;    /* low = v2, band = v1, high = in - k*v1 - v2 */
+```
+
+For fixed point, use `g = 2·sin(π·fc/fs)` instead of `tan`: **sin is more accurate
+at low bit depth** (Simper's own note), and we already have `fm1_sin` — `tan` is
+*not* free on the pi32v2. So the TDF2 topology with a `fm1_sin`-derived `g` is the
+right fixed-point choice. Both forms are two state variables + one coefficient
+recompute per control tick; matches umetate's `svf` node (`z1`/`z2` state).
 
 ### 4.2 One-pole
 
@@ -287,15 +331,19 @@ The classic character filter; `res` is the feedback, `g` the tan-based cutoff.
 The Buchla 292 LPG couples a one-pole low-pass and a VCA, both driven by the
 **same** control — a vactrol (LED + LDR), whose non-linear decay is the character:
 
-- fast attack (~1–3 ms);
-- a "plucky" decay that is *not* a simple exponential — the LDR dims quickly then
-  slowly (its "memory"/"ring"), so the gate closes with a distinctive tail;
+- fast attack (~instant–3 ms);
+- a slow decay: ~**1–1.5 s** from fully open to semi-closed (VTL5C4), then *slower
+  still* to fully closed — and the LDR responds **faster at high light, slower at
+  low light**, which is precisely what makes the decay non-exponential (the "ring"/
+  "pluck" tail);
+- a **memory effect**: the response depends on recent history (the slowest
+  vactrols "remember" being lit), so repeated hits land differently;
 - because cutoff and gain are coupled, the sound gets *quieter and darker
   together* — the "woody" pluck.
 
-The vactrol response is usually modeled as a sum of two exponentials (fast LED +
-slow LDR) or a one-pole with a knee; MI *Streams* models it digitally (SHAPE = the
-vactrol on/off response times, MOD = damping — study its source for the exact
+The vactrol response is modeled as a **sum of two exponentials** (fast LED + slow
+LDR) or a one-pole with a power-law tail; MI *Streams* models it digitally (SHAPE =
+the vactrol on/off response times, MOD = damping — study its source for the exact
 curve, MIT-licensed; credit, don't copy).
 
 In umetate: an `lpg` **node** — `ins {audio, gate}`, `params {response (on/off
@@ -340,6 +388,13 @@ whose source was an IFFT — **data, not a distinct algorithm** (though umetate 
 an `ifft` node for live spectral work). This is how SC's `IFFT` and Csound's
 `adsyn` conceptually collapse to table reads for a fixed spectrum.
 
+Fixed-point caution: kiss_fft's **fixed-point** build scales by `1/N` in *both*
+directions (overflow prevention), so a forward+inverse round-trip is `1/N²` — you
+must multiply back to reconstruct a Q15 table. The pi32v2 **hardware FFT is
+float** (`libFFT_pi32v2_OnChip.a`, `flfft_core_pi32v2.c`), so the `ifft` node's
+"wavetable-from-64-harmonics" is either float (hw, at control rate — the honest
+float isolation) or fixed-point (kiss_fft) with the scaling handled.
+
 ---
 
 ## 6. Cross-cutting efficiency lessons
@@ -361,6 +416,18 @@ an `ifft` node for live spectral work). This is how SC's `IFFT` and Csound's
    ~1.8 kHz control), Pd (64). The per-sample loop is the cost; control is ~1–8%.
 7. **No heap, no virtual dispatch in the audio path** — MI allocates statically;
    only SAPF uses inheritance, and it's the educational outlier.
+
+**The backlog items that are already covered** (pinned so nothing is hand-wavy):
+
+- `triangle` — a `tables:` shape, read by `osc`. Data, no node.
+- `ring mod` — `vca` with an **audio-rate** CV input (multiply two signals). No new
+  node.
+- `high-pass` — the `svf` high-pass output. No new node.
+- `comb` — `delayN` with feedback (§4.7). No new node.
+- `pitched_noise` — a macro: `noise` → a note-tracking `svf` band-pass (cutoff =
+  `note_to_inc`-derived frequency at block rate). No new node.
+- `apc` / `dual_apc` — a macro: a square `osc` + `env` (`apc`), or two squares
+  cross-modulating each other's `inc` (`dual_apc`). Trivial once `fm_op` exists.
 
 ---
 
@@ -456,17 +523,23 @@ osc.audio           ->  gran_window.audio
 ### 8.4 The stochastic component (its own nodes)
 
 The "genuinely Xenakis" core is GENDYN (*Formalized Music*): a waveform is a
-polygon whose **breakpoints each do a bounded random walk** between ±32768
-barriers, with samples by **linear interpolation** between breakpoints. That is
-*already integer* (Q15 ±32767), so it fits the fixed-point baseline exactly. The
-stochastic engine is therefore control-rate nodes, patched into `gran_phase`'s
-mod inputs:
+polygon whose **breakpoints** — both their **amplitudes** *and* the **distances
+between them** — do bounded random walks between ±32768 barriers, with samples by
+**linear interpolation** between breakpoints. The bounds are **mirrors, not
+clamps**: the walk *reflects* off the barrier (an "elastic barrier"), which is the
+specific Xenakis mechanism — a clamp would sound different. This is *already
+integer* (Q15 ±32767), so it fits the fixed-point baseline exactly. The stochastic
+engine is therefore control-rate nodes, patched into `gran_phase`'s mod inputs:
 
-- **`rand_walk`** — a bounded random walk (`x += step·(rand − ½)`, clamped to
-  `[lo, hi]`); Xenakis's barrier model.
+- **`rand_walk`** — `x += step·(u − ½)`, then **reflect** off `[lo, hi]` (mirror,
+  not clamp); Xenakis's barrier model.
 - **`distribution`** — a random draw per control tick (uniform / Gaussian /
-  Cauchy — Xenakis's ST/Free-Stochastic vocabulary).
-- **`drift`** — a low-passed random walk (slow wander).
+  Cauchy — Xenakis's ST/Free-Stochastic vocabulary; Gaussian via sum-of-uniforms
+  or a Box–Muller-lite table, Cauchy via `tan(π·(u − ½))`).
+- **`drift`** — a one-pole-lowpassed `rand_walk` (slow wander).
+
+(`rand_walk` and `drift` are cheap and integer; the Cauchy `tan` needs a `tan`
+table or a `fm1_atan2`-derived identity, so it is the one to keep control-rate.)
 
 ### 8.5 Fixed-point and cost
 
