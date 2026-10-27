@@ -15,7 +15,7 @@ from typing import Any
 
 from ._backend import emit
 from ._frontend import compile
-from ._ir import CompiledGraph, GenError, NodeSpec, load_library
+from ._ir import CompiledGraph, GenError, NodeSpec, load_library, load_macros
 from ._tables import emit_tables_c, emit_tables_h
 
 __all__ = [
@@ -26,31 +26,41 @@ __all__ = [
     "GenError",
     "NodeSpec",
     "load_library",
+    "load_macros",
 ]
 
-_DEFAULT_LIBRARY = Path(__file__).resolve().parent.parent / "modules"
+_DEFAULT_LIBRARY = Path(__file__).resolve().parent.parent / "modules" / "nodes"
+_DEFAULT_MACROS = Path(__file__).resolve().parent.parent / "modules" / "macros"
 
 
 def _graph(
-    patch: Mapping[str, Any], nodes: Mapping[str, NodeSpec] | None
+    patch: Mapping[str, Any],
+    nodes: Mapping[str, NodeSpec] | None,
+    macros: Mapping[str, Any] | None,
 ) -> CompiledGraph:
     if nodes is None:
         nodes = load_library(_DEFAULT_LIBRARY)
-    return compile(patch, nodes)
+    if macros is None:
+        macros = load_macros(_DEFAULT_MACROS)
+    return compile(patch, nodes, macros)
 
 
 def generate(
-    patch: Mapping[str, Any], nodes: Mapping[str, NodeSpec] | None = None
+    patch: Mapping[str, Any],
+    nodes: Mapping[str, NodeSpec] | None = None,
+    macros: Mapping[str, Any] | None = None,
 ) -> str:
     """Compile `patch` into generated `<synth>_dsp.c` source."""
-    return emit(_graph(patch, nodes))
+    return emit(_graph(patch, nodes, macros))
 
 
 def generate_params(
-    patch: Mapping[str, Any], nodes: Mapping[str, NodeSpec] | None = None
+    patch: Mapping[str, Any],
+    nodes: Mapping[str, NodeSpec] | None = None,
+    macros: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """The flattened param table (`params.json`): id -> name + display metadata."""
-    graph = _graph(patch, nodes)
+    graph = _graph(patch, nodes, macros)
     return {
         "params": [
             {
@@ -71,10 +81,12 @@ def generate_params(
 
 
 def param_ids(
-    patch: Mapping[str, Any], nodes: Mapping[str, NodeSpec] | None = None
+    patch: Mapping[str, Any],
+    nodes: Mapping[str, NodeSpec] | None = None,
+    macros: Mapping[str, Any] | None = None,
 ) -> dict[str, int]:
     """The name -> set_param id map (friendly names *and* flattened targets)."""
-    graph = _graph(patch, nodes)
+    graph = _graph(patch, nodes, macros)
     ids: dict[str, int] = {}
     for p in graph.params:
         ids[p.name] = p.id
@@ -83,8 +95,10 @@ def param_ids(
 
 
 def generate_tables(
-    patch: Mapping[str, Any], nodes: Mapping[str, NodeSpec] | None = None
+    patch: Mapping[str, Any],
+    nodes: Mapping[str, NodeSpec] | None = None,
+    macros: Mapping[str, Any] | None = None,
 ) -> tuple[str, str]:
     """The generated `tables.h` + `tables.c` (const XIP arrays) for `tables:`."""
-    graph = _graph(patch, nodes)
+    graph = _graph(patch, nodes, macros)
     return emit_tables_h(graph.tables), emit_tables_c(graph.tables)

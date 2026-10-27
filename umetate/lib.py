@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
-"""`umetate lib` — list the shipped nodes + templates (local only, no registry)."""
+"""`umetate lib` — list the shipped nodes + macros + templates (local, no registry)."""
 
 from __future__ import annotations
 
@@ -10,16 +10,26 @@ import sys
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[1]
-_MODULES = _ROOT / "modules"
+_NODES = _ROOT / "modules" / "nodes"
+_MACROS = _ROOT / "modules" / "macros"
 _EXAMPLES = _ROOT / "examples"
 
 
 def _list_nodes() -> list[str]:
     lines: list[str] = []
-    for manifest in sorted(_MODULES.glob("*/node.json")):
+    for manifest in sorted(_NODES.glob("*/node.json")):
         name = manifest.parent.name
         summary = json.loads(manifest.read_text(encoding="utf-8")).get("summary", "")
         lines.append(f"node     {name:<12} {summary}")
+    return lines
+
+
+def _list_macros() -> list[str]:
+    lines: list[str] = []
+    for manifest in sorted(_MACROS.glob("*/macro.json")):
+        name = manifest.parent.name
+        summary = json.loads(manifest.read_text(encoding="utf-8")).get("summary", "")
+        lines.append(f"macro    {name:<12} {summary}")
     return lines
 
 
@@ -37,6 +47,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.action == "list":
         for line in _list_nodes():
+            print(line)
+        for line in _list_macros():
             print(line)
         for line in _list_templates():
             print(line)

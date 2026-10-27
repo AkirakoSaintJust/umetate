@@ -225,7 +225,7 @@ def param_bounds(kind: str) -> tuple[int, int]:
 
 
 def load_library(root: str | Path) -> dict[str, NodeSpec]:
-    """Load every `modules/<name>/node.json` + `node.c` into a NodeSpec map."""
+    """Load every `modules/nodes/<name>/node.json` + `node.c` into a NodeSpec map."""
     nodes: dict[str, NodeSpec] = {}
     for manifest_path in sorted(Path(root).glob("*/node.json")):
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -234,6 +234,20 @@ def load_library(root: str | Path) -> dict[str, NodeSpec]:
         spec = node_spec_from_manifest(manifest, body)
         nodes[spec.name] = spec
     return nodes
+
+
+def load_macros(root: str | Path) -> dict[str, dict[str, Any]]:
+    """Load every `modules/macros/<name>/macro.json` into a name -> macro map.
+
+    The macro's name is its directory name; the manifest is the same shape as a
+    patch's inline `macros:` entry (`ins`/`outs`/`params`/`nodes`/`wires`), plus a
+    `summary` for `umetate lib`.
+    """
+    macros: dict[str, dict[str, Any]] = {}
+    for manifest_path in sorted(Path(root).glob("*/macro.json")):
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        macros[manifest_path.parent.name] = manifest
+    return macros
 
 
 def node_spec_from_manifest(manifest: dict[str, Any], body: str) -> NodeSpec:

@@ -34,11 +34,20 @@ from ._ir import (
 from ._tables import build_tables
 
 
-def compile(patch: Mapping[str, Any], nodes: Mapping[str, NodeSpec]) -> CompiledGraph:
-    """Compile a patch into a CompiledGraph (parse -> expand -> check -> topo)."""
+def compile(
+    patch: Mapping[str, Any],
+    nodes: Mapping[str, NodeSpec],
+    macros: Mapping[str, Any] | None = None,
+) -> CompiledGraph:
+    """Compile a patch into a CompiledGraph (parse -> expand -> check -> topo).
+
+    `macros` is the shipped macro library (`modules/macros`); the patch's own
+    `macros:` section shadows it.
+    """
     name = to_c_identifier(str(patch["name"]))
     voices = int(patch.get("voices", 1))
-    macros = dict(patch.get("macros") or {})
+    merged_macros = dict(macros or {})
+    merged_macros.update(dict(patch.get("macros") or {}))
 
     instances: list[NodeInstance] = []
     raw_wires: list[tuple[str, str]] = []
@@ -50,7 +59,13 @@ def compile(patch: Mapping[str, Any], nodes: Mapping[str, NodeSpec]) -> Compiled
     for zone, zone_dict in (("voice", voice_zone), ("global", global_zone)):
         for inst_dict in zone_dict.get("nodes", []):
             _expand(
-                dict(inst_dict), zone, nodes, macros, instances, raw_wires, bindings
+                dict(inst_dict),
+                zone,
+                nodes,
+                merged_macros,
+                instances,
+                raw_wires,
+                bindings,
             )
         for wire in zone_dict.get("wires", []):
             raw_wires.append((str(wire["from"]), str(wire["to"])))

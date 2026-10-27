@@ -225,7 +225,7 @@ umetate scaffold patch --name "My Synth" --out examples/my-synth
 
 - Fill `patch.json` from the voice architecture + parameter manifest + tables.
 - Fill `panel.json` from the control map.
-- Add a node to `modules/` only when a shipped node is genuinely insufficient
+- Add a node to `modules/nodes/` only when a shipped node is genuinely insufficient
   (conform to `node.schema.json`; add its host test + budget annotation).
 - After each increment, prove it: `umetate deep-check --host`.
 

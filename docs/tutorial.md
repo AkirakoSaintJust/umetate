@@ -223,7 +223,7 @@ umetate deep-check --host
 ```
 
 **Checkpoint:** a host test produces bounded, non-silent output and a release to
-silence; the patch builds. Add a node to `modules/` only when a shipped node is
+silence; the patch builds. Add a node to `modules/nodes/` only when a shipped node is
 genuinely insufficient.
 
 ## 8. Controls, MIDI, screen, storage

@@ -109,6 +109,21 @@ SVF_WF: dict[str, Any] = {
     "global": {"nodes": [], "wires": []},
 }
 
+# uses the *shipped* fm_op macro (modules/macros), no inline macros: section.
+FM_OP: dict[str, Any] = {
+    "name": "fm_op_test",
+    "voices": 4,
+    "voice": {
+        "nodes": [
+            {"id": "carrier", "type": "fm_op", "params": {"ratio": 1}},
+            {"id": "mod", "type": "fm_op", "params": {"ratio": 2}},
+        ],
+        "wires": [{"from": "mod.audio", "to": "carrier.fm"}],
+        "voice_out": "carrier.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
 TABLE_DEMO: dict[str, Any] = {
     "name": "table_demo",
     "voices": 4,
@@ -291,6 +306,13 @@ def main() -> int:
     print(
         ("ok: " if ok else "FAIL: ")
         + (msg or "svf + wavefolder renders non-silent then silent")
+    )
+    failures += 0 if ok else 1
+
+    ok, msg = _sound(FM_OP)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "shipped fm_op macro renders non-silent then silent")
     )
     failures += 0 if ok else 1
 

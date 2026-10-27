@@ -195,7 +195,9 @@ umetate/
 │  ├─ gen/  assets/
 │  ├─ tests/                #   host tests, flash-map tests, security tests
 │  └─ tools/                #   firmware-local build/package/install helpers
-├─ modules/                 # module library: reviewed nodes (node.json + <node>.c + test)
+├─ modules/                 # module library (§6.9): nodes/ (reviewed nodes) + macros/ (subgraphs)
+│  ├─ nodes/<node>/         #   node.json (manifest) + node.c (per-sample body)
+│  └─ macros/<name>/        #   macro.json (a reusable subgraph)
 ├─ build/web/               # the WASM parity lab output (`web-build` → standalone dsp.wasm + page)
 ├─ skills/
 │  ├─ umetate-development/  # component 2 (SKILL.md + generated references/)
@@ -600,8 +602,9 @@ edit`; the generator is authoritative.
 
 ### 6.9 Module library (the batteries)
 
-Shipped, reviewed nodes in `modules/`, each = `node.json` + `<node>.c` + a host
-test + a budget annotation:
+Shipped, reviewed nodes in `modules/nodes/`, each = `node.json` + `<node>.c` + a host
+test + a budget annotation; shipped macros in `modules/macros/`, each =
+`macro.json` (a reusable subgraph, same shape as a patch's `macros:` entry):
 
 | Node | Kind | Purpose |
 | --- | --- | --- |
@@ -638,10 +641,10 @@ planned half of each shipped node; the full follow-up, classified by the "one no
 | `formant` (K5000-style) | macro | bank of `svf` band-passes + vowel presets |
 | `granulator` (Xenakis) | node(s) | phase-granular (no audio buffer) + a separate stochastic/GENDYN node |
 
-`svf` and `wavefolder` shipped first (the "batch 1" build); `fm_op` is next, and it
-needs the **shipped-macro** mechanism (macros currently live only inline in a
-patch's `macros:` section — there is no `modules/`-style macro library yet), so it
-is deferred until that is added.
+`svf`, `wavefolder`, and `fm_op` shipped first (the "batch 1" build). Shipped
+macros live in `modules/macros/`; a patch's own `macros:` section shadows them.
+Next in the macro backlog: `comb`, `pitched_noise`, `apc`/`dual_apc`, `vps`,
+`formant`.
 
 Build order: `fm_op` + `svf` + `wavefolder` → `ifft` + `lpg` → `formant` + the
 cheap macros → `granulator` last (research-driven). Band-limited oscillators and
@@ -796,7 +799,8 @@ chord, custom loader (`ota-<identity>` + resume + model check), single-bank-OTA
 `NodeSpec`, `NodeInstance`, `CompiledGraph`, `GenError`), `_frontend.py` (parse →
 macro expand → wire resolve → type-check → cycle-check + topo), `_backend.py` (rate
 split → state alloc → allocator → emission), and `generate.py` (the thin pure entry).
-The node library lives in `modules/<node>/node.json + node.c` (§12.5): a manifest +
+The node library lives in `modules/nodes/<node>/node.json + node.c` and the macro
+library in `modules/macros/<name>/macro.json` (§12.5): a manifest +
 a per-sample C template with `${in.*}`/`${out.*}`/`${state.*}`/`${param.*}`
 placeholders (zone-agnostic auto-wrap) and `@@read@@`/`@@write@@` cycle breakers;
 a leftover placeholder is a `GenError`. It type-checks wires (rejects `audio→event`
@@ -1390,10 +1394,11 @@ umetate/
                   #   cycle-check -> topo -> CompiledGraph
   _backend.py     # rate split -> state allocation -> allocator -> C emission
   test_generate.py
-modules/<node>/   # node.json (manifest) + node.c (per-sample body template)
+modules/nodes/<node>/   # node.json (manifest) + node.c (per-sample body template)
+modules/macros/<name>/  # macro.json (a reusable subgraph)
 ```
 
-**Inputs.** node manifests (`node.schema.json`, from `modules/` + user nodes); the
+**Inputs.** node manifests (`node.schema.json`, from `modules/nodes/` + user nodes); the
 patch (`patch.schema.json`); the `tables:` data (wavetables/segments/spectra/
 phase_maps).
 
@@ -1538,11 +1543,11 @@ generator) + a host parity test. The generator composes nodes into the §12.1 se
   first, write last — the sample-level cycle breaker). Example:
 
   ```c
-  /* modules/osc/node.c */
+  /* modules/nodes/osc/node.c */
   ${out.audio} = fm1_sin(${in.phase});
   ```
   ```c
-  /* modules/delay1/node.c */
+  /* modules/nodes/delay1/node.c */
   @@read@@
   ${out.out} = ${state.prev};
   @@write@@
@@ -1782,7 +1787,8 @@ umetate/
   scaffold.py lib.py                        # the schematic engine
   lint.py fmt.py web.py status.py emu.py    # lint.py holds the C standing checks
   test_cli.py  test_generate.py test_panel.py test_web.py
-modules/<node>/node.json + node.c         # the node library (§12.5)
+modules/nodes/<node>/node.json + node.c      # the node library (§12.5)
+modules/macros/<name>/macro.json             # the macro library (§6.9)
 ```
 
 **The data model.**

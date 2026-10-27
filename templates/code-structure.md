@@ -35,7 +35,7 @@ void <synth>_dsp_render(uint32_t frames);
 const int32_t *<synth>_dsp_output(void);
 ```
 
-### New node (`modules/<name>/`)
+### New node (`modules/nodes/<name>/`)
 
 - **`node.json`** (ports, params, state — conform to `node.schema.json`):
 - **`node.c`** core: `static inline void <name>_process(ctx, n)`:
