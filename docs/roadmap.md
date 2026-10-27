@@ -648,11 +648,15 @@ first command; identity and doc set are frozen.
 
 ### Phase 1 — Docker image + volume (P1) — **done**
 
-**P1-1 — Pinned Linux dev container.** — **done** (2026-10-26) — `docker/Dockerfile`
-(Emscripten 6.0.13 pinned), `.dockerignore`, `build.sh`, compose + `.env.example`.
-*Verified:* `docker build` succeeds (3.46 GB); `cc`, `cmake`, `ninja`, `python3`,
-`node`, `emcc`, Pillow all resolve; the firmware host test runs green inside it.
-**Layer: host.**
+**P1-1 — Pinned Linux dev container.** — **done** (2026-10-26; hardened 2026-10-27) —
+`docker/Dockerfile` (Debian 13 trixie, Emscripten 6.0.13 pinned), `.dockerignore`,
+`build.sh`, compose + `.env.example`. Node comes from emsdk's own node 24 (not apt's
+EOL node 18); `apt-get upgrade` + `setuptools` are kept current. *Verified:* `docker
+build` succeeds; `cc`, `cmake`, `ninja`, `python3` (3.13), `node` (24), `emcc`, Pillow
+all resolve; the firmware host test runs green inside it. `docker scout cves` reports
+1 critical / 16 high (down from 9 / 83) — the remainder is pinned emsdk npm
+build-tooling + Debian packages awaiting upstream fixes (picked up by `apt-get
+upgrade` on rebuild). **Layer: host.**
 
 **P1-2 — Target volume + setup.** — **done** — `umetate setup` installs the JieLi Linux
 pi32v2 toolchain (`jieli-linux-toolchains-20260730.1`, SHA-256 `a1545cdd…`, `clang

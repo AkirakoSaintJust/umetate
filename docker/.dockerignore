@@ -7,3 +7,8 @@ __pycache__
 *.pyc
 .venv
 venv
+# local secrets + the fetched toolchain/SDK (large, per-checkout, git-ignored)
+.env
+.local-env
+.jieli
+docs/local-environment.md
