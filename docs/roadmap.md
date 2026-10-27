@@ -618,6 +618,31 @@ test + a budget annotation:
 `umetate lib list` shows the library; `umetate scaffold --template` starts from a shipped template; user
 nodes conform to `node.schema.json`, patches to `patch.schema.json`.
 
+**Backlog (post-baseline, proposed order).** The `/`-suffixed names above are the
+planned half of each shipped node; the full follow-up, classified by the "one node
+= one algorithm; shape/spectrum/envelope = data" rule:
+
+| Item | Kind | Note |
+| --- | --- | --- |
+| `triangle` | data | a `tables:` shape — no node |
+| `saw` / `pulse` (band-limited) | node | polyBLEP/polyBLAMP, or mip-mapped tables — research first (naive tables alias) |
+| ring mod | — | already `vca` with an audio-rate CV |
+| high-pass | — | the `svf` high-pass output |
+| `comb` | macro | `delayN` + feedback |
+| `pitched_noise` | macro | `noise` + note-tracking band-pass |
+| `fm_op` | macro | promote the `op` macro (phasor + osc + env + vca) |
+| `apc` / `dual_apc` | macro | square + env / two cross-modulated squares |
+| `vps` | macro | DAFx-11 (Kleimola et al.): 2-D inflection point `p=(d,v)`, multi-breakpoint, audio-rate modulation — dynamic phase distortion, generalizes `phase_map` |
+| `wavefolder` | node | per-sample non-linear transfer function |
+| `lpg` | node | vactrol filter+VCA (credit MI *Streams*; don't copy) |
+| `formant` (K5000-style) | macro | bank of `svf` band-passes + vowel presets |
+| `granulator` (Xenakis) | node(s) | phase-granular (no audio buffer) + a separate stochastic/GENDYN node |
+
+Build order: `fm_op` + `svf` + `wavefolder` → `ifft` + `lpg` → `formant` + the
+cheap macros → `granulator` last (research-driven). Band-limited oscillators and
+the Xenakis stochastic engine are the two research-heavy items; credit sources and
+honour licences per the development skill.
+
 ### 6.10 UI kit (the panel base)
 
 The shipped, tested UI base every project builds on:
