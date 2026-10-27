@@ -88,7 +88,7 @@ umetate is an **opinionated framework**, not a library of parts. The mapping:
 
 | Angular concept | umetate equivalent |
 | --- | --- |
-| `ng generate component/service` | `umetate scaffold node|macro|patch` + `umetate add <feature>` |
+| `ng generate component/service` | `umetate scaffold node|macro|patch --template` + `umetate lib list` |
 | Components / services | **nodes** (typed DSP primitives) + **macros** (reusable subgraphs) + the platform API as compile-time "services" |
 | Declarative template | the **patch** — a declarative signal graph |
 | AOT compiler + tree-shaking + ivy | the **generator**: patch → SoA state + one fused monomorphic render + params table |
@@ -183,7 +183,7 @@ umetate/
 ├─ umetate/                 # CLI implementation (Python >=3.11)
 │  ├─ cli.py                #   arg parsing, dispatch, help
 │  ├─ quick_check.py setup.py build.py deep_check.py inspect.py
-│  ├─ flash.py debrick.py scaffold.py add.py lib.py
+│  ├─ flash.py debrick.py scaffold.py lib.py
 │  ├─ lint.py fmt.py web.py status.py evidence.py generate.py
 │  └─ runner.py             #   WSL2/Docker POSIX shim
 ├─ firmware/                # component 5: RIB runtime (single firmware root)
@@ -405,9 +405,8 @@ umetate deep-check  [--host|--web|--safety|--links|--all]
 umetate inspect    PACKAGE                   inspect a .fwsc without a device
 umetate flash      PACKAGE [--port NAME] [--device] [--yes]   flash; identity + CRC + model checked; resumes a device in update mode
 umetate debrick    [--route app-rescue|update-loader|mask-rom] [--device]   recovery write (mask-rom: blocked, needs the USB_KEY dongle)
-umetate scaffold   <node|macro|patch> --name NAME [--out DIR]   Angular `ng generate`: default or custom
-umetate add        <feature> [--name NAME]    oscillator|filter|envelope|lfo|effect|midi-map|sequencer
-umetate lib        [list|install NAME]        the module library
+umetate scaffold   <node|macro|patch> --name NAME [--template T] [--out DIR]   generate a skeleton (optionally from a shipped template)
+umetate lib        [list]                     list the shipped nodes + templates (local only)
 umetate lint       [--c]                     C lint + static checks (bounds, ROM, MMIO, flash-busy)
 umetate fmt        [--check]                 clang-format over the repo
 umetate web-build  / web-serve               WASM parity lab
@@ -418,10 +417,11 @@ umetate help [CMD]                           documents every option (component 1
 - `quick-check` is read-only; missing target toolchain is `blocked`, not `fail`;
   `--strict` turns non-device `blocked` into a failure exit.
 - `setup` is opt-in, interactive, hash-pinned, never silent; records the clock choice.
-- `scaffold` generates a **default** node/macro/patch (from the schemas), which the
-  user customizes — DSP core, params, graph — **by hand or agentically**. `add`
-  instantiates a library feature (params + dispatch + test + evidence row); `lib`
-  manages the library. All of it can also be written by hand against the schemas.
+- `scaffold` generates a **default** node/macro/patch (from the schemas, or
+  `--template` copies a shipped template), which the user customizes — DSP core,
+  params, graph — **by hand or agentically**. `lib list` shows the shipped nodes +
+  templates. All of it can also be written by hand against the schemas. The module
+  library is local-only — no remote registry.
 - `flash`/`debrick` are the only device-writing commands, gated by §8,
   run on the **host** (USB CDC), never in the container.
 - `lint` encodes the standing checks: MAXP bounds (`SEC-1`), UAC access (`SEC-2`),
@@ -433,7 +433,7 @@ umetate help [CMD]                           documents every option (component 1
 Offline-bundled interactive loop. Workflow: orient → design interview (player,
 synthesis, controls, MIDI, persistence, browser, acceptance) → one brief → one plan
 (feature contracts + supported-load profile) → environment/baseline → **author the
-synth as nodes/macros/patches** (via `scaffold`/`add`, by hand or driven by the
+synth as nodes/macros/patches** (via `scaffold`, by hand or driven by the
 agent) → first audible slice → shared DSP (host/browser/firmware adapters) →
 panel/display → MIDI/persistence → verify (evidence matrix) → handoff. Refuses
 device writes unless the user explicitly requests that action and §8 gates pass.
@@ -477,7 +477,7 @@ statement (§4.2, §4.3). Integer-first by default; FPU opt-in; hardware math vi
 4. Build untouched RIB; host tests; browser lab; first sound.
 5. The firmware contract (`app_audio`, `app_main`, `platform_poll`, HAL).
 6. Design the instrument (brief, feature contracts, supported-load profile).
-7. **Author the synth** (nodes/macros/patches; `scaffold`/`add`; or hand-written
+7. **Author the synth** (nodes/macros/patches; `scaffold`; or hand-written
    `dsp.c` against `<synth>_dsp_*`).
 8. Controls, MIDI, screen, storage.
 9. Test (host, browser parity, target package, fm1-emu, evidence matrix).
@@ -596,7 +596,7 @@ test + a budget annotation:
 | `noise` | source | white / pink |
 | `ifft` / `add` | spectral | spectral bins → audio (additive) |
 
-`umetate lib` lists/installs; `umetate add <feature>` scaffolds an instance; user
+`umetate lib list` shows the library; `umetate scaffold --template` starts from a shipped template; user
 nodes conform to `node.schema.json`, patches to `patch.schema.json`.
 
 ### 6.10 UI kit (the panel base)
@@ -750,7 +750,7 @@ binding). *Verified:* the pocket-drone two-op FM example (op macro + delay1 feed
 an `audio→event` edge is rejected; `mypy --strict` + `ruff check` + `ruff format
 --check` are clean over the owned Python. *Deferred:* the flattened `params.json`
 table + `const` XIP `tables:` + `model`-enum dispatch (P2-8 follow-up, with
-`scaffold`/`add` in P3); WASM (emscripten) + target (JieLi clang) builds need
+`scaffold` in P3); WASM (emscripten) + target (JieLi clang) builds need
 P1-2/P3-2. **Layer: host.**
 
 **P2-9 — UI base + panel generator.** — **done (host), blocked (target/device)**
@@ -786,17 +786,17 @@ lists all commands; no import side effects. **Layer: host.**
 *Acceptance:* each has `--help`; `build`/`deep-check` never write a device; `--clock
 360|396` rejected; `--dsp float` stays opt-in. **Layer: host/target.**
 
-**P3-3 — `scaffold`/`add`/`lib`, `lint`, `fmt` + the param table.** Scaffold default
-node/macro/patch (`ng generate`); `add` instantiates a library feature (params +
-dispatch + test + evidence row); `lib` lists/installs the library; lint encodes the
+**P3-3 — `scaffold`/`lib`, `lint`, `fmt` + the param table.** `scaffold` generates a
+default node/macro/patch (or `--template` copies a shipped one); `lib list` shows the
+shipped nodes + templates (local only — no remote registry); lint encodes the
 standing checks; fmt is clang-format. Also the **flattened param namespace**
 (`params.json`): unify the DSP's node params, the panel's `param` names, and the
 §12.1 `set_param`/`get_param`/`param_count` seam into one id space (emitted by the
 generator), and the user-defined `const` XIP `tables.c` (wavetables/segments/
-phase_maps). *Acceptance:* `scaffold patch --name X` builds; `add oscillator`
-registers a node and passes `make test` + `lint`; `lib list` shows shipped nodes;
-`lint --c` fails on a crafted MAXP/ROM/MMIO violation; `params.json` maps a named
-param to the `set_param` id the panel writes. **Layer: host.**
+phase_maps). *Acceptance:* `scaffold patch --name X` builds; `scaffold patch --name Y
+--template two-op-fm` copies the template and builds; `lib list` shows the shipped
+nodes + templates; `lint --c` fails on a crafted MAXP/ROM/MMIO violation; `params.json`
+maps a named param to the `set_param` id the panel writes. **Layer: host.**
 
 **P3-4 — `flash`, `debrick` (direct, gated).** Per §6.1 and §8. `flash` wraps the
 inherited `fm1_install.py` (strangler-fig, not a rewrite — the clean `umetate/flash.py`
@@ -829,7 +829,7 @@ regression row exists for supported firmwares; no device-acceptance claim. **Lay
 **P5-1 — umetate-development skill.** `SKILL.md` + offline `references/` (AC79
 facts, flash maps, port-kit patterns, the node/macro/patch schemas, recovery
 taxonomy, evidence vocabulary, code conventions) + `assets/` (copies of `templates/`).
-*Acceptance:* `deep-check --skill` passes; it drives `scaffold`/`add`/patch authoring and
+*Acceptance:* `deep-check --skill` passes; it drives `scaffold`/patch authoring and
 refuses device writes without §8 gates. **Layer: docs.**
 
 **P5-2 — umetate-safety skill.** `SKILL.md` + offline `references/` (threat model,
@@ -917,7 +917,7 @@ side effect of any other task.
 - [ ] `--dsp float` (single-precision, opt-in) and `--clock 240|320` work; `double`
       and 360/396 MHz are rejected or absent.
 - [ ] Hardware acceleration is exposed through `hal/fm1_math.h` with a parity fallback.
-- [ ] The framework is real: `scaffold node|macro|patch` + `add` + `lib` author a
+- [ ] The framework is real: `scaffold node|macro|patch --template` + `lib list` author a
       synth (defaults or custom DSP, by hand or agentically); the generator emits
       the invariant `<synth>_dsp_*` seam with no per-sample dispatch; a hand-written
       `dsp.c` against the same API works as an escape hatch.
@@ -1566,9 +1566,8 @@ shim; `generate.py` is a pure function.
 | `deep_check.py` | `deep-check` | host/web/safety/links/skill checks |
 | `inspect.py` | `inspect` | read a `.fwsc` (identity/CRC/model/damage) without a device |
 | `flash.py`/`debrick.py` | `flash`/`debrick` | the two device-writing commands (host-side, §8 gates) |
-| `scaffold.py` | `scaffold node\|macro\|patch` | generate a default node/macro/patch |
-| `add.py` | `add` | instantiate a library feature (node + params + dispatch + test + evidence row) |
-| `lib.py` | `lib` | list/install the module library |
+| `scaffold.py` | `scaffold node\|macro\|patch` | generate a skeleton; `--template` copies a shipped template |
+| `lib.py` | `lib list` | list the shipped nodes + templates (local only) |
 | `lint.py` / `fmt.py` | `lint --c` / `fmt` | the custom safety checks / clang-format |
 | `web.py` | `web-build` / `web-serve` | emscripten WASM build / loopback serve |
 | `status.py` / `evidence.py` | `status` / `evidence` | parse the roadmap's per-layer claim ledger / validate an evidence matrix |
@@ -1608,10 +1607,9 @@ it compile everywhere. `generate.py` is deterministic (same inputs → byte-iden
 #### 12.7.4 The schematic engine
 
 `scaffold node|macro|patch --name` generates a default from the templates/schemas
-(the user fills the process body / wires); `add <feature>` instantiates a library
-node + its params + a dispatch registration + a test + an evidence row;
-`lib list|install` manages the module library. Everything is also doable by hand
-against the schemas (the Angular escape hatch).
+(the user fills the process body / wires), or `--template` copies a shipped template;
+`lib list` shows the shipped nodes + templates (local only). Everything is also
+doable by hand against the schemas (the Angular escape hatch).
 
 #### 12.7.5 Schema close-out (the worked-example gaps)
 
@@ -1642,7 +1640,7 @@ umetate/
   _ir.py        _frontend.py  _backend.py # generator internals (§12.4): IR, passes, emission
   quick_check.py setup.py build.py deep_check.py inspect.py
   flash.py debrick.py                       # device writes (host-side, §8)
-  scaffold.py add.py lib.py               # the schematic engine
+  scaffold.py lib.py                        # the schematic engine
   lint.py fmt.py web.py status.py evidence.py
   _checks/                                # lint checks, budget, wasm, skill, links
   test_cli.py  test_generate.py           # the CLI + generator contract tests
@@ -1722,7 +1720,7 @@ None of these use the runner.
 | `quick-check` | `runner.probe()` + a host USB probe → `QuickCheckReport` (read-only) |
 | `flash` | host-side **MIDI SysEx** (mido + python-rtmidi, §8 gates) — not the runner |
 | `debrick` | USB_KEY dongle → mask-ROM UBOOT → `jl-uboot-tool` (delegated), §8 gates |
-| `scaffold`/`add`/`lib` | pure Python over templates/schemas — no runner |
+| `scaffold`/`lib` | pure Python over templates/schemas — no runner |
 | `deep-check` | `runner.run` (host tests) + `_checks/` (lint/wasm/skill/links) |
 | `lint`/`fmt` | clang-tidy/clang-format via the runner + the custom `_checks/` |
 
