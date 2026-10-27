@@ -4,7 +4,8 @@
 
 `--host` (the default) runs the host DSP/UI/unit tests; `--safety` runs the C
 standing checks (lint); `--web` builds the standalone wasm + proves host == wasm
-(P4-1); `--skill` verifies the offline skill bundles (P5); `--links` lands in P6.
+(P4-1); `--skill` verifies the offline skill bundles (P5); `--links` checks the
+docs' cross-references (P6).
 """
 
 from __future__ import annotations
@@ -14,11 +15,6 @@ import subprocess
 import sys
 
 from . import runner
-
-# the checks not yet implemented, mapped to the phase they land in
-_NOT_YET = {
-    "links": "P6-1",
-}
 
 
 def _host() -> int:
@@ -76,6 +72,19 @@ def _safety() -> int:
     return 0
 
 
+def _links() -> int:
+    """The docs' cross-references resolve (no dead Markdown links)."""
+    from . import _links
+
+    errors = _links.check()
+    if errors:
+        for error in errors:
+            print(f"deep-check --links: {error}", file=sys.stderr)
+        return 1
+    print("deep-check --links: ok")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="umetate deep-check", description=__doc__)
     parser.add_argument("--host", action="store_true", help="the host tests")
@@ -106,12 +115,10 @@ def main(argv: list[str] | None = None) -> int:
         rc = _skill()
         print(f"deep-check --skill: {'ok' if rc == 0 else 'failed'}")
         failures += 0 if rc == 0 else 1
-    for flag in ("links",):
-        if getattr(args, flag) or args.all:
-            print(
-                f"deep-check --{flag}: not implemented yet ({_NOT_YET[flag]})",
-                file=sys.stderr,
-            )
+    if args.links or args.all:
+        rc = _links()
+        print(f"deep-check --links: {'ok' if rc == 0 else 'failed'}")
+        failures += 0 if rc == 0 else 1
     return 1 if failures else 0
 
 

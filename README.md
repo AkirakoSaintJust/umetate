@@ -42,7 +42,7 @@ umetate deep-check       # run the host-side checks
 umetate/       the CLI (Python)
 firmware/      RIB starter firmware (hardware layer + reference engine)
 modules/       the node library (reviewed DSP primitives)
-web-synth/     the WASM parity lab (built into build/web/ by `web-build`)
+build/web/     the WASM parity lab output (`web-build` → standalone dsp.wasm)
 skills/        the two installable skills
 templates/     fillable forms + the four schemas
 docker/        the pinned build container

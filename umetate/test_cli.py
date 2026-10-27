@@ -309,6 +309,12 @@ def _skill_check() -> None:
     )
 
 
+def _links_check() -> None:
+    from . import _links
+
+    assert _links.check() == [], "the canonical docs have dead cross-references"
+
+
 def main() -> int:
     tests: _Tests = [
         ("no import side effects", _no_import_side_effects),
@@ -327,6 +333,7 @@ def main() -> int:
         ("flash asks before writing", _flash_confirms),
         ("debrick names the routes", _debrick_routes),
         ("the skill bundles are in sync", _skill_check),
+        ("the docs cross-references resolve", _links_check),
     ]
     failures = 0
     for name, test in tests:

@@ -915,15 +915,24 @@ blocked." **Layer: docs.**
 copies of the canonical docs (drift is a hard failure); `deep-check --skill` proves
 them in sync. No device-layer claim.
 
-### Phase 6 — Tutorial + start guide final (P6)
+### Phase 6 — Tutorial + start guide final (P6) — **done**
 
-**P6-1 — Tutorial.** Fill §6.6 with real commands, per-source flags, the
-dual-core/FPU/clock facts, the framework authoring flow, the recovery taxonomy, and
-evidence levels. *Acceptance:* a reader follows the no-hardware path to a target
-package; device steps `blocked`; `deep-check --links` passes. **Layer: docs.**
+**P6-1 — Tutorial.** **done** — `docs/tutorial.md` is now the full 13-stage learner
+path: stages 1–9 (no hardware) give real commands + flags, the dual-core/FPU/clock
+facts, the framework authoring flow (`scaffold` → `patch.json`/`panel.json` →
+`<synth>_dsp_*`), and the evidence levels; stages 10–13 are concise + `blocked`/
+device-only (install gates, the recovery taxonomy → `platform-facts.md` §4). The
+`links` check (`_links.py`) verifies the canonical docs' Markdown links resolve
+(file paths, `#anchor`/URLs skipped); `deep-check --links` is wired. *Acceptance:* a
+reader follows the no-hardware path to a target package; device steps `blocked`;
+`deep-check --links` passes. **Layer: docs.**
 
-**P6-2 — Start guide.** Finalize `README.md`. *Acceptance:* a new reader names the
-toolkit, the firmware component, and the first command. **Layer: docs.**
+**P6-2 — Start guide.** **done** — `README.md` finalized (repo map corrected to
+`build/web/`); a new reader names the toolkit, the firmware component, and the
+first command. **Layer: docs.**
+
+**Exit P6:** **met** — a reader can reach a target package without hardware, with
+device steps clearly `blocked`; the docs' cross-references are machine-checked.
 
 ### Phase 7 — Release & provenance (P7, optional)
 
@@ -1707,9 +1716,9 @@ state kinds. All at P0-1. See `examples/pocket-drone/README.md` §5.
 2. **Commands** — one module per command, each `main(argv: list[str]) -> int`.
 3. **Services** — `evidence.py` (the Status/Layer vocabulary), `runner.py` (container
    exec), `generate.py` (the pure generator), the internal `_ir`/`_frontend`/
-   `_backend`/`_tables`/`_panel`/`_installer`/`_emu`/`_skill` helpers, and the
-   checks (`lint.c_checks`, `_skill.check`, `web.check_parity`) — inline in their
-   command modules, no separate `_checks/` package.
+   `_backend`/`_tables`/`_panel`/`_installer`/`_emu`/`_skill`/`_links` helpers, and
+   the checks (`lint.c_checks`, `_skill.check`, `_links.check`, `web.check_parity`)
+   — inline in their command modules, no separate `_checks/` package.
 
 **Package layout.**
 
@@ -1722,6 +1731,7 @@ umetate/
   _tables.py    _panel.py                 # the table/panel generators
   _installer.py _emu.py                   # the fm1_install loader; the fm1-emu paths
   _skill.py                               # the skill references/ generator + drift check (P5)
+  _links.py                               # the docs' cross-reference check (P6)
   quick_check.py setup.py build.py deep_check.py inspect.py
   flash.py debrick.py                       # device writes (host-side, §8)
   scaffold.py lib.py                        # the schematic engine
@@ -1817,7 +1827,8 @@ requested layers; each reports per the §5.5 vocabulary:
 - `skill` (source) — `_skill.check`: the two offline skills (development, safety)
   each have `SKILL.md` + generated `references/` in sync with the canonical docs
   (byte-for-byte; drift is a hard failure).
-- `links` (source) — the docs' cross-references resolve (no dead links); lands P6.
+- `links` (source) — `_links.check`: the docs' cross-references resolve (no dead
+  Markdown links; file paths, `#anchor`/URLs skipped).
 
 Flags: `--host` (host vectors + UI tests), `--safety` (lint), `--web` (wasm),
 `--skill`, `--links`, `--all`; `lint --c` runs the `lint` check standalone.
