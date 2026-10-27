@@ -4,7 +4,7 @@ description: Design, plan, build, and safely validate a custom M-VAVE FM-1 or SM
 version: 1.1.0
 license: GPL-3.0-only
 compatibility: OpenCode and Agent Skills-compatible loaders
-allowed-tools: read, grep, glob, edit, shell
+allowed-tools: read, grep, glob, edit, shell, websearch, webfetch
 ---
 
 # umetate synthesizer development
@@ -41,7 +41,8 @@ user-confirmed**:
    architecture, exact granular structure and interface of any custom code that
    needs to be written, DSP algorithms, and the verification ladder
    (`templates/project-plan.md`, `templates/feature-contract.md`,
-   `templates/supported-load-profile.md`, `templates/evidence-matrix.md`).
+   `templates/supported-load-profile.md`, `templates/evidence-matrix.md`,
+   `templates/dsp-algorithm.md`, `templates/code-structure.md`).
 
 These map **one-to-one** onto `patch.json`, `panel.json`, and the plan/evidence
 artifacts. Step 5 (authoring) is _mechanical translation_, not design. If the
@@ -105,6 +106,11 @@ of asking the user to repeat them.
 - **Tables** must name any wavetable/segments/spectrum/phase-map data (the
   `tables:` section → `const` XIP).
 
+Each node/macro's **DSP algorithm** (the exact math, formats, coefficients,
+state, and edge cases) is specified in `templates/dsp-algorithm.md` during
+planning (step 3) — which requires research, not recall. The design interview
+only fixes the *graph*; the algorithm spec pins the *how*.
+
 **Exit:** the brief + architecture + manifest are complete, internally consistent,
 and user-confirmed. Do not proceed to the GUI until the voice architecture is
 stable (it determines which parameters the GUI can expose).
@@ -145,9 +151,42 @@ Turn the two designs into one living plan:
   `.cpu1_bss` ≤ 16 KiB; `.dsp_text` ≤ 32 KiB; `.pool` ≤ 336 KiB; XIP code + const
   ≤ 568 KiB; stack 24 KiB CPU0 + 8 KiB CPU1.
 - `templates/evidence-matrix.md` — one row per layer, exact command/artifact.
+- `templates/dsp-algorithm.md` — the exact algorithm for each component (see
+  "DSP algorithm research" below).
+- `templates/code-structure.md` — the exact structure + interface of any custom
+  code: files, the `<synth>_dsp_*` seam (or `node.json` + `process(ctx, n)` for a
+  new node), data layout + section placement, and the host-test hook.
 
 Record file ownership: which files may change, and the forbidden ones (HAL
 registers, `platform.c` services, the loader, `uboot.boot`/`isd_config.ini`).
+
+### DSP algorithm research (specification *and* implementation)
+
+Before you write any DSP algorithm, research how it is best implemented. The
+user may supply references; online search may surface more. Start from the
+default reference points:
+
+| Source | URL |
+| --- | --- |
+| ymfm (MAME 3rdparty) | https://github.com/mamedev/mame/tree/master/3rdparty/ymfm |
+| SuperCollider DSP (UGens) | https://github.com/supercollider/supercollider |
+| Mutable Instruments (eurorack) | https://github.com/pichenettes/eurorack |
+| Synthesis Toolkit (STK) | https://github.com/thestk/stk |
+| maximilian | https://github.com/micknoise/Maximilian |
+| music dsp archives | https://www.musicdsp.org/en/latest/ |
+
+The in-repo study is `docs/dsp-study.md` (MI, SuperCollider, Pure Data, Dexed,
+Nuked, ymfm, SAPF).
+
+**Credit and licences.** Distinguish *consulting* a source (learn the technique —
+give credit in the algorithm spec) from *copying/deriving* its code (preserve the
+source's notice and record it in `LICENSING.md`). Check each source's licence at
+use: GPL-3.0 code folds into this GPL-3.0 project; MIT/BSD code requires its
+notice preserved; incompatible-licensed code is consulted, never copied.
+
+**Performance and memory safety are constraints throughout:** bounded loops, no
+allocation, no 64-bit division, no `double`, no per-sample dispatch in the hot
+loop; one writer per shared value or a snapshot protocol.
 
 **Exit:** the user confirms interfaces, milestone order, measurable limits, and
 the verification plan.

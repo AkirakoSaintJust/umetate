@@ -183,6 +183,10 @@ them into your project, replace the prompts):
   [`templates/supported-load-profile.md`](../templates/supported-load-profile.md)
   + [`templates/evidence-matrix.md`](../templates/evidence-matrix.md) — the plan,
   contracts, budget, and verification.
+- [`templates/dsp-algorithm.md`](../templates/dsp-algorithm.md) — the exact
+  algorithm per component (researched; credit + licence recorded).
+- [`templates/code-structure.md`](../templates/code-structure.md) — the exact
+  structure + interface of any custom code.
 
 The [development skill](../skills/umetate-development/SKILL.md) drives this
 interview and its consistency gate: every GUI binding must target a defined

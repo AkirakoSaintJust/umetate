@@ -203,6 +203,7 @@ umetate/
 ├─ templates/
 │  ├─ synth-brief.md  project-plan.md  feature-contract.md
 │  ├─ supported-load-profile.md  evidence-matrix.md  control-map.md
+│  ├─ dsp-algorithm.md  code-structure.md
 │  └─ scaffold/             # params.schema.json, node.schema.json, patch.schema.json, panel.schema.json
 ├─ docker/                  # component 4: Dockerfile, build.sh, compose, .env.example
 ├─ docs/
@@ -437,13 +438,17 @@ until three artifacts are complete, mutually consistent, and user-confirmed — 
 **synth design + voice architecture** (node/macro graph, parameter manifest,
 tables), the **GUI design + control flow** (context stack, pages, bindings,
 navigation, per-context control meaning), and the **implementation plan**
-(milestones, feature contracts, supported-load profile, evidence matrix). A
-consistency gate cross-checks them (every binding → a defined param, every control
-mapped or explicitly unmapped, the voice count × architecture within budget) before
-authoring begins; authoring is then mechanical translation into `patch.json` +
-`panel.json`. Workflow: orient → design interview → GUI interview → plan →
-consistency gate → author (nodes/macros/patches via `scaffold`) → first slice →
-shared DSP → panel/display → MIDI/persistence → verify (evidence matrix) →
+(milestones, feature contracts, supported-load profile, evidence matrix, the DSP
+algorithms, and the exact structure + interface of any custom code). The plan's
+DSP-algorithm step requires **online research** (default reference points: ymfm,
+SuperCollider UGens, Mutable Instruments, STK, maximilian, musicdsp; credit given
+and licences honoured), with performance and memory safety as standing constraints.
+A consistency gate cross-checks the artifacts (every binding → a defined param,
+every control mapped or explicitly unmapped, the voice count × architecture within
+budget) before authoring begins; authoring is then mechanical translation into
+`patch.json` + `panel.json`. Workflow: orient → design interview → GUI interview →
+plan → consistency gate → author (nodes/macros/patches via `scaffold`) → first
+slice → shared DSP → panel/display → MIDI/persistence → verify (evidence matrix) →
 handoff. Refuses device writes unless the user explicitly requests that action and
 §8 gates pass.
 
@@ -451,7 +456,8 @@ handoff. Refuses device writes unless the user explicitly requests that action a
 verified by `deep-check --skill`): AC79 facts, flash maps + protected ranges, the
 port-kit mapping patterns, the node/macro/patch schemas, the recovery taxonomy, the
 evidence vocabulary, the code conventions. The synth-project templates
-(`templates/*.md`) are referenced by repo path, not copied into the bundle.
+(`templates/*.md`, including `dsp-algorithm.md` + `code-structure.md`) are
+referenced by repo path, not copied into the bundle.
 
 ### 6.3 Skill: umetate-safety
 
