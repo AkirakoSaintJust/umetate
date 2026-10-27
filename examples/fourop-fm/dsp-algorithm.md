@@ -130,3 +130,48 @@ In-repo study: [`docs/dsp-study.md`](../docs/dsp-study.md).
 - **Performance note:** per-sample, but memoryless and a few branches — one
   `fm1_sin` call (one LUT read) plus the switch; no extra tables.
 
+---
+
+## Component: `mix4` + `route4` (the runtime-algorithm routing)
+
+- **Purpose:** make the 7 algorithms a *runtime* selection, not a compile-time
+  graph. `mix4` is the plain 4-input sum; `route4` is a matrix-row mixer that reads
+  a 4-weight row of the routing table and applies it.
+
+- **Algorithm** (fixed-point, exactly): all four operators compute in parallel, and
+  every modulation reads the **1-sample-delayed** output of its sources (so the
+  graph is a DAG regardless of the selected algorithm — the same 1-sample delay as
+  feedback, ~23 µs, inaudible). Each operator's phase modulation is
+  `mod_i = Σ_j routing[alg][i][j] · op_j_delayed`, and the carrier sum is
+  `Σ_i routing[alg][carrier][i] · op_i_delayed`. `mix4` is `in0+in1+in2+in3`;
+  `route4` is `fm1_route4(&routing[(alg·5+dest)·4], a, b, c, d)` = the four-input
+  weighted sum `a·w0 + b·w1 + c·w2 + d·w3`.
+
+- **Inputs / outputs:** `mix4`: `in0..in3` (audio) → `audio`. `route4`: `a b c d`
+  (audio) → `audio`.
+
+- **Parameters:** `route4`: `which` (table — the routing table), `algorithm`
+  (uint32, 0…6), `dest` (uint32, 0…4: 0–3 = modulation rows, 4 = carrier mask).
+
+- **Coefficients / precompute:** the routing table is the `tables:` entry
+  `{ "kind": "routing" }` → 7 algorithms × 5 rows × 4 weights (140 Q15 0/1). The
+  7 rows are ymfm's `s_algorithm_ops` {0,1,2,4,5,6,7} (alg 3 dropped as alg 2's
+  mirror), enumerated in `_tables.py::_ROUTING`.
+
+- **State:** none (memoryless).
+
+- **Edge cases:** weights are 0 or 32767, so a connected input is ×0.99997 (a
+  0.003% error, inaudible for routing); `algorithm` is masked in the `_ROUTING`
+  index (a bad value reads a valid row).
+
+- **Reference + credit:** routing structure from **ymfm** (`s_algorithm_ops` +
+  `output_4op`, BSD-3-Clause). **Deviation:** ymfm evaluates operators in order
+  with current-sample modulation; here all modulation uses the 1-sample-delayed
+  output, so the graph stays acyclic and the algorithm is a runtime matrix. The
+  matrix-as-data idea is umetate's own; the acyclicity trick mirrors feedback.
+
+- **Performance note:** `route4` = four `fm1_q15_mul` + one table row read per
+  sample (per destination); 5 `route4` instances per voice + the `mix4`-equivalent
+  carrier row. Memoryless, no branching.
+
+

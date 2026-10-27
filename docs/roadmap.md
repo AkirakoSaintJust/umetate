@@ -630,6 +630,8 @@ test + a budget annotation; shipped macros in `modules/macros/`, each =
 | `dx_env` | rate/level envelope | DX-style 4-rate/3-level exponential envelope (attack/decay1/decay2/sustain/release) — the fourop-fm operator envelope |
 | `vca` / `mul` | gain | audio×control (modulatable level) |
 | `mix` / `add` | summer | N audio ins → 1 out |
+| `mix4` | 4-input summer | the carrier sum / matrix sum |
+| `route4` | routing-matrix row | reads a 4-weight row of a `routing` table (by `algorithm` + `dest`) — the runtime-algorithm primitive |
 | `svf` / `one_pole` | filter | state-variable (LP/BP/HP) / one-pole; modulatable cutoff/res |
 | `wavefolder` | nonlinear | sine fold: input → sin(π·x) crossfaded by `amount` |
 | `lpg` | vactrol gate | one-pole + VCA, cutoff/gain coupled to a fast-attack/slow-decay envelope |

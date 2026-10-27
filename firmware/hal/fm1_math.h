@@ -110,6 +110,14 @@ FM1_MATH_INLINE int32_t fm1_sin_ws(uint32_t phase, uint32_t ws)
     }
 }
 
+/* 4-input weighted sum against a routing-matrix row (a `const int16_t *` of four
+   0/1 Q15 weights): out = a*w0 + b*w1 + c*w2 + d*w3. */
+FM1_MATH_INLINE int32_t fm1_route4(const int16_t *w, int32_t a, int32_t b, int32_t c, int32_t d)
+{
+    return fm1_q15_mul(a, w[0]) + fm1_q15_mul(b, w[1])
+         + fm1_q15_mul(c, w[2]) + fm1_q15_mul(d, w[3]);
+}
+
 /* fm1_exp2_q16[i] = 2^(-i/256) in Q16  (exponential decay: envelopes, note-to-inc).
  * fm1_log2_q16[i] = log2(1 + i/256) in Q16  (log-domain FM). Both indexed directly. */
 

@@ -1,0 +1,8 @@
+{
+  "name": "route4",
+  "summary": "Routing-matrix row mixer: reads a 4-weight row of a `routing` table (by `algorithm` + `dest`) and sums the four inputs weighted 0/1. The runtime-algorithm-selection primitive.",
+  "ins": { "a": "audio", "b": "audio", "c": "audio", "d": "audio" },
+  "outs": { "audio": "audio" },
+  "params": { "which": "table", "algorithm": "uint32", "dest": "uint32" },
+  "state": {}
+}

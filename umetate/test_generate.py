@@ -107,6 +107,38 @@ WAVEFORM: Patch = {
     "global": {"nodes": [], "wires": []},
 }
 
+# `route4` (routing-matrix row, alg 7 additive = all carriers) + `mix4` — exercises
+# the runtime-algorithm primitive and the 4-input sum.
+ROUTE4_TEST: Patch = {
+    "name": "route4_test",
+    "voices": 4,
+    "tables": {"routing": {"kind": "routing"}},
+    "voice": {
+        "nodes": [
+            {"id": "ph1", "type": "phasor"},
+            {"id": "ph2", "type": "phasor"},
+            {"id": "o1", "type": "osc"},
+            {"id": "o2", "type": "osc"},
+            {
+                "id": "rt",
+                "type": "route4",
+                "params": {"which": "routing", "algorithm": 7, "dest": 4},
+            },
+            {"id": "mx", "type": "mix4"},
+        ],
+        "wires": [
+            {"from": "ph1.phase", "to": "o1.phase"},
+            {"from": "ph2.phase", "to": "o2.phase"},
+            {"from": "o1.audio", "to": "rt.a"},
+            {"from": "o2.audio", "to": "rt.b"},
+            {"from": "rt.audio", "to": "mx.in0"},
+            {"from": "o1.audio", "to": "mx.in1"},
+        ],
+        "voice_out": "mx.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
 SVF_WF: Patch = {
     "name": "svf_wf",
     "voices": 4,
@@ -573,6 +605,13 @@ def main() -> int:
     )
     failures += 0 if ok else 1
 
+    ok, msg = _sound_tables(ROUTE4_TEST)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "route4 + mix4 render non-silent then silent")
+    )
+    failures += 0 if ok else 1
+
     ok, msg = _sound(SVF_WF)
     print(
         ("ok: " if ok else "FAIL: ")
@@ -657,6 +696,31 @@ def main() -> int:
             f"ok: spectrum table is an IFFT sine "
             f"(peak {sine.values[64]} at index 64, size {sine.size})"
         )
+
+    # the routing table is the 7-algorithm 4-op FM matrix (7 × 5 rows × 4 weights).
+    rt = build_tables({"routing": {"kind": "routing"}})[0]
+    ok = rt.size == 7 * 5 * 4 and all(v in (0, 32767) for v in rt.values)
+    # the 7 rows are indexed 0..6 (ymfm algs {0,1,2,4,5,6,7}).
+    alg0_carrier = rt.values[
+        0 * 20 + 4 * 4 : 0 * 20 + 4 * 4 + 4
+    ]  # stack → carrier [0,0,0,1]
+    alg7_carrier = rt.values[
+        6 * 20 + 4 * 4 : 6 * 20 + 4 * 4 + 4
+    ]  # additive → [1,1,1,1]
+    alg4_mod = rt.values[
+        3 * 20 + 1 * 4 : 3 * 20 + 1 * 4 + 4
+    ]  # two-pairs → op1 modulates op2
+    ok = (
+        ok
+        and alg0_carrier == [0, 0, 0, 32767]
+        and alg7_carrier == [32767, 32767, 32767, 32767]
+        and alg4_mod == [32767, 0, 0, 0]
+    )
+    if not ok:
+        print(f"FAIL: routing table is wrong (size {rt.size}, alg0={alg0_carrier})")
+        failures += 1
+    else:
+        print("ok: routing table is the 7-algorithm 4-op FM matrix (140 × 0/1)")
 
     bad: Patch = {
         "name": "bad",

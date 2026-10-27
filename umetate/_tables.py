@@ -15,8 +15,29 @@ from collections.abc import Mapping
 from ._ir import GenError, Table, to_c_identifier
 from ._schema import TableSpec
 
-_TABLE_KINDS = ("wavetable", "segments", "spectrum", "phase_map")
+_TABLE_KINDS = ("wavetable", "segments", "spectrum", "phase_map", "routing")
 _WAVE_SHAPES = ("sine", "triangle", "square", "saw")
+
+# The 7 distinct 4-op FM algorithms (ymfm `s_algorithm_ops`, algorithm 3 dropped as
+# algorithm 2's mirror). Each is (mod, carrier): mod[i][j] = 1 if operator j
+# phase-modulates operator i; carrier[i] = 1 if operator i is summed to the output.
+# Operators op0..op3 are ymfm's O1..O4.
+_ROUTING: list[tuple[list[list[int]], list[int]]] = [
+    # 0: O1 -> O2 -> O3 -> O4 -> out (O4)
+    ([[0, 0, 0, 0], [1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0]], [0, 0, 0, 1]),
+    # 1: (O1 + O2) -> O3 -> O4 -> out (O4)
+    ([[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 0, 0], [0, 0, 1, 0]], [0, 0, 0, 1]),
+    # 2: (O1 + (O2 -> O3)) -> O4 -> out (O4)
+    ([[0, 0, 0, 0], [0, 0, 0, 0], [0, 1, 0, 0], [1, 0, 1, 0]], [0, 0, 0, 1]),
+    # 4: (O1 -> O2) + (O3 -> O4) -> out (O2 + O4)
+    ([[0, 0, 0, 0], [1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 1, 0]], [0, 1, 0, 1]),
+    # 5: (O1 -> O2) + (O1 -> O3) + (O1 -> O4) -> out (O2 + O3 + O4)
+    ([[0, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0]], [0, 1, 1, 1]),
+    # 6: (O1 -> O2) + O3 + O4 -> out (O2 + O3 + O4)
+    ([[0, 0, 0, 0], [1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], [0, 1, 1, 1]),
+    # 7: O1 + O2 + O3 + O4 -> out (all four carriers)
+    ([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], [1, 1, 1, 1]),
+]
 
 
 def table_cname(name: str) -> str:
@@ -39,6 +60,8 @@ def _build_table(name: str, spec: TableSpec) -> Table:
         values = _phase_map(spec)
     elif kind == "spectrum":
         values = _spectrum(spec)
+    elif kind == "routing":
+        values = _routing()
     else:
         values = _segments(spec)
     if not values:
@@ -101,6 +124,18 @@ def _segments(spec: TableSpec) -> list[int]:
         t, level = point
         flat.append(t)
         flat.append(level)
+    return flat
+
+
+def _routing() -> list[int]:
+    """The 7-algorithm routing matrix: per algorithm, 4 modulation rows (dest 0..3)
+    + 1 carrier-mask row, each a 4-weight 0/1 vector (Q15 0 or 32767). Layout:
+    `routing[algorithm * 20 + dest * 4 + src]`."""
+    flat: list[int] = []
+    for mod, carrier in _ROUTING:
+        for dest in range(4):
+            flat.extend(32767 if w else 0 for w in mod[dest])
+        flat.extend(32767 if w else 0 for w in carrier)
     return flat
 
 

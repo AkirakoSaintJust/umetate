@@ -1,0 +1,8 @@
+{
+  "name": "mix4",
+  "summary": "4-input summer (the carrier sum / matrix sum).",
+  "ins": { "in0": "audio", "in1": "audio", "in2": "audio", "in3": "audio" },
+  "outs": { "audio": "audio" },
+  "params": {},
+  "state": {}
+}
