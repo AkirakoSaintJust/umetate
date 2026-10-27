@@ -627,6 +627,7 @@ test + a budget annotation; shipped macros in `modules/macros/`, each =
 | `osc` / `table` | wave reader | `osc` = sine (`fm1_sin`); `table` = wavetable reader (a `tables:` shape selected by a `which` param) |
 | `saw` | band-limited osc | 2nd-order polyBLEP saw; `inv_inc` = 2^32/inc (note-on reciprocal) |
 | `env` / `seg` | segment generator | gate event→control via breakpoint segments (data) |
+| `dx_env` | rate/level envelope | DX-style 4-rate/3-level exponential envelope (attack/decay1/decay2/sustain/release) — the fourop-fm operator envelope |
 | `vca` / `mul` | gain | audio×control (modulatable level) |
 | `mix` / `add` | summer | N audio ins → 1 out |
 | `svf` / `one_pole` | filter | state-variable (LP/BP/HP) / one-pole; modulatable cutoff/res |

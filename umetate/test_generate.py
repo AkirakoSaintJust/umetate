@@ -143,6 +143,40 @@ LPG_TEST: Patch = {
     "global": {"nodes": [], "wires": []},
 }
 
+# the `dx_env` rate/level envelope (attack/decay1/decay2/sustain/release) driving a
+# VCA — non-silent while gated, then release to silence.
+DX_ENV: Patch = {
+    "name": "dx_env_test",
+    "voices": 4,
+    "voice": {
+        "nodes": [
+            {"id": "ph", "type": "phasor"},
+            {"id": "osc", "type": "osc"},
+            {
+                "id": "eg",
+                "type": "dx_env",
+                "params": {
+                    "r1": 20000,
+                    "r2": 6000,
+                    "r3": 3000,
+                    "r4": 9000,
+                    "l1": 32767,
+                    "l2": 24576,
+                    "l3": 16384,
+                },
+            },
+            {"id": "vca", "type": "vca"},
+        ],
+        "wires": [
+            {"from": "ph.phase", "to": "osc.phase"},
+            {"from": "osc.audio", "to": "vca.audio"},
+            {"from": "eg.cv", "to": "vca.cv"},
+        ],
+        "voice_out": "vca.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
 # the `table` node reading a square wavetable + an IFFT spectrum, linked with
 # tables.c (the `table` node is what makes `tables:` shapes actually audible).
 TABLE_OSC: Patch = {
@@ -527,6 +561,13 @@ def main() -> int:
 
     ok, msg = _sound(LPG_TEST)
     print(("ok: " if ok else "FAIL: ") + (msg or "lpg renders non-silent then silent"))
+    failures += 0 if ok else 1
+
+    ok, msg = _sound(DX_ENV)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "dx_env rate/level envelope renders non-silent then silent")
+    )
     failures += 0 if ok else 1
 
     ok, msg = _sound_tables(TABLE_OSC)

@@ -1,0 +1,11 @@
+{
+  "name": "dx_env",
+  "summary": "DX-style rate/level envelope: 4 rates + 3 levels, exponential one-pole per stage (attack → decay1 → decay2 → sustain → release). Q15 gain out.",
+  "ins": { "gate": { "rate": "event", "default": "voice_gate[v]" } },
+  "outs": { "cv": "control" },
+  "params": {
+    "r1": "q16", "r2": "q16", "r3": "q16", "r4": "q16",
+    "l1": "q15", "l2": "q15", "l3": "q15"
+  },
+  "state": { "stage": "uint32", "level": "q15" }
+}
