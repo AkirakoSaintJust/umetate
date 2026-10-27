@@ -168,6 +168,31 @@ TABLE_OSC: dict[str, Any] = {
     "global": {"nodes": [], "wires": []},
 }
 
+# the `saw` node uses the note-on reciprocal (inv_inc = 2^32/inc) via an inline
+# macro that sets the note-derived `inc`.
+SAW_TEST: dict[str, Any] = {
+    "name": "saw_test",
+    "voices": 4,
+    "macros": {
+        "sawop": {
+            "ins": {"fm": "audio"},
+            "outs": {"audio": "audio"},
+            "params": {"ratio": {"target": "osc.inc", "note_derived": True}},
+            "nodes": [{"id": "osc", "type": "saw"}],
+            "wires": [
+                {"from": "fm", "to": "osc.fm"},
+                {"from": "osc.audio", "to": "audio"},
+            ],
+        }
+    },
+    "voice": {
+        "nodes": [{"id": "carrier", "type": "sawop", "params": {"ratio": 1}}],
+        "wires": [],
+        "voice_out": "carrier.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
 TABLE_DEMO: dict[str, Any] = {
     "name": "table_demo",
     "voices": 4,
@@ -404,6 +429,21 @@ def main() -> int:
         + (msg or "table node reads a wavetable + spectrum, non-silent then silent")
     )
     failures += 0 if ok else 1
+
+    ok, msg = _sound(SAW_TEST)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "band-limited saw renders non-silent then silent")
+    )
+    failures += 0 if ok else 1
+
+    # the saw's note-on reciprocal must be emitted in the generated dsp.c
+    src = generate(SAW_TEST)
+    if "0x100000000ull /" not in src:
+        print("FAIL: the note-on reciprocal (2^32/inc) was not emitted")
+        failures += 1
+    else:
+        print("ok: the note-on reciprocal (2^32/inc) is emitted")
 
     # a single-harmonic spectrum must generate a pure-sine wavetable (the IFFT)
     from ._tables import build_tables

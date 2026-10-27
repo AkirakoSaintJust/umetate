@@ -194,6 +194,7 @@ def _expand(
                 zone=zone,
                 spec=spec,
                 params=params,
+                note_derived=dict(spec.note_derived),
                 table=table,
             )
         )

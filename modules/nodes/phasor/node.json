@@ -4,5 +4,6 @@
   "ins": { "mod": "control", "fm": "audio" },
   "outs": { "phase": { "rate": "audio", "format": "phase" } },
   "params": {},
-  "state": { "inc": "q32", "phase": "phase" }
+  "state": { "inc": "q32", "phase": "phase" },
+  "note_derived": { "inc": "1" }
 }

@@ -1,0 +1,10 @@
+{
+  "name": "saw",
+  "summary": "Band-limited saw (2nd-order polyBLEP). `inc` note-derived; `inv_inc` = 2^32/inc (note-on reciprocal).",
+  "ins": { "mod": "control", "fm": "audio" },
+  "outs": { "audio": "audio" },
+  "params": {},
+  "state": { "inc": "q32", "inv_inc": "q32", "phase": "phase" },
+  "note_derived": { "inc": "1" },
+  "note_reciprocal": { "inv_inc": "inc" }
+}

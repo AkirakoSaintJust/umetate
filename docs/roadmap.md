@@ -610,6 +610,7 @@ test + a budget annotation; shipped macros in `modules/macros/`, each =
 | --- | --- | --- |
 | `phasor` | phase accumulator | pitch→phase ramp; reset/sync/mod; the shared phase source |
 | `osc` / `table` | wave reader | `osc` = sine (`fm1_sin`); `table` = wavetable reader (a `tables:` shape selected by a `which` param) |
+| `saw` | band-limited osc | 2nd-order polyBLEP saw; `inv_inc` = 2^32/inc (note-on reciprocal) |
 | `env` / `seg` | segment generator | gate event→control via breakpoint segments (data) |
 | `vca` / `mul` | gain | audio×control (modulatable level) |
 | `mix` / `add` | summer | N audio ins → 1 out |
@@ -632,7 +633,7 @@ planned half of each shipped node; the full follow-up, classified by the "one no
 
 | Item | Kind | Note |
 | --- | --- | --- |
-| `saw` / `pulse` (band-limited) | node | polyBLEP — needs a note-on reciprocal (`1/inc`) generator feature; research/design first |
+| `pulse` (band-limited) | node | the `saw` polyBLEP with a `width` param (two BLEPs, PWM) |
 | ring mod | — | already `vca` with an audio-rate CV |
 | high-pass | — | the `svf` high-pass output |
 | `comb` | — | `delayN` with feedback (already shipped); no macro needed |
@@ -643,10 +644,12 @@ planned half of each shipped node; the full follow-up, classified by the "one no
 | `granulator` (Xenakis) | node(s) | phase-granular (no audio buffer) + a separate stochastic/GENDYN node |
 
 `svf`, `wavefolder`, and `fm_op` shipped first (the "batch 1" build); `lpg`, the
-spectral oscillator, and the `table` reader followed (batch 2/3). Shipped macros
-live in `modules/macros/`; a patch's own `macros:` section shadows them. The two
-deferred generator features are a **note-on reciprocal** (for band-limited
-polyBLEP) and a **note-derived cutoff** (for `pitched_noise`'s tracking filter).
+spectral oscillator, the `table` reader, and the band-limited `saw` (with the
+**note-on reciprocal** feature: `note_reciprocal` in a node manifest, `field =
+2^32/source` at note-on) followed. Shipped macros live in `modules/macros/`; a
+patch's own `macros:` section shadows them. The one deferred generator feature is a
+**note-derived cutoff** (note → `svf` frequency) for `pitched_noise`'s tracking
+filter.
 
 Build order: `fm_op` + `svf` + `wavefolder` → `ifft` + `lpg` → `formant` + the
 cheap macros → `granulator` last (research-driven). Band-limited oscillators and

@@ -76,6 +76,10 @@ class NodeSpec:
     outs: dict[str, PortSpec] = field(default_factory=dict)
     params: dict[str, str] = field(default_factory=dict)  # param -> q-format
     state: dict[str, str] = field(default_factory=dict)  # state -> type (or "pool")
+    note_derived: dict[str, str] = field(default_factory=dict)  # default field -> ratio
+    reciprocals: dict[str, str] = field(
+        default_factory=dict
+    )  # field -> source (2^32/src at note-on)
     body: str = ""  # the per-sample template
 
 
@@ -259,8 +263,21 @@ def node_spec_from_manifest(manifest: dict[str, Any], body: str) -> NodeSpec:
     outs = {str(p): _parse_port(v) for p, v in dict(manifest.get("outs", {})).items()}
     params = {str(k): str(v) for k, v in dict(manifest.get("params", {})).items()}
     state = {str(k): str(v) for k, v in dict(manifest.get("state", {})).items()}
+    note_derived = {
+        str(k): str(v) for k, v in dict(manifest.get("note_derived", {})).items()
+    }
+    reciprocals = {
+        str(k): str(v) for k, v in dict(manifest.get("note_reciprocal", {})).items()
+    }
     return NodeSpec(
-        name=name, ins=ins, outs=outs, params=params, state=state, body=body
+        name=name,
+        ins=ins,
+        outs=outs,
+        params=params,
+        state=state,
+        note_derived=note_derived,
+        reciprocals=reciprocals,
+        body=body,
     )
 
 

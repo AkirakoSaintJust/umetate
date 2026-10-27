@@ -16,16 +16,18 @@
       "additionalProperties": { "enum": ["q12", "q15", "q16", "q32", "phase", "int16", "int32", "uint32", "table"] }
     },
     "state": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": ["name", "type"],
-        "additionalProperties": false,
-        "properties": {
-          "name": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
-          "type": { "enum": ["q12", "q15", "q16", "q32", "phase", "int16", "int32", "uint32"] }
-        }
-      }
+      "type": "object",
+      "additionalProperties": { "enum": ["q12", "q15", "q16", "q32", "phase", "int16", "int32", "uint32", "pool"] }
+    },
+    "note_derived": {
+      "type": "object",
+      "description": "default field -> frequency ratio; at note-on, field = note_to_inc(note) * ratio (a macro param overrides it).",
+      "additionalProperties": { "type": "string" }
+    },
+    "note_reciprocal": {
+      "type": "object",
+      "description": "field -> source state; at note-on, field = 2^32 / source (the note-derived increment's reciprocal, for polyBLEP).",
+      "additionalProperties": { "type": "string" }
     }
   },
   "$defs": {

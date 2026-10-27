@@ -358,10 +358,16 @@ def _seam(graph: CompiledGraph, by_id: dict[str, NodeInstance]) -> list[str]:
         "    voice_gate[pick] = 1;",
     ]
     for i in graph.instances:
-        if i.type == "phasor" and i.zone == "voice":
-            ratio = (i.note_derived or {}).get("inc", "1")
+        if i.zone != "voice" or not i.note_derived:
+            continue
+        for field, ratio in i.note_derived.items():
             lines.append(
-                f"    {i.state_ref('inc', 'pick')} = note_to_inc(note) * {ratio}u;"
+                f"    {i.state_ref(field, 'pick')} = note_to_inc(note) * {ratio}u;"
+            )
+        for field, src in i.spec.reciprocals.items():
+            lines.append(
+                f"    {i.state_ref(field, 'pick')} = "
+                f"(uint32_t)(0x100000000ull / {i.state_ref(src, 'pick')});"
             )
     lines.extend(
         [
