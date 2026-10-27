@@ -88,6 +88,28 @@ FM1_MATH_INLINE int32_t fm1_sin(uint32_t phase)
 
 FM1_MATH_INLINE int32_t fm1_cos(uint32_t phase) { return fm1_sin(phase + 0x40000000u); }
 
+/* 8 waveforms from one quarter-sine table + a 3-bit select (the OPL/OPZ bit trick,
+   dsp-study §2.7). `phase` is Q32 (full cycle); `ws` is 0..7:
+     0 sine, 1 half (mute the negative half), 2 rectified (|sin|),
+     3 half-rectified, 4 quarter (2x, positive half), 5 triangle (positive half),
+     6 square, 7 saw. */
+FM1_MATH_INLINE int32_t fm1_sin_ws(uint32_t phase, uint32_t ws)
+{
+    uint32_t q = phase >> 30;                        /* quadrant 0..3 */
+    uint32_t i = (phase >> 22) & 255u;               /* quarter index 0..255 */
+    int32_t a = fm1_sin_q15[q & 1u ? 255u - i : i];  /* |sin|, Q15 */
+    switch (ws & 7u) {
+        case 0u: return (q & 2u) ? -a : a;                       /* sine */
+        case 1u: return (q & 2u) ? 0 : a;                        /* half */
+        case 2u: return a;                                       /* rectified */
+        case 3u: return (q & 1u) ? 0 : a;                        /* half-rectified */
+        case 4u: return (q & 2u) ? 0 : fm1_sin(phase << 1);      /* quarter */
+        case 5u: return (q & 2u) ? 0 : ((q & 1u) ? -a : a);      /* triangle */
+        case 6u: return (q & 2u) ? -32767 : 32767;               /* square */
+        default: return (int32_t)(phase >> 16) - 32768;          /* saw */
+    }
+}
+
 /* fm1_exp2_q16[i] = 2^(-i/256) in Q16  (exponential decay: envelopes, note-to-inc).
  * fm1_log2_q16[i] = log2(1 + i/256) in Q16  (log-domain FM). Both indexed directly. */
 

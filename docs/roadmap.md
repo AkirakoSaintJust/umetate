@@ -624,7 +624,7 @@ test + a budget annotation; shipped macros in `modules/macros/`, each =
 | Node | Kind | Purpose |
 | --- | --- | --- |
 | `phasor` | phase accumulator | pitch→phase ramp; reset/sync/mod; the shared phase source |
-| `osc` / `table` | wave reader | `osc` = sine (`fm1_sin`); `table` = wavetable reader (a `tables:` shape selected by a `which` param) |
+| `osc` / `table` | wave reader | `osc` = the 8 FM-chip waveforms (`fm1_sin_ws`, a `waveform` param); `table` = wavetable reader (a `tables:` shape selected by a `which` param) |
 | `saw` | band-limited osc | 2nd-order polyBLEP saw; `inv_inc` = 2^32/inc (note-on reciprocal) |
 | `env` / `seg` | segment generator | gate event→control via breakpoint segments (data) |
 | `dx_env` | rate/level envelope | DX-style 4-rate/3-level exponential envelope (attack/decay1/decay2/sustain/release) — the fourop-fm operator envelope |

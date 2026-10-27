@@ -83,3 +83,50 @@ In-repo study: [`docs/dsp-study.md`](../docs/dsp-study.md).
 
 - **Performance note:** control rate (no audio ports), one `fm1_madd_sat` + one
   compare per tick; runs in the control prologue, not the sample loop.
+
+---
+
+## Component: `osc.waveform` (the 8-waveform bit trick)
+
+- **Purpose:** give each operator one of 8 waveforms, from a single quarter-sine
+  table + a 3-bit select — the OPL/OPZ "bit trick" (`docs/dsp-study.md` §2.7).
+  Waveform 0 is the plain sine, so the `osc` node stays backward-compatible.
+
+- **Algorithm** (fixed-point, exactly): `phase` is Q32 (full cycle). Extract the
+  quadrant `q = phase>>30` and quarter index `i = (phase>>22)&255`; the quarter-sine
+  table gives `a = fm1_sin_q15[q&1 ? 255−i : i]` (the |sin|). The 3-bit `ws`
+  selects:
+
+  | ws | name | formula |
+  | --- | --- | --- |
+  | 0 | sine | `(q&2) ? −a : a` |
+  | 1 | half | `(q&2) ? 0 : a` (mute the negative half) |
+  | 2 | rectified | `a` (\|sin\|) |
+  | 3 | half-rectified | `(q&1) ? 0 : a` |
+  | 4 | quarter | `(q&2) ? 0 : fm1_sin(phase<<1)` (2×, positive half) |
+  | 5 | triangle | `(q&2) ? 0 : ((q&1) ? −a : a)` |
+  | 6 | square | `(q&2) ? −32767 : 32767` |
+  | 7 | saw | `(phase>>16) − 32768` |
+
+- **Inputs / outputs:** `phase` (audio, Q32 `phase`), `audio` (audio, Q15).
+
+- **Parameters:** `waveform` (uint32, 0…7, default 0).
+
+- **Coefficients / precompute:** none — the quarter-sine table is the existing
+  `fm1_sin_q15`; the select is a handful of bit ops and one switch, inlined via
+  `fm1_sin_ws` in `hal/fm1_math.h`.
+
+- **State:** none (memoryless).
+
+- **Edge cases:** `ws` is masked `&7` (a bad value degrades to the sine/saw cases);
+  `phase<<1` wraps naturally in Q32.
+
+- **Reference + credit:** the bit-trick concept from `docs/dsp-study.md` §2.7 (which
+  notes the OPZ's 8 differ from the OPL's 8); the exact identity of each waveform
+  from **ymfm**'s OPL table (`opl_registers_base::opl_registers_base`,
+  BSD-3-Clause). The OPZ's exact 8 are a documented follow-up (they share the same
+  mechanism, different mask table). *Re-implemented from the scheme, not copied.*
+
+- **Performance note:** per-sample, but memoryless and a few branches — one
+  `fm1_sin` call (one LUT read) plus the switch; no extra tables.
+

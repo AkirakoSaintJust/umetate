@@ -86,6 +86,27 @@ SINE_ENV: Patch = {
     "global": {"nodes": [], "wires": []},
 }
 
+# `osc` with a non-sine waveform (6 = square) — exercises the fm1_sin_ws bit trick.
+WAVEFORM: Patch = {
+    "name": "waveform_test",
+    "voices": 4,
+    "voice": {
+        "nodes": [
+            {"id": "ph", "type": "phasor"},
+            {"id": "osc", "type": "osc", "params": {"waveform": 6}},
+            {"id": "env", "type": "env"},
+            {"id": "vca", "type": "vca"},
+        ],
+        "wires": [
+            {"from": "ph.phase", "to": "osc.phase"},
+            {"from": "osc.audio", "to": "vca.audio"},
+            {"from": "env.cv", "to": "vca.cv"},
+        ],
+        "voice_out": "vca.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
 SVF_WF: Patch = {
     "name": "svf_wf",
     "voices": 4,
@@ -545,6 +566,13 @@ def main() -> int:
     )
     failures += 0 if ok else 1
 
+    ok, msg = _sound(WAVEFORM)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "osc waveform (square) renders non-silent then silent")
+    )
+    failures += 0 if ok else 1
+
     ok, msg = _sound(SVF_WF)
     print(
         ("ok: " if ok else "FAIL: ")
@@ -675,8 +703,11 @@ def main() -> int:
     params = generate_params(POCKET_DRONE)["params"]
     by_name = {p["name"]: p for p in params}
     lp = by_name.get("lp.cutoff")
-    if lp is None or lp["id"] != 4:
-        print("FAIL: params.json does not map lp.cutoff to id 4")
+    # id 6: each `osc` now contributes a `waveform` param (carrier.osc.waveform,
+    # carrier.env.attack/release, mod.osc.waveform, mod.env.attack/release, then
+    # lp.cutoff).
+    if lp is None or lp["id"] != 6:
+        print("FAIL: params.json does not map lp.cutoff to id 6")
         failures += 1
     else:
         print(f"ok: params.json maps lp.cutoff -> id {lp['id']}")

@@ -1,8 +1,8 @@
 {
   "name": "osc",
-  "summary": "Sine wave reader via the pi32v2 ROM/hardware transcendental (fm1_sin).",
+  "summary": "Wave reader: the 8 FM-chip waveforms (sine/rectified/half/square/saw/triangle) via fm1_sin_ws, selected by a `waveform` param (0 = sine).",
   "ins": { "phase": { "rate": "audio", "format": "phase" } },
   "outs": { "audio": "audio" },
-  "params": {},
+  "params": { "waveform": "uint32" },
   "state": {}
 }
