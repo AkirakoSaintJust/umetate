@@ -101,6 +101,20 @@ def _scaffold_builds() -> None:
         assert (Path(tmp) / "panel.json").exists()
 
 
+def _lint_catches_violation() -> None:
+    from . import lint
+
+    violation = lint._FW / "src" / "_viol.c"
+    violation.write_text(
+        "void f(void){ int b[MAXP]; b[MAXP] = 1; }\n", encoding="utf-8"
+    )
+    try:
+        rc = lint.main(["--c"])
+    finally:
+        violation.unlink(missing_ok=True)
+    assert rc == 1, "a MAXP-bounds violation must fail lint --c"
+
+
 def main() -> int:
     tests: _Tests = [
         ("no import side effects", _no_import_side_effects),
@@ -111,6 +125,7 @@ def main() -> int:
         ("a stub reports its phase", _stub_reports_phase),
         ("lib list shows nodes + templates", _lib_lists),
         ("scaffold patch builds", _scaffold_builds),
+        ("lint --c catches a MAXP violation", _lint_catches_violation),
     ]
     failures = 0
     for name, test in tests:
