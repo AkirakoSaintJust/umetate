@@ -2,7 +2,7 @@
 # toolchain. The JieLi toolchain + AC79 SDK are NOT in this image; they live in the
 # `umetate-target` Docker volume at /opt/jieli (populated by `umetate setup`).
 
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 
