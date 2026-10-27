@@ -83,6 +83,7 @@
 | pitch_depth | plfo.depth | 0 | 32767 | linear | |
 | op1_level … op4_level | opN.vca.level | 0 | 32767 | linear | |
 | op1_waveform … op4_waveform | opN.osc.waveform | 0 | 11 | linear | |
+| op1_ratio … op4_ratio | opN.ph.inc_ratio | 32768 | 1048576 | linear | × |
 | op1_trem_rate … op4_trem_rate | opN.lfo.rate | 0 | 20000000 | log | |
 | op1_trem_depth … op4_trem_depth | opN.lfo.depth | 0 | 32767 | linear | |
 
@@ -90,7 +91,8 @@
 self-modulation depth. `rate` is a Q32 phase increment per sample —
 `f · 2³² / 44100`, so ~97392 = 1 Hz. `depth` is `depth/32768` in the use's units:
 octaves of vibrato for `pitch_depth` (273 ≈ ±10 cents), fraction of full amplitude
-for `trem_depth` (~16000 ≈ ±50%). All block rate.)
+for `trem_depth` (~16000 ≈ ±50%). `ratio` is the q16 frequency multiplier —
+`ratio/65536` = the multiplier (65536 = 1.0, 32768 = 0.5). All block rate.)
 
 ### 2.3 Tables
 

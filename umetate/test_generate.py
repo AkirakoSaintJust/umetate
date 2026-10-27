@@ -48,8 +48,8 @@ POCKET_DRONE: Patch = {
     },
     "voice": {
         "nodes": [
-            {"id": "carrier", "type": "op", "params": {"ratio": 1}},
-            {"id": "mod", "type": "op", "params": {"ratio": 2}},
+            {"id": "carrier", "type": "op", "params": {"ratio": 65536}},
+            {"id": "mod", "type": "op", "params": {"ratio": 131072}},
             {"id": "d1", "type": "delay1"},
         ],
         "wires": [
@@ -186,8 +186,8 @@ FM_OP: Patch = {
     "voices": 4,
     "voice": {
         "nodes": [
-            {"id": "carrier", "type": "fm_op", "params": {"ratio": 1}},
-            {"id": "mod", "type": "fm_op", "params": {"ratio": 2}},
+            {"id": "carrier", "type": "fm_op", "params": {"ratio": 65536}},
+            {"id": "mod", "type": "fm_op", "params": {"ratio": 131072}},
         ],
         "wires": [{"from": "mod.audio", "to": "carrier.fm"}],
         "voice_out": "carrier.audio",
@@ -291,7 +291,7 @@ SAW_TEST: Patch = {
         }
     },
     "voice": {
-        "nodes": [{"id": "carrier", "type": "sawop", "params": {"ratio": 1}}],
+        "nodes": [{"id": "carrier", "type": "sawop", "params": {"ratio": 65536}}],
         "wires": [],
         "voice_out": "carrier.audio",
     },

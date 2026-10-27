@@ -82,7 +82,7 @@ class NodeSpec:
     )  # state -> type (or "pool")
     note_derived: dict[str, str] = field(
         default_factory=lambda: {}
-    )  # default field -> ratio
+    )  # field -> ratio param name (q16, note_on multiplies it into the inc)
     note_cutoff: dict[str, str] = field(
         default_factory=lambda: {}
     )  # default field -> ratio (2*sin filter coeff)
@@ -104,7 +104,7 @@ class NodeInstance:
     in_expr: dict[str, str] = field(default_factory=lambda: {}, repr=False)
     note_derived: dict[str, str] = field(
         default_factory=lambda: {}, repr=False
-    )  # state -> macro ratio (note-on)
+    )  # state -> ratio param name (q16, note-on)
     consumed: set[str] = field(
         default_factory=lambda: set(), repr=False
     )  # output ports wired down-stream

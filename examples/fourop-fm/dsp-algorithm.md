@@ -211,7 +211,8 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   out    = sine · eg_t · level                     (Q15)
   feedback_prev = (out · feedback) delayed 1 sample
   ```
-  `inc = note_to_inc(note) · ratio` (note-derived, so non-integer ratios stay in
+  `inc = note_to_inc(note) · ratio >> 16` (a q16 frequency multiplier, runtime —
+  `ratio` 65536 = 1.0, 131072 = 2.0, 32768 = 0.5, so non-integer ratios stay in
   tune). Feedback taps the *enveloped, leveled* output (matching ymfm, which feeds
   back `compute_volume` = sine × envelope). Tremolo multiplies the envelope
   (`eg · (1 + lfo)`) so it is gated — no bleed during release. Pitch *scales the
@@ -223,13 +224,14 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   shared vibrato LFO) → `audio` (audio).
 
 - **Parameters** (mapped inward):
-  `ratio` (note-derived), `waveform` (uint32 0–11), `level` (q15, the FM index /
-  output amplitude), `feedback` (q15, self-modulation), `trem_rate` (q32, the
-  per-op LFO increment), `trem_depth` (q15, the tremolo depth), and the `dx_env`
-  params `r1..r4, l1..l3`.
+  `ratio` (q16, the frequency multiplier — runtime), `waveform` (uint32 0–11),
+  `level` (q15, the FM index / output amplitude), `feedback` (q15,
+  self-modulation), `trem_rate` (q32, the per-op LFO increment), `trem_depth` (q15,
+  the tremolo depth), and the `dx_env` params `r1..r4, l1..l3`.
 
-- **Coefficients / precompute:** none; `inc` is note-derived at note-on, the
-  feedback is a `delay1` register, the LFO is a control-rate phase accumulator.
+- **Coefficients / precompute:** none; `inc` is note-derived at note-on (from the
+  runtime `ratio`), the feedback is a `delay1` register, the LFO is a control-rate
+  phase accumulator.
 
 - **State:** per-op `phase` (q32), `stage`/`level` (the dx_env), `lfo_phase` (the
   tremolo), `prev` (delay1).

@@ -1,5 +1,5 @@
 {
-  "summary": "The complete DX-style FM operator: phasor + osc(8 waveforms) + dx_env(rate/level) + vca(level), with 1-sample self-feedback, a note-derived `ratio`, a per-op amplitude LFO (tremolo), and a `pitch` input (the shared vibrato LFO).",
+  "summary": "The complete DX-style FM operator: phasor + osc(12 waveforms) + dx_env(rate/level) + vca(level), with 1-sample self-feedback, a q16 `ratio` frequency multiplier (runtime), a per-op amplitude LFO (tremolo), and a `pitch` input (the shared vibrato LFO).",
   "ins": { "fm": "audio", "pitch": "control" },
   "outs": { "audio": "audio" },
   "params": {

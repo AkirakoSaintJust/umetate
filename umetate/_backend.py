@@ -362,7 +362,9 @@ def _seam(graph: CompiledGraph, by_id: dict[str, NodeInstance]) -> list[str]:
             continue
         for field, ratio in i.note_derived.items():
             lines.append(
-                f"    {i.state_ref(field, 'pick')} = note_to_inc(note) * {ratio}u;"
+                f"    {i.state_ref(field, 'pick')} = "
+                f"(uint32_t)(((uint64_t)note_to_inc(note) * "
+                f"(uint32_t){i.param_expr(ratio)}) >> 16);"
             )
         for field, ratio in i.note_cutoff.items():
             lines.append(

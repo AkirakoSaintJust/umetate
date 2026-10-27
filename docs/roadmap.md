@@ -727,9 +727,9 @@ the operator. The **envelope graph** is a new `envelope` widget that draws the D
 rate/level curve as **straight line segments** (an approximation — no curve fitting)
 and deliberately has **no "now-playing" stage cursor**: tracking live envelope state
 from CPU1 is CPU-heavy and unsafe for the audio core. `ratio` is the operator's
-**frequency multiplier** (`inc = note_to_inc(note) × ratio`), not a raw increment;
-exposing it on the panel requires making note-derived params runtime-editable (a
-generator follow-up).
+**frequency multiplier** — a q16 runtime param (`inc = note_to_inc(note) · ratio
+>> 16`, so 65536 = 1.0), not a raw increment; note-derived ratios are now
+runtime-editable.
 
 ---
 
@@ -1484,7 +1484,7 @@ class NodeSpec:                                        # the compiled node.json 
     name: str
     ins: dict[str, PortSpec]; outs: dict[str, PortSpec]
     params: dict[str, str]; state: dict[str, str]      # name -> q-format / pool
-    note_derived: dict[str, str]                       # field -> ratio (note_to_inc·r at note-on)
+    note_derived: dict[str, str]                       # field -> ratio param name (q16, note_on·r)
     note_cutoff: dict[str, str]                        # field -> ratio (2·sin(π·inc·r/2^32))
     reciprocals: dict[str, str]                        # field -> source (2^32/src at note-on)
     body: str                                          # the node.c per-sample template
@@ -1494,7 +1494,7 @@ class NodeInstance:
     id: str; type: str; zone: str                      # zone: "voice" | "global"
     spec: NodeSpec; params: dict[str, str]
     in_expr: dict[str, str]                            # input port -> C expr (resolved)
-    note_derived: dict[str, str]                       # state -> macro ratio (note-on)
+    note_derived: dict[str, str]                       # state -> ratio param name (q16, note-on)
 
 @dataclass
 class CompiledGraph:                                   # frontend -> backend
@@ -1539,13 +1539,14 @@ class CompiledGraph:                                   # frontend -> backend
    UMETATE_POOL` ring buffer.
 
 6. **Voice-allocator synthesis.** The voice zone's reserved **allocator inputs** —
-   `note` (a MIDI note → `inc = note_to_inc(note) × ratio`, stored in each phasor's
-   `inc` state), `gate` (event → the `env` nodes), `velocity` (control → the `vca`
-   levels) — drive the allocator. These are **bindings, not graph edges** (the
-   note→inc uses a table at note-on). Emit `note_on`: pick a free/stealable voice,
-   set each phasor's `inc`, set `velocity`, trigger `gate`. Emit `note_off` (clear
-   `gate`), `all_notes_off`, `quiet`, `lit`, `set_bend_q16` (the shared slot), and
-   the `set_param`/`get_param` shared-array accessors.
+   `note` (a MIDI note → `inc = (note_to_inc(note) · ratio) >> 16`, the q16 `ratio`
+   a runtime param stored in each phasor's `inc` state), `gate` (event → the `env`
+   nodes), `velocity` (control → the `vca` levels) — drive the allocator. These are
+   **bindings, not graph edges** (the note→inc uses a table at note-on). Emit
+   `note_on`: pick a free/stealable voice, set each phasor's `inc`, set `velocity`,
+   trigger `gate`. Emit `note_off` (clear `gate`), `all_notes_off`, `quiet`, `lit`,
+   `set_bend_q16` (the shared slot), and the `set_param`/`get_param` shared-array
+   accessors.
 
 7. **Code emission** — the fused `render` (inlines each node's `node.c` body with
    placeholders substituted — flat, monomorphic, no per-sample dispatch):

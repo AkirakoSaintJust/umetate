@@ -240,7 +240,17 @@ def _expand(
             raise GenError(f"macro param {pname!r} targets unknown node {inner_id!r}")
         value = instance_params.get(pname)
         if note_kind == "inc":
-            inst.note_derived[field] = value if value is not None else "1"
+            # a note-derived ratio: map to the target node's ratio *param* (q16),
+            # which note_on multiplies into the increment. The node declares it in
+            # `note_derived` as `field -> param-name`.
+            ratio_param = inst.spec.note_derived.get(field)
+            if ratio_param is None:
+                raise GenError(
+                    f"macro param {pname!r} targets {inner_id}.{field}, which is "
+                    f"not a note-derived ratio"
+                )
+            if value is not None:
+                inst.params[ratio_param] = value
         elif note_kind == "cutoff":
             inst.note_cutoff[field] = value if value is not None else "1"
         elif value is not None:
