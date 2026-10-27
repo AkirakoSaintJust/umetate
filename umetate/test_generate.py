@@ -11,6 +11,7 @@ Run: python3 -m umetate.test_generate
 
 from __future__ import annotations
 
+import json
 import math
 import subprocess
 import sys
@@ -18,7 +19,8 @@ import tempfile
 from pathlib import Path
 
 from ._ir import GenError
-from ._schema import Patch
+from ._panel import generate_panel
+from ._schema import Patch, as_panel, as_patch
 from .generate import generate, generate_params, generate_tables, param_ids
 
 POCKET_DRONE: Patch = {
@@ -360,6 +362,36 @@ int main(void) {
 }
 """
 
+# A patch with a post-voice IIR stage (e.g. a global filter) rings down and settles
+# into a sub-LSB limit cycle after note-off, so it never reaches *exactly* zero. This
+# contract verifies the operators gate: non-silent while held, then the tail decays
+# to below -60 dBFS after a full release window.
+DECAY_HARNESS = """\
+#include <stdio.h>
+#include <stdint.h>
+void __NAME___dsp_reset(void);
+void __NAME___dsp_note_on(uint32_t note, uint32_t velocity);
+void __NAME___dsp_render(int32_t *out, uint32_t frames);
+void __NAME___dsp_all_notes_off(void);
+static int32_t out[4096];
+int main(void) {
+    __NAME___dsp_reset();
+    __NAME___dsp_note_on(69, 100);
+    __NAME___dsp_render(out, 512);
+    int64_t e = 0; for (int i = 0; i < 1024; i++) e += (int64_t)out[i] * out[i];
+    if (e < 1000000) { printf("FAIL: silent\\n"); return 1; }
+    __NAME___dsp_all_notes_off();
+    __NAME___dsp_render(out, 2048);
+    int64_t t = 0; for (int i = 3072; i < 4096; i++) t += (int64_t)out[i] * out[i];
+    if (t > 1000000) {
+        printf("FAIL: did not decay after off (tail=%lld)\\n", (long long)t);
+        return 1;
+    }
+    printf("ok: __NAME__ renders non-silent then decays to near-silence\\n");
+    return 0;
+}
+"""
+
 DUMP_HARNESS = """\
 #include <stdio.h>
 #include <stdint.h>
@@ -441,6 +473,41 @@ def _sound_tables(patch: Patch) -> tuple[bool, str]:
         (d / "tables.c").write_text(impl)
         cname = patch["name"].replace("-", "_").replace(".", "_")
         (d / "harness.c").write_text(SOUND_HARNESS.replace("__NAME__", cname))
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-I",
+                str(d),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                str(d / "tables.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            return False, "compile failed:\n" + proc.stderr
+        run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+        return run.returncode == 0, run.stdout.strip()
+
+
+def _sound_decay_tables(patch: Patch) -> tuple[bool, str]:
+    """Generate + compile (with tables.c) + run the decay contract (for a patch
+    with a post-voice IIR stage whose tail never reaches exact zero)."""
+    src = generate(patch)
+    hdr, impl = generate_tables(patch)
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        (d / "tables.h").write_text(hdr)
+        (d / "tables.c").write_text(impl)
+        cname = patch["name"].replace("-", "_").replace(".", "_")
+        (d / "harness.c").write_text(DECAY_HARNESS.replace("__NAME__", cname))
         proc = subprocess.run(
             [
                 "cc",
@@ -611,6 +678,43 @@ def main() -> int:
         + (msg or "route4 + mix4 render non-silent then silent")
     )
     failures += 0 if ok else 1
+
+    # the dogfood patch itself (examples/fourop-fm/patch.json) renders.
+    ffm = as_patch(
+        json.loads(
+            (
+                Path(__file__).resolve().parents[1]
+                / "examples"
+                / "fourop-fm"
+                / "patch.json"
+            ).read_text(encoding="utf-8")
+        )
+    )
+    ok, msg = _sound_decay_tables(ffm)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "fourop-fm (4-op FM) renders non-silent then decays to near-silence")
+    )
+    failures += 0 if ok else 1
+
+    # the dogfood panel (examples/fourop-fm/panel.json) resolves against the patch's
+    # params (every widget/binding names a real set_param id).
+    ffm_panel = as_panel(
+        json.loads(
+            (
+                Path(__file__).resolve().parents[1]
+                / "examples"
+                / "fourop-fm"
+                / "panel.json"
+            ).read_text(encoding="utf-8")
+        )
+    )
+    try:
+        generate_panel(ffm_panel, param_ids(ffm))
+        print("ok: fourop-fm panel.json resolves against the patch params")
+    except GenError as exc:
+        print(f"FAIL: fourop-fm panel.json does not resolve ({exc})")
+        failures += 1
 
     ok, msg = _sound(SVF_WF)
     print(

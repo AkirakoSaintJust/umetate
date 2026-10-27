@@ -22,7 +22,7 @@
       "required": ["kind"],
       "additionalProperties": false,
       "properties": {
-        "kind": { "enum": ["wavetable", "segments", "spectrum", "phase_map"] },
+        "kind": { "enum": ["wavetable", "segments", "spectrum", "phase_map", "routing"] },
         "shape": { "enum": ["sine", "triangle", "square", "saw"], "description": "wavetable only" },
         "size": { "type": "integer", "minimum": 1, "maximum": 65536 },
         "harmonics": { "type": "array", "items": { "type": "integer" }, "description": "spectrum only" },

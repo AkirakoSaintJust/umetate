@@ -1,0 +1,67 @@
+{
+  "name": "fourop-fm",
+  "home": "home",
+  "global": [
+    { "source": "KEY", "action": "note_on" },
+    { "source": "BTN_EDIT", "action": "push", "arg": "op" },
+    { "source": "BTN_HOME", "action": "pop_home" }
+  ],
+  "contexts": {
+    "home": {
+      "pages": [
+        {
+          "id": "home",
+          "widgets": [
+            { "type": "label", "row": 1, "span": 2, "text": "4OP FM" },
+            { "type": "param_row", "row": 3, "param": "algorithm", "text": "ALG" },
+            { "type": "param_row", "row": 4, "param": "cutoff", "text": "CUT" },
+            { "type": "param_row", "row": 5, "param": "res", "text": "RES" },
+            { "type": "param_row", "row": 6, "param": "fold", "text": "FOLD" },
+            { "type": "param_row", "row": 7, "param": "master", "text": "MAST" },
+            { "type": "param_row", "row": 8, "param": "feedback", "text": "FB" },
+            { "type": "param_row", "row": 9, "param": "attack", "text": "ATK" },
+            { "type": "param_row", "row": 10, "param": "release", "text": "REL" }
+          ]
+        }
+      ],
+      "bindings": [
+        { "source": "ENC_KNOB1", "target": "algorithm", "behavior": "relative" },
+        { "source": "ENC_KNOB2", "target": "cutoff", "behavior": "relative" },
+        { "source": "ENC_KNOB3", "target": "res", "behavior": "relative" },
+        { "source": "ENC_KNOB4", "target": "fold", "behavior": "relative" },
+        { "source": "ENC_KNOB5", "target": "master", "behavior": "relative" },
+        { "source": "ENC_KNOB6", "target": "feedback", "behavior": "relative" },
+        { "source": "ENC_KNOB7", "target": "attack", "behavior": "relative" },
+        { "source": "ENC_SELECT", "target": "release", "behavior": "relative" }
+      ]
+    },
+    "op": {
+      "pages": [
+        {
+          "id": "op",
+          "widgets": [
+            { "type": "label", "row": 1, "span": 2, "text": "OPERATORS" },
+            { "type": "param_row", "row": 3, "param": "op1_level", "text": "OP1 LVL" },
+            { "type": "param_row", "row": 4, "param": "op1_waveform", "text": "OP1 WAV" },
+            { "type": "param_row", "row": 5, "param": "op2_level", "text": "OP2 LVL" },
+            { "type": "param_row", "row": 6, "param": "op2_waveform", "text": "OP2 WAV" },
+            { "type": "param_row", "row": 7, "param": "op3_level", "text": "OP3 LVL" },
+            { "type": "param_row", "row": 8, "param": "op3_waveform", "text": "OP3 WAV" },
+            { "type": "param_row", "row": 9, "param": "op4_level", "text": "OP4 LVL" },
+            { "type": "param_row", "row": 10, "param": "op4_waveform", "text": "OP4 WAV" }
+          ]
+        }
+      ],
+      "bindings": [
+        { "source": "ENC_KNOB1", "target": "op1_level", "behavior": "relative" },
+        { "source": "ENC_KNOB2", "target": "op1_waveform", "behavior": "relative" },
+        { "source": "ENC_KNOB3", "target": "op2_level", "behavior": "relative" },
+        { "source": "ENC_KNOB4", "target": "op2_waveform", "behavior": "relative" },
+        { "source": "ENC_KNOB5", "target": "op3_level", "behavior": "relative" },
+        { "source": "ENC_KNOB6", "target": "op3_waveform", "behavior": "relative" },
+        { "source": "ENC_KNOB7", "target": "op4_level", "behavior": "relative" },
+        { "source": "ENC_SELECT", "target": "op4_waveform", "behavior": "relative" }
+      ]
+    }
+  }
+}

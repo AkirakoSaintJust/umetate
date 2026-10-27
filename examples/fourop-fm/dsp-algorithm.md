@@ -132,11 +132,13 @@ In-repo study: [`docs/dsp-study.md`](../docs/dsp-study.md).
 
 ---
 
-## Component: `mix4` + `route4` (the runtime-algorithm routing)
+## Component: `mix4` + `route4` + `route` (the runtime-algorithm routing)
 
 - **Purpose:** make the 7 algorithms a *runtime* selection, not a compile-time
-  graph. `mix4` is the plain 4-input sum; `route4` is a matrix-row mixer that reads
-  a 4-weight row of the routing table and applies it.
+  graph. `mix4` is the plain 4-input sum; `route4` is the general matrix-row mixer
+  that reads a 4-weight row of the routing table and applies it; `route` is the
+  ergonomic 4-op router the patch actually uses — one `algorithm` param, all five
+  rows (4 modulation + the carrier sum) computed at once.
 
 - **Algorithm** (fixed-point, exactly): all four operators compute in parallel, and
   every modulation reads the **1-sample-delayed** output of its sources (so the
@@ -148,10 +150,13 @@ In-repo study: [`docs/dsp-study.md`](../docs/dsp-study.md).
   weighted sum `a·w0 + b·w1 + c·w2 + d·w3`.
 
 - **Inputs / outputs:** `mix4`: `in0..in3` (audio) → `audio`. `route4`: `a b c d`
-  (audio) → `audio`.
+  (audio) → `audio`. `route`: `a b c d` (audio, the four delayed operator outputs)
+  → `mod2 mod3 mod4 car` (audio — modulation into op2/op3/op4 and the carrier sum).
 
 - **Parameters:** `route4`: `which` (table — the routing table), `algorithm`
   (uint32, 0…6), `dest` (uint32, 0…4: 0–3 = modulation rows, 4 = carrier mask).
+  `route`: `which` (table), `algorithm` (uint32, 0…6) — one shared algorithm for all
+  five rows.
 
 - **Coefficients / precompute:** the routing table is the `tables:` entry
   `{ "kind": "routing" }` → 7 algorithms × 5 rows × 4 weights (140 Q15 0/1). The
@@ -171,8 +176,11 @@ In-repo study: [`docs/dsp-study.md`](../docs/dsp-study.md).
   matrix-as-data idea is umetate's own; the acyclicity trick mirrors feedback.
 
 - **Performance note:** `route4` = four `fm1_q15_mul` + one table row read per
-  sample (per destination); 5 `route4` instances per voice + the `mix4`-equivalent
-  carrier row. Memoryless, no branching.
+  sample (per destination); `route` = five such rows (4 modulation + carrier) per
+  sample from a single `algorithm` param — the one `route` node the patch uses
+  replaces five `route4` instances (and their five would-be-duplicated `algorithm`
+  params). `mix4` is the general 4-sum (used by the standalone routing test, not the
+  patch, which takes its carrier sum from `route.car`). Memoryless, no branching.
 
 ---
 
@@ -180,7 +188,7 @@ In-repo study: [`docs/dsp-study.md`](../docs/dsp-study.md).
 
 - **Purpose:** one FM operator = `phasor → osc → dx_env → vca`, with 1-sample
   self-feedback and a note-derived `ratio`. The complete DX-style building block;
-  an N-operator voice is N `fm_op` wired by the routing matrix (§`route4`).
+  an N-operator voice is N `fm_op` wired by the routing matrix (§`route`).
 
 - **Algorithm** (fixed-point, exactly):
   ```

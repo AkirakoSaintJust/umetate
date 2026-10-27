@@ -178,7 +178,7 @@ class Table:
     """A `tables:` entry: a name + kind + its `const` XIP values (Q15 int16)."""
 
     name: str
-    kind: str  # "wavetable" | "segments" | "spectrum" | "phase_map"
+    kind: str  # "wavetable" | "segments" | "spectrum" | "phase_map" | "routing"
     size: int
     values: list[int]
 

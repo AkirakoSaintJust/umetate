@@ -632,6 +632,7 @@ test + a budget annotation; shipped macros in `modules/macros/`, each =
 | `mix` / `add` | summer | N audio ins → 1 out |
 | `mix4` | 4-input summer | the carrier sum / matrix sum |
 | `route4` | routing-matrix row | reads a 4-weight row of a `routing` table (by `algorithm` + `dest`) — the runtime-algorithm primitive |
+| `route` | 4-op FM router | one `algorithm` param, four `fm1_route4` rows: modulation into op2/op3/op4 + the carrier sum (the ergonomic 4-op wrapper over `route4`) |
 | `svf` / `one_pole` | filter | state-variable (LP/BP/HP) / one-pole; modulatable cutoff/res |
 | `wavefolder` | nonlinear | sine fold: input → sin(π·x) crossfaded by `amount` |
 | `lpg` | vactrol gate | one-pole + VCA, cutoff/gain coupled to a fast-attack/slow-decay envelope |
@@ -641,6 +642,19 @@ test + a budget annotation; shipped macros in `modules/macros/`, each =
 
 `umetate lib list` shows the library; `umetate scaffold --template` starts from a shipped template; user
 nodes conform to `node.schema.json`, patches to `patch.schema.json`.
+
+The **fourop-fm dogfood** (`examples/fourop-fm/`) surfaced two known gaps (recorded,
+not fixed there):
+
+- **Patch `params:` `default` is ignored.** `patch.schema.json` accepts a `default`
+  on a param binding, but the generator uses the node param's literal as the DSP
+  initial value and never reads the binding's `default` (the generated `params.json`
+  `default` is the node value). A patch's per-node `params` are the real source of
+  the initial value today.
+- **`svf` has a sub-LSB limit cycle.** The Chamberlin SVF never reaches *exactly*
+  zero after the input stops (a ~±3 LSB, ≈ −80 dBFS fixed-point limit cycle), so a
+  patch with a post-voice filter fails the strict "silent after off" host contract;
+  the dogfood adds a decay-to-near-silence contract instead.
 
 The `table` node makes `tables:` shapes audible: `triangle`/`square`/`saw`/`pulse`
 are `tables:` `wavetable` shapes + `table` (data), and the **spectral oscillator**

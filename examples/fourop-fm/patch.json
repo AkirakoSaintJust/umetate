@@ -1,0 +1,63 @@
+{
+  "name": "fourop-fm",
+  "voices": 8,
+  "tables": { "routing": { "kind": "routing" } },
+  "params": {
+    "algorithm":    { "target": "route.algorithm", "min": 0, "max": 6, "curve": "linear" },
+    "cutoff":       { "target": "lp.f", "min": 0, "max": 65535, "curve": "log", "unit": "Hz" },
+    "res":          { "target": "lp.q", "min": 0, "max": 65535, "curve": "linear" },
+    "fold":         { "target": "wf.amount", "min": 0, "max": 32767, "curve": "linear" },
+    "master":       { "target": "master.level", "min": 0, "max": 32767, "curve": "linear" },
+    "feedback":     { "target": "op1.fb.level", "min": 0, "max": 32767, "curve": "linear" },
+    "attack":       { "target": "op1.eg.r1", "min": 0, "max": 65535, "curve": "log" },
+    "release":      { "target": "op1.eg.r4", "min": 0, "max": 65535, "curve": "log" },
+    "op1_level":    { "target": "op1.vca.level", "min": 0, "max": 32767, "curve": "linear" },
+    "op2_level":    { "target": "op2.vca.level", "min": 0, "max": 32767, "curve": "linear" },
+    "op3_level":    { "target": "op3.vca.level", "min": 0, "max": 32767, "curve": "linear" },
+    "op4_level":    { "target": "op4.vca.level", "min": 0, "max": 32767, "curve": "linear" },
+    "op1_waveform": { "target": "op1.osc.waveform", "min": 0, "max": 7, "curve": "linear" },
+    "op2_waveform": { "target": "op2.osc.waveform", "min": 0, "max": 7, "curve": "linear" },
+    "op3_waveform": { "target": "op3.osc.waveform", "min": 0, "max": 7, "curve": "linear" },
+    "op4_waveform": { "target": "op4.osc.waveform", "min": 0, "max": 7, "curve": "linear" }
+  },
+  "voice": {
+    "nodes": [
+      { "id": "op1", "type": "fm_op", "params": { "ratio": 1, "waveform": 0, "level": 28000, "feedback": 8000, "r1": 20000, "r2": 4000, "r3": 2000, "r4": 30000, "l1": 32767, "l2": 20000, "l3": 12000 } },
+      { "id": "op2", "type": "fm_op", "params": { "ratio": 1, "waveform": 0, "level": 16000, "feedback": 0, "r1": 20000, "r2": 4000, "r3": 2000, "r4": 30000, "l1": 32767, "l2": 20000, "l3": 12000 } },
+      { "id": "op3", "type": "fm_op", "params": { "ratio": 3, "waveform": 0, "level": 12000, "feedback": 0, "r1": 20000, "r2": 4000, "r3": 2000, "r4": 30000, "l1": 32767, "l2": 20000, "l3": 12000 } },
+      { "id": "op4", "type": "fm_op", "params": { "ratio": 2, "waveform": 0, "level": 10000, "feedback": 0, "r1": 20000, "r2": 4000, "r3": 2000, "r4": 30000, "l1": 32767, "l2": 20000, "l3": 12000 } },
+      { "id": "d1", "type": "delay1" },
+      { "id": "d2", "type": "delay1" },
+      { "id": "d3", "type": "delay1" },
+      { "id": "d4", "type": "delay1" },
+      { "id": "route", "type": "route", "params": { "which": "routing", "algorithm": 4 } }
+    ],
+    "wires": [
+      { "from": "op1.audio", "to": "d1.in" },
+      { "from": "op2.audio", "to": "d2.in" },
+      { "from": "op3.audio", "to": "d3.in" },
+      { "from": "op4.audio", "to": "d4.in" },
+      { "from": "d1.out", "to": "route.a" },
+      { "from": "d2.out", "to": "route.b" },
+      { "from": "d3.out", "to": "route.c" },
+      { "from": "d4.out", "to": "route.d" },
+      { "from": "route.mod2", "to": "op2.fm" },
+      { "from": "route.mod3", "to": "op3.fm" },
+      { "from": "route.mod4", "to": "op4.fm" }
+    ],
+    "voice_out": "route.car"
+  },
+  "global": {
+    "nodes": [
+      { "id": "lp", "type": "svf", "params": { "f": 8000, "q": 40000 } },
+      { "id": "wf", "type": "wavefolder", "params": { "amount": 0 } },
+      { "id": "master", "type": "vca", "params": { "level": 30000 } }
+    ],
+    "wires": [
+      { "from": "voice", "to": "lp.audio" },
+      { "from": "lp.low", "to": "wf.audio" },
+      { "from": "wf.audio", "to": "master.audio" },
+      { "from": "master.audio", "to": "out" }
+    ]
+  }
+}
