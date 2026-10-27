@@ -1,0 +1,8 @@
+{
+  "name": "table",
+  "summary": "Wavetable reader: a 256-entry table indexed by the top 8 bits of `phase` (nearest-neighbor).",
+  "ins": { "phase": { "rate": "audio", "format": "phase" } },
+  "outs": { "audio": "audio" },
+  "params": { "which": "table" },
+  "state": {}
+}

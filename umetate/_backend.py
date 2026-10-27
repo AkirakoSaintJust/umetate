@@ -314,6 +314,10 @@ def _substitute(inst: NodeInstance, line: str, v: str, table_names: set[str]) ->
     for name in inst.spec.params:
         out = out.replace(f"${{param.{name}}}", inst.param_expr(name))
     out = out.replace("${const.mask}", f"{inst.c}_delay_mask")
+    if inst.table is not None:
+        if inst.table not in table_names:
+            raise GenError(f"unknown table {inst.table!r} in {inst.type}/node.c")
+        out = out.replace("${table.@}", table_cname(inst.table))
     out = _TABLE_RE.sub(lambda m: _table_ref(m.group(1), table_names, inst), out)
     leftover = _PLACEHOLDER_RE.search(out)
     if leftover is not None:

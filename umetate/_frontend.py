@@ -18,6 +18,7 @@ from ._ir import (
     EVENT,
     OUT_SINK,
     RESERVED_INPUTS,
+    TABLE,
     VOICE_SOURCE,
     CompiledGraph,
     Edge,
@@ -107,6 +108,8 @@ def _build_params(
     flat: list[tuple[str, str, int, str]] = []
     for i in instances:
         for pname, kind in i.spec.params.items():
+            if kind == TABLE:
+                continue  # a compile-time table selector, not a runtime param
             flat.append(
                 (
                     i.param_expr(pname),
@@ -174,13 +177,24 @@ def _expand(
         spec = nodes.get(type_)
         if spec is None:
             raise GenError(f"unknown node type {type_!r} (instance {id_!r})")
+        params = _str_params(inst_dict.get("params"))
+        table = None
+        for pname, kind in spec.params.items():
+            if kind == TABLE:
+                table = params.pop(pname, None)
+                if table is None:
+                    raise GenError(
+                        f"node {id_!r} (type {type_!r}) needs a table name "
+                        f"(params: {{ {pname}: <name> }})"
+                    )
         instances.append(
             NodeInstance(
                 id=id_,
                 type=type_,
                 zone=zone,
                 spec=spec,
-                params=_str_params(inst_dict.get("params")),
+                params=params,
+                table=table,
             )
         )
         return

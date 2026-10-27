@@ -29,6 +29,7 @@ POOL = "pool"
 INT16 = "int16"
 INT32 = "int32"
 UINT32 = "uint32"
+TABLE = "table"  # a compile-time param naming a `tables:` entry (a string, not int)
 
 # ---- the voice zone's reserved allocator inputs (bindings, not graph edges) ----
 RESERVED_INPUTS = ("note", "gate", "velocity")
@@ -92,6 +93,7 @@ class NodeInstance:
     consumed: set[str] = field(
         default_factory=set, repr=False
     )  # output ports wired down-stream
+    table: str | None = None  # the selected table name (a "table"-kind param)
 
     @property
     def c(self) -> str:

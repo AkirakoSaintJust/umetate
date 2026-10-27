@@ -609,7 +609,7 @@ test + a budget annotation; shipped macros in `modules/macros/`, each =
 | Node | Kind | Purpose |
 | --- | --- | --- |
 | `phasor` | phase accumulator | pitch→phase ramp; reset/sync/mod; the shared phase source |
-| `osc` / `table` | wave reader | phase→audio via a table; optional `phase_map` (phase distortion) |
+| `osc` / `table` | wave reader | `osc` = sine (`fm1_sin`); `table` = wavetable reader (a `tables:` shape selected by a `which` param) |
 | `env` / `seg` | segment generator | gate event→control via breakpoint segments (data) |
 | `vca` / `mul` | gain | audio×control (modulatable level) |
 | `mix` / `add` | summer | N audio ins → 1 out |
@@ -618,10 +618,13 @@ test + a budget annotation; shipped macros in `modules/macros/`, each =
 | `lpg` | vactrol gate | one-pole + VCA, cutoff/gain coupled to a fast-attack/slow-decay envelope |
 | `delay1` / `delayN` | delay | 1-sample (feedback) / N-sample (echo); the DAG cycle-breakers |
 | `noise` | source | white / pink |
-| spectral osc | data | `tables:` `spectrum` (harmonic amplitudes → wavetable via additive/IFFT) + `osc` |
 
 `umetate lib list` shows the library; `umetate scaffold --template` starts from a shipped template; user
 nodes conform to `node.schema.json`, patches to `patch.schema.json`.
+
+The `table` node makes `tables:` shapes audible: `triangle`/`square`/`saw`/`pulse`
+are `tables:` `wavetable` shapes + `table` (data), and the **spectral oscillator**
+is `tables:` `spectrum` (additive/IFFT) + `table`.
 
 **Backlog (post-baseline, proposed order).** The `/`-suffixed names above are the
 planned half of each shipped node; the full follow-up, classified by the "one node
@@ -629,22 +632,21 @@ planned half of each shipped node; the full follow-up, classified by the "one no
 
 | Item | Kind | Note |
 | --- | --- | --- |
-| `triangle` | data | a `tables:` shape — no node |
-| `saw` / `pulse` (band-limited) | node | polyBLEP/polyBLAMP, or mip-mapped tables — research first (naive tables alias) |
+| `saw` / `pulse` (band-limited) | node | polyBLEP — needs a note-on reciprocal (`1/inc`) generator feature; research/design first |
 | ring mod | — | already `vca` with an audio-rate CV |
 | high-pass | — | the `svf` high-pass output |
-| `comb` | macro | `delayN` + feedback |
-| `pitched_noise` | macro | `noise` + note-tracking band-pass |
-| `apc` / `dual_apc` | macro | square + env / two cross-modulated squares |
+| `comb` | — | `delayN` with feedback (already shipped); no macro needed |
+| `pitched_noise` | macro | `noise` + note-tracking `svf` band-pass — needs a note-derived cutoff feature |
+| `apc` / `dual_apc` | macro | square `table` + env / two cross-modulated squares (needs `tables: {square: …}`) |
 | `vps` | macro | DAFx-11 (Kleimola et al.): 2-D inflection point `p=(d,v)`, multi-breakpoint, audio-rate modulation — dynamic phase distortion, generalizes `phase_map` |
 | `formant` (K5000-style) | macro | bank of `svf` band-passes + vowel presets |
 | `granulator` (Xenakis) | node(s) | phase-granular (no audio buffer) + a separate stochastic/GENDYN node |
 
-`svf`, `wavefolder`, and `fm_op` shipped first (the "batch 1" build); `lpg` and
-the spectral oscillator (`tables: spectrum`, the "ifft osc") followed (batch 2).
-Shipped macros live in `modules/macros/`; a patch's own `macros:` section shadows
-them. Next in the macro backlog: `comb`, `pitched_noise`, `apc`/`dual_apc`, `vps`,
-`formant`.
+`svf`, `wavefolder`, and `fm_op` shipped first (the "batch 1" build); `lpg`, the
+spectral oscillator, and the `table` reader followed (batch 2/3). Shipped macros
+live in `modules/macros/`; a patch's own `macros:` section shadows them. The two
+deferred generator features are a **note-on reciprocal** (for band-limited
+polyBLEP) and a **note-derived cutoff** (for `pitched_noise`'s tracking filter).
 
 Build order: `fm_op` + `svf` + `wavefolder` → `ifft` + `lpg` → `formant` + the
 cheap macros → `granulator` last (research-driven). Band-limited oscillators and

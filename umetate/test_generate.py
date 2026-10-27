@@ -142,6 +142,32 @@ LPG_TEST: dict[str, Any] = {
     "global": {"nodes": [], "wires": []},
 }
 
+# the `table` node reading a square wavetable + an IFFT spectrum, linked with
+# tables.c (the `table` node is what makes `tables:` shapes actually audible).
+TABLE_OSC: dict[str, Any] = {
+    "name": "table_osc",
+    "voices": 4,
+    "tables": {
+        "sq": {"kind": "wavetable", "shape": "square"},
+        "add": {"kind": "spectrum", "harmonics": [32767, 16000, 8000, 4000]},
+    },
+    "voice": {
+        "nodes": [
+            {"id": "ph", "type": "phasor"},
+            {"id": "osc", "type": "table", "params": {"which": "add"}},
+            {"id": "env", "type": "env"},
+            {"id": "vca", "type": "vca"},
+        ],
+        "wires": [
+            {"from": "ph.phase", "to": "osc.phase"},
+            {"from": "osc.audio", "to": "vca.audio"},
+            {"from": "env.cv", "to": "vca.cv"},
+        ],
+        "voice_out": "vca.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
 TABLE_DEMO: dict[str, Any] = {
     "name": "table_demo",
     "voices": 4,
@@ -265,6 +291,40 @@ def _sound(patch: dict[str, Any]) -> tuple[bool, str]:
         return run.returncode == 0, run.stdout.strip()
 
 
+def _sound_tables(patch: dict[str, Any]) -> tuple[bool, str]:
+    """Generate + compile (with tables.c) + run the sound contract for a table patch."""
+    src = generate(patch)
+    hdr, impl = generate_tables(patch)
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        (d / "tables.h").write_text(hdr)
+        (d / "tables.c").write_text(impl)
+        cname = patch["name"].replace("-", "_").replace(".", "_")
+        (d / "harness.c").write_text(SOUND_HARNESS.replace("__NAME__", cname))
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-I",
+                str(d),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                str(d / "tables.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            return False, "compile failed:\n" + proc.stderr
+        run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+        return run.returncode == 0, run.stdout.strip()
+
+
 def _compile_tables(hdr: str, impl: str) -> tuple[bool, str]:
     """Compile the generated tables.c (with its tables.h) for host."""
     with tempfile.TemporaryDirectory() as tmp:
@@ -336,6 +396,13 @@ def main() -> int:
 
     ok, msg = _sound(LPG_TEST)
     print(("ok: " if ok else "FAIL: ") + (msg or "lpg renders non-silent then silent"))
+    failures += 0 if ok else 1
+
+    ok, msg = _sound_tables(TABLE_OSC)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "table node reads a wavetable + spectrum, non-silent then silent")
+    )
     failures += 0 if ok else 1
 
     # a single-harmonic spectrum must generate a pure-sine wavetable (the IFFT)
