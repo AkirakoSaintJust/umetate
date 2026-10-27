@@ -22,12 +22,12 @@
     { "id": "vca", "type": "vca" },
     { "id": "fb", "type": "vca" },
     { "id": "d1", "type": "delay1" },
-    { "id": "sum", "type": "mix4" }
+    { "id": "sum", "type": "mix" }
   ],
   "wires": [
     { "from": "fm", "to": "sum.in0" },
     { "from": "d1.out", "to": "sum.in1" },
-    { "from": "pitch", "to": "sum.in2" },
+    { "from": "pitch", "to": "ph.pitch" },
     { "from": "sum.audio", "to": "ph.fm" },
     { "from": "ph.phase", "to": "osc.phase" },
     { "from": "osc.audio", "to": "vca.audio" },

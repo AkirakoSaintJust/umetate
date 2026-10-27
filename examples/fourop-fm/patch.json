@@ -62,7 +62,7 @@
       { "id": "lp", "type": "svf", "params": { "f": 8000, "q": 40000 } },
       { "id": "wf", "type": "wavefolder", "params": { "amount": 0 } },
       { "id": "master", "type": "vca", "params": { "level": 30000 } },
-      { "id": "plfo", "type": "lfo", "params": { "rate": 486958, "depth": 14 } }
+      { "id": "plfo", "type": "lfo", "params": { "rate": 486958, "depth": 273 } }
     ],
     "wires": [
       { "from": "voice", "to": "lp.audio" },

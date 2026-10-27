@@ -67,8 +67,11 @@ The dogfood did its job — it surfaced two bugs (fixed) and several gaps
    `rate × CONTROL_BLOCK` per tick (the emitted `CONTROL_BLOCK` macro), so the
    phase increments in sample units and the output is a per-sub-block held value
    — smooth for sub-audio rates, no per-sample cost. The pitch LFO is a *global*
-   control-rate node (scalar, computed before the voice audio loop, so it can
-   feed the operators); the tremolo LFOs are per-voice.
+   control-rate node (scalar, computed before the voice audio loop, so it can feed
+   the operators); the tremolo LFOs are per-voice. **Vibrato scales `inc`, not
+   phase:** the `phasor` gained a `pitch` input (`inc × (1 + pitch/32768)`), so
+   vibrato is *relative* — constant cents across the keyboard — rather than the
+   absolute-Hz wobble you'd get by reusing `fm`.
 7. **The OPZ's exact 8-waveform mask (deferred).** `fm1_sin_ws` implements the
    OPL/OPZ bit-trick scheme with the OPL's mask table; the OPZ's exact 8 are a
    documented follow-up in `dsp-algorithm.md`.

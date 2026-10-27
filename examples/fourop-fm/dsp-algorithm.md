@@ -195,8 +195,9 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   ```
   trem   = eg · lfo                                (Q15; the tremolo LFO, bipolar)
   eg_t   = eg + trem                               (= eg · (1 + lfo/32768))
-  sum    = external_fm + feedback_prev + pitch     (Q15; pitch = the vibrato LFO)
-  phase += inc + (sum << 16)                       (FM index: full-scale = ±π phase)
+  sum    = external_fm + feedback_prev             (Q15)
+  inc_eff = inc · (32768 + pitch) >> 15            (relative pitch; pitch = vibrato)
+  phase += inc_eff + (sum << 16)                   (FM index: full-scale = ±π phase)
   sine   = fm1_sin_ws(phase, waveform)             (8 waveforms)
   out    = sine · eg_t · level                     (Q15)
   feedback_prev = (out · feedback) delayed 1 sample
@@ -204,8 +205,10 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   `inc = note_to_inc(note) · ratio` (note-derived, so non-integer ratios stay in
   tune). Feedback taps the *enveloped, leveled* output (matching ymfm, which feeds
   back `compute_volume` = sine × envelope). Tremolo multiplies the envelope
-  (`eg · (1 + lfo)`) so it is gated — no bleed during release. Pitch adds to the
-  FM sum (phase modulation), so it too is silenced with the envelope.
+  (`eg · (1 + lfo)`) so it is gated — no bleed during release. Pitch *scales the
+  increment* (`inc · (1 + pitch/32768)`) — relative pitch, so vibrato is constant
+  cents across the keyboard, and it too is silenced with the envelope (the output
+  is gated, not the phase).
 
 - **Inputs / outputs:** `fm` (audio, external modulation), `pitch` (control, the
   shared vibrato LFO) → `audio` (audio).
@@ -223,15 +226,17 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   tremolo), `prev` (delay1).
 
 - **Edge cases:** feedback = 0 → no self-modulation; `trem_depth` = 0 → `eg_t = eg`
-  (no tremolo); `pitch` = 0 (depth 0) → no vibrato. The `(sum << 16)` scale keeps a
-  full-scale modulator at a ±π phase swing, so the modulator's `level` is the FM
-  depth.
+  (no tremolo); `pitch` = 0 (depth 0) → `inc_eff = inc` (no vibrato). The
+  `(sum << 16)` scale keeps a full-scale modulator at a ±π phase swing, so the
+  modulator's `level` is the FM depth; the `(32768 + pitch)` scale keeps a
+  full-scale pitch offset at ±1 octave.
 
 - **Reference + credit:** operator decomposition (phasor/osc/env/vca) from
   ymfm/Dexed (dsp-study §2.6); feedback tap + 1-sample delay from ymfm
   (`output_4op`). The `<<16` FM-index scale is umetate's own fixed-point choice
   (ymfm scales by `>>1` on a 10.10 phase — a different range for a different phase
-  width). The tremolo-multiplies-envelope and pitch-via-FM forms are umetate's own.
+  width). The tremolo-multiplies-envelope and pitch-scales-inc forms are umetate's
+  own.
 
 - **Performance note:** audio rate; per sample = 1 phase add + 1 LUT read + 1
   envelope multiply + 3 gain multiplies + the feedback multiply (the tremolo add is
@@ -258,7 +263,11 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
 - **Inputs / outputs:** none → `cv` (control, Q15 bipolar ±depth).
 
 - **Parameters:** `rate` (q32, the increment per sample), `depth` (q15, the output
-  amplitude — 0 disables the LFO).
+  amplitude — 0 disables the LFO). `depth` is interpreted at the point of use: as a
+  pitch LFO the operator applies `inc · (1 + cv/32768)`, so `depth/32768` is the
+  vibrato in **octaves** (273 ≈ ±10 cents); as an amplitude LFO the tremolo gain is
+  `1 + cv/32768`, so `depth/32768` is the **fraction of full amplitude** (~16000 ≈
+  ±50%).
 
 - **Coefficients / precompute:** none — `fm1_sin` is the existing quarter-sine LUT.
 

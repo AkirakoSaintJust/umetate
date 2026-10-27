@@ -19,7 +19,8 @@
   - `modules/nodes/osc/` — added the `waveform` param (8 waveforms).
   - `modules/nodes/vca/` — added the `level` param (Q15 gain).
   - `modules/nodes/phasor/` — the `fm` input now scales `<<16` (full-scale = ±π
-    phase swing).
+    phase swing), and a `pitch` input scales the increment (`inc × (1 + pitch/32768)`,
+    full-scale = ±1 octave) for relative-pitch vibrato.
   - `firmware/hal/fm1_math.h` — `fm1_sin_ws` (the 8-waveform bit trick),
     `fm1_route4` (the 4-weight Q15 dot product).
   - `umetate/_tables.py` — the `routing` table kind (the 7-algorithm matrix).

@@ -88,7 +88,9 @@
 
 (`level` is both the output amplitude and the FM index; `feedback` is op1's
 self-modulation depth. `rate` is a Q32 phase increment per sample —
-`f · 2³² / 44100`, so ~97392 = 1 Hz. All block rate.)
+`f · 2³² / 44100`, so ~97392 = 1 Hz. `depth` is `depth/32768` in the use's units:
+octaves of vibrato for `pitch_depth` (273 ≈ ±10 cents), fraction of full amplitude
+for `trem_depth` (~16000 ≈ ±50%). All block rate.)
 
 ### 2.3 Tables
 

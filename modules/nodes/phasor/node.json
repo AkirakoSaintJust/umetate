@@ -1,7 +1,7 @@
 {
   "name": "phasor",
-  "summary": "Q32 phase accumulator; `mod` (control) and `fm` (audio) are additive offsets.",
-  "ins": { "mod": "control", "fm": "audio" },
+  "summary": "Q32 phase accumulator. `inc` (note-derived) is the pitch; `pitch` (control, Q15) scales it — full-scale = ±1 octave. `fm` (audio, Q15) is scaled `<<16` (full-scale = ±π, the FM index); `mod` (control) is a small additive offset.",
+  "ins": { "mod": "control", "fm": "audio", "pitch": "control" },
   "outs": { "phase": { "rate": "audio", "format": "phase" } },
   "params": {},
   "state": { "inc": "q32", "phase": "phase" },
