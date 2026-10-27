@@ -392,6 +392,32 @@ int main(void) {
 }
 """
 
+# The runtime-algorithm contract: set `algorithm` to each of the 7 routings via
+# set_param and confirm each renders non-silent (the `route` node's whole point).
+ALGO_HARNESS = """\
+#include <stdio.h>
+#include <stdint.h>
+void __NAME___dsp_reset(void);
+void __NAME___dsp_note_on(uint32_t note, uint32_t velocity);
+void __NAME___dsp_set_param(uint32_t id, int32_t value);
+void __NAME___dsp_render(int32_t *out, uint32_t frames);
+void __NAME___dsp_all_notes_off(void);
+static int32_t out[512];
+int main(void) {
+    for (uint32_t alg = 0; alg < 7; alg++) {
+        __NAME___dsp_reset();
+        __NAME___dsp_set_param(__ALGO_ID__, (int32_t)alg);
+        __NAME___dsp_note_on(69, 100);
+        __NAME___dsp_render(out, 256);
+        int64_t e = 0; for (int i = 0; i < 512; i++) e += (int64_t)out[i] * out[i];
+        if (e < 1000000) { printf("FAIL: algorithm %u silent\\n", alg); return 1; }
+        __NAME___dsp_all_notes_off();
+    }
+    printf("ok: __NAME__ renders non-silent across all 7 algorithms\\n");
+    return 0;
+}
+"""
+
 DUMP_HARNESS = """\
 #include <stdio.h>
 #include <stdint.h>
@@ -508,6 +534,45 @@ def _sound_decay_tables(patch: Patch) -> tuple[bool, str]:
         (d / "tables.c").write_text(impl)
         cname = patch["name"].replace("-", "_").replace(".", "_")
         (d / "harness.c").write_text(DECAY_HARNESS.replace("__NAME__", cname))
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-I",
+                str(d),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                str(d / "tables.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            return False, "compile failed:\n" + proc.stderr
+        run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+        return run.returncode == 0, run.stdout.strip()
+
+
+def _algorithms_render(patch: Patch) -> tuple[bool, str]:
+    """Generate + compile + run the runtime-algorithm contract: each of the 7
+    algorithms, selected via set_param, must render non-silent."""
+    src = generate(patch)
+    hdr, impl = generate_tables(patch)
+    algo_id = str(param_ids(patch)["algorithm"])
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        (d / "tables.h").write_text(hdr)
+        (d / "tables.c").write_text(impl)
+        cname = patch["name"].replace("-", "_").replace(".", "_")
+        harness = ALGO_HARNESS.replace("__NAME__", cname).replace(
+            "__ALGO_ID__", algo_id
+        )
+        (d / "harness.c").write_text(harness)
         proc = subprocess.run(
             [
                 "cc",
@@ -694,6 +759,13 @@ def main() -> int:
     print(
         ("ok: " if ok else "FAIL: ")
         + (msg or "fourop-fm (4-op FM) renders non-silent then decays to near-silence")
+    )
+    failures += 0 if ok else 1
+
+    ok, msg = _algorithms_render(ffm)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "fourop-fm renders non-silent across all 7 algorithms")
     )
     failures += 0 if ok else 1
 

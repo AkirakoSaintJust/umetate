@@ -688,6 +688,13 @@ saw, and the full-scale wrap jump is gone). The **note-derived cutoff** feature
 out the generator feature list. Shipped macros live in `modules/macros/`; a
 patch's own `macros:` section shadows them.
 
+The **fourop-fm dogfood** (`examples/fourop-fm/`) closed the runtime-algorithm
+gap: `dx_env`, `osc.waveform` (8 waveforms), `vca.level`, `mix4` (the 2-input
+`mix` → 4-input `mix4`), `route4`, `route`, and the `fm_op` rewrite, with the
+**algorithm as a runtime `routing` matrix** — a `tables:` entry applied by
+`route`/`route4` rather than a compile-time graph — plus the `<<16` FM-index
+scale on `phasor.fm`.
+
 Build order: `fm_op` + `svf` + `wavefolder` → `ifft` + `lpg` → `pitched_noise` +
 `formant` + the cheap macros → `granulator` last (research-driven). Band-limited
 oscillators and the Xenakis stochastic engine are the two research-heavy items;
