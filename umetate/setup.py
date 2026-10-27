@@ -81,7 +81,7 @@ def _script(args: argparse.Namespace, lock: Lock) -> str:
         tarball = "/tmp/tc.tar.xz"
         lines.append(f"curl -fsSL {shlex.quote(tc['download'])} -o {tarball}")
     else:
-        tarball = args.toolchain
+        tarball = str(args.toolchain)
     pinned = tc.get("linux_sha256", "")
     if verify and pinned and not pinned.startswith("TBD"):
         lines.append(
@@ -103,7 +103,7 @@ def _script(args: argparse.Namespace, lock: Lock) -> str:
         )
         lines.append(clone)
     else:
-        lines.append(f"cp -a {shlex.quote(args.sdk)} {shlex.quote(_SDK_DIR)}")
+        lines.append(f"cp -a {shlex.quote(str(args.sdk))} {shlex.quote(_SDK_DIR)}")
     assets = f"{_SDK_DIR}/cpu/wl82/tools"
     for name, expected in sdk["assets"].items():
         path = f"{assets}/{name}"

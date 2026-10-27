@@ -338,18 +338,20 @@ def build_main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", type=Path, default=OUT, help="output directory")
     args = parser.parse_args(argv)
 
-    if not args.patch.is_file():
-        print(f"web-build: {args.patch} not found", file=sys.stderr)
+    patch_path: Path = args.patch
+    out: Path = args.out
+    if not patch_path.is_file():
+        print(f"web-build: {patch_path} not found", file=sys.stderr)
         return 1
     try:
-        patch = as_patch(json.loads(args.patch.read_text(encoding="utf-8")))
+        patch = as_patch(json.loads(patch_path.read_text(encoding="utf-8")))
     except (OSError, json.JSONDecodeError, ValueError) as exc:
-        print(f"web-build: cannot read {args.patch}: {exc}", file=sys.stderr)
+        print(f"web-build: cannot read {patch_path}: {exc}", file=sys.stderr)
         return 1
 
     name = patch["name"].replace("-", "_").replace(".", "_")
-    print(f"web-build: {name} -> {args.out}")
-    return build(patch, args.out, name)
+    print(f"web-build: {name} -> {out}")
+    return build(patch, out, name)
 
 
 def serve_main(argv: list[str] | None = None) -> int:
@@ -358,7 +360,9 @@ def serve_main(argv: list[str] | None = None) -> int:
     parser.add_argument("--port", type=int, default=8000, help="loopback port")
     args = parser.parse_args(argv)
 
-    if not (args.dir / "index.html").is_file():
+    directory: Path = args.dir
+    port: int = args.port
+    if not (directory / "index.html").is_file():
         print(
             "web-serve: nothing built — run `umetate web-build` first",
             file=sys.stderr,
@@ -366,10 +370,10 @@ def serve_main(argv: list[str] | None = None) -> int:
         return 1
 
     handler = functools.partial(
-        http.server.SimpleHTTPRequestHandler, directory=str(args.dir)
+        http.server.SimpleHTTPRequestHandler, directory=str(directory)
     )
-    with socketserver.ThreadingTCPServer(("127.0.0.1", args.port), handler) as httpd:
-        print(f"web-serve: http://127.0.0.1:{args.port}/  (Ctrl+C to stop)")
+    with socketserver.ThreadingTCPServer(("127.0.0.1", port), handler) as httpd:
+        print(f"web-serve: http://127.0.0.1:{port}/  (Ctrl+C to stop)")
         with contextlib.suppress(KeyboardInterrupt):
             httpd.serve_forever()
     return 0

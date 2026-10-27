@@ -165,12 +165,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", type=Path, help="output dir (default: ./<name>)")
     args = parser.parse_args(argv)
 
-    out = args.out or Path(args.name)
+    name = str(args.name)
+    out: Path = args.out or Path(name)
+    template: str | None = args.template
     if args.kind == "node":
-        return _node(args.name, out)
+        return _node(name, out)
     if args.kind == "macro":
-        return _macro(args.name, out)
-    return _patch(args.name, out, args.template)
+        return _macro(name, out)
+    return _patch(name, out, template)
 
 
 if __name__ == "__main__":

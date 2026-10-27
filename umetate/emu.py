@@ -39,7 +39,7 @@ def _gui(args: argparse.Namespace, fwsc: Path) -> int:
     if args.persist:
         cmd += ["--flash", _flash(args)]
     if args.midi:
-        cmd += ["--midi", args.midi]
+        cmd += ["--midi", str(args.midi)]
     if args.mhz:
         cmd += ["--mhz", str(args.mhz)]
     print(f"emu: {_emu.LIVE_BIN.name} --fwsc {fwsc}")
@@ -55,7 +55,7 @@ def _check(args: argparse.Namespace, fwsc: Path) -> int:
         cmd += ["--flash", _flash(args)]
     env = dict(os.environ)
     if args.keys:
-        env["FM1_BENCH_KEYS"] = args.keys
+        env["FM1_BENCH_KEYS"] = str(args.keys)
     print(f"emu: {_emu.LIVE_BIN.name} --shot {args.ms} --fwsc {fwsc}")
     proc = subprocess.run(
         cmd, cwd=_emu.EMU_DIR, env=env, capture_output=True, text=True
@@ -93,7 +93,7 @@ def main(argv: list[str] | None = None) -> int:
         print("emu: fm1-emu not built — run `umetate setup` first", file=sys.stderr)
         return 1
 
-    fwsc = args.fwsc or _BOARD_PACKAGE[args.board]
+    fwsc: Path = args.fwsc or _BOARD_PACKAGE[str(args.board)]
     if not fwsc.is_file():
         print(f"emu: {fwsc} not built — run `umetate build` first", file=sys.stderr)
         return 1

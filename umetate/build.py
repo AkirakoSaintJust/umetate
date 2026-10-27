@@ -81,8 +81,8 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 1
     toolchain, sdk = resolved
-    profile = "performance" if args.profile == "perf" else args.profile
-    cmd = [
+    profile = "performance" if args.profile == "perf" else str(args.profile)
+    cmd: list[str] = [
         "python3",
         "tools/cmake_target.py",
         "build",
@@ -95,9 +95,9 @@ def main(argv: list[str] | None = None) -> int:
         "--out",
         "/work/firmware/build",
         "--board",
-        args.board,
+        str(args.board),
         "--model",
-        args.model,
+        str(args.model),
         "--profile",
         profile,
     ]

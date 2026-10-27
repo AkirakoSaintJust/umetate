@@ -82,7 +82,7 @@ def flash(
 
     install_argv = [str(path)]
     if args.port:
-        install_argv += ["--port", args.port]
+        install_argv += ["--port", str(args.port)]
     if args.yes:
         install_argv += ["--yes"]
     if ask is None:

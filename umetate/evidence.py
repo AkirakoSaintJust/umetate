@@ -89,19 +89,21 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
+    matrix_path: Path = args.matrix
+    strict: bool = args.strict
     try:
-        matrix = json.loads(args.matrix.read_text(encoding="utf-8"))
+        matrix = json.loads(matrix_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        print(f"evidence: cannot read {args.matrix}: {exc}", file=sys.stderr)
+        print(f"evidence: cannot read {matrix_path}: {exc}", file=sys.stderr)
         return 1
 
-    errors = validate(matrix, strict=args.strict)
+    errors = validate(matrix, strict=strict)
     if errors:
         for error in errors:
             print(f"evidence: {error}", file=sys.stderr)
         return 1
     print(
-        f"evidence: {args.matrix} valid ({len(as_evidence(matrix)['layers'])} layers)"
+        f"evidence: {matrix_path} valid ({len(as_evidence(matrix)['layers'])} layers)"
     )
     return 0
 

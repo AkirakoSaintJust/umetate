@@ -42,7 +42,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"debrick: {route:<14}{mark}  {procedure}")
         return 0
 
-    procedure, blocked = _ROUTES[args.route]
+    procedure, blocked = _ROUTES[str(args.route)]
     print(f"debrick: {args.route} — {procedure}")
     if blocked:
         print(
