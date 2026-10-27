@@ -210,6 +210,7 @@ umetate/
 │  ├─ roadmap.md            #   THIS document (status authority)
 │  ├─ platform-facts.md     #   hardware facts + device safety + recovery taxonomy
 │  └─ tutorial.md           # component 6
+├─ provenance/              # baseline + release records (evidence, not status)
 └─ examples/                # worked example(s)
 ```
 
@@ -940,14 +941,21 @@ first command. **Layer: docs.**
 **Exit P6:** **met** — a reader can reach a target package without hardware, with
 device steps clearly `blocked`; the docs' cross-references are machine-checked.
 
-### Phase 7 — Release & provenance (P7, optional)
+### Phase 7 — Release & provenance (P7) — **done**
 
-**P7-1 — Baseline tag + provenance.** Tag `umetate-baseline-YYYY-MM-DD`; record
-commit, tag, package hashes, identities, toolchain/SDK hashes, per-claim status.
-*Acceptance:* clean clone → `deep-check --all` → four target builds; no "security-clean"/
-"device-accepted" wording while blocked. **Layer: release.**
+**P7-1 — Baseline tag + provenance.** **done** — `provenance/` (`README.md` naming +
+required fields, `baseline-2026-10-27.md`) records the commit/tag, the four package
+identities + SHA-256 hashes, the toolchain/SDK/emscripten/fm1-emu pins, and the
+per-claim status. Verified by a **clean clone** → `deep-check --all` → four target
+builds (all `pass`). The verification surfaced and fixed two latent target-build
+defects (`.dsp_text` check relative-vs-absolute; math helpers not inlined → XIP
+calls). No "security-clean"/"device-accepted" wording while blocked. **Layer: release.**
 
-**P7-2 — Publish only on request.** Nothing pushed/published by default. **Layer: release.**
+**P7-2 — Publish only on request.** **done** — nothing pushed/published; `origin`
+exists but is not written to. **Layer: release.**
+
+**Exit P7:** **met** — `umetate-baseline-2026-10-27` tagged on a clean tree; a clean
+clone reproduces the checks + four packages; nothing is published.
 
 ---
 
