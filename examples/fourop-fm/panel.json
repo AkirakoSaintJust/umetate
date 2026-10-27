@@ -19,8 +19,8 @@
             { "type": "param_row", "row": 6, "param": "fold", "text": "FOLD" },
             { "type": "param_row", "row": 7, "param": "master", "text": "MAST" },
             { "type": "param_row", "row": 8, "param": "feedback", "text": "FB" },
-            { "type": "param_row", "row": 9, "param": "attack", "text": "ATK" },
-            { "type": "param_row", "row": 10, "param": "release", "text": "REL" }
+            { "type": "param_row", "row": 9, "param": "pitch_rate", "text": "VIB RATE" },
+            { "type": "param_row", "row": 10, "param": "pitch_depth", "text": "VIB DEPTH" }
           ]
         }
       ],
@@ -31,8 +31,8 @@
         { "source": "ENC_KNOB4", "target": "fold", "behavior": "relative" },
         { "source": "ENC_KNOB5", "target": "master", "behavior": "relative" },
         { "source": "ENC_KNOB6", "target": "feedback", "behavior": "relative" },
-        { "source": "ENC_KNOB7", "target": "attack", "behavior": "relative" },
-        { "source": "ENC_SELECT", "target": "release", "behavior": "relative" }
+        { "source": "ENC_KNOB7", "target": "pitch_rate", "behavior": "relative" },
+        { "source": "ENC_SELECT", "target": "pitch_depth", "behavior": "relative" }
       ]
     },
     "op": {
@@ -60,7 +60,36 @@
         { "source": "ENC_KNOB5", "target": "op3_level", "behavior": "relative" },
         { "source": "ENC_KNOB6", "target": "op3_waveform", "behavior": "relative" },
         { "source": "ENC_KNOB7", "target": "op4_level", "behavior": "relative" },
-        { "source": "ENC_SELECT", "target": "op4_waveform", "behavior": "relative" }
+        { "source": "ENC_SELECT", "target": "op4_waveform", "behavior": "relative" },
+        { "source": "BTN_EDIT", "action": "push", "arg": "lfo" }
+      ]
+    },
+    "lfo": {
+      "pages": [
+        {
+          "id": "lfo",
+          "widgets": [
+            { "type": "label", "row": 1, "span": 2, "text": "TREMOLO" },
+            { "type": "param_row", "row": 3, "param": "op1_trem_rate", "text": "OP1 RATE" },
+            { "type": "param_row", "row": 4, "param": "op1_trem_depth", "text": "OP1 DEPTH" },
+            { "type": "param_row", "row": 5, "param": "op2_trem_rate", "text": "OP2 RATE" },
+            { "type": "param_row", "row": 6, "param": "op2_trem_depth", "text": "OP2 DEPTH" },
+            { "type": "param_row", "row": 7, "param": "op3_trem_rate", "text": "OP3 RATE" },
+            { "type": "param_row", "row": 8, "param": "op3_trem_depth", "text": "OP3 DEPTH" },
+            { "type": "param_row", "row": 9, "param": "op4_trem_rate", "text": "OP4 RATE" },
+            { "type": "param_row", "row": 10, "param": "op4_trem_depth", "text": "OP4 DEPTH" }
+          ]
+        }
+      ],
+      "bindings": [
+        { "source": "ENC_KNOB1", "target": "op1_trem_rate", "behavior": "relative" },
+        { "source": "ENC_KNOB2", "target": "op1_trem_depth", "behavior": "relative" },
+        { "source": "ENC_KNOB3", "target": "op2_trem_rate", "behavior": "relative" },
+        { "source": "ENC_KNOB4", "target": "op2_trem_depth", "behavior": "relative" },
+        { "source": "ENC_KNOB5", "target": "op3_trem_rate", "behavior": "relative" },
+        { "source": "ENC_KNOB6", "target": "op3_trem_depth", "behavior": "relative" },
+        { "source": "ENC_KNOB7", "target": "op4_trem_rate", "behavior": "relative" },
+        { "source": "ENC_SELECT", "target": "op4_trem_depth", "behavior": "relative" }
       ]
     }
   }

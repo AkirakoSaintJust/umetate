@@ -18,14 +18,24 @@
     "op1_waveform": { "target": "op1.osc.waveform", "min": 0, "max": 7, "curve": "linear" },
     "op2_waveform": { "target": "op2.osc.waveform", "min": 0, "max": 7, "curve": "linear" },
     "op3_waveform": { "target": "op3.osc.waveform", "min": 0, "max": 7, "curve": "linear" },
-    "op4_waveform": { "target": "op4.osc.waveform", "min": 0, "max": 7, "curve": "linear" }
+    "op4_waveform": { "target": "op4.osc.waveform", "min": 0, "max": 7, "curve": "linear" },
+    "pitch_rate":     { "target": "plfo.rate", "min": 0, "max": 20000000, "curve": "log", "unit": "" },
+    "pitch_depth":    { "target": "plfo.depth", "min": 0, "max": 32767, "curve": "linear" },
+    "op1_trem_rate":  { "target": "op1.lfo.rate", "min": 0, "max": 20000000, "curve": "log" },
+    "op1_trem_depth": { "target": "op1.lfo.depth", "min": 0, "max": 32767, "curve": "linear" },
+    "op2_trem_rate":  { "target": "op2.lfo.rate", "min": 0, "max": 20000000, "curve": "log" },
+    "op2_trem_depth": { "target": "op2.lfo.depth", "min": 0, "max": 32767, "curve": "linear" },
+    "op3_trem_rate":  { "target": "op3.lfo.rate", "min": 0, "max": 20000000, "curve": "log" },
+    "op3_trem_depth": { "target": "op3.lfo.depth", "min": 0, "max": 32767, "curve": "linear" },
+    "op4_trem_rate":  { "target": "op4.lfo.rate", "min": 0, "max": 20000000, "curve": "log" },
+    "op4_trem_depth": { "target": "op4.lfo.depth", "min": 0, "max": 32767, "curve": "linear" }
   },
   "voice": {
     "nodes": [
-      { "id": "op1", "type": "fm_op", "params": { "ratio": 1, "waveform": 0, "level": 28000, "feedback": 8000, "r1": 20000, "r2": 4000, "r3": 2000, "r4": 30000, "l1": 32767, "l2": 20000, "l3": 12000 } },
-      { "id": "op2", "type": "fm_op", "params": { "ratio": 1, "waveform": 0, "level": 16000, "feedback": 0, "r1": 20000, "r2": 4000, "r3": 2000, "r4": 30000, "l1": 32767, "l2": 20000, "l3": 12000 } },
-      { "id": "op3", "type": "fm_op", "params": { "ratio": 3, "waveform": 0, "level": 12000, "feedback": 0, "r1": 20000, "r2": 4000, "r3": 2000, "r4": 30000, "l1": 32767, "l2": 20000, "l3": 12000 } },
-      { "id": "op4", "type": "fm_op", "params": { "ratio": 2, "waveform": 0, "level": 10000, "feedback": 0, "r1": 20000, "r2": 4000, "r3": 2000, "r4": 30000, "l1": 32767, "l2": 20000, "l3": 12000 } },
+      { "id": "op1", "type": "fm_op", "params": { "ratio": 1, "waveform": 0, "level": 28000, "feedback": 8000, "trem_rate": 389566, "trem_depth": 2000, "r1": 20000, "r2": 4000, "r3": 2000, "r4": 30000, "l1": 32767, "l2": 20000, "l3": 12000 } },
+      { "id": "op2", "type": "fm_op", "params": { "ratio": 1, "waveform": 0, "level": 16000, "feedback": 0, "trem_rate": 486958, "trem_depth": 1500, "r1": 20000, "r2": 4000, "r3": 2000, "r4": 30000, "l1": 32767, "l2": 20000, "l3": 12000 } },
+      { "id": "op3", "type": "fm_op", "params": { "ratio": 3, "waveform": 0, "level": 12000, "feedback": 0, "trem_rate": 292174, "trem_depth": 1800, "r1": 20000, "r2": 4000, "r3": 2000, "r4": 30000, "l1": 32767, "l2": 20000, "l3": 12000 } },
+      { "id": "op4", "type": "fm_op", "params": { "ratio": 2, "waveform": 0, "level": 10000, "feedback": 0, "trem_rate": 340870, "trem_depth": 1200, "r1": 20000, "r2": 4000, "r3": 2000, "r4": 30000, "l1": 32767, "l2": 20000, "l3": 12000 } },
       { "id": "d1", "type": "delay1" },
       { "id": "d2", "type": "delay1" },
       { "id": "d3", "type": "delay1" },
@@ -51,13 +61,18 @@
     "nodes": [
       { "id": "lp", "type": "svf", "params": { "f": 8000, "q": 40000 } },
       { "id": "wf", "type": "wavefolder", "params": { "amount": 0 } },
-      { "id": "master", "type": "vca", "params": { "level": 30000 } }
+      { "id": "master", "type": "vca", "params": { "level": 30000 } },
+      { "id": "plfo", "type": "lfo", "params": { "rate": 486958, "depth": 14 } }
     ],
     "wires": [
       { "from": "voice", "to": "lp.audio" },
       { "from": "lp.low", "to": "wf.audio" },
       { "from": "wf.audio", "to": "master.audio" },
-      { "from": "master.audio", "to": "out" }
+      { "from": "master.audio", "to": "out" },
+      { "from": "plfo.cv", "to": "op1.pitch" },
+      { "from": "plfo.cv", "to": "op2.pitch" },
+      { "from": "plfo.cv", "to": "op3.pitch" },
+      { "from": "plfo.cv", "to": "op4.pitch" }
     ]
   }
 }

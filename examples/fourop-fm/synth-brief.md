@@ -14,9 +14,8 @@
 - **Three reference sounds:** (1) a DX7-style E-piano (algorithm 4, two
   2-operator stacks); (2) a clangorous bell (algorithm 0, deep stack + feedback);
   (3) an additive organ pad (algorithm 7, all four carriers).
-- **Explicit non-goals:** no LFO (the OPZ's two are deferred), no patch
-  persistence/MIDI sysex, no effects beyond filter + wavefolder, no velocity
-  scaling (deferred; see README).
+- **Explicit non-goals:** no patch persistence/MIDI sysex, no effects beyond
+  filter + wavefolder, no velocity scaling (deferred; see README).
 
 ## 2. Sound and voice architecture
 
@@ -32,7 +31,9 @@
 - **Envelopes and velocity:** DX rate/level (`dx_env`, 4 rates + 3 levels); no
   velocity scaling (deferred).
 - **Modulation:** the routing matrix (7 algorithms) selects which operator
-  phase-modulates which; feedback = self-modulation.
+  phase-modulates which; feedback = self-modulation. One **global pitch LFO**
+  (vibrato, shared across voices) and one **amplitude LFO per operator** (tremolo,
+  per-voice).
 - **Effects and output stage:** carrier sum → `svf` LP → `wavefolder` → master
   `vca`.
 
@@ -49,20 +50,22 @@
   ```
   The four `delay1` make the graph acyclic for *every* algorithm (all modulation
   reads the 1-sample-delayed output of its sources).
-- **Global-zone graph:** `lp` (`svf`) → `wf` (`wavefolder`) → `master` (`vca`):
+- **Global-zone graph:** `lp` (`svf`) → `wf` (`wavefolder`) → `master` (`vca`),
+  plus the shared `plfo` (`lfo`) whose `cv` feeds every operator's `pitch`:
   `voice → lp.audio`, `lp.low → wf.audio`, `wf.audio → master.audio`,
-  `master.audio → out`.
+  `master.audio → out`, `plfo.cv → op1..op4.pitch`.
 - **Macros:** `fm_op` (shipped, `modules/macros/fm_op/`) — the operator, with
-  params `ratio` (note-derived), `waveform`, `level`, `feedback`, `r1..r4`,
-  `l1..l3` mapped inward.
+  params `ratio` (note-derived), `waveform`, `level`, `feedback`, `trem_rate`,
+  `trem_depth`, `r1..r4`, `l1..l3` mapped inward, and inputs `fm` (audio) +
+  `pitch` (control).
 - **Voice count / sample rate:** 8 voices / 44100 Hz (the default).
 - **Feedback paths:** each operator's self-feedback is one `delay1` (out ×
-  feedback → sum with external fm → `ph.fm`).
+  feedback → sum with external fm + pitch → `ph.fm`).
 
 ### 2.2 Parameter manifest
 
-> The 16 friendly names below are what the panel exposes; the generator also
-> auto-exposes the remaining 29 flattened operator-envelope params (per-op
+> The 26 friendly names below are what the panel exposes; the generator also
+> auto-exposes the remaining flattened operator-envelope params (per-op
 > `r2/r3/l1/l2/l3` × 4, plus op2–4's `feedback`/`r1`/`r4`) by their
 > `<instance>.<param>` target path (settable via `set_param`, not on the panel).
 
@@ -76,11 +79,16 @@
 | feedback | op1.fb.level | 0 | 32767 | linear | |
 | attack | op1.eg.r1 | 0 | 65535 | log | |
 | release | op1.eg.r4 | 0 | 65535 | log | |
+| pitch_rate | plfo.rate | 0 | 20000000 | log | |
+| pitch_depth | plfo.depth | 0 | 32767 | linear | |
 | op1_level … op4_level | opN.vca.level | 0 | 32767 | linear | |
 | op1_waveform … op4_waveform | opN.osc.waveform | 0 | 7 | linear | |
+| op1_trem_rate … op4_trem_rate | opN.lfo.rate | 0 | 20000000 | log | |
+| op1_trem_depth … op4_trem_depth | opN.lfo.depth | 0 | 32767 | linear | |
 
 (`level` is both the output amplitude and the FM index; `feedback` is op1's
-self-modulation depth. All block rate.)
+self-modulation depth. `rate` is a Q32 phase increment per sample —
+`f · 2³² / 44100`, so ~97392 = 1 Hz. All block rate.)
 
 ### 2.3 Tables
 
@@ -91,9 +99,10 @@ self-modulation depth. All block rate.)
 ## 3. Controls and display
 
 - **Keys, buttons, encoders, MASTER:** keys = notes; ENC_KNOB1–7 + ENC_SELECT =
-  the 8 home/op params; BTN_EDIT pushes the `op` context; BTN_HOME pops home.
+  the 8 per-context params; BTN_EDIT pushes `op` then `lfo`; BTN_HOME pops home.
 - **Performance and navigation modes:** `home` (algorithm + output chain +
-  op1 envelope) and `op` (per-operator level/waveform).
+  vibrato), `op` (per-operator level/waveform), and `lfo` (per-operator tremolo
+  rate/depth).
 - **Screen content and update rules:** retained-mode, ~30 Hz redraw; no display
   in the audio callback.
 - **LED feedback:** none specific.
@@ -131,10 +140,12 @@ self-modulation depth. All block rate.)
 ## 7. Acceptance and evidence
 
 - **Must-have features:** 7 runtime algorithms; 8 waveforms; per-op feedback;
-  rate/level envelopes; the filter + wavefolder output chain; a panel.
-- **Optional features:** velocity scaling, LFO, patch persistence.
-- **Host tests:** `umetate.test_generate` renders the patch (non-silent → decays)
-  and resolves the panel; the routing table is the 7-algorithm matrix.
+  rate/level envelopes; a global pitch LFO + per-op amplitude LFO; the filter +
+  wavefolder output chain; a panel.
+- **Optional features:** velocity scaling, patch persistence.
+- **Host tests:** `umetate.test_generate` renders the patch (non-silent → decays),
+  proves the 7 algorithms, resolves the panel, and checks the LFO oscillates; the
+  routing table is the 7-algorithm matrix.
 - **Target package checks:** `lint.c_checks` clean; the emitted DSP compiles
   under the JieLi clang.
 - **Physical timing and device checks:** device acceptance is `blocked`

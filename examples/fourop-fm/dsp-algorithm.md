@@ -187,46 +187,94 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
 ## Component: `fm_op` (the DX-style operator)
 
 - **Purpose:** one FM operator = `phasor → osc → dx_env → vca`, with 1-sample
-  self-feedback and a note-derived `ratio`. The complete DX-style building block;
-  an N-operator voice is N `fm_op` wired by the routing matrix (§`route`).
+  self-feedback, a note-derived `ratio`, a per-op amplitude LFO (tremolo), and a
+  `pitch` input (the shared vibrato LFO). The complete DX-style building block; an
+  N-operator voice is N `fm_op` wired by the routing matrix (§`route`).
 
 - **Algorithm** (fixed-point, exactly):
   ```
-  sum   = external_fm + feedback_prev        (Q15)
-  phase += inc + (sum << 16)                  (FM index: full-scale = ±π phase)
-  sine  = fm1_sin_ws(phase, waveform)         (8 waveforms)
-  out   = sine · eg · level                   (Q15; eg = the dx_env gain)
+  trem   = eg · lfo                                (Q15; the tremolo LFO, bipolar)
+  eg_t   = eg + trem                               (= eg · (1 + lfo/32768))
+  sum    = external_fm + feedback_prev + pitch     (Q15; pitch = the vibrato LFO)
+  phase += inc + (sum << 16)                       (FM index: full-scale = ±π phase)
+  sine   = fm1_sin_ws(phase, waveform)             (8 waveforms)
+  out    = sine · eg_t · level                     (Q15)
   feedback_prev = (out · feedback) delayed 1 sample
   ```
   `inc = note_to_inc(note) · ratio` (note-derived, so non-integer ratios stay in
   tune). Feedback taps the *enveloped, leveled* output (matching ymfm, which feeds
-  back `compute_volume` = sine × envelope).
+  back `compute_volume` = sine × envelope). Tremolo multiplies the envelope
+  (`eg · (1 + lfo)`) so it is gated — no bleed during release. Pitch adds to the
+  FM sum (phase modulation), so it too is silenced with the envelope.
 
-- **Inputs / outputs:** `fm` (audio, external modulation) → `audio` (audio).
+- **Inputs / outputs:** `fm` (audio, external modulation), `pitch` (control, the
+  shared vibrato LFO) → `audio` (audio).
 
 - **Parameters** (mapped inward):
   `ratio` (note-derived), `waveform` (uint32 0–7), `level` (q15, the FM index /
-  output amplitude), `feedback` (q15, self-modulation), and the `dx_env` params
-  `r1..r4, l1..l3`.
+  output amplitude), `feedback` (q15, self-modulation), `trem_rate` (q32, the
+  per-op LFO increment), `trem_depth` (q15, the tremolo depth), and the `dx_env`
+  params `r1..r4, l1..l3`.
 
 - **Coefficients / precompute:** none; `inc` is note-derived at note-on, the
-  feedback is a `delay1` register.
+  feedback is a `delay1` register, the LFO is a control-rate phase accumulator.
 
-- **State:** per-op `phase` (q32), `stage`/`level` (the dx_env), `prev` (delay1).
+- **State:** per-op `phase` (q32), `stage`/`level` (the dx_env), `lfo_phase` (the
+  tremolo), `prev` (delay1).
 
-- **Edge cases:** feedback = 0 → no self-modulation; `sum` = external fm only. The
-  `(sum << 16)` scale keeps a full-scale modulator at a ±π phase swing, so the
-  modulator's `level` is the FM depth.
+- **Edge cases:** feedback = 0 → no self-modulation; `trem_depth` = 0 → `eg_t = eg`
+  (no tremolo); `pitch` = 0 (depth 0) → no vibrato. The `(sum << 16)` scale keeps a
+  full-scale modulator at a ±π phase swing, so the modulator's `level` is the FM
+  depth.
 
 - **Reference + credit:** operator decomposition (phasor/osc/env/vca) from
   ymfm/Dexed (dsp-study §2.6); feedback tap + 1-sample delay from ymfm
   (`output_4op`). The `<<16` FM-index scale is umetate's own fixed-point choice
   (ymfm scales by `>>1` on a 10.10 phase — a different range for a different phase
-  width).
+  width). The tremolo-multiplies-envelope and pitch-via-FM forms are umetate's own.
 
 - **Performance note:** audio rate; per sample = 1 phase add + 1 LUT read + 1
-  envelope multiply + 2 gain multiplies + the feedback multiply. The `delay1` is
-  the cycle-breaker (read first, write last).
+  envelope multiply + 3 gain multiplies + the feedback multiply (the tremolo add is
+  a `mix`). The LFO runs at control rate (once per sub-block). The `delay1` is the
+  cycle-breaker (read first, write last).
+
+---
+
+## Component: `lfo` (the vibrato/tremolo source)
+
+- **Purpose:** a free-running low-frequency oscillator, shared as the *one global*
+  pitch LFO (vibrato) and instantiated *per operator* for amplitude LFO (tremolo).
+  Control-rate: one update per `CONTROL_BLOCK` samples.
+
+- **Algorithm** (fixed-point, exactly):
+  ```
+  phase += rate · CONTROL_BLOCK       (Q32; rate = f · 2³² / 44100 per sample)
+  cv    = fm1_sin(phase) · depth      (Q15 bipolar, ±depth)
+  ```
+  `rate` is a Q32 phase increment *per sample* (the `note_to_inc` convention), so
+  the per-control-tick advance is `rate × CONTROL_BLOCK`. A 1 Hz LFO is
+  `rate = 2³² / 44100 ≈ 97392`.
+
+- **Inputs / outputs:** none → `cv` (control, Q15 bipolar ±depth).
+
+- **Parameters:** `rate` (q32, the increment per sample), `depth` (q15, the output
+  amplitude — 0 disables the LFO).
+
+- **Coefficients / precompute:** none — `fm1_sin` is the existing quarter-sine LUT.
+
+- **State:** `phase` (q32).
+
+- **Edge cases:** `depth` = 0 → `cv` = 0 (off); `rate` = 0 → frozen phase (a
+  constant). The control-rate staircase is ~1.4 kHz (`44100/CONTROL_BLOCK`), smooth
+  enough for sub-audio LFO frequencies.
+
+- **Reference + credit:** a textbook LFO (phase accumulator + sine LUT), expressed
+  as a control-rate node; the `rate × CONTROL_BLOCK` advance is the control-rate
+  accumulator form, umetate's own.
+
+- **Performance note:** control rate — one phase add + one LUT read per sub-block,
+  not per sample. A global LFO runs once per sub-block (scalar); a per-op LFO runs
+  once per voice per sub-block.
 
 
 

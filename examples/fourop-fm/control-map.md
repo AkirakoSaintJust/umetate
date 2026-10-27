@@ -20,7 +20,7 @@
 ## 2. Player model
 
 - **Performance gesture:** one hand on keys, one on ENC_KNOB1 (algorithm).
-- **Menu depth tolerance:** two contexts, no nesting beyond `push`/`pop_home`.
+- **Menu depth tolerance:** three contexts, no nesting beyond `push`/`pop_home`.
 - **What must stay playable during any interaction:** held notes — redraw is
   rate-bounded, never in the audio callback.
 
@@ -37,13 +37,13 @@
 | ENC_KNOB4 | fold | relative | wavefolder depth |
 | ENC_KNOB5 | master | relative | output level |
 | ENC_KNOB6 | feedback | relative | op1 self-modulation |
-| ENC_KNOB7 | attack | relative | op1 envelope attack |
-| ENC_SELECT | release | relative | op1 envelope release |
+| ENC_KNOB7 | pitch_rate | relative | vibrato LFO rate (log) |
+| ENC_SELECT | pitch_depth | relative | vibrato LFO depth |
 | BTN_EDIT | push `op` | | enter operator edit |
 | BTN_HOME | pop_home | | (no-op at home) |
 
 - **Pages:** `home` — label "4OP FM", then `param_row`s for algorithm/cutoff/res/
-  fold/master/feedback/attack/release.
+  fold/master/feedback/pitch_rate/pitch_depth.
 - **on-enter:** — **on-exit:** —
 
 ### Context: `op`
@@ -58,9 +58,27 @@
 | ENC_KNOB6 | op3_waveform | relative | |
 | ENC_KNOB7 | op4_level | relative | |
 | ENC_SELECT | op4_waveform | relative | |
+| BTN_EDIT | push `lfo` | | enter tremolo edit |
 | BTN_HOME | pop_home | | back to home |
 
 - **Pages:** `op` — label "OPERATORS", then `param_row`s for op1–4 level/waveform.
+- **on-enter:** — **on-exit:** —
+
+### Context: `lfo`
+
+| Source | Target param / action | Behavior / curve | Note |
+| --- | --- | --- | --- |
+| ENC_KNOB1 | op1_trem_rate | relative | |
+| ENC_KNOB2 | op1_trem_depth | relative | |
+| ENC_KNOB3 | op2_trem_rate | relative | |
+| ENC_KNOB4 | op2_trem_depth | relative | |
+| ENC_KNOB5 | op3_trem_rate | relative | |
+| ENC_KNOB6 | op3_trem_depth | relative | |
+| ENC_KNOB7 | op4_trem_rate | relative | |
+| ENC_SELECT | op4_trem_depth | relative | |
+| BTN_HOME | pop_home | | back to home |
+
+- **Pages:** `lfo` — label "TREMOLO", then `param_row`s for op1–4 trem rate/depth.
 - **on-enter:** — **on-exit:** —
 
 ## 4. Global bindings (always-on, resolved last)
@@ -77,6 +95,7 @@
 | --- | --- | --- |
 | home | label + 8 `param_row` | redraw on change, ~30 Hz |
 | op | label + 8 `param_row` | redraw on change, ~30 Hz |
+| lfo | label + 8 `param_row` | redraw on change, ~30 Hz |
 
 ## 6. LED / pad feedback
 
@@ -91,13 +110,14 @@
 
 ## 8. Control flow (the state machine)
 
-- **Context transitions:** boot → `home`; `BTN_EDIT` pushes `op`; `BTN_HOME`
-  pops to home (`pop_home`).
-- **The full context stack, worst case:** `[home, op]` — depth 2, unwinds via
+- **Context transitions:** boot → `home`; `BTN_EDIT` pushes `op`; `BTN_EDIT` (in
+  `op`) pushes `lfo`; `BTN_HOME` pops to home (`pop_home`).
+- **The full context stack, worst case:** `[home, op, lfo]` — depth 3, unwinds via
   `pop_home`.
 - **Per-control meaning across contexts:** ENC_KNOB1–7/ENC_SELECT are home params
-  in `home` and operator params in `op`; KEY is always note_on; BTN_HOME always
-  pops home.
+  in `home`, operator params in `op`, and tremolo params in `lfo`; KEY is always
+  note_on; BTN_HOME always pops home; BTN_EDIT pushes the next context (home →
+  op → lfo).
 - **Unresolved / ambiguous bindings:** none.
 
 ## 9. Acceptance

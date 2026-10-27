@@ -141,6 +141,21 @@ ROUTE4_TEST: Patch = {
     "global": {"nodes": [], "wires": []},
 }
 
+# the `lfo` node: a free-running control-rate sine, wired straight to the output so
+# the non-silent contract proves it oscillates (not a constant).
+LFO_TEST: Patch = {
+    "name": "lfo_test",
+    "voices": 1,
+    "voice": {
+        "nodes": [
+            {"id": "lf", "type": "lfo", "params": {"rate": 9739155, "depth": 32767}}
+        ],
+        "wires": [],
+        "voice_out": "lf.cv",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
 SVF_WF: Patch = {
     "name": "svf_wf",
     "voices": 4,
@@ -596,6 +611,38 @@ def _algorithms_render(patch: Patch) -> tuple[bool, str]:
         return run.returncode == 0, run.stdout.strip()
 
 
+def _lfo_varies(patch: Patch) -> tuple[bool, str]:
+    """Generate + compile + run a dump, checking the `lfo` output is non-constant
+    (it oscillates) rather than a stuck DC value."""
+    src = generate(patch)
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        cname = patch["name"].replace("-", "_").replace(".", "_")
+        (d / "harness.c").write_text(DUMP_HARNESS.replace("__NAME__", cname))
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            return False, "compile failed:\n" + proc.stderr
+        run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+        samples = [int(x) for x in run.stdout.split()]
+    if not samples or len(set(samples)) < 2:
+        return False, "lfo output is constant"
+    return True, ""
+
+
 def _goertzel(sig: list[int], freq: float, fs: float) -> float:
     """DFT magnitude at an arbitrary (possibly non-bin) frequency."""
     c = 2.0 * math.cos(2.0 * math.pi * freq / fs)
@@ -792,6 +839,13 @@ def main() -> int:
     print(
         ("ok: " if ok else "FAIL: ")
         + (msg or "svf + wavefolder renders non-silent then silent")
+    )
+    failures += 0 if ok else 1
+
+    ok, msg = _lfo_varies(LFO_TEST)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "lfo oscillates (non-constant control output)")
     )
     failures += 0 if ok else 1
 

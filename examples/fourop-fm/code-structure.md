@@ -12,6 +12,7 @@
   - `modules/nodes/mix4/` — 4-input summer.
   - `modules/nodes/route4/` — the general routing-matrix row mixer.
   - `modules/nodes/route/` — the 4-op FM router (one `algorithm` param, 4 rows).
+  - `modules/nodes/lfo/` — the control-rate low-frequency oscillator.
   - `modules/macros/fm_op/` — the operator (`macro.json`).
   - `examples/fourop-fm/{patch.json,panel.json,synth-brief.md,dsp-algorithm.md,code-structure.md,control-map.md,README.md}`.
 - **Modified**:
@@ -43,6 +44,10 @@ No hand-written `dsp.c`: `generate(patch)` emits `<synth>_dsp_*` from the patch
   `test_generate.py`.
 - **`route4`** / **`mix4`** — the general primitive (row mixer) + 4-sum. Host
   test: `test_generate.py` `ROUTE4_TEST`.
+- **`lfo`** — `node.json`: `ins {}`, `outs { cv(control) }`,
+  `params { rate(q32), depth(q15) }`, `state { phase(phase) }`. `node.c`:
+  `phase += rate * CONTROL_BLOCK` (the emitted macro) then `cv = fm1_sin(phase) ×
+  depth`. Host test: `test_generate.py` `LFO_TEST` (oscillates, non-constant).
 
 ### HAL helpers (`firmware/hal/fm1_math.h`)
 
@@ -55,8 +60,10 @@ No hand-written `dsp.c`: `generate(patch)` emits `<synth>_dsp_*` from the patch
 ## 3. Data layout
 
 - **Per-voice state:** SoA (the generator default) — `opN_ph_phase[NVOICE]`,
-  `opN_eg_level[NVOICE]`, `dN_prev[NVOICE]`, etc.
-- **Single-instance control state:** the global `svf`/`wavefolder`/`vca` scalars.
+  `opN_eg_level[NVOICE]`, `opN_lfo_phase[NVOICE]` (the per-op tremolo LFO),
+  `dN_prev[NVOICE]`, etc.
+- **Single-instance control state:** the global `svf`/`wavefolder`/`vca` scalars
+  and `plfo_phase` (the shared pitch LFO).
 - **Section placement:** per-sample bodies in `.dsp_text`; `routing` + the
   quarter-sine tables `const` (XIP); engine state `.cpu1_bss`.
 

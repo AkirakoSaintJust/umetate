@@ -639,6 +639,7 @@ test + a budget annotation; shipped macros in `modules/macros/`, each =
 | `delay1` / `delayN` | delay | 1-sample (feedback) / N-sample (echo); the DAG cycle-breakers |
 | `noise` | source | white (xorshift, Q15) |
 | `track_bp` | note-tracked filter | state-variable band-pass whose `f` = 2·sin(π·f_note/fs) (the `note_cutoff` feature) |
+| `lfo` | low-frequency osc | control-rate fixed-rate sine (`rate` = Q32 inc/sample, `depth` = bipolar Q15); advances `rate × CONTROL_BLOCK` per tick — the vibrato/tremolo source |
 
 `umetate lib list` shows the library; `umetate scaffold --template` starts from a shipped template; user
 nodes conform to `node.schema.json`, patches to `patch.schema.json`.
@@ -690,10 +691,11 @@ patch's own `macros:` section shadows them.
 
 The **fourop-fm dogfood** (`examples/fourop-fm/`) closed the runtime-algorithm
 gap: `dx_env`, `osc.waveform` (8 waveforms), `vca.level`, `mix4` (the 2-input
-`mix` → 4-input `mix4`), `route4`, `route`, and the `fm_op` rewrite, with the
-**algorithm as a runtime `routing` matrix** — a `tables:` entry applied by
-`route`/`route4` rather than a compile-time graph — plus the `<<16` FM-index
-scale on `phasor.fm`.
+`mix` → 4-input `mix4`), `route4`, `route`, `lfo` (the control-rate
+vibrato/tremolo source), and the `fm_op` rewrite (per-op tremolo + a `pitch`
+input), with the **algorithm as a runtime `routing` matrix** — a `tables:` entry
+applied by `route`/`route4` rather than a compile-time graph — plus the `<<16`
+FM-index scale on `phasor.fm`.
 
 Build order: `fm_op` + `svf` + `wavefolder` → `ifft` + `lpg` → `pitched_noise` +
 `formant` + the cheap macros → `granulator` last (research-driven). Band-limited

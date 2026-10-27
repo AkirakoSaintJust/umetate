@@ -3,16 +3,18 @@
 A committed end-to-end dogfood (`docs/roadmap.md` §6.9) that exercises the
 framework and surfaces gaps: a 4-operator FM synth in the OPZ/DX21 lineage, with
 **per-operator feedback**, **7 runtime-selectable algorithms**, **rate/level
-envelopes**, and **8 operator waveforms**.
+envelopes**, **8 operator waveforms**, one **global pitch LFO**, and one
+**amplitude LFO per operator**.
 
 ## 1. The synth
 
 - **Voice** (8 voices): four `fm_op` operators (`phasor → osc → dx_env → vca`,
-  each with 1-sample self-feedback) + four `delay1` + one `route`. Every
-  modulation reads the 1-sample-delayed output of its sources, so the graph is
-  acyclic for *every* algorithm; the algorithm is a `tables:` routing matrix the
-  `route` node applies at runtime.
-- **Global:** carrier sum → `svf` low-pass → `wavefolder` → master `vca`.
+  each with 1-sample self-feedback + a per-op tremolo LFO) + four `delay1` + one
+  `route`. Every modulation reads the 1-sample-delayed output of its sources, so
+  the graph is acyclic for *every* algorithm; the algorithm is a `tables:`
+  routing matrix the `route` node applies at runtime.
+- **Global:** carrier sum → `svf` low-pass → `wavefolder` → master `vca`, plus
+  the shared `plfo` (pitch/vibrato) whose `cv` feeds every operator's `pitch`.
 - **Algorithms:** the 7 rows of ymfm's `s_algorithm_ops` {0,1,2,4,5,6,7}
   (algorithm 3 dropped as algorithm 2's mirror — see `dsp-algorithm.md`).
 
@@ -20,16 +22,16 @@ envelopes**, and **8 operator waveforms**.
 
 | File | What it holds |
 | --- | --- |
-| `patch.json` | the declarative synth (voice/global zones, 16 friendly params, the `routing` table) |
-| `panel.json` | the UI (`home` + `op` contexts) |
+| `patch.json` | the declarative synth (voice/global zones, 26 friendly params, the `routing` table) |
+| `panel.json` | the UI (`home` + `op` + `lfo` contexts) |
 | `synth-brief.md` | the instrument brief (source of truth for the above) |
-| `dsp-algorithm.md` | the per-component math (dx_env, osc.waveform, routing, fm_op) |
+| `dsp-algorithm.md` | the per-component math (dx_env, osc.waveform, routing, fm_op, lfo) |
 | `code-structure.md` | the nodes/macros + HAL helpers the dogfood shipped |
 | `control-map.md` | the UI interview (contexts, bindings, pages) |
 
 The dogfood shipped library code in `modules/nodes/` (`dx_env`, `mix4`, `route4`,
-`route`), `modules/macros/fm_op/`, and two helpers in `firmware/hal/fm1_math.h`
-(`fm1_sin_ws`, `fm1_route4`).
+`route`, `lfo`), `modules/macros/fm_op/`, and two helpers in
+`firmware/hal/fm1_math.h` (`fm1_sin_ws`, `fm1_route4`).
 
 ## 3. Run
 
@@ -61,7 +63,12 @@ The dogfood did its job — it surfaced two bugs (fixed) and several gaps
    decay-to-near-silence contract. Recorded in the roadmap §6.9.
 5. **Velocity is unwired (deferred).** Like the pocket-drone, the operator VCA
    doesn't take the allocator's `velocity`; scaling it is a follow-up.
-6. **LFO (deferred).** The OPZ has two; out of scope here.
+6. **The LFO is a control-rate accumulator (shipped).** The `lfo` node advances
+   `rate × CONTROL_BLOCK` per tick (the emitted `CONTROL_BLOCK` macro), so the
+   phase increments in sample units and the output is a per-sub-block held value
+   — smooth for sub-audio rates, no per-sample cost. The pitch LFO is a *global*
+   control-rate node (scalar, computed before the voice audio loop, so it can
+   feed the operators); the tremolo LFOs are per-voice.
 7. **The OPZ's exact 8-waveform mask (deferred).** `fm1_sin_ws` implements the
    OPL/OPZ bit-trick scheme with the OPL's mask table; the OPZ's exact 8 are a
    documented follow-up in `dsp-algorithm.md`.
