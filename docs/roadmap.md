@@ -829,16 +829,15 @@ display metadata (min/max/curve/unit/rate/modulatable) to a flattened
 emits `tables.c`/`.h` (built-in shapes + inline spec, referenceable by
 `${table.<name>}`). **Layer: host.**
 
-**P3-4 — `flash`, `debrick` (direct, gated).** Per §6.1 and §8. `flash` wraps the
-inherited `fm1_install.py` (strangler-fig, not a rewrite — the clean `umetate/flash.py`
-stays after device verification): parses identity/CRC/model, switches to update mode,
-and resumes a device already in update mode; `debrick` names the recovery routes and
-their prerequisites. `mask-rom` debrick is **blocked** (needs the USB_KEY dongle +
-`jl-uboot-tool`; the dongle is at hand but pending a USB solder, and the FM-1 is
-unreachable for ~10 days). *Acceptance:* no write without `--device` + confirmation;
-wrong-model exits 6; resume checks the model; a fake device (the inherited
-`install_test.py`'s `backend` seam) exercises flash/resume without hardware.
-**Layer: host.**
+**P3-4 — `flash`, `debrick` (direct, gated).** — **done (host), blocked (device)** —
+`flash.py` wraps the inherited `fm1_install.py` (strangler-fig, not a rewrite): the
+§8 `--device` gate, package identity/CRC verification before any MIDI, the named
+recovery routes, then the installer (wrong-model exits 6). `debrick.py` names the
+recovery routes + prerequisites; `mask-rom` is **blocked** (USB_KEY dongle pending a
+USB solder; FM-1 ~10 days). *Verified:* `flash` refuses without `--device`; a damaged
+package exits 2; a wrong-model fake device exits 6 (the inherited `install_test.py`
+`backend` seam); `debrick` lists the routes; `mypy --strict` + `ruff` + `test_cli`
+green. Real-device acceptance is `blocked`. **Layer: host.**
 
 **P3-5 — `web-build`/`web-serve` + `evidence`.** — **done (host/browser)** —
 `web.py` (`web-build` emscripten-compiles the generated `dsp.c` to a standalone

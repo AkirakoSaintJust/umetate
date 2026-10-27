@@ -15,6 +15,7 @@ import sys
 import tempfile
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 import umetate.cli as cli
 from umetate import __version__
@@ -70,14 +71,6 @@ def _quick_check_json() -> None:
     assert "layers" in data
     for layer in data["layers"]:
         assert set(layer) == {"layer", "status", "detail"}
-
-
-def _stub_reports_phase() -> None:
-    buf = io.StringIO()
-    with contextlib.redirect_stderr(buf):
-        rc = cli.main(["flash"])
-    assert rc == 1
-    assert "P3-4" in buf.getvalue()
 
 
 def _lib_lists() -> None:
@@ -173,6 +166,119 @@ def _wasm_import_parser() -> None:
     assert web.wasm_import_count(one_import) == 1
 
 
+def _synthetic_package(
+    fm1: Any, product: str = "FM-1_900", size: int = 0x2000
+) -> bytes:
+    """A valid 20-block .fwsc (as fm1_install's own test builds it)."""
+    img = bytearray((i * 7) & 0xFF for i in range(size))
+    img[0x1800:0x1810] = fm1.LOADER_MARK
+    data = bytes(img[0x400:])
+    entry = bytearray(0x50)
+    entry[0:16] = (
+        (0).to_bytes(2, "little")
+        + (0).to_bytes(2, "little")
+        + fm1._crc16(data).to_bytes(2, "little")
+        + bytes(2)
+        + (0x400).to_bytes(4, "little")
+        + len(data).to_bytes(4, "little")
+    )
+    entry[0x40:0x49] = b"flash.bin"
+    lst = fm1._dec(bytes(entry))
+    hdr = bytearray(0x40)
+    hdr[4:8] = size.to_bytes(4, "little")
+    hdr[8:10] = (1).to_bytes(2, "little")
+    hdr[2:4] = fm1._crc16(lst).to_bytes(2, "little")
+    hdr[0:2] = fm1._crc16(bytes(hdr[2:0x40])).to_bytes(2, "little")
+    img[0:0x40] = fm1._dec(bytes(hdr))
+    img[0x40:0x90] = lst
+    raw = bytearray()
+    for i in range(20):
+        m = (ord(product[i]) + i + 1) & 0xFF if i < len(product) else 0x7D
+        raw += img[i * fm1.KEEP : (i + 1) * fm1.KEEP] + bytes([m])
+    raw += img[20 * fm1.KEEP :]
+    return bytes(raw)
+
+
+class _WrongBackend:
+    """A MIDI backend whose one device answers with a wrong identity."""
+
+    def __init__(self, fm1: Any, identity: str) -> None:
+        self._fm1 = fm1
+        self._identity = identity.encode()
+
+    def input_names(self) -> list[str]:
+        return ["FM-1"]
+
+    output_names = input_names
+
+    def open(self, in_name: str, out_name: str) -> _WrongLink:
+        return _WrongLink(self)
+
+
+class _WrongLink:
+    def __init__(self, backend: _WrongBackend) -> None:
+        self._b = backend
+
+    def send(self, pkt: bytes) -> bool:
+        return True
+
+    def read(self, timeout: float) -> bytes:
+        t = self._b._identity
+        body = bytes([0, 0x59, 0x11, 0, 0, 0]) + t + bytes(28 - len(t))
+        return b"\xf0" + bytes(self._b._fm1.pack7(body)) + b"\xf7"
+
+    def drain(self) -> None:
+        pass
+
+    def close(self) -> None:
+        pass
+
+    @property
+    def lost(self) -> bool:
+        return False
+
+
+def _flash_gates() -> None:
+    from . import flash as F
+
+    # no --device: refused, nothing sent
+    buf = io.StringIO()
+    with contextlib.redirect_stderr(buf):
+        rc = F.flash(["x.fwsc"])
+    assert rc == 1 and "--device" in buf.getvalue()
+
+    # a missing package
+    assert F.flash(["missing.fwsc", "--device", "--yes"]) == 2
+
+    # a damaged/garbage package
+    fm1 = F._load()
+    with tempfile.TemporaryDirectory() as tmp:
+        bad = Path(tmp) / "bad.fwsc"
+        bad.write_bytes(b"\x00" * 100)
+        assert F.flash([str(bad), "--device", "--yes"]) == 2
+
+        # wrong model -> exit 6 (the fake-device seam, delegated)
+        ok = Path(tmp) / "ok.fwsc"
+        ok.write_bytes(_synthetic_package(fm1))
+        backend = _WrongBackend(fm1, "SMK-37 Pro_016")
+        rc = F.flash([str(ok), "--device", "--yes"], backend=backend, out=io.StringIO())
+        assert rc == 6
+
+
+def _debrick_routes() -> None:
+    from . import debrick
+
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        rc = debrick.main([])
+    out = buf.getvalue()
+    assert rc == 0 and "app-rescue" in out and "mask-rom" in out
+
+    with contextlib.redirect_stderr(io.StringIO()):
+        rc = debrick.main(["--route", "mask-rom"])
+    assert rc == 1  # blocked
+
+
 def main() -> int:
     tests: _Tests = [
         ("no import side effects", _no_import_side_effects),
@@ -180,7 +286,6 @@ def main() -> int:
         ("version prints __version__", _version_command),
         ("status parses the roadmap", _status_parses),
         ("quick-check --json emits the layer/status shape", _quick_check_json),
-        ("a stub reports its phase", _stub_reports_phase),
         ("lib list shows nodes + templates", _lib_lists),
         ("scaffold patch builds", _scaffold_builds),
         ("lint --c catches a MAXP violation", _lint_catches_violation),
@@ -188,6 +293,8 @@ def main() -> int:
         ("the fm1-emu binary paths resolve", _emu_paths),
         ("evidence validates a matrix", _evidence_validates),
         ("the wasm import parser counts imports", _wasm_import_parser),
+        ("flash gates + wrong-model exit 6", _flash_gates),
+        ("debrick names the routes", _debrick_routes),
     ]
     failures = 0
     for name, test in tests:
