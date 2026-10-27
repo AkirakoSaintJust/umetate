@@ -2,9 +2,9 @@
 # Copyright (C) 2026 P1Onken (umetate)
 """`umetate deep-check` — run the host tests + the checks (§12.8).
 
-`--host` (the default) runs the host DSP/UI/unit tests; `--web` builds the standalone
-wasm + proves host == wasm (P4-1); `--skill` verifies the offline skill bundles
-(P5); the remaining checks land in their phases (`--safety`, `--links` P6).
+`--host` (the default) runs the host DSP/UI/unit tests; `--safety` runs the C
+standing checks (lint); `--web` builds the standalone wasm + proves host == wasm
+(P4-1); `--skill` verifies the offline skill bundles (P5); `--links` lands in P6.
 """
 
 from __future__ import annotations
@@ -17,7 +17,6 @@ from . import runner
 
 # the checks not yet implemented, mapped to the phase they land in
 _NOT_YET = {
-    "safety": "P3-3",
     "links": "P6-1",
 }
 
@@ -64,6 +63,19 @@ def _skill() -> int:
     return 0
 
 
+def _safety() -> int:
+    """The C standing checks (SEC-1/SEC-2, ROM, MMIO, no-double-in-DSP)."""
+    from . import lint
+
+    errors = lint.c_checks()
+    if errors:
+        for error in errors:
+            print(f"deep-check --safety: {error}", file=sys.stderr)
+        return 1
+    print("deep-check --safety: ok")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="umetate deep-check", description=__doc__)
     parser.add_argument("--host", action="store_true", help="the host tests")
@@ -82,6 +94,10 @@ def main(argv: list[str] | None = None) -> int:
         rc = _host()
         print(f"deep-check --host: {'ok' if rc == 0 else 'failed'}")
         failures += 0 if rc == 0 else 1
+    if args.safety or args.all:
+        rc = _safety()
+        print(f"deep-check --safety: {'ok' if rc == 0 else 'failed'}")
+        failures += 0 if rc == 0 else 1
     if args.web or args.all:
         rc = _web()
         print(f"deep-check --web: {'ok' if rc == 0 else 'failed'}")
@@ -90,7 +106,7 @@ def main(argv: list[str] | None = None) -> int:
         rc = _skill()
         print(f"deep-check --skill: {'ok' if rc == 0 else 'failed'}")
         failures += 0 if rc == 0 else 1
-    for flag in ("safety", "links"):
+    for flag in ("links",):
         if getattr(args, flag) or args.all:
             print(
                 f"deep-check --{flag}: not implemented yet ({_NOT_YET[flag]})",

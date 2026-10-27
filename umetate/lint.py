@@ -83,6 +83,14 @@ _CHECKS: list[tuple[str, Callable[[Path], list[str]]]] = [
 ]
 
 
+def c_checks() -> list[str]:
+    """Run the C standing checks; return the list of violations (empty = clean)."""
+    errors: list[str] = []
+    for _name, check in _CHECKS:
+        errors.extend(check(_FW))
+    return errors
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="umetate lint", description=__doc__)
     parser.add_argument("--c", action="store_true", dest="c_checks", help="C checks")
@@ -91,9 +99,7 @@ def main(argv: list[str] | None = None) -> int:
     if not args.c_checks:
         parser.error("give --c (the C standing checks)")
 
-    errors: list[str] = []
-    for _name, check in _CHECKS:
-        errors.extend(check(_FW))
+    errors = c_checks()
     if errors:
         for error in errors:
             print(f"lint: {error}", file=sys.stderr)

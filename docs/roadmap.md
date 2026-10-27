@@ -24,7 +24,7 @@ context, leaving nothing to chance. Spare prose; one fact lives in one place.
 | D7 | CLI device writes | The CLI drives flash/debrick **directly** (`flash`, `debrick`), always behind explicit approval + recovery/backup gates; never as a build/test side effect. |
 | D8 | Document set | **Five canonical docs** (see §4.6) + one firmware-internal `firmware/README.md` + JSON schemas (artifacts). |
 | D9 | Skills | Two skills (development, safety); each **bundles its references offline**. |
-| D10 | Web target | A **WASM parity lab** (web-synth style) + **fm1-emu** as the separate pre-hardware model layer. |
+| D10 | Web target | A **WASM parity lab** (AudioWorklet, output at `build/web/`) + **fm1-emu** as the separate pre-hardware model layer. |
 | D11 | Build environment | **Docker-only**: pinned Linux dev container + a Docker volume holding the JieLi toolchain at `/opt/jieli`; Windows runs it via WSL2. |
 | D12 | First install (stock device) | **Stock update entry** (primary) + **mask-ROM UBOOT / USB_KEY dongle** (fallback). |
 | D13 | Update loader | **Custom source-owned loader** (`ota-<identity>`, Felucca/RIB lineage): on-device model check, resume, `.fwsc` + frozen `_990` preserved. |
@@ -196,7 +196,7 @@ umetate/
 │  ├─ tests/                #   host tests, flash-map tests, security tests
 │  └─ tools/                #   firmware-local build/package/install helpers
 ├─ modules/                 # module library: reviewed nodes (node.json + <node>.c + test)
-├─ web-synth/               # WASM parity lab (local web app target)
+├─ build/web/               # the WASM parity lab output (`web-build` → standalone dsp.wasm + page)
 ├─ skills/
 │  ├─ umetate-development/  # component 2 (SKILL.md + generated references/)
 │  └─ umetate-safety/       # component 3 (SKILL.md + generated references/)
@@ -214,7 +214,7 @@ umetate/
 
 Hard rule: **one firmware root** (`firmware/`, no nesting), **one status
 authority** (`docs/roadmap.md`), **one CLI entry point** (`umetate`). Generated
-views (`gen/`, skill `references/`, `web-synth` artifacts, generated `dsp.c` and
+views (`gen/`, skill `references/`, the `build/web/` artifacts, generated `dsp.c` and
 param tables) are produced by a generator, never hand-edited.
 
 ### 4.2 Runtime ownership (dual-core — the only way)
@@ -588,7 +588,7 @@ vocabulary as an `Enum`. I/O-bound: optimize only measured hot paths.
   fallback).
 
 **Generated files.** `gen/`, generated `dsp.c` + param tables, `synth_params.h`,
-`params.js`, skill `references/`, `web-synth` artifacts carry `// GENERATED — do not
+`params.js`, skill `references/`, the `build/web/` artifacts carry `// GENERATED — do not
 edit`; the generator is authoritative.
 
 ### 6.9 Module library (the batteries)
@@ -1708,7 +1708,8 @@ state kinds. All at P0-1. See `examples/pocket-drone/README.md` §5.
 3. **Services** — `evidence.py` (the Status/Layer vocabulary), `runner.py` (container
    exec), `generate.py` (the pure generator), the internal `_ir`/`_frontend`/
    `_backend`/`_tables`/`_panel`/`_installer`/`_emu`/`_skill` helpers, and the
-   `_checks/` (the planned lint/budget/wasm/skill/link checks).
+   checks (`lint.c_checks`, `_skill.check`, `web.check_parity`) — inline in their
+   command modules, no separate `_checks/` package.
 
 **Package layout.**
 
@@ -1724,8 +1725,7 @@ umetate/
   quick_check.py setup.py build.py deep_check.py inspect.py
   flash.py debrick.py                       # device writes (host-side, §8)
   scaffold.py lib.py                        # the schematic engine
-  lint.py fmt.py web.py status.py emu.py
-  _checks/                                # lint checks, budget, wasm, skill, links (planned)
+  lint.py fmt.py web.py status.py emu.py    # lint.py holds the C standing checks
   test_cli.py  test_generate.py test_panel.py test_web.py
 modules/<node>/node.json + node.c         # the node library (§12.5)
 ```
@@ -1740,16 +1740,11 @@ class Status(StrEnum):
 class Layer(StrEnum):
     SOURCE="source"; HOST="host"; BROWSER="browser"; TARGET="target"
     EMULATOR="emulator"; TIMING="timing"; DEVICE="device"; RELEASE="release"
-
-# config.py — frozen, validated on construction
-@dataclass(frozen=True)
-class BuildConfig:
-    board: str = "fm1"; model: str | None = None
-    dsp: str = "integer"; clock: int = 320; profile: str = "perf"
-@dataclass(frozen=True)
-class QuickCheckReport:
-    layers: tuple[LayerReport, ...]; summary: dict[Status, int]
 ```
+
+Build/check options are `argparse` flags on their command modules (`build.py`
+`--board/--model/--dsp/--clock/--profile`); there is no separate `config.py`
+dataclass layer.
 
 **`quick-check` vs `deep-check`.** `quick-check` is a fast, read-only presence/version
 probe (per §5.5 layer): `source` = git repo + clean tree + `mypy --strict`/`ruff` +
@@ -1757,7 +1752,7 @@ schemas; `host` = container up + `cc`/`cmake`/`ninja`/`python3`/`node`/`emcc` re
 `browser` = emscripten present; `target` = `/opt/jieli` toolchain version + SDK asset
 hashes vs `env.lock`; `emulator` = fm1-emu present; `timing`/`device` = a host USB
 probe + the device identity; `release` = tag + package hashes. `deep-check` is the
-deep one (runs the host tests + `_checks/`). `--json` emits
+deep one (runs the host tests + the checks). `--json` emits
 `{"layers":[{"layer","status","detail"}],"summary":{…}}`; `--strict` turns a
 non-device `blocked` into a non-zero exit.
 
@@ -1800,27 +1795,29 @@ None of these use the runner.
 | --- | --- |
 | `build` | `generate.py` (pure) → `runner.run` (target build) → the packager → `.fwsc` |
 | `inspect` | read a `.fwsc` (identity/CRC/model/damage) — pure, no runner, no device |
-| `quick-check` | `runner.probe()` + a host USB probe → `QuickCheckReport` (read-only) |
+| `quick-check` | `runner.probe()` + a host USB probe → a per-layer report (read-only) |
 | `flash` | host-side **MIDI SysEx** (mido + python-rtmidi, §8 gates) — not the runner |
 | `debrick` | USB_KEY dongle → mask-ROM UBOOT → `jl-uboot-tool` (delegated), §8 gates |
 | `scaffold`/`lib` | pure Python over templates/schemas — no runner |
-| `deep-check` | `runner.run` (host tests) + `_checks/` (lint/wasm/skill/links) |
-| `lint`/`fmt` | clang-tidy/clang-format via the runner + the custom `_checks/` |
+| `deep-check` | `runner.run` (host tests) + the checks (lint/wasm/skill) |
+| `lint`/`fmt` | clang-tidy/clang-format via the runner + `lint.c_checks` |
 
-**The checks (`_checks/`, one module each).** `deep-check` runs the checks for the
+**The checks (inline in the command modules).** `deep-check` runs the checks for the
 requested layers; each reports per the §5.5 vocabulary:
 
-- `lint` (source) — the C standing checks: SEC-1 MAXP bounds, SEC-2 UAC access,
-  ROM-address constants, HAL-only MMIO, the flash-busy call graph, no `double`/
-  64-bit-div/allocation in the DSP TU (`.clang-tidy` + the custom checks).
-- `budget` (target) — the link report: `.dsp_text`/`.pool`/`.cpu1_bss` fit the
-  §12.2 flash/RAM map; run by `build`, fails on overage (never silent).
-- `wasm` (browser) — `dsp.wasm` is standalone (no import section) + the host↔browser
-  parity: the gcc (host) and wasm (node) renders match exactly (`deep-check --web`).
-- `skill` (source) — the two offline skills (development, safety) each have
-  `SKILL.md` + generated `references/` in sync with the canonical docs
+- `lint` (source) — `lint.c_checks`: the C standing checks: SEC-1 MAXP bounds,
+  SEC-2 UAC access, ROM-address constants, HAL-only MMIO, the flash-busy call
+  graph, no `double`/64-bit-div/allocation in the DSP TU (`.clang-tidy` + the
+  custom checks).
+- `budget` (target) — run by `build` (the firmware link report): `.dsp_text`/
+  `.pool`/`.cpu1_bss` fit the §12.2 flash/RAM map; fails on overage (never silent).
+- `wasm` (browser) — `web.check_parity`: `dsp.wasm` is standalone (no import
+  section) + the host↔browser parity: the gcc (host) and wasm (node) renders match
+  exactly (`deep-check --web`).
+- `skill` (source) — `_skill.check`: the two offline skills (development, safety)
+  each have `SKILL.md` + generated `references/` in sync with the canonical docs
   (byte-for-byte; drift is a hard failure).
-- `links` (source) — the docs' cross-references resolve (no dead links).
+- `links` (source) — the docs' cross-references resolve (no dead links); lands P6.
 
 Flags: `--host` (host vectors + UI tests), `--safety` (lint), `--web` (wasm),
 `--skill`, `--links`, `--all`; `lint --c` runs the `lint` check standalone.

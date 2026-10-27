@@ -81,9 +81,10 @@ Before interviewing, read (do not trust memory):
 
 Record the board (`--board fm1|smk37`), the **exact control inventory** (every
 named button/encoder/key/pad/fader/wheel), and what each source can express. The
-FM-1 has 27 keys, two octave buttons, a MASTER pot, and its button/encoder set;
-the SMK-37 adds velocity, 16 pads, 4 faders, 8 encoders (+bank), and pitch/mod
-wheels — always read the enum, never assume a name.
+exact names are board-specific — always read the `BTN_*`/`ENC_*` enums in
+`firmware/src/platform.c` rather than assuming a count. The SMK-37 adds, relative
+to the FM-1, the velocity keybed, 16 pads, 4 faders (+ bank), 8 encoders
+(+ bank), and the pitch/mod wheels.
 
 ### 1. Design interview — the synth architecture
 
@@ -138,8 +139,10 @@ Turn the two designs into one living plan:
 - `templates/feature-contract.md` — one per milestone: params/events, bounds,
   files, verification, risks, fallback.
 - `templates/supported-load-profile.md` — the simultaneous maxima and the worst
-  case. Hard limits: audio callback ≤ 2.9 ms (50% of 5.8 ms), RAM ≤ 96 KiB,
-  pool ≤ 336 KiB, code ≤ 568 KiB, stack ≤ 24 KiB.
+  case. Hard limits (per `docs/roadmap.md` §12.2, verified by the linker report):
+  audio callback ≤ 2.9 ms (50% of 5.8 ms); CPU0 `.data`/`.bss` ≤ 96 KiB; CPU1
+  `.cpu1_bss` ≤ 16 KiB; `.dsp_text` ≤ 32 KiB; `.pool` ≤ 336 KiB; XIP code + const
+  ≤ 568 KiB; stack 24 KiB CPU0 + 8 KiB CPU1.
 - `templates/evidence-matrix.md` — one row per layer, exact command/artifact.
 
 Record file ownership: which files may change, and the forbidden ones (HAL

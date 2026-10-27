@@ -16,7 +16,7 @@ firmware in small, measured increments.
 | --- | --- | --- | --- | --- |
 | 1 | What umetate is; RIB as the runtime; the framework on top | correct mental model | docs | no |
 | 2 | Safety before hardware (hard-brick risk, backup limits, recovery) | informed consent + a backup plan | docs | no |
-| 3 | Verify the environment (`umetate doctor`) | a green/blocked report | host | no |
+| 3 | Verify the environment (`umetate quick-check`) | a green/blocked report | host | no |
 | 4 | Build untouched RIB; host tests; browser lab | first sound in the browser | host/browser | no |
 | 5 | The firmware contract (`app_audio`, `app_main`, `platform_poll`, HAL) | a correct app skeleton | source | no |
 | 6 | Design the instrument (brief, feature contracts, load profile) | a bounded design | docs | no |
@@ -31,10 +31,9 @@ firmware in small, measured increments.
 ## Core commands
 
 ```sh
-umetate doctor            # verify the environment (read-only)
+umetate quick-check         # verify the environment (read-only)
 umetate scaffold patch --name "My Synth" --out examples/my-synth   # author a synth
-umetate add oscillator --name saw                                  # add a feature
-umetate check             # run the host-side checks
+umetate deep-check --host   # run the host-side checks
 umetate build --board fm1 --model pro                              # a target package (no flash)
 ```
 

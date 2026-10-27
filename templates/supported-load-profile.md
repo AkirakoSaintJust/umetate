@@ -25,10 +25,12 @@
 | Resource | Target | Evidence class | Measured |
 | --- | --- | --- | --- |
 | Audio callback | ≤ 2.9 ms (50% of 5.8 ms) | estimated / host / target | |
-| RAM | ≤ 96 KiB | build report | |
-| Pool | ≤ 336 KiB | build report | |
-| Code | ≤ 568 KiB | build report | |
-| Stack | ≤ 24 KiB | build report | |
+| CPU0 `.data`/`.bss` | ≤ 96 KiB | build report | |
+| CPU1 `.cpu1_bss` | ≤ 16 KiB | build report | |
+| `.dsp_text` (hot DSP code) | ≤ 32 KiB | build report | |
+| `.pool` (delay lines) | ≤ 336 KiB | build report | |
+| XIP code + const | ≤ 568 KiB | build report | |
+| Stack | 24 KiB CPU0 + 8 KiB CPU1 | build report | |
 | Flash write pause | no audio during erase | design | |
 
 ## Worst-case test

@@ -76,11 +76,16 @@ def render(skill: str, rel: str) -> str:
 
 
 def generate() -> None:
-    """(Re)write every generated `references/` file from its canonical source."""
+    """(Re)write every generated `references/` file from its canonical source.
+
+    Writes bytes (not `write_text`), so the canonical sources' LF line endings are
+    preserved verbatim — on Windows, `write_text` would re-translate `\n` to `\r\n`
+    and every regeneration would churn the committed copies.
+    """
     for (skill, rel), _ in _SOURCES.items():
         dest = _SKILLS / skill / rel
         dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_text(render(skill, rel), encoding="utf-8")
+        dest.write_bytes(render(skill, rel).encode("utf-8"))
 
 
 @dataclass
