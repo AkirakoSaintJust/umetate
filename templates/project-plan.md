@@ -1,0 +1,56 @@
+# Project plan
+
+> One living plan per project. Link the brief, feature contracts, load profile,
+> and evidence matrix instead of copying their content. Delete superseded text.
+
+## 1. Snapshot
+
+- **Project:**
+- **Brief:**
+- **Repository/commit:**
+- **Board(s):**
+- **Status date:**
+- **Security/evidence caveats:**
+
+## 2. Milestones
+
+| # | Milestone | Player-visible outcome | Contract | Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| 1 | First audible slice | one note, one envelope, one control | | host | |
+| 2 | Voice and filter | polyphony and tone control | | host/browser | |
+| 3 | Panel and display | playable controls and feedback | | target | |
+| 4 | MIDI and persistence | external notes and recall | | target/device | |
+
+## 3. Interfaces and ownership
+
+- **Audio callback owner:**
+- **Main-loop owner:**
+- **Shared values and publication rule:**
+- **HAL/platform changes:**
+- **Storage layout/version:**
+
+## 4. Resource budget
+
+- **Link to supported-load profile:**
+- **Link to budget report:**
+- **Hard limits and warnings:**
+
+## 5. Verification ladder
+
+- **Host commands:**
+- **Browser commands:**
+- **Target commands:**
+- **Device commands/approval:**
+- **What is blocked:**
+
+## 6. Risks and stop criteria
+
+| Risk | Trigger | Response | Stop criterion |
+| --- | --- | --- | --- |
+| | | | |
+
+## 7. Handoff
+
+- **Read first:**
+- **Do not change without approval:**
+- **Next safe action:**

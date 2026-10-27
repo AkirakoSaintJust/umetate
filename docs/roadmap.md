@@ -198,11 +198,11 @@ umetate/
 ├─ modules/                 # module library: reviewed nodes (node.json + <node>.c + test)
 ├─ web-synth/               # WASM parity lab (local web app target)
 ├─ skills/
-│  ├─ umetate-development/  # component 2 (SKILL.md + offline references/)
-│  └─ umetate-safety/       # component 3 (SKILL.md + offline references/)
+│  ├─ umetate-development/  # component 2 (SKILL.md + generated references/)
+│  └─ umetate-safety/       # component 3 (SKILL.md + generated references/)
 ├─ templates/
 │  ├─ synth-brief.md  project-plan.md  feature-contract.md
-│  ├─ supported-load-profile.md  evidence-matrix.md
+│  ├─ supported-load-profile.md  evidence-matrix.md  control-map.md
 │  └─ scaffold/             # params.schema.json, node.schema.json, patch.schema.json, panel.schema.json
 ├─ docker/                  # component 4: Dockerfile, build.sh, compose, .env.example
 ├─ docs/
@@ -440,9 +440,11 @@ agent) → first audible slice → shared DSP (host/browser/firmware adapters) �
 panel/display → MIDI/persistence → verify (evidence matrix) → handoff. Refuses
 device writes unless the user explicitly requests that action and §8 gates pass.
 
-`references/` bundles (offline): AC79 facts, flash maps + protected ranges, the
+`references/` (generated, offline — byte-for-byte copies of the canonical docs,
+verified by `deep-check --skill`): AC79 facts, flash maps + protected ranges, the
 port-kit mapping patterns, the node/macro/patch schemas, the recovery taxonomy, the
-evidence vocabulary, the code conventions.
+evidence vocabulary, the code conventions. The synth-project templates
+(`templates/*.md`) are referenced by repo path, not copied into the bundle.
 
 ### 6.3 Skill: umetate-safety
 
@@ -450,7 +452,8 @@ Offline-bundled. Triggers on memory-safety review, USB/UAC/MIDI/OTA attack
 surfaces, package identity, flash writes, and any device write. Maps each surface
 (USB EP0/EP1/EP3, UAC tap/FIR/DMA, MIDI SysEx, OTA parser, update loader,
 flash/store, package identity, host installer, build supply chain) to code, a test,
-or an explicit gate. Owns the device-write gate (§8).
+or an explicit gate. Owns the device-write gate (§8). Its `references/` are the
+generated recovery taxonomy + code conventions (same drift-checked copies).
 
 ### 6.4 Docker image + volume
 
@@ -878,18 +881,29 @@ audio peak). *Verified:* `umetate emu --check` boots `umetate-fm1-pro.fwsc` (aud
 audio peak 6720, no halt); `quick-check` reports the `emulator` layer as `pass`. RIB
 runs unchanged in the emulator. No device-acceptance claim. **Layer: emulator.**
 
-### Phase 5 — Skills (P5)
+### Phase 5 — Skills (P5) — **done**
 
-**P5-1 — umetate-development skill.** `SKILL.md` + offline `references/` (AC79
-facts, flash maps, port-kit patterns, the node/macro/patch schemas, recovery
-taxonomy, evidence vocabulary, code conventions) + `assets/` (copies of `templates/`).
-*Acceptance:* `deep-check --skill` passes; it drives `scaffold`/patch authoring and
-refuses device writes without §8 gates. **Layer: docs.**
+**P5-1 — umetate-development skill.** **done** — `SKILL.md` (the full workflow
+prose: orient → design interview → plan → author nodes/macros/patches via
+`scaffold` → first slice → shared DSP → panel → MIDI/persistence → verify →
+recovery/handoff) + generated offline `references/` (AC79 facts, flash maps,
+recovery taxonomy, evidence vocabulary, code conventions from
+`firmware/README.md`, and the node/macro/patch schemas). The 5 synth-project
+templates (`synth-brief`/`project-plan`/`feature-contract`/`supported-load-profile`/
+`evidence-matrix`) now live in `templates/` and are referenced by repo path (not
+copied into the bundle). *Acceptance:* `deep-check --skill` passes; it drives
+`scaffold`/patch authoring and refuses device writes without §8 gates. **Layer: docs.**
 
-**P5-2 — umetate-safety skill.** `SKILL.md` + offline `references/` (threat model,
-audit checklist, device gates, recovery taxonomy). *Acceptance:* `deep-check --skill`
-passes; maps every surface to code/test/gate; preserves "not security-clean while
-SEC-1 device validation is blocked." **Layer: docs.**
+**P5-2 — umetate-safety skill.** **done** — `SKILL.md` (the threat model + surface
+map, memory-safety + attack-surface workflow, package identity, the §8 device-write
+gate, reporting) + generated offline `references/` (recovery taxonomy + code
+conventions). *Acceptance:* `deep-check --skill` passes; maps every surface to
+code/test/gate; preserves "not security-clean while SEC-1 device validation is
+blocked." **Layer: docs.**
+
+**Exit P5:** **met** — both skills are offline-bundled; `references/` are generated
+copies of the canonical docs (drift is a hard failure); `deep-check --skill` proves
+them in sync. No device-layer claim.
 
 ### Phase 6 — Tutorial + start guide final (P6)
 
@@ -1683,8 +1697,8 @@ state kinds. All at P0-1. See `examples/pocket-drone/README.md` §5.
 2. **Commands** — one module per command, each `main(argv: list[str]) -> int`.
 3. **Services** — `evidence.py` (the Status/Layer vocabulary), `runner.py` (container
    exec), `generate.py` (the pure generator), the internal `_ir`/`_frontend`/
-   `_backend`/`_tables`/`_panel`/`_installer`/`_emu` helpers, and `_checks/` (the
-   planned lint/budget/wasm/skill/link checks).
+   `_backend`/`_tables`/`_panel`/`_installer`/`_emu`/`_skill` helpers, and the
+   `_checks/` (the planned lint/budget/wasm/skill/link checks).
 
 **Package layout.**
 
@@ -1696,6 +1710,7 @@ umetate/
   _ir.py        _frontend.py  _backend.py # generator internals (§12.4): IR, passes, emission
   _tables.py    _panel.py                 # the table/panel generators
   _installer.py _emu.py                   # the fm1_install loader; the fm1-emu paths
+  _skill.py                               # the skill references/ generator + drift check (P5)
   quick_check.py setup.py build.py deep_check.py inspect.py
   flash.py debrick.py                       # device writes (host-side, §8)
   scaffold.py lib.py                        # the schematic engine
@@ -1792,8 +1807,9 @@ requested layers; each reports per the §5.5 vocabulary:
   §12.2 flash/RAM map; run by `build`, fails on overage (never silent).
 - `wasm` (browser) — `dsp.wasm` is standalone (no import section) + the host↔browser
   parity: the gcc (host) and wasm (node) renders match exactly (`deep-check --web`).
-- `skill` (source) — the two offline skills (development, safety) have `SKILL.md` +
-  `references/` present and valid.
+- `skill` (source) — the two offline skills (development, safety) each have
+  `SKILL.md` + generated `references/` in sync with the canonical docs
+  (byte-for-byte; drift is a hard failure).
 - `links` (source) — the docs' cross-references resolve (no dead links).
 
 Flags: `--host` (host vectors + UI tests), `--safety` (lint), `--web` (wasm),

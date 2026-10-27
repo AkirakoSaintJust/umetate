@@ -301,6 +301,14 @@ def _debrick_routes() -> None:
     assert rc == 1  # blocked
 
 
+def _skill_check() -> None:
+    from . import _skill
+
+    assert _skill.check() == [], (
+        "the skill bundles drifted; run `python -m umetate._skill generate`"
+    )
+
+
 def main() -> int:
     tests: _Tests = [
         ("no import side effects", _no_import_side_effects),
@@ -318,6 +326,7 @@ def main() -> int:
         ("flash gates + wrong-model exit 6", _flash_gates),
         ("flash asks before writing", _flash_confirms),
         ("debrick names the routes", _debrick_routes),
+        ("the skill bundles are in sync", _skill_check),
     ]
     failures = 0
     for name, test in tests:

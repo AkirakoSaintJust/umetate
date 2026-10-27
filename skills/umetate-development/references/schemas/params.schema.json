@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://umetate.dev/schema/params.schema.json",
+  "title": "umetate generated params (params.json)",
+  "description": "The generated, flattened param table (what the panel/MIDI sees). Validated by this schema; the patch's `params:` section (binding + display metadata) and its per-node params are its source.",
+  "type": "object",
+  "required": ["params"],
+  "additionalProperties": false,
+  "properties": {
+    "params": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/param" }
+    }
+  },
+  "$defs": {
+    "param": {
+      "type": "object",
+      "required": ["id", "name", "target", "min", "max", "default"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The stable set_param id (the generated table indexes by it)."
+        },
+        "name": {
+          "type": "string",
+          "description": "The user-facing name (a `params:` key, else the target path)."
+        },
+        "target": {
+          "type": "string",
+          "description": "The flattened <instance>.<param> path this id backs."
+        },
+        "min": { "type": "integer" },
+        "max": { "type": "integer" },
+        "default": { "type": "integer", "description": "The DSP initial value." },
+        "curve": { "enum": ["linear", "log"] },
+        "unit": { "type": "string", "description": "Display unit, e.g. 'Hz', '%', 'cents'." },
+        "rate": {
+          "enum": ["sample", "block"],
+          "description": "sample = re-derived per frame; block = every control block."
+        },
+        "modulatable": { "type": "boolean" }
+      }
+    }
+  }
+}

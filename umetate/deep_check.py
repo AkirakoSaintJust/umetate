@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
-"""`umetate deep-check` — run the host tests + the checks (`_checks/`, §12.8).
+"""`umetate deep-check` — run the host tests + the checks (§12.8).
 
 `--host` (the default) runs the host DSP/UI/unit tests; `--web` builds the standalone
-wasm + proves host == wasm (P4-1); the other checks land in their phases
-(`--safety`/`--skill` P3-3, `--links` P6).
+wasm + proves host == wasm (P4-1); `--skill` verifies the offline skill bundles
+(P5); the remaining checks land in their phases (`--safety`, `--links` P6).
 """
 
 from __future__ import annotations
@@ -18,7 +18,6 @@ from . import runner
 # the checks not yet implemented, mapped to the phase they land in
 _NOT_YET = {
     "safety": "P3-3",
-    "skill": "P3-3",
     "links": "P6-1",
 }
 
@@ -51,6 +50,20 @@ def _web() -> int:
     return 0 if ok else 1
 
 
+def _skill() -> int:
+    """Verify the offline skill bundles: `SKILL.md` + generated `references/` in
+    sync with the canonical docs (fail on drift)."""
+    from . import _skill
+
+    errors = _skill.check()
+    if errors:
+        for error in errors:
+            print(f"deep-check --skill: {error}", file=sys.stderr)
+        return 1
+    print("deep-check --skill: ok (two skills, references in sync)")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="umetate deep-check", description=__doc__)
     parser.add_argument("--host", action="store_true", help="the host tests")
@@ -73,7 +86,11 @@ def main(argv: list[str] | None = None) -> int:
         rc = _web()
         print(f"deep-check --web: {'ok' if rc == 0 else 'failed'}")
         failures += 0 if rc == 0 else 1
-    for flag in ("safety", "skill", "links"):
+    if args.skill or args.all:
+        rc = _skill()
+        print(f"deep-check --skill: {'ok' if rc == 0 else 'failed'}")
+        failures += 0 if rc == 0 else 1
+    for flag in ("safety", "links"):
         if getattr(args, flag) or args.all:
             print(
                 f"deep-check --{flag}: not implemented yet ({_NOT_YET[flag]})",
