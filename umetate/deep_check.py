@@ -2,8 +2,9 @@
 # Copyright (C) 2026 P1Onken (umetate)
 """`umetate deep-check` — run the host tests + the checks (`_checks/`, §12.8).
 
-`--host` (the default) runs the host DSP/UI/unit tests; the other checks land in
-their phases (`--safety`/`--skill` P3-3, `--web` P3-5, `--links` P6).
+`--host` (the default) runs the host DSP/UI/unit tests; `--web` builds the standalone
+wasm + proves host == wasm (P4-1); the other checks land in their phases
+(`--safety`/`--skill` P3-3, `--links` P6).
 """
 
 from __future__ import annotations
@@ -32,7 +33,7 @@ def _host() -> int:
 
 
 def _web() -> int:
-    """Build the standalone `dsp.wasm` (web-build) and verify no import section."""
+    """Build the standalone `dsp.wasm` and prove host == wasm (the parity check)."""
     import json
 
     from . import web
@@ -43,7 +44,11 @@ def _web() -> int:
         print(f"deep-check --web: {exc}", file=sys.stderr)
         return 1
     name = str(patch["name"]).replace("-", "_").replace(".", "_")
-    return web.build(patch, web._OUT, name)
+    if web.build(patch, web._OUT, name) != 0:
+        return 1
+    ok, msg = web.check_parity(web._OUT, name)
+    print(f"deep-check --web parity: {'ok' if ok else 'FAIL'} ({msg})")
+    return 0 if ok else 1
 
 
 def main(argv: list[str] | None = None) -> int:

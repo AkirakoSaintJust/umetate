@@ -851,12 +851,18 @@ browser (peak 32765 on note-on, silent after off); `web-serve` serves the harnes
 + `ruff` + `test_cli` green. The real parity lab (AudioWorklet + the automated
 host↔browser check) is **P4-1**. **Layer: host/browser.**
 
-### Phase 4 — Web lab + emulator (P4) — **in progress**
+### Phase 4 — Web lab + emulator (P4) — **done**
 
-**P4-1 — WASM parity lab.** Compile the generated DSP (the same sources as
-firmware/host) to standalone WASM; AudioWorklet adapter; versioned message protocol;
-explicit rate/block conversion; gesture-gated start. *Acceptance:* `deep-check --web`
-passes; browser matches host within tolerance. **Layer: browser.**
+**P4-1 — WASM parity lab.** — **done (browser)** — the P3-5 harness grew an
+**AudioWorklet** (`worklet.js`: wasm instance, 128→256 block conversion, Q15→float) +
+a **versioned message protocol** (`{v: 1, op: …}`, rejected unless v1) + a
+**gesture-gated start** (`main.js`/`index.html`), and `deep-check --web` now proves
+**host == wasm parity**: the same generated `dsp.c` compiled by gcc (host) and emcc
+(wasm, run via node — the browser's WebAssembly semantics) render an identical script
+and the 512 `int32` samples match **exactly**. *Verified:* `deep-check --web parity: ok
+(host == wasm, exact)`; `test_web` (standalone wasm + the exact parity) green; `mypy
+--strict` + `ruff` clean. (Also fixed the latent `--out` path bug in `_emcc_args`.)
+**Layer: browser.**
 
 **P4-2 — fm1-emu as model layer.** — **done (emulator)** — `umetate setup` (no flags)
 now installs Rust (rustup) and builds fm1-emu at the pinned commit — the `fm1-emu`
@@ -1776,8 +1782,8 @@ requested layers; each reports per the §5.5 vocabulary:
   64-bit-div/allocation in the DSP TU (`.clang-tidy` + the custom checks).
 - `budget` (target) — the link report: `.dsp_text`/`.pool`/`.cpu1_bss` fit the
   §12.2 flash/RAM map; run by `build`, fails on overage (never silent).
-- `wasm` (browser) — `dsp.wasm` is standalone (no import section); P4-1 adds the
-  host↔browser parity within tolerance.
+- `wasm` (browser) — `dsp.wasm` is standalone (no import section) + the host↔browser
+  parity: the gcc (host) and wasm (node) renders match exactly (`deep-check --web`).
 - `skill` (source) — the two offline skills (development, safety) have `SKILL.md` +
   `references/` present and valid.
 - `links` (source) — the docs' cross-references resolve (no dead links).
