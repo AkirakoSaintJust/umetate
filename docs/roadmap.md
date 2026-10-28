@@ -723,6 +723,21 @@ The shipped, tested UI base every project builds on:
 The panel schema is `templates/scaffold/panel.schema.json`; the interview fills
 `templates/control-map.md`.
 
+**Interaction design rules** (learned on the fourop-fm FM-1 exercise, and now in the
+skill + tutorial):
+
+- **Know each control's kind.** A smooth analog *pot* (the FM-1's `MASTER`) is
+  volume and platform-owned — never bind it to a page slot; a detented *encoder* is
+  a parameter control. Distinguish *dedicated* knobs (`ALGORITHM`, `PRESETS`) from
+  *page-slot* knobs (`KNOB1–4`). Name collisions exist (`SELECT` knob vs `SEL`
+  button) — read the `platform.c` enums.
+- **Respect the silkscreen.** A control's printed label fixes its meaning; the
+  firmware means what it says.
+- **Keys are a menu surface.** The keybed is not just notes — keys double as
+  shortcuts (operator select, mute).
+- **Prefer the page-slot model.** A small fixed set of encoders whose meaning
+  changes per page, with the labels shown on screen.
+
 **fourop-fm panel.** The operator editor is a **4-param page** model: the rightmost
 four encoders (`ENC_KNOB4–7`) edit the four on-screen params, `ENC_SELECT` cycles
 sub-pages (pitch → env-rates → env-levels → tremolo; home: main → pitch), buttons
@@ -1746,6 +1761,14 @@ An `envelope` widget declares its 7 params explicitly (`params: [r1..r4, l1..l3]
 resolved to an `ENV_PARAM[n_op × 7]` table read at `ui_selected_op * 7 + i`; a
 `status` widget reads the algorithm param + `ui_selected_op` + the mute table and
 renders `ALG <n> · OP <n>/4 · MUTE`.
+
+**Recommended interaction pattern** (the fourop-fm FM-1 exercise): the **page-slot
+model** — `BIND_PAGE_SLOT` maps a fixed row of encoders (`KNOB1–4`) to the current
+page's params, so a few knobs reach every parameter with the labels shown on screen
+(the screen says what the knobs do). Dedicated knobs stay dedicated (`ALGORITHM`,
+`PRESETS`); the smooth `MASTER` pot is platform volume, never a slot. The keybed is
+a menu surface (keys as operator/mute shortcuts). This keeps navigation ≤ 2 contexts
+deep on a 240×240 screen.
 
 **Main loop (resolution + dispatch + redraw).**
 

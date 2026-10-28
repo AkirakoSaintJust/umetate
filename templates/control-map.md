@@ -9,6 +9,8 @@
 
 - **Board / revision:**
 - **Controls and their kinds** (momentary / latch / absolute / relative / pot / pad / fader / wheel / key / MIDI):
+- **Knob kinds** (smooth analog pot = volume vs detented encoder = parameter; dedicated knob vs page-slot knob):
+- **Silkscreen labels** (the printed name of each control — a fixed constraint the design must respect):
 - **Display / fonts / LEDs available:**
 - **Controls explicitly unmapped (and why):**
 
@@ -16,6 +18,7 @@
 
 - **Performance gesture** (one hand on keys, one on …):
 - **Menu depth tolerance:**
+- **Keys as shortcuts** (does the keybed double as a menu surface — operator select, mute?):
 - **What must stay playable during any interaction** (held notes, transport):
 
 ## 3. Contexts (modes) and their bindings

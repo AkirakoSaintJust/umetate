@@ -88,6 +88,12 @@ exact names are board-specific — always read the `BTN_*`/`ENC_*` enums in
 to the FM-1, the velocity keybed, 16 pads, 4 faders (+ bank), 8 encoders
 (+ bank), and the pitch/mod wheels.
 
+Record each control's **kind**, not just its name: a smooth analog *pot* (the
+FM-1's `MASTER`) is volume and platform-owned; a detented *encoder* is a parameter
+control. Distinguish *dedicated* knobs (`ALGORITHM`, `PRESETS`) from *page-slot*
+knobs (`KNOB1–4`). Name collisions exist — the FM-1 has both a `SELECT` *knob* and
+a `SEL` *button* — so read the enums, never guess.
+
 ### 1. Design interview — the synth architecture
 
 Interview in focused rounds; write the result into `templates/synth-brief.md`.
@@ -132,6 +138,19 @@ screen; LED/pad feedback; and the full control flow.
   transport, panic.
 - **Widgets** are abstract (`label`, `value`, `bar`, `param_row`, `param_column`,
   `list`, `grid`) — no skeuomorphic knobs on a 240×240 screen.
+- **GUI design rules** (learned on the fourop-fm FM-1 exercise):
+  - **Know each control's kind.** A smooth pot (`MASTER`) is volume and
+    platform-owned — never bind it to a page slot; a detented encoder is a
+    parameter. Distinguish dedicated knobs from page-slot knobs.
+  - **Respect the silkscreen.** A control's printed label fixes its meaning; the
+    firmware must mean what it says. Don't reassign a labelled control.
+  - **Keys are a menu surface.** A keybed is not just notes — use keys as
+    shortcuts (operator select, mute) so a few controls reach every parameter.
+  - **Prefer the page-slot model.** A small fixed set of encoders whose meaning
+    changes per page, with the labels shown on screen (the screen says what the
+    knobs do). This beats deep menus for a few knobs + a 240×240 screen.
+  - **Gesture primitives.** If the design needs long-press/double-tap, check the
+    UI kit expresses it; otherwise use an explicit page or button.
 
 **Exit:** every control is mapped to a param or action, or explicitly marked
 unmapped; every binding target is a param from the manifest; the control flow is

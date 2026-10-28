@@ -233,6 +233,15 @@ Map only controls the hardware actually exposes (read the `BTN_*`/`ENC_*` enums 
 their pages and bindings; global bindings (keys → note-on, MASTER → volume) resolve
 last. Widgets are abstract (`label`, `value`, `bar`, `param_row`, `list`, `grid`).
 
+Know each control's **kind** before binding it: a smooth analog *pot* (the FM-1's
+`MASTER`) is volume and platform-owned — never bind it to a page slot; a detented
+*encoder* is a parameter control. Distinguish *dedicated* knobs (`ALGORITHM`,
+`PRESETS`) from *page-slot* knobs (`KNOB1–4`), and note name collisions (`SELECT`
+knob vs `SEL` button). Respect the silkscreen — a printed label fixes a control's
+meaning. Use the keybed as a menu surface (keys as operator/mute shortcuts), and
+prefer the **page-slot model**: a few encoders whose meaning changes per page, with
+the labels shown on screen (the screen says what the knobs do).
+
 Rules: the audio callback does no display, flash, logging, blocking, or allocation;
 publish shared values with one writer or a snapshot protocol; draw only what
 changed. Persist versioned records with CRC/commit, saving when silent.
