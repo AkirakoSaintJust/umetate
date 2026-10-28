@@ -879,6 +879,40 @@ against the 2.9 ms budget — with the emulator (`umetate emu --check --mhz 240`
 as the target-accurate confirmation. The development skill's interview gains a
 **polyphony budget** step: the voice count is a measured claim, not an estimate.
 
+**Voice modes (retrigger / mono / unison / legato / portamento).** The voice
+manager is a **generator emission** — a reusable `umetate/_voice.py` module, F3's
+"rails", which the seam inlines — owning the per-voice state and the
+allocation/mode/glide logic; it is parameterized by `NVOICE` at AOT time, so
+`dsp.c` stays one standalone file (no separately-compiled runtime). The generator
+emits the synth-specific note→increment glue alongside it. Decisions (all
+settled):
+
+- **Retrigger is the default** in every mode. A `voice_trig[v]` one-shot flag (set
+  on note-on, cleared after the control prologue) resets the envelope; `dx_env`
+  gains a `trigger` input (default `voice_trig[v]`) that resets to attack
+  *regardless of stage* — this also fixes the current steal bug (a stolen voice
+  kept the old note's envelope).
+- **Mono**: one sounding note, `note_priority` (last/highest/lowest, default
+  last). On note-off, the next-held note (by priority) takes over.
+- **Unison**: `unison_count` stacked voices per note, **linear detune spread**
+  (±cents around the note).
+- **Legato** (mono): overlapping notes don't retrigger the envelope; the pitch
+  glides.
+- **Portamento**: **constant-rate** (interval-proportional glide time), a
+  **linear ramp** `inc += step·sign(target − inc)` — no LUT, one add per voice per
+  block (a one-pole would be constant-time/exponential, a different feel).
+- **Takeover retrigger** (mono note-off → next held note): retriggers iff `legato`
+  is off; `portamento` (glide) is orthogonal and applies whenever it is set.
+- All mode params — `mode`, `unison_count`, `unison_detune`, `legato`,
+  `portamento`, `note_priority` — are **per-preset**.
+
+Per-voice state (SoA, `.cpu1_bss`): `voice_gate`/`voice_note`/`voice_age`/
+`voice_velocity` (existing) + `voice_trig` (uint8 one-shot), `voice_target_inc`
+(uint32 glide target), and the unison detune (a q16 ratio, per voice). The emitted
+interface is `voice_init`, `voice_note_on(note, velocity, picked[])` (returns the
+assigned voice indices), `voice_note_off`, `voice_all_off`, and `voice_glide`
+(the per-block ramp).
+
 #### 6.11.5 Milestones (ordered)
 
 | # | Milestone | Acceptance |
@@ -949,9 +983,11 @@ payload layout. One patch + one panel → byte-identical output every time.
 **Level 6 — Firmware** is the *operating system + the synth app*. `firmware/`
 ships the platform (boot, USB/MIDI, panel, display, storage, recovery, the UI
 kit) and — the current gap — must also ship a **synth runtime framework**: the
-voice allocator, the MIDI handler (notes/CC/sustain/panic/bend), the preset store,
-and the settings record. A synth then composes `app_audio` + `app_main` from
-*framework + generated code*, not hand-written `rib.c` glue.
+MIDI handler (notes/CC/sustain/panic/bend, channel/keyzone → part routing), the
+preset store, and the settings record. The *per-voice* allocator (assignment,
+mono/unison/legato/portamento/retrigger/glide) is generator rails (§6.11.4), not
+hand-written C. A synth then composes `app_audio` + `app_main` from *framework +
+generated code*, not hand-written `rib.c` glue.
 
 **The multitimbral patch** (F3). `parts: N` declares N independent timbres. Each
 part is its own parameter set (the id space is `part × param`) plus routing
@@ -966,9 +1002,10 @@ timing, 64 slots), and **system settings** (base channel, tune — one global
 record). This mirrors the classic patch / performance / system split.
 
 **The gaps** (what's still hand-written or missing): the firmware synth-runtime
-framework (voice alloc / MIDI / presets / settings); the generator's velocity /
-parts / CC / SysEx emission; the CLI's `umetate budget`, `preset export/import`,
-and source-vocabulary lint.
+framework (MIDI handler / presets / settings) and the generator's voice rails
+(`_voice.py`: allocator + modes); the generator's velocity / parts / CC / SysEx
+emission; the CLI's `umetate budget`, `preset export/import`, and
+source-vocabulary lint.
 
 **Universal vs fourop-fm-specific.** Of the four-op-FM work, the *universal*
 tooling is: `gain`/`cmul`/`csum` (the control/audio-separated gain family),
