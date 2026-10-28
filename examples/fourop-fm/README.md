@@ -3,8 +3,8 @@
 A committed end-to-end dogfood (`docs/roadmap.md` §6.9) that exercises the
 framework and surfaces gaps: a 4-operator FM synth in the OPZ/DX21 lineage, with
 **per-operator feedback**, **7 runtime-selectable algorithms**, **rate/level
-envelopes**, **8 operator waveforms**, one **global pitch LFO**, and one
-**amplitude LFO per operator**.
+envelopes**, **12 operator waveforms**, one **global pitch LFO** + **global pitch
+envelope**, and one **amplitude LFO per operator**.
 
 ## 1. The synth
 
@@ -13,8 +13,9 @@ envelopes**, **8 operator waveforms**, one **global pitch LFO**, and one
   `route`. Every modulation reads the 1-sample-delayed output of its sources, so
   the graph is acyclic for *every* algorithm; the algorithm is a `tables:`
   routing matrix the `route` node applies at runtime.
-- **Global:** carrier sum → `svf` low-pass → `wavefolder` → master `vca`, plus
-  the shared `plfo` (pitch/vibrato) whose `cv` feeds every operator's `pitch`.
+- **Global:** carrier sum → `svf` low-pass → `wavefolder` → `out`, plus the
+  shared `plfo` (vibrato) and `penv` (pitch envelope) summed by `csum` into every
+  operator's `pitch`.
 - **Algorithms:** the 7 rows of ymfm's `s_algorithm_ops` {0,1,2,4,5,6,7}
   (algorithm 3 dropped as algorithm 2's mirror — see `dsp-algorithm.md`).
 
@@ -22,8 +23,8 @@ envelopes**, **8 operator waveforms**, one **global pitch LFO**, and one
 
 | File | What it holds |
 | --- | --- |
-| `patch.json` | the declarative synth (voice/global zones, 26 friendly params, the `routing` table) |
-| `panel.json` | the UI (`home` + `op` + `lfo` contexts) |
+| `patch.json` | the declarative synth (voice/global zones, 35 friendly params, the `routing` table) |
+| `panel.json` | the UI (`home` + `op` + `fx` + `glo` contexts) |
 | `synth-brief.md` | the instrument brief (source of truth for the above) |
 | `dsp-algorithm.md` | the per-component math (dx_env, osc.waveform, routing, fm_op, lfo) |
 | `code-structure.md` | the nodes/macros + HAL helpers the dogfood shipped |

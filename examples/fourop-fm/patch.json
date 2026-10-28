@@ -7,7 +7,6 @@
     "cutoff":       { "target": "lp.f", "min": 0, "max": 65535, "curve": "log", "unit": "Hz" },
     "res":          { "target": "lp.q", "min": 0, "max": 65535, "curve": "linear" },
     "fold":         { "target": "wf.amount", "min": 0, "max": 32767, "curve": "linear" },
-    "master":       { "target": "master.level", "min": 0, "max": 32767, "curve": "linear" },
     "feedback":     { "target": "op1.fb.level", "min": 0, "max": 32767, "curve": "linear" },
     "attack":       { "target": "op1.eg.r1", "min": 0, "max": 65535, "curve": "log" },
     "release":      { "target": "op1.eg.r4", "min": 0, "max": 65535, "curve": "log" },
@@ -71,7 +70,6 @@
     "nodes": [
       { "id": "lp", "type": "svf", "params": { "f": 8000, "q": 40000 } },
       { "id": "wf", "type": "wavefolder", "params": { "amount": 0 } },
-      { "id": "master", "type": "vca", "params": { "level": 30000 } },
       { "id": "plfo", "type": "lfo", "params": { "rate": 486958, "depth": 273 } },
       { "id": "penv", "type": "pitch_env", "params": { "base": 2731, "rate": 3277 } },
       { "id": "psum", "type": "csum" }
@@ -79,8 +77,7 @@
     "wires": [
       { "from": "voice", "to": "lp.audio" },
       { "from": "lp.low", "to": "wf.audio" },
-      { "from": "wf.audio", "to": "master.audio" },
-      { "from": "master.audio", "to": "out" },
+      { "from": "wf.audio", "to": "out" },
       { "from": "plfo.cv", "to": "psum.in0" },
       { "from": "penv.cv", "to": "psum.in1" },
       { "from": "psum.cv", "to": "op1.pitch" },

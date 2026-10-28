@@ -35,8 +35,8 @@
   (vibrato, shared across voices), one **global pitch envelope** (the "pitch
   blip": a `base` offset that decays back at note-on), and one **amplitude LFO
   per operator** (tremolo, per-voice).
-- **Effects and output stage:** carrier sum → `svf` LP → `wavefolder` → master
-  `vca`.
+- **Effects and output stage:** carrier sum → `svf` LP → `wavefolder` → `out`
+  (the `MASTER` pot is the volume; no output VCA).
 
 ### 2.1 Voice architecture (the node/macro graph)
 
@@ -51,11 +51,11 @@
   ```
   The four `delay1` make the graph acyclic for *every* algorithm (all modulation
   reads the 1-sample-delayed output of its sources).
-- **Global-zone graph:** `lp` (`svf`) → `wf` (`wavefolder`) → `master` (`vca`),
-  plus the shared `plfo` (`lfo`) and `penv` (`pitch_env`) whose `cv`s are summed
-  by `psum` (`csum`) into every operator's `pitch`:
-  `voice → lp.audio`, `lp.low → wf.audio`, `wf.audio → master.audio`,
-  `master.audio → out`, `plfo.cv + penv.cv → op1..op4.pitch`.
+- **Global-zone graph:** `lp` (`svf`) → `wf` (`wavefolder`) → `out`, plus the
+  shared `plfo` (`lfo`) and `penv` (`pitch_env`) whose `cv`s are summed by
+  `psum` (`csum`) into every operator's `pitch`:
+  `voice → lp.audio`, `lp.low → wf.audio`, `wf.audio → out`,
+  `plfo.cv + penv.cv → op1..op4.pitch`.
 - **Macros:** `fm_op` (shipped, `modules/macros/fm_op/`) — the operator, with
   params `ratio` (note-derived), `waveform`, `level`, `feedback`, `trem_rate`,
   `trem_depth`, `r1..r4`, `l1..l3` mapped inward, and inputs `fm` (audio) +
@@ -66,7 +66,7 @@
 
 ### 2.2 Parameter manifest
 
-> The 36 friendly names below are what the panel exposes; the generator also
+> The 35 friendly names below are what the panel exposes; the generator also
 > auto-exposes the remaining flattened operator-envelope params (per-op
 > `r2/r3/l1/l2/l3` × 4, plus op2–4's `feedback`/`r1`/`r4`) by their
 > `<instance>.<param>` target path (settable via `set_param`, not on the panel).
@@ -77,7 +77,6 @@
 | cutoff | lp.f | 0 | 65535 | log | Hz |
 | res | lp.q | 0 | 65535 | linear | |
 | fold | wf.amount | 0 | 32767 | linear | |
-| master | master.level | 0 | 32767 | linear | |
 | feedback | op1.fb.level | 0 | 32767 | linear | |
 | attack | op1.eg.r1 | 0 | 65535 | log | |
 | release | op1.eg.r4 | 0 | 65535 | log | |
@@ -92,15 +91,16 @@
 | op1_trem_rate … op4_trem_rate | opN.lfo.rate | 0 | 20000000 | log | |
 | op1_trem_depth … op4_trem_depth | opN.lfo.depth | 0 | 32767 | linear | |
 
-(`level` is both the output amplitude and the FM index; `feedback` is op1's
-self-modulation depth. `rate` is a Q32 phase increment per sample —
-`f · 2³² / 44100`, so ~97392 = 1 Hz. `depth` is `depth/32768` in the use's units:
-octaves of vibrato for `pitch_depth` (273 ≈ ±10 cents), fraction of full amplitude
-for `trem_depth` (~16000 ≈ ±50%). `ratio` is the q16 frequency multiplier —
-`ratio/65536` = the multiplier (65536 = 1.0, 32768 = 0.5). `penv_base` is the q15
-starting pitch offset of the global pitch envelope (the `phasor.pitch` octave
-scale: 32767 = +1 octave, 2731 ≈ +1 semitone); `penv_rate` is its q16 one-pole
-decay rate toward the specified pitch. All block rate.)
+(`level` is both the output amplitude and the FM index; `feedback` is the
+self-modulation depth — currently op1's, with carrier-only routing (following the
+algorithm's carrier) a later refinement. `rate` is a Q32 phase increment per
+sample — `f · 2³² / 44100`, so ~97392 = 1 Hz. `depth` is `depth/32768` in the
+use's units: octaves of vibrato for `pitch_depth` (273 ≈ ±10 cents), fraction of
+full amplitude for `trem_depth` (~16000 ≈ ±50%). `ratio` is the q16 frequency
+multiplier — `ratio/65536` = the multiplier (65536 = 1.0, 32768 = 0.5). `penv_base`
+is the q15 starting pitch offset of the global pitch envelope (the `phasor.pitch`
+octave scale: 32767 = +1 octave, 2731 ≈ +1 semitone); `penv_rate` is its q16
+one-pole decay rate toward the specified pitch. All block rate.)
 
 ### 2.3 Tables
 
@@ -110,14 +110,14 @@ decay rate toward the specified pitch. All block rate.)
 
 ## 3. Controls and display
 
-- **Keys, buttons, encoders, MASTER:** keys = notes; ENC_KNOB1–3 = always-on
-  algorithm/cutoff/res; ENC_KNOB4–7 = the current page's four params; ENC_SELECT
-  cycles pages; BTN_OCT_UP/DOWN selects the operator; BTN_STOP mutes the selected
-  operator; BTN_EDIT pushes `op`; BTN_HOME pops home.
-- **Performance and navigation modes:** `home` (main = algorithm + output chain +
-  vibrato, plus `pitch` = the global pitch envelope), `op` (per-operator
-  pitch/env/tremolo sub-pages, operator-relative). Each op page opens with a
-  `status` readout (`ALG n · OP n/4 · MUTE`).
+- **Keys, buttons, encoders, MASTER:** keys = notes; `ALGORITHM` = always-on
+  algorithm; `KNOB1–4` = the current page's four params; `SELECT` cycles pages;
+  `SEL` selects the operator; `EDIT`/`FX`/`GLO` push their contexts; `HOME` pops
+  home; `MASTER` is the volume pot (platform, not a patch param).
+- **Performance and navigation modes:** `home` (the four perform knobs cutoff ·
+  res · fold · feedback), `op` (per-operator pitch/env/tremolo/mute sub-pages,
+  operator-relative), `fx` (the output chain), `glo` (vibrato + the pitch
+  envelope). Each op page opens with a `status` readout (`ALG n · OP n/4 · MUTE`).
 - **Screen content and update rules:** retained-mode, ~30 Hz redraw; no display
   in the audio callback.
 - **LED feedback:** none specific.

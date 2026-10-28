@@ -5,14 +5,11 @@
   "mute": ["op1_mute", "op2_mute", "op3_mute", "op4_mute"],
   "global": [
     { "source": "KEY", "action": "note_on" },
-    { "source": "ENC_KNOB1", "target": "algorithm", "behavior": "relative" },
-    { "source": "ENC_KNOB2", "target": "cutoff", "behavior": "relative" },
-    { "source": "ENC_KNOB3", "target": "res", "behavior": "relative" },
+    { "source": "ENC_ALGORITHM", "target": "algorithm", "behavior": "relative" },
     { "source": "BTN_EDIT", "action": "push", "arg": "op" },
     { "source": "BTN_HOME", "action": "pop_home" },
-    { "source": "BTN_OCT_UP", "action": "op_next" },
-    { "source": "BTN_OCT_DOWN", "action": "op_prev" },
-    { "source": "BTN_STOP", "action": "op_mute" }
+    { "source": "BTN_FX", "action": "push", "arg": "fx" },
+    { "source": "BTN_GLO", "action": "push", "arg": "glo" }
   ],
   "contexts": {
     "home": {
@@ -20,28 +17,19 @@
         {
           "id": "main",
           "widgets": [
-            { "type": "label", "row": 1, "span": 2, "text": "4OP FM" },
-            { "type": "param_row", "row": 4, "param": "fold", "text": "FOLD" },
-            { "type": "param_row", "row": 5, "param": "master", "text": "MAST" },
-            { "type": "param_row", "row": 6, "param": "pitch_rate", "text": "VIB RATE" },
-            { "type": "param_row", "row": 7, "param": "pitch_depth", "text": "VIB DEPTH" }
-          ]
-        },
-        {
-          "id": "pitch",
-          "widgets": [
-            { "type": "label", "row": 1, "span": 2, "text": "PITCH ENV" },
-            { "type": "param_row", "row": 4, "param": "penv_base", "text": "BASE" },
-            { "type": "param_row", "row": 5, "param": "penv_rate", "text": "RATE" }
+            { "type": "status", "row": 1, "span": 2, "param": "algorithm" },
+            { "type": "param_row", "row": 4, "param": "cutoff", "text": "CUTOFF" },
+            { "type": "param_row", "row": 5, "param": "res", "text": "RES" },
+            { "type": "param_row", "row": 6, "param": "fold", "text": "FOLD" },
+            { "type": "param_row", "row": 7, "param": "feedback", "text": "FEEDBACK" }
           ]
         }
       ],
       "bindings": [
-        { "source": "ENC_KNOB4", "slot": 0, "behavior": "relative" },
-        { "source": "ENC_KNOB5", "slot": 1, "behavior": "relative" },
-        { "source": "ENC_KNOB6", "slot": 2, "behavior": "relative" },
-        { "source": "ENC_KNOB7", "slot": 3, "behavior": "relative" },
-        { "source": "ENC_SELECT", "action": "next_page" }
+        { "source": "ENC_KNOB1", "slot": 0, "behavior": "relative" },
+        { "source": "ENC_KNOB2", "slot": 1, "behavior": "relative" },
+        { "source": "ENC_KNOB3", "slot": 2, "behavior": "relative" },
+        { "source": "ENC_KNOB4", "slot": 3, "behavior": "relative" }
       ]
     },
     "op": {
@@ -51,9 +39,9 @@
           "widgets": [
             { "type": "status", "row": 1, "span": 2, "param": "algorithm" },
             { "type": "param_row", "row": 4, "param": "op1.ph.inc_ratio", "text": "RATIO", "unit": "x" },
-            { "type": "param_row", "row": 5, "param": "op1.fb.level", "text": "FB" },
-            { "type": "param_row", "row": 6, "param": "op1.osc.waveform", "text": "WAVE" },
-            { "type": "param_row", "row": 7, "param": "op1.vca.level", "text": "LEVEL" }
+            { "type": "param_row", "row": 5, "param": "op1.vca.level", "text": "LEVEL" },
+            { "type": "param_row", "row": 6, "param": "op1.fb.level", "text": "FEEDBACK" },
+            { "type": "param_row", "row": 7, "param": "op1.osc.waveform", "text": "WAVE" }
           ]
         },
         {
@@ -86,14 +74,64 @@
             { "type": "param_row", "row": 4, "param": "op1.lfo.rate", "text": "RATE" },
             { "type": "param_row", "row": 5, "param": "op1.lfo.depth", "text": "DEPTH" }
           ]
+        },
+        {
+          "id": "mute",
+          "widgets": [
+            { "type": "status", "row": 1, "span": 2, "param": "algorithm" },
+            { "type": "param_row", "row": 4, "param": "op1_mute", "text": "OP1" },
+            { "type": "param_row", "row": 5, "param": "op2_mute", "text": "OP2" },
+            { "type": "param_row", "row": 6, "param": "op3_mute", "text": "OP3" },
+            { "type": "param_row", "row": 7, "param": "op4_mute", "text": "OP4" }
+          ]
         }
       ],
       "bindings": [
-        { "source": "ENC_KNOB4", "slot": 0, "behavior": "relative" },
-        { "source": "ENC_KNOB5", "slot": 1, "behavior": "relative" },
-        { "source": "ENC_KNOB6", "slot": 2, "behavior": "relative" },
-        { "source": "ENC_KNOB7", "slot": 3, "behavior": "relative" },
-        { "source": "ENC_SELECT", "action": "next_page" }
+        { "source": "ENC_KNOB1", "slot": 0, "behavior": "relative" },
+        { "source": "ENC_KNOB2", "slot": 1, "behavior": "relative" },
+        { "source": "ENC_KNOB3", "slot": 2, "behavior": "relative" },
+        { "source": "ENC_KNOB4", "slot": 3, "behavior": "relative" },
+        { "source": "ENC_SELECT", "action": "next_page" },
+        { "source": "BTN_SEL", "action": "op_next" }
+      ]
+    },
+    "fx": {
+      "pages": [
+        {
+          "id": "fx",
+          "widgets": [
+            { "type": "label", "row": 1, "span": 2, "text": "FX" },
+            { "type": "param_row", "row": 4, "param": "cutoff", "text": "CUTOFF" },
+            { "type": "param_row", "row": 5, "param": "res", "text": "RES" },
+            { "type": "param_row", "row": 6, "param": "fold", "text": "FOLD" }
+          ]
+        }
+      ],
+      "bindings": [
+        { "source": "ENC_KNOB1", "slot": 0, "behavior": "relative" },
+        { "source": "ENC_KNOB2", "slot": 1, "behavior": "relative" },
+        { "source": "ENC_KNOB3", "slot": 2, "behavior": "relative" },
+        { "source": "ENC_KNOB4", "slot": 3, "behavior": "relative" }
+      ]
+    },
+    "glo": {
+      "pages": [
+        {
+          "id": "mod",
+          "widgets": [
+            { "type": "label", "row": 1, "span": 2, "text": "GLOBAL" },
+            { "type": "param_row", "row": 4, "param": "pitch_rate", "text": "VIB RATE" },
+            { "type": "param_row", "row": 5, "param": "pitch_depth", "text": "VIB DEPTH" },
+            { "type": "param_row", "row": 6, "param": "penv_base", "text": "P-ENV BASE" },
+            { "type": "param_row", "row": 7, "param": "penv_rate", "text": "P-ENV RATE" }
+          ]
+        }
+      ],
+      "bindings": [
+        { "source": "ENC_KNOB1", "slot": 0, "behavior": "relative" },
+        { "source": "ENC_KNOB2", "slot": 1, "behavior": "relative" },
+        { "source": "ENC_KNOB3", "slot": 2, "behavior": "relative" },
+        { "source": "ENC_KNOB4", "slot": 3, "behavior": "relative" }
       ]
     }
   }

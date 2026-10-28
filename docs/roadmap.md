@@ -738,23 +738,27 @@ skill + tutorial):
 - **Prefer the page-slot model.** A small fixed set of encoders whose meaning
   changes per page, with the labels shown on screen.
 
-**fourop-fm panel.** The operator editor is a **4-param page** model: the rightmost
-four encoders (`ENC_KNOB4–7`) edit the four on-screen params, `ENC_SELECT` cycles
-sub-pages (pitch → env-rates → env-levels → tremolo; home: main → pitch), buttons
-navigate contexts, `BTN_OCT_UP`/`BTN_OCT_DOWN` select the operator, and `BTN_STOP`
-mutes the selected operator. The pages are operator-relative (`operators` +
+**fourop-fm panel.** The panel maps to the **real FM-1** control surface:
+`ALGORITHM` is the always-on algorithm encoder; the **4-param page** model puts the
+current page's params on `KNOB1–4`, `SELECT` cycles sub-pages (pitch → env-rates →
+env-levels → tremolo → mute), `SEL` selects the operator, and `EDIT`/`FX`/`GLO`
+push their contexts (`op` = the operator editor, `fx` = the output chain, `glo` =
+the global vibrato + pitch envelope). The pages are operator-relative (`operators` +
 `OP_ROW`/`OP_PARAM`), and each op page opens with a **`status` readout** (`ALG <n> ·
 OP <n>/4 · MUTE`) so the algorithm, selected operator, and mute stay visible while
-editing. The **envelope graph** is an `envelope` widget that draws the DX rate/level
-curve as **straight line segments** (an approximation — no curve fitting), with stage
-length = the one-pole time constant `65536/rate`, and deliberately **no "now-playing"
-stage cursor**: tracking live envelope state from CPU1 is CPU-heavy and unsafe for
-the audio core. The widget declares its 7 params explicitly (`params: [r1..r4,
-l1..l3]`), resolved to a per-operator `ENV_PARAM[n_op × 7]` table — no "7
-consecutive flattened ids" assumption. The home `pitch` page edits the global pitch
-envelope (`penv_base`/`penv_rate`). `ratio` is the operator's **frequency
-multiplier** — a q16 runtime param (`inc = note_to_inc(note) · ratio >> 16`, so
-65536 = 1.0), not a raw increment.
+editing. **Mute** is a sub-page — the four knobs toggle op1–4 directly (no
+long-press primitive). The **envelope graph** is an `envelope` widget that draws the
+DX rate/level curve as **straight line segments** (an approximation — no curve
+fitting), with stage length = the one-pole time constant `65536/rate`, and
+deliberately **no "now-playing" stage cursor**: tracking live envelope state from
+CPU1 is CPU-heavy and unsafe for the audio core. The widget declares its 7 params
+explicitly (`params: [r1..r4, l1..l3]`), resolved to a per-operator `ENV_PARAM[n_op ×
+7]` table — no "7 consecutive flattened ids" assumption. The `glo` page edits the
+global pitch envelope (`penv_base`/`penv_rate`) and the vibrato. `feedback` is op1's
+self-modulation (carrier-only routing is a later refinement); `master` is dropped —
+the `MASTER` pot is the volume. `ratio` is the operator's **frequency multiplier** —
+a q16 runtime param (`inc = note_to_inc(note) · ratio >> 16`, so 65536 = 1.0), not a
+raw increment.
 
 ---
 
