@@ -47,13 +47,17 @@ enum {
 /* ---- the fixed input-source vocabulary (the generator maps panel strings to these) ---- */
 enum {
     UI_SRC_KEY = 0,                              /* note key: value = MIDI note */
-    UI_SRC_BTN_OCT_DOWN, UI_SRC_BTN_OCT_UP,      /* the FM-1's two buttons */
-    UI_SRC_ENC_PRESETS,                          /* the FM-1's one encoder */
-    UI_SRC_ADC_MASTER,                           /* the FM-1's master knob */
+    UI_SRC_BTN_OCT_DOWN, UI_SRC_BTN_OCT_UP,      /* the FM-1's octave buttons */
+    UI_SRC_ENC_PRESETS,                          /* the FM-1's preset encoder */
+    UI_SRC_ENC_ALGORITHM,                        /* the FM-1's algorithm encoder */
+    UI_SRC_ADC_MASTER,                           /* the FM-1's master knob (a smooth pot) */
+    UI_SRC_ENC_SELECT,                           /* the FM-1's select encoder */
     UI_SRC_ENC_KNOB1, UI_SRC_ENC_KNOB2, UI_SRC_ENC_KNOB3, UI_SRC_ENC_KNOB4,
-    UI_SRC_ENC_KNOB5, UI_SRC_ENC_KNOB6, UI_SRC_ENC_KNOB7, UI_SRC_ENC_SELECT,
+    UI_SRC_ENC_KNOB5, UI_SRC_ENC_KNOB6, UI_SRC_ENC_KNOB7,
     UI_SRC_BTN_EDIT, UI_SRC_BTN_HOME, UI_SRC_BTN_PLAY, UI_SRC_BTN_STOP, UI_SRC_BTN_REC,
     UI_SRC_BTN_SAVE, UI_SRC_BTN_SEQ,
+    UI_SRC_BTN_FX, UI_SRC_BTN_SEL, UI_SRC_BTN_ENV, UI_SRC_BTN_LFO,
+    UI_SRC_BTN_GLO, UI_SRC_BTN_ARP,
     UI_SRC_PAD_BASE,                             /* + 0..15 */
     UI_SRC_FADER_BASE,                           /* + 0..3 */
     UI_SRC_WHEEL_BASE,                           /* + 0..1 */

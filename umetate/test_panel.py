@@ -19,7 +19,7 @@ from pathlib import Path
 
 from ._ir import GenError
 from ._panel import generate_panel
-from ._schema import PanelManifest, as_panel
+from ._schema import PanelBinding, PanelManifest, as_panel
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -136,6 +136,46 @@ def main() -> int:
         failures += 1
     except GenError as exc:
         print(f"ok: unknown panel param rejected ({exc})")
+
+    # the real FM-1 controls resolve + compile (the source vocabulary covers the board)
+    fm1_binds: list[PanelBinding] = [
+        {"source": s, "target": "cutoff", "behavior": "relative"}
+        for s in (
+            "ENC_ALGORITHM",
+            "BTN_GLO",
+            "BTN_FX",
+            "BTN_SEL",
+            "BTN_ENV",
+            "BTN_LFO",
+            "BTN_ARP",
+        )
+    ]
+    fm1_panel: PanelManifest = {
+        "name": "fm1",
+        "contexts": {
+            "home": {"pages": [{"id": "home", "widgets": []}], "bindings": fm1_binds}
+        },
+        "global": [],
+    }
+    ok, msg = _compile(fm1_panel)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + ("the real FM-1 sources resolve + compile" if ok else msg)
+    )
+    failures += 0 if ok else 1
+
+    try:
+        generate_panel(
+            {
+                "name": "demo",
+                "contexts": {"home": {"pages": [{"id": "home", "widgets": []}]}},
+                "global": [{"source": "BTN_WOBBLE", "action": "pop_home"}],
+            }
+        )
+        print("FAIL: unknown source not rejected")
+        failures += 1
+    except GenError as exc:
+        print(f"ok: unknown source rejected ({exc})")
 
     print("panel tests " + ("FAILED" if failures else "passed"))
     return 1 if failures else 0
