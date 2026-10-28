@@ -725,15 +725,21 @@ The panel schema is `templates/scaffold/panel.schema.json`; the interview fills
 
 **fourop-fm panel.** The operator editor is a **4-param page** model: the rightmost
 four encoders (`ENC_KNOB4–7`) edit the four on-screen params, `ENC_SELECT` cycles
-sub-pages (pitch → env-rates → env-levels → tremolo), buttons navigate contexts,
-`BTN_OCT_UP`/`BTN_OCT_DOWN` select the operator, and `BTN_STOP` mutes the selected
-operator. The pages are operator-relative (`operators` + `OP_ROW`/`OP_PARAM`). The
-**envelope graph** is an `envelope` widget that draws the DX rate/level curve as
-**straight line segments** (an approximation — no curve fitting), with stage length
-= the one-pole time constant `65536/rate`, and deliberately **no "now-playing" stage
-cursor**: tracking live envelope state from CPU1 is CPU-heavy and unsafe for the
-audio core. `ratio` is the operator's **frequency multiplier** — a q16 runtime param
-(`inc = note_to_inc(note) · ratio >> 16`, so 65536 = 1.0), not a raw increment.
+sub-pages (pitch → env-rates → env-levels → tremolo; home: main → pitch), buttons
+navigate contexts, `BTN_OCT_UP`/`BTN_OCT_DOWN` select the operator, and `BTN_STOP`
+mutes the selected operator. The pages are operator-relative (`operators` +
+`OP_ROW`/`OP_PARAM`), and each op page opens with a **`status` readout** (`ALG <n> ·
+OP <n>/4 · MUTE`) so the algorithm, selected operator, and mute stay visible while
+editing. The **envelope graph** is an `envelope` widget that draws the DX rate/level
+curve as **straight line segments** (an approximation — no curve fitting), with stage
+length = the one-pole time constant `65536/rate`, and deliberately **no "now-playing"
+stage cursor**: tracking live envelope state from CPU1 is CPU-heavy and unsafe for
+the audio core. The widget declares its 7 params explicitly (`params: [r1..r4,
+l1..l3]`), resolved to a per-operator `ENV_PARAM[n_op × 7]` table — no "7
+consecutive flattened ids" assumption. The home `pitch` page edits the global pitch
+envelope (`penv_base`/`penv_rate`). `ratio` is the operator's **frequency
+multiplier** — a q16 runtime param (`inc = note_to_inc(note) · ratio >> 16`, so
+65536 = 1.0), not a raw increment.
 
 ---
 
@@ -1720,9 +1726,11 @@ static const ui_binding ui_global[];            /* always-on, resolved last */
 
 typedef struct { uint8_t type, row, col, span;  /* LABEL/VALUE/BAR/PARAM_ROW/
                                                    PARAM_COLUMN/LIST/GRID/OP_ROW/
-                                                   ENVELOPE/CUSTOM */
+                                                   ENVELOPE/STATUS/CUSTOM */
                  uint16_t param; const char *text, *unit;
-                 int32_t last; } ui_widget;     /* OP_ROW/ENVELOPE `param` is an op-param slot */
+                 int32_t last; } ui_widget;     /* OP_ROW `param` = an op-param slot;
+                                                   STATUS `param` = the algorithm param id;
+                                                   ENVELOPE `param` is unused */
 typedef struct { const ui_widget *w; uint8_t n; const char *title; } ui_page;
 ```
 
@@ -1734,6 +1742,10 @@ cycle `ui_selected_op` (0..3), `op_mute` toggles the selected operator's mute pa
 `param` is an index into an `OP_PARAM[n_op × n_op_param]` table, resolved through
 `ui_selected_op` — so the operator-relative pages show the *selected* operator's
 params (`operators: [op1..op4]`, a widget param `opN.<rest>` is operator-relative).
+An `envelope` widget declares its 7 params explicitly (`params: [r1..r4, l1..l3]`),
+resolved to an `ENV_PARAM[n_op × 7]` table read at `ui_selected_op * 7 + i`; a
+`status` widget reads the algorithm param + `ui_selected_op` + the mute table and
+renders `ALG <n> · OP <n>/4 · MUTE`.
 
 **Main loop (resolution + dispatch + redraw).**
 

@@ -13,7 +13,7 @@
   (param); BTN_EDIT/HOME/OCT/STOP = momentary navigation/mute; MASTER = pot.
 - **Display / fonts / LEDs available:** 240×240 LCD; the abstract widget set
   (`label`, `value`, `bar`, `param_row`, `param_column`, `list`, `grid`, the
-  op-relative `op_row`).
+  op-relative `op_row`, the `envelope` graph, and the `status` readout).
 - **Controls explicitly unmapped (and why):** BTN_PLAY/REC/SAVE/SEQ,
   ENC_PRESETS, FM1_ADC_MASTER — no sequencer, patches, or master volume here.
 
@@ -44,8 +44,10 @@
 ### Context: `home`
 
 - **Pages:** `main` — label "4OP FM", then `param_row`s for fold / master /
-  pitch_rate / pitch_depth.
-- **Bindings:** ENC_KNOB4–7 → `slot` 0–3 (the page's four params).
+  pitch_rate / pitch_depth; `pitch` — the global pitch envelope (the "pitch
+  blip": `penv_base` + `penv_rate`).
+- **Bindings:** ENC_KNOB4–7 → `slot` 0–3 (the page's four params); ENC_SELECT →
+  `next_page`.
 
 ### Context: `op` (the operator editor)
 
@@ -57,8 +59,13 @@
 | trem | trem_rate · trem_depth · (—) · (—) |
 
 - **Bindings:** ENC_KNOB4–7 → `slot` 0–3; ENC_SELECT → `next_page`.
+- Each sub-page opens with a `status` readout (`ALG <n> · OP <n>/4 · MUTE`), so
+  the algorithm, selected operator, and its mute state stay visible while
+  editing.
 - The pages are **operator-relative** (`operators: [op1..op4]`): each widget's
-  `op1.<param>` resolves through the selected operator (`op_row`).
+  `op1.<param>` resolves through the selected operator (`op_row`). The
+  `envelope` widget declares its 7 params explicitly (`r1..r4, l1..l3`) and
+  draws the selected operator's curve.
 
 ## 4. Global bindings (always-on, resolved last)
 
@@ -69,10 +76,11 @@ See §3 "Always-on" — the encoders/buttons that resolve before any context.
 | Context / page | Widgets | Update rule |
 | --- | --- | --- |
 | home / main | label + 4 `param_row` | redraw on change, ~30 Hz |
-| op / pitch | label + 4 `op_row` | redraw on change, ~30 Hz |
-| op / env-rates | label + 4 `op_row` | redraw on change, ~30 Hz |
-| op / env-levels | label + 3 `op_row` | redraw on change, ~30 Hz |
-| op / trem | label + 2 `op_row` | redraw on change, ~30 Hz |
+| home / pitch | label + 2 `param_row` | redraw on change, ~30 Hz |
+| op / pitch | `status` + 4 `op_row` | redraw on change, ~30 Hz |
+| op / env-rates | `status` + 4 `op_row` + `envelope` | redraw on change, ~30 Hz |
+| op / env-levels | `status` + 3 `op_row` + `envelope` | redraw on change, ~30 Hz |
+| op / trem | `status` + 2 `op_row` | redraw on change, ~30 Hz |
 
 ## 6. LED / pad feedback
 
@@ -90,8 +98,8 @@ See §3 "Always-on" — the encoders/buttons that resolve before any context.
 - **The selected operator** is a flat 0..3 counter (`op_next`/`op_prev`), shared
   across contexts; `op_mute` toggles `opN_mute` for the selected one.
 - **Per-control meaning:** ENC_KNOB1–3 are always algorithm/cutoff/res; ENC_KNOB4–7
-  are the current page's four params; ENC_SELECT cycles sub-pages (in `op`);
-  BTN_STOP mutes the selected operator.
+  are the current page's four params; ENC_SELECT cycles sub-pages (in `home` and
+  `op`); BTN_STOP mutes the selected operator.
 - **Unresolved / ambiguous bindings:** none.
 
 ## 9. Acceptance
