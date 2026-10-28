@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import re
 
+from . import _voice
 from ._ir import (
     POOL,
     CompiledGraph,
@@ -49,12 +50,8 @@ def emit(graph: CompiledGraph) -> str:
     lines.append("")
     lines.extend(_note_to_inc())
     lines.extend(_state_decls(graph))
-    lines.append("static uint8_t voice_gate[NVOICE] UMETATE_CPU1;")
-    lines.append("static uint8_t voice_note[NVOICE] UMETATE_CPU1;")
-    lines.append("static uint32_t voice_age[NVOICE] UMETATE_CPU1;")
-    lines.append("static int32_t voice_velocity[NVOICE] UMETATE_CPU1;")
-    lines.append("static uint8_t voice_trig[NVOICE] UMETATE_CPU1;")
-    lines.append("static uint32_t ages;")
+    lines.extend(_voice.voice_state_decls())
+    lines.extend(_voice.mode_param_decls())
     lines.append("static uint32_t patch_gate UMETATE_CPU1;")
     lines.extend(_param_decls(graph))
     lines.extend(_param_tables(graph))
@@ -346,57 +343,54 @@ def _table_ref(name: str, table_names: set[str], inst: NodeInstance) -> str:
 # -------------------------------------------------------------------- seam ----
 
 
-def _seam(graph: CompiledGraph, by_id: dict[str, NodeInstance]) -> list[str]:
+def _note_derived_fn(graph: CompiledGraph) -> list[str]:
+    """Emit `static inline void <name>_note_derived(uint32_t v)` — the synth-specific
+    note→increment/cutoff/reciprocal glue, parameterized by a voice index so the
+    voice manager can call it on note_on, mono takeover, and (later) glide."""
     name = graph.name
-    lines = [
-        f"void {name}_dsp_reset(void) {{",
-        "    for (uint32_t v = 0; v < NVOICE; v++) voice_gate[v] = 0;",
-        "    ages = 0;",
-        "}",
-        "",
-        f"void {name}_dsp_note_on(uint32_t note, uint32_t velocity) {{",
-        "    uint32_t pick = 0, best = 0xFFFFFFFFu, v;",
-        "    if (note > 127u || !velocity) return;",
-        "    for (v = 0; v < NVOICE; v++) {",
-        "        uint32_t score = (voice_note[v] == note && voice_gate[v]) ? 0u",
-        "                       : voice_gate[v] ? 0x80000000u + voice_age[v] : voice_age[v] + 1u;",
-        "        if (score < best) { best = score; pick = v; }",
-        "    }",
-        "    voice_note[pick] = (uint8_t)note;",
-        "    voice_age[pick] = ++ages;",
-        "    voice_gate[pick] = 1;",
-        "    voice_trig[pick] = 1; /* note-on edge: retrigger the envelope (even on a steal) */",
-        "    voice_velocity[pick] = (int32_t)(velocity * 258u); /* 0..127 -> q15 (32767/127 ≈ 258) */",
-    ]
+    body: list[str] = []
     for i in graph.instances:
         if i.zone != "voice":
             continue
         for field, ratio in i.note_derived.items():
-            lines.append(
-                f"    {i.state_ref(field, 'pick')} = "
-                f"(uint32_t)(((uint64_t)note_to_inc(note) * "
+            body.append(
+                f"    {i.state_ref(field, 'v')} = (uint32_t)(((uint64_t)voice_inc[v] * "
                 f"(uint32_t){i.param_expr(ratio)}) >> 16);"
             )
         for field, ratio in i.note_cutoff.items():
-            lines.append(
-                f"    {i.state_ref(field, 'pick')} = "
-                f"(uint32_t)(fm1_sin((note_to_inc(note) * {ratio}u) >> 1) << 1);"
+            body.append(
+                f"    {i.state_ref(field, 'v')} = "
+                f"(uint32_t)(fm1_sin((note_to_inc(voice_note[v]) * {ratio}u) >> 1) << 1);"
             )
         for field, src in i.spec.reciprocals.items():
-            lines.append(
-                f"    {i.state_ref(field, 'pick')} = "
-                f"(uint32_t)(0x100000000ull / {i.state_ref(src, 'pick')});"
+            body.append(
+                f"    {i.state_ref(field, 'v')} = "
+                f"(uint32_t)(0x100000000ull / {i.state_ref(src, 'v')});"
             )
+    if not body:
+        body.append("    (void)v;")
+    return [f"static inline void {name}_note_derived(uint32_t v) {{", *body, "}", ""]
+
+
+def _seam(graph: CompiledGraph, by_id: dict[str, NodeInstance]) -> list[str]:
+    name = graph.name
+    lines: list[str] = []
+    lines.extend(_voice.helpers())
+    lines.extend(_note_derived_fn(graph))
     lines.extend(
         [
+            f"void {name}_dsp_reset(void) {{",
+            *_voice.reset(),
             "}",
             "",
-            f"void {name}_dsp_note_off(uint32_t note) {{",
-            "    for (uint32_t v = 0; v < NVOICE; v++) if (voice_note[v] == note) voice_gate[v] = 0;",
-            "}",
-            "",
+        ]
+    )
+    lines.extend(_voice.note_on(name))
+    lines.extend(_voice.note_off(name))
+    lines.extend(
+        [
             f"void {name}_dsp_all_notes_off(void) {{",
-            "    for (uint32_t v = 0; v < NVOICE; v++) voice_gate[v] = 0;",
+            *_voice.all_off(),
             "}",
             "",
             f"void {name}_dsp_set_bend_q16(uint32_t bend) {{ (void)bend; }}",

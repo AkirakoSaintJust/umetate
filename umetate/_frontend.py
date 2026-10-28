@@ -41,6 +41,7 @@ from ._schema import (
     Zone,
 )
 from ._tables import build_tables
+from ._voice import mode_param_entries
 
 
 def compile(
@@ -94,6 +95,9 @@ def compile(
     voice_out_ref = voice_zone.get("voice_out")
     voice_out, global_out = _typecheck(edges, by_id, voice_out_ref, bindings)
 
+    params = _build_params(instances, patch.get("params") or {})
+    params.extend(mode_param_entries(len(params)))
+
     return CompiledGraph(
         name=name,
         voices=voices,
@@ -102,7 +106,7 @@ def compile(
         global_order=_topo([i for i in instances if i.zone == "global"], edges),
         voice_out=voice_out,
         global_out=global_out,
-        params=_build_params(instances, patch.get("params") or {}),
+        params=params,
         tables=build_tables(patch.get("tables") or {}),
     )
 

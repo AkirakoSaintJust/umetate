@@ -610,6 +610,119 @@ RETRIG_PATCH: Patch = {
 }
 
 
+# The voice-mode contracts: mono (one voice, last-note priority + note_off
+# takeover) and unison (a note consumes `unison_count` voices, so a second note
+# steals the whole stack). Observed through `dsp_lit` (the gated-note bitmask).
+MODE_PATCH: Patch = {
+    "name": "mode_test",
+    "voices": 2,
+    "voice": {
+        "nodes": [
+            {"id": "ph", "type": "phasor"},
+            {"id": "osc", "type": "osc"},
+        ],
+        "wires": [{"from": "ph.phase", "to": "osc.phase"}],
+        "voice_out": "osc.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
+MODE_HARNESS = """\
+#include <stdio.h>
+#include <stdint.h>
+void __NAME___dsp_reset(void);
+void __NAME___dsp_note_on(uint32_t note, uint32_t velocity);
+void __NAME___dsp_note_off(uint32_t note);
+void __NAME___dsp_set_param(uint32_t id, int32_t value);
+uint32_t __NAME___dsp_lit(uint32_t base);
+int main(void) {
+    /* mono: one voice, last-note priority, note_off takeover */
+    __NAME___dsp_reset();
+    __NAME___dsp_set_param(__MODE_ID__, 1);
+    __NAME___dsp_note_on(60, 100);
+    __NAME___dsp_note_on(62, 100);
+    __NAME___dsp_note_on(64, 100);
+    uint32_t lit = __NAME___dsp_lit(60);
+    if (lit != (1u << 4)) {
+        printf("FAIL: mono last priority (lit=%u)\\n", lit);
+        return 1;
+    }
+    __NAME___dsp_note_off(64);
+    lit = __NAME___dsp_lit(60);
+    if (lit != (1u << 2)) {
+        printf("FAIL: mono takeover to 62 (lit=%u)\\n", lit);
+        return 1;
+    }
+    __NAME___dsp_note_off(62);
+    lit = __NAME___dsp_lit(60);
+    if (lit != (1u << 0)) {
+        printf("FAIL: mono takeover to 60 (lit=%u)\\n", lit);
+        return 1;
+    }
+
+    /* unison count=2 on a 2-voice patch: a second note steals the whole stack */
+    __NAME___dsp_reset();
+    __NAME___dsp_set_param(__MODE_ID__, 2);
+    __NAME___dsp_set_param(__UNISON_COUNT_ID__, 2);
+    __NAME___dsp_note_on(60, 100);
+    __NAME___dsp_note_on(72, 100);
+    lit = __NAME___dsp_lit(60);
+    if (lit != (1u << 12)) {
+        printf("FAIL: unison did not stack (lit=%u)\\n", lit);
+        return 1;
+    }
+
+    printf("ok: __NAME__ mono priority/takeover + unison stacking\\n");
+    return 0;
+}
+"""
+
+# The legato contract: in mono, an overlapping note must NOT retrigger the
+# envelope when legato is on (the envelope keeps running), but MUST when off.
+# One process per legato value (the engine's static envelope/phase are shared).
+LEGATO_PATCH: Patch = {
+    "name": "legato_test",
+    "voices": 1,
+    "voice": {
+        "nodes": [
+            {
+                "id": "op",
+                "type": "fm_op",
+                "params": {"ratio": 65536, "r1": 2000, "l1": 32767},
+            },
+        ],
+        "wires": [],
+        "voice_out": "op.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
+LEGATO_HARNESS = """\
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+void __NAME___dsp_reset(void);
+void __NAME___dsp_note_on(uint32_t note, uint32_t velocity);
+void __NAME___dsp_render(int32_t *out, uint32_t frames);
+void __NAME___dsp_set_param(uint32_t id, int32_t value);
+static int32_t out[1024];
+int main(int argc, char **argv) {
+    int legato = atoi(argv[1]);
+    __NAME___dsp_reset();
+    __NAME___dsp_set_param(__MODE_ID__, 1);
+    __NAME___dsp_set_param(__LEGATO_ID__, legato);
+    __NAME___dsp_note_on(60, 100);
+    __NAME___dsp_render(out, 256);       /* the attack is underway */
+    __NAME___dsp_note_on(64, 100);       /* overlap: retrigger iff legato is off */
+    __NAME___dsp_render(out, 256);
+    int64_t e = 0;
+    for (int i = 0; i < 512; i++) e += (int64_t)out[i] * out[i];
+    printf("%lld\\n", (long long)e);
+    return 0;
+}
+"""
+
+
 def _include_args() -> list[str]:
     root = Path(__file__).resolve().parents[1]
     return ["-I", str(root / "firmware" / "hal"), "-I", str(root / "firmware" / "gen")]
@@ -773,6 +886,89 @@ def _retrigger_on_steal(patch: Patch) -> tuple[bool, str]:
         if steal > 3 * fresh:
             return False, f"steal did not retrigger (fresh={fresh} steal={steal})"
         return True, "a voice steal retriggers the envelope"
+
+
+def _modes_behave(patch: Patch) -> tuple[bool, str]:
+    """Generate + compile + run the mono/unison contracts (mode params via
+    set_param)."""
+    src = generate(patch)
+    mode_id = str(param_ids(patch)["mode"])
+    count_id = str(param_ids(patch)["unison_count"])
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        cname = patch["name"].replace("-", "_").replace(".", "_")
+        harness = (
+            MODE_HARNESS.replace("__NAME__", cname)
+            .replace("__MODE_ID__", mode_id)
+            .replace("__UNISON_COUNT_ID__", count_id)
+        )
+        (d / "harness.c").write_text(harness)
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            return False, "compile failed:\n" + proc.stderr
+        run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+        return run.returncode == 0, run.stdout.strip()
+
+
+def _legato_behave(patch: Patch) -> tuple[bool, str]:
+    """Generate + compile + run the legato contract (mono overlap retrigger). One
+    process per legato value, so the engine's static envelope/phase don't leak."""
+    src = generate(patch)
+    mode_id = str(param_ids(patch)["mode"])
+    legato_id = str(param_ids(patch)["legato"])
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        cname = patch["name"].replace("-", "_").replace(".", "_")
+        harness = (
+            LEGATO_HARNESS.replace("__NAME__", cname)
+            .replace("__MODE_ID__", mode_id)
+            .replace("__LEGATO_ID__", legato_id)
+        )
+        (d / "harness.c").write_text(harness)
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            return False, "compile failed:\n" + proc.stderr
+        on = int(
+            subprocess.run(
+                [str(d / "t"), "1"], capture_output=True, text=True
+            ).stdout.strip()
+        )
+        off = int(
+            subprocess.run(
+                [str(d / "t"), "0"], capture_output=True, text=True
+            ).stdout.strip()
+        )
+        if on <= 2 * off:
+            return False, f"legato did not hold the envelope (on={on} off={off})"
+        return True, "legato holds the envelope across an overlap"
 
 
 def _sound_tables(patch: Patch) -> tuple[bool, str]:
@@ -1239,6 +1435,22 @@ def main() -> int:
     )
     failures += 0 if ok else 1
 
+    # voice modes: mono (one voice, last-note priority, takeover) + unison (stack).
+    ok, msg = _modes_behave(MODE_PATCH)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "mono priority/takeover + unison stacking")
+    )
+    failures += 0 if ok else 1
+
+    # legato: a mono overlap retriggers the envelope iff legato is off.
+    ok, msg = _legato_behave(LEGATO_PATCH)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "legato holds the envelope across an overlap")
+    )
+    failures += 0 if ok else 1
+
     # the dogfood panel (examples/fourop-fm/panel.json) resolves against the patch's
     # params (every widget/binding names a real set_param id).
     ffm_panel = as_panel(
@@ -1393,9 +1605,9 @@ def main() -> int:
     )
     failures += 0 if ok else 1
 
-    # the note-derived cutoff must be emitted as 2*sin(pi*inc/2^32)
+    # the note-derived cutoff must be emitted as 2*sin(pi*inc/2^32) (per voice)
     src = generate(PITCHED_NOISE)
-    if "fm1_sin((note_to_inc(note)" not in src:
+    if "fm1_sin((note_to_inc(voice_note[v])" not in src:
         print("FAIL: the note-derived cutoff (2*sin) was not emitted")
         failures += 1
     else:
@@ -1486,13 +1698,27 @@ def main() -> int:
     params = generate_params(POCKET_DRONE)["params"]
     by_name = {p["name"]: p for p in params}
     lp = by_name.get("lp.cutoff")
-    # `lp` is the last node in pocket-drone's graph, so its cutoff is the last id
+    # `lp` is the last node in pocket-drone's graph, so its cutoff is the last
+    # *node* id; the six universal voice-mode params (`vm_*`) are appended after it
     # (robust against param additions to earlier nodes — e.g. osc.waveform, vca.level).
-    if lp is None or lp["id"] != len(params) - 1:
-        print("FAIL: params.json does not map lp.cutoff to the last id")
+    n_mode = 6
+    if lp is None or lp["id"] != len(params) - 1 - n_mode:
+        print("FAIL: params.json does not map lp.cutoff to the last node id")
         failures += 1
     else:
         print(f"ok: params.json maps lp.cutoff -> id {lp['id']}")
+    if [p["name"] for p in params[-n_mode:]] != [
+        "mode",
+        "unison_count",
+        "unison_detune",
+        "legato",
+        "portamento",
+        "note_priority",
+    ]:
+        print("FAIL: the universal voice-mode params are not appended last")
+        failures += 1
+    else:
+        print("ok: the six universal voice-mode params are appended last")
 
     # the params: manifest binds a friendly name to a flattened param + metadata
     params = generate_params(TABLE_DEMO)["params"]

@@ -913,13 +913,27 @@ interface is `voice_init`, `voice_note_on(note, velocity, picked[])` (returns th
 assigned voice indices), `voice_note_off`, `voice_all_off`, and `voice_glide`
 (the per-block ramp).
 
-**Status (F3, first slice):** the `trigger` reserved input + the retrigger fix are
-landed — `voice_trig[v]` is a one-shot note-on edge (set in `note_on`, cleared
-after the control prologue); `dx_env` gained a `trigger` input (default
-`voice_trig[v]`) that resets to attack regardless of stage, so a stolen voice
-re-attacks. A host test proves a steal retriggers. The allocator itself is still
-the frozen poly/oldest-steal seam; `_voice.py` (the extracted rails), the mono /
-unison / legato / portamento modes, and the `parts:` multitimbral model follow.
+**Status (F3):** the voice manager is now the generator rails module
+`umetate/_voice.py` (per-voice SoA state, the `voice_mono_active` priority helper,
+and the `note_on`/`note_off`/`all_notes_off`/`reset` emission), and the six mode
+params are appended to every patch's param set (ids N..N+5). Landed:
+
+- **`trigger` reserved input** — `voice_trig[v]` (one-shot, set in `note_on`,
+  cleared after the control prologue); `dx_env` retriggers on it regardless of
+  stage, so a stolen voice re-attacks (F3a).
+- **The six mode params** — `mode` (poly/mono/unison), `unison_count`,
+  `unison_detune` (cents, linear spread), `legato`, `note_priority`
+  (last/highest/lowest), and `portamento` (accepted, reserved).
+- **Mono** — one voice (voice 0), a 128-note held tracker + `note_priority`;
+  `note_off` does priority takeover; legato gates the retrigger on overlap.
+- **Unison** — `unison_count` stacked voices with a linear ±cents detune folded
+  into each voice's base increment.
+- The note→increment glue is now `<name>_note_derived(v)`, parameterized by voice
+  index and driven by `voice_inc[v]` (note_to_inc × detune) — the seam that glide
+  will ramp.
+
+Still open: **portamento/glide** (the `voice_inc[v]` → target ramp, next) and the
+`parts:` multitimbral model (per-part param sets, channel/keyzone, `note_on_ch`).
 
 #### 6.11.5 Milestones (ordered)
 
@@ -927,7 +941,7 @@ unison / legato / portamento modes, and the `parts:` multitimbral model follow.
 | --- | --- | --- |
 | F1 | **Interview loop hardening** (L1–L7). | synth-brief semantics column + multi-timbrality + MIDI-spec prompts; control-map menu→page→mode-tree prompt; skill non-goal rule + two-tier example definition; source-vocabulary check runs. |
 | F2 | **Velocity routing.** — **done** | `voice_velocity[]` + `velocity` reserved input + `vel_amp`/`vel_fm`/`vel_rate` in `fm_op` (velocity → amplitude, → FM, → envelope rate via a `dx_env` rate-scale input); host tests prove a higher velocity is louder and attacks faster. |
-| F3 | **Voice-management rails** (parts). | `parts:` schema + generator part-aware allocation — per-part parameter sets (independent timbres), channel + keyzone routing, per-part level/delay, layering; host test proves split, layer, and delay. |
+| F3 | **Voice-management rails** (modes — done; glide + parts remain). | `_voice.py` rails + `trigger`/retrigger + mono (note_priority/legato) + unison (detune) + the six mode params; host tests prove mono priority/takeover, unison stacking, and legato. Remaining: the `portamento` glide ramp, then `parts:` schema + per-part param sets + channel/keyzone routing + layering + `note_on_ch`. |
 | F4 | **Presets + settings + SysEx.** | 64-slot part-patch store + 64-slot multi-patch store, settings record (channel/tune), the shared SysEx envelope + identity/param/part-patch/multi-patch/settings commands; export→import round-trips. |
 | F5 | **MIDI CC map.** | generator-emitted `cc → param` table; host test proves a CC write reaches the right param. |
 | F6 | **Polyphony budget tool.** | `umetate budget` reports a measured voice count for 2×12, 2×10, 2×8; the skill interview consumes it. |

@@ -38,9 +38,10 @@ extend-exclude = [
 select = ["E", "F", "I", "B", "UP", "SIM", "C4"]
 
 [tool.ruff.lint.per-file-ignores]
-# the emitter's string literals hold generated C lines (formatted per .clang-format,
+# the emitters' string literals hold generated C lines (formatted per .clang-format,
 # not the 88-col Python rule).
 "umetate/_backend.py" = ["E501"]
+"umetate/_voice.py" = ["E501"]
 
 # ---- strict typing (mypy) ----
 [tool.mypy]
