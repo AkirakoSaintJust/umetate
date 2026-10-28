@@ -896,8 +896,8 @@ settled):
   last). On note-off, the next-held note (by priority) takes over.
 - **Unison**: `unison_count` stacked voices per note, **linear detune spread**
   (±cents around the note).
-- **Legato** (mono): overlapping notes don't retrigger the envelope; the pitch
-  glides.
+- **Legato** (mono): overlapping notes don't retrigger the envelope — the pitch
+  jumps instantly to the new note. Legato never glides; only `portamento` glides.
 - **Portamento**: **constant-rate** (interval-proportional glide time), a
   **linear ramp** `inc += step·sign(target − inc)` — no LUT, one add per voice per
   block (a one-pole would be constant-time/exponential, a different feel).
