@@ -59,6 +59,14 @@ never improvise in the code.
   `blocked` is a recorded limitation, not a pass.
 - Keep one brief, one plan, one load profile, and one evidence matrix. Update
   them in place; delete superseded text instead of adding another spec.
+- Think in the **composition model + workflow loop** (`docs/roadmap.md` §6.12):
+  node → macro → patch → panel → generator → firmware, produced by the orient →
+  interview → plan → gate → author → verify loop. A decision that changes one
+  level is reflected in both the model and the plan — never only in the code.
+- **One decision-set per increment** (`docs/roadmap.md` §6.13): the smallest
+  coherent, verifiable change; test the full gate after each; commit with the
+  roadmap/brief/plan updated in the same commit. Never batch unrelated decisions,
+  and never implement before the design is confirmed.
 - Never flash, erase, force, or run a device-writing command unless the user
   explicitly requests that exact action and the §8 gates pass. A build, test, or
   edit is not permission to write hardware.
@@ -266,7 +274,11 @@ umetate scaffold patch --name "My Synth" --out examples/my-synth
 - Fill `panel.json` from the control map.
 - Add a node to `modules/nodes/` only when a shipped node is genuinely insufficient
   (conform to `node.schema.json`; add its host test + budget annotation).
-- After each increment, prove it: `umetate deep-check --host`.
+- Work in **small increments — one decision-set per increment** (the smallest
+  change that is a coherent, verifiable unit — see `docs/roadmap.md` §6.13). After
+  each, run the full gate and **commit with the plan/brief/roadmap updated in the
+  same commit**. Do not batch unrelated decisions; do not implement before the
+  design is confirmed.
 
 ### 6. Share DSP, panel, MIDI, persistence
 

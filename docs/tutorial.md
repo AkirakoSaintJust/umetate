@@ -59,6 +59,11 @@ base that your instrument runs on. On top of RIB sits the **framework**: a decla
 way to author the synth (nodes/macros/patches), the UI (panel/contexts), and the
 parameter table, compiled by the generator into the `<synth>_dsp_*` seam.
 
+The **composition model** (node → macro → patch → panel → generator → firmware)
+and the **development loop** (design → small, tested increments → verify → commit)
+are the two halves of the architecture — defined once in
+[`docs/roadmap.md`](roadmap.md) §6.12–§6.13 and walked through stage by stage here.
+
 Seven components, one entry point (`umetate`):
 
 1. **CLI** — `quick-check`, `setup`, `build`, `emu`, `deep-check`, `inspect`,
@@ -216,7 +221,11 @@ escape hatch. The patch's `params:` section binds friendly names to flattened
 [`templates/scaffold/patch.schema.json`](../templates/scaffold/patch.schema.json)
 and the worked example [`examples/pocket-drone/patch.json`](../examples/pocket-drone/patch.json).
 
-After each change, prove it:
+Work in **small, measured increments — one decision-set per increment** (the
+smallest change that is a coherent, verifiable unit). After each, run the full
+gate and **commit with the brief/plan/roadmap updated in the same commit**. Never
+batch unrelated decisions, and never implement before the design is confirmed.
+Prove each increment:
 
 ```sh
 umetate deep-check --host

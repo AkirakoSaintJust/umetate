@@ -1012,10 +1012,10 @@ universal.
 
 **Level 3 — Patch** is the *complete engine declaration*. `patch.json` declares
 `voices`, `params` (the manifest), `tables` (XIP data), `voice`/`global` zones,
-`voice_out`, and — once F3 lands — `parts`. Compiles to the frozen `<synth>_dsp_*`
-seam (§12.1). The reserved allocator inputs `note`/`gate`/`velocity`/`trigger` are
-bindings,
-not edges; `velocity` is a per-voice control (F2).
+`voice_out`, and `parts` (F3, done). Compiles to the frozen `<synth>_dsp_*` seam
+(§12.1). The reserved allocator inputs `note`/`gate`/`velocity`/`trigger` are
+bindings, not edges; `velocity` is a per-voice control (F2), `trigger` a note-on
+edge (F3).
 
 **Level 4 — Panel** is the *UI declaration*. `panel.json` declares contexts /
 pages / widgets / bindings + `operators` / `mute`. Compiles to `panel.h`
@@ -1024,18 +1024,20 @@ pages / widgets / bindings + `operators` / `mute`. Compiles to `panel.h`
 
 **Level 5 — Generator** is the *deterministic AOT compiler* (`umetate generate`).
 Emits the fused monomorphic `dsp.c` (no per-sample dispatch), `panel.h`,
-`params.json` (manifest + metadata), `tables.{c,h}` — and, as F2–F5 land, the
-`velocity` routing, the `parts:` allocator, the `cc → param` map, and the SysEx
-payload layout. One patch + one panel → byte-identical output every time.
+`params.json` (manifest + metadata), `tables.{c,h}`, the voice-management rails
+(`_voice.py`: allocator + modes + `parts:`, F3), the `velocity` routing (F2) — and,
+as F4–F5 land, the `cc → param` map and the SysEx payload layout. One patch + one
+panel → byte-identical output every time.
 
 **Level 6 — Firmware** is the *operating system + the synth app*. `firmware/`
 ships the platform (boot, USB/MIDI, panel, display, storage, recovery, the UI
-kit) and — the current gap — must also ship a **synth runtime framework**: the
-MIDI handler (notes/CC/sustain/panic/bend, channel/keyzone → part routing), the
-preset store, and the settings record. The *per-voice* allocator (assignment,
-mono/unison/legato/portamento/retrigger/glide) is generator rails (§6.11.4), not
-hand-written C. A synth then composes `app_audio` + `app_main` from *framework +
-generated code*, not hand-written `rib.c` glue.
+kit). The *per-voice* allocator (assignment, mono/unison/legato/portamento/
+retrigger/glide, `parts:`) is **generator rails** (`umetate/_voice.py`, F3) — not
+hand-written C. The remaining gap (F4/F7) is a **synth runtime framework**: the
+MIDI handler (notes/CC/sustain/panic/bend, channel/keyzone → part routing — the
+app-layer half of `note_on_ch`), the preset store, and the settings record. A
+synth then composes `app_audio` + `app_main` from *framework + generated code*,
+not hand-written `rib.c` glue.
 
 **The multitimbral patch** (F3). `parts: N` declares N independent timbres. Each
 part is its own parameter set (the id space is `part × param`) plus routing
@@ -1050,21 +1052,52 @@ timing, 64 slots), and **system settings** (base channel, tune — one global
 record). This mirrors the classic patch / performance / system split.
 
 **The gaps** (what's still hand-written or missing): the firmware synth-runtime
-framework (MIDI handler / presets / settings) and the generator's voice rails
-(`_voice.py`: allocator + modes); the generator's velocity / parts / CC / SysEx
-emission; the CLI's `umetate budget`, `preset export/import`, and
-source-vocabulary lint.
+framework (MIDI handler / presets / settings — F4/F7); the generator's CC / SysEx
+emission (F5/F4); and the CLI's `umetate budget` (F6), `preset export/import`
+(F4), and source-vocabulary lint (F1, done).
 
 **Universal vs fourop-fm-specific.** Of the four-op-FM work, the *universal*
 tooling is: `gain`/`cmul`/`csum` (the control/audio-separated gain family),
 `mute`, `pitch_env`, the separation invariant + its generic test, the `velocity`
-reserved input, the `parts:` multitimbral model, the two-tier preset model, the
-shared SysEx envelope, the generator CC map, the polyphony budget tool, and the
-source-vocabulary check. The *fourop-fm-specific* bits are `algo`/`route`/
-`route4`, the `fm_op` macro, the 12-waveform `osc` union, the 7-algorithm
-`routing` table, and the DX `dx_env` — each an instance of a universal mechanism
-(the selector, the router, the operator, the wave reader, the matrix, the
-rate/level envelope).
+reserved input, the `trigger` reserved input, the `parts:` multitimbral model, the
+two-tier preset model, the shared SysEx envelope, the generator CC map, the
+polyphony budget tool, and the source-vocabulary check. The *fourop-fm-specific*
+bits are `algo`/`route`/`route4`, the `fm_op` macro, the 12-waveform `osc` union,
+the 7-algorithm `routing` table, and the DX `dx_env` — each an instance of a
+universal mechanism (the selector, the router, the operator, the wave reader, the
+matrix, the rate/level envelope).
+
+**Two halves of one architecture.** The composition model above is the
+*structure*; the **workflow loop** is the *process* that produces it — orient →
+design interview (synth + GUI) → implementation plan → consistency gate → author
+(mechanical translation) → verify → recovery/handoff (the development skill,
+`SKILL.md` §0–8). They stay reconciled through two invariants: the **seam**
+(`<synth>_dsp_*` + `panel.h` + `params.json`, emitted by the generator or
+hand-written as an escape hatch) and the **rails** (`_voice.py`, the reserved
+inputs, the mode params). A decision that changes one level is reflected in the
+model *and* the loop — never only in the code.
+
+### 6.13 The development loop (granularity)
+
+Both umetate's own development and a user's synth follow one fine-grained loop:
+**one decision-set per increment** — the smallest change that is a coherent,
+verifiable unit — through two nested loops.
+
+- **Design loop** — decide before code: write the decision into its canonical
+  artifact (the roadmap for umetate itself; the brief / control-map / plan for a
+  synth), make it mutually consistent, confirm it with the user. No code until
+  the decision is confirmed.
+- **Implementation loop** — translate in small increments; after each, run the
+  full gate (`mypy` + `ruff` + `pyright`; the host/browser/target tests;
+  `_skill`/`_links`/`lint --c`) and **commit with the canonical artifact updated
+  in the same commit** (the roadmap is the single source of truth — never out of
+  sync with the code).
+
+Rules: never batch unrelated decisions into one increment; never implement before
+the design is confirmed; never weaken a test to make a build pass; a lower
+evidence layer never proves a higher one. This is how F2/F3 were built — F3a
+`trigger` → F3b rails/modes → glide → F3c `parts:` → level/delay — each a
+separately tested and committed slice.
 
 ---
 
@@ -1493,6 +1526,10 @@ generator) meets the hardware layer (`app_audio`).
 void     <synth>_dsp_init(uint32_t rate);                      /* once at boot */
 void     <synth>_dsp_render(int32_t *out, uint32_t frames);    /* fill out = L R L R…, Q15 ±32767 */
 void     <synth>_dsp_note_on(uint32_t note, uint32_t velocity);/* note = MIDI number, vel 1..127 */
+void     <synth>_dsp_note_on_ch(uint32_t note, uint32_t velocity, uint32_t channel);
+                                                               /* parts: 0xFFFFFFFF = omni; additive
+                                                                  to note_on (F3). note_on forwards
+                                                                  to note_on_ch(…, omni). */
 void     <synth>_dsp_note_off(uint32_t note);
 void     <synth>_dsp_all_notes_off(void);
 int      <synth>_dsp_set_param(uint32_t id, int32_t value);    /* clamp; 0 ok, -1 bad id */
