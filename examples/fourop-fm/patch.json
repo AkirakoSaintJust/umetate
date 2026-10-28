@@ -7,7 +7,7 @@
     "cutoff":       { "target": "lp.f", "min": 0, "max": 65535, "curve": "log", "unit": "Hz" },
     "res":          { "target": "lp.q", "min": 0, "max": 65535, "curve": "linear" },
     "fold":         { "target": "wf.amount", "min": 0, "max": 32767, "curve": "linear" },
-    "feedback":     { "target": "op1.fb.level", "min": 0, "max": 32767, "curve": "linear" },
+    "feedback":     { "target": "route.feedback", "min": 0, "max": 32767, "curve": "linear" },
     "attack":       { "target": "op1.eg.r1", "min": 0, "max": 65535, "curve": "log" },
     "release":      { "target": "op1.eg.r4", "min": 0, "max": 65535, "curve": "log" },
     "op1_level":    { "target": "op1.vca.level", "min": 0, "max": 32767, "curve": "linear" },
@@ -41,15 +41,15 @@
   },
   "voice": {
     "nodes": [
-      { "id": "op1", "type": "fm_op", "params": { "ratio": 65536, "waveform": 0, "level": 28000, "feedback": 8000, "trem_rate": 389566, "trem_depth": 2000, "r1": 20000, "r2": 4000, "r3": 2000, "r4": 30000, "l1": 32767, "l2": 20000, "l3": 12000 } },
-      { "id": "op2", "type": "fm_op", "params": { "ratio": 65536, "waveform": 0, "level": 16000, "feedback": 0, "trem_rate": 486958, "trem_depth": 1500, "r1": 20000, "r2": 4000, "r3": 2000, "r4": 30000, "l1": 32767, "l2": 20000, "l3": 12000 } },
-      { "id": "op3", "type": "fm_op", "params": { "ratio": 196608, "waveform": 0, "level": 12000, "feedback": 0, "trem_rate": 292174, "trem_depth": 1800, "r1": 20000, "r2": 4000, "r3": 2000, "r4": 30000, "l1": 32767, "l2": 20000, "l3": 12000 } },
-      { "id": "op4", "type": "fm_op", "params": { "ratio": 131072, "waveform": 0, "level": 10000, "feedback": 0, "trem_rate": 340870, "trem_depth": 1200, "r1": 20000, "r2": 4000, "r3": 2000, "r4": 30000, "l1": 32767, "l2": 20000, "l3": 12000 } },
+      { "id": "op1", "type": "fm_op", "params": { "ratio": 65536, "waveform": 0, "level": 28000, "trem_rate": 389566, "trem_depth": 2000, "r1": 20000, "r2": 4000, "r3": 2000, "r4": 30000, "l1": 32767, "l2": 20000, "l3": 12000 } },
+      { "id": "op2", "type": "fm_op", "params": { "ratio": 65536, "waveform": 0, "level": 16000, "trem_rate": 486958, "trem_depth": 1500, "r1": 20000, "r2": 4000, "r3": 2000, "r4": 30000, "l1": 32767, "l2": 20000, "l3": 12000 } },
+      { "id": "op3", "type": "fm_op", "params": { "ratio": 196608, "waveform": 0, "level": 12000, "trem_rate": 292174, "trem_depth": 1800, "r1": 20000, "r2": 4000, "r3": 2000, "r4": 30000, "l1": 32767, "l2": 20000, "l3": 12000 } },
+      { "id": "op4", "type": "fm_op", "params": { "ratio": 131072, "waveform": 0, "level": 10000, "trem_rate": 340870, "trem_depth": 1200, "r1": 20000, "r2": 4000, "r3": 2000, "r4": 30000, "l1": 32767, "l2": 20000, "l3": 12000 } },
       { "id": "d1", "type": "delay1" },
       { "id": "d2", "type": "delay1" },
       { "id": "d3", "type": "delay1" },
       { "id": "d4", "type": "delay1" },
-      { "id": "route", "type": "route", "params": { "which": "routing", "algorithm": 4 } }
+      { "id": "route", "type": "route", "params": { "which": "routing", "algorithm": 4, "feedback": 8000 } }
     ],
     "wires": [
       { "from": "op1.audio", "to": "d1.in" },
@@ -62,7 +62,11 @@
       { "from": "d4.out", "to": "route.d" },
       { "from": "route.mod2", "to": "op2.fm" },
       { "from": "route.mod3", "to": "op3.fm" },
-      { "from": "route.mod4", "to": "op4.fm" }
+      { "from": "route.mod4", "to": "op4.fm" },
+      { "from": "route.fb1", "to": "op1.feedback" },
+      { "from": "route.fb2", "to": "op2.feedback" },
+      { "from": "route.fb3", "to": "op3.feedback" },
+      { "from": "route.fb4", "to": "op4.feedback" }
     ],
     "voice_out": "route.car"
   },

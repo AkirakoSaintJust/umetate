@@ -2,17 +2,18 @@
 
 A committed end-to-end dogfood (`docs/roadmap.md` §6.9) that exercises the
 framework and surfaces gaps: a 4-operator FM synth in the OPZ/DX21 lineage, with
-**per-operator feedback**, **7 runtime-selectable algorithms**, **rate/level
+**carrier-only feedback**, **7 runtime-selectable algorithms**, **rate/level
 envelopes**, **12 operator waveforms**, one **global pitch LFO** + **global pitch
 envelope**, and one **amplitude LFO per operator**.
 
 ## 1. The synth
 
 - **Voice** (8 voices): four `fm_op` operators (`phasor → osc → dx_env → vca`,
-  each with 1-sample self-feedback + a per-op tremolo LFO) + four `delay1` + one
-  `route`. Every modulation reads the 1-sample-delayed output of its sources, so
-  the graph is acyclic for *every* algorithm; the algorithm is a `tables:`
-  routing matrix the `route` node applies at runtime.
+  each with carrier-gated 1-sample self-feedback + a per-op tremolo LFO) + four
+  `delay1` + one `route`. Every modulation reads the 1-sample-delayed output of its
+  sources, so the graph is acyclic for *every* algorithm; the algorithm is a
+  `tables:` routing matrix the `route` node applies at runtime (which also gates the
+  single `feedback` knob by the carrier mask).
 - **Global:** carrier sum → `svf` low-pass → `wavefolder` → `out`, plus the
   shared `plfo` (vibrato) and `penv` (pitch envelope) summed by `csum` into every
   operator's `pitch`.

@@ -147,7 +147,8 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   graph. `mix4` is the plain 4-input sum; `route4` is the general matrix-row mixer
   that reads a 4-weight row of the routing table and applies it; `route` is the
   ergonomic 4-op router the patch actually uses — one `algorithm` param, all five
-  rows (4 modulation + the carrier sum) computed at once.
+  rows (4 modulation + the carrier sum) computed at once, plus the carrier-gated
+  feedback depths (`feedback` × the carrier mask) for carrier-only feedback.
 
 - **Algorithm** (fixed-point, exactly): all four operators compute in parallel, and
   every modulation reads the **1-sample-delayed** output of its sources (so the
@@ -160,12 +161,14 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
 
 - **Inputs / outputs:** `mix4`: `in0..in3` (audio) → `audio`. `route4`: `a b c d`
   (audio) → `audio`. `route`: `a b c d` (audio, the four delayed operator outputs)
-  → `mod2 mod3 mod4 car` (audio — modulation into op2/op3/op4 and the carrier sum).
+  → `mod2 mod3 mod4 car` (audio — modulation into op2/op3/op4 and the carrier sum)
+  + `fb1 fb2 fb3 fb4` (control — the carrier-gated feedback depth for op1..op4).
 
 - **Parameters:** `route4`: `which` (table — the routing table), `algorithm`
   (uint32, 0…6), `dest` (uint32, 0…4: 0–3 = modulation rows, 4 = carrier mask).
-  `route`: `which` (table), `algorithm` (uint32, 0…6) — one shared algorithm for all
-  five rows.
+  `route`: `which` (table), `algorithm` (uint32, 0…6), `feedback` (q15 — the
+  carrier-gated feedback depth). `algorithm` is the one shared selection for all
+  five rows; `feedback` is gated by the carrier mask into `fb1..fb4`.
 
 - **Coefficients / precompute:** the routing table is the `tables:` entry
   `{ "kind": "routing" }` → 7 algorithms × 5 rows × 4 weights (140 Q15 0/1). The
@@ -188,8 +191,10 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   sample (per destination); `route` = five such rows (4 modulation + carrier) per
   sample from a single `algorithm` param — the one `route` node the patch uses
   replaces five `route4` instances (and their five would-be-duplicated `algorithm`
-  params). `mix4` is the general 4-sum (used by the standalone routing test, not the
-  patch, which takes its carrier sum from `route.car`). Memoryless, no branching.
+  params). The `fb1..fb4` gates are four table reads + four conditional selects
+  per sample (loop-invariant, hoisted by the compiler). `mix4` is the general 4-sum
+  (used by the standalone routing test, not the patch, which takes its carrier sum
+  from `route.car`). Memoryless, no branching.
 
 ---
 
@@ -209,7 +214,7 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   phase += inc_eff + (sum << 16)                   (FM index: full-scale = ±π phase)
   sine   = fm1_sin_wave(phase, waveform)          (12-wave OPZ+OPL union)
   out    = sine · eg_t · level                     (Q15)
-  feedback_prev = (out · feedback) delayed 1 sample
+  feedback_prev = (out · feedback_depth) delayed 1 sample   (feedback_depth = the carrier-gated input)
   audio  = mute ? 0 : out                          (the per-op mute gate)
   ```
   `inc = note_to_inc(note) · ratio >> 16` (a q16 frequency multiplier, runtime —
@@ -224,14 +229,16 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   loop still runs internally.
 
 - **Inputs / outputs:** `fm` (audio, external modulation), `pitch` (control, the
-  shared vibrato LFO) → `audio` (audio).
+  shared vibrato LFO), `feedback` (control, the carrier-gated self-modulation
+  depth) → `audio` (audio).
 
 - **Parameters** (mapped inward):
   `ratio` (q16, the frequency multiplier — runtime), `waveform` (uint32 0–11),
-  `level` (q15, the FM index / output amplitude), `feedback` (q15,
-  self-modulation), `mute` (uint32, 0/1 — the output gate), `trem_rate` (q32, the
-  per-op LFO increment), `trem_depth` (q15, the tremolo depth), and the `dx_env`
-  params `r1..r4, l1..l3`.
+  `level` (q15, the FM index / output amplitude), `mute` (uint32, 0/1 — the output
+  gate), `trem_rate` (q32, the per-op LFO increment), `trem_depth` (q15, the
+  tremolo depth), and the `dx_env` params `r1..r4, l1..l3`. `feedback` is a
+  *control input*, not a param — the `route` node feeds it the carrier-gated depth
+  (§`route`).
 
 - **Coefficients / precompute:** none; `inc` is note-derived at note-on (from the
   runtime `ratio`), the feedback is a `delay1` register, the LFO is a control-rate

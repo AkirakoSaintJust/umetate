@@ -983,6 +983,23 @@ def main() -> int:
         print(f"FAIL: fourop-fm panel.json does not resolve ({exc})")
         failures += 1
 
+    # carrier-only feedback: a single `feedback` knob (route.feedback) is gated by
+    # the algorithm's carrier mask into op1..op4.feedback — not a fixed op1.
+    ffm_ids = param_ids(ffm)
+    ffm_src = generate(ffm)
+    ok = (
+        ffm_ids.get("feedback") is not None
+        and ffm_ids.get("feedback") == ffm_ids.get("route.feedback")
+        and "? route_feedback : 0" in ffm_src
+        and "route_fb1_x" in ffm_src
+        and "route_fb4_x" in ffm_src
+    )
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + "feedback is one carrier-gated knob (route.feedback → op1..op4)"
+    )
+    failures += 0 if ok else 1
+
     ok, msg = _sound(SVF_WF)
     print(
         ("ok: " if ok else "FAIL: ")

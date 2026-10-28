@@ -57,12 +57,15 @@
   `voice → lp.audio`, `lp.low → wf.audio`, `wf.audio → out`,
   `plfo.cv + penv.cv → op1..op4.pitch`.
 - **Macros:** `fm_op` (shipped, `modules/macros/fm_op/`) — the operator, with
-  params `ratio` (note-derived), `waveform`, `level`, `feedback`, `trem_rate`,
-  `trem_depth`, `r1..r4`, `l1..l3` mapped inward, and inputs `fm` (audio) +
-  `pitch` (control).
+  params `ratio` (note-derived), `waveform`, `level`, `trem_rate`, `trem_depth`,
+  `r1..r4`, `l1..l3` mapped inward, and inputs `fm` (audio) + `pitch` (control) +
+  `feedback` (control, the carrier-gated self-modulation depth).
 - **Voice count / sample rate:** 8 voices / 44100 Hz (the default).
 - **Feedback paths:** each operator's self-feedback is one `delay1` (out ×
-  feedback → sum with external fm + pitch → `ph.fm`).
+  feedback → sum with external fm + pitch → `ph.fm`). The single `feedback` knob
+  (`route.feedback`) is **carrier-gated** — the `route` node gates it by the
+  algorithm's carrier mask into `op1..op4.feedback`, so only the carrier
+  self-modulates.
 
 ### 2.2 Parameter manifest
 
@@ -77,7 +80,7 @@
 | cutoff | lp.f | 0 | 65535 | log | Hz |
 | res | lp.q | 0 | 65535 | linear | |
 | fold | wf.amount | 0 | 32767 | linear | |
-| feedback | op1.fb.level | 0 | 32767 | linear | |
+| feedback | route.feedback | 0 | 32767 | linear | |
 | attack | op1.eg.r1 | 0 | 65535 | log | |
 | release | op1.eg.r4 | 0 | 65535 | log | |
 | pitch_rate | plfo.rate | 0 | 20000000 | log | |
@@ -92,8 +95,8 @@
 | op1_trem_depth … op4_trem_depth | opN.lfo.depth | 0 | 32767 | linear | |
 
 (`level` is both the output amplitude and the FM index; `feedback` is the
-self-modulation depth — currently op1's, with carrier-only routing (following the
-algorithm's carrier) a later refinement. `rate` is a Q32 phase increment per
+carrier-gated self-modulation depth (`route.feedback` — only the current
+algorithm's carrier self-modulates). `rate` is a Q32 phase increment per
 sample — `f · 2³² / 44100`, so ~97392 = 1 Hz. `depth` is `depth/32768` in the
 use's units: octaves of vibrato for `pitch_depth` (273 ≈ ±10 cents), fraction of
 full amplitude for `trem_depth` (~16000 ≈ ±50%). `ratio` is the q16 frequency
@@ -154,9 +157,9 @@ one-pole decay rate toward the specified pitch. All block rate.)
 
 ## 7. Acceptance and evidence
 
-- **Must-have features:** 7 runtime algorithms; 12 waveforms; per-op feedback;
-  rate/level envelopes; a global pitch LFO + global pitch envelope + per-op
-  amplitude LFO; the filter + wavefolder output chain; a panel.
+- **Must-have features:** 7 runtime algorithms; 12 waveforms; carrier-only
+  feedback; rate/level envelopes; a global pitch LFO + global pitch envelope +
+  per-op amplitude LFO; the filter + wavefolder output chain; a panel.
 - **Optional features:** velocity scaling, patch persistence.
 - **Host tests:** `umetate.test_generate` renders the patch (non-silent → decays),
   proves the 7 algorithms, resolves the panel, and checks the LFO oscillates; the
