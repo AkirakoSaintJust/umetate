@@ -800,16 +800,21 @@ strengthening below.
 - **Velocity** is a per-voice **control signal** (routable), applied to **three
   separate depth targets**: `vel_amp` (amplitude), `vel_rate` (envelope
   rate/time), `vel_fm` (FM index) — each 0..32767, default 0.
-- **Parts**: 2. Each part has `level` (amplitude), `delay` (note-onset offset,
-  ms), `channel` (MIDI channel or omni), `low`/`high` (keyzone). Notes route by
-  **channel + keyzone**; **layering** (two parts on the same channel/keyzone) is
-  allowed and must be easy — building a sound out of partials is a first-class FM
-  technique. fourop-fm's two parts share the same 4-op voice (one parameter set);
-  per-part *sounds* are a later toolkit rail.
+- **Parts**: 2, each an **independent timbre** (its own 39-param 4-op voice) plus
+  `level` (amplitude), `delay` (note-onset offset, ms), `channel` (MIDI channel
+  or omni), `low`/`high` (keyzone). Notes route by **channel + keyzone**;
+  **layering** (two parts on the same channel/keyzone) is allowed and must be
+  easy — building a sound out of partials is a first-class FM technique.
+  Per-part parameter sets are the general multitimbral model the toolkit's
+  voice-management rails must support.
 - **MIDI CC**: fixed, generator-assigned (one CC per param, emitted from
   `params.json`), documented — not user-editable on-device.
-- **Presets**: 64 slots, flash, CRC + version; save / load / name; SysEx
-  export / import.
+- **Presets**: two tiers, as most synths do — **part patches** (a single timbre:
+  its 39 params + name) and **multi patches** (a composition: which part patch
+  each of the 2 parts uses + each part's `level`/`delay`/`channel`/`keyzone` +
+  name). 64 part-patch slots and 64 multi-patch slots, flash, CRC + version;
+  save / load / name; SysEx export / import. System settings (base MIDI channel,
+  master tune) are a separate global record.
 - **SysEx**: a shared, versioned envelope every firmware uses, with a
   per-firmware payload.
 - **Polyphony**: measure with the emulator; **12 voices × 2 parts** ideal, fall
@@ -831,14 +836,17 @@ resolvable reserved input exactly like `gate` — a node/macro declares
 **Parts (voice-management rails).** The patch gains a `parts:` concept; the
 generator emits part-aware allocation:
 
-- `note_on(note, velocity, channel)` — the seam gains a channel argument (the
-  app passes the note's MIDI channel).
-- Each part: `channel` (or omni) + `low`/`high` keyzone. A note routes to every
-  part whose channel matches (or is omni) *and* whose keyzone contains the note —
-  so one note may fire both parts (layering).
+- `note_on_ch(note, velocity, channel)` — an *additive* seam function (the frozen
+  `note_on(note, velocity)` stays and forwards with channel 0 = omni).
+- Each part: an independent timbre (its own parameter set) + `channel` (or omni)
+  + `low`/`high` keyzone. A note routes to every part whose channel matches (or
+  is omni) *and* whose keyzone contains the note — so one note may fire both
+  parts (layering).
 - Each part owns a voice pool (`12` per part = 24 total); per-part `level` is a
   gain and `delay` is a note-onset offset (the envelope attacks `delay` ms after
   note-on, held silent before).
+- Params are **per-part**: the id space is `part × param`, and a voice reads its
+  part's params through a `voice_part[v]` tag set at note-on.
 
 **SysEx envelope (shared base).**
 
@@ -847,14 +855,17 @@ F0 00 21 1D <model-id> <cmd> <ver> <payload…> <CRC16> F7
 ```
 
 Shared: manufacturer/device id, model identity, command + version byte, CRC-16,
-and four commands every firmware answers — *identity request*, *param dump*,
-*preset dump*, *settings dump*. Per-firmware: the payload layout (which params,
-order, Q-scaling). A 4-op patch is **not** DX7-compatible (DX7 is 6-op); DX7
-`.SYX` import is explicitly out of scope for fourop-fm.
+and five commands every firmware answers — *identity request*, *param dump*,
+*part-patch dump*, *multi-patch dump*, *settings dump*. Per-firmware: the payload
+layout (which params, order, Q-scaling). A 4-op patch is **not** DX7-compatible
+(DX7 is 6-op); DX7 `.SYX` import is explicitly out of scope for fourop-fm.
 
-**Preset format.** 64 slots × (39 params + name + version + CRC). Load/save via
-the existing `slot_load`/`slot_save`; export/import a bank via the SysEx preset
-dump. Flash writes happen only when silent (the existing rule).
+**Preset format.** Two tiers. A **part patch** = a single timbre (its 39 params)
++ name + version + CRC — 64 slots. A **multi patch** = 2 part-patch references +
+2×(level, delay, channel, keyzone) + name + version + CRC — 64 slots. Load/save
+via the existing `slot_load`/`slot_save`; export/import a bank via the SysEx
+preset dump (part patches and multi patches are separate dump commands). Flash
+writes happen only when silent (the existing rule).
 
 **MIDI CC map.** The generator emits a `const` `cc -> param id` table from
 `params.json` (one CC per param, ascending from a base), plus the reversed
@@ -873,15 +884,101 @@ as the target-accurate confirmation. The development skill's interview gains a
 | --- | --- | --- |
 | F1 | **Interview loop hardening** (L1–L7). | synth-brief semantics column; skill non-goal rule + two-tier example definition; source-vocabulary check runs. |
 | F2 | **Velocity routing.** | `voice_velocity[]` + `velocity` reserved input + `vel_amp`/`vel_rate`/`vel_fm` in `fm_op`; host test proves amplitude responds to velocity and 0 velocity = no change. |
-| F3 | **Voice-management rails** (parts). | `parts:` schema + generator part-aware allocation (channel + keyzone + per-part level/delay + layering); host test proves split, layer, and delay. |
-| F4 | **Presets + settings + SysEx.** | 64-slot store, settings record (channel/tune), the shared SysEx envelope + identity/param/preset/settings commands; export→import round-trips. |
+| F3 | **Voice-management rails** (parts). | `parts:` schema + generator part-aware allocation — per-part parameter sets (independent timbres), channel + keyzone routing, per-part level/delay, layering; host test proves split, layer, and delay. |
+| F4 | **Presets + settings + SysEx.** | 64-slot part-patch store + 64-slot multi-patch store, settings record (channel/tune), the shared SysEx envelope + identity/param/part-patch/multi-patch/settings commands; export→import round-trips. |
 | F5 | **MIDI CC map.** | generator-emitted `cc → param` table; host test proves a CC write reaches the right param. |
 | F6 | **Polyphony budget tool.** | `umetate budget` reports a measured voice count for 2×12, 2×10, 2×8; the skill interview consumes it. |
-| F7 | **fourop-fm firmware assembly.** | `examples/fourop-fm/` builds a firmware: 2 parts, velocity, CC, presets, settings, sustain/panic, `app_main`/`app_audio` glue on the shipped framework. |
+| F7 | **fourop-fm firmware assembly.** | `examples/fourop-fm/` builds a firmware: 2 independent-timbre parts, velocity, CC, presets, settings, sustain/panic, `app_main`/`app_audio` glue on the shipped framework. |
 | F8 | **Docs / tutorial / skill finalization.** | tutorial + README + skill describe the full path; roadmap §6.11/§7/§12 updated; every milestone green. |
 
 Each milestone: mypy + ruff + pyright clean; all test modules green; `_skill` +
 `_links` in sync; `lint.c_checks` clean; roadmap updated in the same commit.
+
+---
+
+### 6.12 The composition model (node → macro → patch → firmware)
+
+The toolkit is a **layered compiler**: five authoring levels compose ahead-of-time
+into one fused engine + one panel + one firmware. Each level has a clean, typed
+contract; the generator composes them with no runtime interpretation. This is the
+backbone the whole toolkit (CLI, RIB rails, agent, tutorial, docs) is built
+around.
+
+| Level | Authoring artifact | Compiles to | Ships in |
+| --- | --- | --- | --- |
+| 1 · Node | `modules/nodes/<n>/{node.json,node.c}` | an inlined body | `modules/nodes/` |
+| 2 · Macro | `modules/macros/<m>/macro.json` | an expanded subgraph | `modules/macros/` |
+| 3 · Patch | `patch.json` | `dsp.c` (the `<synth>_dsp_*` seam) | the project |
+| 4 · Panel | `panel.json` | `panel.h` (`ui_tables`) | the project |
+| 5 · Generator | — (the AOT compiler) | `dsp.c`, `panel.h`, `params.json`, `tables.{c,h}`, `cc-map`, `sysex-layout` | `umetate/` |
+| 6 · Firmware | `app_audio` + `app_main` | the device binary | `firmware/` |
+
+**Level 1 — Node** is *one DSP algorithm*. `node.json` declares `ins`/`outs`/
+`params`/`state` with Q-formats; `node.c` is the body template with the
+`${in.x}`/`${out.x}`/`${param.x}`/`${state.x}` placeholders. Contract: a node
+with only `control`/`event` ports is **control-rate** (once per `CONTROL_BLOCK`);
+any `audio` port makes it **audio-rate** (per sample). `delay1`/`delayN` carry the
+`@@read@@`/`@@write@@` split (the cycle-breakers). Every node has a host parity
+test. *Universal rule:* one node = one algorithm; shape/spectrum/envelope = data.
+
+**Level 2 — Macro** is a *reusable subgraph*. `macro.json` declares `ins`/`outs`/
+`params` + inner `nodes`/`wires`. Contract: a macro is **expanded** (inlined) into
+leaf nodes; `params` map to inner node params *or state* (`ratio → phasor.inc`
+via `note_derived`); the graph is a DAG (feedback only via `delay1`). `fm_op` is
+the FM-specific macro; the *mechanism* (compose nodes, map params inward) is
+universal.
+
+**Level 3 — Patch** is the *complete engine declaration*. `patch.json` declares
+`voices`, `params` (the manifest), `tables` (XIP data), `voice`/`global` zones,
+`voice_out`, and — once F3 lands — `parts`. Compiles to the frozen `<synth>_dsp_*`
+seam (§12.1). The reserved allocator inputs `note`/`gate`/`velocity` are bindings,
+not edges; `velocity` is a per-voice control (F2).
+
+**Level 4 — Panel** is the *UI declaration*. `panel.json` declares contexts /
+pages / widgets / bindings + `operators` / `mute`. Compiles to `panel.h`
+(`ui_tables`). Sources are validated against the board's `BTN_*`/`ENC_*` enums
+(L1); params resolve against the patch's `param_ids`.
+
+**Level 5 — Generator** is the *deterministic AOT compiler* (`umetate generate`).
+Emits the fused monomorphic `dsp.c` (no per-sample dispatch), `panel.h`,
+`params.json` (manifest + metadata), `tables.{c,h}` — and, as F2–F5 land, the
+`velocity` routing, the `parts:` allocator, the `cc → param` map, and the SysEx
+payload layout. One patch + one panel → byte-identical output every time.
+
+**Level 6 — Firmware** is the *operating system + the synth app*. `firmware/`
+ships the platform (boot, USB/MIDI, panel, display, storage, recovery, the UI
+kit) and — the current gap — must also ship a **synth runtime framework**: the
+voice allocator, the MIDI handler (notes/CC/sustain/panic/bend), the preset store,
+and the settings record. A synth then composes `app_audio` + `app_main` from
+*framework + generated code*, not hand-written `rib.c` glue.
+
+**The multitimbral patch** (F3). `parts: N` declares N independent timbres. Each
+part is its own parameter set (the id space is `part × param`) plus routing
+(`channel`, `low`/`high` keyzone) and gain/timing (`level`, `delay`). A voice is
+tagged `voice_part[v]` at note-on and reads its part's params. `note_on_ch(note,
+velocity, channel)` routes a note to every part whose channel matches (or is
+omni) *and* whose keyzone contains it — one note may fire many parts (layering).
+
+**The persistence model** (F4). Three records: **part patches** (one timbre,
+64 slots), **multi patches** (which part patch each part uses + routing + gain/
+timing, 64 slots), and **system settings** (base channel, tune — one global
+record). This mirrors the classic patch / performance / system split.
+
+**The gaps** (what's still hand-written or missing): the firmware synth-runtime
+framework (voice alloc / MIDI / presets / settings); the generator's velocity /
+parts / CC / SysEx emission; the CLI's `umetate budget`, `preset export/import`,
+and source-vocabulary lint.
+
+**Universal vs fourop-fm-specific.** Of the four-op-FM work, the *universal*
+tooling is: `gain`/`cmul`/`csum` (the control/audio-separated gain family),
+`mute`, `pitch_env`, the separation invariant + its generic test, the `velocity`
+reserved input, the `parts:` multitimbral model, the two-tier preset model, the
+shared SysEx envelope, the generator CC map, the polyphony budget tool, and the
+source-vocabulary check. The *fourop-fm-specific* bits are `algo`/`route`/
+`route4`, the `fm_op` macro, the 12-waveform `osc` union, the 7-algorithm
+`routing` table, and the DX `dx_env` — each an instance of a universal mechanism
+(the selector, the router, the operator, the wave reader, the matrix, the
+rate/level envelope).
 
 ---
 
