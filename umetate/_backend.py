@@ -56,6 +56,8 @@ def emit(graph: CompiledGraph) -> str:
     lines.extend(_param_decls(graph))
     lines.extend(_param_tables(graph))
     lines.append("")
+    lines.extend(_voice.helpers())  # voice_mono_active (used by note_on/off)
+    lines.extend(_note_derived_fn(graph))  # <name>_note_derived (render + seam)
     lines.extend(_render(graph, by_id, table_names))
     lines.extend(_seam(graph, by_id))
     return "\n".join(lines) + "\n"
@@ -174,6 +176,9 @@ def _render(
     # control prologue: global control-rate nodes (scalar)
     for i in global_ctrl:
         lines.extend(_emit_body(i, "0", "        ", table_names))
+
+    # portamento glide (control rate): ramp each voice's base increment.
+    lines.extend(_voice.glide(name))
 
     # audio loop
     lines.append(f"        for (uint32_t f = b; f < b + {cb}u && f < frames; f++) {{")
@@ -375,8 +380,6 @@ def _note_derived_fn(graph: CompiledGraph) -> list[str]:
 def _seam(graph: CompiledGraph, by_id: dict[str, NodeInstance]) -> list[str]:
     name = graph.name
     lines: list[str] = []
-    lines.extend(_voice.helpers())
-    lines.extend(_note_derived_fn(graph))
     lines.extend(
         [
             f"void {name}_dsp_reset(void) {{",

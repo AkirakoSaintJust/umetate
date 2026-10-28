@@ -8,9 +8,9 @@ Pure emission (like `_backend`): every function returns C source lines. The
 synth-specific note→increment glue lives in `<name>_note_derived` (emitted by the
 backend); this module owns the allocation semantics — poly / mono / unison — and
 the per-voice base increment `voice_inc[v]` (note_to_inc × detune) that the
-note-derived increments scale. Portamento (glide) is reserved here but not yet
-emitted: `voice_inc[v]` is written once at note-on, and `vm_portamento` is accepted
-but ignored until the glide ramp lands.
+note-derived increments scale. Portamento (glide) ramps `voice_inc[v]` toward
+`voice_target_inc[v]` at a constant rate (linear in the increment, no LUT); the
+ramp lives in `glide()` and re-runs the note→increment glue each block.
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ MODE_PARAMS: tuple[tuple[str, int, str, int, int, str], ...] = (
     ("vm_unison_count", 1, "unison_count", 1, 8, ""),
     ("vm_unison_detune", 0, "unison_detune", 0, 200, "cents"),
     ("vm_legato", 0, "legato", 0, 1, ""),
-    ("vm_portamento", 0, "portamento", 0, 1000, "ms"),  # reserved: glide lands next
+    ("vm_portamento", 0, "portamento", 0, 65536, ""),  # Q16 glide rate (0 = off)
     ("vm_note_priority", 0, "note_priority", 0, 2, ""),  # 0=last 1=highest 2=lowest
 )
 
@@ -57,7 +57,8 @@ def voice_state_decls() -> list[str]:
         "static uint32_t voice_age[NVOICE] UMETATE_CPU1;",
         "static int32_t voice_velocity[NVOICE] UMETATE_CPU1;",
         "static uint8_t voice_trig[NVOICE] UMETATE_CPU1;",
-        "static uint32_t voice_inc[NVOICE] UMETATE_CPU1;",
+        "static uint32_t voice_inc[NVOICE] UMETATE_CPU1; /* current base increment */",
+        "static uint32_t voice_target_inc[NVOICE] UMETATE_CPU1; /* glide target */",
         "static int32_t voice_detune[NVOICE] UMETATE_CPU1;",
         "static uint8_t mono_held[128] UMETATE_CPU1;",
         "static uint32_t mono_order[128] UMETATE_CPU1;",
@@ -149,14 +150,17 @@ def note_on(name: str) -> list[str]:
         "",
         "    for (uint32_t k = 0; k < npicked; k++) {",
         "        uint32_t pick = picked[k];",
+        "        uint8_t was = voice_gate[pick]; /* sounding before this note-on? */",
         "        voice_note[pick] = (uint8_t)snote;",
         "        voice_age[pick] = ++ages;",
         "        voice_gate[pick] = 1;",
         "        voice_trig[pick] = trig;",
         "        /* 0..127 -> q15 (32767/127 ~= 258) */",
         "        voice_velocity[pick] = (int32_t)(velocity * 258u);",
-        "        voice_inc[pick] = (uint32_t)(((uint64_t)note_to_inc(snote) * "
+        "        voice_target_inc[pick] = (uint32_t)(((uint64_t)note_to_inc(snote) * ",
         "(uint32_t)voice_detune[pick]) >> 16);",
+        "        /* a fresh voice snaps to pitch; a steal glides when portamento is on */",
+        "        if (!vm_portamento || !was) voice_inc[pick] = voice_target_inc[pick];",
         f"        {name}_note_derived(pick);",
         "    }",
         "}",
@@ -176,8 +180,9 @@ def note_off(name: str) -> list[str]:
         "        if (active != (uint32_t)voice_note[0]) {",
         "            voice_note[0] = (uint8_t)active;",
         "            if (!vm_legato) voice_trig[0] = 1;",
-        "            voice_inc[0] = (uint32_t)(((uint64_t)note_to_inc(active) * "
+        "            voice_target_inc[0] = (uint32_t)(((uint64_t)note_to_inc(active) * ",
         "(uint32_t)voice_detune[0]) >> 16);",
+        "            if (!vm_portamento) voice_inc[0] = voice_target_inc[0];",
         f"            {name}_note_derived(0);",
         "        }",
         "        return;",
@@ -186,6 +191,34 @@ def note_off(name: str) -> list[str]:
         "        if (voice_note[v] == note) voice_gate[v] = 0;",
         "}",
         "",
+    ]
+
+
+def glide(name: str) -> list[str]:
+    """The per-block portamento ramp (indented for the render loop): move each
+    gated voice's `voice_inc[v]` toward `voice_target_inc[v]` at a constant rate
+    (linear in the increment, one add per voice per block), re-deriving the
+    note→increment glue when the increment moves."""
+    return [
+        "        if (vm_portamento) {",
+        "            for (uint32_t v = 0; v < NVOICE; v++) {",
+        "                if (!voice_gate[v]) continue;",
+        "                uint32_t cur = voice_inc[v];",
+        "                uint32_t tgt = voice_target_inc[v];",
+        "                if (cur != tgt) {",
+        "                    uint32_t step = (uint32_t)(((uint64_t)tgt *",
+        "                        (uint32_t)vm_portamento) >> 16);",
+        "                    if (step < 1u) step = 1u;",
+        "                    if (tgt > cur) {",
+        "                        cur += step; if (cur > tgt) cur = tgt;",
+        "                    } else {",
+        "                        cur -= step; if (cur < tgt) cur = tgt;",
+        "                    }",
+        "                    voice_inc[v] = cur;",
+        f"                    {name}_note_derived(v);",
+        "                }",
+        "            }",
+        "        }",
     ]
 
 

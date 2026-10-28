@@ -923,17 +923,21 @@ params are appended to every patch's param set (ids N..N+5). Landed:
   stage, so a stolen voice re-attacks (F3a).
 - **The six mode params** — `mode` (poly/mono/unison), `unison_count`,
   `unison_detune` (cents, linear spread), `legato`, `note_priority`
-  (last/highest/lowest), and `portamento` (accepted, reserved).
+  (last/highest/lowest), and `portamento` (Q16 glide rate, 0 = off).
 - **Mono** — one voice (voice 0), a 128-note held tracker + `note_priority`;
   `note_off` does priority takeover; legato gates the retrigger on overlap.
 - **Unison** — `unison_count` stacked voices with a linear ±cents detune folded
   into each voice's base increment.
-- The note→increment glue is now `<name>_note_derived(v)`, parameterized by voice
-  index and driven by `voice_inc[v]` (note_to_inc × detune) — the seam that glide
-  will ramp.
+- **Portamento** — `voice_inc[v]` ramps toward `voice_target_inc[v]` at a constant
+  rate (linear in the increment, `step = target × portamento >> 16`, clamped; no
+  LUT, one add per voice per block), re-deriving `<name>_note_derived(v)` each
+  block. A fresh voice snaps; a steal glides.
+- The note→increment glue is `<name>_note_derived(v)`, parameterized by voice index
+  and driven by `voice_inc[v]` (note_to_inc × detune) — shared by note-on, mono
+  takeover, and the glide ramp.
 
-Still open: **portamento/glide** (the `voice_inc[v]` → target ramp, next) and the
-`parts:` multitimbral model (per-part param sets, channel/keyzone, `note_on_ch`).
+Still open: the `parts:` multitimbral model (per-part param sets, channel/keyzone
+routing, per-part `level`/`delay`, layering, `note_on_ch`).
 
 #### 6.11.5 Milestones (ordered)
 
@@ -941,7 +945,7 @@ Still open: **portamento/glide** (the `voice_inc[v]` → target ramp, next) and 
 | --- | --- | --- |
 | F1 | **Interview loop hardening** (L1–L7). | synth-brief semantics column + multi-timbrality + MIDI-spec prompts; control-map menu→page→mode-tree prompt; skill non-goal rule + two-tier example definition; source-vocabulary check runs. |
 | F2 | **Velocity routing.** — **done** | `voice_velocity[]` + `velocity` reserved input + `vel_amp`/`vel_fm`/`vel_rate` in `fm_op` (velocity → amplitude, → FM, → envelope rate via a `dx_env` rate-scale input); host tests prove a higher velocity is louder and attacks faster. |
-| F3 | **Voice-management rails** (modes — done; glide + parts remain). | `_voice.py` rails + `trigger`/retrigger + mono (note_priority/legato) + unison (detune) + the six mode params; host tests prove mono priority/takeover, unison stacking, and legato. Remaining: the `portamento` glide ramp, then `parts:` schema + per-part param sets + channel/keyzone routing + layering + `note_on_ch`. |
+| F3 | **Voice-management rails** (modes — done; parts remain). | `_voice.py` rails + `trigger`/retrigger + mono (note_priority/legato) + unison (detune) + portamento (constant-rate glide) + the six mode params; host tests prove mono priority/takeover, unison stacking, legato, and glide. Remaining: `parts:` schema + per-part param sets + channel/keyzone routing + layering + `note_on_ch`. |
 | F4 | **Presets + settings + SysEx.** | 64-slot part-patch store + 64-slot multi-patch store, settings record (channel/tune), the shared SysEx envelope + identity/param/part-patch/multi-patch/settings commands; export→import round-trips. |
 | F5 | **MIDI CC map.** | generator-emitted `cc → param` table; host test proves a CC write reaches the right param. |
 | F6 | **Polyphony budget tool.** | `umetate budget` reports a measured voice count for 2×12, 2×10, 2×8; the skill interview consumes it. |

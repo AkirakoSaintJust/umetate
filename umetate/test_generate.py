@@ -722,6 +722,50 @@ int main(int argc, char **argv) {
 }
 """
 
+# The portamento contract: a note change glides the pitch (constant rate) instead
+# of snapping. A single-voice sine steers from note 60 to note 72; with glide the
+# average frequency over the window stays near 60 (few zero crossings), without it
+# the window is all note 72 (roughly twice the crossings). One process per
+# portamento value (the engine's static phase is shared).
+GLIDE_PATCH: Patch = {
+    "name": "glide_test",
+    "voices": 1,
+    "voice": {
+        "nodes": [
+            {"id": "ph", "type": "phasor"},
+            {"id": "osc", "type": "osc"},
+        ],
+        "wires": [{"from": "ph.phase", "to": "osc.phase"}],
+        "voice_out": "osc.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
+GLIDE_HARNESS = """\
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+void __NAME___dsp_reset(void);
+void __NAME___dsp_note_on(uint32_t note, uint32_t velocity);
+void __NAME___dsp_render(int32_t *out, uint32_t frames);
+void __NAME___dsp_set_param(uint32_t id, int32_t value);
+static int32_t out[2048];
+int main(int argc, char **argv) {
+    int portamento = atoi(argv[1]);
+    __NAME___dsp_reset();
+    __NAME___dsp_set_param(__PORTAMENTO_ID__, portamento);
+    __NAME___dsp_note_on(60, 100);
+    __NAME___dsp_render(out, 256);       /* settle at note 60 */
+    __NAME___dsp_note_on(72, 100);       /* steal -> snap or glide to 72 */
+    __NAME___dsp_render(out, 1024);
+    int c = 0;                           /* positive-going zero crossings */
+    for (int i = 0; i + 1 < 1024; i++)
+        if (out[2 * i] < 0 && out[2 * (i + 1)] >= 0) c++;
+    printf("%d\\n", c);
+    return 0;
+}
+"""
+
 
 def _include_args() -> list[str]:
     root = Path(__file__).resolve().parents[1]
@@ -969,6 +1013,50 @@ def _legato_behave(patch: Patch) -> tuple[bool, str]:
         if on <= 2 * off:
             return False, f"legato did not hold the envelope (on={on} off={off})"
         return True, "legato holds the envelope across an overlap"
+
+
+def _glide_ramps(patch: Patch) -> tuple[bool, str]:
+    """Generate + compile + run the portamento contract: a note change glides the
+    pitch (constant rate) rather than snapping. One process per portamento value."""
+    src = generate(patch)
+    portamento_id = str(param_ids(patch)["portamento"])
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        cname = patch["name"].replace("-", "_").replace(".", "_")
+        harness = GLIDE_HARNESS.replace("__NAME__", cname).replace(
+            "__PORTAMENTO_ID__", portamento_id
+        )
+        (d / "harness.c").write_text(harness)
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            return False, "compile failed:\n" + proc.stderr
+        snap = int(
+            subprocess.run(
+                [str(d / "t"), "0"], capture_output=True, text=True
+            ).stdout.strip()
+        )
+        glide = int(
+            subprocess.run(
+                [str(d / "t"), "100"], capture_output=True, text=True
+            ).stdout.strip()
+        )
+        if glide >= snap - 3:
+            return False, f"portamento did not glide (snap={snap} glide={glide})"
+        return True, "portamento glides the pitch instead of snapping"
 
 
 def _sound_tables(patch: Patch) -> tuple[bool, str]:
@@ -1448,6 +1536,14 @@ def main() -> int:
     print(
         ("ok: " if ok else "FAIL: ")
         + (msg or "legato holds the envelope across an overlap")
+    )
+    failures += 0 if ok else 1
+
+    # portamento: a note change glides the pitch (constant rate) instead of snapping.
+    ok, msg = _glide_ramps(GLIDE_PATCH)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "portamento glides the pitch instead of snapping")
     )
     failures += 0 if ok else 1
 
