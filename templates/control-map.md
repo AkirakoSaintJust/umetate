@@ -26,6 +26,11 @@
 > A context owns both its view and its control meaning. For **each** context,
 > fill a table like the one below — one row per control/MIDI source that does
 > something here, and a row for every on-enter/on-exit side effect.
+>
+> First draw the **menu tree** — every context (menu), its pages, and the *modes*
+> within a page (a page whose widgets change under a hold/shift, or a multi-mode
+> page). A fresh reader must be able to draw the screen for every state from this
+> section alone.
 
 ### Context: `home`
 

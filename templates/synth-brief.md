@@ -22,6 +22,9 @@
 - **Envelopes and velocity:**
 - **Modulation (LFO, envelopes, macros):**
 - **Effects and output stage:**
+- **Multi-timbrality (`parts:`):** (number of parts; each an independent timbre or
+  shared; per-part routing `channel` + keyzone `low`/`high`; per-part gain/timing
+  `level` + `delay`; note→part routing rule; layering allowed; per-part voice pool)
 
 ### 2.1 Voice architecture (the node/macro graph)
 
@@ -63,6 +66,7 @@
 
 - **MIDI in / out / thru:**
 - **Channels, velocity-zero note-off, sustain, panic:**
+- **CC map** (fixed generator-assigned vs user-assignable; which params; sustain/panic/bend/program change):
 - **Clock and transport:**
 - **USB roles (MIDI, audio, update):**
 - **Overflow and back-pressure behaviour:**

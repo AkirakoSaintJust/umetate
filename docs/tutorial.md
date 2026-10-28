@@ -242,6 +242,13 @@ meaning. Use the keybed as a menu surface (keys as operator/mute shortcuts), and
 prefer the **page-slot model**: a few encoders whose meaning changes per page, with
 the labels shown on screen (the screen says what the knobs do).
 
+Draw the **menu tree** up front — every context (menu), its pages, and the *modes*
+within a page — before you fill the bindings; a fresh reader must be able to draw
+the screen for every state. Design **multi-timbrality** (`parts:`) and the **MIDI
+specification** (channels, the `cc → param` map, sustain/panic/bend, program
+change) in the same interview — they are engine and control-map concerns, not
+afterthoughts.
+
 Rules: the audio callback does no display, flash, logging, blocking, or allocation;
 publish shared values with one writer or a snapshot protocol; draw only what
 changed. Persist versioned records with CRC/commit, saving when silent.

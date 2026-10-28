@@ -111,6 +111,15 @@ of asking the user to repeat them.
   generated `params.json`.
 - **Tables** must name any wavetable/segments/spectrum/phase-map data (the
   `tables:` section → `const` XIP).
+- **Multi-timbrality** (if the synth has `parts:`): name each part, whether it is
+  an **independent timbre** (its own parameter set), its routing (`channel` +
+  keyzone `low`/`high`), its gain/timing (`level`, `delay`), the note→part routing
+  rule (channel + keyzone), whether **layering** is allowed (one note → several
+  parts), and the voice pool per part + the total.
+- **MIDI specification**: the receive channels (per part or omni), the `cc → param`
+  map (fixed generator-assigned, or user-assignable), sustain (CC64), panic
+  (CC123), pitch bend, program change, and note-on/off + velocity. This is the
+  source of the generated `cc-map` and the `note_on_ch` allocator.
 
 Each node/macro's **DSP algorithm** (the exact math, formats, coefficients,
 state, and edge cases) is specified in `templates/dsp-algorithm.md` during
@@ -130,6 +139,11 @@ screen; LED/pad feedback; and the full control flow.
 
 - **Contexts:** every mode is a context with pages, bindings, and optional
   `on_enter`/`on_exit` hooks (save-on-exit, reset-on-entry).
+- **Menu → page → mode correspondence:** enumerate the full graphical tree —
+  every context (menu), its pages, and the *modes* within a page (a page whose
+  widgets change under a hold/shift, or a multi-mode page). A fresh reader must be
+  able to draw the screen for every state; this is the panel's *graphical UI
+  correspondence*, not just its bindings.
 - **Control flow:** name every transition — `push`/`pop`/`pop_home`/`next_page`/
   `prev_page`/`set_page`/`bank_next`/`bank_prev` — and which control triggers it.
   A fresh agent must be able to trace every button/encoder/key through every
@@ -227,7 +241,13 @@ artifact_, never the code. Walk every item; do not skip:
       `gate`/`velocity` reserved sources are used correctly.
 - [ ] The voice count × architecture fits the supported-load profile (voice SoA
       × nodes × per-sample work within the callback budget).
-- [ ] The MIDI map (`cc:N`, `note:N`) targets only defined parameters.
+- [ ] The MIDI map (`cc:N`, `note:N`) targets only defined parameters; sustain,
+      panic, and bend are wired or explicitly deferred.
+- [ ] Every part's params, routing (channel/keyzone), and gain/timing are
+      specified; the note→part routing + layering is unambiguous; per-part voice
+      pools sum to the supported-load profile's voice count.
+- [ ] Every menu/page/mode in the GUI correspondence has its widgets and bindings;
+      no page is declared without a screen it can draw.
 - [ ] Persistence fields correspond to defined parameters/tables.
 - [ ] Non-goals are respected; no feature was added "because the platform can".
 

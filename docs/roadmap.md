@@ -882,7 +882,7 @@ as the target-accurate confirmation. The development skill's interview gains a
 
 | # | Milestone | Acceptance |
 | --- | --- | --- |
-| F1 | **Interview loop hardening** (L1–L7). | synth-brief semantics column; skill non-goal rule + two-tier example definition; source-vocabulary check runs. |
+| F1 | **Interview loop hardening** (L1–L7). | synth-brief semantics column + multi-timbrality + MIDI-spec prompts; control-map menu→page→mode-tree prompt; skill non-goal rule + two-tier example definition; source-vocabulary check runs. |
 | F2 | **Velocity routing.** | `voice_velocity[]` + `velocity` reserved input + `vel_amp`/`vel_rate`/`vel_fm` in `fm_op`; host test proves amplitude responds to velocity and 0 velocity = no change. |
 | F3 | **Voice-management rails** (parts). | `parts:` schema + generator part-aware allocation — per-part parameter sets (independent timbres), channel + keyzone routing, per-part level/delay, layering; host test proves split, layer, and delay. |
 | F4 | **Presets + settings + SysEx.** | 64-slot part-patch store + 64-slot multi-patch store, settings record (channel/tune), the shared SysEx envelope + identity/param/part-patch/multi-patch/settings commands; export→import round-trips. |
