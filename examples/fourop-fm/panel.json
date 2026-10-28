@@ -40,6 +40,7 @@
             { "type": "status", "row": 1, "span": 2, "param": "algorithm" },
             { "type": "param_row", "row": 4, "param": "op1.ph.inc_ratio", "text": "RATIO", "unit": "x" },
             { "type": "param_row", "row": 5, "param": "op1.vca.level", "text": "LEVEL" },
+            { "type": "param_row", "row": 6, "param": "op1.fb.level", "text": "FEEDBACK" },
             { "type": "param_row", "row": 7, "param": "op1.osc.waveform", "text": "WAVE" }
           ]
         },

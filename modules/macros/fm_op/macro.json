@@ -1,11 +1,12 @@
 {
-  "summary": "The complete DX-style FM operator: phasor + osc(12 waveforms) + dx_env(rate/level) + vca(level), with 1-sample self-feedback (the `feedback` control input is the carrier-gated depth), a q16 `ratio` frequency multiplier (runtime), a per-op amplitude LFO (tremolo), a per-op `mute` gate, and a `pitch` input (the shared vibrato LFO).",
-  "ins": { "fm": "audio", "pitch": "control", "feedback": "control" },
+  "summary": "The complete DX-style FM operator: phasor + osc(12 waveforms) + dx_env(rate/level) + vca(level), with per-op 1-sample self-feedback (the `feedback` param) plus a carrier-gated `car_fb` input (the HOME carrier-feedback master), a q16 `ratio` frequency multiplier (runtime), a per-op amplitude LFO (tremolo), a per-op `mute` gate, and a `pitch` input (the shared vibrato LFO).",
+  "ins": { "fm": "audio", "pitch": "control", "car_fb": "control" },
   "outs": { "audio": "audio" },
   "params": {
     "ratio": { "target": "ph.inc", "note_derived": true },
     "waveform": "osc.waveform",
     "level": "vca.level",
+    "feedback": "fb.level",
     "mute": "mute.mute",
     "trem_rate": "lfo.rate",
     "trem_depth": "lfo.depth",
@@ -21,6 +22,8 @@
     { "id": "cvsum", "type": "mix" },
     { "id": "vca", "type": "vca" },
     { "id": "fb", "type": "vca" },
+    { "id": "carfb", "type": "gain" },
+    { "id": "fbsum", "type": "mix" },
     { "id": "d1", "type": "delay1" },
     { "id": "sum", "type": "mix" },
     { "id": "mute", "type": "mute" }
@@ -29,7 +32,6 @@
     { "from": "fm", "to": "sum.in0" },
     { "from": "d1.out", "to": "sum.in1" },
     { "from": "pitch", "to": "ph.pitch" },
-    { "from": "feedback", "to": "fb.cv" },
     { "from": "sum.audio", "to": "ph.fm" },
     { "from": "ph.phase", "to": "osc.phase" },
     { "from": "osc.audio", "to": "vca.audio" },
@@ -39,7 +41,11 @@
     { "from": "trem.audio", "to": "cvsum.in1" },
     { "from": "cvsum.audio", "to": "vca.cv" },
     { "from": "vca.audio", "to": "fb.audio" },
-    { "from": "fb.audio", "to": "d1.in" },
+    { "from": "vca.audio", "to": "carfb.audio" },
+    { "from": "car_fb", "to": "carfb.cv" },
+    { "from": "fb.audio", "to": "fbsum.in0" },
+    { "from": "carfb.audio", "to": "fbsum.in1" },
+    { "from": "fbsum.audio", "to": "d1.in" },
     { "from": "vca.audio", "to": "mute.audio" },
     { "from": "mute.audio", "to": "audio" }
   ]

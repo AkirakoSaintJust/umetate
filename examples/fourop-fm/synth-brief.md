@@ -57,21 +57,24 @@
   `voice → lp.audio`, `lp.low → wf.audio`, `wf.audio → out`,
   `plfo.cv + penv.cv → op1..op4.pitch`.
 - **Macros:** `fm_op` (shipped, `modules/macros/fm_op/`) — the operator, with
-  params `ratio` (note-derived), `waveform`, `level`, `trem_rate`, `trem_depth`,
-  `r1..r4`, `l1..l3` mapped inward, and inputs `fm` (audio) + `pitch` (control) +
-  `feedback` (control, the carrier-gated self-modulation depth).
+  params `ratio` (note-derived), `waveform`, `level`, `feedback` (per-op
+  self-modulation), `trem_rate`, `trem_depth`, `r1..r4`, `l1..l3` mapped inward,
+  and inputs `fm` (audio) + `pitch` (control) + `car_fb` (control, the carrier
+  feedback master).
 - **Voice count / sample rate:** 8 voices / 44100 Hz (the default).
 - **Feedback paths:** each operator's self-feedback is one `delay1` (out ×
-  feedback → sum with external fm + pitch → `ph.fm`). The single `feedback` knob
-  (`route.feedback`) is **carrier-gated** — the `route` node gates it by the
-  algorithm's carrier mask into `op1..op4.feedback`, so only the carrier
-  self-modulates.
+  feedback → sum with external fm + pitch → `ph.fm`). Feedback is **per-op +
+  carrier**: each operator's `opN_feedback` (its own self-modulation, on the op
+  page) is summed with the carrier-gated `feedback` master (`route.feedback`, the
+  HOME knob) — the `route` node gates the master by the carrier mask into
+  `op1..op4.car_fb`, so only the carrier gets the master on top of its per-op
+  amount.
 
 ### 2.2 Parameter manifest
 
-> The 35 friendly names below are what the panel exposes; the generator also
+> The 39 friendly names below are what the panel exposes; the generator also
 > auto-exposes the remaining flattened operator-envelope params (per-op
-> `r2/r3/l1/l2/l3` × 4, plus op2–4's `feedback`/`r1`/`r4`) by their
+> `r2/r3/l1/l2/l3` × 4, plus op2–4's `r1`/`r4`) by their
 > `<instance>.<param>` target path (settable via `set_param`, not on the panel).
 
 | Param (name) | Target | Min | Max | Curve | Unit |
@@ -91,12 +94,14 @@
 | op1_waveform … op4_waveform | opN.osc.waveform | 0 | 11 | linear | |
 | op1_ratio … op4_ratio | opN.ph.inc_ratio | 32768 | 1048576 | linear | × |
 | op1_mute … op4_mute | opN.mute.mute | 0 | 1 | linear | |
+| op1_feedback … op4_feedback | opN.fb.level | 0 | 32767 | linear | |
 | op1_trem_rate … op4_trem_rate | opN.lfo.rate | 0 | 20000000 | log | |
 | op1_trem_depth … op4_trem_depth | opN.lfo.depth | 0 | 32767 | linear | |
 
-(`level` is both the output amplitude and the FM index; `feedback` is the
-carrier-gated self-modulation depth (`route.feedback` — only the current
-algorithm's carrier self-modulates). `rate` is a Q32 phase increment per
+(`level` is both the output amplitude and the FM index; `feedback` is the carrier
+feedback master (`route.feedback`, added to whichever operator is the current
+algorithm's carrier), and `opN_feedback` is each operator's own self-modulation
+depth (added on top). `rate` is a Q32 phase increment per
 sample — `f · 2³² / 44100`, so ~97392 = 1 Hz. `depth` is `depth/32768` in the
 use's units: octaves of vibrato for `pitch_depth` (273 ≈ ±10 cents), fraction of
 full amplitude for `trem_depth` (~16000 ≈ ±50%). `ratio` is the q16 frequency

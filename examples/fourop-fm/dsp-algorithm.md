@@ -148,7 +148,8 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   that reads a 4-weight row of the routing table and applies it; `route` is the
   ergonomic 4-op router the patch actually uses — one `algorithm` param, all five
   rows (4 modulation + the carrier sum) computed at once, plus the carrier-gated
-  feedback depths (`feedback` × the carrier mask) for carrier-only feedback.
+  feedback master (`feedback` × the carrier mask) — added to each operator's per-op
+  feedback.
 
 - **Algorithm** (fixed-point, exactly): all four operators compute in parallel, and
   every modulation reads the **1-sample-delayed** output of its sources (so the
@@ -200,10 +201,12 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
 
 ## Component: `fm_op` (the DX-style operator)
 
-- **Purpose:** one FM operator = `phasor → osc → dx_env → vca`, with 1-sample
-  self-feedback, a q16 `ratio`, a per-op amplitude LFO (tremolo), a per-op `mute`
-  gate, and a `pitch` input (the shared vibrato LFO). The complete DX-style building
-  block; an N-operator voice is N `fm_op` wired by the routing matrix (§`route`).
+- **Purpose:** one FM operator = `phasor → osc → dx_env → vca`, with per-op
+  1-sample self-feedback (`feedback`, a param) plus a carrier-gated `car_fb` input
+  (the HOME feedback master), a q16 `ratio`, a per-op amplitude LFO (tremolo), a
+  per-op `mute` gate, and a `pitch` input (the shared vibrato LFO). The complete
+  DX-style building block; an N-operator voice is N `fm_op` wired by the routing
+  matrix (§`route`).
 
 - **Algorithm** (fixed-point, exactly):
   ```
@@ -214,7 +217,7 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   phase += inc_eff + (sum << 16)                   (FM index: full-scale = ±π phase)
   sine   = fm1_sin_wave(phase, waveform)          (12-wave OPZ+OPL union)
   out    = sine · eg_t · level                     (Q15)
-  feedback_prev = (out · feedback_depth) delayed 1 sample   (feedback_depth = the carrier-gated input)
+  feedback_prev = (out · (feedback + car_fb)) delayed 1 sample   (feedback = per-op, car_fb = carrier master)
   audio  = mute ? 0 : out                          (the per-op mute gate)
   ```
   `inc = note_to_inc(note) · ratio >> 16` (a q16 frequency multiplier, runtime —
@@ -229,16 +232,16 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   loop still runs internally.
 
 - **Inputs / outputs:** `fm` (audio, external modulation), `pitch` (control, the
-  shared vibrato LFO), `feedback` (control, the carrier-gated self-modulation
-  depth) → `audio` (audio).
+  shared vibrato LFO), `car_fb` (control, the carrier feedback master) → `audio`
+  (audio).
 
 - **Parameters** (mapped inward):
   `ratio` (q16, the frequency multiplier — runtime), `waveform` (uint32 0–11),
-  `level` (q15, the FM index / output amplitude), `mute` (uint32, 0/1 — the output
-  gate), `trem_rate` (q32, the per-op LFO increment), `trem_depth` (q15, the
-  tremolo depth), and the `dx_env` params `r1..r4, l1..l3`. `feedback` is a
-  *control input*, not a param — the `route` node feeds it the carrier-gated depth
-  (§`route`).
+  `level` (q15, the FM index / output amplitude), `feedback` (q15, the per-op
+  self-modulation depth), `mute` (uint32, 0/1 — the output gate), `trem_rate` (q32,
+  the per-op LFO increment), `trem_depth` (q15, the tremolo depth), and the
+  `dx_env` params `r1..r4, l1..l3`. The `car_fb` *input* adds the carrier-gated
+  master (§`route`).
 
 - **Coefficients / precompute:** none; `inc` is note-derived at note-on (from the
   runtime `ratio`), the feedback is a `delay1` register, the LFO is a control-rate
