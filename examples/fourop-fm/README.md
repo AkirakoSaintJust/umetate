@@ -24,7 +24,7 @@ envelope**, and one **amplitude LFO per operator**.
 
 | File | What it holds |
 | --- | --- |
-| `patch.json` | the declarative synth (voice/global zones, 35 friendly params, the `routing` table) |
+| `patch.json` | the declarative synth (voice/global zones, 39 friendly params, the `routing` table) |
 | `panel.json` | the UI (`home` + `op` + `fx` + `glo` contexts) |
 | `synth-brief.md` | the instrument brief (source of truth for the above) |
 | `dsp-algorithm.md` | the per-component math (dx_env, osc.waveform, routing, fm_op, lfo) |

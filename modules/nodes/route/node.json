@@ -1,8 +1,8 @@
 {
   "name": "route",
-  "summary": "The 4-op FM algorithm router: reads the 4 modulation rows + carrier row of a `routing` table by `algorithm`, and outputs the modulation into op2/op3/op4 + the carrier sum, plus the carrier-gated feedback depths (`feedback` x carrier mask) for op1..op4. (op1 = O1 is never externally modulated.)",
+  "summary": "The 4-op FM algorithm router: reads the 4 modulation rows + carrier row of a `routing` table by `algorithm`, and outputs the modulation into op2/op3/op4 + the carrier sum, plus the carrier-gated feedback master (`car_fb` x carrier mask) for op1..op4. (op1 = O1 is never externally modulated.)",
   "ins": { "a": "audio", "b": "audio", "c": "audio", "d": "audio" },
   "outs": { "mod2": "audio", "mod3": "audio", "mod4": "audio", "car": "audio", "fb1": "control", "fb2": "control", "fb3": "control", "fb4": "control" },
-  "params": { "which": "table", "algorithm": "uint32", "feedback": "q15" },
+  "params": { "which": "table", "algorithm": "uint32", "car_fb": "q15" },
   "state": {}
 }

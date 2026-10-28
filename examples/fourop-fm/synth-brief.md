@@ -65,7 +65,7 @@
 - **Feedback paths:** each operator's self-feedback is one `delay1` (out ×
   feedback → sum with external fm + pitch → `ph.fm`). Feedback is **per-op +
   carrier**: each operator's `opN_feedback` (its own self-modulation, on the op
-  page) is summed with the carrier-gated `feedback` master (`route.feedback`, the
+  page) is summed with the carrier-gated `feedback` master (`route.car_fb`, the
   HOME knob) — the `route` node gates the master by the carrier mask into
   `op1..op4.car_fb`, so only the carrier gets the master on top of its per-op
   amount.
@@ -83,7 +83,7 @@
 | cutoff | lp.f | 0 | 65535 | log | Hz |
 | res | lp.q | 0 | 65535 | linear | |
 | fold | wf.amount | 0 | 32767 | linear | |
-| feedback | route.feedback | 0 | 32767 | linear | |
+| feedback | route.car_fb | 0 | 32767 | linear | |
 | attack | op1.eg.r1 | 0 | 65535 | log | |
 | release | op1.eg.r4 | 0 | 65535 | log | |
 | pitch_rate | plfo.rate | 0 | 20000000 | log | |
@@ -99,7 +99,7 @@
 | op1_trem_depth … op4_trem_depth | opN.lfo.depth | 0 | 32767 | linear | |
 
 (`level` is both the output amplitude and the FM index; `feedback` is the carrier
-feedback master (`route.feedback`, added to whichever operator is the current
+feedback master (`route.car_fb`, added to whichever operator is the current
 algorithm's carrier), and `opN_feedback` is each operator's own self-modulation
 depth (added on top). `rate` is a Q32 phase increment per
 sample — `f · 2³² / 44100`, so ~97392 = 1 Hz. `depth` is `depth/32768` in the
@@ -162,7 +162,7 @@ one-pole decay rate toward the specified pitch. All block rate.)
 
 ## 7. Acceptance and evidence
 
-- **Must-have features:** 7 runtime algorithms; 12 waveforms; carrier-only
+- **Must-have features:** 7 runtime algorithms; 12 waveforms; per-op + carrier
   feedback; rate/level envelopes; a global pitch LFO + global pitch envelope +
   per-op amplitude LFO; the filter + wavefolder output chain; a panel.
 - **Optional features:** velocity scaling, patch persistence.

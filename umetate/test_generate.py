@@ -18,10 +18,18 @@ import sys
 import tempfile
 from pathlib import Path
 
-from ._ir import GenError
+from ._ir import AUDIO, GenError
 from ._panel import generate_panel
 from ._schema import Patch, as_panel, as_patch
-from .generate import generate, generate_params, generate_tables, param_ids
+from .generate import (
+    generate,
+    generate_params,
+    generate_tables,
+    load_library,
+    param_ids,
+)
+
+LIBRARY_ROOT = Path(__file__).resolve().parents[1] / "modules" / "nodes"
 
 POCKET_DRONE: Patch = {
     "name": "pocket-drone",
@@ -983,22 +991,61 @@ def main() -> int:
         print(f"FAIL: fourop-fm panel.json does not resolve ({exc})")
         failures += 1
 
-    # carrier feedback: `feedback` (route.feedback) is the carrier-gated master,
-    # summed with a per-op `opN_feedback` (opN.fb.level) in each operator.
+    # carrier feedback: `feedback` (route.car_fb) is the carrier-gated master,
+    # summed with a per-op `opN_feedback` (opN.fb.level) in each operator. Test the
+    # param structure and the node contract — not the emitted C (which is free to
+    # change shape).
     ffm_ids = param_ids(ffm)
-    ffm_src = generate(ffm)
+    route_spec = load_library(LIBRARY_ROOT)["route"]
     ok = (
-        ffm_ids.get("feedback") == ffm_ids.get("route.feedback")
+        ffm_ids.get("feedback") == ffm_ids.get("route.car_fb")
         and ffm_ids.get("op1_feedback") == ffm_ids.get("op1.fb.level")
-        and "? route_feedback : 0" in ffm_src
-        and "route_fb1_x" in ffm_src
-        and "op1_fb_level" in ffm_src
+        and all(f"fb{i}" in route_spec.outs for i in range(1, 5))
+        and all(route_spec.outs[f"fb{i}"].kind != AUDIO for i in range(1, 5))
+        and "car_fb" in route_spec.params
     )
     print(
         ("ok: " if ok else "FAIL: ")
-        + "feedback is a carrier master + per-op depth (route.feedback + opN.fb.level)"
+        + "feedback is a carrier master + per-op depth (route.car_fb + opN.fb.level)"
     )
     failures += 0 if ok else 1
+
+    # control/audio separation: a control-only node runs once per block, never per
+    # sample — its ports are all `control`/`event`, no `audio`. A library node must
+    # not smuggle an audio port into a control computation (or vice versa).
+    lib = load_library(LIBRARY_ROOT)
+    sep_ok = True
+    for name in ("cmul", "csum", "lfo", "dx_env", "env", "pitch_env"):
+        spec = lib[name]
+        kinds = [p.kind for p in spec.ins.values()]
+        kinds += [p.kind for p in spec.outs.values()]
+        if AUDIO in kinds:
+            print(f"FAIL: {name} is control-rate but has an audio port")
+            sep_ok = False
+    for name in (
+        "gain",
+        "mix",
+        "vca",
+        "osc",
+        "phasor",
+        "svf",
+        "wavefolder",
+        "mute",
+        "delay1",
+        "mix4",
+        "route4",
+    ):
+        spec = lib[name]
+        kinds = [p.kind for p in spec.ins.values()]
+        kinds += [p.kind for p in spec.outs.values()]
+        if AUDIO not in kinds:
+            print(f"FAIL: {name} is audio-rate but has no audio port")
+            sep_ok = False
+    print(
+        ("ok: " if sep_ok else "FAIL: ")
+        + "control/audio separation (control-only nodes carry no audio port)"
+    )
+    failures += 0 if sep_ok else 1
 
     ok, msg = _sound(SVF_WF)
     print(

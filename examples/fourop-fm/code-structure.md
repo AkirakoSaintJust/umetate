@@ -11,13 +11,17 @@
   - `modules/nodes/dx_env/` — the DX rate/level envelope (`node.json` + `node.c`).
   - `modules/nodes/mix4/` — 4-input summer.
   - `modules/nodes/route4/` — the general routing-matrix row mixer.
-  - `modules/nodes/route/` — the 4-op FM router (one `algorithm` param, 4 rows).
+  - `modules/nodes/route/` — the 4-op FM router (one `algorithm` param, 4 rows + the carrier-gated feedback master).
   - `modules/nodes/lfo/` — the control-rate low-frequency oscillator.
   - `modules/nodes/mute/` — the output gate (per-operator mute).
+  - `modules/nodes/gain/` — pure audio×cv gain (no static `level`).
+  - `modules/nodes/cmul/` — control×control multiplier (control-rate modulation).
+  - `modules/nodes/csum/` — control summer (control-rate modulation).
+  - `modules/nodes/pitch_env/` — the global pitch envelope (the "pitch blip").
   - `modules/macros/fm_op/` — the operator (`macro.json`).
   - `examples/fourop-fm/{patch.json,panel.json,synth-brief.md,dsp-algorithm.md,code-structure.md,control-map.md,README.md}`.
 - **Modified**:
-  - `modules/nodes/osc/` — added the `waveform` param (8 waveforms).
+  - `modules/nodes/osc/` — added the `waveform` param (12 waveforms, the OPZ+OPL union).
   - `modules/nodes/vca/` — added the `level` param (Q15 gain).
   - `modules/nodes/phasor/` — the `fm` input now scales `<<16` (full-scale = ±π
     phase swing), and a `pitch` input scales the increment (`inc × (1 + pitch/32768)`,
@@ -40,10 +44,11 @@ No hand-written `dsp.c`: `generate(patch)` emits `<synth>_dsp_*` from the patch
   `state { stage(uint32), level(q15) }`. `node.c`: a 5-stage one-pole state
   machine (control rate). Host test: `test_generate.py` `DX_ENV`.
 - **`route`** — `node.json`: `ins { a b c d(audio) }`,
-  `outs { mod2 mod3 mod4 car(audio) }`, `params { which(table), algorithm(uint32) }`.
-  `node.c`: four `fm1_route4` calls reading rows 1–4 of the routing table.
-  Host test: the fourop-fm render + routing-table assertions in
-  `test_generate.py`.
+  `outs { mod2 mod3 mod4 car(audio), fb1 fb2 fb3 fb4(control) }`,
+  `params { which(table), algorithm(uint32), car_fb(q15) }`. `node.c`: four
+  `fm1_route4` calls reading rows 1–4 of the routing table, plus the
+  carrier-gated `fb1..fb4` (`car_fb` × the carrier mask). Host test: the
+  fourop-fm render + routing-table assertions in `test_generate.py`.
 - **`route4`** / **`mix4`** — the general primitive (row mixer) + 4-sum. Host
   test: `test_generate.py` `ROUTE4_TEST`.
 - **`lfo`** — `node.json`: `ins {}`, `outs { cv(control) }`,
@@ -67,8 +72,8 @@ No hand-written `dsp.c`: `generate(patch)` emits `<synth>_dsp_*` from the patch
 - **Per-voice state:** SoA (the generator default) — `opN_ph_phase[NVOICE]`,
   `opN_eg_level[NVOICE]`, `opN_lfo_phase[NVOICE]` (the per-op tremolo LFO),
   `dN_prev[NVOICE]`, etc.
-- **Single-instance control state:** the global `svf`/`wavefolder`/`vca` scalars
-  and `plfo_phase` (the shared pitch LFO).
+- **Single-instance control state:** the global `svf`/`wavefolder` scalars, the
+  `plfo` phase (the shared pitch LFO), and the `penv`/`psum` control scalars.
 - **Section placement:** per-sample bodies in `.dsp_text`; `routing` + the
   quarter-sine tables `const` (XIP); engine state `.cpu1_bss`.
 

@@ -1,0 +1,8 @@
+{
+  "name": "cmul",
+  "summary": "Control-rate multiplier: control × control → control (for control-rate modulation, e.g. envelope × tremolo LFO). The control-rate counterpart of `gain`.",
+  "ins": { "in0": "control", "in1": "control" },
+  "outs": { "cv": "control" },
+  "params": {},
+  "state": {}
+}

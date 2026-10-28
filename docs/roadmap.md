@@ -633,7 +633,7 @@ test + a budget annotation; shipped macros in `modules/macros/`, each =
 | `mix` / `add` | summer | N audio ins → 1 out |
 | `mix4` | 4-input summer | the carrier sum / matrix sum |
 | `route4` | routing-matrix row | reads a 4-weight row of a `routing` table (by `algorithm` + `dest`) — the runtime-algorithm primitive |
-| `route` | 4-op FM router | one `algorithm` param, four `fm1_route4` rows: modulation into op2/op3/op4 + the carrier sum, plus the carrier-gated feedback master `fb1..fb4` (`feedback` × the carrier mask, summed into each operator's per-op feedback) (the ergonomic 4-op wrapper over `route4`) |
+| `route` | 4-op FM router | one `algorithm` param, four `fm1_route4` rows: modulation into op2/op3/op4 + the carrier sum, plus the carrier-gated feedback master `fb1..fb4` (`car_fb` × the carrier mask, summed into each operator's per-op feedback) (the ergonomic 4-op wrapper over `route4`) |
 | `svf` / `one_pole` | filter | state-variable (LP/BP/HP) / one-pole; modulatable cutoff/res |
 | `wavefolder` | nonlinear | sine fold: input → sin(π·x) crossfaded by `amount` |
 | `lpg` | vactrol gate | one-pole + VCA, cutoff/gain coupled to a fast-attack/slow-decay envelope |
@@ -644,6 +644,7 @@ test + a budget annotation; shipped macros in `modules/macros/`, each =
 | `mute` | gate | passes the input through, or outputs 0 when `mute` is set — the per-operator mute for auditioning the algorithm |
 | `pitch_env` | pitch envelope | global control-rate "pitch blip": on the `patch_gate` rising, `level = base` (q15 offset), then one-pole decay toward 0 at `rate` (q16) |
 | `csum` | control summer | adds two control inputs (for summing slow modulations, e.g. vibrato + pitch envelope) |
+| `cmul` | control multiplier | multiplies two control inputs (control-rate modulation, e.g. envelope × tremolo LFO) |
 
 `umetate lib list` shows the library; `umetate scaffold --template` starts from a shipped template; user
 nodes conform to `node.schema.json`, patches to `patch.schema.json`.
@@ -694,12 +695,12 @@ out the generator feature list. Shipped macros live in `modules/macros/`; a
 patch's own `macros:` section shadows them.
 
 The **fourop-fm dogfood** (`examples/fourop-fm/`) closed the runtime-algorithm
-gap: `dx_env`, `osc.waveform` (8 waveforms), `vca.level`, `mix4` (the 2-input
-`mix` → 4-input `mix4`), `route4`, `route`, `lfo` (the control-rate
-vibrato/tremolo source), and the `fm_op` rewrite (per-op tremolo + a `pitch`
-input), with the **algorithm as a runtime `routing` matrix** — a `tables:` entry
-applied by `route`/`route4` rather than a compile-time graph — plus the `<<16`
-FM-index scale on `phasor.fm`.
+gap: `dx_env`, `osc.waveform` (12 waveforms, the OPZ+OPL union), `vca.level`,
+`mix4` (the 2-input `mix` → 4-input `mix4`), `route4`, `route`, `lfo` (the
+control-rate vibrato/tremolo source), and the `fm_op` rewrite (per-op tremolo +
+a `pitch` input), with the **algorithm as a runtime `routing` matrix** — a
+`tables:` entry applied by `route`/`route4` rather than a compile-time graph —
+plus the `<<16` FM-index scale on `phasor.fm`.
 
 Build order: `fm_op` + `svf` + `wavefolder` → `ifft` + `lpg` → `pitched_noise` +
 `formant` + the cheap macros → `granulator` last (research-driven). Band-limited

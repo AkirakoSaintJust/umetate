@@ -7,7 +7,7 @@
     "cutoff":       { "target": "lp.f", "min": 0, "max": 65535, "curve": "log", "unit": "Hz" },
     "res":          { "target": "lp.q", "min": 0, "max": 65535, "curve": "linear" },
     "fold":         { "target": "wf.amount", "min": 0, "max": 32767, "curve": "linear" },
-    "feedback":     { "target": "route.feedback", "min": 0, "max": 32767, "curve": "linear" },
+    "feedback":     { "target": "route.car_fb", "min": 0, "max": 32767, "curve": "linear" },
     "attack":       { "target": "op1.eg.r1", "min": 0, "max": 65535, "curve": "log" },
     "release":      { "target": "op1.eg.r4", "min": 0, "max": 65535, "curve": "log" },
     "op1_level":    { "target": "op1.vca.level", "min": 0, "max": 32767, "curve": "linear" },
@@ -53,7 +53,7 @@
       { "id": "d2", "type": "delay1" },
       { "id": "d3", "type": "delay1" },
       { "id": "d4", "type": "delay1" },
-      { "id": "route", "type": "route", "params": { "which": "routing", "algorithm": 4, "feedback": 8000 } }
+      { "id": "route", "type": "route", "params": { "which": "routing", "algorithm": 4, "car_fb": 8000 } }
     ],
     "wires": [
       { "from": "op1.audio", "to": "d1.in" },

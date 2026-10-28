@@ -163,13 +163,13 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
 - **Inputs / outputs:** `mix4`: `in0..in3` (audio) → `audio`. `route4`: `a b c d`
   (audio) → `audio`. `route`: `a b c d` (audio, the four delayed operator outputs)
   → `mod2 mod3 mod4 car` (audio — modulation into op2/op3/op4 and the carrier sum)
-  + `fb1 fb2 fb3 fb4` (control — the carrier-gated feedback depth for op1..op4).
+  + `fb1 fb2 fb3 fb4` (control — the carrier-gated feedback master for op1..op4).
 
 - **Parameters:** `route4`: `which` (table — the routing table), `algorithm`
   (uint32, 0…6), `dest` (uint32, 0…4: 0–3 = modulation rows, 4 = carrier mask).
-  `route`: `which` (table), `algorithm` (uint32, 0…6), `feedback` (q15 — the
-  carrier-gated feedback depth). `algorithm` is the one shared selection for all
-  five rows; `feedback` is gated by the carrier mask into `fb1..fb4`.
+  `route`: `which` (table), `algorithm` (uint32, 0…6), `car_fb` (q15 — the
+  carrier feedback master). `algorithm` is the one shared selection for all
+  five rows; `car_fb` is gated by the carrier mask into `fb1..fb4`.
 
 - **Coefficients / precompute:** the routing table is the `tables:` entry
   `{ "kind": "routing" }` → 7 algorithms × 5 rows × 4 weights (140 Q15 0/1). The
