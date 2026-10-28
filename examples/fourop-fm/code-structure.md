@@ -40,10 +40,13 @@ No hand-written `dsp.c`: `generate(patch)` emits `<synth>_dsp_*` from the patch
 
 ### New nodes
 
-- **`dx_env`** — `node.json`: `ins { gate(event, default voice_gate[v]) }`,
+- **`dx_env`** — `node.json`: `ins { gate(event, default voice_gate[v]),
+  trigger(event, default voice_trig[v]), rate_scale(control, default 32768) }`,
   `outs { cv(control) }`, `params { r1 r2 r3 r4(q16), l1 l2 l3(q15) }`,
   `state { stage(uint32), level(q15) }`. `node.c`: a 5-stage one-pole state
-  machine (control rate). Host test: `test_generate.py` `DX_ENV`.
+  machine (control rate); `trigger` retriggers on a note-on edge, `rate_scale`
+  scales every stage's coefficient (velocity → envelope rate). Host test:
+  `test_generate.py` `DX_ENV`.
 - **`route`** — `node.json`: `ins { alg(control), a b c d(audio) }`,
   `outs { mod2 mod3 mod4 car(audio) }`, `params { which(table) }`. `node.c`: four
   `fm1_route4` calls reading rows 1–4 of the routing table, indexed by `alg`.

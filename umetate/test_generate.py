@@ -564,6 +564,51 @@ VEL_RATE_PATCH: Patch = {
     "global": {"nodes": [], "wires": []},
 }
 
+# The retrigger contract: a note-on that *steals* a sounding voice must reset that
+# voice's envelope to attack (not continue the old note's envelope). Compare, for
+# the *same* note 72, a fresh attack ("fresh") against an attack after a steal
+# ("steal", note 60 first): with retrigger the two energies match; without it the
+# stolen note rides the old note's raised envelope and is much louder. One process
+# per mode (the engine's per-voice envelope/phase are static and shared).
+RETRIG_HARNESS = """\
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+void __NAME___dsp_reset(void);
+void __NAME___dsp_note_on(uint32_t note, uint32_t velocity);
+void __NAME___dsp_render(int32_t *out, uint32_t frames);
+static int32_t out[1024];
+int main(int argc, char **argv) {
+    int steal = argc > 1 && strcmp(argv[1], "steal") == 0;
+    __NAME___dsp_reset();
+    if (steal) { __NAME___dsp_note_on(60, 100); __NAME___dsp_render(out, 256); }
+    __NAME___dsp_note_on(72, 100);
+    __NAME___dsp_render(out, 256);
+    int64_t e = 0;
+    for (int i = 0; i < 512; i++) e += (int64_t)out[i] * out[i];
+    printf("%lld\\n", (long long)e);
+    return 0;
+}
+"""
+
+RETRIG_PATCH: Patch = {
+    "name": "retrig_test",
+    "voices": 1,
+    "voice": {
+        "nodes": [
+            {
+                "id": "op",
+                "type": "fm_op",
+                "params": {"ratio": 65536, "r1": 2000, "l1": 32767},
+            },
+        ],
+        "wires": [],
+        "voice_out": "op.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
 
 def _include_args() -> list[str]:
     root = Path(__file__).resolve().parents[1]
@@ -686,6 +731,48 @@ def _velocity_rate_responds(patch: Patch) -> tuple[bool, str]:
         if hi <= 2 * lo:
             return False, f"velocity did not scale the envelope rate (hi={hi} lo={lo})"
         return True, "velocity scales the operator envelope rate"
+
+
+def _retrigger_on_steal(patch: Patch) -> tuple[bool, str]:
+    """Generate + compile + run the steal-retrigger contract: a note-on that steals
+    a sounding voice resets its envelope (the `trigger` reserved input). One process
+    per mode, so the engine's static per-voice envelope/phase don't leak between
+    notes."""
+    src = generate(patch)
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        cname = patch["name"].replace("-", "_").replace(".", "_")
+        (d / "harness.c").write_text(RETRIG_HARNESS.replace("__NAME__", cname))
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            return False, "compile failed:\n" + proc.stderr
+        fresh = int(
+            subprocess.run(
+                [str(d / "t"), "fresh"], capture_output=True, text=True
+            ).stdout.strip()
+        )
+        steal = int(
+            subprocess.run(
+                [str(d / "t"), "steal"], capture_output=True, text=True
+            ).stdout.strip()
+        )
+        if steal > 3 * fresh:
+            return False, f"steal did not retrigger (fresh={fresh} steal={steal})"
+        return True, "a voice steal retriggers the envelope"
 
 
 def _sound_tables(patch: Patch) -> tuple[bool, str]:
@@ -1142,6 +1229,13 @@ def main() -> int:
     print(
         ("ok: " if ok else "FAIL: ")
         + (msg or "velocity scales the operator envelope rate")
+    )
+    failures += 0 if ok else 1
+
+    # retrigger: a note-on that steals a sounding voice resets its envelope.
+    ok, msg = _retrigger_on_steal(RETRIG_PATCH)
+    print(
+        ("ok: " if ok else "FAIL: ") + (msg or "a voice steal retriggers the envelope")
     )
     failures += 0 if ok else 1
 

@@ -1,9 +1,11 @@
 /* DX-style rate/level envelope (control rate). Exponential one-pole per stage —
    the rate/level character of ymfm/Dexed (§3.2), with the rate as a Q16 one-pole
    coefficient. `rate_scale` (Q15, default unity 32768) scales every stage's
-   coefficient — velocity → envelope rate. Stages: 0=attack (0→l1), 1=decay1
-   (l1→l2), 2=decay2 (l2→l3), 3=sustain (hold l3), 4=release (→0). `level` is Q15
-   gain; a gate edge resets attack (on) or starts release (off). */
+   coefficient — velocity → envelope rate. `trigger` (default `voice_trig[v]`)
+   resets to attack on a note-on edge, even mid-note (a voice steal). Stages:
+   0=attack (0→l1), 1=decay1 (l1→l2), 2=decay2 (l2→l3), 3=sustain (hold l3),
+   4=release (→0). `level` is Q15 gain; a gate edge starts release (off). */
+if (${in.trigger}) { ${state.stage} = 0u; ${state.level} = 0; }
 if (${in.gate}) {
     if (${state.stage} == 4u) { ${state.stage} = 0u; ${state.level} = 0; }
 } else if (${state.stage} != 4u) {

@@ -72,7 +72,7 @@
       "required": ["from", "to"],
       "additionalProperties": false,
       "properties": {
-        "from": { "type": "string", "description": "a port, <instance>.<port>, or a reserved voice source (gate, velocity)" },
+        "from": { "type": "string", "description": "a port, <instance>.<port>, or a reserved voice source (gate, velocity, trigger)" },
         "to": { "type": "string", "description": "<instance>.<port>" }
       }
     },

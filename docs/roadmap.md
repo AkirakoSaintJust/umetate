@@ -913,6 +913,14 @@ interface is `voice_init`, `voice_note_on(note, velocity, picked[])` (returns th
 assigned voice indices), `voice_note_off`, `voice_all_off`, and `voice_glide`
 (the per-block ramp).
 
+**Status (F3, first slice):** the `trigger` reserved input + the retrigger fix are
+landed — `voice_trig[v]` is a one-shot note-on edge (set in `note_on`, cleared
+after the control prologue); `dx_env` gained a `trigger` input (default
+`voice_trig[v]`) that resets to attack regardless of stage, so a stolen voice
+re-attacks. A host test proves a steal retriggers. The allocator itself is still
+the frozen poly/oldest-steal seam; `_voice.py` (the extracted rails), the mono /
+unison / legato / portamento modes, and the `parts:` multitimbral model follow.
+
 #### 6.11.5 Milestones (ordered)
 
 | # | Milestone | Acceptance |
@@ -966,7 +974,8 @@ universal.
 **Level 3 — Patch** is the *complete engine declaration*. `patch.json` declares
 `voices`, `params` (the manifest), `tables` (XIP data), `voice`/`global` zones,
 `voice_out`, and — once F3 lands — `parts`. Compiles to the frozen `<synth>_dsp_*`
-seam (§12.1). The reserved allocator inputs `note`/`gate`/`velocity` are bindings,
+seam (§12.1). The reserved allocator inputs `note`/`gate`/`velocity`/`trigger` are
+bindings,
 not edges; `velocity` is a per-voice control (F2).
 
 **Level 4 — Panel** is the *UI declaration*. `panel.json` declares contexts /
@@ -1869,7 +1878,8 @@ register read (ordered first) from its write (ordered last), which is what makes
 FM feedback exactly 1-sample.
 
 **Schema note** (see `examples/pocket-drone/README.md` §5): the `voice` zone's
-reserved allocator inputs `gate`/`note`/`velocity` are **bindings, not wires**; a
+reserved allocator inputs `gate`/`note`/`velocity`/`trigger` are **bindings, not
+wires**; a
 named `voice_out` marks the voice-zone signal summed into the global bus; macro
 params may target a node's **state** (e.g. `ratio → phasor.inc`) as well as a port.
 Add all of these to `patch.schema.json` at P0-1 (§12.7.5).
@@ -2138,7 +2148,7 @@ doable by hand against the schemas (the Angular escape hatch).
 #### 12.7.5 Schema close-out (the worked-example gaps)
 
 Add to `patch.schema.json`: (a) the `voice` zone's reserved allocator inputs
-`gate`/`note`/`velocity` (bindings, not wires); (b) a named `voice_out` (the
+`gate`/`note`/`velocity`/`trigger` (bindings, not wires); (b) a named `voice_out` (the
 voice-zone signal summed into the global bus); (c) macro params may target node
 **state** (applied at note-on) as well as ports. Add `q12` to `node.schema.json`
 state kinds. All at P0-1. See `examples/pocket-drone/README.md` §5.

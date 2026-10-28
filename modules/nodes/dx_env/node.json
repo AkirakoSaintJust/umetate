@@ -1,8 +1,9 @@
 {
   "name": "dx_env",
-  "summary": "DX-style rate/level envelope: 4 rates + 3 levels, exponential one-pole per stage (attack → decay1 → decay2 → sustain → release). Q15 gain out. A `rate_scale` control input (default unity) scales every stage's one-pole coefficient — velocity → envelope rate.",
+  "summary": "DX-style rate/level envelope: 4 rates + 3 levels, exponential one-pole per stage (attack → decay1 → decay2 → sustain → release). Q15 gain out. A `rate_scale` control input (default unity) scales every stage's one-pole coefficient — velocity → envelope rate. A `trigger` event (default `voice_trig[v]`) resets to attack on every note-on edge, even mid-note (voice steal).",
   "ins": {
     "gate": { "rate": "event", "default": "voice_gate[v]" },
+    "trigger": { "rate": "event", "default": "voice_trig[v]" },
     "rate_scale": { "rate": "control", "default": "32768" }
   },
   "outs": { "cv": "control" },

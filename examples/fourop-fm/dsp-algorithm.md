@@ -47,9 +47,12 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   | 4 release | `0` | `level < 8` | level := 0 |
 
   Gate edges drive the stage: gate↑ from release → stage 0 (level := 0); gate↓ from
-  any non-release stage → stage 4.
+  any non-release stage → stage 4. A `trigger` edge (default `voice_trig[v]`)
+  resets to stage 0 regardless of stage — a note-on retriggers even a stolen voice.
 
-- **Inputs / outputs:** `gate` (event, default `voice_gate[v]`), `cv` (control, Q15).
+- **Inputs / outputs:** `gate` (event, default `voice_gate[v]`), `trigger` (event,
+  default `voice_trig[v]`), `rate_scale` (control, default 32768 — scales every
+  stage's one-pole coefficient, e.g. velocity → envelope rate), `cv` (control, Q15).
 
 - **Parameters** (Q-format, range, default, rate, modulatable):
 

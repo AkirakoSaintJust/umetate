@@ -34,7 +34,7 @@ UINT32 = "uint32"
 TABLE = "table"  # a compile-time param naming a `tables:` entry (a string, not int)
 
 # ---- the voice zone's reserved allocator inputs (bindings, not graph edges) ----
-RESERVED_INPUTS = ("note", "gate", "velocity")
+RESERVED_INPUTS = ("note", "gate", "velocity", "trigger")
 
 # ---- the zone-boundary markers ----
 VOICE_SOURCE = "voice"  # a wire source naming the mixed voice bus
