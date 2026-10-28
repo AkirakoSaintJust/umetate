@@ -766,11 +766,134 @@ multiplier** — a q16 runtime param (`inc = note_to_inc(note) · ratio >> 16`, 
 
 ---
 
+### 6.11 fourop-fm firmware — the full-synth program
+
+**Status:** planned. This section is the plan of record: it turns fourop-fm from a
+patch-level generator dogfood into a complete example **firmware**, and folds every
+lesson from that work back into the toolkit (interview loop, node library,
+generator rails for voice management, presets/sysex/settings, CLI, and the
+polyphony budget tool).
+
+#### 6.11.1 Goal
+
+A complete, worked firmware — `examples/fourop-fm/` builds a real FM-1 firmware —
+that demonstrates the toolkit's full capability: polyphony + voice management,
+velocity, MIDI (notes / CC / sustain / panic / bend), presets (save / load /
+export / import via SysEx), system settings, and **2-part multitimbrality** with
+split, layering, and MIDI-channel routing. Building it forces the toolkit
+strengthening below.
+
+#### 6.11.2 Lessons (from the work since `f0ff875`)
+
+| # | Lesson | Fix (where) |
+| --- | --- | --- |
+| L1 | The control surface was fictional until late (`ENC_KNOB5–7`, `BTN_STOP`). | **Source-vocabulary check** — the panel generator validates `panel.json` sources against the board's `BTN_*`/`ENC_*` enums (a `lint`/`build` gate, not a doc note). |
+| L2 | Param *semantics* were iterated 3× (feedback op1→carrier→per-op+carrier; `master` VCA→dropped). | `templates/synth-brief.md` §2.2 gains a **semantics** column — each param's *behaviour* is pinned before code, not just its range/curve. |
+| L3 | Velocity / MIDI / persistence were "non-goals" and got skipped, not decided. | Interview rule (skill): a non-goal is a **written, justified decision**; the example must walk the full path (velocity → MIDI CC → preset) or defer each with a reason. |
+| L4 | "Example" was ambiguous (patch dogfood ≠ firmware). | Tutorial + README define **two tiers** — patch-level (generator only) vs full-firmware (app glue) — and the path between them. |
+| L5 | App glue (voice alloc, MIDI, presets) is hand-written per synth. | Ship a reusable **app framework** + generator **voice-management rails** (below). |
+| L6 | Control/audio separation discovered late. | Already fixed (`cmul`/`csum` + the generic test); keep as a first-class invariant. |
+| L7 | Nodes added reactively (`gain`, `cmul`, `csum`, `algo`, `mute`, `pitch_env`). | Review the node/macro library against the full-synth target for completeness. |
+
+#### 6.11.3 Locked decisions
+
+- **Velocity** is a per-voice **control signal** (routable), applied to **three
+  separate depth targets**: `vel_amp` (amplitude), `vel_rate` (envelope
+  rate/time), `vel_fm` (FM index) — each 0..32767, default 0.
+- **Parts**: 2. Each part has `level` (amplitude), `delay` (note-onset offset,
+  ms), `channel` (MIDI channel or omni), `low`/`high` (keyzone). Notes route by
+  **channel + keyzone**; **layering** (two parts on the same channel/keyzone) is
+  allowed and must be easy — building a sound out of partials is a first-class FM
+  technique. fourop-fm's two parts share the same 4-op voice (one parameter set);
+  per-part *sounds* are a later toolkit rail.
+- **MIDI CC**: fixed, generator-assigned (one CC per param, emitted from
+  `params.json`), documented — not user-editable on-device.
+- **Presets**: 64 slots, flash, CRC + version; save / load / name; SysEx
+  export / import.
+- **SysEx**: a shared, versioned envelope every firmware uses, with a
+  per-firmware payload.
+- **Polyphony**: measure with the emulator; **12 voices × 2 parts** ideal, fall
+  back to 10 or 8 per part if the budget is exceeded.
+
+#### 6.11.4 Design (concrete)
+
+**Velocity routing.** Add `static int32_t voice_velocity[NVOICE]` (velocity 0..127
+scaled to q15 by `velocity << 8`), stored in `note_on`. Make `velocity` a
+resolvable reserved input exactly like `gate` — a node/macro declares
+`ins: { velocity: { rate: "control", default: "voice_velocity[v]" } }`. The
+`fm_op` macro then consumes it three ways, each with a depth param:
+
+- `vel_amp` → `level_eff = level · (32768 − vel_amp + vel_amp · velocity) >> 15`
+  (unity when velocity is 0 or `vel_amp` is 0).
+- `vel_rate` → envelope rate/time scaling (higher velocity = faster attack).
+- `vel_fm` → modulator `level` scaling (higher velocity = more FM depth).
+
+**Parts (voice-management rails).** The patch gains a `parts:` concept; the
+generator emits part-aware allocation:
+
+- `note_on(note, velocity, channel)` — the seam gains a channel argument (the
+  app passes the note's MIDI channel).
+- Each part: `channel` (or omni) + `low`/`high` keyzone. A note routes to every
+  part whose channel matches (or is omni) *and* whose keyzone contains the note —
+  so one note may fire both parts (layering).
+- Each part owns a voice pool (`12` per part = 24 total); per-part `level` is a
+  gain and `delay` is a note-onset offset (the envelope attacks `delay` ms after
+  note-on, held silent before).
+
+**SysEx envelope (shared base).**
+
+```
+F0 00 21 1D <model-id> <cmd> <ver> <payload…> <CRC16> F7
+```
+
+Shared: manufacturer/device id, model identity, command + version byte, CRC-16,
+and four commands every firmware answers — *identity request*, *param dump*,
+*preset dump*, *settings dump*. Per-firmware: the payload layout (which params,
+order, Q-scaling). A 4-op patch is **not** DX7-compatible (DX7 is 6-op); DX7
+`.SYX` import is explicitly out of scope for fourop-fm.
+
+**Preset format.** 64 slots × (39 params + name + version + CRC). Load/save via
+the existing `slot_load`/`slot_save`; export/import a bank via the SysEx preset
+dump. Flash writes happen only when silent (the existing rule).
+
+**MIDI CC map.** The generator emits a `const` `cc -> param id` table from
+`params.json` (one CC per param, ascending from a base), plus the reversed
+`param id -> cc` for MIDI-learn-less fixed mapping. Documented in `control-map.md`.
+
+**Polyphony budget tool.** A new `umetate budget --voices N` (and `--parts N`)
+that generates the patch at N voices, compiles on host, times a worst-case
+`render(256)` (all voices sounding, envelope open), and reports the render time
+against the 2.9 ms budget — with the emulator (`umetate emu --check --mhz 240`)
+as the target-accurate confirmation. The development skill's interview gains a
+**polyphony budget** step: the voice count is a measured claim, not an estimate.
+
+#### 6.11.5 Milestones (ordered)
+
+| # | Milestone | Acceptance |
+| --- | --- | --- |
+| F1 | **Interview loop hardening** (L1–L7). | synth-brief semantics column; skill non-goal rule + two-tier example definition; source-vocabulary check runs. |
+| F2 | **Velocity routing.** | `voice_velocity[]` + `velocity` reserved input + `vel_amp`/`vel_rate`/`vel_fm` in `fm_op`; host test proves amplitude responds to velocity and 0 velocity = no change. |
+| F3 | **Voice-management rails** (parts). | `parts:` schema + generator part-aware allocation (channel + keyzone + per-part level/delay + layering); host test proves split, layer, and delay. |
+| F4 | **Presets + settings + SysEx.** | 64-slot store, settings record (channel/tune), the shared SysEx envelope + identity/param/preset/settings commands; export→import round-trips. |
+| F5 | **MIDI CC map.** | generator-emitted `cc → param` table; host test proves a CC write reaches the right param. |
+| F6 | **Polyphony budget tool.** | `umetate budget` reports a measured voice count for 2×12, 2×10, 2×8; the skill interview consumes it. |
+| F7 | **fourop-fm firmware assembly.** | `examples/fourop-fm/` builds a firmware: 2 parts, velocity, CC, presets, settings, sustain/panic, `app_main`/`app_audio` glue on the shipped framework. |
+| F8 | **Docs / tutorial / skill finalization.** | tutorial + README + skill describe the full path; roadmap §6.11/§7/§12 updated; every milestone green. |
+
+Each milestone: mypy + ruff + pyright clean; all test modules green; `_skill` +
+`_links` in sync; `lint.c_checks` clean; roadmap updated in the same commit.
+
+---
+
 ## 7. Implementation roadmap (ordered)
 
 Each task lists its goal, actions, and acceptance/evidence (per §5.5). A task is
 "done" only when its acceptance is met and the claim ledger in `docs/roadmap.md`
 is updated in the same commit.
+
+> The **fourop-fm firmware program** (finishing the example into a full firmware +
+> the toolkit strengthening it forces) is planned in §6.11 (milestones F1–F8); it
+> runs on top of the P-phases below.
 
 ### Phase 0 — Governance & skeleton (P0) — **done** (2026-10-26)
 
