@@ -475,6 +475,52 @@ int main(void) {
 }
 """
 
+# The velocity contract: with a non-zero `vel_amp`, a high-velocity note must be
+# louder than a low-velocity one (the `velocity` reserved input → the operator vca).
+VEL_HARNESS = """\
+#include <stdio.h>
+#include <stdint.h>
+void __NAME___dsp_reset(void);
+void __NAME___dsp_note_on(uint32_t note, uint32_t velocity);
+void __NAME___dsp_render(int32_t *out, uint32_t frames);
+void __NAME___dsp_all_notes_off(void);
+static int32_t out[1024];
+static int64_t energy(uint32_t vel) {
+    __NAME___dsp_reset();
+    __NAME___dsp_note_on(69, vel);
+    __NAME___dsp_render(out, 512);
+    int64_t e = 0;
+    for (int i = 0; i < 1024; i++) e += (int64_t)out[i] * out[i];
+    __NAME___dsp_all_notes_off();
+    return e;
+}
+int main(void) {
+    int64_t hi = energy(127), lo = energy(1);
+    if (hi <= 2 * lo) {
+        printf("FAIL: velocity did not scale amplitude (hi=%lld lo=%lld)\\n",
+               (long long)hi, (long long)lo);
+        return 1;
+    }
+    printf("ok: __NAME__ velocity scales amplitude\\n");
+    return 0;
+}
+"""
+
+# A single fm_op operator with full velocity→amplitude (vel_amp = 32767), for the
+# velocity contract.
+VEL_PATCH: Patch = {
+    "name": "vel_test",
+    "voices": 1,
+    "voice": {
+        "nodes": [
+            {"id": "op", "type": "fm_op", "params": {"ratio": 65536, "vel_amp": 32767}},
+        ],
+        "wires": [],
+        "voice_out": "op.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
 
 def _include_args() -> list[str]:
     root = Path(__file__).resolve().parents[1]
@@ -511,6 +557,34 @@ def _sound(patch: Patch) -> tuple[bool, str]:
         (d / "dsp.c").write_text(src)
         cname = patch["name"].replace("-", "_").replace(".", "_")
         (d / "harness.c").write_text(SOUND_HARNESS.replace("__NAME__", cname))
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            return False, "compile failed:\n" + proc.stderr
+        run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+        return run.returncode == 0, run.stdout.strip()
+
+
+def _velocity_responds(patch: Patch) -> tuple[bool, str]:
+    """Generate + compile + run the velocity contract (high velocity is louder)."""
+    src = generate(patch)
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        cname = patch["name"].replace("-", "_").replace(".", "_")
+        (d / "harness.c").write_text(VEL_HARNESS.replace("__NAME__", cname))
         proc = subprocess.run(
             [
                 "cc",
@@ -969,6 +1043,14 @@ def main() -> int:
     print(
         ("ok: " if ok else "FAIL: ")
         + (msg or "fourop-fm renders non-silent across all 7 algorithms")
+    )
+    failures += 0 if ok else 1
+
+    # the velocity contract: a higher-velocity note is louder (the `velocity`
+    # reserved input, routed through the operator's vel_amp depth).
+    ok, msg = _velocity_responds(VEL_PATCH)
+    print(
+        ("ok: " if ok else "FAIL: ") + (msg or "velocity scales the operator amplitude")
     )
     failures += 0 if ok else 1
 

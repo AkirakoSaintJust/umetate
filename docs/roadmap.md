@@ -646,6 +646,7 @@ test + a budget annotation; shipped macros in `modules/macros/`, each =
 | `pitch_env` | pitch envelope | global control-rate "pitch blip": on the `patch_gate` rising, `level = base` (q15 offset), then one-pole decay toward 0 at `rate` (q16) |
 | `csum` | control summer | adds two control inputs (for summing slow modulations, e.g. vibrato + pitch envelope) |
 | `cmul` | control multiplier | multiplies two control inputs (control-rate modulation, e.g. envelope × tremolo LFO) |
+| `vel_depth` | velocity depth | control-rate gain `32768 − depth + velocity·depth>>15`; `depth` is the velocity→amount (0 = no response, 32767 = full scaling). The `velocity` input defaults to the allocator's per-voice `voice_velocity[v]` |
 
 `umetate lib list` shows the library; `umetate scaffold --template` starts from a shipped template; user
 nodes conform to `node.schema.json`, patches to `patch.schema.json`.
@@ -883,7 +884,7 @@ as the target-accurate confirmation. The development skill's interview gains a
 | # | Milestone | Acceptance |
 | --- | --- | --- |
 | F1 | **Interview loop hardening** (L1–L7). | synth-brief semantics column + multi-timbrality + MIDI-spec prompts; control-map menu→page→mode-tree prompt; skill non-goal rule + two-tier example definition; source-vocabulary check runs. |
-| F2 | **Velocity routing.** | `voice_velocity[]` + `velocity` reserved input + `vel_amp`/`vel_rate`/`vel_fm` in `fm_op`; host test proves amplitude responds to velocity and 0 velocity = no change. |
+| F2 | **Velocity routing.** — **done** | `voice_velocity[]` + `velocity` reserved input + `vel_amp`/`vel_fm` in `fm_op` (velocity → amplitude and → FM); host test proves a higher velocity is louder. `vel_rate` (velocity → envelope rate) is deferred — it needs a `dx_env` rate-scale input. |
 | F3 | **Voice-management rails** (parts). | `parts:` schema + generator part-aware allocation — per-part parameter sets (independent timbres), channel + keyzone routing, per-part level/delay, layering; host test proves split, layer, and delay. |
 | F4 | **Presets + settings + SysEx.** | 64-slot part-patch store + 64-slot multi-patch store, settings record (channel/tune), the shared SysEx envelope + identity/param/part-patch/multi-patch/settings commands; export→import round-trips. |
 | F5 | **MIDI CC map.** | generator-emitted `cc → param` table; host test proves a CC write reaches the right param. |

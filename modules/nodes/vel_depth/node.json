@@ -1,0 +1,8 @@
+{
+  "name": "vel_depth",
+  "summary": "Velocity depth (control rate): the gain `32768 - depth + velocity·depth >> 15` — `depth` is how much velocity attenuates soft notes (0 = no response, 32767 = full velocity scaling). The `velocity` input defaults to the allocator's per-voice `voice_velocity[v]` (a reserved input, q15).",
+  "ins": { "velocity": { "rate": "control", "default": "voice_velocity[v]" } },
+  "outs": { "cv": "control" },
+  "params": { "depth": "q15" },
+  "state": {}
+}

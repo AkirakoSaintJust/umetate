@@ -52,6 +52,7 @@ def emit(graph: CompiledGraph) -> str:
     lines.append("static uint8_t voice_gate[NVOICE] UMETATE_CPU1;")
     lines.append("static uint8_t voice_note[NVOICE] UMETATE_CPU1;")
     lines.append("static uint32_t voice_age[NVOICE] UMETATE_CPU1;")
+    lines.append("static int32_t voice_velocity[NVOICE] UMETATE_CPU1;")
     lines.append("static uint32_t ages;")
     lines.append("static uint32_t patch_gate UMETATE_CPU1;")
     lines.extend(_param_decls(graph))
@@ -360,6 +361,7 @@ def _seam(graph: CompiledGraph, by_id: dict[str, NodeInstance]) -> list[str]:
         "    voice_note[pick] = (uint8_t)note;",
         "    voice_age[pick] = ++ages;",
         "    voice_gate[pick] = 1;",
+        "    voice_velocity[pick] = (int32_t)(velocity * 258u); /* 0..127 -> q15 (32767/127 ≈ 258) */",
     ]
     for i in graph.instances:
         if i.zone != "voice":
