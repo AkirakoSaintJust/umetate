@@ -521,6 +521,49 @@ VEL_PATCH: Patch = {
     "global": {"nodes": [], "wires": []},
 }
 
+# The velocity→rate contract: with vel_rate full and vel_amp zero, a high-velocity
+# note attacks faster, so it is louder during the attack window. Run one velocity
+# per process (the engine's per-voice envelope/phase are static and shared across
+# `note_on` calls in a single process).
+VEL_RATE_HARNESS = """\
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+void __NAME___dsp_reset(void);
+void __NAME___dsp_note_on(uint32_t note, uint32_t velocity);
+void __NAME___dsp_render(int32_t *out, uint32_t frames);
+static int32_t out[256];
+int main(int argc, char **argv) {
+    uint32_t vel = (uint32_t)atoi(argv[1]);
+    __NAME___dsp_reset();
+    __NAME___dsp_note_on(69, vel);
+    __NAME___dsp_render(out, 128);
+    int64_t e = 0;
+    for (int i = 0; i < 256; i++) e += (int64_t)out[i] * out[i];
+    printf("%lld\\n", (long long)e);
+    return 0;
+}
+"""
+
+# A single fm_op operator with full velocity→rate (vel_rate = 32767, vel_amp = 0)
+# and a non-instant attack (r1 = 20000), so the rate scaling is visible.
+VEL_RATE_PATCH: Patch = {
+    "name": "vel_rate_test",
+    "voices": 1,
+    "voice": {
+        "nodes": [
+            {
+                "id": "op",
+                "type": "fm_op",
+                "params": {"ratio": 65536, "vel_rate": 32767, "r1": 20000, "l1": 32767},
+            },
+        ],
+        "wires": [],
+        "voice_out": "op.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
 
 def _include_args() -> list[str]:
     root = Path(__file__).resolve().parents[1]
@@ -603,6 +646,46 @@ def _velocity_responds(patch: Patch) -> tuple[bool, str]:
             return False, "compile failed:\n" + proc.stderr
         run = subprocess.run([str(d / "t")], capture_output=True, text=True)
         return run.returncode == 0, run.stdout.strip()
+
+
+def _velocity_rate_responds(patch: Patch) -> tuple[bool, str]:
+    """Generate + compile + run the velocity→rate contract (one process per velocity,
+    so the engine's static per-voice envelope/phase don't leak between notes)."""
+    src = generate(patch)
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        cname = patch["name"].replace("-", "_").replace(".", "_")
+        (d / "harness.c").write_text(VEL_RATE_HARNESS.replace("__NAME__", cname))
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            return False, "compile failed:\n" + proc.stderr
+        hi = int(
+            subprocess.run(
+                [str(d / "t"), "127"], capture_output=True, text=True
+            ).stdout.strip()
+        )
+        lo = int(
+            subprocess.run(
+                [str(d / "t"), "1"], capture_output=True, text=True
+            ).stdout.strip()
+        )
+        if hi <= 2 * lo:
+            return False, f"velocity did not scale the envelope rate (hi={hi} lo={lo})"
+        return True, "velocity scales the operator envelope rate"
 
 
 def _sound_tables(patch: Patch) -> tuple[bool, str]:
@@ -1051,6 +1134,14 @@ def main() -> int:
     ok, msg = _velocity_responds(VEL_PATCH)
     print(
         ("ok: " if ok else "FAIL: ") + (msg or "velocity scales the operator amplitude")
+    )
+    failures += 0 if ok else 1
+
+    # velocity → envelope rate: a higher-velocity note attacks faster.
+    ok, msg = _velocity_rate_responds(VEL_RATE_PATCH)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "velocity scales the operator envelope rate")
     )
     failures += 0 if ok else 1
 

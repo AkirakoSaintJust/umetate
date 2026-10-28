@@ -1,5 +1,5 @@
 {
-  "summary": "The complete DX-style FM operator: phasor + osc(12 waveforms) + dx_env(rate/level) + vca(level), with per-op 1-sample self-feedback (the `feedback` param) plus a carrier-gated `car_fb` input, velocity → amplitude (`vel_amp`) and velocity → FM (`vel_fm`), a q16 `ratio` frequency multiplier (runtime), a per-op amplitude LFO (tremolo), a per-op `mute` gate, and a `pitch` input (the shared vibrato LFO).",
+  "summary": "The complete DX-style FM operator: phasor + osc(12 waveforms) + dx_env(rate/level) + vca(level), with per-op 1-sample self-feedback (the `feedback` param) plus a carrier-gated `car_fb` input, velocity → amplitude (`vel_amp`), velocity → FM (`vel_fm`), velocity → envelope rate (`vel_rate`), a q16 `ratio` frequency multiplier (runtime), a per-op amplitude LFO (tremolo), a per-op `mute` gate, and a `pitch` input (the shared vibrato LFO).",
   "ins": { "fm": "audio", "pitch": "control", "car_fb": "control" },
   "outs": { "audio": "audio" },
   "params": {
@@ -10,6 +10,7 @@
     "mute": "mute.mute",
     "vel_amp": "velamp.depth",
     "vel_fm": "velfm.depth",
+    "vel_rate": "velrate.depth",
     "trem_rate": "lfo.rate",
     "trem_depth": "lfo.depth",
     "r1": "eg.r1", "r2": "eg.r2", "r3": "eg.r3", "r4": "eg.r4",
@@ -25,6 +26,7 @@
     { "id": "velamp", "type": "vel_depth", "params": { "depth": 0 } },
     { "id": "ampvel", "type": "cmul" },
     { "id": "velfm", "type": "vel_depth", "params": { "depth": 0 } },
+    { "id": "velrate", "type": "vel_depth", "params": { "depth": 0 } },
     { "id": "fmvel", "type": "gain" },
     { "id": "vca", "type": "vca" },
     { "id": "fb", "type": "vca" },
@@ -43,6 +45,7 @@
     { "from": "sum.audio", "to": "ph.fm" },
     { "from": "ph.phase", "to": "osc.phase" },
     { "from": "osc.audio", "to": "vca.audio" },
+    { "from": "velrate.cv", "to": "eg.rate_scale" },
     { "from": "eg.cv", "to": "trem.in0" },
     { "from": "lfo.cv", "to": "trem.in1" },
     { "from": "eg.cv", "to": "cvsum.in0" },

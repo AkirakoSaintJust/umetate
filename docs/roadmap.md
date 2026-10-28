@@ -627,7 +627,7 @@ test + a budget annotation; shipped macros in `modules/macros/`, each =
 | `osc` / `table` | wave reader | `osc` = the 12-waveform OPZ+OPL union (`fm1_sin_wave`, a `waveform` param: 0–7 OPZ, 8–11 OPL-only square/saw/rectified/pulse); `table` = wavetable reader (a `tables:` shape selected by a `which` param) |
 | `saw` | band-limited osc | 2nd-order polyBLEP saw; `inv_inc` = 2^32/inc (note-on reciprocal) |
 | `env` / `seg` | segment generator | gate event→control via breakpoint segments (data) |
-| `dx_env` | rate/level envelope | DX-style 4-rate/3-level exponential envelope (attack/decay1/decay2/sustain/release) — the fourop-fm operator envelope |
+| `dx_env` | rate/level envelope | DX-style 4-rate/3-level exponential envelope (attack/decay1/decay2/sustain/release); a `rate_scale` control input scales every stage's coefficient (velocity → envelope rate) — the fourop-fm operator envelope |
 | `vca` | gain | audio×control (modulatable level) |
 | `gain` | gain | pure audio×cv (no static `level` — a modulatable gain without the trim) |
 | `mix` / `add` | summer | N audio ins → 1 out |
@@ -884,7 +884,7 @@ as the target-accurate confirmation. The development skill's interview gains a
 | # | Milestone | Acceptance |
 | --- | --- | --- |
 | F1 | **Interview loop hardening** (L1–L7). | synth-brief semantics column + multi-timbrality + MIDI-spec prompts; control-map menu→page→mode-tree prompt; skill non-goal rule + two-tier example definition; source-vocabulary check runs. |
-| F2 | **Velocity routing.** — **done** | `voice_velocity[]` + `velocity` reserved input + `vel_amp`/`vel_fm` in `fm_op` (velocity → amplitude and → FM); host test proves a higher velocity is louder. `vel_rate` (velocity → envelope rate) is deferred — it needs a `dx_env` rate-scale input. |
+| F2 | **Velocity routing.** — **done** | `voice_velocity[]` + `velocity` reserved input + `vel_amp`/`vel_fm`/`vel_rate` in `fm_op` (velocity → amplitude, → FM, → envelope rate via a `dx_env` rate-scale input); host tests prove a higher velocity is louder and attacks faster. |
 | F3 | **Voice-management rails** (parts). | `parts:` schema + generator part-aware allocation — per-part parameter sets (independent timbres), channel + keyzone routing, per-part level/delay, layering; host test proves split, layer, and delay. |
 | F4 | **Presets + settings + SysEx.** | 64-slot part-patch store + 64-slot multi-patch store, settings record (channel/tune), the shared SysEx envelope + identity/param/part-patch/multi-patch/settings commands; export→import round-trips. |
 | F5 | **MIDI CC map.** | generator-emitted `cc → param` table; host test proves a CC write reaches the right param. |
