@@ -11,7 +11,8 @@
   - `modules/nodes/dx_env/` — the DX rate/level envelope (`node.json` + `node.c`).
   - `modules/nodes/mix4/` — 4-input summer.
   - `modules/nodes/route4/` — the general routing-matrix row mixer.
-  - `modules/nodes/route/` — the 4-op FM router (one `algorithm` param, 4 rows + the carrier-gated feedback master).
+  - `modules/nodes/route/` — the audio-rate 4-op FM router (reads `alg` + 4 rows).
+  - `modules/nodes/algo/` — the algorithm selector + carrier-feedback gater (control rate).
   - `modules/nodes/lfo/` — the control-rate low-frequency oscillator.
   - `modules/nodes/mute/` — the output gate (per-operator mute).
   - `modules/nodes/gain/` — pure audio×cv gain (no static `level`).
@@ -43,12 +44,14 @@ No hand-written `dsp.c`: `generate(patch)` emits `<synth>_dsp_*` from the patch
   `outs { cv(control) }`, `params { r1 r2 r3 r4(q16), l1 l2 l3(q15) }`,
   `state { stage(uint32), level(q15) }`. `node.c`: a 5-stage one-pole state
   machine (control rate). Host test: `test_generate.py` `DX_ENV`.
-- **`route`** — `node.json`: `ins { a b c d(audio) }`,
-  `outs { mod2 mod3 mod4 car(audio), fb1 fb2 fb3 fb4(control) }`,
-  `params { which(table), algorithm(uint32), car_fb(q15) }`. `node.c`: four
-  `fm1_route4` calls reading rows 1–4 of the routing table, plus the
-  carrier-gated `fb1..fb4` (`car_fb` × the carrier mask). Host test: the
-  fourop-fm render + routing-table assertions in `test_generate.py`.
+- **`route`** — `node.json`: `ins { alg(control), a b c d(audio) }`,
+  `outs { mod2 mod3 mod4 car(audio) }`, `params { which(table) }`. `node.c`: four
+  `fm1_route4` calls reading rows 1–4 of the routing table, indexed by `alg`.
+  Host test: the fourop-fm render + routing-table assertions in `test_generate.py`.
+- **`algo`** — `node.json`: `ins {}`, `outs { alg(control), fb1..fb4(control) }`,
+  `params { which(table), algorithm(uint32), car_fb(q15) }`. `node.c`: echoes
+  `algorithm` as `alg` and gates `car_fb` by the carrier mask into `fb1..fb4`
+  (control rate). Host test: `test_generate.py` feedback + separation assertions.
 - **`route4`** / **`mix4`** — the general primitive (row mixer) + 4-sum. Host
   test: `test_generate.py` `ROUTE4_TEST`.
 - **`lfo`** — `node.json`: `ins {}`, `outs { cv(control) }`,

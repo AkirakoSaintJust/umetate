@@ -628,12 +628,13 @@ test + a budget annotation; shipped macros in `modules/macros/`, each =
 | `saw` | band-limited osc | 2nd-order polyBLEP saw; `inv_inc` = 2^32/inc (note-on reciprocal) |
 | `env` / `seg` | segment generator | gate event→control via breakpoint segments (data) |
 | `dx_env` | rate/level envelope | DX-style 4-rate/3-level exponential envelope (attack/decay1/decay2/sustain/release) — the fourop-fm operator envelope |
-| `vca` / `mul` | gain | audio×control (modulatable level) |
+| `vca` | gain | audio×control (modulatable level) |
 | `gain` | gain | pure audio×cv (no static `level` — a modulatable gain without the trim) |
 | `mix` / `add` | summer | N audio ins → 1 out |
 | `mix4` | 4-input summer | the carrier sum / matrix sum |
 | `route4` | routing-matrix row | reads a 4-weight row of a `routing` table (by `algorithm` + `dest`) — the runtime-algorithm primitive |
-| `route` | 4-op FM router | one `algorithm` param, four `fm1_route4` rows: modulation into op2/op3/op4 + the carrier sum, plus the carrier-gated feedback master `fb1..fb4` (`car_fb` × the carrier mask, summed into each operator's per-op feedback) (the ergonomic 4-op wrapper over `route4`) |
+| `route` | 4-op FM router | reads the `alg` control input (the selected algorithm) and four `fm1_route4` rows: modulation into op2/op3/op4 + the carrier sum (audio rate — the ergonomic 4-op wrapper over `route4`) |
+| `algo` | algorithm selector | control-rate: owns the `algorithm` param, outputs it as `alg` for the router, and gates the `car_fb` master by the carrier mask into `fb1..fb4` |
 | `svf` / `one_pole` | filter | state-variable (LP/BP/HP) / one-pole; modulatable cutoff/res |
 | `wavefolder` | nonlinear | sine fold: input → sin(π·x) crossfaded by `amount` |
 | `lpg` | vactrol gate | one-pole + VCA, cutoff/gain coupled to a fast-attack/slow-decay envelope |
@@ -758,7 +759,7 @@ explicitly (`params: [r1..r4, l1..l3]`), resolved to a per-operator `ENV_PARAM[n
 7]` table — no "7 consecutive flattened ids" assumption. The `glo` page edits the
 global pitch envelope (`penv_base`/`penv_rate`) and the vibrato. `feedback` is
 **per-op + carrier**: each operator's `opN_feedback` (the op page) is summed with
-the carrier-gated `feedback` master (the HOME knob) via `route.fb1..fb4`; `master`
+the carrier-gated `feedback` master (the HOME knob) via `algo.fb1..fb4`; `master`
 is dropped — the `MASTER` pot is the volume. `ratio` is the operator's **frequency
 multiplier** — a q16 runtime param (`inc = note_to_inc(note) · ratio >> 16`, so
 65536 = 1.0), not a raw increment.
@@ -1669,7 +1670,7 @@ generator) + a host parity test. The generator composes nodes into the §12.1 se
 | `osc` / `table` | wave reader | `phase`(c/a) | `audio`(a) | `shape`, `level`, `phase_map` | — |
 | `phase_shape` | dynamic phase shaper (VPS) | `phase`(c/a) | `phase`(c/a) | `d`, `v` | — |
 | `env` / `seg` | segment generator | `gate`(e) | `cv`(c) | — (segments = data) | `stage`, `level`(q16) |
-| `vca` / `mul` | gain | `audio`(a), `cv`(c) | `audio`(a) | `level` | — |
+| `vca` | gain | `audio`(a), `cv`(c) | `audio`(a) | `level` | — |
 | `mix` / `add` | summer | `in0..inN`(a) | `audio`(a) | — | — |
 | `svf` / `one_pole` | filter | `audio`(a), `cut`(c), `res`(c) | `audio`(a) | `cutoff`, `res` | `z1`, `z2`(q16) |
 | `delay1` | 1-sample delay | `audio`(a) | `audio`(a) | — | `prev`(q15) |

@@ -991,22 +991,24 @@ def main() -> int:
         print(f"FAIL: fourop-fm panel.json does not resolve ({exc})")
         failures += 1
 
-    # carrier feedback: `feedback` (route.car_fb) is the carrier-gated master,
+    # carrier feedback: `feedback` (algo.car_fb) is the carrier-gated master,
     # summed with a per-op `opN_feedback` (opN.fb.level) in each operator. Test the
     # param structure and the node contract — not the emitted C (which is free to
     # change shape).
     ffm_ids = param_ids(ffm)
-    route_spec = load_library(LIBRARY_ROOT)["route"]
+    algo_spec = load_library(LIBRARY_ROOT)["algo"]
     ok = (
-        ffm_ids.get("feedback") == ffm_ids.get("route.car_fb")
+        ffm_ids.get("feedback") == ffm_ids.get("algo.car_fb")
+        and ffm_ids.get("algorithm") == ffm_ids.get("algo.algorithm")
         and ffm_ids.get("op1_feedback") == ffm_ids.get("op1.fb.level")
-        and all(f"fb{i}" in route_spec.outs for i in range(1, 5))
-        and all(route_spec.outs[f"fb{i}"].kind != AUDIO for i in range(1, 5))
-        and "car_fb" in route_spec.params
+        and all(f"fb{i}" in algo_spec.outs for i in range(1, 5))
+        and all(algo_spec.outs[f"fb{i}"].kind != AUDIO for i in range(1, 5))
+        and "car_fb" in algo_spec.params
+        and "alg" in algo_spec.outs
     )
     print(
         ("ok: " if ok else "FAIL: ")
-        + "feedback is a carrier master + per-op depth (route.car_fb + opN.fb.level)"
+        + "feedback is a carrier master + per-op depth (algo.car_fb + opN.fb.level)"
     )
     failures += 0 if ok else 1
 
@@ -1015,7 +1017,7 @@ def main() -> int:
     # not smuggle an audio port into a control computation (or vice versa).
     lib = load_library(LIBRARY_ROOT)
     sep_ok = True
-    for name in ("cmul", "csum", "lfo", "dx_env", "env", "pitch_env"):
+    for name in ("cmul", "csum", "lfo", "dx_env", "env", "pitch_env", "algo"):
         spec = lib[name]
         kinds = [p.kind for p in spec.ins.values()]
         kinds += [p.kind for p in spec.outs.values()]

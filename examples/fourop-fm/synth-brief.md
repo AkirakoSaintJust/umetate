@@ -51,9 +51,11 @@
   ```
   The four `delay1` make the graph acyclic for *every* algorithm (all modulation
   reads the 1-sample-delayed output of its sources).
-- **Global-zone graph:** `lp` (`svf`) → `wf` (`wavefolder`) → `out`, plus the
-  shared `plfo` (`lfo`) and `penv` (`pitch_env`) whose `cv`s are summed by
-  `psum` (`csum`) into every operator's `pitch`:
+- **Global-zone graph:** `algo` (the algorithm selector + carrier-feedback master)
+  → `alg` into the `route` node + `fb1..fb4` into `op1..op4.car_fb`; `lp` (`svf`)
+  → `wf` (`wavefolder`) → `out`, plus the shared `plfo` (`lfo`) and `penv`
+  (`pitch_env`) whose `cv`s are summed by `psum` (`csum`) into every operator's
+  `pitch`:
   `voice → lp.audio`, `lp.low → wf.audio`, `wf.audio → out`,
   `plfo.cv + penv.cv → op1..op4.pitch`.
 - **Macros:** `fm_op` (shipped, `modules/macros/fm_op/`) — the operator, with
@@ -65,8 +67,8 @@
 - **Feedback paths:** each operator's self-feedback is one `delay1` (out ×
   feedback → sum with external fm + pitch → `ph.fm`). Feedback is **per-op +
   carrier**: each operator's `opN_feedback` (its own self-modulation, on the op
-  page) is summed with the carrier-gated `feedback` master (`route.car_fb`, the
-  HOME knob) — the `route` node gates the master by the carrier mask into
+  page) is summed with the carrier-gated `feedback` master (`algo.car_fb`, the
+  HOME knob) — the `algo` node gates the master by the carrier mask into
   `op1..op4.car_fb`, so only the carrier gets the master on top of its per-op
   amount.
 
@@ -79,11 +81,11 @@
 
 | Param (name) | Target | Min | Max | Curve | Unit |
 | --- | --- | --- | --- | --- | --- |
-| algorithm | route.algorithm | 0 | 6 | linear | |
+| algorithm | algo.algorithm | 0 | 6 | linear | |
 | cutoff | lp.f | 0 | 65535 | log | Hz |
 | res | lp.q | 0 | 65535 | linear | |
 | fold | wf.amount | 0 | 32767 | linear | |
-| feedback | route.car_fb | 0 | 32767 | linear | |
+| feedback | algo.car_fb | 0 | 32767 | linear | |
 | attack | op1.eg.r1 | 0 | 65535 | log | |
 | release | op1.eg.r4 | 0 | 65535 | log | |
 | pitch_rate | plfo.rate | 0 | 20000000 | log | |
@@ -99,7 +101,7 @@
 | op1_trem_depth … op4_trem_depth | opN.lfo.depth | 0 | 32767 | linear | |
 
 (`level` is both the output amplitude and the FM index; `feedback` is the carrier
-feedback master (`route.car_fb`, added to whichever operator is the current
+feedback master (`algo.car_fb`, added to whichever operator is the current
 algorithm's carrier), and `opN_feedback` is each operator's own self-modulation
 depth (added on top). `rate` is a Q32 phase increment per
 sample — `f · 2³² / 44100`, so ~97392 = 1 Hz. `depth` is `depth/32768` in the

@@ -13,7 +13,8 @@ envelope**, and one **amplitude LFO per operator**.
   tremolo LFO) + four `delay1` + one `route`. Every modulation reads the
   1-sample-delayed output of its sources, so the graph is acyclic for *every*
   algorithm; the algorithm is a `tables:` routing matrix the `route` node applies at
-  runtime (which also gates the single HOME `feedback` knob into the carrier).
+  runtime (the `algo` node selects it and gates the single HOME `feedback` knob
+  into the carrier).
 - **Global:** carrier sum → `svf` low-pass → `wavefolder` → `out`, plus the
   shared `plfo` (vibrato) and `penv` (pitch envelope) summed by `csum` into every
   operator's `pitch`.
@@ -32,7 +33,8 @@ envelope**, and one **amplitude LFO per operator**.
 | `control-map.md` | the UI interview (contexts, bindings, pages) |
 
 The dogfood shipped library code in `modules/nodes/` (`dx_env`, `mix4`, `route4`,
-`route`, `lfo`), `modules/macros/fm_op/`, and two helpers in
+`route`, `algo`, `lfo`, `mute`, `gain`, `cmul`, `csum`, `pitch_env`),
+`modules/macros/fm_op/`, and two helpers in
 `firmware/hal/fm1_math.h` (`fm1_sin_wave`, `fm1_route4`).
 
 ## 3. Run

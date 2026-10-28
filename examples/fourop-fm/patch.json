@@ -3,11 +3,11 @@
   "voices": 8,
   "tables": { "routing": { "kind": "routing" } },
   "params": {
-    "algorithm":    { "target": "route.algorithm", "min": 0, "max": 6, "curve": "linear" },
+    "algorithm":    { "target": "algo.algorithm", "min": 0, "max": 6, "curve": "linear" },
     "cutoff":       { "target": "lp.f", "min": 0, "max": 65535, "curve": "log", "unit": "Hz" },
     "res":          { "target": "lp.q", "min": 0, "max": 65535, "curve": "linear" },
     "fold":         { "target": "wf.amount", "min": 0, "max": 32767, "curve": "linear" },
-    "feedback":     { "target": "route.car_fb", "min": 0, "max": 32767, "curve": "linear" },
+    "feedback":     { "target": "algo.car_fb", "min": 0, "max": 32767, "curve": "linear" },
     "attack":       { "target": "op1.eg.r1", "min": 0, "max": 65535, "curve": "log" },
     "release":      { "target": "op1.eg.r4", "min": 0, "max": 65535, "curve": "log" },
     "op1_level":    { "target": "op1.vca.level", "min": 0, "max": 32767, "curve": "linear" },
@@ -53,7 +53,7 @@
       { "id": "d2", "type": "delay1" },
       { "id": "d3", "type": "delay1" },
       { "id": "d4", "type": "delay1" },
-      { "id": "route", "type": "route", "params": { "which": "routing", "algorithm": 4, "car_fb": 8000 } }
+      { "id": "route", "type": "route", "params": { "which": "routing" } }
     ],
     "wires": [
       { "from": "op1.audio", "to": "d1.in" },
@@ -66,16 +66,13 @@
       { "from": "d4.out", "to": "route.d" },
       { "from": "route.mod2", "to": "op2.fm" },
       { "from": "route.mod3", "to": "op3.fm" },
-      { "from": "route.mod4", "to": "op4.fm" },
-      { "from": "route.fb1", "to": "op1.car_fb" },
-      { "from": "route.fb2", "to": "op2.car_fb" },
-      { "from": "route.fb3", "to": "op3.car_fb" },
-      { "from": "route.fb4", "to": "op4.car_fb" }
+      { "from": "route.mod4", "to": "op4.fm" }
     ],
     "voice_out": "route.car"
   },
   "global": {
     "nodes": [
+      { "id": "algo", "type": "algo", "params": { "which": "routing", "algorithm": 4, "car_fb": 8000 } },
       { "id": "lp", "type": "svf", "params": { "f": 8000, "q": 40000 } },
       { "id": "wf", "type": "wavefolder", "params": { "amount": 0 } },
       { "id": "plfo", "type": "lfo", "params": { "rate": 486958, "depth": 273 } },
@@ -83,6 +80,11 @@
       { "id": "psum", "type": "csum" }
     ],
     "wires": [
+      { "from": "algo.alg", "to": "route.alg" },
+      { "from": "algo.fb1", "to": "op1.car_fb" },
+      { "from": "algo.fb2", "to": "op2.car_fb" },
+      { "from": "algo.fb3", "to": "op3.car_fb" },
+      { "from": "algo.fb4", "to": "op4.car_fb" },
       { "from": "voice", "to": "lp.audio" },
       { "from": "lp.low", "to": "wf.audio" },
       { "from": "wf.audio", "to": "out" },
