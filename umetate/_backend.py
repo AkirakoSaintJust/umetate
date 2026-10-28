@@ -53,6 +53,7 @@ def emit(graph: CompiledGraph) -> str:
     lines.append("static uint8_t voice_note[NVOICE] UMETATE_CPU1;")
     lines.append("static uint32_t voice_age[NVOICE] UMETATE_CPU1;")
     lines.append("static uint32_t ages;")
+    lines.append("static uint32_t patch_gate UMETATE_CPU1;")
     lines.extend(_param_decls(graph))
     lines.extend(_param_tables(graph))
     lines.append("")
@@ -148,6 +149,9 @@ def _render(
     lines = [
         f"void {name}_dsp_render(int32_t *out, uint32_t frames) {{",
         f"    for ({_CONTROL_BLOCK_TYPE} b = 0; b < frames; b += {cb}u) {{",
+        "        patch_gate = 0u;",
+        "        for (uint32_t _pg = 0; _pg < NVOICE; _pg++)",
+        "            if (voice_gate[_pg]) { patch_gate = 1u; break; }",
     ]
     # control-output temps (held across the sub-block's audio loop)
     for i in _control_rate_nodes(graph, by_id):

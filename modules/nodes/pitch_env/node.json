@@ -1,0 +1,8 @@
+{
+  "name": "pitch_env",
+  "summary": "Global pitch envelope (the 'pitch blip'): on the patch gate rising the pitch is offset by `base` (q15), then decays back to the specified pitch at `rate` (q16 one-pole).",
+  "ins": { "gate": { "rate": "event", "default": "patch_gate" } },
+  "outs": { "cv": "control" },
+  "params": { "base": "q15", "rate": "q16" },
+  "state": { "level": "q15", "prev": "uint32" }
+}

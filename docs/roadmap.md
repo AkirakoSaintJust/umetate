@@ -641,6 +641,8 @@ test + a budget annotation; shipped macros in `modules/macros/`, each =
 | `track_bp` | note-tracked filter | state-variable band-pass whose `f` = 2·sin(π·f_note/fs) (the `note_cutoff` feature) |
 | `lfo` | low-frequency osc | control-rate fixed-rate sine (`rate` = Q32 inc/sample, `depth` = bipolar Q15); advances `rate × CONTROL_BLOCK` per tick — the vibrato/tremolo source |
 | `mute` | gate | passes the input through, or outputs 0 when `mute` is set — the per-operator mute for auditioning the algorithm |
+| `pitch_env` | pitch envelope | global control-rate "pitch blip": on the `patch_gate` rising, `level = base` (q15 offset), then one-pole decay toward 0 at `rate` (q16) |
+| `csum` | control summer | adds two control inputs (for summing slow modulations, e.g. vibrato + pitch envelope) |
 
 `umetate lib list` shows the library; `umetate scaffold --template` starts from a shipped template; user
 nodes conform to `node.schema.json`, patches to `patch.schema.json`.

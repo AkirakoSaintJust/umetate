@@ -1,0 +1,8 @@
+{
+  "name": "csum",
+  "summary": "Control-rate summer: adds its two control inputs (for summing slow modulations, e.g. vibrato + pitch envelope).",
+  "ins": { "in0": "control", "in1": "control" },
+  "outs": { "cv": "control" },
+  "params": {},
+  "state": {}
+}

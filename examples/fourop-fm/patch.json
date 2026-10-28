@@ -29,6 +29,8 @@
     "op4_mute": { "target": "op4.mute.mute", "min": 0, "max": 1, "curve": "linear" },
     "pitch_rate":     { "target": "plfo.rate", "min": 0, "max": 20000000, "curve": "log", "unit": "" },
     "pitch_depth":    { "target": "plfo.depth", "min": 0, "max": 32767, "curve": "linear" },
+    "penv_base":      { "target": "penv.base", "min": -32768, "max": 32767, "curve": "linear" },
+    "penv_rate":      { "target": "penv.rate", "min": 0, "max": 65535, "curve": "log" },
     "op1_trem_rate":  { "target": "op1.lfo.rate", "min": 0, "max": 20000000, "curve": "log" },
     "op1_trem_depth": { "target": "op1.lfo.depth", "min": 0, "max": 32767, "curve": "linear" },
     "op2_trem_rate":  { "target": "op2.lfo.rate", "min": 0, "max": 20000000, "curve": "log" },
@@ -70,17 +72,21 @@
       { "id": "lp", "type": "svf", "params": { "f": 8000, "q": 40000 } },
       { "id": "wf", "type": "wavefolder", "params": { "amount": 0 } },
       { "id": "master", "type": "vca", "params": { "level": 30000 } },
-      { "id": "plfo", "type": "lfo", "params": { "rate": 486958, "depth": 273 } }
+      { "id": "plfo", "type": "lfo", "params": { "rate": 486958, "depth": 273 } },
+      { "id": "penv", "type": "pitch_env", "params": { "base": 2731, "rate": 3277 } },
+      { "id": "psum", "type": "csum" }
     ],
     "wires": [
       { "from": "voice", "to": "lp.audio" },
       { "from": "lp.low", "to": "wf.audio" },
       { "from": "wf.audio", "to": "master.audio" },
       { "from": "master.audio", "to": "out" },
-      { "from": "plfo.cv", "to": "op1.pitch" },
-      { "from": "plfo.cv", "to": "op2.pitch" },
-      { "from": "plfo.cv", "to": "op3.pitch" },
-      { "from": "plfo.cv", "to": "op4.pitch" }
+      { "from": "plfo.cv", "to": "psum.in0" },
+      { "from": "penv.cv", "to": "psum.in1" },
+      { "from": "psum.cv", "to": "op1.pitch" },
+      { "from": "psum.cv", "to": "op2.pitch" },
+      { "from": "psum.cv", "to": "op3.pitch" },
+      { "from": "psum.cv", "to": "op4.pitch" }
     ]
   }
 }

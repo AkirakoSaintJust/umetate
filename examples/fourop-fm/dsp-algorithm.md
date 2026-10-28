@@ -300,5 +300,43 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   not per sample. A global LFO runs once per sub-block (scalar); a per-op LFO runs
   once per voice per sub-block.
 
+---
+
+## Component: `pitch_env` (the global pitch envelope)
+
+- **Purpose:** a patch-level "pitch blip" — on the first note-on, every operator's
+  pitch is offset by `base`, then decays back to the specified (note-derived) pitch.
+  Summed with the vibrato (`csum`) into the operators' `pitch` input.
+
+- **Algorithm** (fixed-point, exactly):
+  ```
+  on patch_gate rise:  level = base            (q15 pitch offset)
+  level -= level · rate >> 16                   (one-pole decay toward 0, q16)
+  cv = level                                    (q15 bipolar; feeds the pitch input)
+  ```
+  `base` is the starting offset from the specified pitch (the same ±1 octave scale
+  as `phasor.pitch`: 32767 = +1 octave, 2731 ≈ +1 semitone). `rate` is a q16
+  one-pole coefficient (the decay speed toward 0).
+
+- **Inputs / outputs:** `gate` (event, default `patch_gate` = any voice active) →
+  `cv` (control, q15 bipolar).
+
+- **Parameters:** `base` (q15, the starting offset), `rate` (q16, the decay rate).
+
+- **Coefficients / precompute:** none — one `int64` multiply-add per tick.
+
+- **State:** `level` (q15, the current offset), `prev` (uint32, the previous gate,
+  to detect the rise).
+
+- **Edge cases:** `base = 0` → no blip; `rate` large → instant decay; the gate-fall
+  is a no-op (the blip has already settled — a release sweep is a later extension).
+
+- **Reference + credit:** the DX7's global pitch EG (rates + levels on the patch's
+  pitch), reduced to the "blip" use — a one-pole decay from the base offset. The
+  `patch_gate` (any voice active) is umetate's own global-envelope trigger.
+
+- **Performance note:** control rate — one compare + one `int64` multiply per
+  sub-block (scalar). `csum` (control summer) is a single add per sub-block.
+
 
 
