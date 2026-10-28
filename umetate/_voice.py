@@ -59,6 +59,7 @@ def voice_state_decls() -> list[str]:
         "static int32_t voice_velocity[NVOICE] UMETATE_CPU1;",
         "static uint8_t voice_trig[NVOICE] UMETATE_CPU1;",
         "static uint8_t voice_part[NVOICE] UMETATE_CPU1; /* the part a voice belongs to */",
+        "static uint32_t voice_delay[NVOICE] UMETATE_CPU1; /* onset-offset samples (0 = live) */",
         "static uint32_t voice_inc[NVOICE] UMETATE_CPU1; /* current base increment */",
         "static uint32_t voice_target_inc[NVOICE] UMETATE_CPU1; /* glide target */",
         "static int32_t voice_detune[NVOICE] UMETATE_CPU1;",
@@ -199,13 +200,15 @@ def _note_on_ch_parts(name: str) -> list[str]:
         "        uint32_t best = 0xFFFFFFFFu, bp = 0;",
         "        for (uint32_t v = 0; v < NVOICE; v++) {",
         "            if (chosen[v]) continue;",
-        "            uint32_t score = voice_gate[v] ? 0x80000000u + voice_age[v]",
-        "                             : voice_age[v] + 1u;",
+        "            uint32_t score = (voice_gate[v] || voice_delay[v] > 0u)",
+        "                             ? 0x80000000u + voice_age[v] : voice_age[v] + 1u;",
         "            if (score < best) { best = score; bp = v; }",
         "        }",
         "        chosen[bp] = 1;",
         "        voice_part[bp] = (uint8_t)p;",
         "        voice_detune[bp] = 65536;",
+        "        /* per-part onset offset (ms) -> samples, held silent while pending */",
+        "        voice_delay[bp] = (uint32_t)(part_delay[p] > 0 ? part_delay[p] * 44 : 0);",
         "        picked[npicked++] = bp;",
         "    }",
         "    uint8_t trig = 1;",
@@ -215,13 +218,17 @@ def _note_on_ch_parts(name: str) -> list[str]:
         "        uint8_t was = voice_gate[pick];",
         "        voice_note[pick] = (uint8_t)snote;",
         "        voice_age[pick] = ++ages;",
-        "        voice_gate[pick] = 1;",
-        "        voice_trig[pick] = trig;",
         "        voice_velocity[pick] = (int32_t)(velocity * 258u);",
-        "        voice_target_inc[pick] = (uint32_t)(((uint64_t)note_to_inc(snote) * ",
+        "        if (voice_delay[pick] > 0u) {",
+        "            voice_gate[pick] = 0; /* pending: the envelope attacks at expiry */",
+        "        } else {",
+        "            voice_gate[pick] = 1;",
+        "            voice_trig[pick] = trig;",
+        "            voice_target_inc[pick] = (uint32_t)(((uint64_t)note_to_inc(snote) * ",
         "(uint32_t)voice_detune[pick]) >> 16);",
-        "        if (!vm_portamento || !was) voice_inc[pick] = voice_target_inc[pick];",
-        f"        {name}_note_derived(pick);",
+        "            if (!vm_portamento || !was) voice_inc[pick] = voice_target_inc[pick];",
+        f"            {name}_note_derived(pick);",
+        "        }",
         "    }",
         "}",
         "",
@@ -235,7 +242,7 @@ def note_off(name: str, n_parts: int) -> list[str]:
         return [
             f"void {name}_dsp_note_off(uint32_t note) {{",
             "    for (uint32_t v = 0; v < NVOICE; v++)",
-            "        if (voice_note[v] == note) voice_gate[v] = 0;",
+            "        if (voice_note[v] == note) { voice_gate[v] = 0; voice_delay[v] = 0; }",
             "}",
             "",
         ]
@@ -291,10 +298,32 @@ def glide(name: str) -> list[str]:
     ]
 
 
+def delay_countdown(name: str) -> list[str]:
+    """The per-block onset-offset countdown (indented for the render loop): a
+    pending voice fires (gate + trigger + increment) when its delay expires."""
+    return [
+        "        for (uint32_t v = 0; v < NVOICE; v++) {",
+        "            if (voice_delay[v] == 0u) continue;",
+        "            if (voice_delay[v] > CONTROL_BLOCK) {",
+        "                voice_delay[v] -= CONTROL_BLOCK;",
+        "                continue;",
+        "            }",
+        "            voice_delay[v] = 0u;",
+        "            voice_gate[v] = 1;",
+        "            voice_trig[v] = 1;",
+        "            voice_target_inc[v] = (uint32_t)(((uint64_t)note_to_inc(voice_note[v]) * ",
+        "(uint32_t)voice_detune[v]) >> 16);",
+        "            voice_inc[v] = voice_target_inc[v];",
+        f"            {name}_note_derived(v);",
+        "        }",
+    ]
+
+
 def all_off() -> list[str]:
     """The all-notes-off (panic) body: release every voice + the mono tracker."""
     return [
         "    for (uint32_t v = 0; v < NVOICE; v++) voice_gate[v] = 0;",
+        "    for (uint32_t v = 0; v < NVOICE; v++) voice_delay[v] = 0;",
         "    for (uint32_t n = 0; n < 128u; n++) mono_held[n] = 0;",
     ]
 
@@ -303,6 +332,7 @@ def reset() -> list[str]:
     """The reset body: all-off + age/serial zero."""
     return [
         "    for (uint32_t v = 0; v < NVOICE; v++) voice_gate[v] = 0;",
+        "    for (uint32_t v = 0; v < NVOICE; v++) voice_delay[v] = 0;",
         "    for (uint32_t n = 0; n < 128u; n++) mono_held[n] = 0;",
         "    ages = 0;",
         "    mono_serial = 0;",

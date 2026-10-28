@@ -183,10 +183,16 @@ def _render(
     lines = [
         f"void {name}_dsp_render(int32_t *out, uint32_t frames) {{",
         f"    for ({_CONTROL_BLOCK_TYPE} b = 0; b < frames; b += {cb}u) {{",
-        "        patch_gate = 0u;",
-        "        for (uint32_t _pg = 0; _pg < NVOICE; _pg++)",
-        "            if (voice_gate[_pg]) { patch_gate = 1u; break; }",
     ]
+    if per_part:
+        lines.extend(_voice.delay_countdown(name))
+    lines.extend(
+        [
+            "        patch_gate = 0u;",
+            "        for (uint32_t _pg = 0; _pg < NVOICE; _pg++)",
+            "            if (voice_gate[_pg]) { patch_gate = 1u; break; }",
+        ]
+    )
     # control-output temps (held across the sub-block's audio loop)
     for i in _control_rate_nodes(graph, by_id):
         for port in i.spec.outs:
@@ -231,7 +237,13 @@ def _render(
 
     mix_expr = _voice_mix(graph, by_id, normal)
     if mix_expr is not None:
-        lines.append(f"                bus = fm1_sat_add32(bus, {mix_expr});")
+        if per_part:
+            lines.append(
+                f"                bus = fm1_sat_add32(bus, "
+                f"fm1_q15_mul({mix_expr}, part_level[voice_part[v]]));"
+            )
+        else:
+            lines.append(f"                bus = fm1_sat_add32(bus, {mix_expr});")
 
     for i in breakers:
         _, write = _split_template(i.spec.body)

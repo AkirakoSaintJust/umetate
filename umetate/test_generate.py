@@ -811,6 +811,51 @@ int main(int argc, char **argv) {
 }
 """
 
+# Per-part `level` (gain) and `delay` (onset offset): part 0 silent on channel 0
+# (level 0) but loud on channel 1; a part-0 note delayed 100 ms is silent over its
+# first 256 samples (still pending).
+LEVEL_DELAY_HARNESS = """\
+#include <stdio.h>
+#include <stdint.h>
+void __NAME___dsp_reset(void);
+void __NAME___dsp_note_on_ch(uint32_t note, uint32_t velocity, uint32_t channel);
+void __NAME___dsp_render(int32_t *out, uint32_t frames);
+void __NAME___dsp_set_param(uint32_t id, int32_t value);
+static int32_t out[512];
+static int64_t energy(void) {
+    int64_t e = 0;
+    for (int i = 0; i < 512; i++) e += (int64_t)out[i] * out[i];
+    return e;
+}
+int main(void) {
+    /* delay: part 0 delayed 100 ms -> the first 256 samples are silent */
+    __NAME___dsp_reset();
+    __NAME___dsp_set_param(__DELAY_P0_ID__, 100);
+    __NAME___dsp_note_on_ch(60, 100, 0u);
+    __NAME___dsp_render(out, 256);
+    if (energy() != 0) { printf("FAIL: per-part delay not silent\\n"); return 1; }
+
+    /* level: part 0 silent -> channel 0 quiet, channel 1 (part 1) loud */
+    __NAME___dsp_reset();
+    __NAME___dsp_set_param(__DELAY_P0_ID__, 0);
+    __NAME___dsp_set_param(__LEVEL_P0_ID__, 0);
+    __NAME___dsp_note_on_ch(60, 100, 0u);
+    __NAME___dsp_render(out, 256);
+    int64_t lvl0 = energy();
+    __NAME___dsp_reset();
+    __NAME___dsp_note_on_ch(60, 100, 1u);
+    __NAME___dsp_render(out, 256);
+    int64_t lvl1 = energy();
+    if (lvl0 >= lvl1 / 100) {
+        printf("FAIL: per-part level (ch0=%lld ch1=%lld)\\n",
+               (long long)lvl0, (long long)lvl1);
+        return 1;
+    }
+    printf("ok: __NAME__ per-part level + delay\\n");
+    return 0;
+}
+"""
+
 
 def _include_args() -> list[str]:
     root = Path(__file__).resolve().parents[1]
@@ -1142,6 +1187,41 @@ def _parts_route(patch: Patch) -> tuple[bool, str]:
         if omni <= 3 * ch0:
             return False, f"parts routing/layering failed (omni={omni} ch0={ch0})"
         return True, "parts route by channel and layer (omni fires both parts)"
+
+
+def _parts_level_delay(patch: Patch) -> tuple[bool, str]:
+    """Generate + compile + run the per-part level (gain) + delay (onset) contracts."""
+    src = generate(patch)
+    level_id = str(param_ids(patch)["level.p0"])
+    delay_id = str(param_ids(patch)["delay.p0"])
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        cname = patch["name"].replace("-", "_").replace(".", "_")
+        harness = (
+            LEVEL_DELAY_HARNESS.replace("__NAME__", cname)
+            .replace("__LEVEL_P0_ID__", level_id)
+            .replace("__DELAY_P0_ID__", delay_id)
+        )
+        (d / "harness.c").write_text(harness)
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            return False, "compile failed:\n" + proc.stderr
+        run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+        return run.returncode == 0, run.stdout.strip()
 
 
 def _sound_tables(patch: Patch) -> tuple[bool, str]:
@@ -1638,6 +1718,11 @@ def main() -> int:
         ("ok: " if ok else "FAIL: ")
         + (msg or "parts route by channel and layer (omni fires both parts)")
     )
+    failures += 0 if ok else 1
+
+    # per-part level (gain) + delay (onset offset).
+    ok, msg = _parts_level_delay(PARTS_PATCH)
+    print(("ok: " if ok else "FAIL: ") + (msg or "per-part level + delay"))
     failures += 0 if ok else 1
 
     # per-part params occupy a `part × param` id space (part-major, contiguous).

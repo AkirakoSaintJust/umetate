@@ -951,9 +951,14 @@ params are appended to every patch's param set (ids N..N+5). Landed:
   matching part (channel + keyzone) — one note may layer several parts — each
   allocating a distinct poly voice from the shared pool (`voice_part[v]` tag).
   `note_on` is the frozen omni forwarder.
+- **Per-part `level` + `delay`** — `level` (q15 gain) scales a voice in the mix
+  (`bus += voice × part_level[voice_part[v]] >> 15`); `delay` (onset offset, ms) is
+  a per-voice `voice_delay[v]` countdown — a delayed voice is allocated but held
+  silent (gate off) until it expires, then it attacks (`gate`+`trig`+increment), so
+  the envelope attacks `delay` ms after note-on. Allocator treats pending voices as
+  taken; `note_off`/panic/reset clear the countdown.
 
-Still open: per-part `level` (gain) and `delay` (onset offset) are declared but not
-yet applied; mono/unison with parts is deferred (parts allocate poly).
+Still open: mono/unison with parts (parts allocate poly); per-part mode is deferred.
 
 #### 6.11.5 Milestones (ordered)
 
@@ -961,7 +966,7 @@ yet applied; mono/unison with parts is deferred (parts allocate poly).
 | --- | --- | --- |
 | F1 | **Interview loop hardening** (L1–L7). | synth-brief semantics column + multi-timbrality + MIDI-spec prompts; control-map menu→page→mode-tree prompt; skill non-goal rule + two-tier example definition; source-vocabulary check runs. |
 | F2 | **Velocity routing.** — **done** | `voice_velocity[]` + `velocity` reserved input + `vel_amp`/`vel_fm`/`vel_rate` in `fm_op` (velocity → amplitude, → FM, → envelope rate via a `dx_env` rate-scale input); host tests prove a higher velocity is louder and attacks faster. |
-| F3 | **Voice-management rails** (modes + parts routing — done; level/delay remain). | `_voice.py` rails + `trigger`/retrigger + mono (note_priority/legato) + unison (detune) + portamento (glide) + the six mode params + `parts:` (per-part param arrays, `voice_part[v]`, `note_on_ch` channel/keyzone routing, layering); host tests prove mono/unison/legato/glide/routing+layering. Remaining: per-part `level`/`delay` application. |
+| F3 | **Voice-management rails.** — **done** | `_voice.py` rails + `trigger`/retrigger + mono (note_priority/legato) + unison (detune) + portamento (glide) + the six mode params + `parts:` (per-part param arrays, `voice_part[v]`, `note_on_ch` channel/keyzone routing, layering, per-part `level`/`delay`); host tests prove mono/unison/legato/glide/routing+layering+level+delay. Deferred (noted): per-part mono/unison mode. |
 | F4 | **Presets + settings + SysEx.** | 64-slot part-patch store + 64-slot multi-patch store, settings record (channel/tune), the shared SysEx envelope + identity/param/part-patch/multi-patch/settings commands; export→import round-trips. |
 | F5 | **MIDI CC map.** | generator-emitted `cc → param` table; host test proves a CC write reaches the right param. |
 | F6 | **Polyphony budget tool.** | `umetate budget` reports a measured voice count for 2×12, 2×10, 2×8; the skill interview consumes it. |
