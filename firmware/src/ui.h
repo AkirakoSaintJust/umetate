@@ -25,6 +25,7 @@ enum {
     UI_GRID,           /* a grid of cells (span lines tall) */
     UI_OP_ROW,         /* a param row resolved through the selected operator */
     UI_ENVELOPE,       /* the DX rate/level curve (straight-line approximation) */
+    UI_STATUS,         /* a status readout (algorithm + selected operator + mute) */
     UI_CUSTOM,         /* the cv_* canvas escape hatch: ui_draw_custom() draws it */
 };
 
@@ -96,6 +97,7 @@ typedef struct {
     const uint16_t *op_param;                    /* n_op * n_op_param operator-relative params */
     uint8_t n_op;                                /* the number of operators (0 = none) */
     uint8_t n_op_param;                          /* op-relative params per operator */
+    const uint16_t *env;                         /* the envelope group: n_op * 7 params */
     uint16_t n_params;                           /* ui_params[] size */
     uint16_t n_widgets;                          /* ui_dirty[] size (across all pages) */
 } ui_tables;

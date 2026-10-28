@@ -26,13 +26,22 @@
             { "type": "param_row", "row": 6, "param": "pitch_rate", "text": "VIB RATE" },
             { "type": "param_row", "row": 7, "param": "pitch_depth", "text": "VIB DEPTH" }
           ]
+        },
+        {
+          "id": "pitch",
+          "widgets": [
+            { "type": "label", "row": 1, "span": 2, "text": "PITCH ENV" },
+            { "type": "param_row", "row": 4, "param": "penv_base", "text": "BASE" },
+            { "type": "param_row", "row": 5, "param": "penv_rate", "text": "RATE" }
+          ]
         }
       ],
       "bindings": [
         { "source": "ENC_KNOB4", "slot": 0, "behavior": "relative" },
         { "source": "ENC_KNOB5", "slot": 1, "behavior": "relative" },
         { "source": "ENC_KNOB6", "slot": 2, "behavior": "relative" },
-        { "source": "ENC_KNOB7", "slot": 3, "behavior": "relative" }
+        { "source": "ENC_KNOB7", "slot": 3, "behavior": "relative" },
+        { "source": "ENC_SELECT", "action": "next_page" }
       ]
     },
     "op": {
@@ -40,7 +49,7 @@
         {
           "id": "pitch",
           "widgets": [
-            { "type": "label", "row": 1, "span": 2, "text": "OP - PITCH" },
+            { "type": "status", "row": 1, "span": 2, "param": "algorithm" },
             { "type": "param_row", "row": 4, "param": "op1.ph.inc_ratio", "text": "RATIO", "unit": "x" },
             { "type": "param_row", "row": 5, "param": "op1.fb.level", "text": "FB" },
             { "type": "param_row", "row": 6, "param": "op1.osc.waveform", "text": "WAVE" },
@@ -50,28 +59,30 @@
         {
           "id": "env-rates",
           "widgets": [
-            { "type": "label", "row": 1, "span": 2, "text": "OP - ENV RATES" },
+            { "type": "status", "row": 1, "span": 2, "param": "algorithm" },
             { "type": "param_row", "row": 4, "param": "op1.eg.r1", "text": "ATK" },
             { "type": "param_row", "row": 5, "param": "op1.eg.r2", "text": "DCY1" },
             { "type": "param_row", "row": 6, "param": "op1.eg.r3", "text": "DCY2" },
             { "type": "param_row", "row": 7, "param": "op1.eg.r4", "text": "REL" },
-            { "type": "envelope", "row": 9, "span": 5, "param": "op1.eg.r1" }
+            { "type": "envelope", "row": 9, "span": 5,
+              "params": ["op1.eg.r1", "op1.eg.r2", "op1.eg.r3", "op1.eg.r4", "op1.eg.l1", "op1.eg.l2", "op1.eg.l3"] }
           ]
         },
         {
           "id": "env-levels",
           "widgets": [
-            { "type": "label", "row": 1, "span": 2, "text": "OP - ENV LEVELS" },
+            { "type": "status", "row": 1, "span": 2, "param": "algorithm" },
             { "type": "param_row", "row": 4, "param": "op1.eg.l1", "text": "L1" },
             { "type": "param_row", "row": 5, "param": "op1.eg.l2", "text": "L2" },
             { "type": "param_row", "row": 6, "param": "op1.eg.l3", "text": "SUS" },
-            { "type": "envelope", "row": 8, "span": 5, "param": "op1.eg.r1" }
+            { "type": "envelope", "row": 8, "span": 5,
+              "params": ["op1.eg.r1", "op1.eg.r2", "op1.eg.r3", "op1.eg.r4", "op1.eg.l1", "op1.eg.l2", "op1.eg.l3"] }
           ]
         },
         {
           "id": "trem",
           "widgets": [
-            { "type": "label", "row": 1, "span": 2, "text": "OP - TREMOLO" },
+            { "type": "status", "row": 1, "span": 2, "param": "algorithm" },
             { "type": "param_row", "row": 4, "param": "op1.lfo.rate", "text": "RATE" },
             { "type": "param_row", "row": 5, "param": "op1.lfo.depth", "text": "DEPTH" }
           ]

@@ -59,11 +59,12 @@
       "required": ["type"],
       "additionalProperties": false,
       "properties": {
-        "type": { "enum": ["label", "value", "bar", "param_row", "param_column", "list", "grid", "envelope"] },
+        "type": { "enum": ["label", "value", "bar", "param_row", "param_column", "list", "grid", "envelope", "status"] },
         "row": { "type": "integer", "minimum": 0 },
         "col": { "type": "integer", "minimum": 0 },
         "span": { "type": "integer", "minimum": 1 },
         "param": { "type": "string", "description": "param path, e.g. filter.cutoff" },
+        "params": { "type": "array", "items": { "type": "string" }, "description": "the envelope widget's 7 param paths (r1..r4, l1..l3)" },
         "text": { "type": "string" },
         "unit": { "type": "string" },
         "fmt": { "type": "string", "description": "printf format for the value" },

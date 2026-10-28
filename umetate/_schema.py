@@ -134,6 +134,7 @@ class Widget(TypedDict):
     col: NotRequired[int]
     span: NotRequired[int]
     param: NotRequired[str]
+    params: NotRequired[list[str]]
     text: NotRequired[str]
     unit: NotRequired[str]
     fmt: NotRequired[str]

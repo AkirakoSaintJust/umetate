@@ -88,6 +88,7 @@ _WIDGETS = {
     "list": "UI_LIST",
     "grid": "UI_GRID",
     "envelope": "UI_ENVELOPE",
+    "status": "UI_STATUS",
 }
 
 
@@ -107,6 +108,7 @@ def generate_panel(
     params: dict[str, int] = {}
     operators = panel.get("operators") or []
     op_names: list[str] = []  # the operator-relative param "rest" parts, first-seen
+    env_names: list[str] = []  # the envelope's 7 op-relative "rest" parts
 
     def op_rest(pname: str) -> str | None:
         """If `pname` is operator-relative (`opN.<rest>`), return the `<rest>` part."""
@@ -175,19 +177,23 @@ def generate_panel(
         row = w.get("row", 0)
         col = w.get("col", 0)
         span = w.get("span", 1)
-        wparam = w.get("param")
-        rest = op_rest(wparam) if wparam else None
-        if rest is not None:
-            if rest not in op_names:
-                op_names.append(rest)
-            typ = "UI_ENVELOPE" if w["type"] == "envelope" else "UI_OP_ROW"
-            param = str(op_names.index(rest))
+        if w["type"] == "envelope":
+            typ = "UI_ENVELOPE"
+            param = "0"  # unused; the runtime reads the env group
         else:
-            raw_typ = _WIDGETS.get(w["type"])
-            if raw_typ is None:
-                raise GenError(f"unknown widget type {w['type']!r}")
-            typ = raw_typ
-            param = param_sym(wparam) if wparam else "UI_NO_PARAM"
+            wparam = w.get("param")
+            rest = op_rest(wparam) if wparam else None
+            if rest is not None:
+                if rest not in op_names:
+                    op_names.append(rest)
+                typ = "UI_OP_ROW"
+                param = str(op_names.index(rest))
+            else:
+                raw_typ = _WIDGETS.get(w["type"])
+                if raw_typ is None:
+                    raise GenError(f"unknown widget type {w['type']!r}")
+                typ = raw_typ
+                param = param_sym(wparam) if wparam else "UI_NO_PARAM"
         text = cstr(w.get("text"))
         unit = cstr(w.get("unit"))
         fmt = cstr(w.get("fmt"))
@@ -207,14 +213,26 @@ def generate_panel(
     for context in contexts.values():
         for page in context.get("pages", []):
             for w in page.get("widgets", []):
-                wparam = w.get("param")
-                if wparam:
-                    rest = op_rest(wparam)
-                    if rest is not None:
+                if w["type"] == "envelope":
+                    for p in w.get("params", []):
+                        rest = op_rest(p)
+                        if rest is None:
+                            raise GenError(
+                                f"envelope param {p!r} is not operator-relative"
+                            )
+                        if rest not in env_names:
+                            env_names.append(rest)
                         for op in operators:
                             param_id(f"{op}.{rest}")
-                    else:
-                        param_id(wparam)
+                else:
+                    wparam = w.get("param")
+                    if wparam:
+                        rest = op_rest(wparam)
+                        if rest is not None:
+                            for op in operators:
+                                param_id(f"{op}.{rest}")
+                        else:
+                            param_id(wparam)
         for b in context.get("bindings", []):
             target = b.get("target")
             if target:
@@ -304,12 +322,20 @@ def generate_panel(
         op_ptr = "OP_PARAM"
     else:
         op_ptr = "0"
+    if operators and env_names:
+        flat = [str(param_id(f"{op}.{n}")) for op in operators for n in env_names]
+        lines.append(
+            f"static const uint16_t ENV_PARAM[{len(flat)}] = {{ {', '.join(flat)} }};"
+        )
+        env_ptr = "ENV_PARAM"
+    else:
+        env_ptr = "0"
     lines.append("")
     lines.append("static const ui_tables PANEL = {")
     lines.append(
         f'    "{name}", {home}, CTX, {len(ctx_names)}, GLOBAL_BIND, '
         f"{len(panel.get('global', []))}, MUTE_TBL, {op_ptr}, "
-        f"{len(operators)}, {len(op_names)}, {n_params}, {widget_count},"
+        f"{len(operators)}, {len(op_names)}, {env_ptr}, {n_params}, {widget_count},"
     )
     lines.append("};")
     return "\n".join(lines) + "\n"

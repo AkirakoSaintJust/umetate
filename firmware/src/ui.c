@@ -330,21 +330,22 @@ static void ui_draw_grid(const ui_widget *w)
     cv_blit(x, y);
 }
 
-/* the DX rate/level envelope as straight line segments: 7 consecutive params
- * (r1..r4, l1..l3) from the widget's base param. Stage length = 65536/rate (the
- * one-pole time constant, clamped); a short flat sustain segment. No stage cursor. */
+/* the DX rate/level envelope as straight line segments: the selected operator's 7
+ * envelope params (r1..r4, l1..l3) from the `env` group. Stage length = 65536/rate
+ * (the one-pole time constant, clamped); a short flat sustain segment. No cursor. */
 static void ui_draw_envelope(const ui_widget *w)
 {
     uint32_t x, y, wd, ht, i, cx;
-    uint32_t len[5], total = 0;
+    uint32_t len[5], total = 0, p0;
     int32_t lvl[5], px[6], py[6];
-    uint16_t base = ui_widget_param(w);
 
     ui_region(w, &x, &y, &wd, &ht);
-    if (base + 6u >= ui_t->n_params)
+    if (!ui_t->env || ui_selected_op >= ui_t->n_op)
         return;
+    p0 = (uint32_t)ui_selected_op * 7u;
     for (i = 0; i < 4; i++) {
-        int32_t r = ui_param_v[base + i];
+        uint16_t p = ui_t->env[p0 + i];
+        int32_t r = p < ui_t->n_params ? ui_param_v[p] : 0;
         uint32_t t = r <= 0 ? 60u : (uint32_t)(65536u / (uint32_t)r);
         len[i] = t < 2u ? 2u : (t > 60u ? 60u : t);
         total += len[i];
@@ -353,9 +354,10 @@ static void ui_draw_envelope(const ui_widget *w)
     total += len[4];
     if (!total)
         total = 1u;
-    lvl[0] = ui_param_v[base + 4];                  /* l1 */
-    lvl[1] = ui_param_v[base + 5];                  /* l2 */
-    lvl[2] = ui_param_v[base + 6];                  /* l3 (sustain) */
+    for (i = 0; i < 3; i++) {
+        uint16_t p = ui_t->env[p0 + 4u + i];
+        lvl[i] = p < ui_t->n_params ? ui_param_v[p] : 0;
+    }
     lvl[3] = lvl[2];
     lvl[4] = 0;
     for (i = 0; i < 5; i++) {
@@ -376,6 +378,34 @@ static void ui_draw_envelope(const ui_widget *w)
     cv_blit(x, y);
 }
 
+/* the status readout: ALG <n>  OP <n>/<m>  [MUTE] (the widget's `param` is the
+ * algorithm param; the operator + mute come from ui_selected_op + the mute table). */
+static void ui_draw_status(const ui_widget *w)
+{
+    char s[32], t[12];
+    uint32_t x, y, wd, ht;
+    int32_t alg = w->param < ui_t->n_params ? ui_param_v[w->param] : 0;
+    int muted = 0;
+    ui_region(w, &x, &y, &wd, &ht);
+    if (ui_t->mute && ui_selected_op < 4u) {
+        uint16_t p = ui_t->mute[ui_selected_op];
+        if (p < ui_t->n_params)
+            muted = ui_param_v[p] != 0;
+    }
+    ui_strcpy(s, "ALG ");
+    ui_itoa(alg, t);
+    ui_strcat(s, t);
+    ui_strcat(s, "  OP ");
+    t[0] = (char)('1' + ui_selected_op);
+    t[1] = '/';
+    t[2] = (char)('0' + ui_t->n_op);
+    t[3] = 0;
+    ui_strcat(s, t);
+    if (muted)
+        ui_strcat(s, "  MUTE");
+    draw_text_box(x, y, wd, &FONT_S, s, C_HI, 0);
+}
+
 static void ui_draw_widget(const ui_widget *w)
 {
     switch (w->type) {
@@ -388,6 +418,7 @@ static void ui_draw_widget(const ui_widget *w)
     case UI_LIST: ui_draw_list(w); break;
     case UI_GRID: ui_draw_grid(w); break;
     case UI_ENVELOPE: ui_draw_envelope(w); break;
+    case UI_STATUS: ui_draw_status(w); break;
     case UI_CUSTOM: ui_draw_custom(w); break;
     default: break;
     }
@@ -402,12 +433,23 @@ static int32_t ui_widget_value(const ui_widget *w, uint32_t slot)
     case UI_LIST:
     case UI_GRID: return ui_cursor;
     case UI_ENVELOPE: {                             /* redraw when any of the 7 change */
-        uint16_t b = ui_widget_param(w);
         int32_t sum = 0;
-        uint32_t i;
-        if (b + 6u < ui_t->n_params)
-            for (i = 0; i < 7; i++) sum += ui_param_v[b + i];
+        uint32_t i, p0 = (uint32_t)ui_selected_op * 7u;
+        if (ui_t->env && ui_selected_op < ui_t->n_op)
+            for (i = 0; i < 7; i++) {
+                uint16_t p = ui_t->env[p0 + i];
+                if (p < ui_t->n_params) sum += ui_param_v[p];
+            }
         return sum;
+    }
+    case UI_STATUS: {                               /* algorithm + operator + mute */
+        int32_t alg = w->param < ui_t->n_params ? ui_param_v[w->param] : 0;
+        int32_t m = 0;
+        if (ui_t->mute && ui_selected_op < 4u) {
+            uint16_t p = ui_t->mute[ui_selected_op];
+            if (p < ui_t->n_params) m = ui_param_v[p] != 0;
+        }
+        return alg * 4 + (int32_t)ui_selected_op * 2 + m;
     }
     default:                                       /* VALUE/BAR/PARAM_ROW/COLUMN/OP_ROW */
         return ui_widget_param(w) < ui_t->n_params ? ui_param_v[ui_widget_param(w)] : 0;
