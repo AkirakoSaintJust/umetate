@@ -766,6 +766,51 @@ int main(int argc, char **argv) {
 }
 """
 
+# The multitimbral contract: `parts:` routes a note by channel+keyzone and layers
+# (a note fires every matching part). A 2-part patch (part 0 = ch 0, part 1 = ch 1)
+# makes `note_on_ch(60, vel, omni)` fire both parts (two stacked voices → ~4× the
+# single-part energy) while `note_on_ch(60, vel, 0)` fires only part 0.
+PARTS_PATCH: Patch = {
+    "name": "parts_test",
+    "voices": 4,
+    "parts": {
+        "count": 2,
+        "channel": [0, 1],
+        "low": [0, 0],
+        "high": [127, 127],
+    },
+    "voice": {
+        "nodes": [
+            {"id": "ph", "type": "phasor"},
+            {"id": "osc", "type": "osc"},
+        ],
+        "wires": [{"from": "ph.phase", "to": "osc.phase"}],
+        "voice_out": "osc.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
+PARTS_HARNESS = """\
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+void __NAME___dsp_reset(void);
+void __NAME___dsp_note_on_ch(uint32_t note, uint32_t velocity, uint32_t channel);
+void __NAME___dsp_render(int32_t *out, uint32_t frames);
+static int32_t out[512];
+int main(int argc, char **argv) {
+    uint32_t ch = strcmp(argv[1], "omni") == 0 ? 0xFFFFFFFFu : 0u;
+    __NAME___dsp_reset();
+    __NAME___dsp_note_on_ch(60, 100, ch);
+    __NAME___dsp_render(out, 256);
+    int64_t e = 0;
+    for (int i = 0; i < 512; i++) e += (int64_t)out[i] * out[i];
+    printf("%lld\\n", (long long)e);
+    return 0;
+}
+"""
+
 
 def _include_args() -> list[str]:
     root = Path(__file__).resolve().parents[1]
@@ -1057,6 +1102,46 @@ def _glide_ramps(patch: Patch) -> tuple[bool, str]:
         if glide >= snap - 3:
             return False, f"portamento did not glide (snap={snap} glide={glide})"
         return True, "portamento glides the pitch instead of snapping"
+
+
+def _parts_route(patch: Patch) -> tuple[bool, str]:
+    """Generate + compile + run the multitimbral contract: channel routing + layering
+    (one process per route, so the engine's static phase is shared)."""
+    src = generate(patch)
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        cname = patch["name"].replace("-", "_").replace(".", "_")
+        (d / "harness.c").write_text(PARTS_HARNESS.replace("__NAME__", cname))
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            return False, "compile failed:\n" + proc.stderr
+        omni = int(
+            subprocess.run(
+                [str(d / "t"), "omni"], capture_output=True, text=True
+            ).stdout.strip()
+        )
+        ch0 = int(
+            subprocess.run(
+                [str(d / "t"), "ch0"], capture_output=True, text=True
+            ).stdout.strip()
+        )
+        if omni <= 3 * ch0:
+            return False, f"parts routing/layering failed (omni={omni} ch0={ch0})"
+        return True, "parts route by channel and layer (omni fires both parts)"
 
 
 def _sound_tables(patch: Patch) -> tuple[bool, str]:
@@ -1435,10 +1520,10 @@ def _table_placeholder_resolves() -> None:
     from ._ir import NodeInstance, NodeSpec
 
     inst = NodeInstance(id="w", type="wt", zone="voice", spec=NodeSpec(name="wt"))
-    out = substitute(inst, "int32_t x = ${table.sine}[0];", "v", {"sine"})
+    out = substitute(inst, "int32_t x = ${table.sine}[0];", "v", {"sine"}, False)
     assert "table_sine" in out and "${" not in out
     try:
-        substitute(inst, "int32_t x = ${table.nope}[0];", "v", {"sine"})
+        substitute(inst, "int32_t x = ${table.nope}[0];", "v", {"sine"}, False)
         raise AssertionError("unknown table not rejected")
     except GenError:
         pass
@@ -1546,6 +1631,28 @@ def main() -> int:
         + (msg or "portamento glides the pitch instead of snapping")
     )
     failures += 0 if ok else 1
+
+    # parts: a note routes by channel/keyzone and layers (omni fires every part).
+    ok, msg = _parts_route(PARTS_PATCH)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "parts route by channel and layer (omni fires both parts)")
+    )
+    failures += 0 if ok else 1
+
+    # per-part params occupy a `part × param` id space (part-major, contiguous).
+    pids = param_ids(PARTS_PATCH)
+    if pids.get("osc.waveform.p0") is None or pids.get("osc.waveform.p1") is None:
+        print("FAIL: per-part voice params are not in the param id space")
+        failures += 1
+    elif pids["osc.waveform.p0"] != pids["osc.waveform.p1"] - 2:
+        print("FAIL: per-part params are not part-major contiguous")
+        failures += 1
+    elif pids.get("channel.p0") is None or pids.get("channel.p1") is None:
+        print("FAIL: per-part routing params are not in the param id space")
+        failures += 1
+    else:
+        print("ok: per-part params are part-major (channel.p0/p1 present)")
 
     # the dogfood panel (examples/fourop-fm/panel.json) resolves against the patch's
     # params (every widget/binding names a real set_param id).

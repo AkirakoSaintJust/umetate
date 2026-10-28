@@ -10,6 +10,7 @@ with a reason, never a silent fallback.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from typing import cast
 
 from ._ir import (
     AUDIO,
@@ -37,6 +38,7 @@ from ._schema import (
     NoteKind,
     ParamBinding,
     ParamTarget,
+    Parts,
     Patch,
     Zone,
 )
@@ -95,7 +97,12 @@ def compile(
     voice_out_ref = voice_zone.get("voice_out")
     voice_out, global_out = _typecheck(edges, by_id, voice_out_ref, bindings)
 
-    params = _build_params(instances, patch.get("params") or {})
+    parts = patch.get("parts")
+    n_parts = parts["count"] if parts else 1
+    if n_parts < 1:
+        raise GenError("parts: 'count' must be >= 1")
+
+    params = _build_params(instances, patch.get("params") or {}, n_parts, parts)
     params.extend(mode_param_entries(len(params)))
 
     return CompiledGraph(
@@ -108,26 +115,47 @@ def compile(
         global_out=global_out,
         params=params,
         tables=build_tables(patch.get("tables") or {}),
+        n_parts=n_parts,
     )
 
 
+# per-part routing params (cname, field, min, max, fallback default)
+_ROUTING_PARAMS: tuple[tuple[str, str, int, int, int], ...] = (
+    ("part_channel", "channel", -1, 15, 0),
+    ("part_low", "low", 0, 127, 0),
+    ("part_high", "high", 0, 127, 127),
+    ("part_level", "level", 0, 32768, 32768),
+    ("part_delay", "delay", 0, 1000, 0),
+)
+
+
+def _routing_values(parts: Parts | None, field: str) -> list[int] | None:
+    """The per-part routing array for `field`, or None when unset."""
+    if parts is None:
+        return None
+    return cast(list[int] | None, parts.get(field))
+
+
 def _build_params(
-    instances: list[NodeInstance], manifest: Mapping[str, ParamBinding]
+    instances: list[NodeInstance],
+    manifest: Mapping[str, ParamBinding],
+    n_parts: int,
+    parts: Parts | None,
 ) -> list[ParamEntry]:
-    """Flatten node params (in expansion order) and merge the `params:` manifest."""
-    flat: list[tuple[str, str, int, str]] = []
+    """Flatten node params (per-part for the voice zone) + the routing params."""
+    voice: list[tuple[str, str, int, str]] = []
+    global_: list[tuple[str, str, int, str]] = []
     for i in instances:
         for pname, kind in i.spec.params.items():
             if kind == TABLE:
                 continue  # a compile-time table selector, not a runtime param
-            flat.append(
-                (
-                    i.param_expr(pname),
-                    f"{i.id}.{pname}",
-                    param_default(kind, i.params.get(pname)),
-                    kind,
-                )
+            entry = (
+                i.param_expr(pname),
+                f"{i.id}.{pname}",
+                param_default(kind, i.params.get(pname)),
+                kind,
             )
+            (voice if i.zone == "voice" else global_).append(entry)
 
     by_target: dict[str, str] = {}
     meta: dict[str, ParamBinding] = {}
@@ -140,31 +168,84 @@ def _build_params(
         by_target[target] = name
         meta[target] = spec
 
-    flat_targets = {target for _, target, _, _ in flat}
+    flat_targets = {target for _, target, _, _ in voice + global_}
     for target, name in by_target.items():
         if target not in flat_targets:
             raise GenError(f"params: {name!r} targets unknown param {target!r}")
 
-    entries: list[ParamEntry] = []
-    for idx, (cname, target, default, kind) in enumerate(flat):
-        name = by_target.get(target, target)
+    def add(
+        cname: str,
+        target: str,
+        default: int,
+        kind: str,
+        name: str,
+        part: int | None,
+        m: ParamBinding | None,
+    ) -> ParamEntry:
         lo, hi = param_bounds(kind)
-        m = meta.get(target)
-        entries.append(
-            ParamEntry(
-                id=idx,
-                name=name,
-                target=target,
-                cname=cname,
-                min=m.get("min", lo) if m else lo,
-                max=m.get("max", hi) if m else hi,
-                default=default,
-                curve=m.get("curve", "linear") if m else "linear",
-                unit=m.get("unit", "") if m else "",
-                rate=m.get("rate", "block") if m else "block",
-                modulatable=m.get("modulatable", False) if m else False,
-            )
+        return ParamEntry(
+            id=len(entries),
+            name=name,
+            target=target,
+            cname=cname,
+            part=part,
+            min=m.get("min", lo) if m else lo,
+            max=m.get("max", hi) if m else hi,
+            default=default,
+            curve=m.get("curve", "linear") if m else "linear",
+            unit=m.get("unit", "") if m else "",
+            rate=m.get("rate", "block") if m else "block",
+            modulatable=m.get("modulatable", False) if m else False,
         )
+
+    entries: list[ParamEntry] = []
+    if n_parts > 1:
+        for p in range(n_parts):
+            for cname, target, default, kind in voice:
+                base = by_target.get(target, target)
+                entries.append(
+                    add(
+                        cname,
+                        f"{target}.p{p}",
+                        default,
+                        kind,
+                        f"{base}.p{p}",
+                        p,
+                        meta.get(target),
+                    )
+                )
+    else:
+        for cname, target, default, kind in voice:
+            base = by_target.get(target, target)
+            entries.append(
+                add(cname, target, default, kind, base, None, meta.get(target))
+            )
+
+    for cname, target, default, kind in global_:
+        base = by_target.get(target, target)
+        entries.append(add(cname, target, default, kind, base, None, meta.get(target)))
+
+    if n_parts > 1:
+        for cname, field, lo, hi, fallback in _ROUTING_PARAMS:
+            arr = _routing_values(parts, field)
+            for p in range(n_parts):
+                default = arr[p] if arr is not None and p < len(arr) else fallback
+                entries.append(
+                    ParamEntry(
+                        id=len(entries),
+                        name=f"{field}.p{p}",
+                        target=f"part.{field}.p{p}",
+                        cname=cname,
+                        part=p,
+                        min=lo,
+                        max=hi,
+                        default=default,
+                        curve="linear",
+                        unit="",
+                        rate="block",
+                        modulatable=False,
+                    )
+                )
     return entries
 
 

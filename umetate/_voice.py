@@ -37,6 +37,7 @@ def mode_param_entries(start_id: int) -> list[ParamEntry]:
             name=name,
             target=cname,
             cname=cname,
+            part=None,
             min=lo,
             max=hi,
             default=default_,
@@ -57,6 +58,7 @@ def voice_state_decls() -> list[str]:
         "static uint32_t voice_age[NVOICE] UMETATE_CPU1;",
         "static int32_t voice_velocity[NVOICE] UMETATE_CPU1;",
         "static uint8_t voice_trig[NVOICE] UMETATE_CPU1;",
+        "static uint8_t voice_part[NVOICE] UMETATE_CPU1; /* the part a voice belongs to */",
         "static uint32_t voice_inc[NVOICE] UMETATE_CPU1; /* current base increment */",
         "static uint32_t voice_target_inc[NVOICE] UMETATE_CPU1; /* glide target */",
         "static int32_t voice_detune[NVOICE] UMETATE_CPU1;",
@@ -92,11 +94,23 @@ def helpers() -> list[str]:
     ]
 
 
-def note_on(name: str) -> list[str]:
-    """The `<name>_dsp_note_on` body: mode-aware allocation + assignment, calling
-    `<name>_note_derived(pick)` for the synth-specific note→increment glue."""
-    return [
+def note_on(name: str, n_parts: int) -> list[str]:
+    """The `<name>_dsp_note_on_ch` implementation (mode-aware single-timbre, or
+    channel/keyzone routing for parts) + the frozen `<name>_dsp_note_on` forwarder."""
+    impl = _note_on_ch_parts(name) if n_parts > 1 else _note_on_ch_single(name)
+    return impl + [
         f"void {name}_dsp_note_on(uint32_t note, uint32_t velocity) {{",
+        f"    {name}_dsp_note_on_ch(note, velocity, 0xFFFFFFFFu); /* omni */",
+        "}",
+        "",
+    ]
+
+
+def _note_on_ch_single(name: str) -> list[str]:
+    """The mode-aware allocation (mono/unison/poly), as `<name>_dsp_note_on_ch`."""
+    return [
+        f"void {name}_dsp_note_on_ch(uint32_t note, uint32_t velocity, uint32_t channel) {{",
+        "    (void)channel;",
         "    if (note > 127u || !velocity) return;",
         "    uint8_t picked[NVOICE];",
         "    uint32_t npicked = 0;",
@@ -168,8 +182,63 @@ def note_on(name: str) -> list[str]:
     ]
 
 
-def note_off(name: str) -> list[str]:
-    """The `<name>_dsp_note_off` body (mono note_priority takeover, else poly)."""
+def _note_on_ch_parts(name: str) -> list[str]:
+    """The multitimbral routing: a note fires every matching part (channel +
+    keyzone), each allocating one poly voice from the shared pool."""
+    return [
+        f"void {name}_dsp_note_on_ch(uint32_t note, uint32_t velocity, uint32_t channel) {{",
+        "    if (note > 127u || !velocity) return;",
+        "    uint8_t picked[NVOICE];",
+        "    uint8_t chosen[NVOICE];",
+        "    uint32_t npicked = 0;",
+        "    for (uint32_t v = 0; v < NVOICE; v++) chosen[v] = 0;",
+        "    for (uint32_t p = 0; p < N_PART; p++) {",
+        "        if (part_channel[p] != -1 && channel != 0xFFFFFFFFu &&",
+        "            part_channel[p] != (int32_t)channel) continue;",
+        "        if (note < (uint32_t)part_low[p] || note > (uint32_t)part_high[p]) continue;",
+        "        uint32_t best = 0xFFFFFFFFu, bp = 0;",
+        "        for (uint32_t v = 0; v < NVOICE; v++) {",
+        "            if (chosen[v]) continue;",
+        "            uint32_t score = voice_gate[v] ? 0x80000000u + voice_age[v]",
+        "                             : voice_age[v] + 1u;",
+        "            if (score < best) { best = score; bp = v; }",
+        "        }",
+        "        chosen[bp] = 1;",
+        "        voice_part[bp] = (uint8_t)p;",
+        "        voice_detune[bp] = 65536;",
+        "        picked[npicked++] = bp;",
+        "    }",
+        "    uint8_t trig = 1;",
+        "    uint32_t snote = note;",
+        "    for (uint32_t k = 0; k < npicked; k++) {",
+        "        uint32_t pick = picked[k];",
+        "        uint8_t was = voice_gate[pick];",
+        "        voice_note[pick] = (uint8_t)snote;",
+        "        voice_age[pick] = ++ages;",
+        "        voice_gate[pick] = 1;",
+        "        voice_trig[pick] = trig;",
+        "        voice_velocity[pick] = (int32_t)(velocity * 258u);",
+        "        voice_target_inc[pick] = (uint32_t)(((uint64_t)note_to_inc(snote) * ",
+        "(uint32_t)voice_detune[pick]) >> 16);",
+        "        if (!vm_portamento || !was) voice_inc[pick] = voice_target_inc[pick];",
+        f"        {name}_note_derived(pick);",
+        "    }",
+        "}",
+        "",
+    ]
+
+
+def note_off(name: str, n_parts: int) -> list[str]:
+    """The `<name>_dsp_note_off` body: mode-aware (mono takeover) single-timbre, or
+    plain poly release for parts (mono/unison with parts is deferred)."""
+    if n_parts > 1:
+        return [
+            f"void {name}_dsp_note_off(uint32_t note) {{",
+            "    for (uint32_t v = 0; v < NVOICE; v++)",
+            "        if (voice_note[v] == note) voice_gate[v] = 0;",
+            "}",
+            "",
+        ]
     return [
         f"void {name}_dsp_note_off(uint32_t note) {{",
         "    if (note > 127u) return;",

@@ -17,6 +17,7 @@ from ._ir import (
     CompiledGraph,
     GenError,
     NodeInstance,
+    ParamEntry,
     param_default,
 )
 from ._tables import table_cname
@@ -46,12 +47,14 @@ def emit(graph: CompiledGraph) -> str:
     lines.append("#endif")
     lines.append("")
     lines.append(f"#define NVOICE {graph.voices}")
+    lines.append(f"#define N_PART {graph.n_parts}")
     lines.append(f"#define CONTROL_BLOCK {graph.control_block}")
     lines.append("")
     lines.extend(_note_to_inc())
     lines.extend(_state_decls(graph))
     lines.extend(_voice.voice_state_decls())
     lines.extend(_voice.mode_param_decls())
+    lines.extend(_routing_decls(graph))
     lines.append("static uint32_t patch_gate UMETATE_CPU1;")
     lines.extend(_param_decls(graph))
     lines.extend(_param_tables(graph))
@@ -95,22 +98,51 @@ def _state_decls(graph: CompiledGraph) -> list[str]:
     return lines
 
 
-def _param_decls(graph: CompiledGraph) -> list[str]:
-    """Emit one `static int32_t` per node param, initialized to its default/value."""
+def _routing_decls(graph: CompiledGraph) -> list[str]:
+    """The per-part routing backing arrays (`part_channel`/`part_low`/`part_high`/
+    `part_level`/`part_delay`), initialized from the routing params' defaults."""
+    if graph.n_parts <= 1:
+        return []
+    defaults: dict[str, list[int]] = {}
+    for p in graph.params:
+        if p.part is not None and p.cname.startswith("part_"):
+            defaults.setdefault(p.cname, []).append(p.default)
     lines: list[str] = []
+    for cname, vals in defaults.items():
+        lines.append(
+            f"static int32_t {cname}[{graph.n_parts}] = {{ "
+            f"{', '.join(str(v) for v in vals)} }};"
+        )
+    return lines
+
+
+def _param_decls(graph: CompiledGraph) -> list[str]:
+    """Emit one `static int32_t` (or a `[N_PART]` array) per node param, per-part
+    for the voice zone, initialized to its default/value."""
+    lines: list[str] = []
+    per_part = graph.n_parts > 1
     for i in graph.instances:
         for pname, kind in i.spec.params.items():
-            lines.append(
-                f"static int32_t {i.param_expr(pname)} = "
-                f"{param_default(kind, i.params.get(pname))};"
-            )
+            default = param_default(kind, i.params.get(pname))
+            if per_part and i.zone == "voice":
+                init = ", ".join(str(default) for _ in range(graph.n_parts))
+                lines.append(
+                    f"static int32_t {i.param_expr(pname)}[{graph.n_parts}] = {{ {init} }};"
+                )
+            else:
+                lines.append(f"static int32_t {i.param_expr(pname)} = {default};")
     return lines
+
+
+def _slot_ref(p: ParamEntry) -> str:
+    """The `&backing` (or `&backing[part]`) expression for a param's slot."""
+    return f"&{p.cname}[{p.part}]" if p.part is not None else f"&{p.cname}"
 
 
 def _param_tables(graph: CompiledGraph) -> list[str]:
     """The param slot table + the `dsp_param` metadata table (both `const`, XIP)."""
     params = graph.params
-    slots = ", ".join(f"&{p.cname}" for p in params) if params else "0"
+    slots = ", ".join(_slot_ref(p) for p in params) if params else "0"
     lines = [
         f"#define PARAM_COUNT {len(params)}",
         f"static int32_t *const synth_param_slots[{len(params) or 1}] = {{ {slots} }};",
@@ -142,6 +174,7 @@ def _render(
     graph: CompiledGraph, by_id: dict[str, NodeInstance], table_names: set[str]
 ) -> list[str]:
     name, cb = graph.name, graph.control_block
+    per_part = graph.n_parts > 1
     voice_audio = _zone(graph.voice_order, by_id, audio_only=True)
     voice_ctrl = _zone(graph.voice_order, by_id, audio_only=False)
     global_audio = _zone(graph.global_order, by_id, audio_only=True)
@@ -167,7 +200,7 @@ def _render(
         lines.append("        for (uint32_t v = 0; v < NVOICE; v++) {")
         lines.append("            if (!voice_gate[v]) continue;")
         for i in voice_ctrl:
-            lines.extend(_emit_body(i, "v", "            ", table_names))
+            lines.extend(_emit_body(i, "v", "            ", table_names, per_part))
         lines.append(
             "            voice_trig[v] = 0; /* one-shot note-on edge, consumed above */"
         )
@@ -175,7 +208,7 @@ def _render(
 
     # control prologue: global control-rate nodes (scalar)
     for i in global_ctrl:
-        lines.extend(_emit_body(i, "0", "        ", table_names))
+        lines.extend(_emit_body(i, "0", "        ", table_names, per_part))
 
     # portamento glide (control rate): ramp each voice's base increment.
     lines.extend(_voice.glide(name))
@@ -190,9 +223,11 @@ def _render(
     normal = [i for i in voice_audio if not i.is_breaker()]
     for i in breakers:
         read, _ = _split_template(i.spec.body)
-        lines.extend(_emit_lines(read, i, "v", "                ", table_names))
+        lines.extend(
+            _emit_lines(read, i, "v", "                ", table_names, per_part)
+        )
     for i in normal:
-        lines.extend(_emit_body(i, "v", "                ", table_names))
+        lines.extend(_emit_body(i, "v", "                ", table_names, per_part))
 
     mix_expr = _voice_mix(graph, by_id, normal)
     if mix_expr is not None:
@@ -200,11 +235,13 @@ def _render(
 
     for i in breakers:
         _, write = _split_template(i.spec.body)
-        lines.extend(_emit_lines(write, i, "v", "                ", table_names))
+        lines.extend(
+            _emit_lines(write, i, "v", "                ", table_names, per_part)
+        )
     lines.append("            }")
 
     for i in global_audio:
-        lines.extend(_emit_body(i, "0", "            ", table_names))
+        lines.extend(_emit_body(i, "0", "            ", table_names, per_part))
 
     out_expr = _final_out(graph, by_id)
     lines.append(f"            out[f * 2] = {out_expr}; out[f * 2 + 1] = {out_expr};")
@@ -262,7 +299,7 @@ def _final_out(graph: CompiledGraph, by_id: dict[str, NodeInstance]) -> str:
 
 
 def _emit_body(
-    inst: NodeInstance, v: str, indent: str, table_names: set[str]
+    inst: NodeInstance, v: str, indent: str, table_names: set[str], per_part: bool
 ) -> list[str]:
     """Emit a node's full body (read + write parts) at the given indent.
 
@@ -270,8 +307,8 @@ def _emit_body(
     low/band/high) doesn't leave unused locals under `-Wall`.
     """
     read, write = _split_template(inst.spec.body)
-    lines = _emit_lines(read, inst, v, indent, table_names) + _emit_lines(
-        write, inst, v, indent, table_names
+    lines = _emit_lines(read, inst, v, indent, table_names, per_part) + _emit_lines(
+        write, inst, v, indent, table_names, per_part
     )
     for port in inst.spec.outs:
         if port not in inst.consumed:
@@ -280,7 +317,12 @@ def _emit_body(
 
 
 def _emit_lines(
-    template: str, inst: NodeInstance, v: str, indent: str, table_names: set[str]
+    template: str,
+    inst: NodeInstance,
+    v: str,
+    indent: str,
+    table_names: set[str],
+    per_part: bool,
 ) -> list[str]:
     lines: list[str] = []
     for line in template.splitlines():
@@ -289,7 +331,9 @@ def _emit_lines(
             continue
         leading = len(line) - len(line.lstrip())
         lines.append(
-            indent + " " * leading + substitute(inst, stripped, v, table_names)
+            indent
+            + " " * leading
+            + substitute(inst, stripped, v, table_names, per_part)
         )
     return lines
 
@@ -311,7 +355,9 @@ def _split_template(body: str) -> tuple[str, str]:
     return "\n".join(read_lines), "\n".join(write_lines)
 
 
-def substitute(inst: NodeInstance, line: str, v: str, table_names: set[str]) -> str:
+def substitute(
+    inst: NodeInstance, line: str, v: str, table_names: set[str], per_part: bool
+) -> str:
     """Substitute the documented placeholders; a leftover is a GenError."""
     out = line.replace("${v}", v)
     for port in inst.spec.ins:
@@ -323,7 +369,10 @@ def substitute(inst: NodeInstance, line: str, v: str, table_names: set[str]) -> 
     for name in inst.spec.state:
         out = out.replace(f"${{state.{name}}}", inst.state_ref(name, v))
     for name in inst.spec.params:
-        out = out.replace(f"${{param.{name}}}", inst.param_expr(name))
+        expr = inst.param_expr(name)
+        if per_part and inst.zone == "voice":
+            expr = f"{expr}[voice_part[{v}]]"
+        out = out.replace(f"${{param.{name}}}", expr)
     out = out.replace("${const.mask}", f"{inst.c}_delay_mask")
     if inst.table is not None:
         if inst.table not in table_names:
@@ -353,14 +402,18 @@ def _note_derived_fn(graph: CompiledGraph) -> list[str]:
     note→increment/cutoff/reciprocal glue, parameterized by a voice index so the
     voice manager can call it on note_on, mono takeover, and (later) glide."""
     name = graph.name
+    per_part = graph.n_parts > 1
     body: list[str] = []
     for i in graph.instances:
         if i.zone != "voice":
             continue
         for field, ratio in i.note_derived.items():
+            ratio_expr = i.param_expr(ratio)
+            if per_part:
+                ratio_expr = f"{ratio_expr}[voice_part[v]]"
             body.append(
                 f"    {i.state_ref(field, 'v')} = (uint32_t)(((uint64_t)voice_inc[v] * "
-                f"(uint32_t){i.param_expr(ratio)}) >> 16);"
+                f"(uint32_t){ratio_expr}) >> 16);"
             )
         for field, ratio in i.note_cutoff.items():
             body.append(
@@ -388,8 +441,8 @@ def _seam(graph: CompiledGraph, by_id: dict[str, NodeInstance]) -> list[str]:
             "",
         ]
     )
-    lines.extend(_voice.note_on(name))
-    lines.extend(_voice.note_off(name))
+    lines.extend(_voice.note_on(name, graph.n_parts))
+    lines.extend(_voice.note_off(name, graph.n_parts))
     lines.extend(
         [
             f"void {name}_dsp_all_notes_off(void) {{",

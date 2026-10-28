@@ -843,11 +843,20 @@ generator emits part-aware allocation:
   + `low`/`high` keyzone. A note routes to every part whose channel matches (or
   is omni) *and* whose keyzone contains the note — so one note may fire both
   parts (layering).
-- Each part owns a voice pool (`12` per part = 24 total); per-part `level` is a
-  gain and `delay` is a note-onset offset (the envelope attacks `delay` ms after
-  note-on, held silent before).
-- Params are **per-part**: the id space is `part × param`, and a voice reads its
-  part's params through a `voice_part[v]` tag set at note-on.
+- **Shared voice pool**: `voices` is the total; all parts share it and the
+  allocator steals across parts (one busy part can use another's idle voices).
+- **`parts:` schema is parallel arrays** (not a list of per-part objects):
+  `{"count": N, "channel": [...], "low": [...], "high": [...], "level": [...],
+  "delay": [...]}`. Chosen so a future firmware can add an `engine: [...]` array
+  and point *different parts at different patch engines* (one FM, one additive,
+  one subtractive VA) without restructuring — each part is then an independent
+  param block for its engine. Out of scope for F3 but the shape reserves the
+  seam.
+- Per-part `level` is a gain and `delay` is a note-onset offset (the envelope
+  attacks `delay` ms after note-on, held silent before).
+- Params are **per-part**: the id space is `part × param` (part-major, so a part's
+  timbre is one contiguous block — trivial part-patch save/load), and a voice
+  reads its part's params through a `voice_part[v]` tag set at note-on.
 
 **SysEx envelope (shared base).**
 
@@ -935,9 +944,16 @@ params are appended to every patch's param set (ids N..N+5). Landed:
 - The note→increment glue is `<name>_note_derived(v)`, parameterized by voice index
   and driven by `voice_inc[v]` (note_to_inc × detune) — shared by note-on, mono
   takeover, and the glide ramp.
+- **Parts (multitimbral)** — `parts: {count, channel[], low[], high[], level[],
+  delay[]}` (parallel arrays); the voice-zone params become `[N_PART]` arrays read
+  as `param[voice_part[v]]`, and the id space is `part × param` (part-major,
+  contiguous per part). `note_on_ch(note, velocity, channel)` routes a note to every
+  matching part (channel + keyzone) — one note may layer several parts — each
+  allocating a distinct poly voice from the shared pool (`voice_part[v]` tag).
+  `note_on` is the frozen omni forwarder.
 
-Still open: the `parts:` multitimbral model (per-part param sets, channel/keyzone
-routing, per-part `level`/`delay`, layering, `note_on_ch`).
+Still open: per-part `level` (gain) and `delay` (onset offset) are declared but not
+yet applied; mono/unison with parts is deferred (parts allocate poly).
 
 #### 6.11.5 Milestones (ordered)
 
@@ -945,7 +961,7 @@ routing, per-part `level`/`delay`, layering, `note_on_ch`).
 | --- | --- | --- |
 | F1 | **Interview loop hardening** (L1–L7). | synth-brief semantics column + multi-timbrality + MIDI-spec prompts; control-map menu→page→mode-tree prompt; skill non-goal rule + two-tier example definition; source-vocabulary check runs. |
 | F2 | **Velocity routing.** — **done** | `voice_velocity[]` + `velocity` reserved input + `vel_amp`/`vel_fm`/`vel_rate` in `fm_op` (velocity → amplitude, → FM, → envelope rate via a `dx_env` rate-scale input); host tests prove a higher velocity is louder and attacks faster. |
-| F3 | **Voice-management rails** (modes — done; parts remain). | `_voice.py` rails + `trigger`/retrigger + mono (note_priority/legato) + unison (detune) + portamento (constant-rate glide) + the six mode params; host tests prove mono priority/takeover, unison stacking, legato, and glide. Remaining: `parts:` schema + per-part param sets + channel/keyzone routing + layering + `note_on_ch`. |
+| F3 | **Voice-management rails** (modes + parts routing — done; level/delay remain). | `_voice.py` rails + `trigger`/retrigger + mono (note_priority/legato) + unison (detune) + portamento (glide) + the six mode params + `parts:` (per-part param arrays, `voice_part[v]`, `note_on_ch` channel/keyzone routing, layering); host tests prove mono/unison/legato/glide/routing+layering. Remaining: per-part `level`/`delay` application. |
 | F4 | **Presets + settings + SysEx.** | 64-slot part-patch store + 64-slot multi-patch store, settings record (channel/tune), the shared SysEx envelope + identity/param/part-patch/multi-patch/settings commands; export→import round-trips. |
 | F5 | **MIDI CC map.** | generator-emitted `cc → param` table; host test proves a CC write reaches the right param. |
 | F6 | **Polyphony budget tool.** | `umetate budget` reports a measured voice count for 2×12, 2×10, 2×8; the skill interview consumes it. |

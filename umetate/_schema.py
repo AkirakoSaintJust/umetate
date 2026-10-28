@@ -84,6 +84,19 @@ class TableSpec(TypedDict):
     points: NotRequired[list[list[int]]]
 
 
+class Parts(TypedDict):
+    """A patch `parts:` section: N timbres, routing in parallel arrays (indexed by
+    part). Chosen (over a list of per-part objects) so a future firmware can add an
+    `engine: [...]` array and point different parts at different patch engines."""
+
+    count: int
+    channel: NotRequired[list[int]]  # MIDI channel per part, -1 = omni
+    low: NotRequired[list[int]]  # keyzone low per part
+    high: NotRequired[list[int]]  # keyzone high per part
+    level: NotRequired[list[int]]  # q15 gain per part
+    delay: NotRequired[list[int]]  # note-onset offset (ms) per part
+
+
 # `global` is a Python keyword, so this one uses the functional form.
 Patch = TypedDict(
     "Patch",
@@ -96,6 +109,7 @@ Patch = TypedDict(
         "macros": NotRequired[dict[str, Macro]],
         "voice": NotRequired[Zone],
         "global": NotRequired[Zone],
+        "parts": NotRequired[Parts],
     },
 )
 

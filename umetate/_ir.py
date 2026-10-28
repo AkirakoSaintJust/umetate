@@ -164,6 +164,7 @@ class ParamEntry:
     name: str  # user-facing name (manifest key, else the target path)
     target: str  # "<instance>.<param>" (the flattened path)
     cname: str  # the C backing variable (e.g. "lp_cutoff")
+    part: int | None  # None = scalar; int = index into a per-part array
     min: int
     max: int
     default: int  # the DSP initial value (from the node param)
@@ -197,6 +198,7 @@ class CompiledGraph:
     params: list[ParamEntry] = field(default_factory=lambda: [])
     tables: list[Table] = field(default_factory=lambda: [])
     control_block: int = CONTROL_BLOCK_DEFAULT
+    n_parts: int = 1  # `parts:` count (1 = single-timbre; >1 = multitimbral)
 
 
 def to_c_identifier(name: str) -> str:
