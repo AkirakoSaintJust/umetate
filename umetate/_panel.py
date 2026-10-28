@@ -10,7 +10,7 @@ an unknown name is a GenError, never a silently-wrong table.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
 
 from ._ir import GenError, to_c_identifier
 from ._schema import Context, PanelBinding, PanelManifest, Widget
@@ -53,6 +53,98 @@ _PREFIX_SOURCES = {
     "fader": "UI_SRC_FADER_BASE",
     "wheel": "UI_SRC_WHEEL_BASE",
 }
+
+# ---- the per-board control inventory (firmware/src/platform.c BTN_*/ENC_* enums) ----
+# A panel must only bind sources the target board actually has. `KEY` + the MIDI
+# prefixes (`cc:`, `note:`) are universal; `pad:`/`fader:`/`wheel:` are SMK-37 only.
+_BOARD_SOURCES: dict[str, frozenset[str]] = {
+    "fm1": frozenset(
+        {
+            "KEY",
+            "FM1_ADC_MASTER",
+            "BTN_OCT_DOWN",
+            "BTN_OCT_UP",
+            "BTN_FX",
+            "BTN_SEL",
+            "BTN_ENV",
+            "BTN_LFO",
+            "BTN_EDIT",
+            "BTN_GLO",
+            "BTN_HOME",
+            "BTN_SAVE",
+            "BTN_ARP",
+            "BTN_SEQ",
+            "BTN_PLAY",
+            "BTN_REC",
+            "ENC_SELECT",
+            "ENC_ALGORITHM",
+            "ENC_KNOB1",
+            "ENC_KNOB2",
+            "ENC_KNOB3",
+            "ENC_KNOB4",
+            "ENC_PRESETS",
+        }
+    ),
+    "smk37": frozenset(
+        {
+            "KEY",
+            "FM1_ADC_MASTER",
+            "BTN_OCT_DOWN",
+            "BTN_OCT_UP",
+            "BTN_ARP",
+            "BTN_LFO",
+            "BTN_SEL",
+            "BTN_ENV",
+            "BTN_GLO",
+            "BTN_SAVE",
+            "BTN_HOME",
+            "BTN_EDIT",
+            "BTN_FX",
+            "BTN_SEQ",
+            "BTN_PLAY",
+            "BTN_REC",
+            "ENC_SELECT",
+            "ENC_ALGORITHM",
+            "ENC_PRESETS",
+            "ENC_KNOB1",
+            "ENC_KNOB2",
+            "ENC_KNOB3",
+            "ENC_KNOB4",
+        }
+    ),
+}
+_UNIVERSAL_PREFIXES = ("cc:", "note:")
+_BOARD_PREFIXES: dict[str, tuple[str, ...]] = {
+    "fm1": (),
+    "smk37": ("pad:", "fader:", "wheel:"),
+}
+
+
+def _iter_panel_sources(panel: PanelManifest) -> Iterator[str]:
+    """Every control source the panel binds, in the global + context bindings."""
+    for binding in panel.get("global", []):
+        yield binding["source"]
+    for context in panel["contexts"].values():
+        for binding in context.get("bindings", []):
+            yield binding["source"]
+
+
+def check_sources(panel: PanelManifest, board: str) -> list[str]:
+    """The panel's sources the target `board` does not have (empty = all valid).
+
+    The source-vocabulary check (roadmap §6.11 L1): a panel must not bind a
+    control that the board lacks (e.g. `ENC_KNOB5` on the FM-1).
+    """
+    valid = _BOARD_SOURCES.get(board)
+    if valid is None:
+        return [f"unknown board {board!r} (expected {', '.join(_BOARD_SOURCES)})"]
+    prefixes = _UNIVERSAL_PREFIXES + _BOARD_PREFIXES.get(board, ())
+    return [
+        source
+        for source in _iter_panel_sources(panel)
+        if source not in valid and not source.startswith(prefixes)
+    ]
+
 
 _ACTIONS = {
     "note_on": "UI_ACT_NOTE_ON",

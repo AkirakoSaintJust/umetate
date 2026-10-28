@@ -18,7 +18,7 @@ import tempfile
 from pathlib import Path
 
 from ._ir import GenError
-from ._panel import generate_panel
+from ._panel import check_sources, generate_panel
 from ._schema import PanelBinding, PanelManifest, as_panel
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -176,6 +176,40 @@ def main() -> int:
         failures += 1
     except GenError as exc:
         print(f"ok: unknown source rejected ({exc})")
+
+    # the source-vocabulary check: a panel must bind only the target board's controls.
+    ffm = as_panel(
+        json.loads(
+            (ROOT / "examples" / "fourop-fm" / "panel.json").read_text(encoding="utf-8")
+        )
+    )
+    bad_sources = check_sources(ffm, "fm1")
+    print(
+        ("ok: " if not bad_sources else "FAIL: ")
+        + (
+            "the fourop-fm panel binds only FM-1 controls"
+            if not bad_sources
+            else f"non-FM-1 sources {bad_sources}"
+        )
+    )
+    failures += 0 if not bad_sources else 1
+
+    phantom: PanelManifest = {
+        "name": "phantom",
+        "contexts": {
+            "home": {
+                "pages": [{"id": "home", "widgets": []}],
+                "bindings": [{"source": "ENC_KNOB5", "target": "cutoff"}],
+            }
+        },
+        "global": [],
+    }
+    bad_sources = check_sources(phantom, "fm1")
+    print(
+        ("ok: " if bad_sources == ["ENC_KNOB5"] else "FAIL: ")
+        + "the source-vocabulary check flags a phantom source"
+    )
+    failures += 0 if bad_sources == ["ENC_KNOB5"] else 1
 
     print("panel tests " + ("FAILED" if failures else "passed"))
     return 1 if failures else 0
