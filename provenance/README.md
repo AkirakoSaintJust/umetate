@@ -1,7 +1,7 @@
 # Provenance records
 
-This directory holds baseline and release records. They are evidence, not a
-second status tracker: current status belongs in `docs/roadmap.md`.
+This directory contains baseline and release records. They document evidence;
+they do not track current project status. See `docs/roadmap.md` for that.
 
 ## Naming
 
@@ -11,7 +11,7 @@ second status tracker: current status belongs in `docs/roadmap.md`.
 
 ## Required fields
 
-Every record states:
+Each record should include:
 
 - source commit/tag and whether the tree was clean;
 - board/model(s) and package identity;
@@ -25,5 +25,5 @@ Every record states:
 
 ## Current records
 
-- [`baseline-2026-10-27.md`](baseline-2026-10-27.md) — the toolkit baseline after
-  P0–P6 (tag `umetate-baseline-2026-10-27`).
+- [`baseline-2026-10-27.md`](baseline-2026-10-27.md) records the toolkit baseline
+  after P0–P6. Its tag is `umetate-baseline-2026-10-27`.

@@ -5,9 +5,9 @@ M-VAVE FM-1 / SMK-37 firmware, inspired by (but independent of) fm1tk.
 **Author:** P1Onken. **Licence:** GPL-3.0-only. **Status authority:** this file
 (`docs/roadmap.md`). **Date:** 2026-10-25.
 
-This document is the single source of truth for the design and the order of
-work. It is meant to be executable top to bottom by a fresh agent with no prior
-context, leaving nothing to chance. Spare prose; one fact lives in one place.
+This file is the single source of truth for the design and work order. A fresh
+agent should be able to follow it from top to bottom without prior context. Keep
+prose spare; each fact has one home.
 
 ---
 
@@ -43,8 +43,9 @@ context, leaving nothing to chance. Spare prose; one fact lives in one place.
 
 ## 2. Lessons carried over from fm1tk
 
-The `/old-reference` project was over-engineered in places and under-decided in
-others. umetate keeps the engineering discipline and drops the ceremony.
+The `/old-reference` project had too much machinery in some places and left key
+decisions open in others. umetate keeps the engineering discipline and drops the
+ceremony.
 
 | fm1tk pain point | umetate response |
 | --- | --- |
@@ -515,7 +516,7 @@ statement (§4.2, §4.3). Integer-first by default; FPU opt-in; hardware math vi
 ### 6.8 Maintainability & readability contract
 
 Enforced by three committed artifacts, owned in detail by `firmware/README.md`.
-This section summarizes; do not duplicate the detail.
+This section summarizes the rules; the full detail stays in `firmware/README.md`.
 
 - **`firmware/README.md`** — the app contract, the enumerated platform/HAL API,
   numeric conventions, naming case rules, the **ten rules**, and the audio-callback
@@ -1015,11 +1016,10 @@ Each milestone: mypy + ruff + pyright clean; all test modules green; `_skill` +
 
 ### 6.12 The composition model (node → macro → patch → firmware)
 
-The toolkit is a **layered compiler**: five authoring levels compose ahead-of-time
-into one fused engine + one panel + one firmware. Each level has a clean, typed
-contract; the generator composes them with no runtime interpretation. This is the
-backbone the whole toolkit (CLI, RIB rails, agent, tutorial, docs) is built
-around.
+The toolkit is a **layered compiler**: five authoring levels compose ahead of
+time into one fused engine, one panel, and one firmware. Each level has a typed
+contract, and the generator combines them without runtime interpretation. The
+CLI, RIB rails, agent, tutorial, and docs all follow this model.
 
 | Level | Authoring artifact | Compiles to | Ships in |
 | --- | --- | --- | --- |
@@ -1114,9 +1114,9 @@ model *and* the loop — never only in the code.
 
 ### 6.13 The development loop (granularity)
 
-Both umetate's own development and a user's synth follow one fine-grained loop:
-**one decision-set per increment** — the smallest change that is a coherent,
-verifiable unit — through two nested loops.
+Umetate development and synth projects both follow a fine-grained loop: **one
+decision-set per increment**, the smallest coherent, verifiable change. The work
+runs through two nested loops.
 
 - **Design loop** — decide before code: write the decision into its canonical
   artifact (the roadmap for umetate itself; the brief / control-map / plan for a
@@ -1542,12 +1542,11 @@ side effect of any other task.
 
 ## 12. Detailed design (the blueprint)
 
-The implementation blueprint: files, structs, functions, data flow, and memory,
-per subsystem, so a fresh implementer makes zero design decisions. Written
-subsystem by subsystem; read with §7 (the order). Sections: 12.1 the invariant
-seam; 12.2 the memory & emission contract; 12.3 the RIB runtime; 12.4 the
-generator; 12.5 the node library; 12.6 the UI kit; 12.7 CLI/build/tests; 12.8 the
-CLI codebase.
+This blueprint specifies files, structs, functions, data flow, and memory for
+each subsystem so an implementer does not have to make design decisions. Read it
+with §7 for the implementation order. Sections: 12.1 the invariant seam; 12.2 the
+memory and emission contract; 12.3 the RIB runtime; 12.4 the generator; 12.5 the
+node library; 12.6 the UI kit; 12.7 CLI/build/tests; 12.8 the CLI codebase.
 
 ### 12.1 The invariant seam — the `<synth>_dsp_*` contract
 
@@ -2337,8 +2336,8 @@ mapped onto the §5.5 `Layer`/`Status` enums above (e.g. `done (host), blocked
 unparseable headers degrade to a `not-run`/skipped row, so a prose reword never breaks
 the command.
 
-**The runner (the platform abstraction).** Everything POSIX — the target build, the
-host DSP tests, the WASM build, clang tooling — runs in the pinned container:
+**The runner (the platform abstraction).** The target build, host DSP tests,
+WASM build, and clang tooling all run in the pinned POSIX container:
 
 ```python
 def ensure_container() -> None                        # start umetate-host-build if absent

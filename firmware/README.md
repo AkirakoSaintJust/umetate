@@ -1,135 +1,147 @@
 # RIB — the starter firmware contract
 
-RIb is the umetate starter firmware: a Dinghy/Felucca-derived, source-owned base
-for the M-VAVE FM-1 and SMK-37. This file is the **code-level contract**: the API
-your app writes against, the numeric conventions, and the readability/perf rules.
-It is not a tutorial (see `docs/tutorial.md`) and not a status file (see
-`docs/roadmap.md`).
+RIB is umetate's starter firmware for the M-VAVE FM-1 and SMK-37, derived from
+Dinghy/Felucca and maintained here as source. This file defines the **code-level
+contract**: the app API, numeric conventions, and rules for readable, fast code.
+For a guided introduction, see `docs/tutorial.md`; for project status, see
+`docs/roadmap.md`.
 
-Raw registers live in `hal/` only. Everything your app touches is a named helper
-below. Read this once; it is short and complete.
+Only `hal/` accesses raw registers. App code uses the named helpers documented
+below.
 
 ## 1. The app contract
 
-Your app supplies two functions, nothing else is required:
+An app provides two functions:
 
 ```c
 static void app_audio(int32_t *out, uint32_t n);   /* audio ISR: fill n=256 stereo frames @ 44.1 kHz */
 static void app_main(void);                        /* main loop; never returns */
 ```
 
-- `app_audio` runs in the audio interrupt, ~5.8 ms per block. `out` is
-  `L R L R …`, already zeroed; **add** your sound to it. Full scale is ±32767
-  (Q15); more is clipped by the platform. Callback budget target: ≤ 2.9 ms (50%).
-- `app_main` must call `platform_poll()` often (USB + watchdog; never less than
-  once every couple of seconds). It reads the panel and MIDI and draws.
+- `app_audio` runs in the audio interrupt, once per 256-frame block (~5.8 ms).
+  The interleaved stereo buffer (`L R L R …`) is already zeroed; **add** your
+  samples to it. Full scale is ±32767 (Q15); the platform clips larger values.
+  Keep the callback under 2.9 ms (50% of the block period).
+- `app_main` reads the panel and MIDI and updates the display. It must call
+  `platform_poll()` regularly to service USB and the watchdog, at least once every
+  couple of seconds.
 
 ## 2. The platform API
 
-All helpers are `fm1_`-prefixed and board-agnostic; SMK-37 extras are behind
-`BOARD_SMK37`.
+The board-agnostic helpers use the `fm1_` prefix. SMK-37-specific helpers are
+available when `BOARD_SMK37` is defined.
 
 ### Time
 
 | Call | Meaning |
 | --- | --- |
 | `fm1_ms` | milliseconds since power-on (`volatile uint32_t`) |
-| `fm1_ticks()` / `fm1_micros()` | free-running 24 MHz counter / microseconds (`FM1_TICKS_PER_US` = 24) |
-| `fm1_delay_ms(ms)` / `fm1_delay_us(us)` | short busy waits (they do **not** poll) |
+| `fm1_ticks()` / `fm1_micros()` | free-running 24 MHz counter and microseconds (`FM1_TICKS_PER_US` = 24) |
+| `fm1_delay_ms(ms)` / `fm1_delay_us(us)` | short busy waits; these calls do **not** poll |
 
-Time the callback: `t0 = fm1_ticks(); …; (fm1_ticks() - t0) / FM1_TICKS_PER_US`.
+To time the callback, take a counter reading before and after it, then divide
+the difference by `FM1_TICKS_PER_US`: `t0 = fm1_ticks(); …; (fm1_ticks() - t0) / FM1_TICKS_PER_US`.
 
-### Input (scanned at 10 kHz, debounced)
+### Input
+
+The input scanner samples controls at 10 kHz and debounces them.
 
 | Call | Meaning |
 | --- | --- |
-| `fm1_in.notes` / `fm1_in.buttons` | held keys (bit 0 = F3 … 26 = G5) / buttons (bit = `BTN_*`) |
-| `fm1_input_edges(&released)` / `fm1_input_note_edges()` | edges since the last call |
-| `fm1_enc_take(ENC_x)` | detents since the last call (+ = clockwise) |
-| `fm1_adc_read(FM1_ADC_MASTER)` / `…_BATT` | MASTER knob (0..1023) / battery raw |
+| `fm1_in.notes` / `fm1_in.buttons` | held keys (bit 0 = F3 through bit 26 = G5) and held buttons (bit = `BTN_*`) |
+| `fm1_input_edges(&released)` / `fm1_input_note_edges()` | input edges since the previous call |
+| `fm1_enc_take(ENC_x)` | encoder detents since the previous call; positive means clockwise |
+| `fm1_adc_read(FM1_ADC_MASTER)` / `…_BATT` | MASTER knob value (0–1023) and raw battery reading |
 
 ### LEDs / screen / MIDI / storage
 
 | Area | Calls |
 | --- | --- |
-| LEDs | `fm1_led_key(id, on)`, `fm1_led_key_glow(id, on)`, raw layers `fm1_led[]` |
-| Screen | `lcd_fill(x,y,w,h,c)`, `draw_text_box(...)`, canvas `cv_begin/cv_rect/cv_line/cv_pset/cv_text/cv_blit`, `FONT_S`/`FONT_L` |
-| MIDI | `midi_get(&st,&d1,&d2)` (1 = USB, 2 = TRS), `midi_send(st,d1,d2)` (main loop only) |
-| Storage | `settings_load/save`, `blob_load/save(i,..)`, `slot_load/save(i,..)` — each with magic + length + CRC |
+| LEDs | `fm1_led_key(id, on)`, `fm1_led_key_glow(id, on)`, and raw `fm1_led[]` layers |
+| Screen | `lcd_fill(x,y,w,h,c)`, `draw_text_box(...)`, canvas calls `cv_begin/cv_rect/cv_line/cv_pset/cv_text/cv_blit`, and `FONT_S`/`FONT_L` |
+| MIDI | `midi_get(&st,&d1,&d2)` (1 = USB, 2 = TRS); `midi_send(st,d1,d2)` (main loop only) |
+| Storage | `settings_load/save`, `blob_load/save(i,..)`, `slot_load/save(i,..)`; each record has a magic value, length, and CRC |
 
 ### The SMK-37 (behind `BOARD_SMK37`)
 
-`fm1_in.key_vel[]` (velocity), `smk_extkey_take()` (outer keys), `fm1_in.keys`
-(37 keys), `padled_set(pad,r,g,b)` / `padled_flush()`, `fm1_in.fader[0..3]`,
-`fm1_in.wheel[0..1]` + `smk_pw_bend()`, `fm1_in.pad_press[]`. The store uses an
-owner tag; give your fork its own `DATA_FAMILY`.
+The SMK-37 adds velocity in `fm1_in.key_vel[]`, 37-key state in `fm1_in.keys`,
+and outer-key events from `smk_extkey_take()`. Use `padled_set()` and
+`padled_flush()` for pad LEDs, `fm1_in.fader[0..3]` for faders, and
+`fm1_in.wheel[0..1]` plus `smk_pw_bend()` for the wheels. Pad presses are in
+`fm1_in.pad_press[]`. The store uses an owner tag; assign your fork its own
+`DATA_FAMILY`.
 
 ## 3. Numeric conventions
 
-- **Q15 levels** (×32768, ±32767), **Q12/Q16 gains and coefficients**,
-  **32-bit phase accumulator**: `inc = f * 2^32 / FS`, `ph += inc`.
-- **No `float`/`double` in the integer baseline**; `--dsp float` is single-precision
-  only and confined to `rib_dsp.c`. **No `double` anywhere on target.**
-- **No 64-bit division/modulo** (`int64_t * x` is fine; `a / b` on 64-bit needs
-  `__udivdi3` and the link fails). Shift, or divide 32-bit.
-- **Division by zero does not trap** (the trap is off) — it gives a wrong value.
-  Test your divisors.
-- **Compute constants on the host; write them as literals** (`INC_C9 = …`).
-- Envelopes, filter coefficients, and LFOs update at **block rate** (16–32
-  frames), not per sample, unless measured.
+- Represent **levels in Q15** (scale by 32768; clamp to ±32767) and gains or
+  coefficients in **Q12/Q16**. Use a 32-bit phase accumulator:
+  `inc = f * 2^32 / FS`, then `ph += inc` per sample.
+- Keep the integer baseline free of `float` and `double`. The optional
+  `--dsp float` path uses single precision and stays in `rib_dsp.c`. The target
+  does not support `double`.
+- Do not divide or take a modulo of 64-bit values. Multiplication such as
+  `int64_t * x` is fine, but 64-bit division needs `__udivdi3` and will fail at
+  link time. Shift or divide 32-bit values instead.
+- Division by zero does not trap on this target; it returns a wrong result.
+  Validate divisors before using them.
+- Calculate constants on the host and put the resulting literals in the firmware,
+  for example `INC_C9 = …`.
+- Update envelopes, filter coefficients, and LFOs at **block rate** (every 16–32
+  frames), not every sample, unless measurements justify the higher rate.
 
 ## 4. Naming
 
-| Kind | Case | Example |
+| Kind | Convention | Example |
 | --- | --- | --- |
-| functions | `snake_case`, layer prefix | `fm1_ticks()`, `rib_render()`, `synth_dsp_render()` |
-| macros / constants / enum values | `UPPER_SNAKE`, shared prefix | `FM1_TICKS_PER_US`, `BTN_OCT_DOWN`, `ENC_KNOB1` |
-| structs | `snake_case` (no `_t`: POSIX-reserved) | `fm1_input`, `voice_state` |
-| file-local | `static` + `snake_case` | `static void ramp_coeff(void)` |
+| functions | `snake_case` with a layer prefix | `fm1_ticks()`, `rib_render()`, `synth_dsp_render()` |
+| macros, constants, enum values | `UPPER_SNAKE` with a shared prefix | `FM1_TICKS_PER_US`, `BTN_OCT_DOWN`, `ENC_KNOB1` |
+| structs | `snake_case`; avoid `_t`, which POSIX reserves | `fm1_input`, `voice_state` |
+| file-local names | `static` and `snake_case` | `static void ramp_coeff(void)` |
 
-Prefixes: `fm1_` = board/HAL, `rib_` = reference app, `<synth>_` = user synth
-(from the scaffold name). On-device identity strings are **frozen** (`_990`).
+Use `fm1_` for board/HAL functions, `rib_` for the reference app, and
+`<synth>_` for synth code (using the scaffold name). On-device identity strings
+are **frozen** at `_990`.
 
 ## 5. The ten rules (readable *and* fast)
 
-Adapted from the NASA/JPL "Power of 10" (Holzmann, 2006). Each is enforced by
-`umetate lint --c`, `.clang-tidy`, or review:
+These rules are adapted from NASA/JPL's "Power of 10" (Holzmann, 2006). Check
+them with `umetate lint --c`, `.clang-tidy`, and code review:
 
-1. **Simple control flow.** No `goto`, no `setjmp`/`longjmp`, no recursion.
-2. **Bounded loops.** Every loop has a named upper bound; no `while (1)` inside
-   the audio callback.
-3. **No heap after init.** `static`/`.pool` buffers only; nothing allocates in
-   the audio path.
-4. **Small functions** (≤ ~60 lines). Factor; `static` + `inline` let the
-   compiler remove the call under `-O3`/LTO.
-5. **Assert invariants.** Ranges, divisors, buffer bounds. Side-effect-free;
-   compiled out of the release profile.
-6. **Smallest scope.** Declare at point of use; `static` for file-locals.
-7. **Check returns and parameters.** Non-void callers check; functions validate
-   their inputs.
-8. **Limited preprocessor.** Header guards + complete-unit macros only. No token
-   pasting, no variadic/recursive macros. Conditional compilation only for
-   `BOARD_SMK37` and `--dsp`/`--clock` seams.
-9. **Restricted pointers and dispatch.** One dereference level; no
-   pointer-in-typedef/macro; **no indirect dispatch per sample** in the hot loop.
-   Runtime-selectable models dispatch at **block rate** (a `switch`, or a
-   `static const` table indexed once per block), never per sample; prefer
-   **model-as-data** (one monomorphic loop reading a chosen table). The only
-   per-call function pointers are the fixed platform seams
-   `app_audio`/`app_main`/`LCD_IDLE`.
-10. **Warnings-as-errors from day one**, plus the static analyzers, daily.
+1. **Keep control flow simple.** Do not use `goto`, `setjmp`/`longjmp`, or
+   recursion.
+2. **Bound every loop.** Give each loop a named upper limit. Never use an unbounded
+   `while (1)` in the audio callback.
+3. **Do not allocate after initialization.** Use `static` or `.pool` buffers; the
+   audio path must not allocate.
+4. **Keep functions small** (about 60 lines or fewer). Factor longer functions;
+   `static inline` lets `-O3`/LTO remove the call where appropriate.
+5. **Assert invariants.** Check ranges, divisors, and buffer bounds. Assertions
+   must have no side effects and are compiled out of the release profile.
+6. **Limit scope.** Declare variables where they are used and mark file-local
+   names `static`.
+7. **Check inputs and return values.** Validate function parameters, and make
+   callers check every non-void result.
+8. **Keep preprocessor use limited.** Use header guards and complete-unit macros;
+   avoid token pasting and variadic or recursive macros. Conditional compilation
+   is reserved for `BOARD_SMK37` and the `--dsp`/`--clock` seams.
+9. **Limit pointers and dispatch.** Use at most one level of indirection; do not
+   hide pointers in typedefs or macros. The hot loop must not use **indirect
+   dispatch per sample**. Select models at **block rate**, with a `switch` or a
+   `static const` table indexed once per block. Prefer **model-as-data**: one
+   monomorphic loop reads the selected table. The only per-call function pointers
+   are the fixed platform seams `app_audio`, `app_main`, and `LCD_IDLE`.
+10. **Treat warnings as errors from the start.** Run the static analyzers daily.
 
-**Data-layout rule (perf + readability):** per-voice parallel state is
-**SoA** — e.g. `int16_t phase[NVOICE]`, `int16_t env[NVOICE]` as separate arrays
-iterated together — because the hot loop walks one field across all voices.
-Single-instance control state may be a plain struct. Say which, in a comment,
-next to the declaration. `const` tables (`wavetables`, fonts) are XIP and cost no
-RAM.
+**Data layout:** Store parallel per-voice state as **SoA**: separate arrays such
+as `int16_t phase[NVOICE]` and `int16_t env[NVOICE]`, iterated together. The hot
+loop then walks one field across all voices. A single-instance control state can
+use a plain struct. Add a comment by each declaration to explain the choice.
+`const` tables such as wavetables and fonts are XIP and use no RAM.
 
 ### 5.1 Runtime-selectable models (dispatch)
 
-The hot inner loop must stay **monomorphic** (one model's code, inlined, no
-per-sample branch). Three tiers, in order of preference:
+Keep the hot inner loop **monomorphic**: inline one model's code, with no
+per-sample branch. Prefer these approaches in order:
 
 1. **Model as data.** When models differ only by waveform, they are tables, not
    code — one oscillator loop reads whichever table a voice points at; selecting
@@ -174,33 +186,34 @@ per-sample branch). Three tiers, in order of preference:
    `render_fn` is a `static const` table indexed once per block — allowed because
    it is per-block, never per-sample.
 
-These three tiers are the **primitive-level** techniques. At the framework level
-(see `../docs/roadmap.md` §3.1), runtime model selection is a *graph* concern — a
-`select` node, or separate patches — and the generator emits the block-rate
-`switch`/buckets from that switchable topology, so the user never hand-writes the
-dispatch. On the pi32v2 (I-cache, weak branch prediction) monomorphic loops matter
-more than on a desktop: an indirect call per sample thrashes I-cache and mispredicts.
+These techniques apply to individual DSP primitives. At the framework level,
+runtime model selection belongs in the graph (see `../docs/roadmap.md` §3.1): use
+a `select` node or separate patches. The generator emits the block-rate switch or
+buckets, so users do not write dispatch code themselves. On the pi32v2, with its
+small instruction cache and weak branch prediction, monomorphic loops matter more
+than on a desktop. An indirect call per sample can thrash the cache and mispredict.
 
 ## 6. The audio callback "never" list
 
-Inside `app_audio` (and anything it calls): **no** display, **no** flash, **no**
-logging/`printf`, **no** blocking/waiting, **no** allocation, **no** division by a
-runtime value without a guard. One writer per shared value, or a snapshot
-protocol; `volatile` alone is not atomicity.
+Inside `app_audio` and every function it calls, do not access the display or flash,
+log or print, block or wait, allocate memory, or divide by a runtime value without
+a guard. Give each shared value one writer or use a snapshot protocol. `volatile`
+alone does not make an access atomic.
 
 ## 7. Tooling
 
 - `.clang-format` (repo root) — formatting, applied by `umetate fmt`.
 - `.clang-tidy` (repo root) — UB/style/bug checks, run by `umetate lint --c`
   against the portable C.
-- `umetate lint --c` also runs the target-specific checks: MAXP/buffer/descriptor
-  bounds, UAC out-of-object access, ROM-address constants, HAL-only MMIO,
-  flash-busy call graph, no `double`/64-bit-div/allocation in the DSP TU, and the
-  image/RAM/pool budget.
+- `umetate lint --c` also checks target-specific constraints: MAXP, buffer and
+  descriptor bounds; UAC object access; ROM-address constants; HAL-only MMIO; the
+  flash-busy call graph; no `double`, 64-bit division, or allocation in the DSP
+  translation unit; and image, RAM, and pool budgets.
 
 ## 8. The SMK-37
 
-Same chip, 37-key velocity keybed, 16 RGB pads, 4 faders (+ bank), 8 encoders
-(+ bank), pitch/mod wheels, outer keys. `--board smk37` builds the same app
-unchanged. The store uses an owner tag; the board layer (`board/`) is gated by
-`BOARD_SMK37`; the FM-1 build stays byte-identical.
+The SMK-37 uses the same chip and adds a 37-key velocity keybed, 16 RGB pads,
+four faders and eight encoders (both banked), pitch and modulation wheels, and
+outer keys. Build with `--board smk37`; the app source stays the same. The board
+layer (`board/`) is guarded by `BOARD_SMK37`, and the store uses an owner tag. The
+FM-1 build remains byte-identical.

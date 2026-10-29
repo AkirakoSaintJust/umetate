@@ -1,8 +1,9 @@
 # Worked example: Pocket Drone (two-op FM)
 
-A concrete end-to-end example to exercise the blueprint (`docs/roadmap.md` §12) and
-find where the declarative design meets reality. The generator is not implemented
-yet, so `dsp.c` below is a hand sketch of what it should emit.
+Pocket Drone is a worked design for the blueprint in `docs/roadmap.md` §12. It
+shows where the declarative patch meets implementation details, and records gaps
+to resolve. The generator is not implemented yet, so the `dsp.c` below is a sketch
+of the code it is expected to emit.
 
 ## 1. The synth
 
@@ -153,8 +154,9 @@ void pocket_drone_render(int32_t *out, uint32_t frames) {
 }
 ```
 
-The fused render already shows the design working: SoA voice state, the 1-sample
-`d1_prev` feedback, the per-voice loop, the voice→bus mix, and the global chain.
+The sketch makes the intended render structure concrete: SoA voice state,
+one-sample `d1_prev` feedback, a per-voice loop, the voice-to-bus mix, and the
+global effects chain.
 
 ## 5. Lessons (what the example exposed)
 
@@ -182,5 +184,5 @@ The fused render already shows the design working: SoA voice state, the 1-sample
    the phasor's `inc` (state), `level` targets the vca's param. → The macro param
    mapping must allow a `state` target (handled at note-on), not only `port` targets.
 
-These are all small, fixable gaps in §12.4 (pass 5) and `patch.schema.json` — the
-worked example did its job by surfacing them before implementation.
+The roadmap records these gaps in §12.4 (pass 5), and `patch.schema.json` will
+need to reflect the decisions before the generator is implemented.

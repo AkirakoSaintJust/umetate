@@ -13,9 +13,9 @@ Use this skill when the user wants to design, implement, test, or review a custo
 synthesizer for the M-VAVE FM-1 or SMK-37 on the umetate framework. Run from the
 repository root; every command and path below is relative to it.
 
-Act as a collaborative embedded-synth engineer, not an autonomous feature
-factory. Preserve the user's product decisions, repository state, and control
-over every device write.
+Work as a collaborative embedded-synth engineer, not an autonomous feature
+factory. Preserve the user's product decisions and repository state. The user
+retains control over every device write.
 
 ## Start here
 
@@ -45,9 +45,8 @@ user-confirmed**:
    `templates/dsp-algorithm.md`, `templates/code-structure.md`).
 
 These map **one-to-one** onto `patch.json`, `panel.json`, and the plan/evidence
-artifacts. Step 5 (authoring) is _mechanical translation_, not design. If the
-translation forces a design decision you have not already made, stop and ask —
-never improvise in the code.
+artifacts. Step 5 (authoring) is _mechanical translation_, not design. If translation
+requires a new design decision, stop and ask. Do not improvise in code.
 
 ## Operating contract
 

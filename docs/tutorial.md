@@ -1,10 +1,10 @@
-# Build your own M-VAVE FM-1 / SMK-37 synthesizer
+# Build a synthesizer for the M-VAVE FM-1 / SMK-37
 
-A workshop for programmers who know the sound they want but are new to the FM-1,
-embedded audio, and the umetate workflow. You start from the source-built
-**RIB** starter firmware, design an instrument, prototype its sound, then develop
-and verify firmware in small, measured increments. Hardware is optional until stage 10
-(install).
+This tutorial is for programmers who know what they want an instrument to sound
+like but are new to the FM-1, embedded audio, or umetate. Starting with the
+source-built **RIB** firmware, you will design an instrument, prototype its sound,
+then build and verify the firmware in small steps. You can work through stages 1–9
+without hardware; installation begins at stage 10.
 
 > **Safety and evidence.** Never flash as a side effect of editing code. Identify a
 > real recovery route before installing. Source, host, browser, target package,
@@ -29,9 +29,10 @@ and verify firmware in small, measured increments. Hardware is optional until st
 | 12 | Troubleshoot and recover (route taxonomy) | a known recovery path | docs/device | maybe |
 | 13 | Record evidence and release provenance | a traceable release | release | no |
 
-Every stage states its evidence layer and a no-hardware path. Target timing and
-device acceptance require the actual FM-1/SMK-37; installation requires the
-separate approval, backup, power, identity, and recovery gates.
+Each stage names its evidence layer and says whether hardware is needed. Only a
+real FM-1 or SMK-37 can establish target timing or device acceptance. Installation
+also requires separate approval and checks for backup, power, device identity, and
+recovery.
 
 ## Core commands
 
@@ -43,26 +44,27 @@ umetate build --board fm1 --model pro   # a target package -> .fwsc (no flash)
 umetate status              # the per-phase claim ledger
 ```
 
-The status authority is [`docs/roadmap.md`](roadmap.md); the evidence-tagged
-hardware facts (clock, cores, FPU, flash, recovery) live in
-[`docs/platform-facts.md`](platform-facts.md). The firmware code-level contract is
-[`firmware/README.md`](../firmware/README.md).
+For current project status, use [`docs/roadmap.md`](roadmap.md). The evidence-tagged
+hardware facts (clock, cores, FPU, flash, and recovery) are in
+[`docs/platform-facts.md`](platform-facts.md). The firmware API and coding rules
+are in [`firmware/README.md`](../firmware/README.md).
 
 ---
 
-## 1. What umetate is; RIB as the runtime; the framework on top
+## 1. Umetate, RIB, and the synth framework
 
-**umetate** is a toolkit for designing, building, testing, and safely installing
-custom firmware on the M-VAVE **FM-1** and **SMK-37** (Pro/Elite/MKE-P37). **RIB**
-(Rigid Inflatable Boat) is its starter firmware — a Dinghy/Felucca-derived, dual-core
-base that your instrument runs on. On top of RIB sits the **framework**: a declarative
-way to author the synth (nodes/macros/patches), the UI (panel/contexts), and the
-parameter table, compiled by the generator into the `<synth>_dsp_*` seam.
+**umetate** helps you design, build, test, and safely install custom firmware on
+the M-VAVE **FM-1** and **SMK-37** (Pro/Elite/MKE-P37). Your instrument runs on
+**RIB** (Rigid Inflatable Boat), a dual-core starter firmware derived from
+Dinghy/Felucca. The framework sits on top: describe the synth with nodes, macros,
+and patches; describe its UI with a panel and contexts; then let the generator
+compile them and the parameter table into the `<synth>_dsp_*` interface.
 
-The **composition model** (node → macro → patch → panel → generator → firmware)
-and the **development loop** (design → small, tested increments → verify → commit)
-are the two halves of the architecture — defined once in
-[`docs/roadmap.md`](roadmap.md) §6.12–§6.13 and walked through stage by stage here.
+The architecture has two parts. The **composition model** turns nodes into
+macros, patches, panels, and firmware. The **development loop** takes each design
+through a small implementation, tests it, verifies the result, and commits the
+change. [`docs/roadmap.md`](roadmap.md) §6.12–§6.13 defines both; this tutorial
+puts them into practice.
 
 Seven components, one entry point (`umetate`):
 
@@ -79,48 +81,51 @@ Seven components, one entry point (`umetate`):
 6. **Tutorial** — this document.
 7. **Start guide** — [`README.md`](../README.md).
 
-**Checkpoint:** you can name the toolkit, the firmware component, and the first
-command. Do not install anything yet.
+**Checkpoint:** you can distinguish umetate from RIB and know which command to
+run first. No tools have been installed yet.
 
 ## 2. Safety before hardware
 
-Hard-brick risk is real: a single 1 MiB flash bank, no recovery button, no test
-pads, no debug header. Before any write, you must be able to name a recovery route
-and a rollback image. A **full-flash backup is not a documented FM-1 capability** —
-the rollback target is a verified stock `.fwsc` plus the applicable route.
+A failed flash can hard-brick the device. The FM-1 has a single 1 MiB flash bank,
+no recovery button, no test pads, and no debug header. Before writing anything,
+identify both a recovery route and a rollback image. The FM-1 has no documented
+full-flash backup; rollback means a verified stock `.fwsc` and a recovery route
+that applies to the failure.
 
 Read the recovery taxonomy in [`docs/platform-facts.md`](platform-facts.md) §4 and
 the device-write gates in the [safety skill](../skills/umetate-safety/SKILL.md).
-The rules, in one sentence: a build, test, or edit is **never** permission to write
-hardware; every `flash`/`debrick` requires an explicit request, a recorded identity,
-a verified package, a named rollback, and a named recovery route.
+A build, test, or edit never permits a hardware write. Every `flash` or `debrick`
+requires an explicit request, a recorded identity, a verified package, a named
+rollback, and a named recovery route.
 
 **Checkpoint:** you can state the hard-brick risk and the recovery taxonomy before
 touching a device. You will not flash in this tutorial's no-hardware stages.
 
 ## 3. Verify the environment
 
-Everything POSIX — the target build, host tests, the WASM build — runs in the
-pinned Docker container; on Windows the CLI drives native `docker.exe` (Docker
-Desktop). The toolchain and SDK live in the `umetate-target` volume, populated by
-`setup` (opt-in, hash-verified against [`env.lock`](../env.lock)).
+The pinned Docker container runs target builds, host tests, and the WASM build.
+On Windows, umetate calls Docker Desktop through native `docker.exe`. The JieLi
+toolchain and SDK live in the `umetate-target` volume. When you opt in,
+`umetate setup` installs them there after checking their hashes against
+[`env.lock`](../env.lock).
 
 ```sh
 umetate quick-check         # read-only presence/version probe per layer
 umetate setup --dry-run     # see exactly what would be installed, nothing written
 ```
 
-`quick-check` reports each evidence layer; a missing toolchain is `blocked`, not a
-failure. When you are ready to do target work, run `umetate setup` (with consent) to
-install the JieLi toolchain + SDK into the volume, then Rust + the `fm1-emu`
-emulator. `--no-emulator` opts out of the emulator.
+`quick-check` reports each evidence layer. If a toolchain is missing, its status
+is `blocked`, not `fail`. When you are ready to build for the target, run
+`umetate setup` and approve installation of the JieLi toolchain and SDK into the
+volume. Setup also installs Rust and the `fm1-emu` emulator; pass `--no-emulator`
+to skip the emulator.
 
 **Checkpoint:** `quick-check` shows `source`/`host` as `pass` and `target`/`device`
 as `blocked` (or `pass` for target after `setup`).
 
 ## 4. Build untouched RIB; host tests; browser lab
 
-Build and test the baseline before you change anything:
+First, build and test the untouched baseline:
 
 ```sh
 umetate deep-check --host   # host DSP/UI/unit tests
@@ -128,10 +133,10 @@ umetate web-build           # emscripten -> standalone dsp.wasm
 umetate web-serve           # loopback static server (build/web/)
 ```
 
-The host tests run in the container and prove bounded, non-silent output. The
-browser lab (`build/web/`) is a local listening target — an AudioWorklet that runs
-the same pure DSP as the host and the firmware. It cannot prove FM-1 timing, panel
-ergonomics, DMA, flash safety, or recovery.
+The container runs host tests that check for bounded, non-silent output. The
+browser lab in `build/web/` runs the same pure DSP in an AudioWorklet, so you can
+listen locally. Neither check establishes FM-1 timing, panel ergonomics, DMA
+behavior, flash safety, or recovery.
 
 To produce a target package (still no flash, needs the toolchain from stage 3):
 
@@ -139,18 +144,19 @@ To produce a target package (still no flash, needs the toolchain from stage 3):
 umetate build --board fm1 --model pro --profile perf
 ```
 
-Flags: `--board fm1|smk37`, `--model pro|elite|mke` (non-`pro` requires `--board
-smk37`), `--dsp integer|float`, `--clock 240|320`, `--profile baseline|perf`. The
-package (`umetate-fm1-pro.fwsc` and friends) lands in `firmware/build/`; inspect it
-with `umetate inspect firmware/build/umetate-fm1-pro.fwsc` (identity, model, CRC).
+Available flags are `--board fm1|smk37`, `--model pro|elite|mke` (Elite and MKE
+require `--board smk37`), `--dsp integer|float`, `--clock 240|320`, and
+`--profile baseline|perf`. The package, such as `umetate-fm1-pro.fwsc`, is written
+to `firmware/build/`. Inspect it with `umetate inspect` to check its identity,
+model, and CRC.
 
 **Checkpoint:** the host tests pass, the browser produces sound, and a target
-package builds with the SDK asset hashes verified. A package is not device
-acceptance.
+package builds with the SDK asset hashes verified. A package does not prove
+device acceptance.
 
 ## 5. The firmware contract
 
-Your app supplies two functions, nothing else is required (see
+Your app supplies two functions (see
 [`firmware/README.md`](../firmware/README.md) §1):
 
 ```c
@@ -158,26 +164,30 @@ void app_audio(int32_t *out, uint32_t n);   /* audio ISR: fill n=256 stereo fram
 void app_main(void);                        /* main loop; must call platform_poll() */
 ```
 
-- 256 interleaved stereo frames ≈ 5.8 ms per callback; keep the DSP under **2.9 ms**
-  (50%). Output is Q15 ±32767; the platform clips/scales after the app.
-- Raw registers live in `firmware/hal/` only; the app and DSP call `fm1_*` helpers.
-- **Dual-core is the default:** CPU0 owns boot/platform/USB/flash/panel/recovery,
-  CPU1 owns the DSP render. A boot-time core-1 probe detects the `0x00200000`
-  misread and, on failure, the same firmware renders on CPU0 (a stability fallback,
-  not a second build).
-- **FPU:** single-precision only (no `double`). `--dsp float` is the opt-in path
-  (still unwired as of P2-4); the shipped default is integer.
-- **Clock is bootloader-dependent** (V13 app 240 MHz, V15 bootloader 360 MHz, V16
-  bootloader 320 MHz); `--clock` offers **240 / 320** only. RIB reports the measured
-  clock and never sets it by default; power-cycle after any change.
+- Each callback handles 256 interleaved stereo frames and lasts about 5.8 ms. Keep
+  DSP work below **2.9 ms** (half the callback period). Output uses Q15 (±32767);
+  the platform clips and scales it after the app returns.
+- Raw register access belongs in `firmware/hal/`. The app and DSP use `fm1_*`
+  helpers instead.
+- **Dual-core is the default.** CPU0 handles boot, platform services, USB, flash,
+  the panel, and recovery. CPU1 renders audio. A boot-time probe checks for the
+  `0x00200000` core-1 misread; if it fails, the same firmware renders on CPU0.
+  This fallback does not require a separate build.
+- **FPU:** the hardware supports single precision, not `double`. `--dsp float` is
+  the opt-in path, but it is not yet wired in (P2-4). Integer DSP remains the
+  default.
+- **Clock:** the bootloader determines the clock (V13 app: 240 MHz; V15
+  bootloader: 360 MHz; V16 bootloader: 320 MHz). The `--clock` option offers only
+  **240 or 320 MHz**. RIB reports the measured clock and does not change it by
+  default. Power-cycle after changing it.
 
 **Checkpoint:** you can state the contract, the dual-core split, the FPU rule, and
 the clock rule. Change nothing yet.
 
 ## 6. Design the instrument
 
-Design before code. Run the design interview and record it in the templates (copy
-them into your project, replace the prompts):
+Finish the design before writing code. Work through the design interview and
+record the decisions in copies of these templates:
 
 - [`templates/synth-brief.md`](../templates/synth-brief.md) — the instrument, the
   voice architecture (node/macro graph), the parameter manifest, and tables.
@@ -193,39 +203,42 @@ them into your project, replace the prompts):
 - [`templates/code-structure.md`](../templates/code-structure.md) — the exact
   structure + interface of any custom code.
 
-The [development skill](../skills/umetate-development/SKILL.md) drives this
-interview and its consistency gate: every GUI binding must target a defined
-parameter, every control mapped or explicitly unmapped, and the voice count ×
-architecture must fit the budget (CPU0 `.data`/`.bss` ≤ 96 KiB, CPU1 `.cpu1_bss`
-≤ 16 KiB, `.dsp_text` ≤ 32 KiB, `.pool` ≤ 336 KiB, XIP ≤ 568 KiB).
+The [development skill](../skills/umetate-development/SKILL.md) guides the
+interview and checks that the artifacts agree. Every GUI binding must point to a
+defined parameter; account for every control by mapping it or explaining why it is
+unused. The voice count and architecture must also fit the resource limits: CPU0
+`.data`/`.bss` ≤ 96 KiB, CPU1 `.cpu1_bss` ≤ 16 KiB, `.dsp_text` ≤ 32 KiB,
+`.pool` ≤ 336 KiB, and XIP ≤ 568 KiB.
 
 **Checkpoint:** the brief + control map + plan are complete, mutually consistent,
 and confirmed. No code yet.
 
 ## 7. Author the synth
 
-Translate the design into a patch — not design, translate. Inspect the shipped
-node library, scaffold a starter, then fill it in:
+Translate the confirmed design into a patch. Start by inspecting the shipped nodes
+and scaffolding a project:
 
 ```sh
 umetate lib                 # the shipped nodes + templates (local only)
 umetate scaffold patch --name "My Synth" --out examples/my-synth
 ```
 
-The generator AOT-compiles `patch.json` (+ `panel.json`) to the invariant
-`<synth>_dsp_*` seam. The nodes are `phasor`, `osc`, `noise`, `env`, `one_pole`,
-`vca`, `mix`, `delay1`, `delayN`; `delay1`/`delayN` are the only cycle-breakers (the
-graph is a DAG). A power user may hand-write `dsp.c` against the same seam as an
-escape hatch. The patch's `params:` section binds friendly names to flattened
-`<instance>.<param>` ids; `tables:` adds `const` XIP tables. See
-[`templates/scaffold/patch.schema.json`](../templates/scaffold/patch.schema.json)
-and the worked example [`examples/pocket-drone/patch.json`](../examples/pocket-drone/patch.json).
+The generator compiles `patch.json` and `panel.json` ahead of time into the
+stable `<synth>_dsp_*` interface. The shipped nodes are `phasor`, `osc`, `noise`,
+`env`, `one_pole`, `vca`, `mix`, `delay1`, and `delayN`. The two delay nodes are
+the only way to break a cycle; otherwise, the graph is a DAG. If needed, you can
+write `dsp.c` by hand against the same interface. In the patch, `params:` maps
+readable names to flattened `<instance>.<param>` IDs, while `tables:` adds
+`const` tables stored in XIP. See the
+[`patch.schema.json`](../templates/scaffold/patch.schema.json) and the worked
+[`pocket-drone` patch](../examples/pocket-drone/patch.json).
 
-Work in **small, measured increments — one decision-set per increment** (the
-smallest change that is a coherent, verifiable unit). After each, run the full
-gate and **commit with the brief/plan/roadmap updated in the same commit**. Never
-batch unrelated decisions, and never implement before the design is confirmed.
-Prove each increment:
+Work in **small, measured increments**, with one decision-set in each. Keep every
+change coherent and verifiable. After each increment, run the full gate and
+**commit the code with the brief, plan, and roadmap updated alongside it**. Do not
+bundle unrelated decisions or start implementation before the design is confirmed.
+
+Verify each increment with:
 
 ```sh
 umetate deep-check --host
@@ -237,37 +250,39 @@ genuinely insufficient.
 
 ## 8. Controls, MIDI, screen, storage
 
-Map only controls the hardware actually exposes (read the `BTN_*`/`ENC_*` enums in
-`firmware/src/platform.c`). Fill `panel.json` from the control map: contexts own
-their pages and bindings; global bindings (keys → note-on, MASTER → volume) resolve
-last. Widgets are abstract (`label`, `value`, `bar`, `param_row`, `list`, `grid`).
+Map only controls that exist on the hardware; check the `BTN_*` and `ENC_*` enums
+in `firmware/src/platform.c`. Use the control map to fill out `panel.json`. Each
+context owns its pages and bindings, and global bindings (such as keys to note-on
+and MASTER to volume) resolve last. The UI uses abstract widgets such as `label`,
+`value`, `bar`, `param_row`, `list`, and `grid`.
 
-Know each control's **kind** before binding it: a smooth analog *pot* (the FM-1's
-`MASTER`) is volume and platform-owned — never bind it to a page slot; a detented
-*encoder* is a parameter control. Distinguish *dedicated* knobs (`ALGORITHM`,
-`PRESETS`) from *page-slot* knobs (`KNOB1–4`), and note name collisions (`SELECT`
-knob vs `SEL` button). Respect the silkscreen — a printed label fixes a control's
-meaning. Use the keybed as a menu surface (keys as operator/mute shortcuts), and
-prefer the **page-slot model**: a few encoders whose meaning changes per page, with
-the labels shown on screen (the screen says what the knobs do).
+Identify each control before assigning it. The FM-1's smooth `MASTER` pot is
+platform-owned volume, never a page slot. Detented encoders change parameters.
+Keep dedicated knobs (`ALGORITHM`, `PRESETS`) distinct from page-slot knobs
+(`KNOB1–4`), and remember that the `SELECT` knob and `SEL` button are different
+controls. Printed labels are constraints: `ALGORITHM` should still control the
+algorithm. The keybed can also serve as a menu surface, for example as operator or
+mute shortcuts. Prefer the **page-slot model**: a small set of encoders controls
+the parameters on the current page, whose labels appear on screen.
 
-Draw the **menu tree** up front — every context (menu), its pages, and the *modes*
-within a page — before you fill the bindings; a fresh reader must be able to draw
-the screen for every state. Design **multi-timbrality** (`parts:`) and the **MIDI
-specification** (channels, the `cc → param` map, sustain/panic/bend, program
-change) in the same interview — they are engine and control-map concerns, not
-afterthoughts.
+Draw the **menu tree** before filling in bindings. Include every context, its pages,
+and any modes within a page. From this tree, someone else should be able to sketch
+the screen for every state. Decide on **multi-timbrality** (`parts:`) and the
+**MIDI specification** (channels, CC-to-parameter mapping, sustain, panic, bend,
+and program change) during the same interview. Both affect the engine and control
+map.
 
-Rules: the audio callback does no display, flash, logging, blocking, or allocation;
-publish shared values with one writer or a snapshot protocol; draw only what
-changed. Persist versioned records with CRC/commit, saving when silent.
+Keep display work, flash access, logging, blocking calls, and allocation out of the
+audio callback. Give each shared value one writer or use a snapshot protocol. On
+the UI side, draw only what changed. Save versioned records with a CRC and commit
+rule, and write them while the instrument is silent.
 
 **Checkpoint:** controls map to documented ids; held notes survive a redraw (host
 UI test first). Device checks remain `blocked`.
 
 ## 9. Test
 
-Run the narrowest checks first, then widen:
+Start with focused checks, then test across more layers:
 
 ```sh
 umetate lint --c             # the C standing checks
@@ -277,52 +292,54 @@ umetate emu --check          # the emulator headless shot (a model layer)
 umetate build --board fm1 --model pro   # a target package
 ```
 
-Record each layer in [`templates/evidence-matrix.md`](../templates/evidence-matrix.md)
-and validate it with `umetate evidence --strict`. The emulator is a model layer
-(1.92× optimistic on timing; it cannot prove recovery, FPU, core-1 stability, or
-electrical behaviour). A target package is not physical timing; a host test is not
-device acceptance.
+Record the results in the
+[`evidence matrix`](../templates/evidence-matrix.md) and validate them with
+`umetate evidence --strict`. The emulator is only a model: its timing is 1.92×
+optimistic, and it cannot establish recovery behavior, FPU operation, core-1
+stability, or electrical behavior. A target package does not prove physical timing;
+host tests do not establish device acceptance.
 
 **Checkpoint:** every must-have feature has a test matrix; host/browser/target
 evidence is recorded; device layers are `blocked`.
 
 ## 10. Install — only when ready (hardware)
 
-Device-only. Before any write, confirm the exact board/revision, current firmware
-identity, a verified package (`umetate inspect`), a named rollback (verified stock
-`.fwsc`), and a named recovery route. Then, with explicit approval:
+This stage requires the device. Before writing, confirm the board and revision,
+current firmware identity, verified package (use `umetate inspect`), rollback image
+(verified stock `.fwsc`), and recovery route. Get explicit approval before running:
 
 ```sh
 umetate flash firmware/build/umetate-fm1-pro.fwsc --device
 ```
 
-`flash` requires `--device` and an interactive confirmation; a wrong-model device
-exits 6. `debrick` names the recovery routes (its `mask-rom` route is `blocked`
-until the USB_KEY dongle is ready). A build, test, or edit is never permission to
-write hardware.
+`flash` requires `--device` and interactive confirmation. It exits with code 6 if
+the model does not match. `debrick` lists the recovery routes; its `mask-rom` route
+remains `blocked` until the USB_KEY dongle is available. Building, testing, or editing
+never grants permission to write to hardware.
 
 **Checkpoint:** the install plan names the board, identity, rollback, and route.
 The write itself is `blocked` until hardware and approval exist.
 
 ## 11. Validate on device (hardware)
 
-Device-only and `blocked` here: audio, MIDI, USB, stress under the supported-load
-profile, power-cycle, and recovery. Record board/revision, firmware/package, steps,
-and unresolved risks. A device record is the only thing that proves device
-acceptance.
+This stage also requires hardware and remains `blocked`. Test audio, MIDI, USB,
+stress under the supported-load profile, power cycling, and recovery. Record the
+board and revision, firmware and package, test steps, and any unresolved risks.
+Only a device test record can establish device acceptance.
 
-## 12. Troubleshoot and recover (maybe)
+## 12. Troubleshoot and recover
 
-Recovery is a taxonomy, not one button — see
-[`docs/platform-facts.md`](platform-facts.md) §4: app-level USB rescue, the boot
-guard, boot-time `OCT−`, running `OCT−`+`OCT+` held 5 s, the update loader
-(`ota-<identity>`), and mask-ROM UBOOT via the USB_KEY dongle. There is no "three
-short flashes" and no full-flash backup; if you cannot name the route and its
-prerequisite, stop.
+Recovery is not one button. Each route has its own prerequisites; see
+[`docs/platform-facts.md`](platform-facts.md) §4. Options include app-level USB
+rescue, the boot guard, boot-time `OCT−`, holding `OCT−` and `OCT+` for five seconds
+while running, the `ota-<identity>` update loader, and mask-ROM UBOOT via the
+USB_KEY dongle. There is no "three short flashes" route and no full-flash backup.
+If you cannot identify a route and confirm its prerequisites, stop.
 
 ## 13. Record evidence and release provenance
 
-Record the evidence matrix and, if a release is requested, the source/package
-correspondence, licences/notices, version, and reproducible inputs. Publication is
-a separate, explicit request. The baseline is **not** "security-clean" while the
-`SEC-1` USB endpoint validation is blocked on hardware.
+Keep the evidence matrix with the release record. If a release is requested,
+record which source produced each package, along with licences and notices, the
+version, and reproducible inputs. Publishing requires a separate explicit request.
+Do not describe the baseline as **security-clean** while `SEC-1` USB endpoint
+validation remains blocked on hardware.
