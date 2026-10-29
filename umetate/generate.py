@@ -173,10 +173,13 @@ def generate_cc_header(
     base: int = 16,
 ) -> str:
     """The generated `cc_map.h`: the fixed `cc -> param` table (indexed by CC, `CC_NONE`
-    where unassigned) and the reversed `param -> cc` table."""
+    where unassigned), the reversed `param -> cc` table, and the per-param [min, max]
+    ranges (the MIDI handler scales a 7-bit CC value to the param's full range)."""
+    graph = _graph(patch, nodes, macros)
     cm = generate_cc_map(patch, nodes, macros, base)
     by_cc = {entry["cc"]: entry["param"] for entry in cm["entries"]}
     by_param = {entry["param"]: entry["cc"] for entry in cm["entries"]}
+    n = len(graph.params)
 
     def fmt_row(values: list[str]) -> str:
         return "    " + ", ".join(values) + ","
@@ -188,7 +191,7 @@ def generate_cc_header(
         "#pragma once",
         "#include <stdint.h>",
         f"#define CC_BASE {cm['base']}u",
-        f"#define CC_PARAMS {len(cm['entries'])}u",
+        f"#define CC_PARAMS {n}u",
         "#define CC_NONE 0xFFFFu",
         "static const uint16_t cc_to_param[128] = {",
     ]
@@ -198,14 +201,32 @@ def generate_cc_header(
         [
             "};",
             "",
-            f"static const uint8_t param_to_cc[{len(cm['entries']) or 1}] = {{",
+            f"static const uint8_t param_to_cc[{n or 1}] = {{",
         ]
     )
-    for i in range(0, len(cm["entries"]), 12):
+    for i in range(0, n, 12):
+        lines.append(fmt_row([f"{by_param[p]!s}u" for p in range(i, min(i + 12, n))]))
+    lines.extend(
+        [
+            "};",
+            "",
+            f"static const int32_t param_min[{n or 1}] = {{",
+        ]
+    )
+    for i in range(0, n, 8):
         lines.append(
-            fmt_row(
-                [f"{by_param[p]!s}u" for p in range(i, min(i + 12, len(cm["entries"])))]
-            )
+            fmt_row([str(graph.params[p].min) for p in range(i, min(i + 8, n))])
+        )
+    lines.extend(
+        [
+            "};",
+            "",
+            f"static const int32_t param_max[{n or 1}] = {{",
+        ]
+    )
+    for i in range(0, n, 8):
+        lines.append(
+            fmt_row([str(graph.params[p].max) for p in range(i, min(i + 8, n))])
         )
     lines.extend(["};", ""])
     return "\n".join(lines)

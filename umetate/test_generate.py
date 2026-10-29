@@ -1941,6 +1941,19 @@ def main() -> int:
     print(("ok: " if ok else "FAIL: ") + (msg or "a CC write reaches its mapped param"))
     failures += 0 if ok else 1
 
+    # the cc header also carries the per-param [min, max] (the MIDI handler's scaling).
+    from .generate import generate_cc_header
+
+    hdr = generate_cc_header(PARTS_PATCH)
+    if (
+        f"static const int32_t param_min[{len(mapped_ids)}]" not in hdr
+        or f"static const int32_t param_max[{len(mapped_ids)}]" not in hdr
+    ):
+        print("FAIL: the cc header lacks the per-param ranges")
+        failures += 1
+    else:
+        print("ok: the cc header carries the per-param [min, max] ranges")
+
     # the dogfood panel (examples/fourop-fm/panel.json) resolves against the patch's
     # params (every widget/binding names a real set_param id).
     ffm_panel = as_panel(
