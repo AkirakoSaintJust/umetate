@@ -203,6 +203,14 @@ def _container_path(path: Path) -> str:
     return "/work/" + path.resolve().relative_to(_ROOT.resolve()).as_posix()
 
 
+class _ReusableTCPServer(socketserver.ThreadingTCPServer):
+    """A ThreadingTCPServer that reuses the port (Windows TIME_WAIT) + daemon
+    threads."""
+
+    allow_reuse_address = True
+    daemon_threads = True
+
+
 def _emcc_args(name: str, host: bool, out: Path) -> list[str]:
     """The emcc command for a standalone, no-import dsp.wasm."""
     web = str(out) if host else _container_path(out)
@@ -372,8 +380,16 @@ def serve_main(argv: list[str] | None = None) -> int:
     handler = functools.partial(
         http.server.SimpleHTTPRequestHandler, directory=str(directory)
     )
-    with socketserver.ThreadingTCPServer(("127.0.0.1", port), handler) as httpd:
-        print(f"web-serve: http://127.0.0.1:{port}/  (Ctrl+C to stop)")
-        with contextlib.suppress(KeyboardInterrupt):
-            httpd.serve_forever()
+    try:
+        with _ReusableTCPServer(("127.0.0.1", port), handler) as httpd:
+            print(f"web-serve: http://127.0.0.1:{port}/  (Ctrl+C to stop)")
+            with contextlib.suppress(KeyboardInterrupt):
+                httpd.serve_forever()
+    except OSError as exc:
+        print(
+            f"web-serve: cannot bind 127.0.0.1:{port} ({exc}) — is another "
+            "web-serve running?",
+            file=sys.stderr,
+        )
+        return 1
     return 0

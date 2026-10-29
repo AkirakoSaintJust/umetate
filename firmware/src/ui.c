@@ -72,6 +72,7 @@ static void ui_reset_page(void)
 
 void ui_init(const ui_tables *t)
 {
+    palette_set(0); /* load the default palette — C_LINE..C_HI (gfx.c) would stay black */
     if (t->n_params > UI_PARAM_MAX)
         return; /* a panel beyond the kit's param cap: not rendered (the generator checks too) */
     ui_t = t;
