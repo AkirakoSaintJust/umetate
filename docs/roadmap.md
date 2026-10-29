@@ -917,13 +917,26 @@ strengthening below.
   pinned to the same closed-source clang 4.0.1 fork. **Float is not the answer
   either**: the pi32v2 has a single-cycle 32×32→64 MAC (`r3_r2 += r1*r0`), so our
   integer Q15 multiply is already ~2 instructions, and float loses phase precision
-  (24-bit mantissa < 32-bit phase). Remaining levers: hand-written asm for the hot
-  loop (what the stock did; breaks the generated-C model) and the global-algo routing
-  select. The `fm1_q15_mul(x, 32768)` identity was **tried and rejected**: folding the
-  route's 0/1 weights to boolean selects (`w ? a : 0`) measured *no faster* (a
-  data-dependent branch per term vs the straight-line MAC — the guard in §12.7.3
-  caught the wash). The 32767 "1" keeps its 0.003% routing rounding (inaudible,
-  documented in `dsp-algorithm.md`).
+  (24-bit mantissa < 32-bit phase). Remaining lever: hand-written asm for the hot
+  loop (what the stock did; breaks the generated-C model).
+
+  **Two source-level "obvious" optimisations were tried and rejected by the guard:**
+  - the `fm1_q15_mul(x, 32768)` identity — folding the route's 0/1 weights to
+    boolean selects (`w ? a : 0`) measured *no faster* (a data-dependent branch per
+    term vs the straight-line MAC). The 32767 "1" keeps its 0.003% routing rounding
+    (inaudible, documented in `dsp-algorithm.md`).
+  - the **global-algo routing select** — hoisting the route's `alg` clamp to
+    `block_derived` measured *no faster*: `alg` is a *global* scalar, so gcc already
+    hoists its load + clamp + pointer arithmetic out of the sample loop, and the
+    hoist forced a per-voice array read instead.
+
+  **Universal lesson (the `block_derived` rule):** hoisting block-constant work to
+  block rate wins when the value is **derived from per-voice state** — a per-voice
+  array read the compiler *cannot* hoist out of the sample loop (the `osc`'s
+  `waveform<<10` base and the `phasor`'s pitch-scaled `step` are the ~30% win, line
+  908) — but is redundant or slightly worse when the value is **derived from global
+  state** (the compiler already hoists a global scalar). `block_derived` is for
+  per-voice array-derived block-constants, not global ones.
 
   **The asm lever is now a reusable library, not a break of the model.** The
   pi32v2 assembler syntax was pinned by experiment (the disassembler's "arithmetic"
