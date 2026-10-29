@@ -63,7 +63,7 @@ float poly_blep(float t, float dt) {          /* t = phase in [0,1), dt = inc */
 }
 /* saw:    out = 2*t - 1 - poly_blep(t, dt);
    square: out = (t < 0.5f ? 1 : -1) + poly_blep(t, dt) - poly_blep(fract(t+0.5f), dt);
-   triangle: a polyBLEP'd square through a leaky integrator (y += k·(x−y)), one extra state. */
+   triangle: the polyBLEP'd square through a leaky integrator, one extra state. */
 ```
 
 The correction has the same shape at each discontinuity; only its phase changes.
@@ -80,6 +80,14 @@ fundamental. Third- and fourth-order Lagrange or B-spline corrections extend tha
 range; a 2-tap EQ FIR (`b0 + b1·z⁻¹ + b0·z⁻²`) can flatten the passband (Välimäki
 et al.). "Band-limited" therefore describes a family of approaches, not one fixed
 algorithm.
+
+The triangle's leaky integrator is `y = (1 − 1/1024)·y + slope·x` with `slope =
+inc/2^16` (note-derived), not the single-coefficient `y += k·(x−y)` form — a single
+`k` must be both the integration gain and the leak, so it either droops low notes
+(k small) or goes unstable above ~7 kHz (k = 2π·dt, Finke's original, which sndkit
+notes is unclear). Splitting the gain from a fixed 1/1024 leak keeps the output
+full-scale at any pitch; the price is a brief note-on transient (the integrator
+starts from 0, decaying over ~2^10 samples) and a ~1 LSB DC offset.
 
 The same polynomial works in Q15/Q16. In fixed-point code, avoid the divide in
 `poly_blep` (`t /= dt`): compute `1/dt` at **note-on**, while `dt` is constant.

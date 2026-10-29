@@ -134,6 +134,35 @@ FM1_MATH_INLINE int32_t fm1_tune_q16(int32_t octave, int32_t semi, int32_t cent)
     return (int32_t)((uint32_t)r >> (-oct));
 }
 
+/* The 2nd-order PolyBLEP residual (Tale / Martin Finke; "Making Audio Plugins
+ * Part 18"). Returns the Q15 correction for a unit step at phase 0: the value to
+ * layer on the naive waveform around its discontinuity. `p` is the Q32 phase
+ * position (0..2^32), `inc` the Q32 increment, `inv_inc` = 2^32/inc (note-on
+ * reciprocal) so u = p/inc is `(uint64)p * inv_inc` with no per-sample divide.
+ *
+ *   saw:     out = 2t - 1 - blep(t)
+ *   square:  out = (t < 0.5 ? 1 : -1) + blep(t) - blep((t + 0.5) mod 1)
+ *   pulse:   the second blep moves to the pulse width: blep((t + 1 - pw) mod 1)
+ *   triangle: the polyBLEP'd square through a leaky integrator (one extra state).
+ */
+FM1_MATH_INLINE int32_t fm1_poly_blep(uint32_t p, uint32_t inc, uint32_t inv_inc)
+{
+    if (p < inc) {
+        /* just after the wrap: u = p/inc (Q32); residual 2u - u^2 - 1 (negative). */
+        uint32_t u = (uint32_t)((uint64_t)p * inv_inc);
+        int64_t q = (int64_t)(2ull * u - (((uint64_t)u * u) >> 32)); /* 2u - u^2 */
+        return (int32_t)((q - 0x100000000LL) >> 17);
+    }
+    if (p > 0u - inc) {
+        /* just before the wrap: w = 2^32 - p; residual (1 - w/inc)^2. */
+        uint32_t w = 0u - p;
+        uint32_t u = (uint32_t)((uint64_t)w * inv_inc);
+        uint64_t omt = 0x100000000ull - u;          /* 1 - w/inc */
+        return (int32_t)((omt * omt) >> 49);
+    }
+    return 0;
+}
+
 
 /* ------------------------------------------------------ ROM transcendentals */
 /* The pi32v2's on-chip ROM math (driver/cpu/wl82/asm/math.h, Apache-2.0): hardware

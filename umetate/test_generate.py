@@ -392,6 +392,54 @@ SAW_TEST: Patch = {
     "global": {"nodes": [], "wires": []},
 }
 
+# the band-limited pulse (square at width 0.5) and triangle, for spectral
+# anti-aliasing contracts (same note-derived `inc` shape as SAW_TEST).
+PULSE_TEST: Patch = {
+    "name": "pulse_test",
+    "voices": 4,
+    "macros": {
+        "op": {
+            "ins": {"fm": "audio"},
+            "outs": {"audio": "audio"},
+            "params": {"ratio": {"target": "osc.inc", "note_derived": True}},
+            "nodes": [{"id": "osc", "type": "pulse"}],
+            "wires": [
+                {"from": "fm", "to": "osc.fm"},
+                {"from": "osc.audio", "to": "audio"},
+            ],
+        }
+    },
+    "voice": {
+        "nodes": [{"id": "carrier", "type": "op", "params": {"ratio": 65536}}],
+        "wires": [],
+        "voice_out": "carrier.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
+TRIANGLE_TEST: Patch = {
+    "name": "triangle_test",
+    "voices": 4,
+    "macros": {
+        "op": {
+            "ins": {"fm": "audio"},
+            "outs": {"audio": "audio"},
+            "params": {"ratio": {"target": "osc.inc", "note_derived": True}},
+            "nodes": [{"id": "osc", "type": "triangle"}],
+            "wires": [
+                {"from": "fm", "to": "osc.fm"},
+                {"from": "osc.audio", "to": "audio"},
+            ],
+        }
+    },
+    "voice": {
+        "nodes": [{"id": "carrier", "type": "op", "params": {"ratio": 65536}}],
+        "wires": [],
+        "voice_out": "carrier.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
 # the `pitched_noise` macro uses the note-derived cutoff (f = 2*sin(pi*f_note/fs)).
 PITCHED_NOISE: Patch = {
     "name": "pn_test",
@@ -1720,6 +1768,58 @@ def _naive_saw(n: int, inc: int) -> list[int]:
     return out
 
 
+def _naive_square(n: int, inc: int) -> list[int]:
+    """The un-corrected square (width 0.5, same phase accumulator)."""
+    ph = 0
+    out: list[int] = []
+    for _ in range(n):
+        ph = (ph + inc) & 0xFFFFFFFF
+        out.append(32767 if ph < 0x80000000 else -32767)
+    return out
+
+
+def _render_samples(patch: Patch, frames: int) -> list[int]:
+    """Generate + compile + run the patch, returning `frames` left-channel samples."""
+    src = generate(patch)
+    cname = patch["name"].replace("-", "_").replace(".", "_")
+    harness = (
+        "#include <stdio.h>\n#include <stdint.h>\n"
+        f"void {cname}_dsp_note_on(uint32_t note, uint32_t velocity);\n"
+        f"void {cname}_dsp_render(int32_t *out, uint32_t frames);\n"
+        f"static int32_t out[{2 * frames}];\n"
+        "int main(void) {\n"
+        f"    {cname}_dsp_note_on(69, 100);\n"
+        f"    {cname}_dsp_render(out, {frames});\n"
+        f'    for (int i = 0; i < {frames}; i++) printf("%d\\n", out[2 * i]);\n'
+        "    return 0;\n"
+        "}\n"
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        (d / "harness.c").write_text(harness)
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            raise AssertionError("compile failed:\n" + proc.stderr)
+        run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+        if run.returncode != 0:
+            raise AssertionError("run failed:\n" + run.stderr)
+    return [int(x) for x in run.stdout.split()]
+
+
 def _saw_antialias() -> None:
     """The polyBLEP saw removes the wrap discontinuity and attenuates high
     harmonics vs a naive saw (the anti-aliasing claim, verified spectrally)."""
@@ -1774,6 +1874,56 @@ def _saw_antialias() -> None:
         print(
             f"ok: polyBLEP harmonic {h} attenuated ({blep:.3f} vs naive {naive_h:.3f})"
         )
+
+
+def _pulse_antialias() -> None:
+    """The polyBLEP pulse (square at width 0.5) attenuates its odd near-Nyquist
+    harmonics vs the naive square (two BLEPs smooth both discontinuities)."""
+    samples = _render_samples(PULSE_TEST, 2048)
+    inc = 42852281  # note_to_inc(69) at 44.1 kHz (A4 = 440 Hz)
+    naive = _naive_square(len(samples), inc)
+    fs = 44100.0
+    f0 = fs * inc / (1 << 32)
+    for h in (41, 43, 45, 47, 49):  # odd harmonics near Nyquist (square has none even)
+        f = f0 * h
+        if f >= fs / 2:
+            continue
+        blep = _goertzel(samples, f, fs) / _goertzel(samples, f0, fs)
+        naive_h = _goertzel(naive, f, fs) / _goertzel(naive, f0, fs)
+        assert blep < naive_h * 0.75, (
+            f"polyBLEP pulse harmonic {h} not attenuated ({blep:.3f} vs {naive_h:.3f})"
+        )
+        print(
+            "ok: polyBLEP pulse harmonic "
+            f"{h} attenuated ({blep:.3f} vs naive {naive_h:.3f})"
+        )
+
+
+def _triangle_bandlimited() -> None:
+    """The polyBLEP triangle (integrated square) has the ideal odd-harmonic 1/n^2
+    spectrum — a band-limited triangle (unlike saw/square's 1/n, the triangle
+    already rolls off fast, so the claim is the *correct* spectrum, not
+    attenuation vs the naive triangle). The leaky integrator's note-on transient
+    is skipped (measured over the steady-state tail)."""
+    samples = _render_samples(TRIANGLE_TEST, 16384)
+    tail = samples[8192:]  # steady state (the transient decays in ~2^13 samples)
+    inc = 42852281
+    fs = 44100.0
+    f0 = fs * inc / (1 << 32)
+    peak = max(abs(x) for x in tail)
+    assert 28000 <= peak <= 34000, f"triangle peak {peak} is not full-scale"
+    print(f"ok: polyBLEP triangle peak {peak} (full-scale)")
+    # odd harmonics follow 1/n^2 (3 -> 1/9, 21 -> 1/441); a band-limited triangle
+    for h, expect in ((3, 1.0 / 9.0), (21, 1.0 / 441.0)):
+        got = _goertzel(tail, f0 * h, fs) / _goertzel(tail, f0, fs)
+        assert expect * 0.7 <= got <= expect * 1.3, (
+            f"triangle harmonic {h} {got:.4f} not ~1/{h * h}={expect:.4f}"
+        )
+        print(f"ok: polyBLEP triangle harmonic {h} ~1/{h * h} ({got:.4f})")
+    # near-Nyquist odd harmonic stays tiny (no aliasing spike)
+    h49 = _goertzel(tail, f0 * 49, fs) / _goertzel(tail, f0, fs)
+    assert h49 < 0.005, f"triangle near-Nyquist harmonic 49 {h49:.4f} not tiny"
+    print(f"ok: polyBLEP triangle near-Nyquist harmonic 49 tiny ({h49:.4f})")
 
 
 def _compile_tables(hdr: str, impl: str) -> tuple[bool, str]:
@@ -2338,6 +2488,32 @@ def main() -> int:
         _saw_antialias()
     except AssertionError as exc:
         print(f"FAIL: polyBLEP anti-aliasing: {exc}")
+        failures += 1
+
+    ok, msg = _sound(PULSE_TEST)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "band-limited pulse renders non-silent then silent")
+    )
+    failures += 0 if ok else 1
+
+    try:
+        _pulse_antialias()
+    except AssertionError as exc:
+        print(f"FAIL: polyBLEP pulse anti-aliasing: {exc}")
+        failures += 1
+
+    ok, msg = _sound(TRIANGLE_TEST)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "band-limited triangle renders non-silent then silent")
+    )
+    failures += 0 if ok else 1
+
+    try:
+        _triangle_bandlimited()
+    except AssertionError as exc:
+        print(f"FAIL: polyBLEP triangle band-limiting: {exc}")
         failures += 1
 
     ok, msg = _sound(PITCHED_NOISE)

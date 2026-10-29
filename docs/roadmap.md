@@ -714,11 +714,9 @@ planned half of each shipped node; the full follow-up, classified by the "one no
 
 | Item | Kind | Note |
 | --- | --- | --- |
-| `pulse` (band-limited) | node | the `saw` polyBLEP with a `width` param (two BLEPs, PWM) |
 | ring mod | — | already `vca` with an audio-rate CV |
 | high-pass | — | the `svf` high-pass output |
 | `comb` | — | `delayN` with feedback (already shipped); no macro needed |
-| `pulse` (band-limited) | node | the `saw` polyBLEP with a `width` param (two BLEPs, PWM) |
 | `apc` / `dual_apc` | macro | square `table` + env / two cross-modulated squares |
 | `vps` | macro | DAFx-11 (Kleimola et al.): 2-D inflection point `p=(d,v)`, multi-breakpoint, audio-rate modulation — dynamic phase distortion, generalizes `phase_map`. The single-breakpoint, control-rate case is now `phase_shape` (and `phase_dist` = the `v=0.5` classic); the multi-breakpoint/audio-rate macro is the remaining extension. Follow-up: the `phase_shape` slope divisions (2 signed 64-bit per voice per block, ~10–20% of a block at 20 voices) should be hoisted to note-rate when `d`/`v` are unmodulated, or replaced with reciprocals |
 | `formant` (K5000-style) | macro | bank of `svf` band-passes + vowel presets |
@@ -738,8 +736,12 @@ out the generator feature list. The **phase shaping** pair (`phase_shape` = VPS,
 `naive_vco` macro, saw/sine/triangle/square, non-band-limited by design) followed:
 the naive VCO is `tuned_phasor` (octave/semi/cent tuning, note-derived via
 `fm1_tune_q16` = 2^(octave+semi/12+cent/1200)) → `phase_dist` (PWM) → `naive_osc`.
-Shipped macros live in `modules/macros/`; a patch's own `macros:` section shadows
-them.
+The **band-limited oscillator trio** is complete: `saw`, `pulse` (square/PWM via a
+`width` control input, two BLEPs), and `triangle` (the polyBLEP'd square through a
+leaky integrator) share one `fm1_poly_blep` residual in `fm1_math.h` (Tale /
+Martin Finke); `saw`/`pulse` attenuation and the triangle's 1/n² spectrum are
+verified host-side. Shipped macros live in `modules/macros/`; a patch's own
+`macros:` section shadows them.
 
 The **fourop-fm dogfood** (`examples/fourop-fm/`) closed the runtime-algorithm
 gap: `dx_env`, `osc.waveform` (12 waveforms, the OPZ+OPL union), `vca.level`,
@@ -2159,6 +2161,8 @@ generator) + a host parity test. The generator composes nodes into the §12.1 se
 | `wavefolder` | nonlinear | `audio`(a) | `audio`(a) | `amount` | — |
 | `lpg` | vactrol gate | `audio`(a), `gate`(e) | `audio`(a) | `attack`, `release` | `level`(q15), `z1`(q15) |
 | `saw` | band-limited osc | `mod`(c), `fm`(a) | `audio`(a) | — | `inc`(q32), `inv_inc`(q32), `phase`(phase) |
+| `pulse` | band-limited pulse/square (PWM) | `mod`(c), `fm`(a), `width`(c, default 0.5) | `audio`(a) | — | `inc`(q32), `inv_inc`(q32), `phase`(phase), `pw`(q32) |
+| `triangle` | band-limited triangle | `mod`(c), `fm`(a) | `audio`(a) | — | `inc`(q32), `inv_inc`(q32), `phase`(phase), `slope`(q16), `integ`(i32) |
 | `track_bp` | note-tracked filter | `audio`(a) | `audio`(a) | `res` | `f`(q16), `low`(q15), `band`(q15) |
 | `ifft` / `add` | spectral | `bins`(c) | `audio`(a) | — | `buf` |
 
