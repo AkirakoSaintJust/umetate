@@ -228,9 +228,11 @@ umetate scaffold patch --name "My Synth" --out examples/my-synth
 ```
 
 The generator compiles `patch.json` and `panel.json` ahead of time into the
-stable `<synth>_dsp_*` interface. The shipped nodes are `phasor`, `osc`, `noise`,
-`env`, `one_pole`, `vca`, `mix`, `delay1`, and `delayN`. The two delay nodes are
-the only way to break a cycle; otherwise, the graph is a DAG. If needed, you can
+stable `<synth>_dsp_*` interface. The shipped library (run `umetate lib`) covers
+oscillators (`phasor`, `osc`, `naive_osc`, the band-limited `saw`/`pulse`/
+`triangle`, phase shaping), envelopes (`env`, `dx_env`), filters, gain/VCA, and
+routing. The two delay nodes are the only way to break a cycle; otherwise, the
+graph is a DAG. If needed, you can
 write `dsp.c` by hand against the same interface. In the patch, `params:` maps
 readable names to flattened `<instance>.<param>` IDs, while `tables:` adds
 `const` tables stored in XIP. See the

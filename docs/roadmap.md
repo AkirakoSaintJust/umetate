@@ -682,8 +682,14 @@ test + a budget annotation; shipped macros in `modules/macros/`, each =
 | Node | Kind | Purpose |
 | --- | --- | --- |
 | `phasor` | phase accumulator | pitch→phase ramp; reset/sync/mod; `fm` (audio) scaled `<<16` → ±π phase swing (the FM index); `pitch` (control) scales the increment → ±1 octave (the vibrato input, relative pitch) |
+| `tuned_phasor` | phase accumulator | Q32 phase with octave/semi/cent tuning (`fm1_tune_q16`, note-derived); `pitch` (control) scales ±1 octave; `fm` (audio) = the FM index |
 | `osc` / `table` | wave reader | `osc` = the 12-waveform OPZ+OPL union (`fm1_sin_wave`, a `waveform` param: 0–7 OPZ, 8–11 OPL-only square/saw/rectified/pulse); `table` = wavetable reader (a `tables:` shape selected by a `which` param) |
+| `naive_osc` | naive wave reader | non-band-limited saw/sine/triangle/square (`fm1_naive_wave`), a `shape` param; pair with `phase_dist` for PWM (aliases by design) |
 | `saw` | band-limited osc | 2nd-order polyBLEP saw; `inv_inc` = 2^32/inc (note-on reciprocal) |
+| `pulse` | band-limited osc | 2nd-order polyBLEP square/pulse (two BLEPs); modulatable `width` (duty, default 0.5) |
+| `triangle` | band-limited osc | the polyBLEP'd square through a leaky integrator (1/n² spectrum) |
+| `phase_shape` | phase shaper | VPS (DAFx-11, Kleimola et al.): one 2-D inflection `(d,v)`; `v` ∈ [0,2), `d` ∈ (0,1) |
+| `phase_dist` | phase shaper | classic phase distortion (VPS with `v=0.5` fixed) |
 | `env` / `seg` | segment generator | gate event→control via breakpoint segments (data) |
 | `dx_env` | rate/level envelope | DX-style 4-rate/3-level exponential envelope (attack/decay1/decay2/sustain/release); a `rate_scale` control input scales every stage's coefficient (velocity → envelope rate) — the fourop-fm operator envelope |
 | `vca` | gain | audio×control (modulatable level) |
@@ -847,9 +853,9 @@ multiplier** — a q16 runtime param (`inc = note_to_inc(note) · ratio >> 16`, 
 
 ### 6.11 fourop-fm firmware — the full-synth program
 
-**Status:** planned. This section is the plan of record: it turns fourop-fm from a
-patch-level generator dogfood into a complete example **firmware**, and folds every
-lesson from that work back into the toolkit (interview loop, node library,
+**Status:** done (F1–F8). This section records the plan that turned fourop-fm from
+a patch-level generator dogfood into a complete example **firmware**, and folded
+every lesson from that work back into the toolkit (interview loop, node library,
 generator rails for voice management, presets/sysex/settings, CLI, and the
 polyphony budget tool).
 
@@ -1393,7 +1399,7 @@ and the `libFFT_pi32v2_OnChip.a` — they include `cpu.h` → `WL82.h` (the whol
 register header) + the OS (`system/includes.h`, `os/os_api.h`), so only their
 self-contained *declarations* are vendored; the implementations are read from the SDK
 checkout like the binary assets. The hardware FFT (`hwfft_*`) and vector DSP
-(`vector_*`) are wired in P2-8. *Blocked:* the hw FFT/vector DSP + hw-vs-sw parity
+(`vector_*`) are **deferred** (blocked on device parity). *Blocked:* the hw FFT/vector DSP + hw-vs-sw parity
 (the target link now works; the device acceptance is `blocked`). **Layer: source/host/target.**
 
 **P2-4 — FPU opt-in (`--dsp float`).** — **blocked** (the flag is accepted but the
@@ -1494,7 +1500,7 @@ installs both into the `umetate-target` volume with all three SDK assets hash-ve
 **P3-3 — `scaffold`/`lib`, `lint`, `fmt` + the param table.** — **done (host)** —
 `scaffold.py` (generate a node/macro/patch skeleton; `--template` copies a shipped
 example, e.g. `pocket-drone`; a generated patch is verified to build), `lib.py`
-(`lib list` — the 9 nodes + 2 templates, local only), `lint.py` (`lint --c` — the
+(`lib list` — the shipped nodes + macros + templates, local only), `lint.py` (`lint --c` — the
 grep-based standing checks: SEC-1 MAXP bounds, HAL-only MMIO, hardcoded flash
 addresses, no double/alloc in the DSP TU), `fmt.py` (clang-format), and the
 **flattened param namespace**: the generator now emits the §12.1
@@ -1791,7 +1797,7 @@ for the flash/XIP cache (`hal/fm1_flash.h`), never for the inter-core transport.
 | param table | `const` → XIP |
 | mailbox + note queue + params + status | aligned `.bss` (shared, csync) |
 
-**P2-8 (future): asynchronous ping-pong.** To drop the ISR wait, core 1 renders
+**Future: asynchronous ping-pong.** To drop the ISR wait, core 1 renders
 ahead into `int32_t dsp_blocks[2][512]` with a per-buffer `ready[2]`/`done[2]`
 handshake (CPU1 sets `ready[p]`, toggles `p`; CPU0's `app_audio` copies `buf[p]`,
 sets `done[p]`, clears `ready[p]`); the render job becomes a continuous core-1
@@ -1884,8 +1890,8 @@ exceeded):**
 
 Total internal RAM must fit the usable ~511 KB (0x1c00000+). The indicative sizes
 above sum to ~512 KB — at the limit, so the **linker report is the authority and
-the build fails on overage, never silently.** Reconcile at P2-8 (when the generator
-first emits `.cpu1_bss`/`.dsp_text`), before the first target package — e.g. trim
+the build fails on overage, never silently.** Reconciled at F7d (when the generator
+first emitted `.cpu1_bss`/`.dsp_text`), before the first target package — e.g. trim
 `.pool` (delay lines are the discretionary budget) or `.dsp_text`. The shared state
 (mailbox, note queue, status) lives in plain aligned `.bss` — **no `.shared` section
 or uncached alias is used** (none is sourced on this chip). The two cores **share the
@@ -1968,7 +1974,7 @@ section macro `FM1TK_DSP_API` → `UMETATE_DSP`.
 - **audio wiring:** dual-core → `app_audio` hands `rib_render_block(out)` as the job
   and waits; on fallback it runs the same block locally. The engine is unaware of
   the mode.
-- **Deferred to P2-8:** the §12.1 ping-pong `dsp_blocks[2][512]` + `ready`/`done`
+- **Deferred (future):** the §12.1 ping-pong `dsp_blocks[2][512]` + `ready`/`done`
   handshake (asynchronous, no ISR wait).
 
 **Key structs (grounded in the imported code).** `fm1_in` (input matrix,
@@ -1980,8 +1986,8 @@ magic + CRC); the flash map (`fm1_flash_map.h` allow-list + `_Static_assert`s).
 fm1_input_init → (dual-core: release CPU1 + probe) → app_init (engine_init) →
 app_main` loop.
 
-**Memory reconciliation (closes the §12.2 budget).** Reconcile at P2-8, when the
-generator first emits `.cpu1_bss`/`.dsp_text` — e.g. trim `.pool` (delay lines are
+**Memory reconciliation (closes the §12.2 budget).** Reconciled at F7d, when the
+generator first emitted `.cpu1_bss`/`.dsp_text` — e.g. trim `.pool` (delay lines are
 the discretionary budget) or `.dsp_text`. The linker report is the authority; the
 build fails on overage, never silently.
 
@@ -2202,7 +2208,7 @@ generator) + a host parity test. The generator composes nodes into the §12.1 se
 | Node | Kind | Ins | Outs | Params | State |
 | --- | --- | --- | --- | --- | --- |
 | `phasor` | phase accumulator | `mod`(c), `fm`(a) | `phase`(c/a) | — | `inc`(q32), `phase`(phase) |
-| `osc` / `table` | wave reader | `phase`(c/a) | `audio`(a) | `shape`, `level`, `phase_map` | — |
+| `osc` / `table` | wave reader | `phase`(a) | `audio`(a) | `waveform`(0–11) / `which`(table) | `base`(u32) |
 | `phase_shape` | vector phaseshaper (VPS): one 2-D inflection `(d,v)` | `phase`(a), `d`(c), `v`(c) | `phase`(a) | — | `s0`,`s1`(q16) |
 | `phase_dist` | classic phase distortion (VPS with `v=0.5`) | `phase`(a), `d`(c) | `phase`(a) | — | `s0`,`s1`(q16) |
 | `naive_osc` | naive (non-band-limited) wave reader (saw/sine/triangle/square, `fm1_naive_wave`) | `phase`(a) | `audio`(a) | `shape`(0–3) | `base`(u32) |
@@ -2217,10 +2223,12 @@ generator) + a host parity test. The generator composes nodes into the §12.1 se
 | `wavefolder` | nonlinear | `audio`(a) | `audio`(a) | `amount` | — |
 | `lpg` | vactrol gate | `audio`(a), `gate`(e) | `audio`(a) | `attack`, `release` | `level`(q15), `z1`(q15) |
 | `saw` | band-limited osc | `mod`(c), `fm`(a) | `audio`(a) | — | `inc`(q32), `inv_inc`(q32), `phase`(phase) |
-| `pulse` | band-limited pulse/square (PWM) | `mod`(c), `fm`(a), `width`(c, default 0.5) | `audio`(a) | — | `inc`(q32), `inv_inc`(q32), `phase`(phase), `pw`(q32) |
+| `pulse` | band-limited pulse/square (PWM) | `mod`(c), `fm`(a) | `audio`(a) | `inc_ratio`(q16), `width`(q15, modulatable), `width_depth`(q15) | `inc`(q32), `inv_inc`(q32), `phase`(phase), `pw`(q32) |
 | `triangle` | band-limited triangle | `mod`(c), `fm`(a) | `audio`(a) | — | `inc`(q32), `inv_inc`(q32), `phase`(phase), `slope`(q16), `integ`(i32) |
 | `track_bp` | note-tracked filter | `audio`(a) | `audio`(a) | `res` | `f`(q16), `low`(q15), `band`(q15) |
-| `ifft` / `add` | spectral | `bins`(c) | `audio`(a) | — | `buf` |
+
+(`ifft` — the additive/IFFT spectral oscillator — is **planned**, not shipped; see
+the build order. `add` is the `mix` synonym.)
 
 `env`/`seg` takes its shape as **data** (a `segments` table); an ADSR is one
 4-segment table, not a distinct node (`docs/dsp-study.md` §3).
