@@ -54,3 +54,5 @@ Thumbs.db
 
 # editor / local tooling (user-owned)
 .vscode/
+
+mvave-stock/
