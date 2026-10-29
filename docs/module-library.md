@@ -1,6 +1,8 @@
-<!-- GENERATED — do not edit. Source: modules/nodes/*/node.json. Regenerate with `umetate lib generate`. -->
+<!-- GENERATED — do not edit. Source: modules/nodes/*/node.json + modules/macros/*/macro.json. Regenerate with `umetate lib generate`. -->
 
-# Node library
+# Module library
+
+## Nodes
 
 | Node | Summary | Ins | Outs | Params | State |
 | --- | --- | --- | --- | --- | --- |
@@ -37,3 +39,11 @@
 | `vca` | Gain cell: Q15 multiply of audio × control cv × a `level` param (default unity) — the FM operator's output amplitude / FM index. | `audio`(audio), `cv`(control) | `audio`(audio) | `level`(q15) | — |
 | `vel_depth` | Velocity depth (control rate): the gain `32768 - depth + velocity·depth >> 15` — `depth` is how much velocity attenuates soft notes (0 = no response, 32767 = full velocity scaling). The `velocity` input defaults to the allocator's per-voice `voice_velocity[v]` (a reserved input, q15). | `velocity`(control) | `cv`(control) | `depth`(q15) | — |
 | `wavefolder` | Sine wavefolder: crossfades the input into sin(pi*x) by `amount` (Q15). | `audio`(audio) | `audio`(audio) | `amount`(q15) | — |
+
+## Macros
+
+| Macro | Summary | Ins | Outs | Params |
+| --- | --- | --- | --- | --- |
+| `fm_op` | The complete DX-style FM operator: phasor + osc(12 waveforms) + dx_env(rate/level) + vca(level), with per-op 1-sample self-feedback (the `feedback` param) plus a carrier-gated `car_fb` input, velocity → amplitude (`vel_amp`), velocity → FM (`vel_fm`), velocity → envelope rate (`vel_rate`), a q16 `ratio` frequency multiplier (runtime), a per-op amplitude LFO (tremolo), a per-op `mute` gate, and a `pitch` input (the shared vibrato LFO). | `car_fb`(control), `fm`(audio), `pitch`(control) | `audio`(audio) | `feedback` → `fb.level`, `l1` → `eg.l1`, `l2` → `eg.l2`, `l3` → `eg.l3`, `level` → `vca.level`, `mute` → `mute.mute`, `r1` → `eg.r1`, `r2` → `eg.r2`, `r3` → `eg.r3`, `r4` → `eg.r4`, `ratio` → `ph.inc` (note_derived), `trem_depth` → `lfo.depth`, `trem_rate` → `lfo.rate`, `vel_amp` → `velamp.depth`, `vel_fm` → `velfm.depth`, `vel_rate` → `velrate.depth`, `waveform` → `osc.waveform` |
+| `naive_vco` | Naive (non-band-limited) oscillator: tuned_phasor → phase_dist (PWM) → naive_osc. `shape` (0 = saw, 1 = sine, 2 = triangle, 3 = square); `octave` (−3..3), `semi` (−11..11), `cent` (−100..100) tune the pitch (note-derived); `width` is the phase_dist bend `d` — 0.5 (default) = no bend, anything else phase-distorts *every* shape (the classic PWM on square/pulse, a bent timbre on saw/sine/triangle). | `fm`(audio), `pitch`(control), `width`(control) | `audio`(audio) | `cent` → `ph.cent`, `octave` → `ph.octave`, `semi` → `ph.semi`, `shape` → `osc.shape` |
+| `pitched_noise` | Pitched noise: white noise through a note-tracked band-pass (a resonant noise pitched to the note). | — | `audio`(audio) | `ratio` → `bp.f` |

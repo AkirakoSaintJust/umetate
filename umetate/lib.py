@@ -3,7 +3,7 @@
 """`umetate lib` — list the shipped nodes + macros + templates (local, no registry).
 
 `markdown` prints the node library as a Markdown table generated from the
-manifests (the authoritative source — `docs/node-library.md` is the checked-in
+manifests (the authoritative source — `docs/module-library.md` is the checked-in
 copy, so the roadmap's node table can never drift from the manifests). `generate`
 writes that file; `check` regenerates to memory and diffs (any drift is an error).
 """
@@ -15,13 +15,21 @@ import json
 import sys
 from pathlib import Path
 
-from ._schema import NodeManifest, ParamSpec, PortDict, as_macro, as_node_manifest
+from ._schema import (
+    Macro,
+    NodeManifest,
+    ParamSpec,
+    ParamTarget,
+    PortDict,
+    as_macro,
+    as_node_manifest,
+)
 
 _ROOT = Path(__file__).resolve().parents[1]
 _NODES = _ROOT / "modules" / "nodes"
 _MACROS = _ROOT / "modules" / "macros"
 _EXAMPLES = _ROOT / "examples"
-_NODE_LIBRARY_DOC = _ROOT / "docs" / "node-library.md"
+_MODULE_LIBRARY_DOC = _ROOT / "docs" / "module-library.md"
 
 
 def _list_nodes() -> list[str]:
@@ -87,32 +95,63 @@ def _row(manifest: NodeManifest) -> str:
     )
 
 
+def _macro_param(p: str, spec: str | ParamTarget) -> str:
+    """A macro param as `` `name` → `target` `` (+ `, note_derived`)."""
+    if isinstance(spec, str):
+        return f"`{p}` → `{spec}`"
+    target = spec["target"]
+    if spec.get("note_derived"):
+        return f"`{p}` → `{target}` (note_derived)"
+    return f"`{p}` → `{target}`"
+
+
+def _macro_row(name: str, manifest: Macro) -> str:
+    ins = [_port(p, s) for p, s in sorted(manifest["ins"].items())]
+    outs = [_port(p, s) for p, s in sorted(manifest["outs"].items())]
+    params = [
+        _macro_param(p, s) for p, s in sorted((manifest.get("params") or {}).items())
+    ]
+    return (
+        f"| `{name}` | {manifest.get('summary', '')} | {_join(ins)} | "
+        f"{_join(outs)} | {_join(params)} |"
+    )
+
+
 def render_markdown() -> str:
-    """The generated node-library table (deterministic, from the manifests)."""
-    rows = [
+    """The generated module-library tables (nodes + macros, from the manifests)."""
+    node_rows = [
         _row(as_node_manifest(json.loads(m.read_text(encoding="utf-8"))))
         for m in sorted(_NODES.glob("*/node.json"))
     ]
+    macro_rows = [
+        _macro_row(m.parent.name, as_macro(json.loads(m.read_text(encoding="utf-8"))))
+        for m in sorted(_MACROS.glob("*/macro.json"))
+    ]
     return (
-        "<!-- GENERATED — do not edit. Source: modules/nodes/*/node.json. "
-        "Regenerate with `umetate lib generate`. -->\n\n"
-        "# Node library\n\n"
+        "<!-- GENERATED — do not edit. Source: modules/nodes/*/node.json + "
+        "modules/macros/*/macro.json. Regenerate with `umetate lib generate`. -->\n\n"
+        "# Module library\n\n"
+        "## Nodes\n\n"
         "| Node | Summary | Ins | Outs | Params | State |\n"
-        "| --- | --- | --- | --- | --- | --- |\n" + "\n".join(rows) + "\n"
+        "| --- | --- | --- | --- | --- | --- |\n"
+        + "\n".join(node_rows)
+        + "\n\n## Macros\n\n"
+        "| Macro | Summary | Ins | Outs | Params |\n"
+        "| --- | --- | --- | --- | --- |\n" + "\n".join(macro_rows) + "\n"
     )
 
 
 def generate() -> None:
-    """Write `docs/node-library.md` (bytes, so LF line endings are preserved)."""
-    _NODE_LIBRARY_DOC.write_bytes(render_markdown().encode("utf-8"))
+    """Write `docs/module-library.md` (bytes, so LF line endings are preserved)."""
+    _MODULE_LIBRARY_DOC.write_bytes(render_markdown().encode("utf-8"))
 
 
 def check() -> list[str]:
-    """The node-library drift errors (empty = in sync)."""
-    if not _NODE_LIBRARY_DOC.is_file():
-        return ["docs/node-library.md: missing (run `umetate lib generate`)"]
-    if _NODE_LIBRARY_DOC.read_text(encoding="utf-8") != render_markdown():
-        return ["docs/node-library.md is out of date (run `umetate lib generate`)"]
+    """The module-library drift errors (empty = in sync)."""
+    if not _MODULE_LIBRARY_DOC.is_file():
+        return ["docs/module-library.md: missing (run `umetate lib generate`)"]
+    if _MODULE_LIBRARY_DOC.read_text(encoding="utf-8") != render_markdown():
+        return ["docs/module-library.md is out of date (run `umetate lib generate`)"]
     return []
 
 
@@ -137,14 +176,14 @@ def main(argv: list[str] | None = None) -> int:
         print(render_markdown(), end="")
     elif args.action == "generate":
         generate()
-        print(f"lib: wrote {_NODE_LIBRARY_DOC}")
+        print(f"lib: wrote {_MODULE_LIBRARY_DOC}")
     else:
         errors = check()
         if errors:
             for error in errors:
                 print(f"lib: {error}", file=sys.stderr)
             return 1
-        print("lib: node library in sync")
+        print("lib: module library in sync")
     return 0
 
 

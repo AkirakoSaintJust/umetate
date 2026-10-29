@@ -63,7 +63,7 @@ def _skill() -> int:
 
 
 def _lib() -> int:
-    """The node-library table is generated from the manifests and in sync."""
+    """The module-library table is generated from the manifests and in sync."""
     from . import lib
 
     errors = lib.check()
@@ -71,7 +71,7 @@ def _lib() -> int:
         for error in errors:
             print(f"deep-check --lib: {error}", file=sys.stderr)
         return 1
-    print("deep-check --lib: ok (node library in sync)")
+    print("deep-check --lib: ok (module library in sync)")
     return 0
 
 

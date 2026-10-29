@@ -679,7 +679,7 @@ Shipped, reviewed nodes in `modules/nodes/`, each = `node.json` + `<node>.c` + a
 test + a budget annotation; shipped macros in `modules/macros/`, each =
 `macro.json` (a reusable subgraph, same shape as a patch's `macros:` entry). The
 node library is generated from the manifests into
-[`docs/node-library.md`](node-library.md) — one row per node (summary + ports +
+[`docs/module-library.md`](module-library.md) — one row per node (summary + ports +
 params + state); `umetate lib generate` rewrites it and `deep-check --lib` fails on
 any drift, so it cannot lag the library.
 
@@ -2175,7 +2175,7 @@ generator) + a host parity test. The generator composes nodes into the §12.1 se
   §12.2.4 emission rules apply.
 
 The node library is generated from the manifests into
-[`docs/node-library.md`](node-library.md) — one row per node (summary + ports +
+[`docs/module-library.md`](module-library.md) — one row per node (summary + ports +
 params + state), with `deep-check --lib` failing on any drift. The `ifft`
 additive/IFFT spectral oscillator is **planned**, not shipped (see the build
 order; `add` is the `mix` synonym).
