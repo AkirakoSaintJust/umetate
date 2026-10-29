@@ -156,13 +156,17 @@ device acceptance.
 
 ## 5. The firmware contract
 
-Your app supplies two functions (see
-[`firmware/README.md`](../firmware/README.md) §1):
+The framework (`firmware/src/rib.c`) provides the platform and the synth services;
+your app supplies the glue (see [`firmware/README.md`](../firmware/README.md) §1):
 
 ```c
-void app_audio(int32_t *out, uint32_t n);   /* audio ISR: fill n=256 stereo frames @ 44.1 kHz */
-void app_main(void);                        /* main loop; must call platform_poll() */
+static void app_audio(int32_t *out, uint32_t n);   /* audio ISR: fill n=256 stereo frames @ 44.1 kHz */
+static void app_main(void);                        /* main loop; must call platform_poll() */
+static void app_idle(void);                        /* runs while the screen draws (MIDI in) */
 ```
+
+`umetate build --synth <dir>` composes the framework + the generated engine +
+your `app.c` glue into the firmware — you never hand-write the platform half.
 
 - Each callback handles 256 interleaved stereo frames and lasts about 5.8 ms. Keep
   DSP work below **2.9 ms** (half the callback period). Output uses Q15 (±32767);
@@ -272,13 +276,33 @@ the screen for every state. Decide on **multi-timbrality** (`parts:`) and the
 and program change) during the same interview. Both affect the engine and control
 map.
 
+The MIDI spec is now framework, not glue. The fixed CC map is the patch's `cc:`
+list — the params you declare there get one CC each, ascending from 16 (sustain 64
+and the channel-mode block stay reserved); a 7-bit CC value is scaled to the
+param's full `[min, max]`. A multitimbral patch's params overflow the CC space, so
+the list is the deliberate surface (the dogfood maps part 0's timbre + the global
+FX). Notes route to the parts by channel + keyzone, sustain defers note-offs,
+CC 123 is panic, and bend is ±2 semitones — all shipped in `synth_midi`. Presets
+are 32 part patches + 32 multi patches (the slot area's measured ceiling) plus one
+settings record; the firmware answers the five SysEx commands over the shared
+envelope, and `umetate preset export/import` moves the bank as `.syx`.
+
+Your project then needs only the **app glue**: `app.c` with `app_audio` (call the
+generated `<synth>_dsp_render`), `app_main` (keys + panel + the service polls +
+silent-only saves), `app_idle`, the `ui_act_*` hooks, and the three service
+contexts (`synth_midi_ctx`, `synth_sysex_ctx`, `synth_runtime_ctx`) — the frozen
+framework (`src/rib.c`) provides everything else, and `umetate build --synth
+examples/<your-synth>` composes it. See `examples/fourop-fm/app.c` for the worked
+glue.
+
 Keep display work, flash access, logging, blocking calls, and allocation out of the
 audio callback. Give each shared value one writer or use a snapshot protocol. On
 the UI side, draw only what changed. Save versioned records with a CRC and commit
 rule, and write them while the instrument is silent.
 
-**Checkpoint:** controls map to documented ids; held notes survive a redraw (host
-UI test first). Device checks remain `blocked`.
+**Checkpoint:** controls map to documented ids; the `cc:` list names the CC
+surface; `build --synth` composes and the host leg renders sound on cue (held
+notes survive a redraw). Device checks remain `blocked`.
 
 ## 9. Test
 
@@ -288,9 +312,20 @@ Start with focused checks, then test across more layers:
 umetate lint --c             # the C standing checks
 umetate deep-check --host    # host tests
 umetate deep-check --web     # wasm + host == wasm parity
-umetate emu --check          # the emulator headless shot (a model layer)
-umetate build --board fm1 --model pro   # a target package
+umetate budget patch.json --voices 8        # the measured polyphony claim
+umetate build --synth examples/my-synth     # compose + host run + target package
+umetate emu --check --mhz 240               # boot the built package, hold a chord
+umetate preset export examples/my-synth     # the bank as .syx (import reverses it)
 ```
+
+`build --synth` writes the generated engine/panel/CC/layout files into
+`firmware/gen/`, host-builds the composition and runs your `host-script.txt`
+(WAV + screen shots — a silent run fails the gate), then packages the firmware
+through the JieLi toolchain (`umetate-fm1-pro-<synth>.fwsc`; without the
+toolchain it reports the target leg blocked and stops at the host evidence).
+`emu --check --mhz 240` boots that package in the emulator and holds a chord: the
+dogfood run halts never and peaks at full scale, so the polyphony fit is
+measured, not estimated.
 
 Record the results in the
 [`evidence matrix`](../templates/evidence-matrix.md) and validate them with
@@ -299,7 +334,7 @@ optimistic, and it cannot establish recovery behavior, FPU operation, core-1
 stability, or electrical behavior. A target package does not prove physical timing;
 host tests do not establish device acceptance.
 
-**Checkpoint:** every must-have feature has a test matrix; host/browser/target
+**Checkpoint:** every must-have feature has a test matrix; host/emulator/target
 evidence is recorded; device layers are `blocked`.
 
 ## 10. Install — only when ready (hardware)

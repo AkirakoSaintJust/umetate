@@ -283,13 +283,23 @@ umetate scaffold patch --name "My Synth" --out examples/my-synth
   same commit**. Do not batch unrelated decisions; do not implement before the
   design is confirmed.
 
-### 6. Share DSP, panel, MIDI, persistence
+### 6. Compose the firmware — app glue on the framework
 
 - Share pure DSP across host/browser/firmware; keep scheduling/display/DMA/flash
   behind adapters. The device callback is 256 frames @ 44.1 kHz; an AudioWorklet
   quantum is ~128 frames. Prove parity: `umetate web-build` then
   `umetate deep-check --web`.
 - Keep the audio callback free of display, flash, logging, blocking, allocation.
+- The MIDI spec, presets, and SysEx are **shipped framework** (`firmware/src/`:
+  `synth_midi`, `synth_sysex`, `synth_runtime`, `presets.c`). Declare the CC
+  surface as the patch's `cc:` list (a multitimbral patch must — its params
+  overflow the 7-bit CC space); presets are 32 part + 32 multi patches (the slot
+  area's measured ceiling); the firmware answers the five SysEx commands.
+- Write only the **app glue**: `app.c` with `app_audio` / `app_main` / `app_idle`,
+  the `ui_act_*` hooks, and the three service contexts (see
+  `examples/fourop-fm/app.c`). `umetate build --synth examples/<project>` composes
+  framework + generated code + glue — host-build, run the project's
+  `host-script.txt` (a silent run fails), then package through the toolchain.
 - Bound queues and define overflow; velocity-zero is note-off; persist versioned
   records with CRC/commit, saving when silent.
 
@@ -301,13 +311,14 @@ Run the narrowest checks first, then widen:
 umetate lint --c
 umetate deep-check --host
 umetate deep-check --web
-umetate emu --check
-umetate build --board fm1 --model pro      # a target package, no flash
+umetate budget <patch.json> --voices N          # the measured polyphony claim
+umetate build --synth examples/<project>        # compose + host evidence + package
+umetate emu --check --mhz 240                   # boot the package, hold a chord
 ```
 
 Record each layer in `templates/evidence-matrix.md` and validate with
-`umetate evidence --strict`. A target package is not physical timing; a host test
-is not device acceptance.
+`umetate evidence --strict`. The emulator is a model (1.92× optimistic); a target
+package is not physical timing; a host test is not device acceptance.
 
 ### 8. Recovery and handoff
 

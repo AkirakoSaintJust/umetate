@@ -1010,11 +1010,11 @@ Still open: mono/unison with parts (parts allocate poly); per-part mode is defer
 | F1 | **Interview loop hardening** (L1–L7). | synth-brief semantics column + multi-timbrality + MIDI-spec prompts; control-map menu→page→mode-tree prompt; skill non-goal rule + two-tier example definition; source-vocabulary check runs. |
 | F2 | **Velocity routing.** — **done** | `voice_velocity[]` + `velocity` reserved input + `vel_amp`/`vel_fm`/`vel_rate` in `fm_op` (velocity → amplitude, → FM, → envelope rate via a `dx_env` rate-scale input); host tests prove a higher velocity is louder and attacks faster. |
 | F3 | **Voice-management rails.** — **done** | `_voice.py` rails + `trigger`/retrigger + mono (note_priority/legato) + unison (detune) + portamento (glide) + the six mode params + `parts:` (per-part param arrays, `voice_part[v]`, `note_on_ch` channel/keyzone routing, layering, per-part `level`/`delay`); host tests prove mono/unison/legato/glide/routing+layering+level+delay. Deferred (noted): per-part mono/unison mode. |
-| F4 | **Presets + settings + SysEx.** — **done** | 32-slot part-patch store + 32-slot multi-patch store (the slot area's measured 16 372 B ceiling; F7d) + settings record (`_records.py`/`presets.c`, byte-parity-tested), the shared SysEx envelope + 7-bit packing (`_sysex.py`), the generated `sysex-layout`, the bank ↔ `.syx` export/import (`_presets.py`), the `umetate preset export/import` CLI, and the C bank save/load over `store.h` (silent-only writes). Host tests prove the export→import round-trip and the C/Python byte parity. The device-side SysEx command handler joins F7's MIDI layer. |
+| F4 | **Presets + settings + SysEx.** — **done** | 32-slot part-patch store + 32-slot multi-patch store (the slot area's measured 16 372 B ceiling; F7d) + settings record (`_records.py`/`presets.c`, byte-parity-tested), the shared SysEx envelope + 7-bit packing (`_sysex.py`), the generated `sysex-layout`, the bank ↔ `.syx` export/import (`_presets.py`), the `umetate preset export/import` CLI, and the C bank save/load over `store.h` (silent-only writes). Host tests prove the export→import round-trip and the C/Python byte parity. The device-side SysEx command handler landed with F7a. |
 | F5 | **MIDI CC map.** — **done** | `generate_cc_map` + `generate_cc_header`: one CC per param, ascending from base 16, skipping the reserved CCs (sustain 64, channel-mode 120..127), plus the reversed `param → cc`; a GenError when the params don't fit. Host tests prove the map is complete/unique/ascending and that a CC write through the generated `cc_map.h` table reaches a real, writable param. |
 | F6 | **Polyphony budget tool.** — **done** | `umetate budget` generates the patch at each `--voices`/`--parts`, compiles for host, and times a worst-case `render(256)` (all voices sounding, envelopes open) — per-voice cost + linearity; the skill interview consumes it (a measured claim, not an estimate). The device fit is the emulator's job (F7e: `umetate emu --check --mhz 240` boots the built firmware and holds a chord — no halt, full-scale audio). |
 | F7 | **fourop-fm firmware assembly** — **done** | `examples/fourop-fm/` builds a firmware: 2 independent-timbre parts, velocity, CC, presets, settings, sustain/panic, `app_main`/`app_audio` glue on the shipped framework. Landed: F7a `synth_sysex` (envelope + five commands + 7-bit packing, byte-parity with `_sysex.py`); F7b `synth_midi` (note routing, CC→param with 7-bit→[min,max] scaling, sustain, panic, bend); F7c `synth_runtime` (a multi patch applies its part-patch refs + routing through set_param) + the generated `synth_layout.h` (model byte, param counts, the routing base) + the patch-level `model` field; F7d `umetate build --synth <dir>` — the composition (rib.c is now the frozen framework: platform + UI kit + the synth services, the demo moved to `rib_app.c`), the generated `dsp.h` seam header + `.dsp_text` SRAM placement, the patch-level `cc:` list (the multitimbral CC surface), 32 preset slots (the slot-area ceiling), and the dogfood app glue (`examples/fourop-fm/app.c`): the host leg renders sound on cue and the target leg builds `umetate-fm1-pro-fourop_fm.fwsc` through the JieLi toolchain (82 060 B image, `.dsp_text` 8 796 B in SRAM, checks green); F7e the emulator run — `umetate emu --check --mhz 240` boots the package and holds a chord: **no halt, full-scale audio peak (16 383)** — the device fit is measured, not estimated. |
-| F8 | **Docs / tutorial / skill finalization.** | tutorial + README + skill describe the full path; roadmap §6.11/§7/§12 updated; every milestone green. |
+| F8 | **Docs / tutorial / skill finalization** — **done** | tutorial + README + skill describe the full path; roadmap §6.11/§7/§12 updated; every milestone green. |
 
 Each milestone: mypy + ruff + pyright clean; all test modules green; `_skill` +
 `_links` in sync; `lint.c_checks` clean; roadmap updated in the same commit.
@@ -1035,7 +1035,7 @@ CLI, RIB rails, agent, tutorial, and docs all follow this model.
 | 3 · Patch | `patch.json` | `dsp.c` (the `<synth>_dsp_*` seam) | the project |
 | 4 · Panel | `panel.json` | `panel.h` (`ui_tables`) | the project |
 | 5 · Generator | — (the AOT compiler) | `dsp.c`, `panel.h`, `params.json`, `tables.{c,h}`, `cc-map`, `sysex-layout` | `umetate/` |
-| 6 · Firmware | `app_audio` + `app_main` | the device binary | `firmware/` |
+| 6 · Firmware | `app.c` (the app glue: `app_audio` + `app_main` + the service contexts) | the device binary (via `umetate build --synth`) | the project + `firmware/` |
 
 **Level 1 — Node** is *one DSP algorithm*. `node.json` declares `ins`/`outs`/
 `params`/`state` with Q-formats; `node.c` is the body template with the
@@ -1064,22 +1064,26 @@ pages / widgets / bindings + `operators` / `mute`. Compiles to `panel.h`
 (`ui_tables`). Sources are validated against the board's `BTN_*`/`ENC_*` enums
 (L1); params resolve against the patch's `param_ids`.
 
-**Level 5 — Generator** is the *deterministic AOT compiler* (`umetate generate`).
-Emits the fused monomorphic `dsp.c` (no per-sample dispatch), `panel.h`,
-`params.json` (manifest + metadata), `tables.{c,h}`, the voice-management rails
-(`_voice.py`: allocator + modes + `parts:`, F3), the `velocity` routing (F2) — and,
-as F4–F5 land, the `cc → param` map and the SysEx payload layout. One patch + one
-panel → byte-identical output every time.
+**Level 5 — Generator** is the *deterministic AOT compiler*. Emits the fused
+monomorphic `dsp.c` (no per-sample dispatch), `panel.h`, `params.json` (manifest +
+metadata), `tables.{c,h}`, the voice-management rails (`_voice.py`: allocator +
+modes + `parts:`, F3), the `velocity` routing (F2), the `cc → param` map + the
+`<synth>_dsp.h` seam header (F5/F7d), and the `synth_layout.h` constants (F7c).
+One patch + one panel → byte-identical output every time.
 
-**Level 6 — Firmware** is the *operating system + the synth app*. `firmware/`
-ships the platform (boot, USB/MIDI, panel, display, storage, recovery, the UI
-kit). The *per-voice* allocator (assignment, mono/unison/legato/portamento/
-retrigger/glide, `parts:`) is **generator rails** (`umetate/_voice.py`, F3) — not
-hand-written C. The remaining gap (F4/F7) is a **synth runtime framework**: the
-MIDI handler (notes/CC/sustain/panic/bend, channel/keyzone → part routing — the
-app-layer half of `note_on_ch`), the preset store, and the settings record. A
-synth then composes `app_audio` + `app_main` from *framework + generated code*,
-not hand-written `rib.c` glue.
+**Level 6 — Firmware** is the *frozen framework + the synth's app glue*.
+`firmware/src/rib.c` ships the platform (boot, USB/MIDI, panel, display, storage,
+recovery, the UI kit) and the **synth services** — `synth_midi` (notes / CC /
+sustain / panic / bend; a CC value scales to the param's [min, max], the CC
+surface is the patch's `cc:` list), `synth_sysex` (the envelope + the five
+commands), `synth_runtime` (a multi patch applies its parts through `set_param`),
+over `presets.c` (the 32+32-slot record store, sized to the measured slot area).
+The *per-voice* allocator (assignment, mono/unison/legato/portamento/retrigger/
+glide, `parts:`) is **generator rails** (`umetate/_voice.py`, F3) — not
+hand-written C. A synth project supplies only the **app glue** (`app.c`:
+`app_audio` + `app_main` + `app_idle` + the `ui_act_*` hooks + the three service
+contexts), and `umetate build --synth <dir>` composes framework + generated code
++ glue into the firmware (F7, done).
 
 **The multitimbral patch** (F3). `parts: N` declares N independent timbres. Each
 part is its own parameter set (the id space is `part × param`) plus routing
@@ -1142,9 +1146,10 @@ runs through two nested loops.
 
 Rules: never batch unrelated decisions into one increment; never implement before
 the design is confirmed; never weaken a test to make a build pass; a lower
-evidence layer never proves a higher one. This is how F2/F3 were built — F3a
-`trigger` → F3b rails/modes → glide → F3c `parts:` → level/delay — each a
-separately tested and committed slice.
+evidence layer never proves a higher one. This is how F2/F3 and F7 were built —
+F3a `trigger` → F3b rails/modes → glide → F3c `parts:` → level/delay, and F7a
+SysEx handler → F7b MIDI → F7c runtime → F7d composition → F7e emulator run —
+each a separately tested and committed slice.
 
 ---
 
@@ -1155,8 +1160,8 @@ Each task lists its goal, actions, and acceptance/evidence (per §5.5). A task i
 is updated in the same commit.
 
 > The **fourop-fm firmware program** (finishing the example into a full firmware +
-> the toolkit strengthening it forces) is planned in §6.11 (milestones F1–F8); it
-> runs on top of the P-phases below.
+> the toolkit strengthening it forces) ran on top of the P-phases below and is
+> **done** — milestones F1–F8 in §6.11.
 
 ### Phase 0 — Governance & skeleton (P0) — **done** (2026-10-26)
 
@@ -2215,8 +2220,8 @@ shim; `generate.py` is a pure function.
 | `cli.py` | dispatch | `argparse` subparsers; `help CMD` documents every option |
 | `quick_check.py` | `quick-check` | read-only env report (native/host/target/device/repo); `--json`, `--strict` |
 | `setup.py` | `setup` | opt-in, non-silent toolchain+SDK install into the Docker volume + Rust + fm1-emu on the host; `--toolchain auto\|PATH`, `--sdk auto\|PATH`, `--clock 240\|320`, `--no-emulator`, `--dry-run`, `--json`, `--yes`; version- + hash-verifies against `env.lock` (mismatch aborts unless `--force`) |
-| `build.py` | `build` | generate + target compile + packager → `.fwsc` (Docker); `blocked` without the toolchain; `--board/--model/--dsp/--clock/--profile` |
-| `emu.py` | `emu` | run your firmware in fm1-emu: the GUI (`fm1-live --fwsc`, `--persist`, `--midi`) or headless (`--check` → `fm1-emu` WAV/regression); `_emu.py` holds the shared paths |
+| `build.py` | `build` | generate + target compile + packager → `.fwsc` (Docker); `blocked` without the toolchain; `--board/--model/--dsp/--clock/--profile`; **`--synth <dir>`** composes a synth project (patch.json + panel.json + app.c) — generate into `firmware/gen/`, host-build + run the project's script (WAV + screens), then the target package `umetate-<board>-<model>-<synth>.fwsc` |
+| `emu.py` | `emu` | run your firmware in fm1-emu: the GUI (`fm1-live --fwsc`, `--persist`, `--midi`) or headless (`--check --mhz` → the shot + audio peak); the default package is the newest composed synth package, else the demo; `_emu.py` holds the shared paths |
 | `generate.py` | (internal) | patch + panel → `dsp.c` + `panel.h` (UI tables); `params.json` + `tables.c` are P3-3 |
 | `deep_check.py` | `deep-check` | host/web/safety/links/skill checks |
 | `inspect.py` | `inspect` | read a `.fwsc` (identity/CRC/model/damage) without a device |
@@ -2231,19 +2236,22 @@ shim; `generate.py` is a pure function.
 #### 12.7.2 The build pipeline (one generated `dsp.c`, three targets)
 
 ```text
-patch.json + panel.json + node manifests
+patch.json + panel.json + node manifests        (+ the project's app.c)
         │  generate.py  (host, pure Python)
         ▼
-dsp.c (engine) + panel.h (UI tables)          (+ params.json + tables.c in P3-3)
+dsp.c (engine) + dsp.h (seam) + panel.h (UI tables)   (+ params.json + tables.{c,h}
+        │                                      + cc_map.h + synth_layout.h, F4–F7)
         │
-        ├──▶ host   → `deep-check --host`  (gcc/clang + test harness  →  vectors)
+        ├──▶ host   → `build --synth` host leg / `deep-check --host`  (gcc/clang + harness → WAV + screens)
         ├──▶ WASM   → `web-build`          (emscripten + js adapter   →  dsp.wasm, no import section)
-        └──▶ target → `build`              (JieLi clang + RIB runtime →  .fwsc)
+        └──▶ target → `build` / `build --synth` (JieLi clang + the rib.c framework + app.c →  .fwsc)
 ```
 
-The three branches are **separate commands**: `build` owns the target branch (and is
-`blocked` without the toolchain), `deep-check --host` is the no-toolchain iteration
-loop, `web-build` the WASM lab.
+The three branches are **separate commands**: `build` (and `build --synth`) owns the
+target branch (blocked without the toolchain), `deep-check --host` is the
+no-toolchain iteration loop, `web-build` the WASM lab. The synth composition adds
+the framework half: `rib.c` includes the platform + the synth services + the
+project's `app.c` (the dogfood packages as `umetate-fm1-pro-fourop_fm.fwsc`).
 
 The **same** `dsp.c` is the input to all three; the §12.2.2 portability macro makes
 it compile everywhere. `generate.py` is deterministic (same inputs → byte-identical).
