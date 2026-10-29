@@ -121,10 +121,13 @@ agent-time, never runtime.
   and a depth param; effective value = base + mod·depth at block rate. The node
   declares *capability* (`modulatable: true`); the **patch is the final spec** — it
   decides exposure (the `params:` surface) and wiring, so the end user of the
-  finished synth never sees the node flag. A param with no dedicated control input
-  (shape, width) takes `modulatable`; one with a natural control input (pitch,
-  level, cutoff) stays a wired input. An unwired `<param>_mod` folds to `base` at
-  `-O2`, so marking a param modulatable costs nothing until it is used.
+  finished synth never sees the node flag. The additive form only makes sense for a
+  **Q-format (continuous)** param — e.g. `pulse.width` (q15). A **discrete index**
+  (`naive_osc.shape`, `osc.waveform`) is *not* additively modulatable: a q15 mod
+  signal would swamp a 0..N index, so it is set via `set_param`, and morphing
+  between shapes would be a separate node. A param with a natural control input
+  (pitch, level, cutoff) stays a wired input. An unwired `<param>_mod` folds to
+  `base` at `-O2`, so marking a param modulatable costs nothing until it is used.
 - **Shape data:** wavetables, segments, spectra, phase-maps live in `tables:` →
   `const` XIP arrays.
 - **Events:** `{kind: note_on|note_off, note, velocity}`; nodes derive gate/trigger.
