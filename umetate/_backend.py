@@ -378,11 +378,12 @@ def _render_dsp_render(graph: CompiledGraph) -> list[str]:
 
 def _render_split(graph: CompiledGraph) -> list[str]:
     """The split-core dispatch (target only): per block, the pre on CPU0, then CPU0
-    renders [0, half) while CPU1 renders [half, NVOICE) via the mailbox, then the
-    combine and the post on CPU0. Falls back to CPU0-only when core 1 is off or
-    gave up (`fm1_cpu1_wait` returns non-zero and holds core 1)."""
+    renders [0, N0) while CPU1 renders [N0, NVOICE) via the mailbox, then the
+    combine and the post on CPU0. `N0` is the patch's `cpu0_voices` (default
+    `voices//2`). Falls back to CPU0-only when core 1 is off or gave up
+    (`fm1_cpu1_wait` returns non-zero and holds core 1)."""
     name, cb = graph.name, graph.control_block
-    half = graph.voices // 2
+    n0 = graph.cpu0_voices if graph.cpu0_voices >= 0 else graph.voices // 2
     return [
         "#if FM1_CPU1_USED",
         f"typedef struct {{ int32_t *bus; uint32_t v0, v1, b, frames; }} {name}_render_job_t;",
@@ -397,12 +398,12 @@ def _render_split(graph: CompiledGraph) -> list[str]:
         "        int dispatched;",
         f"        {name}_render_pre_block();",
         f"        {name}_render_job.bus = {name}_render_bus1;",
-        f"        {name}_render_job.v0 = {half}u; {name}_render_job.v1 = NVOICE;",
+        f"        {name}_render_job.v0 = {n0}u; {name}_render_job.v1 = NVOICE;",
         f"        {name}_render_job.b = b; {name}_render_job.frames = frames;",
         f"        dispatched = fm1_cpu1_dispatch({name}_render_voices_job, 0u);",
-        f"        {name}_render_voices_block({name}_render_bus0, 0u, {half}u, b, frames);",
+        f"        {name}_render_voices_block({name}_render_bus0, 0u, {n0}u, b, frames);",
         "        if (!dispatched || fm1_cpu1_join() != 0)",
-        f"            {name}_render_voices_block({name}_render_bus1, {half}u, NVOICE, b, frames);",
+        f"            {name}_render_voices_block({name}_render_bus1, {n0}u, NVOICE, b, frames);",
         f"        for (uint32_t f = b; f < b + {cb}u && f < frames; f++)",
         f"            {name}_render_bus0[f - b] = fm1_sat_add32({name}_render_bus0[f - b], {name}_render_bus1[f - b]);",
         f"        {name}_render_post_block(out, {name}_render_bus0, b, frames);",

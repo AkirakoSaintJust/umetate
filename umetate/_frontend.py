@@ -58,6 +58,9 @@ def compile(
     """
     name = to_c_identifier(patch["name"])
     voices = patch["voices"]
+    cpu0_voices = patch.get("cpu0_voices", -1)
+    if cpu0_voices != -1 and not 0 <= cpu0_voices <= voices:
+        raise GenError("cpu0_voices must be in 0..voices")
     merged_macros = dict(macros or {})
     merged_macros.update(patch.get("macros") or {})
 
@@ -119,6 +122,7 @@ def compile(
     return CompiledGraph(
         name=name,
         voices=voices,
+        cpu0_voices=cpu0_voices,
         instances=instances,
         voice_order=_topo([i for i in instances if i.zone == "voice"], edges),
         global_order=_topo([i for i in instances if i.zone == "global"], edges),

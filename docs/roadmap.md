@@ -247,7 +247,7 @@ param tables) are produced by a generator, never hand-edited.
   calls the generated `render_split`: per block it runs `render_pre_block`, hands
   CPU1 the `[N0, NVOICE)` range through the mailbox, runs `[0, N0)` on CPU0 in
   parallel, joins, sums the two `render_bus` buffers, then `render_post_block`.
-  `N0 = NVOICE/2`. The mailbox is reached through thin non-inline wrappers
+  `N0 = cpu0_voices` (a patch field, default `NVOICE/2`). The mailbox is reached through thin non-inline wrappers
   `fm1_cpu1_dispatch`/`fm1_cpu1_join` (declared in `fm1_ipc.h`, defined in
   `platform.c`), because `fm1_cpu1.h` owns `fm1_c1_main` and must stay a single TU.
   Measured (emulator, 320 MHz, 8 voices): output bit-identical; CPU0's ISR rises to

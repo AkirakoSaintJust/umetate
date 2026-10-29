@@ -103,6 +103,7 @@ Patch = TypedDict(
     {
         "name": str,
         "voices": int,
+        "cpu0_voices": NotRequired[int],  # CPU0 split count (default voices//2)
         "sample_rate": NotRequired[int],
         "tables": NotRequired[dict[str, TableSpec]],
         "params": NotRequired[dict[str, ParamBinding]],
@@ -329,8 +330,12 @@ def as_patch(raw: object) -> Patch:
     obj = _obj(raw, "patch")
     if not isinstance(obj.get("name"), str):
         raise ValueError("patch: 'name' must be a string")
-    if not isinstance(obj.get("voices"), int):
+    voices = obj.get("voices")
+    if not isinstance(voices, int):
         raise ValueError("patch: 'voices' must be an integer")
+    cpu0 = obj.get("cpu0_voices")
+    if cpu0 is not None and (not isinstance(cpu0, int) or not 0 <= cpu0 <= voices):
+        raise ValueError("patch: 'cpu0_voices' must be an integer in 0..voices")
     model = obj.get("model")
     if model is not None and (not isinstance(model, int) or not 0 <= model <= 0x7F):
         raise ValueError("patch: 'model' must be a byte in 0..127")
