@@ -29,6 +29,7 @@ COMMANDS: dict[str, tuple[str, str]] = {
     "lib": ("list the shipped nodes + templates", "lib"),
     "preset": ("export/import the preset bank as SysEx", "preset"),
     "budget": ("measure the polyphony budget", "budget"),
+    "theme": ("check/generate a WCAG-verified palette", "theme"),
     "lint": ("the C standing checks", "lint"),
     "fmt": ("clang-format the repo", "fmt"),
     "web-build": ("emscripten -> standalone dsp.wasm", "web:build_main"),
