@@ -8,7 +8,21 @@
 #pragma once
 #include "ui.h"
 
-enum { P_alg = 0, P_cutoff, P_res, P_fold, P_op1_level, P_op2_level, N_PARAMS = 6 };
+enum { P_alg = 0, P_cutoff, P_res, P_fold, P_op1_level, P_op2_level, P_ratio, P_mute, P_hz, P_semi, N_PARAMS = 10 };
+
+/* the per-param display scale for the test params */
+static const ui_param_disp DISP_TBL[N_PARAMS] = {
+    { UI_DISP_RAW, 0, 0, 0 },        /* P_alg: 0..0 placeholder (0..7 in real use) */
+    { UI_DISP_OFF_PCT, 1, 0, 65535 },/* P_cutoff: "off" at 0, else % */
+    { UI_DISP_PCT_INV, 0, 0, 65535 },/* P_res: 100% at min */
+    { UI_DISP_PCT, 0, 0, 32767 },    /* P_fold */
+    { UI_DISP_PCT, 0, 0, 32767 },    /* P_op1_level */
+    { UI_DISP_PCT, 0, 0, 32767 },    /* P_op2_level */
+    { UI_DISP_RATIO, 0, 32768, 1048576 }, /* P_ratio */
+    { UI_DISP_ONOFF, 0, 0, 1 },      /* P_mute */
+    { UI_DISP_HZ, 1, 0, 20000000 },  /* P_hz */
+    { UI_DISP_SEMI, 0, -32768, 32767 }, /* P_semi */
+};
 
 static const ui_widget W_0_0[] = {
     { UI_STATUS, 1, 0, 2, P_alg, 0, 0, 0, 0, 0 },
@@ -73,5 +87,5 @@ static const uint16_t MUTE_TBL[4] = { P_op1_level, P_op2_level, 0xFFFF, 0xFFFF }
 static const uint16_t OP_PARAM[2] = { P_op1_level, P_op2_level };
 
 static const ui_tables PANEL = {
-    "accept", 0, CTX, 4, GLOBAL_BIND, 5, MUTE_TBL, OP_PARAM, 2, 1, 0, N_PARAMS, 8,
+    "accept", 0, CTX, 4, GLOBAL_BIND, 5, MUTE_TBL, OP_PARAM, 2, 1, 0, DISP_TBL, N_PARAMS, 8,
 };

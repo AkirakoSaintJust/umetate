@@ -31,6 +31,18 @@ enum {
     UI_CUSTOM,         /* the cv_* canvas escape hatch: ui_draw_custom() draws it */
 };
 
+/* ---- the per-param display scale (the value's on-screen form) ---- */
+enum {
+    UI_DISP_RAW = 0,   /* the signed integer as-is */
+    UI_DISP_RATIO,     /* a Q16 frequency multiplier -> "1.00" (65536 = base pitch) */
+    UI_DISP_PCT,       /* [min,max] -> "N%" */
+    UI_DISP_PCT_INV,   /* [min,max] -> "N%" inverted (100% = min; e.g. damping) */
+    UI_DISP_ONOFF,     /* 0/1 -> "off"/"on" */
+    UI_DISP_OFF_PCT,   /* <= 0 -> "off", else "N%" of [0,max] (e.g. a filter) */
+    UI_DISP_HZ,        /* a Q32 rate -> "N.N Hz" */
+    UI_DISP_SEMI,      /* a bipolar Q15 -> "+/-N.N st" (32768 = +1 octave) */
+};
+
 /* ---- binding kinds ---- */
 enum { UI_BIND_PARAM = 0, UI_BIND_ACTION, UI_BIND_PAGE_SLOT };
 
@@ -41,7 +53,7 @@ enum { UI_ABS = 0, UI_REL, UI_MOMENTARY, UI_LATCH, UI_TOGGLE };
 enum {
     UI_ACT_NOTE_ON = 0, UI_ACT_NOTE_OFF, UI_ACT_SET_STEP, UI_ACT_PUSH, UI_ACT_POP,
     UI_ACT_SWITCH, UI_ACT_POP_HOME, UI_ACT_NEXT_PAGE, UI_ACT_PREV_PAGE, UI_ACT_SET_PAGE,
-    UI_ACT_BANK_NEXT, UI_ACT_BANK_PREV, UI_ACT_TOGGLE, UI_ACT_LATCH, UI_ACT_SAVE,
+    UI_ACT_PAGE, UI_ACT_BANK_NEXT, UI_ACT_BANK_PREV, UI_ACT_TOGGLE, UI_ACT_LATCH, UI_ACT_SAVE,
     UI_ACT_LOAD, UI_ACT_PANIC, UI_ACT_PLAY, UI_ACT_STOP,
     UI_ACT_OP_NEXT, UI_ACT_OP_PREV, UI_ACT_OP_MUTE,   /* the selected-operator group */
 };
@@ -81,6 +93,13 @@ typedef struct {
 
 typedef struct { const char *title; const ui_widget *w; uint8_t n; } ui_page;
 
+/* a param's display scale (per param id; the value's on-screen form + stepping) */
+typedef struct {
+    uint8_t kind;                                /* UI_DISP_* */
+    uint8_t curve;                               /* 0 = linear step, 1 = log step */
+    int32_t min, max;                            /* the raw value's [min, max] */
+} ui_param_disp;
+
 typedef struct {
     uint8_t kind;                                /* UI_BIND_PARAM | UI_BIND_ACTION */
     uint16_t source;
@@ -105,6 +124,7 @@ typedef struct {
     uint8_t n_op;                                /* the number of operators (0 = none) */
     uint8_t n_op_param;                          /* op-relative params per operator */
     const uint16_t *env;                         /* the envelope group: n_op * 7 params */
+    const ui_param_disp *disp;                   /* per-param display scale (n_params) */
     uint16_t n_params;                           /* ui_params[] size */
     uint16_t n_widgets;                          /* ui_dirty[] size (across all pages) */
 } ui_tables;
@@ -118,6 +138,7 @@ void ui_pop_home(void);
 uint8_t ui_top(void);                            /* the active context id */
 void ui_handle(uint16_t source, int32_t value);  /* resolve the source -> param/action */
 int32_t *ui_params(void);                        /* the shared param_values[] */
+void ui_param_fmt(uint16_t p, const char *unit, char *out, uint32_t n); /* format a value */
 void ui_redraw(uint32_t now_ms);                 /* the retained-mode, rate-bounded redraw */
 void ui_custom_set(uint32_t slot, int32_t value); /* drive a UI_CUSTOM widget's dirty value */
 

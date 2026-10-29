@@ -36,6 +36,10 @@
         "default": { "type": "integer", "description": "The DSP initial value." },
         "curve": { "enum": ["linear", "log"] },
         "unit": { "type": "string", "description": "Display unit, e.g. 'Hz', '%', 'cents'." },
+        "display": {
+          "enum": ["raw", "ratio", "pct", "pct_inv", "onoff", "off_pct", "hz", "semi"],
+          "description": "The on-screen form of the value (the panel's per-param display scale)."
+        },
         "rate": {
           "enum": ["sample", "block"],
           "description": "sample = re-derived per frame; block = every control block."

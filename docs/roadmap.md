@@ -2272,6 +2272,30 @@ typedef struct { uint8_t type, row, col, span;  /* LABEL/VALUE/BAR/PARAM_ROW/
 typedef struct { const ui_widget *w; uint8_t n; const char *title; } ui_page;
 ```
 
+**The per-param display scale** (the fix for "the ranges are shown as the raw
+integer"): a patch `params:` entry may declare a `display` form, and the generator
+emits a `ui_param_disp[n_params]` table (per param id) that the runtime uses to
+both **format** and **step** the value. Forms: `raw` (the integer), `ratio` (a Q16
+frequency multiplier → `"1.00"`, `65536` = base pitch), `pct` (0..100% of
+`[min,max]`), `pct_inv` (100..0%, e.g. damping shown as resonance), `onoff`
+(`off`/`on`), `off_pct` (`≤0` → `off`, else %), `hz` (a Q32 rate → `N.N Hz`), and
+`semi` (a bipolar Q15 → `±N.NN st`). A relative encoder steps per the curve: a
+`linear` param moves by `(max-min)/128` a detent, a `log` param moves
+multiplicatively (`v·(1 ± 1/32)`), both clamped to `[min,max]` — so a knob
+reaches the whole range in a sane number of turns and never runs off the end. This
+replaces the earlier "relative = raw ±1" (which made a 0..65535 param take
+thousands of detents).
+
+**Navigation + rendering corrections** (the first hands-on pass exposed these):
+page-slot resolution counts only the five param-bearing widget types, so the
+`status` readout (which carries `param: algorithm`) is *not* slot 0; `EDIT`/`FX`/
+`GLO` are **siblings** — a `switch` action replaces the current mode instead of
+stacking, so `FX → EDIT` needs no `HOME` in between; `op_next`/`op_prev` wrap; a
+`page` action steps pages bidirectionally and wraps (so the last sub-page is not a
+dead end); a page/context change clears the whole screen first (a retained-mode
+redraw otherwise leaves the previous page's stale pixels); a param row draws the
+label dim and the value bright, right-aligned.
+
 **Two binding extensions** (added for the fourop-fm operator editor): `BIND_PAGE_SLOT`
 maps a source to *the Nth param-bearing widget on the current page* (so the rightmost
 four encoders follow the sub-page), and an operator group — `op_next`/`op_prev`

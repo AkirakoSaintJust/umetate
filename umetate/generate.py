@@ -36,6 +36,7 @@ __all__ = [
     "cc_map_reverse",
     "generate_cc_header",
     "param_ids",
+    "param_meta",
     "GenError",
     "NodeSpec",
     "load_library",
@@ -87,6 +88,7 @@ def generate_params(
                 "unit": p.unit,
                 "rate": p.rate,
                 "modulatable": p.modulatable,
+                "display": p.display,
             }
             for p in graph.params
         ]
@@ -112,6 +114,17 @@ def param_ids(
             ids[p.name.removesuffix(".p0")] = p.id
             ids[p.target.removesuffix(".p0")] = p.id
     return ids
+
+
+def param_meta(
+    patch: Patch,
+    nodes: Mapping[str, NodeSpec] | None = None,
+    macros: Mapping[str, Macro] | None = None,
+) -> dict[int, tuple[str, int, int, str]]:
+    """The set_param id -> `(display, min, max, curve)` map (the panel's per-param
+    display scale). `display` is the value's on-screen form (see `_schema`)."""
+    graph = _graph(patch, nodes, macros)
+    return {p.id: (p.display, p.min, p.max, p.curve) for p in graph.params}
 
 
 def generate_tables(

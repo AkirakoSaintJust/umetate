@@ -68,6 +68,7 @@ static void ui_reset_page(void)
     for (i = 0; i < UI_MAX_WIDGETS; i++)
         ui_last[i] = 0x7FFFFFFF;                 /* sentinel: everything redraws */
     ui_cursor = 0;
+    lcd_fill(0, 0, 240, 240, C_BLACK);           /* drop the previous page's stale pixels */
 }
 
 void ui_init(const ui_tables *t)
@@ -143,11 +144,33 @@ static const ui_binding *ui_resolve(uint16_t source)
     return 0;
 }
 
-/* linear/log value scaling (log is a 6-octave approximation, deferred to a table) */
-static int32_t ui_scale(int32_t v, uint8_t curve)
+/* step a param by `delta` detents per its display scale: linear params move by a
+ * fraction of the range (128 detents full-scale), log params move multiplicatively
+ * (~3% per detent, so 0 stays reachable). The result is clamped to [min, max]. */
+static void ui_step_param(uint16_t p, int32_t delta)
 {
-    (void)curve;                                 /* linear identity for now */
-    return v;
+    const ui_param_disp *d = (ui_t->disp && p < ui_t->n_params) ? &ui_t->disp[p] : 0;
+    int32_t v = p < ui_t->n_params ? ui_param_v[p] : 0;
+    if (!delta)
+        return;
+    if (d && d->curve) {
+        if (v == 0)
+            v = delta > 0 ? 1 : -1;
+        else {
+            int32_t s = v >> 5;
+            v += (s ? s : 1) * delta;
+        }
+    } else {
+        int32_t step = d ? (d->max - d->min) / 128 : 1;
+        if (step < 1)
+            step = 1;
+        v += delta * step;
+    }
+    if (d) {
+        if (v < d->min) v = d->min;
+        if (v > d->max) v = d->max;
+    }
+    ui_param_v[p] = v;
 }
 
 /* the param of the current page's Nth param-bearing widget (UI_BIND_PAGE_SLOT) */
@@ -185,10 +208,16 @@ static void ui_do_action(uint8_t action, uint8_t arg)
     case UI_ACT_SWITCH: ui_switch(arg); break;     /* replace the current mode (siblings) */
     case UI_ACT_POP_HOME: ui_pop_home(); break;
     case UI_ACT_NEXT_PAGE:
-        if (ui_pagei[ui_sp] + 1u < ui_ctx()->n_pages) { ui_pagei[ui_sp]++; ui_reset_page(); }
+        if (ui_ctx()->n_pages > 1u)
+            ui_pagei[ui_sp] = (uint8_t)((ui_pagei[ui_sp] + 1u) % ui_ctx()->n_pages);
+        ui_reset_page();
         break;
     case UI_ACT_PREV_PAGE:
-        if (ui_pagei[ui_sp]) { ui_pagei[ui_sp]--; ui_reset_page(); }
+        if (ui_ctx()->n_pages > 1u)
+            ui_pagei[ui_sp] = ui_pagei[ui_sp]
+                ? (uint8_t)(ui_pagei[ui_sp] - 1u)
+                : (uint8_t)(ui_ctx()->n_pages - 1u);
+        ui_reset_page();
         break;
     case UI_ACT_SET_PAGE:
         if (arg < ui_ctx()->n_pages) { ui_pagei[ui_sp] = arg; ui_reset_page(); }
@@ -230,17 +259,17 @@ void ui_handle(uint16_t source, int32_t value)
     if (b->kind == UI_BIND_PARAM) {
         if (b->target < ui_t->n_params) {
             if (b->behavior == UI_REL)
-                ui_param_v[b->target] += ui_scale(value, b->curve);
+                ui_step_param(b->target, value);
             else
-                ui_param_v[b->target] = ui_scale(value, b->curve);
+                ui_param_v[b->target] = value;
         }
     } else if (b->kind == UI_BIND_PAGE_SLOT) {
         uint16_t p = ui_slot_param(b->arg);
         if (p < ui_t->n_params) {
             if (b->behavior == UI_REL)
-                ui_param_v[p] += ui_scale(value, b->curve);
+                ui_step_param(p, value);
             else
-                ui_param_v[p] = ui_scale(value, b->curve);
+                ui_param_v[p] = value;
         }
     } else if (b->action == UI_ACT_NOTE_ON && value >= 0)
         ui_act_note_on((uint8_t)value, 100u);
@@ -248,7 +277,13 @@ void ui_handle(uint16_t source, int32_t value)
         ui_act_note_off((uint8_t)value);
     else if (b->action == UI_ACT_SET_STEP && value >= 0)
         ui_act_set_step((uint8_t)value);
-    else
+    else if (b->action == UI_ACT_PAGE) {
+        if (ui_ctx()->n_pages > 1u) {
+            ui_pagei[ui_sp] = (uint8_t)((ui_pagei[ui_sp] + (value >= 0 ? 1 : -1) + ui_ctx()->n_pages)
+                                        % ui_ctx()->n_pages);
+            ui_reset_page();
+        }
+    } else
         ui_do_action(b->action, b->arg);
 }
 
@@ -279,37 +314,107 @@ static uint16_t ui_widget_param(const ui_widget *w)
     return w->param;
 }
 
+/* a fixed-point decimal: `scaled` is value * 10^dec, printed as "N.NN…" with the
+ * fraction zero-padded to `dec` digits (e.g. scaled=125, dec=2 -> "1.25"). Signed. */
+static void ui_itoa_dec(int32_t scaled, uint8_t dec, char *out)
+{
+    int neg = scaled < 0;
+    uint32_t u = neg ? (uint32_t)(-(int64_t)scaled) : (uint32_t)scaled;
+    uint32_t div = 1, i, whole, frac, scale, len;
+    for (i = 0; i < dec; i++)
+        div *= 10u;
+    whole = u / div;
+    frac = u % div;
+    out[0] = 0;
+    if (neg)
+        ui_strcat(out, "-");
+    ui_itoa((int32_t)whole, out + ui_strlen(out));
+    ui_strcat(out, ".");
+    len = ui_strlen(out);
+    scale = div;
+    for (i = 0; i < dec; i++) {
+        scale /= 10u;
+        out[len++] = (char)('0' + (frac / scale) % 10u);
+    }
+    out[len] = 0;
+}
+
+/* format a param's value into `out` per its display scale (`unit` is used only for
+ * the raw form). The app's status readouts and the host test use this too. */
+void ui_param_fmt(uint16_t p, const char *unit, char *out, uint32_t n)
+{
+    int32_t v = p < ui_t->n_params ? ui_param_v[p] : 0;
+    const ui_param_disp *d = (ui_t->disp && p < ui_t->n_params) ? &ui_t->disp[p] : 0;
+    out[0] = 0;
+    if (!d || d->kind == UI_DISP_RAW) {
+        ui_itoa(v, out);
+        if (unit) {
+            ui_strcat(out, " ");
+            ui_strcat(out, unit);
+        }
+        return;
+    }
+    switch (d->kind) {
+    case UI_DISP_RATIO:                            /* Q16 -> "N.NN" (65536 = 1.00) */
+        ui_itoa_dec((int32_t)(((int64_t)v * 100) >> 16), 2, out);
+        break;
+    case UI_DISP_PCT:
+    case UI_DISP_PCT_INV: {
+        int32_t rng = d->max - d->min;
+        int32_t pct = rng ? (int32_t)((int64_t)(v - d->min) * 100 / rng) : 0;
+        if (d->kind == UI_DISP_PCT_INV)
+            pct = 100 - pct;
+        if (pct < 0) pct = 0; else if (pct > 100) pct = 100;
+        ui_itoa(pct, out);
+        ui_strcat(out, "%");
+        break;
+    }
+    case UI_DISP_ONOFF:
+        ui_strcat(out, v ? "on" : "off");
+        break;
+    case UI_DISP_OFF_PCT: {
+        if (v <= 0) {
+            ui_strcat(out, "off");
+        } else {
+            int32_t pct = d->max ? (int32_t)((int64_t)v * 100 / d->max) : 0;
+            if (pct < 0) pct = 0; else if (pct > 100) pct = 100;
+            ui_itoa(pct, out);
+            ui_strcat(out, "%");
+        }
+        break;
+    }
+    case UI_DISP_HZ:                               /* a Q32 rate -> Hz, one decimal */
+        ui_itoa_dec((int32_t)(((int64_t)v * 441000) >> 32), 1, out);
+        ui_strcat(out, "Hz");
+        break;
+    case UI_DISP_SEMI:                             /* bipolar Q15 -> signed semitones */
+        ui_itoa_dec((int32_t)(((int64_t)v * 1200) >> 15), 2, out);
+        ui_strcat(out, "st");
+        break;
+    default:
+        ui_itoa(v, out);
+        break;
+    }
+    (void)n;
+}
+
 /* format a param's value + unit into `out` (the right-hand column) */
 static void ui_value_str(const ui_widget *w, char *out, uint32_t n)
 {
-    int32_t v = ui_widget_param(w) < ui_t->n_params ? ui_param_v[ui_widget_param(w)] : 0;
-    out[0] = 0;
-    ui_itoa(v, out);
-    if (w->unit) {
-        ui_strcat(out, " ");
-        ui_strcat(out, w->unit);
-    }
-    (void)n;
+    ui_param_fmt(ui_widget_param(w), w->unit, out, n);
 }
 
 /* format a param row's label + value + unit into `out` (for the bar's label) */
 static void ui_format(const ui_widget *w, char *out, uint32_t n)
 {
-    int32_t v = ui_widget_param(w) < ui_t->n_params ? ui_param_v[ui_widget_param(w)] : 0;
+    uint32_t used;
     out[0] = 0;
-    if (w->text)
+    if (w->text) {
         ui_strcat(out, w->text);
-    if (w->text)
         ui_strcat(out, " ");                      /* a gap between the name and its value */
-    if (w->fmt && w->fmt[0] == '%' && w->fmt[1] == 's' && w->text == 0) {
-        /* "%s": the param is a raw string (unsupported here; show the int) */
     }
-    ui_itoa(v, out + ui_strlen(out));
-    if (w->unit) {
-        ui_strcat(out, " ");
-        ui_strcat(out, w->unit);
-    }
-    (void)n;
+    used = ui_strlen(out);
+    ui_value_str(w, out + used, n > used ? n - used : 1);
 }
 
 /* a param row: the label in the label colour, the value + unit right-aligned in

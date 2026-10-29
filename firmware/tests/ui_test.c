@@ -44,6 +44,12 @@ void ui_draw_custom(const ui_widget *w) { (void)w; }
 static int failures;
 #define CHECK(cond, msg) do { if (!(cond)) { printf("FAIL: %s\n", msg); failures++; } } while (0)
 
+static int ui_streq(const char *a, const char *b)
+{
+    while (*a && *b && *a == *b) { a++; b++; }
+    return *a == *b;
+}
+
 int main(void)
 {
     ui_init(&PANEL);
@@ -54,14 +60,15 @@ int main(void)
     CHECK(n_note_on == 1 && n_set_step == 0, "home KEY -> note_on");
 
     /* page-slot resolution: the `status` widget (P_alg) is NOT slot 0 — the first
-     * param_row (P_cutoff) is. A write to slot 0 must leave the algorithm alone. */
+     * param_row (P_cutoff) is. A write to slot 0 must leave the algorithm alone
+     * and move the cutoff (a per-param step, not a raw +1). */
     {
-        int32_t alg0 = ui_params()[P_alg], cut0 = ui_params()[P_cutoff];
+        int32_t alg0 = ui_params()[P_alg], cut0 = ui_params()[P_cutoff], fold0 = ui_params()[P_fold];
         ui_handle(UI_SRC_ENC_KNOB1, 5);                /* slot 0 = cutoff, not algorithm */
         CHECK(ui_params()[P_alg] == alg0, "status widget is not a page slot");
-        CHECK(ui_params()[P_cutoff] == cut0 + 5, "slot 0 is the first param_row");
+        CHECK(ui_params()[P_cutoff] != cut0, "slot 0 is the first param_row (cutoff moved)");
         ui_handle(UI_SRC_ENC_KNOB3, 3);                /* slot 2 = fold */
-        CHECK(ui_params()[P_fold] == 3, "slot 2 is the third param_row");
+        CHECK(ui_params()[P_fold] != fold0, "slot 2 is the third param_row (fold moved)");
     }
 
     /* BTN_SEQ -> push step (context 2) */
@@ -81,13 +88,16 @@ int main(void)
     ui_handle(UI_SRC_KEY, 64);
     CHECK(n_note_on == 2, "home KEY -> note_on again");
 
-    /* BTN_EDIT -> switch edit (context 1); ENC_PRESETS -> cutoff (+3 then -1) */
+    /* BTN_EDIT -> switch edit (context 1); ENC_PRESETS -> cutoff (a relative write) */
     ui_handle(UI_SRC_BTN_EDIT, 1);
     CHECK(ui_top() == 1, "BTN_EDIT switches to edit");
-    CHECK(ui_params()[P_cutoff] == 5, "cutoff keeps the slot write (5)");
-    ui_handle(UI_SRC_ENC_PRESETS, 3);
-    ui_handle(UI_SRC_ENC_PRESETS, -1);
-    CHECK(ui_params()[P_cutoff] == 7, "relative ENC writes cutoff (5+3-1=7)");
+    {
+        int32_t before = ui_params()[P_cutoff];
+        ui_handle(UI_SRC_ENC_PRESETS, 3);              /* a relative write moves the param */
+        CHECK(ui_params()[P_cutoff] != before, "relative ENC writes cutoff");
+        ui_handle(UI_SRC_ENC_PRESETS, -9999);          /* and clamps, never runs away */
+        CHECK(ui_params()[P_cutoff] == 0, "relative ENC clamps cutoff at its min");
+    }
 
     /* the operator select wraps: mute op1, SEL -> op2, mute op2, SEL -> wraps to op1 */
     {
@@ -113,6 +123,41 @@ int main(void)
     /* an unbound source is a no-op */
     ui_handle(UI_SRC_BTN_REC, 1);
     CHECK(n_note_on == 2 && n_set_step == 1, "unbound source is ignored");
+
+    /* the per-param display scale: ratio -> "N.NN", onoff -> words, off_pct -> "off",
+       pct -> 0..100, pct_inv -> inverted, hz -> Hz, semi -> semitones */
+    {
+        char s[24];
+        ui_params()[P_ratio] = 65536;   ui_param_fmt(P_ratio, 0, s, sizeof s);
+        CHECK(ui_streq(s, "1.00"), "ratio 65536 formats as 1.00");
+        ui_params()[P_ratio] = 32768;   ui_param_fmt(P_ratio, 0, s, sizeof s);
+        CHECK(ui_streq(s, "0.50"), "ratio 32768 formats as 0.50");
+        ui_params()[P_ratio] = 131072;  ui_param_fmt(P_ratio, 0, s, sizeof s);
+        CHECK(ui_streq(s, "2.00"), "ratio 131072 formats as 2.00");
+        ui_params()[P_mute] = 1;        ui_param_fmt(P_mute, 0, s, sizeof s);
+        CHECK(ui_streq(s, "on"), "mute 1 formats as on");
+        ui_params()[P_mute] = 0;        ui_param_fmt(P_mute, 0, s, sizeof s);
+        CHECK(ui_streq(s, "off"), "mute 0 formats as off");
+        ui_params()[P_cutoff] = 0;      ui_param_fmt(P_cutoff, 0, s, sizeof s);
+        CHECK(ui_streq(s, "off"), "cutoff 0 formats as off");
+        ui_params()[P_fold] = 16384;    ui_param_fmt(P_fold, 0, s, sizeof s);
+        CHECK(ui_streq(s, "50%"), "fold 16384/32767 formats as 50%");
+        ui_params()[P_res] = 0;         ui_param_fmt(P_res, 0, s, sizeof s);
+        CHECK(ui_streq(s, "100%"), "res (inverted) 0 formats as 100%");
+        ui_params()[P_semi] = 2731;     ui_param_fmt(P_semi, 0, s, sizeof s);
+        CHECK(ui_streq(s, "1.00st"), "semi 2731 formats as 1.00st");
+        ui_params()[P_hz] = 97392;      ui_param_fmt(P_hz, 0, s, sizeof s);
+        CHECK(ui_streq(s, "1.0Hz"), "hz 97392 formats as 1.0Hz");
+    }
+
+    /* a log-curve param steps multiplicatively, a linear one by a fraction; both
+       clamp to [min, max] — a relative detent never runs off the end */
+    ui_params()[P_fold] = 30000;
+    ui_handle(UI_SRC_ENC_KNOB3, 9999);                /* slot 2 = fold (linear) */
+    CHECK(ui_params()[P_fold] == 32767, "a linear step clamps at max");
+    ui_params()[P_fold] = 0;
+    ui_handle(UI_SRC_ENC_KNOB3, -9999);
+    CHECK(ui_params()[P_fold] == 0, "a linear step clamps at min");
 
     if (failures) {
         printf("%d UI failures\n", failures);

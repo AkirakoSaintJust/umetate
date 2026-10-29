@@ -90,6 +90,7 @@ def _synth_main(args: argparse.Namespace) -> int:
         generate_sysex_layout,
         generate_tables,
         param_ids,
+        param_meta,
     )
 
     synth = args.synth.resolve()
@@ -117,12 +118,13 @@ def _synth_main(args: argparse.Namespace) -> int:
         name = to_c_identifier(patch["name"])
         tables_h, tables_c = generate_tables(patch)
         ids = param_ids(patch)
+        meta = param_meta(patch)
         outputs: dict[str, str] = {
             f"{name}_dsp.c": generate(patch),
             "dsp.h": generate_dsp_header(patch),
             "tables.h": tables_h,
             "tables.c": tables_c,
-            "panel.h": generate_panel(panel, ids),
+            "panel.h": generate_panel(panel, ids, meta),
             "cc_map.h": generate_cc_header(patch),
             "synth_layout.h": generate_synth_header(patch),
             "params.json": json.dumps(generate_params(patch), indent=2) + "\n",

@@ -190,6 +190,7 @@ class ParamEntry:
     unit: str  # display unit ("" = none)
     rate: str  # "sample" | "block"
     modulatable: bool
+    display: str  # the value's on-screen form ("raw"/"ratio"/"pct"/…), §12.6
 
 
 @dataclass

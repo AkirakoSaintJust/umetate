@@ -91,7 +91,7 @@
         { "source": "ENC_KNOB2", "slot": 1, "behavior": "relative" },
         { "source": "ENC_KNOB3", "slot": 2, "behavior": "relative" },
         { "source": "ENC_KNOB4", "slot": 3, "behavior": "relative" },
-        { "source": "ENC_SELECT", "action": "next_page" },
+        { "source": "ENC_SELECT", "action": "page" },
         { "source": "BTN_SEL", "action": "op_next" }
       ]
     },

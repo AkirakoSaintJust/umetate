@@ -45,6 +45,7 @@ def mode_param_entries(start_id: int) -> list[ParamEntry]:
             unit=unit,
             rate="block",
             modulatable=False,
+            display="raw",
         )
         for i, (cname, default_, name, lo, hi, unit) in enumerate(MODE_PARAMS)
     ]

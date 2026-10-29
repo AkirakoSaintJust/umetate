@@ -156,6 +156,7 @@ _ACTIONS = {
     "pop_home": "UI_ACT_POP_HOME",
     "next_page": "UI_ACT_NEXT_PAGE",
     "prev_page": "UI_ACT_PREV_PAGE",
+    "page": "UI_ACT_PAGE",
     "set_page": "UI_ACT_SET_PAGE",
     "bank_next": "UI_ACT_BANK_NEXT",
     "bank_prev": "UI_ACT_BANK_PREV",
@@ -193,14 +194,30 @@ _WIDGETS = {
     "status": "UI_STATUS",
 }
 
+# the per-param display scale (a patch `params:` `display` string -> ui.h enum)
+_DISPLAY = {
+    "raw": "UI_DISP_RAW",
+    "ratio": "UI_DISP_RATIO",
+    "pct": "UI_DISP_PCT",
+    "pct_inv": "UI_DISP_PCT_INV",
+    "onoff": "UI_DISP_ONOFF",
+    "off_pct": "UI_DISP_OFF_PCT",
+    "hz": "UI_DISP_HZ",
+    "semi": "UI_DISP_SEMI",
+}
+
 
 def generate_panel(
-    panel: PanelManifest, param_ids: Mapping[str, int] | None = None
+    panel: PanelManifest,
+    param_ids: Mapping[str, int] | None = None,
+    param_meta: Mapping[int, tuple[str, int, int, str]] | None = None,
 ) -> str:
     """Compile a panel.json dict into the generated `panel.h` C source.
 
     `param_ids` (optional) maps a param name to its DSP `set_param` id; when given,
     the panel's `P_x` enum shares that id space, so a knob writes the right param.
+    `param_meta` (optional) maps a param id to `(display, min, max, curve)` — the
+    per-param display scale the runtime uses to format + step the value.
     """
     name = panel["name"]
     contexts = panel["contexts"]
@@ -436,12 +453,36 @@ def generate_panel(
         env_ptr = "ENV_PARAM"
     else:
         env_ptr = "0"
+    # the per-param display scale: one ui_param_disp per param id (raw by default).
+    if param_meta is not None and n_params:
+        disp_rows: list[str] = []
+        for pid in range(n_params):
+            m = param_meta.get(pid)
+            if m is None:
+                disp_rows.append("{ UI_DISP_RAW, 0, 0, 0 }")
+            else:
+                display, lo, hi, curve = m
+                if display not in _DISPLAY:
+                    raise GenError(f"params: unknown display {display!r}")
+                disp_rows.append(
+                    f"{{ {_DISPLAY[display]}, {'1' if curve == 'log' else '0'}, "
+                    f"{lo}, {hi} }}"
+                )
+        lines.append(
+            f"static const ui_param_disp DISP_TBL[{n_params}] = {{ "
+            + ", ".join(disp_rows)
+            + " };"
+        )
+        disp_ptr = "DISP_TBL"
+    else:
+        disp_ptr = "0"
     lines.append("")
     lines.append("static const ui_tables PANEL = {")
     lines.append(
         f'    "{name}", {home}, CTX, {len(ctx_names)}, GLOBAL_BIND, '
         f"{len(panel.get('global', []))}, MUTE_TBL, {op_ptr}, "
-        f"{len(operators)}, {len(op_names)}, {env_ptr}, {n_params}, {widget_count},"
+        f"{len(operators)}, {len(op_names)}, {env_ptr}, {disp_ptr}, "
+        f"{n_params}, {widget_count},"
     )
     lines.append("};")
     return "\n".join(lines) + "\n"

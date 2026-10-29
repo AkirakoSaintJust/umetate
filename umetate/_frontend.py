@@ -215,6 +215,7 @@ def _build_params(
             unit=m.get("unit", "") if m else "",
             rate=m.get("rate", "block") if m else "block",
             modulatable=m.get("modulatable", False) if m else False,
+            display=m.get("display", "raw") if m else "raw",
         )
 
     entries: list[ParamEntry] = []
@@ -263,6 +264,7 @@ def _build_params(
                         unit="",
                         rate="block",
                         modulatable=False,
+                        display="raw",
                     )
                 )
     return entries

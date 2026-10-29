@@ -62,7 +62,14 @@ class Macro(TypedDict):
 
 
 class ParamBinding(TypedDict):
-    """A patch `params:` entry: bind a friendly name to a flattened target."""
+    """A patch `params:` entry: bind a friendly name to a flattened target.
+
+    `display` is the value's on-screen form (the panel's per-param scale): `"raw"`
+    (the integer), `"ratio"` (a Q16 frequency multiplier, `1.00` = base pitch),
+    `"pct"` (0..100% of [min,max]), `"pct_inv"` (100..0%), `"onoff"` (off/on),
+    `"off_pct"` (≤0 → "off", else %), `"hz"` (a Q32 rate as Hz), or `"semi"` (a
+    bipolar Q15 as ±semitones). Absent = `"raw"`.
+    """
 
     target: str
     min: NotRequired[int]
@@ -72,6 +79,7 @@ class ParamBinding(TypedDict):
     unit: NotRequired[str]
     rate: NotRequired[str]
     modulatable: NotRequired[bool]
+    display: NotRequired[str]
 
 
 class TableSpec(TypedDict):
@@ -268,6 +276,7 @@ class ParamDoc(TypedDict):
     unit: str
     rate: str
     modulatable: bool
+    display: str
 
 
 class ParamsDoc(TypedDict):

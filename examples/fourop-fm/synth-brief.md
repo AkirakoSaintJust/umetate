@@ -86,26 +86,31 @@
 > params (`mode`, `unison_count`, `unison_detune`, `legato`, `portamento`,
 > `note_priority`) are per-preset.
 
-| Param (name) | Target | Min | Max | Curve | Unit |
-| --- | --- | --- | --- | --- | --- |
-| algorithm | algo.algorithm | 0 | 7 | linear | |
-| cutoff | lp.f | 0 | 65535 | log | Hz |
-| res | lp.q | 0 | 65535 | linear | |
-| fold | wf.amount | 0 | 32767 | linear | |
-| feedback | algo.car_fb | 0 | 32767 | linear | |
-| attack | op1.eg.r1 | 0 | 65535 | log | |
-| release | op1.eg.r4 | 0 | 65535 | log | |
-| pitch_rate | plfo.rate | 0 | 20000000 | log | |
-| pitch_depth | plfo.depth | 0 | 32767 | linear | |
-| penv_base | penv.base | -32768 | 32767 | linear | |
-| penv_rate | penv.rate | 0 | 65535 | log | |
-| op1_level … op4_level | opN.vca.level | 0 | 32767 | linear | |
-| op1_waveform … op4_waveform | opN.osc.waveform | 0 | 11 | linear | |
-| op1_ratio … op4_ratio | opN.ph.inc_ratio | 32768 | 1048576 | linear | × |
-| op1_mute … op4_mute | opN.mute.mute | 0 | 1 | linear | |
-| op1_feedback … op4_feedback | opN.fb.level | 0 | 32767 | linear | |
-| op1_trem_rate … op4_trem_rate | opN.lfo.rate | 0 | 20000000 | log | |
-| op1_trem_depth … op4_trem_depth | opN.lfo.depth | 0 | 32767 | linear | |
+| Param (name) | Target | Min | Max | Curve | Unit | Display |
+| --- | --- | --- | --- | --- | --- | --- |
+| algorithm | algo.algorithm | 0 | 7 | linear | | raw (0–7) |
+| cutoff | lp.f | 0 | 65535 | log | | off_pct ("off" at 0) |
+| res | lp.q | 0 | 65535 | linear | | pct_inv (100% = least damping) |
+| fold | wf.amount | 0 | 32767 | linear | | pct |
+| feedback | algo.car_fb | 0 | 32767 | linear | | pct |
+| attack | op1.eg.r1 | 0 | 65535 | log | | raw |
+| release | op1.eg.r4 | 0 | 65535 | log | | raw |
+| pitch_rate | plfo.rate | 0 | 20000000 | log | | hz |
+| pitch_depth | plfo.depth | 0 | 32767 | linear | | pct |
+| penv_base | penv.base | -32768 | 32767 | linear | | semi (±st) |
+| penv_rate | penv.rate | 0 | 65535 | log | | raw |
+| op1_level … op4_level | opN.vca.level | 0 | 32767 | linear | | pct |
+| op1_waveform … op4_waveform | opN.osc.waveform | 0 | 11 | linear | | raw (0–11) |
+| op1_ratio … op4_ratio | opN.ph.inc_ratio | 32768 | 1048576 | linear | | ratio (1.00 = base) |
+| op1_mute … op4_mute | opN.mute.mute | 0 | 1 | linear | | onoff (off/on) |
+| op1_feedback … op4_feedback | opN.fb.level | 0 | 32767 | linear | | pct |
+| op1_trem_rate … op4_trem_rate | opN.lfo.rate | 0 | 20000000 | log | | hz |
+| op1_trem_depth … op4_trem_depth | opN.lfo.depth | 0 | 32767 | linear | | pct |
+
+The `display` column is the per-param on-screen form (the `params:` `display`
+field → a `ui_param_disp` entry in the generated panel). A relative encoder steps
+per the curve (linear = a fraction of the range, log = multiplicative), so each
+knob reaches its whole range in a sane number of turns and clamps at the ends.
 
 (`level` is both the output amplitude and the FM index; `feedback` is the carrier
 feedback master (`algo.car_fb`, added to whichever operator is the current
