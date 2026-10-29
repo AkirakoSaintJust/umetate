@@ -591,6 +591,52 @@ def _preset_c_parity() -> None:
         ), "settings record parity"
 
 
+def _budget_measures() -> None:
+    """`umetate budget` measures the host polyphony scaling (a measured claim)."""
+    import json
+
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "patch.json").write_text(
+            json.dumps(
+                {
+                    "name": "t",
+                    "voices": 8,
+                    "voice": {
+                        "nodes": [
+                            {"id": "ph", "type": "phasor"},
+                            {"id": "osc", "type": "osc"},
+                            {"id": "env", "type": "env"},
+                            {"id": "vca", "type": "vca"},
+                        ],
+                        "wires": [
+                            {"from": "ph.phase", "to": "osc.phase"},
+                            {"from": "osc.audio", "to": "vca.audio"},
+                            {"from": "env.cv", "to": "vca.cv"},
+                        ],
+                        "voice_out": "vca.audio",
+                    },
+                    "global": {"nodes": [], "wires": []},
+                }
+            ),
+            encoding="utf-8",
+        )
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = cli.main(["budget", str(d / "patch.json"), "--voices", "4,8"])
+        assert rc == 0, "budget failed"
+        out = buf.getvalue()
+        rows = [
+            line.split()
+            for line in out.splitlines()
+            if line.strip() and line.split()[0].isdigit()
+        ]
+        assert len(rows) == 2, f"expected two measured rows, got {out}"
+        t4, t8 = float(rows[0][1]), float(rows[1][1])
+        assert t4 > 0 and t8 >= t4, "the 8-voice render is not >= the 4-voice"
+        assert "blocked" in out, "the device fit is not reported blocked"
+
+
 def main() -> int:
     tests: _Tests = [
         ("no import side effects", _no_import_side_effects),
@@ -615,6 +661,7 @@ def main() -> int:
         ("the preset bank exports + imports", _bank_roundtrip),
         ("preset export/import round-trips via the CLI", _preset_export_import),
         ("the C preset store matches the Python records", _preset_c_parity),
+        ("umetate budget measures the polyphony scaling", _budget_measures),
     ]
     failures = 0
     for name, test in tests:

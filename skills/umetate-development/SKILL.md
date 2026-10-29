@@ -191,6 +191,9 @@ Turn the two designs into one living plan:
   `.cpu1_bss` ≤ 16 KiB; `.dsp_text` ≤ 32 KiB; `.pool` ≤ 336 KiB; XIP code + const
   ≤ 568 KiB; stack 24 KiB CPU0 + 8 KiB CPU1.
 - `templates/evidence-matrix.md` — one row per layer, exact command/artifact.
+- The **voice count is a measured claim** — run `umetate budget --voices N,M --parts P`
+  (host timing: per-voice cost + linearity; the 2.9 ms device fit is the
+  emulator's job, `blocked` until the firmware is built). Never estimate polyphony.
 - `templates/dsp-algorithm.md` — the exact algorithm for each component (see
   "DSP algorithm research" below).
 - `templates/code-structure.md` — the exact structure + interface of any custom
@@ -247,7 +250,8 @@ artifact_, never the code. Walk every item; do not skip:
 - [ ] Every wire connects real ports; `voice_out` names a real voice-zone signal;
       `gate`/`velocity` reserved sources are used correctly.
 - [ ] The voice count × architecture fits the supported-load profile (voice SoA
-      × nodes × per-sample work within the callback budget).
+      × nodes × per-sample work within the callback budget) — measured with
+      `umetate budget`, not estimated.
 - [ ] The MIDI map (`cc:N`, `note:N`) targets only defined parameters; sustain,
       panic, and bend are wired or explicitly deferred.
 - [ ] Every part's params, routing (channel/keyzone), and gain/timing are

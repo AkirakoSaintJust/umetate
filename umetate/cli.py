@@ -28,6 +28,7 @@ COMMANDS: dict[str, tuple[str, str]] = {
     "scaffold": ("generate a node/macro/patch skeleton", "scaffold"),
     "lib": ("list the shipped nodes + templates", "lib"),
     "preset": ("export/import the preset bank as SysEx", "preset"),
+    "budget": ("measure the polyphony budget", "budget"),
     "lint": ("the C standing checks", "lint"),
     "fmt": ("clang-format the repo", "fmt"),
     "web-build": ("emscripten -> standalone dsp.wasm", "web:build_main"),
