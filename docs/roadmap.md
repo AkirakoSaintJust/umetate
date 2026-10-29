@@ -17,7 +17,7 @@ prose spare; each fact has one home.
 | --- | --- | --- |
 | D1 | Name / authorship | `umetate`; commits credited to P1Onken; not endorsed by M-VAVE. |
 | D2 | Starter firmware (RIB) | Dinghy/Felucca lineage, source-owned, integer-first C. Out of the box it supports **SMK-37**, **dual-core**, **single-precision FPU (opt-in)**, and the **JieLi acceleration hardware**. Performance + stability; extendible + maintainable. |
-| D3 | Dual-core | **Default and the only architecture.** CPU0 = platform/OS/USB/MIDI/UI/flash/watchdog/installer; CPU1 = DSP render only. A boot-time core-1 probe + runtime fallback to CPU0 is the *stability* net, not a build profile. |
+| D3 | Dual-core | **Default and the only architecture.** CPU0 = platform/OS/USB/MIDI/UI/flash/watchdog/installer **+ a split voice-render range** (D3's split-core refinement, §4.2); CPU1 = the remaining voice range. A boot-time core-1 probe + runtime fallback to CPU0 is the *stability* net, not a build profile. |
 | D4 | FPU | **Opt-in** (`--dsp float`). Single-precision only; `double` prohibited; only the DSP translation unit uses FP. |
 | D5 | Clock | Setup offers **240 MHz or 320 MHz**. 360 MHz and 396 MHz are not offered (see §5.1). Firmware reports the measured clock; never assumes. |
 | D6 | On-device identity | **Frozen**: `FM-1_990`, `SMK-37 Pro_990`, `SMK-37 Elite_990`, `MKE-P37_990`. Rename artifacts freely; never rename identity. |
@@ -226,8 +226,22 @@ param tables) are produced by a generator, never hand-edited.
 
 | Core | Owns | Must not |
 | --- | --- | --- |
-| CPU0 | boot, OS/runtime, USB (MIDI + UAC), MIDI UART, panel/UI, display, storage/flash, watchdog, update installer, recovery | long DSP work; FP when CPU1 owns the FPU |
-| CPU1 | DSP render: voice state, block production | OS calls (incl. `printf`), allocation, flash, USB, blocking |
+| CPU0 | boot, OS/runtime, USB (MIDI + UAC), MIDI UART, panel/UI, display, storage/flash, watchdog, update installer, recovery; **the global control prologue + global audio post + its split voice range** | long DSP work; FP when CPU1 owns the FPU |
+| CPU1 | DSP render: **its split voice range** | OS calls (incl. `printf`), allocation, flash, USB, blocking |
+
+- **Split-core render (D3 refinement).** The render is three phases: (a) the global
+  control prologue (pitch env, LFO, algorithm, glide, delay countdown) — single
+  core; (b) the per-voice synthesis (`render_voices_block`, one CONTROL_BLOCK, a
+  voice range `[v0, v1)` into a caller bus) — the parallel phase; (c) the global
+  audio post (filter/wavefolder) + output — single core. The generator emits
+  `render_voices_block` as a `noinline` phase so the voice range can be split
+  across cores: CPU0 renders `[0, N0)`, CPU1 renders `[N0, NVOICE)`, the buses are
+  summed, then the post runs on one core. Single-core is the same three phases
+  with one range `[0, NVOICE)`. The per-voice control temps are file-scope arrays
+  (the two cores write *disjoint* `v` ranges, so no race). The `noinline` phase
+  costs ~5% single-core render time (measured ISR% 18.2→19.1 M/s @ 6 voices,
+  21.7→23.0 @ 8 voices, bit-identical output) — the price of the split-ready seam;
+  the parallel speedup dwarfs it.
 
 - **CPU1 code lives in RAM** (`.c1_text`, its waiting loop) so it never fetches
   from flash while flash is busy (AC79 §7.40).

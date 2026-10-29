@@ -182,13 +182,129 @@ def _param_tables(graph: CompiledGraph) -> list[str]:
 def _render(
     graph: CompiledGraph, by_id: dict[str, NodeInstance], table_names: set[str]
 ) -> list[str]:
-    name, cb = graph.name, graph.control_block
-    per_part = graph.n_parts > 1
     voice_audio = _zone(graph.voice_order, by_id, audio_only=True)
     voice_ctrl = _zone(graph.voice_order, by_id, audio_only=False)
     global_audio = _zone(graph.global_order, by_id, audio_only=True)
     global_ctrl = _zone(graph.global_order, by_id, audio_only=False)
 
+    lines: list[str] = []
+
+    # Split-core render (docs/roadmap.md §4.2, D3): the hot per-voice loop is a
+    # separable phase `render_voices_block` (one CONTROL_BLOCK's worth of voice
+    # synthesis into a caller bus), so it can later run on both cores. `dsp_render`
+    # keeps the block loop and does the global control prologue + global audio
+    # (filter/wavefolder) inline — those stay single-core. The global control-rate
+    # outputs are file-scope temps: `dsp_render` writes them each block, and
+    # `render_voices_block` reads them.
+    for i in _control_rate_nodes(graph, by_id):
+        for port in i.spec.outs:
+            if i.zone == "voice":
+                lines.append(f"static int32_t {i.c}_{port}_x[NVOICE] UMETATE_CPU1;")
+            else:
+                lines.append(f"static int32_t {i.c}_{port}_x UMETATE_CPU1;")
+    lines.append(f"static int32_t {graph.name}_render_bus[CONTROL_BLOCK] UMETATE_CPU1;")
+    lines.append("")
+
+    lines.extend(
+        _render_voices_block(graph, by_id, table_names, voice_ctrl, voice_audio)
+    )
+    lines.extend(
+        _render_dsp_render(graph, by_id, table_names, global_ctrl, global_audio)
+    )
+    return lines
+
+
+def _render_voices_block(
+    graph: CompiledGraph,
+    by_id: dict[str, NodeInstance],
+    table_names: set[str],
+    voice_ctrl: list[NodeInstance],
+    voice_audio: list[NodeInstance],
+) -> list[str]:
+    """One CONTROL_BLOCK of voice synthesis for voices [v0, v1) into `bus` (a
+    caller buffer of CONTROL_BLOCK samples). Reads the file-scope global control
+    temps written by `dsp_render`'s prologue for this block."""
+    name, cb = graph.name, graph.control_block
+    per_part = graph.n_parts > 1
+    lines = [
+        f"UMETATE_DSP_API void {name}_render_voices_block(int32_t *bus, uint32_t v0, uint32_t v1, uint32_t b, uint32_t frames) {{",
+    ]
+
+    # control prologue: voice control-rate nodes (per voice, this core's range)
+    if voice_ctrl:
+        lines.append("    for (uint32_t v = v0; v < v1; v++) {")
+        lines.append("        if (!voice_gate[v]) continue;")
+        for i in voice_ctrl:
+            lines.extend(_emit_body(i, "v", "        ", table_names, per_part))
+        lines.append(
+            "        voice_trig[v] = 0; /* one-shot note-on edge, consumed above */"
+        )
+        lines.append("    }")
+
+    # block-derived state: recompute per-voice block-constant values after the
+    # global control temps are available (e.g. the phasor's pitch-scaled
+    # increment `inc * (32768 + pitch) >> 15` — pitch is control-rate, so the
+    # multiply was being redone every sample).
+    block_derived = [
+        by_id[iid] for iid in graph.voice_order if by_id[iid].block_derived
+    ]
+    if block_derived:
+        lines.append("    for (uint32_t v = v0; v < v1; v++) {")
+        lines.append("        if (!voice_gate[v]) continue;")
+        for i in block_derived:
+            for field, template in i.block_derived.items():
+                expr = substitute(i, template, "v", table_names, per_part)
+                lines.append(f"        {i.state_ref(field, 'v')} = {expr};")
+        lines.append("    }")
+
+    # audio loop
+    lines.append(f"    for (uint32_t f = b; f < b + {cb}u && f < frames; f++) {{")
+    lines.append("        bus[f - b] = 0;")
+    lines.append("        for (uint32_t v = v0; v < v1; v++) {")
+    lines.append("            if (!voice_gate[v]) continue;")
+
+    breakers = [i for i in voice_audio if i.is_breaker()]
+    normal = [i for i in voice_audio if not i.is_breaker()]
+    for i in breakers:
+        read, _ = _split_template(i.spec.body)
+        lines.extend(_emit_lines(read, i, "v", "            ", table_names, per_part))
+    for i in normal:
+        lines.extend(_emit_body(i, "v", "            ", table_names, per_part))
+
+    mix_expr = _voice_mix(graph, by_id, normal)
+    if mix_expr is not None:
+        if per_part:
+            lines.append(
+                f"            bus[f - b] = fm1_sat_add32(bus[f - b], "
+                f"fm1_q15_mul({mix_expr}, part_level[voice_part[v]]));"
+            )
+        else:
+            lines.append(
+                f"            bus[f - b] = fm1_sat_add32(bus[f - b], {mix_expr});"
+            )
+
+    for i in breakers:
+        _, write = _split_template(i.spec.body)
+        lines.extend(_emit_lines(write, i, "v", "            ", table_names, per_part))
+    lines.append("        }")
+    lines.append("    }")
+    lines.append("}")
+    lines.append("")
+    return lines
+
+
+def _render_dsp_render(
+    graph: CompiledGraph,
+    by_id: dict[str, NodeInstance],
+    table_names: set[str],
+    global_ctrl: list[NodeInstance],
+    global_audio: list[NodeInstance],
+) -> list[str]:
+    """The single-core block loop: global control prologue → voice synthesis (via
+    `render_voices_block`) → global audio + output. The block loop is the seam the
+    split-core dispatch will own (per-block pre / parallel voices / post)."""
+    name, cb = graph.name, graph.control_block
+    per_part = graph.n_parts > 1
     lines = [
         f"UMETATE_DSP_API void {name}_dsp_render(int32_t *out, uint32_t frames) {{",
         f"    for ({_CONTROL_BLOCK_TYPE} b = 0; b < frames; b += {cb}u) {{",
@@ -202,84 +318,20 @@ def _render(
             "            if (voice_gate[_pg]) { patch_gate = 1u; break; }",
         ]
     )
-    # control-output temps (held across the sub-block's audio loop)
-    for i in _control_rate_nodes(graph, by_id):
-        for port in i.spec.outs:
-            if i.zone == "voice":
-                lines.append(f"        int32_t {i.c}_{port}_x[NVOICE];")
-            else:
-                lines.append(f"        int32_t {i.c}_{port}_x;")
-
-    # control prologue: voice control-rate nodes (per voice)
-    if voice_ctrl:
-        lines.append("        for (uint32_t v = 0; v < NVOICE; v++) {")
-        lines.append("            if (!voice_gate[v]) continue;")
-        for i in voice_ctrl:
-            lines.extend(_emit_body(i, "v", "            ", table_names, per_part))
-        lines.append(
-            "            voice_trig[v] = 0; /* one-shot note-on edge, consumed above */"
-        )
-        lines.append("        }")
-
-    # control prologue: global control-rate nodes (scalar)
+    # global control-rate nodes (scalar, single writer): write the shared temps.
     for i in global_ctrl:
         lines.extend(_emit_body(i, "0", "        ", table_names, per_part))
-
     # portamento glide (control rate): ramp each voice's base increment.
     lines.extend(_voice.glide(name))
-
-    # block-derived state: recompute per-voice block-constant values after the
-    # global control temps are available (e.g. the phasor's pitch-scaled
-    # increment `inc * (32768 + pitch) >> 15` — pitch is control-rate, so the
-    # multiply was being redone every sample).
-    block_derived = [
-        by_id[iid] for iid in graph.voice_order if by_id[iid].block_derived
-    ]
-    if block_derived:
-        lines.append("        for (uint32_t v = 0; v < NVOICE; v++) {")
-        lines.append("            if (!voice_gate[v]) continue;")
-        for i in block_derived:
-            for field, template in i.block_derived.items():
-                expr = substitute(i, template, "v", table_names, per_part)
-                lines.append(f"            {i.state_ref(field, 'v')} = {expr};")
-        lines.append("        }")
-
-    # audio loop
+    # voice synthesis (the parallel phase — all voices on this core today).
+    lines.append(
+        f"        {name}_render_voices_block({name}_render_bus, 0, NVOICE, b, frames);"
+    )
+    # global audio (filter/wavefolder) + output (single core).
     lines.append(f"        for (uint32_t f = b; f < b + {cb}u && f < frames; f++) {{")
-    lines.append("            int32_t bus = 0;")
-    lines.append("            for (uint32_t v = 0; v < NVOICE; v++) {")
-    lines.append("                if (!voice_gate[v]) continue;")
-
-    breakers = [i for i in voice_audio if i.is_breaker()]
-    normal = [i for i in voice_audio if not i.is_breaker()]
-    for i in breakers:
-        read, _ = _split_template(i.spec.body)
-        lines.extend(
-            _emit_lines(read, i, "v", "                ", table_names, per_part)
-        )
-    for i in normal:
-        lines.extend(_emit_body(i, "v", "                ", table_names, per_part))
-
-    mix_expr = _voice_mix(graph, by_id, normal)
-    if mix_expr is not None:
-        if per_part:
-            lines.append(
-                f"                bus = fm1_sat_add32(bus, "
-                f"fm1_q15_mul({mix_expr}, part_level[voice_part[v]]));"
-            )
-        else:
-            lines.append(f"                bus = fm1_sat_add32(bus, {mix_expr});")
-
-    for i in breakers:
-        _, write = _split_template(i.spec.body)
-        lines.extend(
-            _emit_lines(write, i, "v", "                ", table_names, per_part)
-        )
-    lines.append("            }")
-
+    lines.append(f"            int32_t bus = {name}_render_bus[f - b];")
     for i in global_audio:
         lines.extend(_emit_body(i, "0", "            ", table_names, per_part))
-
     out_expr = _final_out(graph, by_id)
     lines.append(f"            out[f * 2] = {out_expr}; out[f * 2 + 1] = {out_expr};")
     lines.append("        }")
