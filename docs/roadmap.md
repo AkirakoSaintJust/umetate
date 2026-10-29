@@ -861,21 +861,56 @@ generator emits part-aware allocation:
 **SysEx envelope (shared base).**
 
 ```
-F0 00 21 1D <model-id> <cmd> <ver> <payload…> <CRC16> F7
+F0 00 21 1D <model> <cmd> <ver> <payload…> <crc16-lo> <crc16-hi> F7
 ```
 
-Shared: manufacturer/device id, model identity, command + version byte, CRC-16,
-and five commands every firmware answers — *identity request*, *param dump*,
-*part-patch dump*, *multi-patch dump*, *settings dump*. Per-firmware: the payload
-layout (which params, order, Q-scaling). A 4-op patch is **not** DX7-compatible
-(DX7 is 6-op); DX7 `.SYX` import is explicitly out of scope for fourop-fm.
+- Shared: the manufacturer id `00 21 1D`, the envelope frame, the **CRC-16-CCITT**
+  (poly `0x1021`, init `0xFFFF`, no reflect, over `<cmd>…<payload>`, little-endian
+  bytes), and five commands every firmware answers — `0x01` *identity request*
+  (→ identity response), `0x02` *param dump*, `0x03` *part-patch dump* (with a slot
+  byte), `0x04` *multi-patch dump* (with a slot byte), `0x05` *settings dump*;
+  responses echo the command with the high bit set. `0x7F` = unknown command.
+- Per-firmware: `<model>` (one byte), the payload layout — which params, their
+  order, count, and Q-format (the generated `sysex-layout`, emitted alongside
+  `params.json`). Multi-byte payload values are **7-bit packed** (7 data bytes →
+  8 MIDI bytes with the collected top bits; unpacked before CRC/parse).
+- A 4-op patch is **not** DX7-compatible (DX7 is 6-op); DX7 `.SYX` import is
+  explicitly out of scope for fourop-fm.
 
-**Preset format.** Two tiers. A **part patch** = a single timbre (its 39 params)
-+ name + version + CRC — 64 slots. A **multi patch** = 2 part-patch references +
-2×(level, delay, channel, keyzone) + name + version + CRC — 64 slots. Load/save
-via the existing `slot_load`/`slot_save`; export/import a bank via the SysEx
-preset dump (part patches and multi patches are separate dump commands). Flash
-writes happen only when silent (the existing rule).
+**Preset formats (concrete byte layouts, all little-endian).** Every record is a
+self-validating unit — a `u8 version` (`0xFF` = empty slot), a body, and a
+**CRC-32** (poly `0xEDB88320`, init `0xFFFFFFFF`, reflected — the platform's
+`crc32`) over version+body — so a corrupt record is skipped, never the whole bank.
+
+- **Part patch** (one timbre; `N` = the per-part voice-param count, fourop-fm 39):
+
+  ```
+  u8 version | char name[16] | i32 params[N] | u32 crc32
+  ```
+
+- **Multi patch** (a composition; `N_PART` parts, fourop-fm 2):
+
+  ```
+  u8 version | char name[16] | u8 part_slot[N_PART] | i32 level[N_PART] |
+  i32 delay[N_PART] | i32 channel[N_PART] | i32 low[N_PART] | i32 high[N_PART] |
+  u32 crc32
+  ```
+
+  `part_slot[i]` = the part-patch slot each part uses (`0xFF` = none).
+- **Settings** (one global record):
+
+  ```
+  u8 version | i32 base_channel | i32 master_tune | u32 crc32
+  ```
+
+**Flash layout (on the existing `store.h`).** The 64 part patches are one bank
+(≤ `SLOT_MAX`) in slot 0, the 64 multi patches one bank in slot 1, the settings
+record in the settings sector — reusing `slot_load`/`slot_save`/`settings_load`/
+`settings_save` (magic + length + crc32 + header-last commit stays the transport
+integrity). Per-record CRC + version on top: a fresh (erased) bank reads all-empty
+(`0xFF`); a cut save is caught by the area CRC, a single flipped bit by the record
+CRC. Writes happen only when silent (`dsp_quiet`, the existing rule) and only on an
+explicit save, never on a knob step.
 
 **MIDI CC map.** The generator emits a `const` `cc -> param id` table from
 `params.json` (one CC per param, ascending from a base), plus the reversed

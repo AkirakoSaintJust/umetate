@@ -316,6 +316,48 @@ def _links_check() -> None:
     assert _links.check() == [], "the canonical docs have dead cross-references"
 
 
+def _records_roundtrip() -> None:
+    """The preset record formats pack/unpack + CRCs round-trip (§6.11.4 layouts)."""
+    from . import _records
+
+    assert _records.crc32(b"123456789") == 0xCBF43926, "crc32 mismatch"
+    assert _records.crc16(b"123456789") == 0x29B1, "crc16-ccitt mismatch"
+
+    part: _records.PartPatch = {"name": "EPiano", "params": [100, -5, 65536, 0]}
+    raw = _records.pack_part_patch(part, 4)
+    part_back = _records.unpack_part_patch(raw, 4)
+    assert part_back is not None and part_back == part, "part patch round-trip"
+    corrupt = bytearray(raw)
+    corrupt[2] ^= 0x01
+    assert _records.unpack_part_patch(bytes(corrupt), 4) is None, (
+        "corruption undetected"
+    )
+    assert _records.unpack_part_patch(raw[:-1], 4) is None, "truncation undetected"
+    assert (
+        _records.unpack_part_patch(b"\xff" * _records.part_patch_size(4), 4) is None
+    ), "empty slot not None"
+
+    multi: _records.MultiPatch = {
+        "name": "Layers",
+        "part_slot": [0, 1],
+        "level": [32768, 32768],
+        "delay": [0, 40],
+        "channel": [0, 1],
+        "low": [0, 60],
+        "high": [127, 127],
+    }
+    raw = _records.pack_multi_patch(multi, 2)
+    multi_back = _records.unpack_multi_patch(raw, 2)
+    assert multi_back is not None and multi_back == multi, "multi patch round-trip"
+
+    settings: _records.Settings = {"base_channel": -1, "master_tune": 12}
+    raw = _records.pack_settings(settings)
+    settings_back = _records.unpack_settings(raw)
+    assert settings_back is not None and settings_back == settings, (
+        "settings round-trip"
+    )
+
+
 def main() -> int:
     tests: _Tests = [
         ("no import side effects", _no_import_side_effects),
@@ -335,6 +377,7 @@ def main() -> int:
         ("debrick names the routes", _debrick_routes),
         ("the skill bundles are in sync", _skill_check),
         ("the docs cross-references resolve", _links_check),
+        ("the preset records round-trip", _records_roundtrip),
     ]
     failures = 0
     for name, test in tests:
