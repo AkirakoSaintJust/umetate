@@ -55,7 +55,7 @@ int main(void) {
 """
 
 
-def _measure(patch: Patch) -> float:
+def measure(patch: Patch) -> float:
     """Generate + compile + time the worst-case render(256) (µs, host)."""
     src = generate(patch)
     tables_h, tables_c = generate_tables(patch)
@@ -148,7 +148,7 @@ def main(argv: list[str] | None = None) -> int:
             measured["cpu0_voices"] = min(cpu0, n)
         if args.parts is not None:
             measured["parts"] = {"count": args.parts}
-        us = _measure(measured)
+        us = measure(measured)
         print(f"  {n:>6}  {us:>14.1f} us  {us / n:>7.2f} us")
 
     print(

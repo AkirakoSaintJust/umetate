@@ -2391,7 +2391,9 @@ it compile everywhere. `generate.py` is deterministic (same inputs → byte-iden
 - **ring tests:** SPSC wrap-around, overrun counter, no lost note-off.
 - **performance regression guard:** compile the generated `dsp.c` and time a fixed
   render on host; fail over a per-patch threshold. The emulator ISR% (`emu --check
-  --mhz 320`) is the higher-fidelity gate when the toolchain is present.
+  --mhz 320`) is the higher-fidelity gate when the toolchain is present. Implemented
+  as `umetate/test_perf.py` (the fourop-fm dogfood, 20 voices, min-of-3, ~2.8x the
+  ~140 us baseline), wired into `deep-check --python`/`--all`.
 - **evidence matrix:** per §5.5, each layer recorded, `blocked`/`not-run` not passes.
 
 #### 12.7.4 The schematic engine
