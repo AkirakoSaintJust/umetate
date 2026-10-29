@@ -2508,6 +2508,17 @@ def main() -> int:
         print(f"FAIL: polyBLEP pulse anti-aliasing: {exc}")
         failures += 1
 
+    # the pulse width is a settable param (default 0.5 = square), not a wireable
+    # control input — it must appear in the flattened param table with that default.
+    width_params = [
+        p for p in generate_params(PULSE_TEST)["params"] if p["name"].endswith(".width")
+    ]
+    if len(width_params) != 1 or width_params[0]["default"] != 16384:
+        print(f"FAIL: pulse width is not a defaulted param ({width_params})")
+        failures += 1
+    else:
+        print("ok: pulse width is a settable param (default 0.5)")
+
     ok, msg = _sound(TRIANGLE_TEST)
     print(
         ("ok: " if ok else "FAIL: ")

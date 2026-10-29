@@ -13,7 +13,20 @@
     "outs": { "type": "object", "minProperties": 1, "additionalProperties": { "$ref": "#/$defs/port" } },
     "params": {
       "type": "object",
-      "additionalProperties": { "enum": ["q12", "q15", "q16", "q32", "phase", "int16", "int32", "uint32", "table"] }
+      "additionalProperties": {
+        "oneOf": [
+          { "enum": ["q12", "q15", "q16", "q32", "phase", "int16", "int32", "uint32", "table"] },
+          {
+            "type": "object",
+            "required": ["kind"],
+            "additionalProperties": false,
+            "properties": {
+              "kind": { "enum": ["q12", "q15", "q16", "q32", "phase", "int16", "int32", "uint32", "table"] },
+              "default": { "type": "string", "description": "a numeric DSP default (overrides the kind default)" }
+            }
+          }
+        ]
+      }
     },
     "state": {
       "type": "object",

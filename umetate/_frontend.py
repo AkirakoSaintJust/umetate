@@ -169,7 +169,9 @@ def _build_params(
             entry = (
                 i.param_expr(pname),
                 f"{i.id}.{pname}",
-                param_default(kind, i.params.get(pname)),
+                param_default(
+                    kind, i.params.get(pname) or i.spec.param_defaults.get(pname)
+                ),
                 kind,
             )
             (voice if i.zone == "voice" else global_).append(entry)

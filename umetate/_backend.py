@@ -132,7 +132,9 @@ def _param_decls(graph: CompiledGraph) -> list[str]:
     per_part = graph.n_parts > 1
     for i in graph.instances:
         for pname, kind in i.spec.params.items():
-            default = param_default(kind, i.params.get(pname))
+            default = param_default(
+                kind, i.params.get(pname) or i.spec.param_defaults.get(pname)
+            )
             if per_part and i.zone == "voice":
                 init = ", ".join(str(default) for _ in range(graph.n_parts))
                 lines.append(

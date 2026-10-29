@@ -128,6 +128,14 @@ class PortDict(TypedDict):
     default: NotRequired[str]
 
 
+class ParamSpec(TypedDict):
+    """A node.json param in object form: `{kind, default?}` (the default overrides
+    the kind's default)."""
+
+    kind: str
+    default: NotRequired[str]
+
+
 class NodeManifest(TypedDict):
     """A shipped node's node.json."""
 
@@ -135,7 +143,7 @@ class NodeManifest(TypedDict):
     summary: NotRequired[str]
     ins: NotRequired[dict[str, str | PortDict]]
     outs: dict[str, str | PortDict]
-    params: NotRequired[dict[str, str]]
+    params: NotRequired[dict[str, str | ParamSpec]]
     state: NotRequired[dict[str, str]]
     note_derived: NotRequired[dict[str, str]]
     note_cutoff: NotRequired[dict[str, str]]

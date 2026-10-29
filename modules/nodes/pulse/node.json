@@ -1,11 +1,11 @@
 {
   "name": "pulse",
-  "summary": "Band-limited pulse/square (2nd-order polyBLEP, two BLEPs — one per edge). `width` (control, Q15, default 0.5 = square) is the duty — the high fraction of the cycle; wire a control source for PWM. `width` is clamped to [0.01, 0.99] so the two BLEPs never collide into a narrow-pulse artifact. `inc` note-derived; `inv_inc` = 2^32/inc (note-on reciprocal).",
-  "ins": { "mod": "control", "fm": "audio", "width": { "rate": "control", "default": "16384" } },
+  "summary": "Band-limited pulse/square (2nd-order polyBLEP, two BLEPs — one per edge). `width` (Q15, default 0.5 = square) is the duty — the high fraction of the cycle; a settable param, clamped to [0.01, 0.99] so the two BLEPs never collide into a narrow-pulse artifact. `inc` note-derived; `inv_inc` = 2^32/inc (note-on reciprocal).",
+  "ins": { "mod": "control", "fm": "audio" },
   "outs": { "audio": "audio" },
-  "params": { "inc_ratio": "q16" },
+  "params": { "inc_ratio": "q16", "width": { "kind": "q15", "default": "16384" } },
   "state": { "inc": "q32", "inv_inc": "q32", "phase": "phase", "pw": "q32" },
   "note_derived": { "inc": "inc_ratio" },
   "note_reciprocal": { "inv_inc": "inc" },
-  "block_derived": { "pw": "(uint32_t)((${in.width} < 328 ? 328 : (${in.width} > 32440 ? 32440 : ${in.width}))) << 17" }
+  "block_derived": { "pw": "(uint32_t)((${param.width} < 328 ? 328 : (${param.width} > 32440 ? 32440 : ${param.width}))) << 17" }
 }

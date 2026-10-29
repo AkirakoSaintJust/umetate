@@ -77,6 +77,9 @@ class NodeSpec:
     ins: dict[str, PortSpec] = field(default_factory=lambda: {})
     outs: dict[str, PortSpec] = field(default_factory=lambda: {})
     params: dict[str, str] = field(default_factory=lambda: {})  # param -> q-format
+    param_defaults: dict[str, str] = field(
+        default_factory=lambda: {}
+    )  # param -> explicit default (overrides the kind default)
     state: dict[str, str] = field(
         default_factory=lambda: {}
     )  # state -> type (or "pool")
@@ -294,11 +297,21 @@ def node_spec_from_manifest(manifest: NodeManifest, body: str) -> NodeSpec:
     name = manifest["name"]
     ins = {p: _parse_port(v) for p, v in manifest.get("ins", {}).items()}
     outs = {p: _parse_port(v) for p, v in manifest["outs"].items()}
+    params: dict[str, str] = {}
+    param_defaults: dict[str, str] = {}
+    for pname, spec in manifest.get("params", {}).items():
+        if isinstance(spec, str):
+            params[pname] = spec
+        else:
+            params[pname] = spec["kind"]
+            if "default" in spec:
+                param_defaults[pname] = str(spec["default"])
     return NodeSpec(
         name=name,
         ins=ins,
         outs=outs,
-        params=dict(manifest.get("params", {})),
+        params=params,
+        param_defaults=param_defaults,
         state=dict(manifest.get("state", {})),
         note_derived=dict(manifest.get("note_derived", {})),
         note_cutoff=dict(manifest.get("note_cutoff", {})),
