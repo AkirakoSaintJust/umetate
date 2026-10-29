@@ -199,6 +199,7 @@ class CompiledGraph:
     tables: list[Table] = field(default_factory=lambda: [])
     control_block: int = CONTROL_BLOCK_DEFAULT
     n_parts: int = 1  # `parts:` count (1 = single-timbre; >1 = multitimbral)
+    n_voice_params: int = 0  # the per-part timbre-param count (a part patch's N)
 
 
 def to_c_identifier(name: str) -> str:

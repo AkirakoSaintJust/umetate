@@ -1819,6 +1819,25 @@ def main() -> int:
     else:
         print("ok: per-part params are part-major (channel.p0/p1 present)")
 
+    # the generated sysex-layout pins the per-firmware record geometry (F4c).
+    from .generate import generate_sysex_layout
+
+    layout = generate_sysex_layout(PARTS_PATCH)
+    expect = {
+        "n_params": 2,
+        "n_parts": 2,
+        "part_patch_size": 1 + 16 + 2 * 4 + 4,
+        "multi_patch_size": 1 + 16 + 2 + 5 * 2 * 4 + 4,
+        "settings_size": 1 + 4 + 4 + 4,
+        "part_patch_bank_size": 64 * (1 + 16 + 2 * 4 + 4),
+        "multi_patch_bank_size": 64 * (1 + 16 + 2 + 5 * 2 * 4 + 4),
+    }
+    if layout != expect:
+        print(f"FAIL: sysex-layout geometry is wrong ({layout})")
+        failures += 1
+    else:
+        print("ok: sysex-layout pins the record geometry (2 params, 2 parts)")
+
     # the dogfood panel (examples/fourop-fm/panel.json) resolves against the patch's
     # params (every widget/binding names a real set_param id).
     ffm_panel = as_panel(

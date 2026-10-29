@@ -102,6 +102,12 @@ def compile(
     if n_parts < 1:
         raise GenError("parts: 'count' must be >= 1")
 
+    n_voice_params = sum(
+        sum(1 for k in i.spec.params.values() if k != TABLE)
+        for i in instances
+        if i.zone == "voice"
+    )
+
     params = _build_params(instances, patch.get("params") or {}, n_parts, parts)
     params.extend(mode_param_entries(len(params)))
 
@@ -116,6 +122,7 @@ def compile(
         params=params,
         tables=build_tables(patch.get("tables") or {}),
         n_parts=n_parts,
+        n_voice_params=n_voice_params,
     )
 
 

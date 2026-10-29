@@ -257,6 +257,20 @@ class ParamsDoc(TypedDict):
     params: list[ParamDoc]
 
 
+class SysexLayout(TypedDict):
+    """The generated `sysex-layout.json` (roadmap §6.11.4): the per-firmware SysEx
+    payload geometry — the part-patch record's param count, the part count, and the
+    record/bank sizes (the `<model>` byte is a firmware identity, supplied at build)."""
+
+    n_params: int
+    n_parts: int
+    part_patch_size: int
+    multi_patch_size: int
+    settings_size: int
+    part_patch_bank_size: int
+    multi_patch_bank_size: int
+
+
 # ------------------------------------------------- fm1tk strangler-fig ----
 
 

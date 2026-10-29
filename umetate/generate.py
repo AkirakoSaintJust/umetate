@@ -15,13 +15,14 @@ from pathlib import Path
 from ._backend import emit
 from ._frontend import compile
 from ._ir import CompiledGraph, GenError, NodeSpec, load_library, load_macros
-from ._schema import Macro, ParamsDoc, Patch
+from ._schema import Macro, ParamsDoc, Patch, SysexLayout
 from ._tables import emit_tables_c, emit_tables_h
 
 __all__ = [
     "generate",
     "generate_params",
     "generate_tables",
+    "generate_sysex_layout",
     "param_ids",
     "GenError",
     "NodeSpec",
@@ -102,3 +103,27 @@ def generate_tables(
     """The generated `tables.h` + `tables.c` (const XIP arrays) for `tables:`."""
     graph = _graph(patch, nodes, macros)
     return emit_tables_h(graph.tables), emit_tables_c(graph.tables)
+
+
+def generate_sysex_layout(
+    patch: Patch,
+    nodes: Mapping[str, NodeSpec] | None = None,
+    macros: Mapping[str, Macro] | None = None,
+) -> SysexLayout:
+    """The generated `sysex-layout.json` (roadmap §6.11.4): the per-firmware SysEx
+    payload geometry — record/bank sizes from the patch's param + part counts (the
+    `<model>` byte is a firmware identity, supplied at build)."""
+    from ._records import SLOTS, multi_patch_size, part_patch_size, settings_size
+
+    graph = _graph(patch, nodes, macros)
+    n_params = graph.n_voice_params
+    n_parts = graph.n_parts
+    return {
+        "n_params": n_params,
+        "n_parts": n_parts,
+        "part_patch_size": part_patch_size(n_params),
+        "multi_patch_size": multi_patch_size(n_parts),
+        "settings_size": settings_size(),
+        "part_patch_bank_size": SLOTS * part_patch_size(n_params),
+        "multi_patch_bank_size": SLOTS * multi_patch_size(n_parts),
+    }
