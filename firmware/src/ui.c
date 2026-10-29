@@ -449,9 +449,15 @@ static void ui_draw_status(const ui_widget *w)
     t[2] = (char)('0' + ui_t->n_op);
     t[3] = 0;
     ui_strcat(s, t);
-    if (muted)
-        ui_strcat(s, "  MUTE");
-    draw_text_box(x, y, wd, &FONT_S, s, C_HI, 0);
+    /* the mute flag is drawn in the warning colour (its text also says MUTE, so it
+     * is not conveyed by colour alone). */
+    cv_begin(wd, FONT_S.h, C_BLACK);
+    {
+        int32_t end = cv_text(0, 0, &FONT_S, s, C_HI);
+        if (muted)
+            cv_text(end, 0, &FONT_S, "  MUTE", C_WARN);
+    }
+    cv_blit(x, y);
 }
 
 static void ui_draw_widget(const ui_widget *w)

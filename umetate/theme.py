@@ -60,6 +60,41 @@ def rgb_to_hex(c: RGB) -> str:
     return "#{:02x}{:02x}{:02x}".format(*c)
 
 
+def rgb_to_rgb565(c: RGB) -> int:
+    """RGB888 -> RGB565 (the screen's 5/6/5-bit format)."""
+    r, g, b = c
+    return ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3)
+
+
+_EMIT_ROLES = (
+    "background",
+    "surface",
+    "text",
+    "muted",
+    "accent",
+    "success",
+    "warning",
+    "error",
+)
+
+
+def emit_c(theme: Theme) -> str:
+    """A C header of the role colours as RGB565 `#define`s (for gfx.c)."""
+    colors = theme["colors"]
+    lines = [
+        "/* GENERATED — do not edit. Source: firmware/theme.json "
+        "(umetate theme emit firmware/theme.json). */",
+        "#pragma once",
+    ]
+    for role in _EMIT_ROLES:
+        if role not in colors:
+            continue
+        value = rgb_to_rgb565(hex_to_rgb(colors[role]))
+        macro = "THEME_" + role.upper()
+        lines.append(f"#define {macro} 0x{value:04X}u")
+    return "\n".join(lines) + "\n"
+
+
 def _linear(channel: int) -> float:
     """A single sRGB channel (0..255) -> linear light (0..1)."""
     c = channel / 255.0
@@ -153,6 +188,13 @@ def _print_report(theme: Theme) -> None:
         print(f"  {line}")
 
 
+def _read_theme(path: str) -> Theme:
+    """Read a theme.json (`{name, colors}`) from `path`."""
+    with open(path, encoding="utf-8") as f:
+        raw = json.load(f)
+    return {"name": raw.get("name", "palette"), "colors": raw["colors"]}
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="umetate theme", description=__doc__)
     sub = parser.add_subparsers(dest="action", required=True)
@@ -160,22 +202,37 @@ def main(argv: list[str] | None = None) -> int:
     check_p.add_argument("palette", help="a theme.json (`{name, colors}`)")
     gen_p = sub.add_parser("generate", help="build a dark palette from an accent hue")
     gen_p.add_argument("--hue", type=float, default=150.0, help="the accent hue 0..360")
+    gen_p.add_argument(
+        "--c", action="store_true", help="emit a C header (RGB565), not JSON"
+    )
+    emit_p = sub.add_parser("emit", help="emit a C header (RGB565) from a theme.json")
+    emit_p.add_argument("palette", help="a theme.json (`{name, colors}`)")
     args = parser.parse_args(argv)
 
     if args.action == "check":
         try:
-            with open(args.palette, encoding="utf-8") as f:
-                raw = json.load(f)
+            theme = _read_theme(args.palette)
         except (OSError, json.JSONDecodeError) as exc:
             print(f"theme: cannot read {args.palette!r}: {exc}", file=sys.stderr)
             return 1
-        theme: Theme = {"name": raw.get("name", "palette"), "colors": raw["colors"]}
         _print_report(theme)
         return 0 if all("FAIL" not in line for line in check(theme)) else 1
 
+    if args.action == "emit":
+        try:
+            theme = _read_theme(args.palette)
+        except (OSError, json.JSONDecodeError) as exc:
+            print(f"theme: cannot read {args.palette!r}: {exc}", file=sys.stderr)
+            return 1
+        print(emit_c(theme), end="")
+        return 0
+
     theme = generate(args.hue)
-    print(json.dumps(theme, indent=2))
-    _print_report(theme)
+    if args.c:
+        print(emit_c(theme), end="")
+    else:
+        print(json.dumps(theme, indent=2))
+        _print_report(theme)
     return 0
 
 

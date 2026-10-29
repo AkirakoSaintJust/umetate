@@ -1,0 +1,13 @@
+{
+  "name": "fourop-fm",
+  "colors": {
+    "background": "#000000",
+    "surface": "#0a1414",
+    "text": "#ffffff",
+    "muted": "#9ca3af",
+    "accent": "#00ffff",
+    "success": "#00ff2a",
+    "warning": "#ffaa00",
+    "error": "#ff0000"
+  }
+}

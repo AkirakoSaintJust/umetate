@@ -777,10 +777,13 @@ The shipped, tested UI base every project builds on:
 - **Theme (palette):** a small, verified-contrast colour set — background / surface /
   text / muted / accent / success / warning / error — with a **dark-mode default**
   meeting the applicable WCAG 2.1 subset (1.4.3 contrast, 1.4.11 non-text,
-  2.4.7/2.4.13 focus, 1.4.1 not-colour-alone). `umetate theme check|generate` does the
-  WCAG math + a contrast report; the shipped gfx.c palettes were re-verified and the
-  three low-contrast label steps (AMBER/CYAN/RED) brightened to >= 4.5:1
-  (`test_theme.py` locks it).
+  2.4.7/2.4.13 focus, 1.4.1 not-colour-alone). `umetate theme check|generate|emit`
+  does the WCAG math + a contrast report + a C header; the shipped gfx.c palettes
+  were re-verified and the three low-contrast label steps (AMBER/CYAN/RED) brightened
+  to >= 4.5:1 (`test_theme.py` locks it). The theme is **wired into the firmware**:
+  `firmware/theme.json` -> `firmware/gen/theme.h` (generated), gfx.c maps
+  `C_WHITE` to the theme accent (selection) + `C_OK`/`C_WARN`/`C_ERR` for status,
+  and ui.c draws the mute flag in `C_WARN` (with the "MUTE" text, so not colour-alone).
 - **`scope` + `spectro` widgets** (shipped): the oscilloscope plots the last render
   block's left channel (`scope_push` in the audio ISR stores a bounded snapshot;
   `scope_at` reads it — one writer / one reader, no lock, a torn frame is harmless),

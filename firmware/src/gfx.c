@@ -13,6 +13,7 @@ typedef struct {               /* proportional, see tools/gen_font.py */
     const uint8_t *data;
 } felucca_font_t;
 #include "felucca_font.h"
+#include "theme.h"                     /* the generated palette (firmware/theme.json) */
 
 #ifndef CV_MAX
 #define CV_MAX (240u * 124u)      /* the graph strip is 240 x 124 */
@@ -23,7 +24,10 @@ static int32_t cv_oy;            /* y offset for graph drawing */
 
 #define RGB(r, g, b) ((uint16_t)((((r) >> 3) << 11) | (((g) >> 2) << 5) | ((b) >> 3)))
 #define C_BLACK 0x0000u
-#define C_WHITE 0xFFFFu              /* accent only: what is being touched / where we are */
+#define C_WHITE THEME_ACCENT            /* accent: what is being touched / where we are */
+#define C_OK    THEME_SUCCESS           /* status: ok / saved / playing */
+#define C_WARN  THEME_WARNING           /* status: muted / dirty / caution */
+#define C_ERR   THEME_ERROR             /* status: error / halted */
 /* The screen is five steps of one colour, darkest to brightest, plus white.
  * Palettes are picked in the HOME-hold menu (COLOR). */
 typedef struct {

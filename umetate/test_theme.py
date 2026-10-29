@@ -6,15 +6,22 @@ regression lock so a palette edit can't silently drop below 1.4.3)."""
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from .theme import (
     Theme,
     check,
     contrast,
+    emit_c,
     generate,
     hex_to_rgb,
     luminance,
     rgb_to_hex,
+    rgb_to_rgb565,
 )
+
+ROOT = Path(__file__).resolve().parents[1]
 
 # the shipped gfx.c PALETTES (8-bit source), step 2 = C_GRAY (labels), 3 = C_AMB,
 # 4 = C_HI (values). Mirrors firmware/src/gfx.c — keep in sync.
@@ -84,6 +91,21 @@ def main() -> int:
     if rgb_to_hex(hex_to_rgb("#00ff80")) != "#00ff80":
         print("FAIL: hex/rgb round-trip")
         failures += 1
+
+    # 6. the C header emit + the checked-in firmware/gen/theme.h is in sync.
+    if rgb_to_rgb565((0, 255, 255)) != 0x07FF:
+        print("FAIL: cyan RGB565 is not 0x07FF")
+        failures += 1
+    else:
+        print("ok: cyan -> RGB565 0x07FF")
+    raw = json.loads((ROOT / "firmware" / "theme.json").read_text(encoding="utf-8"))
+    emitted = emit_c({"name": raw["name"], "colors": raw["colors"]})
+    checked = (ROOT / "firmware" / "gen" / "theme.h").read_text(encoding="utf-8")
+    if emitted != checked:
+        print("FAIL: firmware/gen/theme.h is stale (run `umetate theme emit`)")
+        failures += 1
+    else:
+        print("ok: firmware/gen/theme.h is in sync with theme.json")
 
     print("theme tests " + ("FAILED" if failures else "passed"))
     return 1 if failures else 0
