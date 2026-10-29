@@ -259,6 +259,15 @@ param tables) are produced by a generator, never hand-edited.
   rest sounding (the score picks `min(voice_age)`; the retrigger/stacking contracts
   in `test_generate` still pass).
 
+- **Steal stress + UB fix.** A 40-note storm on a 20-voice pool (80 voice-requests,
+  60 oldest-steals ×3 rounds) under ASan+UBSan passes: no OOB, no stuck notes, the
+  oldest notes stolen, silence after all-off. UBSan surfaced a real latent bug in
+  two nodes — `(int64_t)x << 16` (a left-shift of a negative signed int64, UB in C)
+  in `phasor` (the FM index) and `wavefolder` — fixed to `(int64_t)x * 65536`
+  (well-defined, identical on two's-complement). The emulator's `--keys` note
+  display uses key indices, so its apparent non-oldest steal is a numbering
+  artifact, not a firmware bug (settled by the host test).
+
 - **CPU1 code lives in RAM** (`.c1_text`, its waiting loop) so it never fetches
   from flash while flash is busy (AC79 §7.40).
 - **IPC:** the one-job mailbox (`fm1_c1_mb`, Felucca `fm1_cpu1.h`) for the render
