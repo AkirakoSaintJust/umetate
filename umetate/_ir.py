@@ -89,6 +89,9 @@ class NodeSpec:
     reciprocals: dict[str, str] = field(
         default_factory=lambda: {}
     )  # field -> source (2^32/src at note-on)
+    block_derived: dict[str, str] = field(
+        default_factory=lambda: {}
+    )  # field -> template (recomputed every control block, before the audio loop)
     body: str = ""  # the per-sample template
 
 
@@ -112,6 +115,9 @@ class NodeInstance:
     note_cutoff: dict[str, str] = field(
         default_factory=lambda: {}, repr=False
     )  # field -> ratio (the 2*sin filter coeff)
+    block_derived: dict[str, str] = field(
+        default_factory=lambda: {}, repr=False
+    )  # field -> template (recomputed each control block)
 
     @property
     def c(self) -> str:
@@ -290,6 +296,7 @@ def node_spec_from_manifest(manifest: NodeManifest, body: str) -> NodeSpec:
         note_derived=dict(manifest.get("note_derived", {})),
         note_cutoff=dict(manifest.get("note_cutoff", {})),
         reciprocals=dict(manifest.get("note_reciprocal", {})),
+        block_derived=dict(manifest.get("block_derived", {})),
         body=body,
     )
 

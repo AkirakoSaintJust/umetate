@@ -4,6 +4,7 @@
   "ins": { "mod": "control", "fm": "audio", "pitch": "control" },
   "outs": { "phase": { "rate": "audio", "format": "phase" } },
   "params": { "inc_ratio": "q16" },
-  "state": { "inc": "q32", "phase": "phase" },
-  "note_derived": { "inc": "inc_ratio" }
+  "state": { "inc": "q32", "phase": "phase", "step": "q32" },
+  "note_derived": { "inc": "inc_ratio" },
+  "block_derived": { "step": "(uint32_t)(((int64_t)${state.inc} * (32768 + ${in.pitch})) >> 15)" }
 }

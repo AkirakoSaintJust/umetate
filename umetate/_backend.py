@@ -228,6 +228,22 @@ def _render(
     # portamento glide (control rate): ramp each voice's base increment.
     lines.extend(_voice.glide(name))
 
+    # block-derived state: recompute per-voice block-constant values after the
+    # global control temps are available (e.g. the phasor's pitch-scaled
+    # increment `inc * (32768 + pitch) >> 15` — pitch is control-rate, so the
+    # multiply was being redone every sample).
+    block_derived = [
+        by_id[iid] for iid in graph.voice_order if by_id[iid].block_derived
+    ]
+    if block_derived:
+        lines.append("        for (uint32_t v = 0; v < NVOICE; v++) {")
+        lines.append("            if (!voice_gate[v]) continue;")
+        for i in block_derived:
+            for field, template in i.block_derived.items():
+                expr = substitute(i, template, "v", table_names, per_part)
+                lines.append(f"            {i.state_ref(field, 'v')} = {expr};")
+        lines.append("        }")
+
     # audio loop
     lines.append(f"        for (uint32_t f = b; f < b + {cb}u && f < frames; f++) {{")
     lines.append("            int32_t bus = 0;")
