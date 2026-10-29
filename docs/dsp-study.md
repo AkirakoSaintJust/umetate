@@ -126,6 +126,13 @@ uint32_t q = p < d ? (p * s0) >> 16 : v + (((p - d) * s1) >> 16);
 out = fm1_sin(q << 16);                                     /* shaped phase -> sine */
 ```
 
+`v` is not confined to `[0,1]`: the phaseshaping allows `v` outside one cycle
+(e.g. `v = 1.5`), and the shaped phase then wraps past the wavecycle (`v < 0` wraps
+backward) — the Q32 phase accumulator's uint32 wrap does this for free. umetate's
+`phase_shape` node keeps it: the slopes are int64 (a *multiply* by 2^15 / 2^17, not
+a `<<` — left-shifting a negative int64 is UB), and the shaped phase is cast to
+uint32. `phase_dist` is the `v = 0.5` classic-PD special case.
+
 For umetate, VPS is a **parameterized phase shaper**, not a fixed `phase_map`
 table. Its transfer depends on `(d, v)`, which can be modulated through
 `<param>_mod` inputs. Static shapes still fit the "shape = data" rule and use

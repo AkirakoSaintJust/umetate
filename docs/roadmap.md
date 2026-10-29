@@ -720,7 +720,7 @@ planned half of each shipped node; the full follow-up, classified by the "one no
 | `comb` | — | `delayN` with feedback (already shipped); no macro needed |
 | `pulse` (band-limited) | node | the `saw` polyBLEP with a `width` param (two BLEPs, PWM) |
 | `apc` / `dual_apc` | macro | square `table` + env / two cross-modulated squares |
-| `vps` | macro | DAFx-11 (Kleimola et al.): 2-D inflection point `p=(d,v)`, multi-breakpoint, audio-rate modulation — dynamic phase distortion, generalizes `phase_map` |
+| `vps` | macro | DAFx-11 (Kleimola et al.): 2-D inflection point `p=(d,v)`, multi-breakpoint, audio-rate modulation — dynamic phase distortion, generalizes `phase_map`. The single-breakpoint, control-rate case is now `phase_shape` (and `phase_dist` = the `v=0.5` classic); the multi-breakpoint/audio-rate macro is the remaining extension |
 | `formant` (K5000-style) | macro | bank of `svf` band-passes + vowel presets |
 | `granulator` (Xenakis) | node(s) | phase-granular (no audio buffer) + a separate stochastic/GENDYN node |
 
@@ -2140,7 +2140,8 @@ generator) + a host parity test. The generator composes nodes into the §12.1 se
 | --- | --- | --- | --- | --- | --- |
 | `phasor` | phase accumulator | `mod`(c), `fm`(a) | `phase`(c/a) | — | `inc`(q32), `phase`(phase) |
 | `osc` / `table` | wave reader | `phase`(c/a) | `audio`(a) | `shape`, `level`, `phase_map` | — |
-| `phase_shape` | dynamic phase shaper (VPS) | `phase`(c/a) | `phase`(c/a) | `d`, `v` | — |
+| `phase_shape` | vector phaseshaper (VPS): one 2-D inflection `(d,v)` | `phase`(a), `d`(c), `v`(c) | `phase`(a) | — | `s0`,`s1`(q16) |
+| `phase_dist` | classic phase distortion (VPS with `v=0.5`) | `phase`(a), `d`(c) | `phase`(a) | — | `s0`,`s1`(q16) |
 | `env` / `seg` | segment generator | `gate`(e) | `cv`(c) | — (segments = data) | `stage`, `level`(q16) |
 | `vca` | gain | `audio`(a), `cv`(c) | `audio`(a) | `level` | — |
 | `mix` / `add` | summer | `in0..inN`(a) | `audio`(a) | — | — |

@@ -1,0 +1,13 @@
+{
+  "name": "phase_dist",
+  "summary": "Classic phase distortion (Casio CZ): the VPS (d,v) inflection with v fixed at 0.5 — a single bend at x=`d` distorts the phase ramp along x only. `d` = the bend position (0..1), control-rate.",
+  "ins": { "phase": { "rate": "audio", "format": "phase" }, "d": { "rate": "control", "default": "16384" } },
+  "outs": { "phase": { "rate": "audio", "format": "phase" } },
+  "params": {},
+  "state": { "d_c": "q15", "s0": "q16", "s1": "q16" },
+  "block_derived": {
+    "d_c": "(${in.d} < 1 ? 1 : (${in.d} > 32767 ? 32767 : ${in.d}))",
+    "s0": "(int32_t)((16384LL * 32768) / ${state.d_c})",
+    "s1": "(int32_t)((16384LL * 32768) / (32768 - ${state.d_c}))"
+  }
+}

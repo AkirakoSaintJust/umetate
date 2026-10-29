@@ -96,6 +96,52 @@ SINE_ENV: Patch = {
     "global": {"nodes": [], "wires": []},
 }
 
+# phase_shape / phase_dist between the phasor and the osc (identity at d=v=0.5).
+PHASE_SHAPE: Patch = {
+    "name": "phase_shape_test",
+    "voices": 4,
+    "voice": {
+        "nodes": [
+            {"id": "ph", "type": "phasor"},
+            {"id": "sh", "type": "phase_shape"},
+            {"id": "osc", "type": "osc"},
+            {"id": "env", "type": "env"},
+            {"id": "vca", "type": "vca"},
+        ],
+        "wires": [
+            {"from": "ph.phase", "to": "sh.phase"},
+            {"from": "sh.phase", "to": "osc.phase"},
+            {"from": "osc.audio", "to": "vca.audio"},
+            {"from": "env.cv", "to": "vca.cv"},
+        ],
+        "voice_out": "vca.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
+PHASE_DIST: Patch = {
+    "name": "phase_dist_test",
+    "voices": 4,
+    "voice": {
+        "nodes": [
+            {"id": "ph", "type": "phasor"},
+            {"id": "pd", "type": "phase_dist"},
+            {"id": "osc", "type": "osc"},
+            {"id": "env", "type": "env"},
+            {"id": "vca", "type": "vca"},
+        ],
+        "wires": [
+            {"from": "ph.phase", "to": "pd.phase"},
+            {"from": "pd.phase", "to": "osc.phase"},
+            {"from": "osc.audio", "to": "vca.audio"},
+            {"from": "env.cv", "to": "vca.cv"},
+        ],
+        "voice_out": "vca.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
+
 # `osc` with a non-sine waveform (6 = double half sine) — exercises fm1_sin_wave.
 WAVEFORM: Patch = {
     "name": "waveform_test",
@@ -2105,6 +2151,20 @@ def main() -> int:
     print(
         ("ok: " if ok else "FAIL: ")
         + (msg or "dx_env rate/level envelope renders non-silent then silent")
+    )
+    failures += 0 if ok else 1
+
+    ok, msg = _sound(PHASE_SHAPE)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "phase_shape (VPS) renders non-silent then silent")
+    )
+    failures += 0 if ok else 1
+
+    ok, msg = _sound(PHASE_DIST)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "phase_dist (classic PD) renders non-silent then silent")
     )
     failures += 0 if ok else 1
 
