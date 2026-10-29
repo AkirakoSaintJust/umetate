@@ -118,11 +118,24 @@ agent-time, never runtime.
   cycle-breakers. FM/PM feedback is an explicit `delay1` edge — a per-sample *data
   dependency*, not a per-sample *dispatch*.
 - **Modulation:** a `modulatable` param gets a paired control input `<param>_mod`
-  and a depth param; effective value = base + mod·depth at block rate.
+  and a depth param; effective value = base + mod·depth at block rate. The node
+  declares *capability* (`modulatable: true`); the **patch is the final spec** — it
+  decides exposure (the `params:` surface) and wiring, so the end user of the
+  finished synth never sees the node flag. A param with no dedicated control input
+  (shape, width) takes `modulatable`; one with a natural control input (pitch,
+  level, cutoff) stays a wired input. An unwired `<param>_mod` folds to `base` at
+  `-O2`, so marking a param modulatable costs nothing until it is used.
 - **Shape data:** wavetables, segments, spectra, phase-maps live in `tables:` →
   `const` XIP arrays.
 - **Events:** `{kind: note_on|note_off, note, velocity}`; nodes derive gate/trigger.
 - **Multiplicity:** patch zones — `voice` = SoA × NVOICE, `global` = single.
+
+**Evaluation is multi-rate, not reactive.** The render is split by rate — sample /
+block (`block_derived`) / note (`note_derived`, `note_tune`, `note_cutoff`,
+`note_reciprocal`) — never by change-detection. Compute-on-change reactivity and
+memoisation are **rejected**: modulation changes every block, so a per-change
+dirty-check would only tax the hot path. There is no `param_derived` rung and no
+reactive graph.
 
 **Authoring, by hand or agentically (like Angular):** the CLI scaffolds a default
 node/macro/patch, which the user customizes — its DSP core, params, and graph —
@@ -521,6 +534,11 @@ generated recovery taxonomy + code conventions (same drift-checked copies).
   auto-fetch (toolchain from `pkgman.jieliapp.com`, SDK from gitee, both with opt-in
   consent) or a user-supplied path; version- + hash-verified against `env.lock`.
 - Windows: everything through WSL2 → Docker.
+- **The image/container are rebuilt, not edited:** after a `docker/Dockerfile` or
+  `env.lock` pin change, rebuild the image and recreate the persistent
+  `umetate-host` container — a stale image silently drops a tool (e.g. pyright).
+  `deep-check` must report a missing tool as *not-run* and fail, not crash with
+  `FileNotFoundError`.
 
 ### 6.5 RIB starter firmware
 
@@ -721,6 +739,8 @@ planned half of each shipped node; the full follow-up, classified by the "one no
 | `vps` | macro | DAFx-11 (Kleimola et al.): 2-D inflection point `p=(d,v)`, multi-breakpoint, audio-rate modulation — dynamic phase distortion, generalizes `phase_map`. The single-breakpoint, control-rate case is now `phase_shape` (and `phase_dist` = the `v=0.5` classic); the multi-breakpoint/audio-rate macro is the remaining extension. Follow-up: the `phase_shape` slope divisions (2 signed 64-bit per voice per block, ~10–20% of a block at 20 voices) should be hoisted to note-rate when `d`/`v` are unmodulated, or replaced with reciprocals |
 | `formant` (K5000-style) | macro | bank of `svf` band-passes + vowel presets |
 | `granulator` (Xenakis) | node(s) | phase-granular (no audio buffer) + a separate stochastic/GENDYN node |
+| SN76489 tone | example | naive square + the chip's 16-step volume ladder as `tables:` data — the "decaying pulse / gloomy" character; no new nodes |
+| `k5000` additive | example | additive/IFFT via the spectral oscillator (`tables: spectrum`), reduced harmonic count for the pi32v2 (post-baseline) |
 
 `svf`, `wavefolder`, and `fm_op` shipped first (the "batch 1" build); `lpg`, the
 spectral oscillator, the `table` reader, and the band-limited `saw` followed. The
@@ -774,6 +794,13 @@ The shipped, tested UI base every project builds on:
   display/flash/logging in the audio callback.
 - **Panel generator:** `panel.json` → the app's UI wiring (bindings, pages,
   navigation); a custom `cv_*` canvas page is the escape hatch.
+- **Theme (palette):** a small, verified-contrast colour set — background / surface /
+  text / muted / accent / success / warning / error — with a **dark-mode default**
+  meeting the applicable WCAG 2.1 subset (1.4.3 contrast, 1.4.11 non-text,
+  2.4.7/2.4.13 focus, 1.4.1 not-colour-alone). The CLI/agent generates the palette +
+  a contrast report alongside `panel.json`.
+- **Planned widgets:** `scope` (time-domain — cheap, downsample the output buffer)
+  and `spectrogram` (kiss_fft, rate-limited on CPU0 idle — the `LCD_IDLE` pattern).
 
 The panel schema is `templates/scaffold/panel.schema.json`; the interview fills
 `templates/control-map.md`.
@@ -903,12 +930,15 @@ strengthening below.
   `rA_rB += [rC ++= i1]*[rD ++= i2]` 64-bit memory-MAC (two auto-incrementing
   loads, immediate strides, `h[..]` for a 16-bit operand); `r1_r0 = r0 * r0` square.
   These are wrapped in `hal/fm1_dsp_kernels.h` as `static inline` helpers with a
-  bit-identical C fallback for host/WASM — RIB and the generator both call the same
-  kernels (the generator emits node bodies that *call* them, so the composable
-  "one node = one algorithm" model is untouched). First kernels: `fm1_kernel_sum_i32`
-  (rep sum) and `fm1_kernel_dot_i32` (rep + memory-MAC dot, 64-bit accumulate).
-  Still open: SIMD `+|+`/`*|*` (syntax known from the stock, semantics TBD), wiring
-  a kernel into the generated render, and re-measuring against clang.
+  bit-identical C fallback for host/WASM, so a kernel is a plain C call — the
+  composable "one node = one algorithm" model is untouched. First kernels:
+  `fm1_kernel_sum_i32` (rep sum) and `fm1_kernel_dot_i32` (rep + memory-MAC dot,
+  64-bit accumulate), host-tested for bit-parity.
+  Wiring a kernel into the generated render is a **committed default**, not an
+  option: the mix/route/dot inner loops emit `fm1_kernel_dot_i32`/`fm1_kernel_sum_i32`
+  so the proven `rep` + memory-MAC path is what every project gets, with a
+  render-time budget regression guard (§12.7.3). Still open: SIMD `+|+`/`*|*`
+  (syntax known from the stock, semantics TBD) and re-measuring against clang.
 
 #### 6.11.4 Design (concrete)
 
@@ -2359,6 +2389,9 @@ it compile everywhere. `generate.py` is deterministic (same inputs → byte-iden
   on the next redraw; a mode override beats the global; no display in the audio
   callback.
 - **ring tests:** SPSC wrap-around, overrun counter, no lost note-off.
+- **performance regression guard:** compile the generated `dsp.c` and time a fixed
+  render on host; fail over a per-patch threshold. The emulator ISR% (`emu --check
+  --mhz 320`) is the higher-fidelity gate when the toolchain is present.
 - **evidence matrix:** per §5.5, each layer recorded, `blocked`/`not-run` not passes.
 
 #### 12.7.4 The schematic engine
