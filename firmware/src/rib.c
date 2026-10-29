@@ -16,8 +16,10 @@
 #include "synth_sysex.h"                       /* before platform.c: usb.c feeds synth_sysex_feed */
 #include "synth_midi.h"
 #include "synth_runtime.h"
+#include "scope.h"
 static void app_idle(void);
 #define LCD_IDLE app_idle                       /* while the screen's DMA runs: MIDI in (platform.c) */
+#include "scope.c"                              /* the scope/spectrogram core (before platform.c: the ISR hooks scope_push) */
 #include "platform.c"
 #if BOARD_SMK37
 #include "smk_wheel.h"

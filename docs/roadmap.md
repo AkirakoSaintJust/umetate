@@ -779,8 +779,14 @@ The shipped, tested UI base every project builds on:
   meeting the applicable WCAG 2.1 subset (1.4.3 contrast, 1.4.11 non-text,
   2.4.7/2.4.13 focus, 1.4.1 not-colour-alone). The CLI/agent generates the palette +
   a contrast report alongside `panel.json`.
-- **Planned widgets:** `scope` (time-domain — cheap, downsample the output buffer)
-  and `spectrogram` (kiss_fft, rate-limited on CPU0 idle — the `LCD_IDLE` pattern).
+- **`scope` + `spectro` widgets** (shipped): the oscilloscope plots the last render
+  block's left channel (`scope_push` in the audio ISR stores a bounded snapshot;
+  `scope_at` reads it — one writer / one reader, no lock, a torn frame is harmless),
+  and the spectrogram is an integer **Goertzel bank** over linearly-spaced bins
+  (log-power, log2 scale — no float, no 64-bit divide on the soft-FP target). Both
+  redraw on `scope_seq` (a new snapshot), bounded by the ~30 Hz retained-mode
+  redraw. Host-tested: snapshot round-trip, a 2000 Hz sine peaks at the right bin,
+  and the 120-bin spectrum costs ~0.08 ms (well under a UI frame).
 
 The panel schema is `templates/scaffold/panel.schema.json`; the interview fills
 `templates/control-map.md`.

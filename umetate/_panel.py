@@ -187,6 +187,8 @@ _WIDGETS = {
     "list": "UI_LIST",
     "grid": "UI_GRID",
     "envelope": "UI_ENVELOPE",
+    "scope": "UI_SCOPE",
+    "spectro": "UI_SPECTRO",
     "status": "UI_STATUS",
 }
 

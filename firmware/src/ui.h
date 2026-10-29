@@ -25,6 +25,8 @@ enum {
     UI_GRID,           /* a grid of cells (span lines tall) */
     UI_OP_ROW,         /* a param row resolved through the selected operator */
     UI_ENVELOPE,       /* the DX rate/level curve (straight-line approximation) */
+    UI_SCOPE,          /* the oscilloscope: the last render block's waveform */
+    UI_SPECTRO,        /* the spectrogram: Goertzel magnitude bars */
     UI_STATUS,         /* a status readout (algorithm + selected operator + mute) */
     UI_CUSTOM,         /* the cv_* canvas escape hatch: ui_draw_custom() draws it */
 };

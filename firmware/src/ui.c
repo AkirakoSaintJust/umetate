@@ -381,6 +381,51 @@ static void ui_draw_envelope(const ui_widget *w)
     cv_blit(x, y);
 }
 
+/* the oscilloscope: the last render block's left channel, downsampled to the
+ * widget width, drawn as a line with a mid-line. Time-varying — redraws whenever
+ * the snapshot advances (scope_seq), which the ISR bumps every block. */
+static void ui_draw_scope(const ui_widget *w)
+{
+    uint32_t x, y, wd, ht, i;
+    int32_t mid, lx, ly;
+    ui_region(w, &x, &y, &wd, &ht);
+    if (wd < 2u)
+        return;
+    cv_begin(wd, ht, C_BLACK);
+    mid = (int32_t)ht / 2;
+    cv_line(0, mid, (int32_t)wd - 1, mid, C_DIM);
+    lx = 0;
+    ly = mid - (scope_at(0u) * (int32_t)ht) / 65536;
+    for (i = 1; i < wd; i++) {
+        int32_t s = scope_at(i * SCOPE_N / wd);
+        int32_t px = (int32_t)i, py = mid - (s * (int32_t)ht) / 65536;
+        cv_line(lx, ly, px, py, C_HI);
+        lx = px;
+        ly = py;
+    }
+    cv_blit(x, y);
+}
+
+/* the spectrogram: SCOPE_BINS linearly-spaced Goertzel bars (power-normalized),
+ * log-free and integer — the ear hears power, and the harmonic series is visible. */
+static void ui_draw_spectro(const ui_widget *w)
+{
+    uint32_t x, y, wd, ht, i;
+    uint16_t mag[SCOPE_BINS];
+    uint32_t bw;
+    ui_region(w, &x, &y, &wd, &ht);
+    scope_spectrum(mag, SCOPE_BINS);
+    bw = wd / SCOPE_BINS;
+    if (bw < 1u)
+        bw = 1u;
+    cv_begin(wd, ht, C_BLACK);
+    for (i = 0; i < SCOPE_BINS; i++) {
+        int32_t bh = (int32_t)((mag[i] * (int32_t)ht) / 32767u);
+        cv_rect((int32_t)(i * bw), (int32_t)ht - bh, (int32_t)bw, bh, C_HI);
+    }
+    cv_blit(x, y);
+}
+
 /* the status readout: ALG <n>  OP <n>/<m>  [MUTE] (the widget's `param` is the
  * algorithm param; the operator + mute come from ui_selected_op + the mute table). */
 static void ui_draw_status(const ui_widget *w)
@@ -421,6 +466,8 @@ static void ui_draw_widget(const ui_widget *w)
     case UI_LIST: ui_draw_list(w); break;
     case UI_GRID: ui_draw_grid(w); break;
     case UI_ENVELOPE: ui_draw_envelope(w); break;
+    case UI_SCOPE: ui_draw_scope(w); break;
+    case UI_SPECTRO: ui_draw_spectro(w); break;
     case UI_STATUS: ui_draw_status(w); break;
     case UI_CUSTOM: ui_draw_custom(w); break;
     default: break;
@@ -433,6 +480,8 @@ static int32_t ui_widget_value(const ui_widget *w, uint32_t slot)
     switch (w->type) {
     case UI_LABEL: return 0;                      /* static: drawn once per page */
     case UI_CUSTOM: return ui_custom_v[slot];
+    case UI_SCOPE:
+    case UI_SPECTRO: return (int32_t)scope_seq();  /* redraw on each new snapshot */
     case UI_LIST:
     case UI_GRID: return ui_cursor;
     case UI_ENVELOPE: {                             /* redraw when any of the 7 change */

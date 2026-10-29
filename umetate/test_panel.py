@@ -211,6 +211,31 @@ def main() -> int:
     )
     failures += 0 if bad_sources == ["ENC_KNOB5"] else 1
 
+    # the scope + spectro widgets generate (and compile against ui.h)
+    vis: PanelManifest = {
+        "name": "vis",
+        "contexts": {
+            "home": {
+                "pages": [
+                    {
+                        "id": "home",
+                        "widgets": [
+                            {"type": "scope", "row": 1, "span": 3},
+                            {"type": "spectro", "row": 4, "span": 3},
+                        ],
+                    }
+                ]
+            }
+        },
+        "global": [],
+    }
+    vis_src = generate_panel(vis)
+    if "UI_SCOPE" in vis_src and "UI_SPECTRO" in vis_src:
+        print("ok: scope/spectro widgets map to UI_SCOPE/UI_SPECTRO")
+    else:
+        print("FAIL: scope/spectro widgets did not map")
+        failures += 1
+
     print("panel tests " + ("FAILED" if failures else "passed"))
     return 1 if failures else 0
 

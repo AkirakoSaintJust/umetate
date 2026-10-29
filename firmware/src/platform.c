@@ -413,6 +413,7 @@ void fm1_alnk0_irq(void)                       /* via isr_alnk0 (hal/fm1_isr.S) 
             int32_t v = (o[i] * master_q12) >> 12;
             o[i] = v > 32767 ? 32767 : v < -32767 ? -32767 : v;
         }
+        scope_push(o, HALF_FRAMES);                 /* the scope/spectrogram snapshot (RAM only) */
         for (b = 0; b < HALF_FRAMES; b += 32u)
             UAC_ONLY(uac_tap(o + 2u * b, 32u));   /* the computer records what the speaker plays */
         for (i = 0; i < HALF_WORDS; i++)

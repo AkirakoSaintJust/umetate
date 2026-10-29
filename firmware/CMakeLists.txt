@@ -104,6 +104,13 @@ add_custom_target(kernel_test
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     DEPENDS hal/fm1_dsp_kernels.h tests/kernel_test.c
     USES_TERMINAL VERBATIM)
+add_custom_target(scope_test
+    COMMAND "${UMETATE_HOST_CC}" -std=c11 -Wall -Wextra -Werror -Ihal -Igen -Isrc
+        -o "${UMETATE_HOST_DIR}/scope_test" "${CMAKE_SOURCE_DIR}/tests/scope_test.c" "${CMAKE_SOURCE_DIR}/src/scope.c"
+    COMMAND "${UMETATE_HOST_DIR}/scope_test"
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    DEPENDS src/scope.c src/scope.h hal/fm1_math.h gen/math_tables.h tests/scope_test.c
+    USES_TERMINAL VERBATIM)
 add_custom_target(uac_test
     COMMAND "${UMETATE_HOST_CC}" -std=c11 -Wall -Wextra -Werror -Isrc
         -o "${UMETATE_HOST_DIR}/uac_test" "${CMAKE_SOURCE_DIR}/tests/uac_test.c"
@@ -179,6 +186,7 @@ add_custom_target(test_all
     COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target ipc_test
     COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target math_test
     COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target kernel_test
+    COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target scope_test
     COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target uac_test
     COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target bootguard_test
     COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target ui_test

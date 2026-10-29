@@ -59,7 +59,7 @@
       "required": ["type"],
       "additionalProperties": false,
       "properties": {
-        "type": { "enum": ["label", "value", "bar", "param_row", "param_column", "list", "grid", "envelope", "status"] },
+        "type": { "enum": ["label", "value", "bar", "param_row", "param_column", "list", "grid", "envelope", "scope", "spectro", "status"] },
         "row": { "type": "integer", "minimum": 0 },
         "col": { "type": "integer", "minimum": 0 },
         "span": { "type": "integer", "minimum": 1 },
