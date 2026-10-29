@@ -1,8 +1,9 @@
 {
   "name": "osc",
-  "summary": "Wave reader: the 12-waveform OPZ + OPL union (0-7 = OPZ: sine/triangle/half/double derivatives; 8-11 = OPL: rectified/pulse/square/saw) via fm1_sin_wave, selected by a `waveform` param (0 = sine).",
+  "summary": "Wave reader: the 12-waveform OPZ + OPL union (0-7 = OPZ: sine/triangle/half/double derivatives; 8-11 = OPL: rectified/pulse/square/saw) as a single Q15 table (fm1_wave), selected by a `waveform` param (0 = sine).",
   "ins": { "phase": { "rate": "audio", "format": "phase" } },
   "outs": { "audio": "audio" },
   "params": { "waveform": "uint32" },
-  "state": {}
+  "state": { "base": "uint32" },
+  "block_derived": { "base": "${param.waveform} << 10" }
 }

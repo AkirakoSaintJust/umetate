@@ -18,6 +18,7 @@
 #pragma once
 #include <stdint.h>
 #include "math_tables.h"                       /* fm1_sin_q15 / fm1_exp2_q16 / fm1_log2_q16 */
+#include "wavetable.h"                         /* fm1_wave (the 12-wave OPZ+OPL union) */
 
 /* These helpers must inline into the hot loop: `.dsp_text` (SRAM) may not call into
  * XIP flash (a flash write would hang the core). `always_inline` makes the intent
@@ -93,37 +94,13 @@ FM1_MATH_INLINE int32_t fm1_cos(uint32_t phase) { return fm1_sin(phase + 0x40000
    re-implemented in linear Q15). `phase` is Q32 (full cycle); `ws` is 0..11.
    0-7 are the OPZ set (sine, triangle, half sine, half triangle, double sine,
    double triangle, double half sine, double half triangle); 8-11 are the OPL-only
-   shapes (rectified |sin|, pulse, square, saw). A bad `ws` degrades to sine. */
+   shapes (rectified |sin|, pulse, square, saw). A bad `ws` degrades to sine.
+   Precomputed into gen/wavetable.h (`fm1_wave[12 * 1024]`, tools/gen_wavetable.py):
+   one load per sample, no switch. The `(ws << 10)` base is block-rate — the
+   oscillator node hoists it with its block_derived. */
 FM1_MATH_INLINE int32_t fm1_sin_wave(uint32_t phase, uint32_t ws)
 {
-    int32_t s = fm1_sin(phase);
-    int32_t a = s < 0 ? -s : s;                        /* |sin|, Q15 */
-    int32_t half = (int32_t)(phase >> 31);             /* mute the 2nd half */
-    uint32_t q = phase >> 30;                          /* quadrant 0..3 */
-    switch (ws & 15u) {
-        case 0u: return s;                             /* sine */
-        case 1u: return fm1_q15_mul(s, a);             /* triangle (sin·|sin|) */
-        case 2u: return half ? 0 : a;                  /* half sine */
-        case 3u: return half ? 0 : fm1_q15_mul(s, a);  /* half triangle */
-        case 4u: return half ? 0 : fm1_sin(phase << 1); /* double sine */
-        case 5u: {                                     /* double triangle */
-            int32_t s2 = fm1_sin(phase << 1);
-            return half ? 0 : fm1_q15_mul(s2, s2 < 0 ? -s2 : s2);
-        }
-        case 6u: {                                     /* double half sine (rectified 2x) */
-            int32_t s2 = fm1_sin(phase << 1);
-            return half ? 0 : (s2 < 0 ? -s2 : s2);
-        }
-        case 7u: {                                     /* double half triangle (sin² 2x) */
-            int32_t s2 = fm1_sin(phase << 1);
-            return half ? 0 : fm1_q15_mul(s2, s2);
-        }
-        case 8u: return a;                             /* rectified |sin| (OPL) */
-        case 9u: return (q & 1u) ? 0 : a;              /* pulse / half-rectified (OPL) */
-        case 10u: return half ? -32767 : 32767;        /* square (OPL) */
-        case 11u: return (int32_t)(phase >> 16) - 32768; /* saw (OPL) */
-        default: return s;                             /* out of range -> sine */
-    }
+    return fm1_wave[((ws & 15u) << 10) | (phase >> 22)];
 }
 
 /* 4-input weighted sum against a routing-matrix row (a `const int16_t *` of four

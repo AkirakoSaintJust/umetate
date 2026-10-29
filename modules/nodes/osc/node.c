@@ -1,3 +1,5 @@
-/* 12-waveform oscillator: fm1_sin_wave applies the OPZ + OPL waveform union to the
-   phase (0-7 OPZ, 8-11 OPL-only), selected by a `waveform` param. */
-int32_t ${out.audio} = fm1_sin_wave(${in.phase}, ${param.waveform});
+/* Wave reader: one load from the precomputed 12-wave table (`fm1_wave`). The
+   `waveform` param is not modulatable, so its `(waveform << 10)` base is
+   recomputed only each block (the node's block_derived); the per-sample work is
+   just the phase index + the load. */
+int32_t ${out.audio} = fm1_wave[${state.base} + (${in.phase} >> 22)];
