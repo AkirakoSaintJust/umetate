@@ -23,6 +23,7 @@ static void app_idle(void);
 #include "smk_wheel.h"
 #endif
 #include "fm1_ipc.h"
+#include "dsp_ipc.c"                            /* the shared dual-core transport (§12.1) */
 #include "ui.h"
 #include "presets.c"
 #include "synth_sysex.c"

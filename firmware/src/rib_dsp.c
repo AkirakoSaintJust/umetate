@@ -17,14 +17,9 @@ static struct {
 } voice[NV];
 static uint32_t ages;
 
-/* ---- shared transport (docs/roadmap.md §12.1): defined once, both cores use it.
- * The voice state above is owned by core 1 (it drains the queue, renders, and
- * publishes status); core 0 only writes the queue, the bend, and reads the status. */
-volatile dsp_cmd dsp_cmd_buf[UMETATE_DSP_CMD_CAP] __attribute__((aligned(64)));
-volatile uint32_t dsp_cmd_head, dsp_cmd_tail, dsp_cmd_overrun, dsp_all_off_pending;
-volatile dsp_status_t dsp_status __attribute__((aligned(64)));
-volatile int32_t bend_q16 = 65536;
-volatile uint32_t lit_base;                     /* core 0 writes the octave's base note */
+/* ---- shared transport (docs/roadmap.md §12.1): defined in src/dsp_ipc.c, shared by
+ * both cores. The voice state above is owned by core 1 (it drains the queue, renders,
+ * and publishes status); core 0 only writes the queue, the bend, and reads the status. */
 
 static DSP_FN int32_t sine(uint32_t phase)
 {

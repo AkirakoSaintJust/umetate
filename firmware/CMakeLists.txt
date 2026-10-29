@@ -75,10 +75,10 @@ add_custom_target(host_test
     USES_TERMINAL VERBATIM)
 add_custom_target(dsp_test
     COMMAND "${UMETATE_HOST_CC}" -std=c11 -Wall -Wextra -Werror -Ihal -Isrc -Igen
-        -o "${UMETATE_HOST_DIR}/dsp_test" "${CMAKE_SOURCE_DIR}/tests/dsp_test.c" "${CMAKE_SOURCE_DIR}/src/rib_dsp.c"
+        -o "${UMETATE_HOST_DIR}/dsp_test" "${CMAKE_SOURCE_DIR}/tests/dsp_test.c" "${CMAKE_SOURCE_DIR}/src/rib_dsp.c" "${CMAKE_SOURCE_DIR}/src/dsp_ipc.c"
     COMMAND "${UMETATE_HOST_DIR}/dsp_test"
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-    DEPENDS src/rib_dsp.c src/rib_dsp.h tests/dsp_test.c
+    DEPENDS src/rib_dsp.c src/rib_dsp.h src/dsp_ipc.c tests/dsp_test.c
     USES_TERMINAL VERBATIM)
 add_custom_target(ipc_test
     COMMAND "${UMETATE_HOST_CC}" -std=c11 -Wall -Wextra -Werror -Ihal -Isrc

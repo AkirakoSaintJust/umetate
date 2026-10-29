@@ -26,7 +26,7 @@ static void play(uint32_t note, uint32_t vel)
 {
 #if FM1_CPU1_USED
     if (fm1_c1_on) {
-        dsp_cmd_push(UMETATE_DSP_CMD_NOTE_ON, (uint16_t)note, (uint16_t)vel);
+        dsp_cmd_push(UMETATE_DSP_CMD_NOTE_ON, 0xFFu, (uint16_t)note, (uint16_t)vel);
         last_note = note;
         return;
     }
@@ -38,7 +38,7 @@ static void stop(uint32_t note)
 {
 #if FM1_CPU1_USED
     if (fm1_c1_on) {
-        dsp_cmd_push(UMETATE_DSP_CMD_NOTE_OFF, (uint16_t)note, 0);
+        dsp_cmd_push(UMETATE_DSP_CMD_NOTE_OFF, 0xFFu, (uint16_t)note, 0);
         return;
     }
 #endif

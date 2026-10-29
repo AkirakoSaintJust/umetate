@@ -24,13 +24,40 @@ static uint8_t multi_bank[MP_BANK(SYNTH_N_PARTS)];
 static uint8_t settings[ST_RECORD], saved_settings[ST_RECORD];
 static uint32_t idle_ok, bank_dirty, set_dirty, t_change;
 
-/* ---- the engine seam wrappers (the synth_midi / synth_runtime seams) */
+/* ---- the engine seam wrappers (the synth_midi / synth_runtime seams). Dual-core
+ * (D3, the default): core 0 pushes note events, core 1 allocates + renders (the
+ * generated <name>_render_block). Single-core fallback (or CPU1 gave up): direct. */
 static void note_on_seam(uint32_t note, uint32_t velocity, uint32_t channel)
 {
+#if FM1_CPU1_USED
+    if (fm1_c1_on) {
+        dsp_cmd_push(UMETATE_DSP_CMD_NOTE_ON, (uint8_t)(channel & 0xFFu),
+                     (uint16_t)note, (uint16_t)velocity);
+        return;
+    }
+#endif
     fourop_fm_dsp_note_on_ch(note, velocity, channel);
 }
-static void note_off_seam(uint32_t note) { fourop_fm_dsp_note_off(note); }
-static void all_off_seam(void) { fourop_fm_dsp_all_notes_off(); }
+static void note_off_seam(uint32_t note)
+{
+#if FM1_CPU1_USED
+    if (fm1_c1_on) {
+        dsp_cmd_push(UMETATE_DSP_CMD_NOTE_OFF, 0xFFu, (uint16_t)note, 0);
+        return;
+    }
+#endif
+    fourop_fm_dsp_note_off(note);
+}
+static void all_off_seam(void)
+{
+#if FM1_CPU1_USED
+    if (fm1_c1_on) {
+        dsp_cmd_push(UMETATE_DSP_CMD_ALL_OFF, 0xFFu, 0, 0);
+        return;
+    }
+#endif
+    fourop_fm_dsp_all_notes_off();
+}
 static int set_param_seam(uint32_t id, int32_t value)
 {
     return fourop_fm_dsp_set_param(id, value);
@@ -50,10 +77,26 @@ static synth_runtime_ctx runtime_ctx = {
     part_bank, multi_bank,
 };
 
-/* ---- audio callback (single core: CPU0 renders the generated engine) */
+/* ---- audio callback (dual-core by default: CPU1 renders; single-core fallback) */
 static void app_audio(int32_t *out, uint32_t n)
 {
+#if FM1_CPU1_USED
+    if (fm1_c1_on && fm1_cpu1_run(fourop_fm_render_block, (uint32_t)(uintptr_t)out) &&
+        fm1_cpu1_wait() == 0)
+        return;
+    fourop_fm_render_block((uint32_t)(uintptr_t)out);
+#else
     fourop_fm_dsp_render(out, n);
+#endif
+}
+
+static int quiet_seam(void)
+{
+#if FM1_CPU1_USED
+    return (int)dsp_status.quiet;
+#else
+    return fourop_fm_dsp_quiet();
+#endif
 }
 
 /* ---- the panel <-> engine mirror: the engine owns the truth */
@@ -78,11 +121,35 @@ static void ui_sync(void)
 /* ---- the app's action hooks (called by ui.c) */
 void ui_act_note_on(uint8_t note, uint8_t vel)
 {
+#if FM1_CPU1_USED
+    if (fm1_c1_on) {
+        dsp_cmd_push(UMETATE_DSP_CMD_NOTE_ON, 0xFFu, note, vel);
+        return;
+    }
+#endif
     fourop_fm_dsp_note_on(note, vel);                /* omni: every matching part */
 }
-void ui_act_note_off(uint8_t note) { fourop_fm_dsp_note_off(note); }
+void ui_act_note_off(uint8_t note)
+{
+#if FM1_CPU1_USED
+    if (fm1_c1_on) {
+        dsp_cmd_push(UMETATE_DSP_CMD_NOTE_OFF, 0xFFu, note, 0);
+        return;
+    }
+#endif
+    fourop_fm_dsp_note_off(note);
+}
 void ui_act_set_step(uint8_t step) { (void)step; }
-void ui_act_panic(void) { fourop_fm_dsp_all_notes_off(); }
+void ui_act_panic(void)
+{
+#if FM1_CPU1_USED
+    if (fm1_c1_on) {
+        dsp_cmd_push(UMETATE_DSP_CMD_ALL_OFF, 0xFFu, 0, 0);
+        return;
+    }
+#endif
+    fourop_fm_dsp_all_notes_off();
+}
 void ui_act_play(void) { }
 void ui_act_stop(void) { }
 void ui_act_save(void)
@@ -114,6 +181,16 @@ static void app_main(void)
     int32_t bc, mt;
 
     fourop_fm_dsp_reset();
+#if FM1_CPU1_USED
+    {
+        fm1_guard_unlock_top();
+        fm1_guard_pc_open();
+        (void)fm1_cpu1_start();
+        fm1_guard_enable(FM1_GUARD_PC);
+        fm1_guard_lock_top();
+    }
+    lit_base = KEY0;
+#endif
     preset_part_bank_load(part_bank, SYNTH_N_PARAMS);   /* an unreadable slot: 0xFF = empty */
     preset_multi_bank_load(multi_bank, SYNTH_N_PARTS);
     if (preset_settings_load(settings) || !preset_settings_unpack(settings, &bc, &mt))
@@ -175,7 +252,11 @@ static void app_main(void)
             t_change = fm1_ms;
         }
 
+#if FM1_CPU1_USED
+        lit = dsp_status.lit;                    /* published by the render job */
+#else
         lit = fourop_fm_dsp_lit(KEY0);
+#endif
         for (k = 0; k < 27u; k++)
             fm1_led_key(KEY_LED(k), lit >> k & 1u);
 
@@ -183,7 +264,7 @@ static void app_main(void)
         ui_redraw(fm1_ms);
         idle_ok = 0;
 
-        if (fourop_fm_dsp_quiet() && fm1_ms - t_change > 2000u) {
+        if (quiet_seam() && fm1_ms - t_change > 2000u) {
             if (bank_dirty) {                          /* silent-only saves (the store erases) */
                 preset_part_bank_save(part_bank, SYNTH_N_PARAMS);
                 bank_dirty = 0;

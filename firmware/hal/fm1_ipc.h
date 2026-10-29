@@ -32,7 +32,7 @@ enum {
 /* One note event (6 bytes; the queue is 64 of these). */
 typedef struct {
     uint8_t  kind;
-    uint8_t  pad;
+    uint8_t  ch;       /* the note's MIDI channel (0..15; 0xFF = omni) */
     uint16_t note;
     uint16_t vel;
 } dsp_cmd;
@@ -64,7 +64,7 @@ extern volatile uint32_t    lit_base;                     /* core 0 writes: the 
 /* Producer = core 0 (main loop). Never drops a note-off: on overflow a note-on is
  * dropped (overrun counted) and a note-off/all-off sets all_off_pending, so a
  * voice can never stick on. */
-static inline void dsp_cmd_push(uint8_t kind, uint16_t note, uint16_t vel)
+static inline void dsp_cmd_push(uint8_t kind, uint8_t ch, uint16_t note, uint16_t vel)
 {
     uint32_t head = dsp_cmd_head;
     if (head - dsp_cmd_tail >= UMETATE_DSP_CMD_CAP) {          /* full */
@@ -78,7 +78,7 @@ static inline void dsp_cmd_push(uint8_t kind, uint16_t note, uint16_t vel)
         return;
     }
     {
-        dsp_cmd c = {kind, 0, note, vel};
+        dsp_cmd c = {kind, ch, note, vel};
         dsp_cmd_buf[head & (UMETATE_DSP_CMD_CAP - 1u)] = c;
     }
     FM1_CSYNC();                                                /* release */

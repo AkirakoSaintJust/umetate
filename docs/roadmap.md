@@ -813,19 +813,24 @@ strengthening below.
 - **MIDI CC**: fixed, generator-assigned (one CC per param, emitted from
   `params.json`), documented — not user-editable on-device.
 - **Presets**: two tiers, as most synths do — **part patches** (a single timbre:
-  its 39 params + name) and **multi patches** (a composition: which part patch
+  its 68 params + name) and **multi patches** (a composition: which part patch
   each of the 2 parts uses + each part's `level`/`delay`/`channel`/`keyzone` +
-  name). 64 part-patch slots and 64 multi-patch slots, flash, CRC + version;
-  save / load / name; SysEx export / import. System settings (base MIDI channel,
-  master tune) are a separate global record.
+  name). 32 part-patch slots and 32 multi-patch slots (the slot area's measured
+  16 372 B ceiling), flash, CRC + version; save / load / name; SysEx export /
+  import. System settings (base MIDI channel, master tune) are a separate global
+  record.
 - **SysEx**: a shared, versioned envelope every firmware uses, with a
   per-firmware payload.
 - **Polyphony**: `voices` is the **total shared pool** across both parts (not
-  per-part — §6.11.4); the dogfood ships **8 voices**. The emulator measures
-  ~9% of the 240 MHz core per active voice (8 voices = ~77% ISR), so 16
-  (8/part) or 24 (12/part) would overrun the 5.8 ms block — 8 is the hardware
-  ceiling for 4-op FM on this core, not a budget fallback. (The earlier
-  "12 × 2 ideal, fall back to 8" target was never measured; it resolved to 8.)
+  per-part — §6.11.4); the dogfood ships **8 voices**. Measured (emulator): the
+  render costs ~9% of a 240 MHz core (0.52 ms) or ~6.5% of a 320 MHz core
+  (0.38 ms) per active voice, linear — so on CPU1's 5.8 ms block the ceiling is
+  ~15 voices at 320 MHz (12 comfortable, 16+ overruns). 8 is a *choice*, not the
+  ceiling. The stock firmware's 20 × 6-op (120 operators) in the same block means
+  our 4-op render is ~2× behind per operator — a render-efficiency gap (the
+  per-sample route matrix + the 12-wave osc), the real lever to reach 20, not
+  clock or core count. (The earlier "12 × 2 ideal" target was never measured;
+  it resolved to 8.)
 
 #### 6.11.4 Design (concrete)
 

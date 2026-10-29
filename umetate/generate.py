@@ -203,6 +203,7 @@ def generate_dsp_header(
         f"int32_t {name}_dsp_get_param(uint32_t id);",
         f"uint32_t {name}_dsp_param_count(void);",
         f"void {name}_dsp_render(int32_t *out, uint32_t frames);",
+        f"void {name}_render_block(uint32_t arg);",
         "",
     ]
     return "\n".join(lines)
