@@ -4,6 +4,9 @@
 # OpenCode agent configuration
 .agents/
 
+# the harness/agent lockfile (environment-local, never committed)
+skills-lock.json
+
 # Python
 __pycache__/
 *.py[cod]
