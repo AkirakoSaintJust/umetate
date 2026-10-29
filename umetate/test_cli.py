@@ -693,6 +693,24 @@ def _budget_measures() -> None:
         assert "emulator" in out, "the device fit does not point at the emulator"
 
 
+def _budget_measures_tabled() -> None:
+    """`umetate budget` generates + compiles the patch's `tables:` (a regression:
+    the dogfood's `routing` table once left `table_routing` undefined)."""
+    root = Path(__file__).resolve().parents[1]
+    patch = root / "examples" / "fourop-fm" / "patch.json"
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        rc = cli.main(["budget", str(patch), "--voices", "8"])
+    assert rc == 0, f"budget on a tabled patch failed:\n{buf.getvalue()}"
+    out = buf.getvalue()
+    rows = [
+        line.split()
+        for line in out.splitlines()
+        if line.strip() and line.split()[0].isdigit()
+    ]
+    assert len(rows) == 1 and float(rows[0][1]) > 0, f"no measured row: {out}"
+
+
 def _synth_build_composes() -> None:
     """`umetate build --synth examples/fourop-fm` composes the dogfood firmware:
     the generated engine/panel/CC/layout files, a sounding host run, and — with
@@ -777,6 +795,7 @@ def main() -> int:
         ("the C preset store matches the Python records", _preset_c_parity),
         ("the C SysEx handler matches the Python envelope", _sysex_c_parity),
         ("umetate budget measures the polyphony scaling", _budget_measures),
+        ("umetate budget compiles the patch's tables", _budget_measures_tabled),
         ("build --synth composes the dogfood firmware", _synth_build_composes),
     ]
     failures = 0

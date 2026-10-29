@@ -20,7 +20,7 @@ import tempfile
 from pathlib import Path
 
 from ._schema import Patch, as_patch
-from .generate import generate
+from .generate import generate, generate_tables
 
 _ROOT = Path(__file__).resolve().parents[1]
 _INCLUDES = [
@@ -58,22 +58,29 @@ int main(void) {
 def _measure(patch: Patch) -> float:
     """Generate + compile + time the worst-case render(256) (µs, host)."""
     src = generate(patch)
+    tables_h, tables_c = generate_tables(patch)
     with tempfile.TemporaryDirectory() as tmp:
         d = Path(tmp)
         (d / "dsp.c").write_text(src)
+        if tables_h:
+            (d / "tables.h").write_text(tables_h)
+            (d / "tables.c").write_text(tables_c)
         cname = patch["name"].replace("-", "_").replace(".", "_")
         (d / "harness.c").write_text(_TIMING_HARNESS.replace("__NAME__", cname))
+        sources = [str(d / "harness.c"), str(d / "dsp.c")]
+        if tables_c:
+            sources.append(str(d / "tables.c"))
         proc = subprocess.run(
             [
                 "cc",
                 "-std=c11",
                 "-D_POSIX_C_SOURCE=199309L",
                 "-O2",
+                f"-I{d}",
                 *_INCLUDES,
                 "-o",
                 str(d / "t"),
-                str(d / "harness.c"),
-                str(d / "dsp.c"),
+                *sources,
                 "-lm",
             ],
             capture_output=True,

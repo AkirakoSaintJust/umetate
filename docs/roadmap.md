@@ -821,9 +821,11 @@ strengthening below.
 - **SysEx**: a shared, versioned envelope every firmware uses, with a
   per-firmware payload.
 - **Polyphony**: `voices` is the **total shared pool** across both parts (not
-  per-part — §6.11.4); the dogfood ships **8 voices**, and the emulator run (F7e)
-  confirms it at 240 MHz. (The earlier "12 × 2 ideal, fall back to 8" target
-  resolved to 8.)
+  per-part — §6.11.4); the dogfood ships **8 voices**. The emulator measures
+  ~9% of the 240 MHz core per active voice (8 voices = ~77% ISR), so 16
+  (8/part) or 24 (12/part) would overrun the 5.8 ms block — 8 is the hardware
+  ceiling for 4-op FM on this core, not a budget fallback. (The earlier
+  "12 × 2 ideal, fall back to 8" target was never measured; it resolved to 8.)
 
 #### 6.11.4 Design (concrete)
 
