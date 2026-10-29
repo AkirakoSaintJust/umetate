@@ -18,8 +18,8 @@ from ._schema import TableSpec
 _TABLE_KINDS = ("wavetable", "segments", "spectrum", "phase_map", "routing")
 _WAVE_SHAPES = ("sine", "triangle", "square", "saw")
 
-# The 7 distinct 4-op FM algorithms (ymfm `s_algorithm_ops`, algorithm 3 dropped as
-# algorithm 2's mirror). Each is (mod, carrier): mod[i][j] = 1 if operator j
+# The 8 distinct 4-op FM algorithms (ymfm `s_algorithm_ops` 0..7 — the standard
+# TX81Z/DX100/DX21 4-op set). Each is (mod, carrier): mod[i][j] = 1 if operator j
 # phase-modulates operator i; carrier[i] = 1 if operator i is summed to the output.
 # Operators op0..op3 are ymfm's O1..O4.
 _ROUTING: list[tuple[list[list[int]], list[int]]] = [
@@ -29,6 +29,8 @@ _ROUTING: list[tuple[list[list[int]], list[int]]] = [
     ([[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 0, 0], [0, 0, 1, 0]], [0, 0, 0, 1]),
     # 2: (O1 + (O2 -> O3)) -> O4 -> out (O4)
     ([[0, 0, 0, 0], [0, 0, 0, 0], [0, 1, 0, 0], [1, 0, 1, 0]], [0, 0, 0, 1]),
+    # 3: ((O1 -> O2) + O3) -> O4 -> out (O4)
+    ([[0, 0, 0, 0], [1, 0, 0, 0], [0, 0, 0, 0], [0, 1, 1, 0]], [0, 0, 0, 1]),
     # 4: (O1 -> O2) + (O3 -> O4) -> out (O2 + O4)
     ([[0, 0, 0, 0], [1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 1, 0]], [0, 1, 0, 1]),
     # 5: (O1 -> O2) + (O1 -> O3) + (O1 -> O4) -> out (O2 + O3 + O4)
@@ -128,7 +130,7 @@ def _segments(spec: TableSpec) -> list[int]:
 
 
 def _routing() -> list[int]:
-    """The 7-algorithm routing matrix: per algorithm, 4 modulation rows (dest 0..3)
+    """The 8-algorithm routing matrix: per algorithm, 4 modulation rows (dest 0..3)
     + 1 carrier-mask row, each a 4-weight 0/1 vector (Q15 0 or 32767). Layout:
     `routing[algorithm * 20 + dest * 4 + src]`."""
     flat: list[int] = []

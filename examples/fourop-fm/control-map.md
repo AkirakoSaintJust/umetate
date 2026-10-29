@@ -33,7 +33,8 @@
 
 - **Performance gesture:** one hand on keys, one on `KNOB1–4` (the page params);
   `ALGORITHM` is the always-on headline control.
-- **Menu depth tolerance:** four contexts, one `push`/`pop_home` (depth 2).
+- **Menu depth tolerance:** four contexts, one `switch`/`pop_home` (depth 2 — the
+  three modes are siblings, not a stack).
 - **Keys as shortcuts:** in `EDIT`, the operator is selected with `SEL` (the keys
   doubling as operator/mute shortcuts is the device-level idiom, outside the
   patch).
@@ -48,9 +49,9 @@
 | --- | --- | --- | --- |
 | KEY | note_on | | keys play notes |
 | ENC_ALGORITHM | algorithm | relative | the headline control |
-| BTN_EDIT | push `op` | | enter the operator editor |
-| BTN_FX | push `fx` | | the output chain |
-| BTN_GLO | push `glo` | | the global modulation |
+| BTN_EDIT | switch `op` | | enter the operator editor |
+| BTN_FX | switch `fx` | | the output chain |
+| BTN_GLO | switch `glo` | | the global modulation |
 | BTN_HOME | pop_home | | back home |
 
 ### Context: `home`
@@ -70,7 +71,7 @@
 | mute | op1_mute · op2_mute · op3_mute · op4_mute |
 
 - **Bindings:** ENC_KNOB1–4 → `slot` 0–3; ENC_SELECT → `next_page`; BTN_SEL →
-  `op_next` (select operator 1 → 2 → 3 → 4).
+  `op_next` (select operator 1 → 2 → 3 → 4 → 1, wrapping).
 - Each sub-page opens with a `status` readout (`ALG <n> · OP <n>/4 · MUTE`), so
   the algorithm, selected operator, and its mute state stay visible while
   editing.
@@ -121,8 +122,10 @@ See §3 "Always-on" — the encoders/buttons that resolve before any context.
 
 ## 8. Control flow (the state machine)
 
-- **Context transitions:** boot → `home`; `BTN_EDIT` pushes `op`; `BTN_FX` pushes
-  `fx`; `BTN_GLO` pushes `glo`; `BTN_HOME` pops home.
+- **Context transitions:** boot → `home`; `BTN_EDIT` switches to `op`; `BTN_FX`
+  switches to `fx`; `BTN_GLO` switches to `glo`; `BTN_HOME` pops home. Switching
+  replaces the current mode (they are siblings), so `fx` → `EDIT` goes straight to
+  the operator editor.
 - **The full context stack, worst case:** `[home, op]` — depth 2.
 - **The selected operator** is a flat 0..3 counter (`op_next`), shared across
   contexts; the `mute` page toggles `opN_mute` directly.

@@ -32,7 +32,7 @@
     full-scale = ±1 octave) for relative-pitch vibrato.
   - `firmware/hal/fm1_math.h` — `fm1_sin_wave` (the 12-wave OPZ+OPL union),
     `fm1_route4` (the 4-weight Q15 dot product).
-  - `umetate/_tables.py` — the `routing` table kind (the 7-algorithm matrix).
+  - `umetate/_tables.py` — the `routing` table kind (the 8-algorithm matrix).
 - **Forbidden to touch:** HAL registers, `platform.c` services, the loader,
   `uboot.boot`/`isd_config.ini` — none were touched.
 

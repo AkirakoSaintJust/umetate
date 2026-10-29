@@ -3,7 +3,7 @@
 This worked example puts the framework through a complete four-operator FM
 synth — the **fourop-fm program** in `docs/roadmap.md` §6.11 (the modules it
 shipped are documented in §6.9). The instrument follows the OPZ/DX21 lineage and
-includes per-operator and carrier feedback, seven runtime-selectable algorithms,
+includes per-operator and carrier feedback, eight runtime-selectable algorithms,
 rate/level envelopes, and 12 waveforms. It also has a shared pitch LFO and pitch
 envelope, plus an amplitude LFO for each operator. It builds into a full
 firmware: **two independent timbres** (parts, channels 0/1), velocity, presets
@@ -21,9 +21,8 @@ glue `app.c` onto the frozen `rib.c` framework (`umetate build --synth`).
 - **Global:** the carrier sum passes through an `svf` low-pass and `wavefolder`
   before `out`. A shared `plfo` (vibrato) and `penv` (pitch envelope) feed each
   operator's `pitch` through `csum`.
-- **Algorithms:** seven rows from ymfm's `s_algorithm_ops`: {0, 1, 2, 4, 5, 6,
-  7}. Algorithm 3 is omitted because it mirrors algorithm 2; see
-  `dsp-algorithm.md`.
+- **Algorithms:** eight rows from ymfm's `s_algorithm_ops`: {0, 1, 2, 3, 4, 5, 6,
+  7} — the full standard TX81Z/DX100/DX21 4-op set; see `dsp-algorithm.md`.
 
 ## 2. Files
 

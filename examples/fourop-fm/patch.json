@@ -27,7 +27,7 @@
     "delay": [0, 0]
   },
   "params": {
-    "algorithm":    { "target": "algo.algorithm", "min": 0, "max": 6, "curve": "linear" },
+    "algorithm":    { "target": "algo.algorithm", "min": 0, "max": 7, "curve": "linear" },
     "cutoff":       { "target": "lp.f", "min": 0, "max": 65535, "curve": "log", "unit": "Hz" },
     "res":          { "target": "lp.q", "min": 0, "max": 65535, "curve": "linear" },
     "fold":         { "target": "wf.amount", "min": 0, "max": 32767, "curve": "linear" },

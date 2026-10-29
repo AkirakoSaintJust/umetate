@@ -32,7 +32,7 @@
   velocity → amplitude/FM/envelope-rate is wired (F2), but the dogfood defaults
   the depths to 0 (off) — settable via `set_param` (`opN.velamp.depth` etc.),
   not on the panel.
-- **Modulation:** the routing matrix (7 algorithms) selects which operator
+- **Modulation:** the routing matrix (8 algorithms) selects which operator
   phase-modulates which; feedback = self-modulation. One **global pitch LFO**
   (vibrato, shared across voices), one **global pitch envelope** (the "pitch
   blip": a `base` offset that decays back at note-on), and one **amplitude LFO
@@ -88,7 +88,7 @@
 
 | Param (name) | Target | Min | Max | Curve | Unit |
 | --- | --- | --- | --- | --- | --- |
-| algorithm | algo.algorithm | 0 | 6 | linear | |
+| algorithm | algo.algorithm | 0 | 7 | linear | |
 | cutoff | lp.f | 0 | 65535 | log | Hz |
 | res | lp.q | 0 | 65535 | linear | |
 | fold | wf.amount | 0 | 32767 | linear | |
@@ -121,9 +121,9 @@ one-pole decay rate toward the specified pitch. All block rate.)
 
 ### 2.3 Tables
 
-- **`routing` → kind `routing`** — the 7-algorithm 4-op FM matrix (7 rows × 5
-  sub-rows × 4 Q15 0/1 weights = 140 entries), ymfm's `s_algorithm_ops`
-  {0,1,2,4,5,6,7} (algorithm 3 dropped as algorithm 2's mirror).
+- **`routing` → kind `routing`** — the 8-algorithm 4-op FM matrix (8 rows × 5
+  sub-rows × 4 Q15 0/1 weights = 160 entries), ymfm's `s_algorithm_ops`
+  {0,1,2,3,4,5,6,7} (the full standard TX81Z/DX100/DX21 4-op set).
 
 ## 3. Controls and display
 
@@ -169,7 +169,7 @@ one-pole decay rate toward the specified pitch. All block rate.)
 
 ## 6. Browser prototype
 
-- **What you want to hear or compare locally:** the 7 algorithms side-by-side;
+- **What you want to hear or compare locally:** the 8 algorithms side-by-side;
   confirm the routing matrix sounds like the DX algorithm family.
 - **Which parameters and MIDI controls the page needs:** algorithm + the 5
   output-chain params; keys via mouse/MIDI.
@@ -180,7 +180,7 @@ one-pole decay rate toward the specified pitch. All block rate.)
 
 ## 7. Acceptance and evidence
 
-- **Must-have features:** 7 runtime algorithms; 12 waveforms; per-op + carrier
+- **Must-have features:** 8 runtime algorithms; 12 waveforms; per-op + carrier
   feedback; rate/level envelopes; a global pitch LFO + global pitch envelope +
   per-op amplitude LFO; the filter + wavefolder output chain; a panel; **two
   timbres** (parts), **presets** (32+32 + settings), **SysEx**, **MIDI CC /
@@ -188,7 +188,7 @@ one-pole decay rate toward the specified pitch. All block rate.)
 - **Optional features (shipped, defaulted off):** velocity scaling (the depths
   default to 0).
 - **Host tests:** `umetate deep-check --all` — mypy + ruff + pyright, the four
-  test modules (`test_generate` renders the patch + proves the 7 algorithms +
+  test modules (`test_generate` renders the patch + proves the 8 algorithms +
   resolves the panel; `test_cli` runs the `build --synth` composition), plus
   `umetate budget` (the measured polyphony claim).
 - **Target package checks:** `umetate build --synth examples/fourop-fm` →
@@ -205,7 +205,7 @@ one-pole decay rate toward the specified pitch. All block rate.)
 
 - **Brief owner:** P1Onken.
 - **Date confirmed:** 2026-10-27.
-- **Open questions that still change architecture:** none — the 7-algorithm
-  collapse (algorithm 2 ≡ 3) is locked in `dsp-algorithm.md`; the F7 additions
+- **Open questions that still change architecture:** none — the 8-algorithm set
+  (ymfm `s_algorithm_ops` 0..7) is locked in `dsp-algorithm.md`; the F7 additions
   (two timbres, presets, SysEx, the `cc:` surface, the app glue) are locked in
   the roadmap §6.11.

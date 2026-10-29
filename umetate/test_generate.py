@@ -568,7 +568,7 @@ int main(void) {
 }
 """
 
-# The runtime-algorithm contract: set `algorithm` to each of the 7 routings via
+# The runtime-algorithm contract: set `algorithm` to each of the 8 routings via
 # set_param and confirm each renders non-silent (the `route` node's whole point).
 ALGO_HARNESS = """\
 #include <stdio.h>
@@ -580,7 +580,7 @@ void __NAME___dsp_render(int32_t *out, uint32_t frames);
 void __NAME___dsp_all_notes_off(void);
 static int32_t out[512];
 int main(void) {
-    for (uint32_t alg = 0; alg < 7; alg++) {
+    for (uint32_t alg = 0; alg < 8; alg++) {
         __NAME___dsp_reset();
         __NAME___dsp_set_param(__ALGO_ID__, (int32_t)alg);
         __NAME___dsp_note_on(69, 100);
@@ -589,7 +589,7 @@ int main(void) {
         if (e < 1000000) { printf("FAIL: algorithm %u silent\\n", alg); return 1; }
         __NAME___dsp_all_notes_off();
     }
-    printf("ok: __NAME__ renders non-silent across all 7 algorithms\\n");
+    printf("ok: __NAME__ renders non-silent across all 8 algorithms\\n");
     return 0;
 }
 """
@@ -1695,7 +1695,7 @@ def _sound_decay_tables(patch: Patch) -> tuple[bool, str]:
 
 
 def _algorithms_render(patch: Patch) -> tuple[bool, str]:
-    """Generate + compile + run the runtime-algorithm contract: each of the 7
+    """Generate + compile + run the runtime-algorithm contract: each of the 8
     algorithms, selected via set_param, must render non-silent."""
     src = generate(patch)
     hdr, impl = generate_tables(patch)
@@ -2330,7 +2330,7 @@ def main() -> int:
     ok, msg = _algorithms_render(ffm)
     print(
         ("ok: " if ok else "FAIL: ")
-        + (msg or "fourop-fm renders non-silent across all 7 algorithms")
+        + (msg or "fourop-fm renders non-silent across all 8 algorithms")
     )
     failures += 0 if ok else 1
 
@@ -2793,30 +2793,34 @@ def main() -> int:
             f"(peak {sine.values[64]} at index 64, size {sine.size})"
         )
 
-    # the routing table is the 7-algorithm 4-op FM matrix (7 × 5 rows × 4 weights).
+    # the routing table is the 8-algorithm 4-op FM matrix (8 × 5 rows × 4 weights).
     rt = build_tables({"routing": {"kind": "routing"}})[0]
-    ok = rt.size == 7 * 5 * 4 and all(v in (0, 32767) for v in rt.values)
-    # the 7 rows are indexed 0..6 (ymfm algs {0,1,2,4,5,6,7}).
+    ok = rt.size == 8 * 5 * 4 and all(v in (0, 32767) for v in rt.values)
+    # the 8 rows are indexed 0..7 (ymfm algs 0..7).
     alg0_carrier = rt.values[
         0 * 20 + 4 * 4 : 0 * 20 + 4 * 4 + 4
     ]  # stack → carrier [0,0,0,1]
     alg7_carrier = rt.values[
-        6 * 20 + 4 * 4 : 6 * 20 + 4 * 4 + 4
+        7 * 20 + 4 * 4 : 7 * 20 + 4 * 4 + 4
     ]  # additive → [1,1,1,1]
-    alg4_mod = rt.values[
+    alg3_mod = rt.values[
         3 * 20 + 1 * 4 : 3 * 20 + 1 * 4 + 4
+    ]  # ((O1->O2)+O3)->O4 → op1 modulates op2
+    alg4_mod = rt.values[
+        4 * 20 + 1 * 4 : 4 * 20 + 1 * 4 + 4
     ]  # two-pairs → op1 modulates op2
     ok = (
         ok
         and alg0_carrier == [0, 0, 0, 32767]
         and alg7_carrier == [32767, 32767, 32767, 32767]
+        and alg3_mod == [32767, 0, 0, 0]
         and alg4_mod == [32767, 0, 0, 0]
     )
     if not ok:
         print(f"FAIL: routing table is wrong (size {rt.size}, alg0={alg0_carrier})")
         failures += 1
     else:
-        print("ok: routing table is the 7-algorithm 4-op FM matrix (140 × 0/1)")
+        print("ok: routing table is the 8-algorithm 4-op FM matrix (160 × 0/1)")
 
     bad: Patch = {
         "name": "bad",

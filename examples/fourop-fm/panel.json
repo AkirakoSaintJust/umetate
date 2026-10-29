@@ -6,10 +6,10 @@
   "global": [
     { "source": "KEY", "action": "note_on" },
     { "source": "ENC_ALGORITHM", "target": "algorithm", "behavior": "relative" },
-    { "source": "BTN_EDIT", "action": "push", "arg": "op" },
+    { "source": "BTN_EDIT", "action": "switch", "arg": "op" },
     { "source": "BTN_HOME", "action": "pop_home" },
-    { "source": "BTN_FX", "action": "push", "arg": "fx" },
-    { "source": "BTN_GLO", "action": "push", "arg": "glo" }
+    { "source": "BTN_FX", "action": "switch", "arg": "fx" },
+    { "source": "BTN_GLO", "action": "switch", "arg": "glo" }
   ],
   "contexts": {
     "home": {

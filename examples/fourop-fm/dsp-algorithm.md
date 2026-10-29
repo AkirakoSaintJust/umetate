@@ -146,7 +146,7 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
 
 ## Component: `mix4` + `route4` + `route` + `algo` (the runtime-algorithm routing)
 
-- **Purpose:** make the 7 algorithms a *runtime* selection, not a compile-time
+- **Purpose:** make the 8 algorithms a *runtime* selection, not a compile-time
   graph. `mix4` is the plain 4-input sum; `route4` is the general matrix-row mixer
   that reads a 4-weight row of the routing table and applies it; `route` is the
   ergonomic **audio-rate** 4-op router the patch uses — reads the `alg` control
@@ -173,16 +173,16 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   feedback master for op1..op4).
 
 - **Parameters:** `route4`: `which` (table — the routing table), `algorithm`
-  (uint32, 0…6), `dest` (uint32, 0…4: 0–3 = modulation rows, 4 = carrier mask).
-  `route`: `which` (table). `algo`: `which` (table), `algorithm` (uint32, 0…6),
+  (uint32, 0…7), `dest` (uint32, 0…4: 0–3 = modulation rows, 4 = carrier mask).
+  `route`: `which` (table). `algo`: `which` (table), `algorithm` (uint32, 0…7),
   `car_fb` (q15 — the carrier feedback master). `algo.algorithm` is the one shared
   selection (broadcast as `alg` to `route`); `car_fb` is gated by the carrier mask
   into `fb1..fb4`.
 
 - **Coefficients / precompute:** the routing table is the `tables:` entry
-  `{ "kind": "routing" }` → 7 algorithms × 5 rows × 4 weights (140 Q15 0/1). The
-  7 rows are ymfm's `s_algorithm_ops` {0,1,2,4,5,6,7} (alg 3 dropped as alg 2's
-  mirror), enumerated in `_tables.py::_ROUTING`.
+  `{ "kind": "routing" }` → 8 algorithms × 5 rows × 4 weights (160 Q15 0/1). The
+  8 rows are ymfm's `s_algorithm_ops` {0,1,2,3,4,5,6,7} — the full standard
+  TX81Z/DX100/DX21 4-op set, enumerated in `_tables.py::_ROUTING`.
 
 - **State:** none (memoryless).
 

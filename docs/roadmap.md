@@ -814,9 +814,12 @@ skill + tutorial):
 **fourop-fm panel.** The panel maps to the **real FM-1** control surface:
 `ALGORITHM` is the always-on algorithm encoder; the **4-param page** model puts the
 current page's params on `KNOB1–4`, `SELECT` cycles sub-pages (pitch → env-rates →
-env-levels → tremolo → mute), `SEL` selects the operator, and `EDIT`/`FX`/`GLO`
-push their contexts (`op` = the operator editor, `fx` = the output chain, `glo` =
-the global vibrato + pitch envelope). The pages are operator-relative (`operators` +
+env-levels → tremolo → mute), `SEL` selects the operator (wrapping 1→4), and
+`EDIT`/`FX`/`GLO` switch contexts (`op` = the operator editor, `fx` = the output
+chain, `glo` = the global vibrato + pitch envelope). The three are **siblings**
+(a `switch` replaces the current mode rather than stacking — so `FX` → `EDIT`
+goes straight to the operator editor without passing through `HOME`); `HOME`
+pops home from anywhere. The pages are operator-relative (`operators` +
 `OP_ROW`/`OP_PARAM`), and each op page opens with a **`status` readout** (`ALG <n> ·
 OP <n>/4 · MUTE`) so the algorithm, selected operator, and mute stay visible while
 editing. **Mute** is a sub-page — the four knobs toggle op1–4 directly (no
@@ -1244,7 +1247,7 @@ patch-level `cc:` surface for multitimbral patches), the polyphony budget tool,
 the source-vocabulary check, the firmware framework (`rib.c` + `synth_midi` /
 `synth_sysex` / `synth_runtime` + `presets.c`), and the `build --synth`
 composition. The *fourop-fm-specific* bits are `algo`/`route`/`route4`, the
-`fm_op` macro, the 12-waveform `osc` union, the 7-algorithm `routing` table, the
+`fm_op` macro, the 12-waveform `osc` union, the 8-algorithm `routing` table, the
 DX `dx_env`, and `examples/fourop-fm/app.c` — each an instance of a universal
 mechanism (the selector, the router, the operator, the wave reader, the matrix,
 the rate/level envelope, the app glue).

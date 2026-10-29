@@ -96,6 +96,15 @@ void ui_push(uint8_t ctx)
     }
 }
 
+/* switch to `ctx`, replacing the current non-home mode (EDIT/FX/GLO are siblings,
+ * not a stack): pops back to home first, then pushes. From home it is a plain push. */
+void ui_switch(uint8_t ctx)
+{
+    if (ui_sp)
+        ui_pop();                                  /* leave the current mode (home stays) */
+    ui_push(ctx);
+}
+
 void ui_pop(void)
 {
     if (!ui_sp)
@@ -143,12 +152,20 @@ static int32_t ui_scale(int32_t v, uint8_t curve)
 
 /* the param of the current page's Nth param-bearing widget (UI_BIND_PAGE_SLOT) */
 static uint16_t ui_widget_param(const ui_widget *w); /* defined below */
+
+/* the widget types a page-slot encoder can edit (the param-bearing widgets) */
+static int ui_is_param_slot(uint8_t type)
+{
+    return type == UI_VALUE || type == UI_BAR || type == UI_PARAM_ROW ||
+           type == UI_PARAM_COLUMN || type == UI_OP_ROW;
+}
+
 static uint16_t ui_slot_param(uint8_t slot)
 {
     const ui_page *p = ui_cur_page();
     uint32_t i, n = 0;
     for (i = 0; i < p->n; i++) {
-        if (p->w[i].param != UI_NO_PARAM && p->w[i].type != UI_ENVELOPE) {
+        if (ui_is_param_slot(p->w[i].type)) {
             if (n == slot)
                 return ui_widget_param(&p->w[i]);
             n++;
@@ -165,6 +182,7 @@ static void ui_do_action(uint8_t action, uint8_t arg)
     case UI_ACT_SET_STEP: ui_act_set_step(arg); break;
     case UI_ACT_PUSH: ui_push(arg); break;
     case UI_ACT_POP: ui_pop(); break;
+    case UI_ACT_SWITCH: ui_switch(arg); break;     /* replace the current mode (siblings) */
     case UI_ACT_POP_HOME: ui_pop_home(); break;
     case UI_ACT_NEXT_PAGE:
         if (ui_pagei[ui_sp] + 1u < ui_ctx()->n_pages) { ui_pagei[ui_sp]++; ui_reset_page(); }
@@ -184,12 +202,13 @@ static void ui_do_action(uint8_t action, uint8_t arg)
             ui_param_v[arg] = ui_param_v[arg] ? 0 : 1;
         break;
     case UI_ACT_OP_NEXT:
-        if (ui_selected_op < 3u)
-            ui_selected_op++;
+        if (ui_t->n_op > 1u)
+            ui_selected_op = (uint8_t)((ui_selected_op + 1u) % ui_t->n_op);
         break;
     case UI_ACT_OP_PREV:
-        if (ui_selected_op)
-            ui_selected_op--;
+        if (ui_t->n_op > 1u)
+            ui_selected_op = ui_selected_op ? (uint8_t)(ui_selected_op - 1u)
+                                            : (uint8_t)(ui_t->n_op - 1u);
         break;
     case UI_ACT_OP_MUTE:
         if (ui_t->mute && ui_selected_op < 4u) {
@@ -260,16 +279,28 @@ static uint16_t ui_widget_param(const ui_widget *w)
     return w->param;
 }
 
-/* format a param value into `out`: fmt is a printf-style hint; only "%d" (or empty)
- * and a trailing unit are supported. */
+/* format a param's value + unit into `out` (the right-hand column) */
+static void ui_value_str(const ui_widget *w, char *out, uint32_t n)
+{
+    int32_t v = ui_widget_param(w) < ui_t->n_params ? ui_param_v[ui_widget_param(w)] : 0;
+    out[0] = 0;
+    ui_itoa(v, out);
+    if (w->unit) {
+        ui_strcat(out, " ");
+        ui_strcat(out, w->unit);
+    }
+    (void)n;
+}
+
+/* format a param row's label + value + unit into `out` (for the bar's label) */
 static void ui_format(const ui_widget *w, char *out, uint32_t n)
 {
     int32_t v = ui_widget_param(w) < ui_t->n_params ? ui_param_v[ui_widget_param(w)] : 0;
     out[0] = 0;
     if (w->text)
         ui_strcat(out, w->text);
-    if (w->text && (w->fmt || w->unit))
-        ui_strcat(out, " ");
+    if (w->text)
+        ui_strcat(out, " ");                      /* a gap between the name and its value */
     if (w->fmt && w->fmt[0] == '%' && w->fmt[1] == 's' && w->text == 0) {
         /* "%s": the param is a raw string (unsupported here; show the int) */
     }
@@ -281,13 +312,25 @@ static void ui_format(const ui_widget *w, char *out, uint32_t n)
     (void)n;
 }
 
+/* a param row: the label in the label colour, the value + unit right-aligned in
+ * the value colour — the value is what changes, so it is the bright/high-contrast
+ * element and the label is the dim reference (the palette's C_GRAY/C_HI roles). */
 static void ui_draw_value(const ui_widget *w)
 {
     uint32_t x, y, wd, ht;
-    char s[32];
+    char val[24];
     ui_region(w, &x, &y, &wd, &ht);
-    ui_format(w, s, sizeof s);
-    draw_text_box(x, y, wd, &FONT_S, s, C_HI, 0);
+    ui_value_str(w, val, sizeof val);
+    cv_begin(wd, ht, C_BLACK);
+    {
+        int32_t vx = (int32_t)wd - text_w(&FONT_S, val);
+        if (vx < 0)
+            vx = 0;
+        if (w->text)
+            cv_text(0, 0, &FONT_S, w->text, C_GRAY);   /* the name: dim */
+        cv_text(vx, 0, &FONT_S, val, C_HI);            /* the value: bright */
+    }
+    cv_blit(x, y);
 }
 
 static void ui_draw_bar(const ui_widget *w)
@@ -347,15 +390,22 @@ static void ui_draw_envelope(const ui_widget *w)
     if (!ui_t->env || ui_selected_op >= ui_t->n_op)
         return;
     p0 = (uint32_t)ui_selected_op * 7u;
-    for (i = 0; i < 4; i++) {
+    for (i = 0; i < 3; i++) {                       /* r1..r3: attack, decay1, decay2 */
         uint16_t p = ui_t->env[p0 + i];
         int32_t r = p < ui_t->n_params ? ui_param_v[p] : 0;
         uint32_t t = r <= 0 ? 60u : (uint32_t)(65536u / (uint32_t)r);
         len[i] = t < 2u ? 2u : (t > 60u ? 60u : t);
         total += len[i];
     }
-    len[4] = 8u;                                    /* sustain: a short flat segment */
-    total += len[4];
+    len[3] = 8u;                                    /* sustain: a short flat hold */
+    total += len[3];
+    {
+        uint16_t p = ui_t->env[p0 + 3];             /* r4: the release rate */
+        int32_t r = p < ui_t->n_params ? ui_param_v[p] : 0;
+        uint32_t t = r <= 0 ? 60u : (uint32_t)(65536u / (uint32_t)r);
+        len[4] = t < 2u ? 2u : (t > 60u ? 60u : t);
+        total += len[4];
+    }
     if (!total)
         total = 1u;
     for (i = 0; i < 3; i++) {
@@ -451,8 +501,9 @@ static void ui_draw_status(const ui_widget *w)
     t[3] = 0;
     ui_strcat(s, t);
     /* the mute flag is drawn in the warning colour (its text also says MUTE, so it
-     * is not conveyed by colour alone). */
-    cv_begin(wd, FONT_S.h, C_BLACK);
+     * is not conveyed by colour alone). Clear the full 2-line region, not just the
+     * font height, so a previous page's header is fully erased. */
+    cv_begin(wd, ht, C_BLACK);
     {
         int32_t end = cv_text(0, 0, &FONT_S, s, C_HI);
         if (muted)

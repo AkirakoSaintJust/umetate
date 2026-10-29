@@ -152,6 +152,7 @@ _ACTIONS = {
     "set_step": "UI_ACT_SET_STEP",
     "push": "UI_ACT_PUSH",
     "pop": "UI_ACT_POP",
+    "switch": "UI_ACT_SWITCH",
     "pop_home": "UI_ACT_POP_HOME",
     "next_page": "UI_ACT_NEXT_PAGE",
     "prev_page": "UI_ACT_PREV_PAGE",

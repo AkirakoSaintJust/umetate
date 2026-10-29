@@ -40,7 +40,7 @@ enum { UI_ABS = 0, UI_REL, UI_MOMENTARY, UI_LATCH, UI_TOGGLE };
 /* ---- actions (the arg is a context/page/step id, as the verb needs) ---- */
 enum {
     UI_ACT_NOTE_ON = 0, UI_ACT_NOTE_OFF, UI_ACT_SET_STEP, UI_ACT_PUSH, UI_ACT_POP,
-    UI_ACT_POP_HOME, UI_ACT_NEXT_PAGE, UI_ACT_PREV_PAGE, UI_ACT_SET_PAGE,
+    UI_ACT_SWITCH, UI_ACT_POP_HOME, UI_ACT_NEXT_PAGE, UI_ACT_PREV_PAGE, UI_ACT_SET_PAGE,
     UI_ACT_BANK_NEXT, UI_ACT_BANK_PREV, UI_ACT_TOGGLE, UI_ACT_LATCH, UI_ACT_SAVE,
     UI_ACT_LOAD, UI_ACT_PANIC, UI_ACT_PLAY, UI_ACT_STOP,
     UI_ACT_OP_NEXT, UI_ACT_OP_PREV, UI_ACT_OP_MUTE,   /* the selected-operator group */
@@ -113,6 +113,7 @@ typedef struct {
 void ui_init(const ui_tables *t);
 void ui_push(uint8_t ctx);
 void ui_pop(void);
+void ui_switch(uint8_t ctx);                      /* replace the current mode (siblings) */
 void ui_pop_home(void);
 uint8_t ui_top(void);                            /* the active context id */
 void ui_handle(uint16_t source, int32_t value);  /* resolve the source -> param/action */

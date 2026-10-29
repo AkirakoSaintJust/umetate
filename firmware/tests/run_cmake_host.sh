@@ -9,6 +9,7 @@ CMAKE="${CMAKE:-cmake}"
 "$CMAKE" --build "$BUILD_DIR" --target dsp_test
 "$CMAKE" --build "$BUILD_DIR" --target uac_test
 "$CMAKE" --build "$BUILD_DIR" --target bootguard_test
+"$CMAKE" --build "$BUILD_DIR" --target ui_test
 "$CMAKE" --build "$BUILD_DIR" --target presets_test
 "$CMAKE" --build "$BUILD_DIR" --target kernel_test
 "$CMAKE" --build "$BUILD_DIR" --target scope_test
