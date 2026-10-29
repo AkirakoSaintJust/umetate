@@ -62,16 +62,20 @@ const log = (s) => { document.getElementById("log").textContent += s + "\\n"; };
 let synth = null;
 
 document.getElementById("start").onclick = async () => {
-  const ctx = new AudioContext({ sampleRate: 44100 });  // the DSP is fixed at 44.1 kHz
-  await ctx.audioWorklet.addModule("worklet.js");
-  synth = new AudioWorkletNode(ctx, "synth",
-      { numberOfOutputs: 1, outputChannelCount: [2] });
-  synth.port.onmessage = (e) => log(String(e.data));
-  synth.connect(ctx.destination);
-  await ctx.resume();
-  document.getElementById("note").disabled = false;
-  document.getElementById("off").disabled = false;
-  log("started (44.1 kHz)");
+  try {
+    const ctx = new AudioContext({ sampleRate: 44100 });  // fixed 44.1 kHz
+    await ctx.audioWorklet.addModule("worklet.js");
+    synth = new AudioWorkletNode(ctx, "synth",
+        { numberOfOutputs: 1, outputChannelCount: [2] });
+    synth.port.onmessage = (e) => log(String(e.data));
+    synth.connect(ctx.destination);
+    await ctx.resume();
+    document.getElementById("note").disabled = false;
+    document.getElementById("off").disabled = false;
+    log("started (44.1 kHz)");
+  } catch (err) {
+    log("start error: " + (err && err.message ? err.message : err));
+  }
 };
 
 const send = (op, extra = {}) =>
@@ -95,12 +99,16 @@ class SynthProcessor extends AudioWorkletProcessor {
     this.pos = BLOCK;  // render on the first process() call
     this.port.onmessage = (e) => this.onmsg(e.data);
     (async () => {
-      const bytes = await (await fetch("dsp.wasm")).arrayBuffer();
-      const { instance } = await WebAssembly.instantiate(bytes, {});
-      this.e = instance.exports;
-      this.out = new Int32Array(this.e.memory.buffer, OUT, BLOCK * 2);
-      this.e[SYNTH + "_dsp_reset"]();
-      this.port.postMessage("ready: " + SYNTH);
+      try {
+        const bytes = await (await fetch("/dsp.wasm")).arrayBuffer();
+        const { instance } = await WebAssembly.instantiate(bytes, {});
+        this.e = instance.exports;
+        this.out = new Int32Array(this.e.memory.buffer, OUT, BLOCK * 2);
+        this.e[SYNTH + "_dsp_reset"]();
+        this.port.postMessage("ready: " + SYNTH);
+      } catch (err) {
+        this.port.postMessage("error: " + (err && err.message ? err.message : err));
+      }
     })();
   }
 
