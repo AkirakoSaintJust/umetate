@@ -13,7 +13,7 @@ parses to None (a rejected import, never a partial bank).
 
 from __future__ import annotations
 
-from typing import TypedDict
+from typing import TypedDict, cast
 
 from ._records import (
     SLOTS,
@@ -43,6 +43,69 @@ class Bank(TypedDict):
 
     part_patches: list[PartPatch | None]
     multi_patches: list[MultiPatch | None]
+
+
+def as_bank(raw: object) -> Bank:
+    """Narrow a JSON object to a Bank (64 slots each; None entries = empty)."""
+    if not isinstance(raw, dict):
+        raise ValueError("bank: expected a JSON object")
+    obj = cast(dict[str, object], raw)
+    part = obj.get("part_patches")
+    multi = obj.get("multi_patches")
+    if not isinstance(part, list) or not isinstance(multi, list):
+        raise ValueError("bank: 'part_patches'/'multi_patches' must be lists")
+    part_list = cast(list[object], part)
+    multi_list = cast(list[object], multi)
+    if len(part_list) != SLOTS or len(multi_list) != SLOTS:
+        raise ValueError(f"bank: each list must have {SLOTS} entries")
+
+    def _part(r: object) -> PartPatch | None:
+        if r is None:
+            return None
+        if not isinstance(r, dict):
+            raise ValueError("bank: bad part-patch entry")
+        entry = cast(dict[str, object], r)
+        name = entry.get("name")
+        params = entry.get("params")
+        if not isinstance(name, str) or not isinstance(params, list):
+            raise ValueError("bank: bad part-patch entry")
+        values = cast(list[object], params)
+        if not all(isinstance(v, int) for v in values):
+            raise ValueError("bank: bad part-patch entry")
+        return {"name": name, "params": cast(list[int], values)}
+
+    def _multi(r: object) -> MultiPatch | None:
+        if r is None:
+            return None
+        if not isinstance(r, dict):
+            raise ValueError("bank: bad multi-patch entry")
+        entry = cast(dict[str, object], r)
+        name = entry.get("name")
+        if not isinstance(name, str):
+            raise ValueError("bank: bad multi-patch entry")
+        fields: dict[str, list[int]] = {}
+        for key in ("part_slot", "level", "delay", "channel", "low", "high"):
+            vals = entry.get(key)
+            if not isinstance(vals, list):
+                raise ValueError(f"bank: bad multi-patch '{key}'")
+            values = cast(list[object], vals)
+            if not all(isinstance(v, int) for v in values):
+                raise ValueError(f"bank: bad multi-patch '{key}'")
+            fields[key] = cast(list[int], values)
+        return {
+            "name": name,
+            "part_slot": fields["part_slot"],
+            "level": fields["level"],
+            "delay": fields["delay"],
+            "channel": fields["channel"],
+            "low": fields["low"],
+            "high": fields["high"],
+        }
+
+    return {
+        "part_patches": [_part(r) for r in part_list],
+        "multi_patches": [_multi(r) for r in multi_list],
+    }
 
 
 def _packed_len(n: int) -> int:

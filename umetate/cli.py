@@ -27,6 +27,7 @@ COMMANDS: dict[str, tuple[str, str]] = {
     "debrick": ("recovery write (mask-rom blocked)", "debrick"),
     "scaffold": ("generate a node/macro/patch skeleton", "scaffold"),
     "lib": ("list the shipped nodes + templates", "lib"),
+    "preset": ("export/import the preset bank as SysEx", "preset"),
     "lint": ("the C standing checks", "lint"),
     "fmt": ("clang-format the repo", "fmt"),
     "web-build": ("emscripten -> standalone dsp.wasm", "web:build_main"),

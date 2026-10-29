@@ -447,6 +447,88 @@ def _bank_roundtrip() -> None:
     assert _presets.import_bank(stream, layout, 0x41) is None, "wrong model undetected"
 
 
+def _preset_export_import() -> None:
+    """`umetate preset export` -> `import` round-trips a bank through a .syx file."""
+    import json
+
+    from . import _presets, _records
+
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "patch.json").write_text(
+            json.dumps(
+                {
+                    "name": "t",
+                    "voices": 2,
+                    "voice": {
+                        "nodes": [
+                            {"id": "ph", "type": "phasor"},
+                            {"id": "osc", "type": "osc"},
+                        ],
+                        "wires": [{"from": "ph.phase", "to": "osc.phase"}],
+                        "voice_out": "osc.audio",
+                    },
+                    "global": {"nodes": [], "wires": []},
+                }
+            ),
+            encoding="utf-8",
+        )
+        bank: _presets.Bank = {
+            "part_patches": [None] * _records.SLOTS,
+            "multi_patches": [None] * _records.SLOTS,
+        }
+        bank["part_patches"][1] = {"name": "EPiano", "params": [100, -5]}
+        (d / "bank.json").write_text(json.dumps(bank), encoding="utf-8")
+
+        rc = cli.main(
+            [
+                "preset",
+                "export",
+                str(d / "patch.json"),
+                "--bank",
+                str(d / "bank.json"),
+                "--model",
+                "0x42",
+                "--out",
+                str(d / "bank.syx"),
+            ]
+        )
+        assert rc == 0, "export failed"
+        assert (d / "bank.syx").exists() and (d / "bank.syx").stat().st_size > 0
+
+        rc = cli.main(
+            [
+                "preset",
+                "import",
+                str(d / "patch.json"),
+                "--from",
+                str(d / "bank.syx"),
+                "--model",
+                "0x42",
+                "--out",
+                str(d / "bank2.json"),
+            ]
+        )
+        assert rc == 0, "import failed"
+        back = json.loads((d / "bank2.json").read_text(encoding="utf-8"))
+        assert back == bank, "bank round-trip mismatch"
+
+        rc = cli.main(
+            [
+                "preset",
+                "import",
+                str(d / "patch.json"),
+                "--from",
+                str(d / "bank.syx"),
+                "--model",
+                "0x41",
+                "--out",
+                str(d / "bank3.json"),
+            ]
+        )
+        assert rc == 1, "wrong-model import not rejected"
+
+
 def main() -> int:
     tests: _Tests = [
         ("no import side effects", _no_import_side_effects),
@@ -469,6 +551,7 @@ def main() -> int:
         ("the preset records round-trip", _records_roundtrip),
         ("the SysEx envelope round-trips", _sysex_roundtrip),
         ("the preset bank exports + imports", _bank_roundtrip),
+        ("preset export/import round-trips via the CLI", _preset_export_import),
     ]
     failures = 0
     for name, test in tests:
