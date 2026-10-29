@@ -826,11 +826,23 @@ strengthening below.
   render costs ~9% of a 240 MHz core (0.52 ms) or ~6.5% of a 320 MHz core
   (0.38 ms) per active voice, linear — so on CPU1's 5.8 ms block the ceiling is
   ~15 voices at 320 MHz (12 comfortable, 16+ overruns). 8 is a *choice*, not the
-  ceiling. The stock firmware's 20 × 6-op (120 operators) in the same block means
-  our 4-op render is ~2× behind per operator — a render-efficiency gap (the
-  per-sample route matrix + the 12-wave osc), the real lever to reach 20, not
-  clock or core count. (The earlier "12 × 2 ideal" target was never measured;
-  it resolved to 8.)
+  ceiling. Two render passes landed — the phasor's block-constant pitch multiply
+  moved out of the sample loop, and the 12-wave `osc` switch became a precomputed
+  `fm1_wave[12·1024]` table with a block-rate base — ~30% less render time.
+
+  The **gap to the stock** is now pinned. The stock is a port of Google's **msfa**
+  (the Dexed core, integer fixed-point, `AL-255/FM-1-RE`), and its efficiency over
+  ours is *compiler codegen*, not hardware: the pi32v2 dual-issues (explicit VLIW
+  `ins1 # ins2`) and has a `rep` zero-overhead loop, and the stock's compiler emits
+  both (16 634 parallel pairs, 3 585 `rep`) while our **clang 4.0.1 emits neither**
+  (`-mcpu=r3` vs `r3s` are byte-identical; only the hand-written `.S` files
+  dual-issue). No community toolchain fixes this — the whole Felucca family is
+  pinned to the same closed-source clang 4.0.1 fork. **Float is not the answer
+  either**: the pi32v2 has a single-cycle 32×32→64 MAC (`r3_r2 += r1*r0`), so our
+  integer Q15 multiply is already ~2 instructions, and float loses phase precision
+  (24-bit mantissa < 32-bit phase). Remaining levers: hand-written asm for the hot
+  loop (what the stock did; breaks the generated-C model), the global-algo routing
+  select, and constant-folding the `fm1_q15_mul(x, 32768)` identity.
 
 #### 6.11.4 Design (concrete)
 
