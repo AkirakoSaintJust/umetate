@@ -407,7 +407,7 @@ umetate setup      [--no-emulator] [--dry-run] [--clock 240|320] [--json]   opt-
 umetate build      --board fm1|smk37 [--model pro|elite|mke]
                    [--dsp integer|float] [--clock 240|320] [--profile baseline|perf]
 umetate emu        [--board fm1|smk37] [--persist] [--midi NAME] [--check]   run your firmware in the fm1-emu GUI (or headless)
-umetate deep-check  [--host|--web|--safety|--skill|--links|--pyright|--all]
+umetate deep-check  [--host|--web|--safety|--python|--skill|--links|--pyright|--all]
 umetate inspect    PACKAGE                   inspect a .fwsc without a device
 umetate flash      PACKAGE [--port NAME] [--device] [--yes]   flash; identity + CRC + model checked; resumes a device in update mode
 umetate debrick    [--route app-rescue|update-loader|mask-rom]   name a recovery route + its procedure (mask-rom: blocked, needs the USB_KEY dongle)
@@ -1139,10 +1139,10 @@ runs through two nested loops.
   synth), make it mutually consistent, confirm it with the user. No code until
   the decision is confirmed.
 - **Implementation loop** — translate in small increments; after each, run the
-  full gate (`mypy` + `ruff` + `pyright`; the host/browser/target tests;
-  `_skill`/`_links`/`lint --c`) and **commit with the canonical artifact updated
-  in the same commit** (the roadmap is the single source of truth — never out of
-  sync with the code).
+  full gate (`umetate deep-check --all`: mypy + ruff + pyright; the Python test
+  modules; the firmware host route; `_skill`/`_links`/`lint --c`) and **commit
+  with the canonical artifact updated in the same commit** (the roadmap is the
+  single source of truth — never out of sync with the code).
 
 Rules: never batch unrelated decisions into one increment; never implement before
 the design is confirmed; never weaken a test to make a build pass; a lower
@@ -2223,7 +2223,7 @@ shim; `generate.py` is a pure function.
 | `build.py` | `build` | generate + target compile + packager → `.fwsc` (Docker); `blocked` without the toolchain; `--board/--model/--dsp/--clock/--profile`; **`--synth <dir>`** composes a synth project (patch.json + panel.json + app.c) — generate into `firmware/gen/`, host-build + run the project's script (WAV + screens), then the target package `umetate-<board>-<model>-<synth>.fwsc` |
 | `emu.py` | `emu` | run your firmware in fm1-emu: the GUI (`fm1-live --fwsc`, `--persist`, `--midi`) or headless (`--check --mhz` → the shot + audio peak); the default package is the newest composed synth package, else the demo; `_emu.py` holds the shared paths |
 | `generate.py` | (internal) | patch + panel → `dsp.c` + `panel.h` (UI tables); `params.json` + `tables.c` are P3-3 |
-| `deep_check.py` | `deep-check` | host/web/safety/links/skill checks |
+| `deep_check.py` | `deep-check` | host/web/safety/python/links/skill/pyright checks; `--all` is the complete gate |
 | `inspect.py` | `inspect` | read a `.fwsc` (identity/CRC/model/damage) without a device |
 | `flash.py`/`debrick.py` | `flash`/`debrick` | `flash` writes a `.fwsc` (§8 gates, wrong-model exits 6); `debrick` names the recovery routes (mask-rom blocked) |
 | `scaffold.py` | `scaffold node\|macro\|patch` | generate a skeleton; `--template` copies a shipped template |
@@ -2409,10 +2409,14 @@ requested layers; each reports per the §5.5 vocabulary:
 - `pyright` (source) — the strict Python type-check (`[tool.pyright]`, §6.8):
   `Any` is banned and the "partially unknown" diagnostics (e.g. an `argparse`
   attribute in a `list[str]`) are errors; run alongside `mypy --strict` + `ruff`.
+- `python` (source) — the owned Python layer, one deterministic pass: `ruff
+  check` + `ruff format --check`, `mypy --strict`, and the four test modules
+  (`test_generate`/`test_panel`/`test_web`/`test_cli` — the last runs the
+  `build --synth` composition, so it is the target build's per-increment gate).
 
 Flags: `--host` (host vectors + UI tests), `--safety` (lint), `--web` (wasm),
-`--skill`, `--links`, `--pyright`, `--all`; `lint --c` runs the `lint` check
-standalone.
+`--python` (ruff + mypy + the test modules), `--skill`, `--links`, `--pyright`,
+`--all` (the complete gate); `lint --c` runs the `lint` check standalone.
 
 **Config & exit model.** Committed `env.lock` (toolchain/SDK pins + hashes); an
 ignored per-checkout env file (toolchain/SDK paths + the `--clock` choice). Build

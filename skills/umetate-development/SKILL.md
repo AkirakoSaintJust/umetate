@@ -305,15 +305,15 @@ umetate scaffold patch --name "My Synth" --out examples/my-synth
 
 ### 7. Verify and report
 
-Run the narrowest checks first, then widen:
+The gate is one command — `umetate deep-check --all` (mypy + ruff + pyright, the
+four test modules, the firmware host route, `_skill`/`_links`/`lint --c`). It is
+the deterministic "is this increment done" check. The wider, slower steps follow:
 
 ```sh
-umetate lint --c
-umetate deep-check --host
-umetate deep-check --web
-umetate budget <patch.json> --voices N          # the measured polyphony claim
-umetate build --synth examples/<project>        # compose + host evidence + package
-umetate emu --check --mhz 240                   # boot the package, hold a chord
+umetate deep-check --all                       # the gate (one command, exit 0/1)
+umetate budget <patch.json> --voices N         # the measured polyphony claim
+umetate build --synth examples/<project>       # compose + host evidence + package
+umetate emu --check --mhz 240                  # boot the package, hold a chord
 ```
 
 Record each layer in `templates/evidence-matrix.md` and validate with

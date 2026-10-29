@@ -4,8 +4,10 @@
 
 `--host` (the default) runs the host DSP/UI/unit tests; `--safety` runs the C
 standing checks (lint); `--web` builds the standalone wasm + proves host == wasm
-(P4-1); `--skill` verifies the offline skill bundles (P5); `--links` checks the
-docs' cross-references (P6); `--pyright` runs the strict Python type-check.
+(P4-1); `--python` runs the Python layer (ruff + mypy + the four test modules);
+`--skill` verifies the offline skill bundles (P5); `--links` checks the docs'
+cross-references (P6); `--pyright` runs the strict Python type-check. `--all` is
+the complete gate — the single deterministic "is this increment done" check.
 """
 
 from __future__ import annotations
@@ -80,6 +82,32 @@ def _pyright() -> int:
     return subprocess.run(["pyright"], cwd=runner.REPO_ROOT).returncode
 
 
+# the Python layer: lint + format + types + the owned test modules. One list, so
+# a new test module is a one-line addition (and the gate stays deterministic).
+_PYTHON_STEPS: tuple[tuple[str, list[str]], ...] = (
+    ("ruff check", ["ruff", "check", "umetate/"]),
+    ("ruff format", ["ruff", "format", "--check", "umetate/"]),
+    ("mypy", ["mypy", "--strict"]),
+    ("test_generate", ["python3", "-m", "umetate.test_generate"]),
+    ("test_panel", ["python3", "-m", "umetate.test_panel"]),
+    ("test_web", ["python3", "-m", "umetate.test_web"]),
+    ("test_cli", ["python3", "-m", "umetate.test_cli"]),
+)
+
+
+def _python() -> int:
+    """The Python layer: ruff (check + format) + mypy --strict + the test modules."""
+    failures = 0
+    for label, cmd in _PYTHON_STEPS:
+        if runner.probe().docker:
+            rc = runner.run(list(cmd), cwd="/work")
+        else:
+            rc = subprocess.run(list(cmd), cwd=runner.REPO_ROOT).returncode
+        print(f"deep-check --python {label}: {'ok' if rc == 0 else 'failed'}")
+        failures += 0 if rc == 0 else 1
+    return 1 if failures else 0
+
+
 def _links() -> int:
     """The docs' cross-references resolve (no dead Markdown links)."""
     from . import _links
@@ -98,6 +126,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--host", action="store_true", help="the host tests")
     parser.add_argument("--safety", action="store_true", help="the C standing checks")
     parser.add_argument("--web", action="store_true", help="the standalone-wasm check")
+    parser.add_argument(
+        "--python", action="store_true", help="ruff + mypy + the test modules"
+    )
     parser.add_argument("--skill", action="store_true", help="the offline skills")
     parser.add_argument("--links", action="store_true", help="docs cross-references")
     parser.add_argument("--pyright", action="store_true", help="the strict type-check")
@@ -109,6 +140,7 @@ def main(argv: list[str] | None = None) -> int:
             args.host,
             args.safety,
             args.web,
+            args.python,
             args.skill,
             args.links,
             args.pyright,
@@ -130,6 +162,8 @@ def main(argv: list[str] | None = None) -> int:
         rc = _web()
         print(f"deep-check --web: {'ok' if rc == 0 else 'failed'}")
         failures += 0 if rc == 0 else 1
+    if args.python or args.all:
+        failures += 0 if _python() == 0 else 1
     if args.skill or args.all:
         rc = _skill()
         print(f"deep-check --skill: {'ok' if rc == 0 else 'failed'}")

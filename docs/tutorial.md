@@ -306,16 +306,14 @@ notes survive a redraw). Device checks remain `blocked`.
 
 ## 9. Test
 
-Start with focused checks, then test across more layers:
+The gate is one command — run it after every increment:
 
 ```sh
-umetate lint --c             # the C standing checks
-umetate deep-check --host    # host tests
-umetate deep-check --web     # wasm + host == wasm parity
-umetate budget patch.json --voices 8        # the measured polyphony claim
-umetate build --synth examples/my-synth     # compose + host run + target package
-umetate emu --check --mhz 240               # boot the built package, hold a chord
-umetate preset export examples/my-synth     # the bank as .syx (import reverses it)
+umetate deep-check --all                       # mypy + ruff + pyright + the test modules + host + skill + links + lint
+umetate budget patch.json --voices 8           # the measured polyphony claim
+umetate build --synth examples/my-synth        # compose + host run + target package
+umetate emu --check --mhz 240                  # boot the built package, hold a chord
+umetate preset export examples/my-synth        # the bank as .syx (import reverses it)
 ```
 
 `build --synth` writes the generated engine/panel/CC/layout files into
