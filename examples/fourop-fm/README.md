@@ -1,10 +1,14 @@
 # Worked example: fourop-fm (4-op Yamaha FM)
 
 This worked example puts the framework through a complete four-operator FM
-synth, documented in `docs/roadmap.md` §6.9. The instrument follows the OPZ/DX21
-lineage and includes per-operator and carrier feedback, seven runtime-selectable
-algorithms, rate/level envelopes, and 12 waveforms. It also has a shared pitch LFO
-and pitch envelope, plus an amplitude LFO for each operator.
+synth — the **fourop-fm program** in `docs/roadmap.md` §6.11 (the modules it
+shipped are documented in §6.9). The instrument follows the OPZ/DX21 lineage and
+includes per-operator and carrier feedback, seven runtime-selectable algorithms,
+rate/level envelopes, and 12 waveforms. It also has a shared pitch LFO and pitch
+envelope, plus an amplitude LFO for each operator. It builds into a full
+firmware: **two independent timbres** (parts, channels 0/1), velocity, presets
+(32+32 + settings), SysEx, and MIDI CC/sustain/panic/bend, composed from the app
+glue `app.c` onto the frozen `rib.c` framework (`umetate build --synth`).
 
 ## 1. The synth
 
@@ -25,8 +29,10 @@ and pitch envelope, plus an amplitude LFO for each operator.
 
 | File | What it holds |
 | --- | --- |
-| `patch.json` | the declarative synth (voice/global zones, 39 friendly params, the `routing` table) |
+| `patch.json` | the declarative synth (voice/global zones, the `routing` table, `parts: 2`, the `model` byte, the `cc:` list — 39 friendly names → 161 set_param ids) |
 | `panel.json` | the UI (`home` + `op` + `fx` + `glo` contexts) |
+| `app.c` | the app glue (the `app_audio`/`app_main`/`app_idle` + service contexts) the framework composes |
+| `host-script.txt` | the host leg's script (notes on both parts, a CC, panic → WAV + screens) |
 | `synth-brief.md` | the instrument brief (source of truth for the above) |
 | `dsp-algorithm.md` | the per-component math (dx_env, osc.waveform, routing, fm_op, lfo) |
 | `code-structure.md` | the nodes/macros + HAL helpers the dogfood shipped |
@@ -40,8 +46,11 @@ The example's implementation lives in `modules/nodes/` (`dx_env`, `mix4`,
 ## 3. Run
 
 ```sh
-python3 -m umetate.test_generate     # renders the patch + resolves the panel
-umetate build                        # generate dsp.c + build the firmware (needs the toolchain)
+umetate deep-check --all                       # the gate (renders the patch, resolves the panel, runs the composition)
+umetate build --synth examples/fourop-fm       # compose + host run + target package (needs the toolchain)
+umetate emu --check --mhz 240                  # boot the package, hold a chord (no halt, full-scale peak)
+umetate preset export examples/fourop-fm       # the 32+32 bank as .syx (import reverses it)
+umetate budget examples/fourop-fm/patch.json --voices 8   # the measured polyphony claim
 ```
 
 ## 4. Lessons (what the example exposed)
@@ -65,8 +74,11 @@ The list below notes whether each is recorded, deferred, or shipped:
    reaches *exactly* zero after the input stops (≈ −80 dBFS), so a post-voice
    filter fails the strict "silent after off" host contract. The dogfood uses a
    decay-to-near-silence contract. Recorded in the roadmap §6.9.
-5. **Velocity is unwired (deferred).** Like the pocket-drone, the operator VCA
-   doesn't take the allocator's `velocity`; scaling it is a follow-up.
+5. **Velocity → amplitude/FM/envelope-rate is wired, defaulted off (shipped,
+   F2).** The `fm_op` macro has `vel_amp`/`vel_fm`/`vel_rate` depths (the
+   reserved `velocity` input), so velocity reaches the operators — but the
+   dogfood defaults each depth to 0, so velocity is inaudible until set via
+   `set_param` (`opN.velamp.depth` etc.). Not on the panel/CC surface.
 6. **Control-rate LFO (shipped).** Each tick, the `lfo` node advances by
    `rate × CONTROL_BLOCK`, using the macro emitted by the generator. Its phase is
    therefore measured in samples, and its output holds for one sub-block. This

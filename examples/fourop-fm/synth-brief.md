@@ -14,8 +14,8 @@
 - **Three reference sounds:** (1) a DX7-style E-piano (algorithm 4, two
   2-operator stacks); (2) a clangorous bell (algorithm 0, deep stack + feedback);
   (3) an additive organ pad (algorithm 7, all four carriers).
-- **Explicit non-goals:** no patch persistence/MIDI sysex, no effects beyond
-  filter + wavefolder, no velocity scaling (deferred; see README).
+- **Explicit non-goals:** no effects beyond filter + wavefolder (patch
+  persistence, SysEx, and velocity scaling are now shipped — see §4/§5).
 
 ## 2. Sound and voice architecture
 
@@ -28,8 +28,10 @@
 - **Oscillators / operators / noise:** 4 operators, each `phasor → osc →
   dx_env → vca` with 1-sample self-feedback (`fm_op` macro).
 - **Filter(s) and resonance:** one global `svf` low-pass, `q` = damping.
-- **Envelopes and velocity:** DX rate/level (`dx_env`, 4 rates + 3 levels); no
-  velocity scaling (deferred).
+- **Envelopes and velocity:** DX rate/level (`dx_env`, 4 rates + 3 levels);
+  velocity → amplitude/FM/envelope-rate is wired (F2), but the dogfood defaults
+  the depths to 0 (off) — settable via `set_param` (`opN.velamp.depth` etc.),
+  not on the panel.
 - **Modulation:** the routing matrix (7 algorithms) selects which operator
   phase-modulates which; feedback = self-modulation. One **global pitch LFO**
   (vibrato, shared across voices), one **global pitch envelope** (the "pitch
@@ -74,10 +76,15 @@
 
 ### 2.2 Parameter manifest
 
-> The 39 friendly names below are what the panel exposes; the generator also
-> auto-exposes the remaining flattened operator-envelope params (per-op
-> `r2/r3/l1/l2/l3` × 4, plus op2–4's `r1`/`r4`) by their
-> `<instance>.<param>` target path (settable via `set_param`, not on the panel).
+> The 39 friendly names below are what the panel exposes. The engine is
+> **two-timbre** (`parts: 2`, channels 0 and 1): every voice-zone param is a
+> per-part array, so the full id space is 68 voice params (the `fm_op` macro's
+> 17 × 4 operators) × 2 parts + 9 global + 10 routing + 6 voice-mode = **161
+> `set_param` ids**, part-major (`part × param`). The patch's `cc:` list exposes
+> 45 of them (part 0's timbre + the global FX + the mode params) as the fixed CC
+> surface; part 1's timbre comes from the multi patch / SysEx. The 6 voice-mode
+> params (`mode`, `unison_count`, `unison_detune`, `legato`, `portamento`,
+> `note_priority`) are per-preset.
 
 | Param (name) | Target | Min | Max | Curve | Unit |
 | --- | --- | --- | --- | --- | --- |
@@ -136,20 +143,29 @@ one-pole decay rate toward the specified pitch. All block rate.)
 
 ## 4. MIDI and connectivity
 
-- **MIDI in / out / thru:** MIDI in (notes); no out/thru.
-- **Channels, velocity-zero note-off, sustain, panic:** omni; velocity-zero =
-  note-off; `all_notes_off` panic.
-- **Clock and transport:** none.
-- **USB roles:** MIDI (update via the normal flash path).
+- **MIDI in / out:** in — notes, CC (the `cc:` list, sustain CC64, panic CC123),
+  pitch bend (±2 semitones); out — the local keys echo on part 0's channel.
+- **Channels:** two parts — part 0 = channel 0, part 1 = channel 1 (a note
+  routes to every part whose channel + keyzone match; layering allowed).
+- **Velocity-zero note-off, sustain, panic:** velocity-zero = note-off; sustain
+  defers note-offs until the pedal lifts; `all_notes_off` (CC123) = panic.
+- **Clock and transport:** none (ignored).
+- **USB roles:** MIDI in/out; firmware update via the normal flash path.
 - **Overflow and back-pressure:** voice stealing (oldest) on >8 voices.
 
 ## 5. State and persistence
 
-- **What survives reboot:** nothing (the patch + panel are compile-time; params
-  are RAM).
-- **Patch/sequence format and version:** N/A.
-- **Storage budget and CRC/commit rule:** N/A.
-- **Backup, import/export, migration, rollback:** N/A.
+- **What survives reboot:** 32 part patches + 32 multi patches + the settings
+  record (base channel, master tune), saved to flash **only when silent** and
+  only on an explicit save; the multi patch in slot 0 applies at boot.
+- **Patch/sequence format and version:** the preset records (`docs/roadmap.md`
+  §6.11.4): `u8 version | name[16] | params | crc32`, 32 slots each (the slot
+  area's measured 16 372 B ceiling).
+- **Storage budget and CRC/commit rule:** per-record CRC-32 + the area CRC;
+  a corrupt record is skipped, never the bank.
+- **Backup, import/export, migration, rollback:** `umetate preset export/import`
+  (the bank ↔ `.syx`), and the five SysEx commands (identity / param dump /
+  part-patch / multi-patch / settings).
 
 ## 6. Browser prototype
 
@@ -166,13 +182,20 @@ one-pole decay rate toward the specified pitch. All block rate.)
 
 - **Must-have features:** 7 runtime algorithms; 12 waveforms; per-op + carrier
   feedback; rate/level envelopes; a global pitch LFO + global pitch envelope +
-  per-op amplitude LFO; the filter + wavefolder output chain; a panel.
-- **Optional features:** velocity scaling, patch persistence.
-- **Host tests:** `umetate.test_generate` renders the patch (non-silent → decays),
-  proves the 7 algorithms, resolves the panel, and checks the LFO oscillates; the
-  routing table is the 7-algorithm matrix.
-- **Target package checks:** `lint.c_checks` clean; the emitted DSP compiles
-  under the JieLi clang.
+  per-op amplitude LFO; the filter + wavefolder output chain; a panel; **two
+  timbres** (parts), **presets** (32+32 + settings), **SysEx**, **MIDI CC /
+  sustain / panic / bend**.
+- **Optional features (shipped, defaulted off):** velocity scaling (the depths
+  default to 0).
+- **Host tests:** `umetate deep-check --all` — mypy + ruff + pyright, the four
+  test modules (`test_generate` renders the patch + proves the 7 algorithms +
+  resolves the panel; `test_cli` runs the `build --synth` composition), plus
+  `umetate budget` (the measured polyphony claim).
+- **Target package checks:** `umetate build --synth examples/fourop-fm` →
+  `umetate-fm1-pro-fourop_fm.fwsc` (82 060 B image, `.dsp_text` in SRAM); the
+  JieLi build's own checks green.
+- **Emulator:** `umetate emu --check --mhz 240` boots the package and holds a
+  chord — no halt, full-scale audio peak.
 - **Physical timing and device checks:** device acceptance is `blocked`
   (hardware ~10 days out).
 - **Known unknowns:** the `svf` sub-LSB limit cycle (recorded in the roadmap,
@@ -183,4 +206,6 @@ one-pole decay rate toward the specified pitch. All block rate.)
 - **Brief owner:** P1Onken.
 - **Date confirmed:** 2026-10-27.
 - **Open questions that still change architecture:** none — the 7-algorithm
-  collapse (algorithm 2 ≡ 3) is locked in `dsp-algorithm.md`.
+  collapse (algorithm 2 ≡ 3) is locked in `dsp-algorithm.md`; the F7 additions
+  (two timbres, presets, SysEx, the `cc:` surface, the app glue) are locked in
+  the roadmap §6.11.

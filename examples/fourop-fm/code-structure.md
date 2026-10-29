@@ -3,7 +3,10 @@
 > Everything beyond the declarative `patch.json`/`panel.json`. The fourop-fm
 > dogfood is mostly *library*: it added a handful of nodes/macros + two HAL
 > helpers, then declared the synth. No hand-written `dsp.c` — the generator emits
-> it.
+> it. The one hand-written piece is `app.c` (the app glue on the frozen `rib.c`
+> framework, F7): `app_audio`/`app_main`/`app_idle`, the `ui_act_*` hooks, and
+> the three service contexts (`synth_midi_ctx`/`synth_sysex_ctx`/
+> `synth_runtime_ctx`).
 
 ## 1. Files
 
@@ -20,7 +23,7 @@
   - `modules/nodes/csum/` — control summer (control-rate modulation).
   - `modules/nodes/pitch_env/` — the global pitch envelope (the "pitch blip").
   - `modules/macros/fm_op/` — the operator (`macro.json`).
-  - `examples/fourop-fm/{patch.json,panel.json,synth-brief.md,dsp-algorithm.md,code-structure.md,control-map.md,README.md}`.
+  - `examples/fourop-fm/{patch.json,panel.json,app.c,host-script.txt,synth-brief.md,dsp-algorithm.md,code-structure.md,control-map.md,README.md}`.
 - **Modified**:
   - `modules/nodes/osc/` — added the `waveform` param (12 waveforms, the OPZ+OPL union).
   - `modules/nodes/vca/` — added the `level` param (Q15 gain).
@@ -94,7 +97,8 @@ No hand-written `dsp.c`: `generate(patch)` emits `<synth>_dsp_*` from the patch
 - **`umetate/test_generate.py`** — `DX_ENV` (envelope), `ROUTE4_TEST`
   (route4+mix4), the routing-table assertions, and the fourop-fm patch render
   (non-silent → decays) + panel resolve. Run:
-  `python3 -m umetate.test_generate`.
+  `python3 -m umetate.test_generate` (or the whole gate: `umetate deep-check
+  --all`).
 
 ## 6. Forbidden dependencies (re-check)
 
