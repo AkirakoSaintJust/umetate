@@ -252,8 +252,12 @@ param tables) are produced by a generator, never hand-edited.
   `platform.c`), because `fm1_cpu1.h` owns `fm1_c1_main` and must stay a single TU.
   Measured (emulator, 320 MHz, 8 voices): output bit-identical; CPU0's ISR rises to
   ~26% (its 4-voice half) from ~7% (the spin-wait), i.e. the render now spans both
-  cores. The ceiling test (raise `NVOICE` toward 16–20 and re-measure) is the next
-  increment.
+  cores. **Ceiling test (measured):** at `NVOICE` 16 the emulator shows 50% ISR, at
+  20 it shows 61% — no halt at either, i.e. the split reaches the stock's 20-voice
+  target with headroom. Voice stealing is unaffected and verified: a host test
+  fills the pool then adds an 11th note and the *oldest* note (21) is stolen, the
+  rest sounding (the score picks `min(voice_age)`; the retrigger/stacking contracts
+  in `test_generate` still pass).
 
 - **CPU1 code lives in RAM** (`.c1_text`, its waiting loop) so it never fetches
   from flash while flash is busy (AC79 §7.40).
