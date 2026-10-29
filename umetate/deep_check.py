@@ -62,6 +62,19 @@ def _skill() -> int:
     return 0
 
 
+def _lib() -> int:
+    """The node-library table is generated from the manifests and in sync."""
+    from . import lib
+
+    errors = lib.check()
+    if errors:
+        for error in errors:
+            print(f"deep-check --lib: {error}", file=sys.stderr)
+        return 1
+    print("deep-check --lib: ok (node library in sync)")
+    return 0
+
+
 def _safety() -> int:
     """The C standing checks (SEC-1/SEC-2, ROM, MMIO, no-double-in-DSP)."""
     from . import lint
@@ -140,6 +153,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--skill", action="store_true", help="the offline skills")
     parser.add_argument("--links", action="store_true", help="docs cross-references")
+    parser.add_argument("--lib", action="store_true", help="the generated node library")
     parser.add_argument("--pyright", action="store_true", help="the strict type-check")
     parser.add_argument("--all", action="store_true", help="everything available")
     args = parser.parse_args(argv)
@@ -152,6 +166,7 @@ def main(argv: list[str] | None = None) -> int:
             args.python,
             args.skill,
             args.links,
+            args.lib,
             args.pyright,
             args.all,
         )
@@ -176,6 +191,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.skill or args.all:
         rc = _skill()
         print(f"deep-check --skill: {'ok' if rc == 0 else 'failed'}")
+        failures += 0 if rc == 0 else 1
+    if args.lib or args.all:
+        rc = _lib()
+        print(f"deep-check --lib: {'ok' if rc == 0 else 'failed'}")
         failures += 0 if rc == 0 else 1
     if args.links or args.all:
         rc = _links()

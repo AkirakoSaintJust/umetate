@@ -677,40 +677,11 @@ edit`; the generator is authoritative.
 
 Shipped, reviewed nodes in `modules/nodes/`, each = `node.json` + `<node>.c` + a host
 test + a budget annotation; shipped macros in `modules/macros/`, each =
-`macro.json` (a reusable subgraph, same shape as a patch's `macros:` entry):
-
-| Node | Kind | Purpose |
-| --- | --- | --- |
-| `phasor` | phase accumulator | pitch→phase ramp; reset/sync/mod; `fm` (audio) scaled `<<16` → ±π phase swing (the FM index); `pitch` (control) scales the increment → ±1 octave (the vibrato input, relative pitch) |
-| `tuned_phasor` | phase accumulator | Q32 phase with octave/semi/cent tuning (`fm1_tune_q16`, note-derived); `pitch` (control) scales ±1 octave; `fm` (audio) = the FM index |
-| `osc` / `table` | wave reader | `osc` = the 12-waveform OPZ+OPL union (`fm1_sin_wave`, a `waveform` param: 0–7 OPZ, 8–11 OPL-only square/saw/rectified/pulse); `table` = wavetable reader (a `tables:` shape selected by a `which` param) |
-| `naive_osc` | naive wave reader | non-band-limited saw/sine/triangle/square (`fm1_naive_wave`), a `shape` param; pair with `phase_dist` for PWM (aliases by design) |
-| `saw` | band-limited osc | 2nd-order polyBLEP saw; `inv_inc` = 2^32/inc (note-on reciprocal) |
-| `pulse` | band-limited osc | 2nd-order polyBLEP square/pulse (two BLEPs); modulatable `width` (duty, default 0.5) |
-| `triangle` | band-limited osc | the polyBLEP'd square through a leaky integrator (1/n² spectrum) |
-| `phase_shape` | phase shaper | VPS (DAFx-11, Kleimola et al.): one 2-D inflection `(d,v)`; `v` ∈ [0,2), `d` ∈ (0,1) |
-| `phase_dist` | phase shaper | classic phase distortion (VPS with `v=0.5` fixed) |
-| `env` / `seg` | segment generator | gate event→control via breakpoint segments (data) |
-| `dx_env` | rate/level envelope | DX-style 4-rate/3-level exponential envelope (attack/decay1/decay2/sustain/release); a `rate_scale` control input scales every stage's coefficient (velocity → envelope rate) — the fourop-fm operator envelope |
-| `vca` | gain | audio×control (modulatable level) |
-| `gain` | gain | pure audio×cv (no static `level` — a modulatable gain without the trim) |
-| `mix` / `add` | summer | N audio ins → 1 out |
-| `mix4` | 4-input summer | the carrier sum / matrix sum |
-| `route4` | routing-matrix row | reads a 4-weight row of a `routing` table (by `algorithm` + `dest`) — the runtime-algorithm primitive |
-| `route` | 4-op FM router | reads the `alg` control input (the selected algorithm) and four `fm1_route4` rows: modulation into op2/op3/op4 + the carrier sum (audio rate — the ergonomic 4-op wrapper over `route4`) |
-| `algo` | algorithm selector | control-rate: owns the `algorithm` param, outputs it as `alg` for the router, and gates the `car_fb` master by the carrier mask into `fb1..fb4` |
-| `svf` / `one_pole` | filter | state-variable (LP/BP/HP) / one-pole; modulatable cutoff/res |
-| `wavefolder` | nonlinear | sine fold: input → sin(π·x) crossfaded by `amount` |
-| `lpg` | vactrol gate | one-pole + VCA, cutoff/gain coupled to a fast-attack/slow-decay envelope |
-| `delay1` / `delayN` | delay | 1-sample (feedback) / N-sample (echo); the DAG cycle-breakers |
-| `noise` | source | white (xorshift, Q15) |
-| `track_bp` | note-tracked filter | state-variable band-pass whose `f` = 2·sin(π·f_note/fs) (the `note_cutoff` feature) |
-| `lfo` | low-frequency osc | control-rate fixed-rate sine (`rate` = Q32 inc/sample, `depth` = bipolar Q15); advances `rate × CONTROL_BLOCK` per tick — the vibrato/tremolo source |
-| `mute` | gate | passes the input through, or outputs 0 when `mute` is set — the per-operator mute for auditioning the algorithm |
-| `pitch_env` | pitch envelope | global control-rate "pitch blip": on the `patch_gate` rising, `level = base` (q15 offset), then one-pole decay toward 0 at `rate` (q16) |
-| `csum` | control summer | adds two control inputs (for summing slow modulations, e.g. vibrato + pitch envelope) |
-| `cmul` | control multiplier | multiplies two control inputs (control-rate modulation, e.g. envelope × tremolo LFO) |
-| `vel_depth` | velocity depth | control-rate gain `32768 − depth + velocity·depth>>15`; `depth` is the velocity→amount (0 = no response, 32767 = full scaling). The `velocity` input defaults to the allocator's per-voice `voice_velocity[v]` |
+`macro.json` (a reusable subgraph, same shape as a patch's `macros:` entry). The
+node library is generated from the manifests into
+[`docs/node-library.md`](node-library.md) — one row per node (summary + ports +
+params + state); `umetate lib generate` rewrites it and `deep-check --lib` fails on
+any drift, so it cannot lag the library.
 
 `umetate lib list` shows the library; `umetate scaffold --template` starts from a shipped template; user
 nodes conform to `node.schema.json`, patches to `patch.schema.json`.
@@ -2203,32 +2174,11 @@ generator) + a host parity test. The generator composes nodes into the §12.1 se
 - **Rules:** pure (no I/O/alloc/blocking), monomorphic, bounded; the ten rules and
   §12.2.4 emission rules apply.
 
-**Shipped nodes** (c = control, a = audio, e = event):
-
-| Node | Kind | Ins | Outs | Params | State |
-| --- | --- | --- | --- | --- | --- |
-| `phasor` | phase accumulator | `mod`(c), `fm`(a) | `phase`(c/a) | — | `inc`(q32), `phase`(phase) |
-| `osc` / `table` | wave reader | `phase`(a) | `audio`(a) | `waveform`(0–11) / `which`(table) | `base`(u32) |
-| `phase_shape` | vector phaseshaper (VPS): one 2-D inflection `(d,v)` | `phase`(a), `d`(c), `v`(c) | `phase`(a) | — | `s0`,`s1`(q16) |
-| `phase_dist` | classic phase distortion (VPS with `v=0.5`) | `phase`(a), `d`(c) | `phase`(a) | — | `s0`,`s1`(q16) |
-| `naive_osc` | naive (non-band-limited) wave reader (saw/sine/triangle/square, `fm1_naive_wave`) | `phase`(a) | `audio`(a) | `shape`(0–3) | `base`(u32) |
-| `tuned_phasor` | phase accumulator with octave/semi/cent tuning | `mod`(c), `fm`(a), `pitch`(c) | `phase`(a) | `octave`(−3..3), `semi`(−11..11), `cent`(−100..100) | `inc`(q32), `phase`(phase), `step`(q32) |
-| `env` / `seg` | segment generator | `gate`(e) | `cv`(c) | — (segments = data) | `stage`, `level`(q16) |
-| `vca` | gain | `audio`(a), `cv`(c) | `audio`(a) | `level` | — |
-| `mix` / `add` | summer | `in0..inN`(a) | `audio`(a) | — | — |
-| `svf` / `one_pole` | filter | `audio`(a), `cut`(c), `res`(c) | `audio`(a) | `cutoff`, `res` | `z1`, `z2`(q16) |
-| `delay1` | 1-sample delay | `audio`(a) | `audio`(a) | — | `prev`(q15) |
-| `delayN` | N-sample delay | `audio`(a) | `audio`(a) | `time`, `fb` | `buf`[`.pool`], `idx` |
-| `noise` | source | — | `audio`(a) | `color` | `lfsr` |
-| `wavefolder` | nonlinear | `audio`(a) | `audio`(a) | `amount` | — |
-| `lpg` | vactrol gate | `audio`(a), `gate`(e) | `audio`(a) | `attack`, `release` | `level`(q15), `z1`(q15) |
-| `saw` | band-limited osc | `mod`(c), `fm`(a) | `audio`(a) | — | `inc`(q32), `inv_inc`(q32), `phase`(phase) |
-| `pulse` | band-limited pulse/square (PWM) | `mod`(c), `fm`(a) | `audio`(a) | `inc_ratio`(q16), `width`(q15, modulatable), `width_depth`(q15) | `inc`(q32), `inv_inc`(q32), `phase`(phase), `pw`(q32) |
-| `triangle` | band-limited triangle | `mod`(c), `fm`(a) | `audio`(a) | — | `inc`(q32), `inv_inc`(q32), `phase`(phase), `slope`(q16), `integ`(i32) |
-| `track_bp` | note-tracked filter | `audio`(a) | `audio`(a) | `res` | `f`(q16), `low`(q15), `band`(q15) |
-
-(`ifft` — the additive/IFFT spectral oscillator — is **planned**, not shipped; see
-the build order. `add` is the `mix` synonym.)
+The node library is generated from the manifests into
+[`docs/node-library.md`](node-library.md) — one row per node (summary + ports +
+params + state), with `deep-check --lib` failing on any drift. The `ifft`
+additive/IFFT spectral oscillator is **planned**, not shipped (see the build
+order; `add` is the `mix` synonym).
 
 `env`/`seg` takes its shape as **data** (a `segments` table); an ADSR is one
 4-segment table, not a distinct node (`docs/dsp-study.md` §3).
