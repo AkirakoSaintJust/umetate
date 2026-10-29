@@ -110,6 +110,7 @@ Patch = TypedDict(
         "voice": NotRequired[Zone],
         "global": NotRequired[Zone],
         "parts": NotRequired[Parts],
+        "model": NotRequired[int],  # the firmware's SysEx <model> byte (0-255)
     },
 )
 
@@ -259,9 +260,10 @@ class ParamsDoc(TypedDict):
 
 class SysexLayout(TypedDict):
     """The generated `sysex-layout.json` (roadmap §6.11.4): the per-firmware SysEx
-    payload geometry — the part-patch record's param count, the part count, and the
-    record/bank sizes (the `<model>` byte is a firmware identity, supplied at build)."""
+    payload geometry — the firmware's `<model>` byte (the patch's `model`), the
+    part-patch record's param count, the part count, and the record/bank sizes."""
 
+    model: int
     n_params: int
     n_parts: int
     part_patch_size: int

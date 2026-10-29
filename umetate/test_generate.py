@@ -1891,6 +1891,7 @@ def main() -> int:
 
     layout = generate_sysex_layout(PARTS_PATCH)
     expect = {
+        "model": 0,
         "n_params": 2,
         "n_parts": 2,
         "part_patch_size": 1 + 16 + 2 * 4 + 4,
@@ -1904,6 +1905,23 @@ def main() -> int:
         failures += 1
     else:
         print("ok: sysex-layout pins the record geometry (2 params, 2 parts)")
+
+    # the generated synth_layout.h carries the runtime constants the framework uses.
+    from .generate import generate_synth_header
+
+    hdr = generate_synth_header(PARTS_PATCH)
+    want = (
+        "#define SYNTH_MODEL 0u\n"
+        "#define SYNTH_N_PARAMS 2u\n"
+        "#define SYNTH_N_PARTS 2u\n"
+        "#define SYNTH_N_GLOBAL 0u\n"
+        "#define SYNTH_ROUTING_BASE (SYNTH_N_PARTS * SYNTH_N_PARAMS + SYNTH_N_GLOBAL)\n"
+    )
+    if want not in hdr:
+        print("FAIL: synth_layout.h carries the wrong constants")
+        failures += 1
+    else:
+        print("ok: synth_layout.h carries the runtime constants")
 
     # the fixed cc map: one CC per param, ascending from base 16, skipping the
     # reserved CCs (sustain 64 + the channel-mode 120..127).
