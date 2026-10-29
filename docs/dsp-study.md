@@ -13,15 +13,15 @@ status. It supports §12.5 of that roadmap.
 Across these projects, the basic unit is a stateful DSP object with a process
 function. Its interface usually takes one of three forms:
 
-| Project | Unit | Interface | Rate | Notes |
-| --- | --- | --- | --- | --- |
-| Mutable Instruments | `Engine` / `Voice` subclass | `Process(const Block& in, const Block& out, size_t size)` | block | `Parameter` knobs (curve lookup); fixed-point `stmlib::`; per-voice classes; no heap in audio |
-| SAPF | `Sapf` subclass | `virtual process(...)` | block | inheritance — the only polymorphic-per-call one |
-| SuperCollider | `UGen` | `next_a(n)` / `next_k(n)` / `next_i()` | per-sample (a) / per-block (k) | `.ar`/`.kr` rate polymorphism; graph + topological sort; `LocalIn`/`Out` feedback |
-| Pure Data | tilde object | `t_int *perform(t_int *w)` | block (64) | buffers in `w[2..]`, `dsp_add` registers the routine; message↔signal split |
-| Dexed (msfa) | `Dx7Note` + 6 operators | `compute(int32_t *buf, …)` | per-sample → block | 32 algorithms; rate/level envelopes; 1-sample operator feedback |
-| Nuked | `OPN2` core | `OPN2_Generate(OPN2*, int16_t *l, int16_t *r)` | per-sample | bit-accurate integer; log/exp/sin tables; register writes |
-| ymfm | `fm_operator` / `engine` | `generate(int32_t *out, uint32_t n)` | per-sample → block | templated operator/engine; shared core + per-chip tables |
+| Project             | Unit                        | Interface                                                 | Rate                           | Notes                                                                                         |
+| ------------------- | --------------------------- | --------------------------------------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------- |
+| Mutable Instruments | `Engine` / `Voice` subclass | `Process(const Block& in, const Block& out, size_t size)` | block                          | `Parameter` knobs (curve lookup); fixed-point `stmlib::`; per-voice classes; no heap in audio |
+| SAPF                | `Sapf` subclass             | `virtual process(...)`                                    | block                          | inheritance — the only polymorphic-per-call one                                               |
+| SuperCollider       | `UGen`                      | `next_a(n)` / `next_k(n)` / `next_i()`                    | per-sample (a) / per-block (k) | `.ar`/`.kr` rate polymorphism; graph + topological sort; `LocalIn`/`Out` feedback             |
+| Pure Data           | tilde object                | `t_int *perform(t_int *w)`                                | block (64)                     | buffers in `w[2..]`, `dsp_add` registers the routine; message↔signal split                    |
+| Dexed (msfa)        | `Dx7Note` + 6 operators     | `compute(int32_t *buf, …)`                                | per-sample → block             | 32 algorithms; rate/level envelopes; 1-sample operator feedback                               |
+| Nuked               | `OPN2` core                 | `OPN2_Generate(OPN2*, int16_t *l, int16_t *r)`            | per-sample                     | bit-accurate integer; log/exp/sin tables; register writes                                     |
+| ymfm                | `fm_operator` / `engine`    | `generate(int32_t *out, uint32_t n)`                      | per-sample → block             | templated operator/engine; shared core + per-chip tables                                      |
 
 The trade-off is straightforward. Block processing (`process(in, out, size)`) is
 easy to test and can support vectorization. Per-sample generation (`next` or
@@ -355,7 +355,7 @@ decay gives the circuit its character:
   darker together. That gives the LPG its woody pluck.
 
 Model the vactrol response as a **sum of two exponentials** (fast LED, slow LDR)
-or as a one-pole with a power-law tail. MI's *Streams* models it digitally: SHAPE
+or as a one-pole with a power-law tail. MI's _Streams_ models it digitally: SHAPE
 sets the vactrol's on/off response times, and MOD controls damping. Consult its
 MIT-licensed source for the curve; credit the work, but do not copy its code.
 
@@ -370,12 +370,12 @@ A formant filter uses band-pass filters at vowel formant frequencies to shape a
 harmonically rich source, such as a saw or pulse, into a vowel. Store the F1 and F2
 frequencies, and optionally F3 for a more natural sound, as **data**:
 
-| Vowel | F1 | F2 | F3 |
-| --- | --- | --- | --- |
+| Vowel      | F1      | F2        | F3   |
+| ---------- | ------- | --------- | ---- |
 | a (father) | 660–850 | 1610–1700 | 2400 |
-| i (heed) | 240–270 | 2300–2400 | 3000 |
-| u (boot) | 250–300 | 595–870 | 2250 |
-| e (bet) | 390–400 | 2000–2300 | 2550 |
+| i (heed)   | 240–270 | 2300–2400 | 3000 |
+| u (boot)   | 250–300 | 595–870   | 2250 |
+| e (bet)    | 390–400 | 2000–2300 | 2550 |
 
 A `formant` macro in umetate could combine three or four parallel `svf`
 band-pass filters and a `vowel` parameter that selects F1/F2/F3 values from a
@@ -427,7 +427,7 @@ control rate, with float isolated there, or use kiss_fft with its scaling handle
 5. **Match the delay to the feedback.** ymfm and Dexed use one-sample operator
    feedback; SC and Pd's `LocalIn`/`send~` are block-delayed. umetate uses
    `delay1` for FM feedback and `delayN` for longer delays.
-6. **Run control faster than the audio block, but slower than audio.** MI uses
+6. **Run control faster than the block rate, but slower than the audio sample rate.** MI uses
    24-sample control blocks (~1.8 kHz); Pd uses 64. Audio-rate work dominates, so
    sub-block control adds roughly 1–8%.
 7. **Keep allocation and virtual dispatch out of the audio path.** MI allocates
@@ -455,12 +455,12 @@ frames instead of once per 256-frame block cost too much CPU?
 
 No. **Control work is small beside audio processing:**
 
-| Work | Ops per voice per block (256 frames) |
-| --- | --- |
-| audio: 256 × (osc ~6 + filter ~10 + vca ~2) | ~4600 |
-| control, once per block (172 Hz) | ~30 |
-| control, every 32 frames (1.4 kHz) | ~240 |
-| control, every 16 frames (2.8 kHz) | ~480 |
+| Work                                        | Ops per voice per block (256 frames) |
+| ------------------------------------------- | ------------------------------------ |
+| audio: 256 × (osc ~6 + filter ~10 + vca ~2) | ~4600                                |
+| control, once per block (172 Hz)            | ~30                                  |
+| control, every 32 frames (1.4 kHz)          | ~240                                 |
+| control, every 16 frames (2.8 kHz)          | ~480                                 |
 
 At 2.8 kHz control (16-frame sub-blocks), this estimate puts control at about
 **10% of one voice's audio work**. Each tick takes only one or two multiply-adds.
@@ -542,7 +542,7 @@ osc.audio           ->  gran_window.audio
 
 ### 8.4 The stochastic component (its own nodes)
 
-The Xenakis-inspired core is GENDYN, described in *Formalized Music*. Its
+The Xenakis-inspired core is GENDYN, described in _Formalized Music_. Its
 waveform is a polygon: both breakpoint amplitudes and distances between
 breakpoints take bounded random walks, with samples linearly interpolated between
 points. At the ±32768 limits, the walk **reflects** rather than clamps. This
