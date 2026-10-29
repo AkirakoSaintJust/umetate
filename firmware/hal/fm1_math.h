@@ -19,6 +19,7 @@
 #include <stdint.h>
 #include "math_tables.h"                       /* fm1_sin_q15 / fm1_exp2_q16 / fm1_log2_q16 */
 #include "wavetable.h"                         /* fm1_wave (the 12-wave OPZ+OPL union) */
+#include "analog_wave.h"                       /* fm1_analog_wave (the 4 analogue shapes) */
 
 /* These helpers must inline into the hot loop: `.dsp_text` (SRAM) may not call into
  * XIP flash (a flash write would hang the core). `always_inline` makes the intent

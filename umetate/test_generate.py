@@ -142,6 +142,26 @@ PHASE_DIST: Patch = {
 }
 
 
+# the analogue oscillator macro (phasor -> phase_dist PWM -> analog_osc table).
+ANALOG_VCO: Patch = {
+    "name": "analog_vco_test",
+    "voices": 4,
+    "voice": {
+        "nodes": [
+            {"id": "vco", "type": "analog_vco", "params": {"shape": 3}},
+            {"id": "env", "type": "env"},
+            {"id": "vca", "type": "vca"},
+        ],
+        "wires": [
+            {"from": "vco.audio", "to": "vca.audio"},
+            {"from": "env.cv", "to": "vca.cv"},
+        ],
+        "voice_out": "vca.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
+
 # `osc` with a non-sine waveform (6 = double half sine) — exercises fm1_sin_wave.
 WAVEFORM: Patch = {
     "name": "waveform_test",
@@ -2165,6 +2185,13 @@ def main() -> int:
     print(
         ("ok: " if ok else "FAIL: ")
         + (msg or "phase_dist (classic PD) renders non-silent then silent")
+    )
+    failures += 0 if ok else 1
+
+    ok, msg = _sound(ANALOG_VCO)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "analog_vco (analogue oscillator) renders non-silent then silent")
     )
     failures += 0 if ok else 1
 

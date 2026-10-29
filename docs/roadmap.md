@@ -2142,6 +2142,7 @@ generator) + a host parity test. The generator composes nodes into the §12.1 se
 | `osc` / `table` | wave reader | `phase`(c/a) | `audio`(a) | `shape`, `level`, `phase_map` | — |
 | `phase_shape` | vector phaseshaper (VPS): one 2-D inflection `(d,v)` | `phase`(a), `d`(c), `v`(c) | `phase`(a) | — | `s0`,`s1`(q16) |
 | `phase_dist` | classic phase distortion (VPS with `v=0.5`) | `phase`(a), `d`(c) | `phase`(a) | — | `s0`,`s1`(q16) |
+| `analog_osc` | analogue wave reader (saw/sine/triangle/square, `fm1_analog_wave`) | `phase`(a) | `audio`(a) | `shape`(0–3) | `base`(u32) |
 | `env` / `seg` | segment generator | `gate`(e) | `cv`(c) | — (segments = data) | `stage`, `level`(q16) |
 | `vca` | gain | `audio`(a), `cv`(c) | `audio`(a) | `level` | — |
 | `mix` / `add` | summer | `in0..inN`(a) | `audio`(a) | — | — |
