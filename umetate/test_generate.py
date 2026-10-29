@@ -2727,6 +2727,23 @@ def main() -> int:
     else:
         print("ok: pulse width is a settable param (default 0.5)")
 
+    # the modulatable set is the continuous Q-format knobs — phase_dist.d /
+    # phase_shape.d (the phase-distortion bend), wavefolder.amount, and pulse.width.
+    # Discrete indices (shape/waveform) are *not* modulatable (set via set_param).
+    specs = load_library(LIBRARY_ROOT)
+    want_mod = {
+        "phase_dist": {"d"},
+        "phase_shape": {"d"},
+        "wavefolder": {"amount"},
+        "pulse": {"width"},
+    }
+    got_mod = {n: specs[n].modulatable for n in want_mod}
+    if got_mod != want_mod:
+        print(f"FAIL: modulatable params drifted ({got_mod})")
+        failures += 1
+    else:
+        print("ok: d/amount/width are the modulatable params")
+
     try:
         _modulation_works()
     except AssertionError as exc:

@@ -1,12 +1,12 @@
 {
   "name": "phase_shape",
-  "summary": "Vector phaseshaping (VPS, DAFx-11 — Kleimola/Lazzarini/Timoney/Välimäki): one 2-D inflection point p=(d,v) reshapes the phase ramp piecewise-linearly before the wave read. `d` = the breakpoint's x-coordinate (0..1); `v` = its y-coordinate — `v` > 1 wraps forward past the cycle (uint32, one wrap: v < 2), `v` < 0 saturates to 0. Classic phase distortion is the v=0.5 case (`phase_dist`). Both are control-rate (the slopes are block_derived).",
-  "ins": { "phase": { "rate": "audio", "format": "phase" }, "d": { "rate": "control", "default": "16384" }, "v": { "rate": "control", "default": "16384" } },
+  "summary": "Vector phaseshaping (VPS, DAFx-11 — Kleimola/Lazzarini/Timoney/Välimäki): one 2-D inflection point p=(d,v) reshapes the phase ramp piecewise-linearly before the wave read. `d` = the breakpoint's x-coordinate (0..1), a settable, modulatable param (wired `d_mod` + `d_depth`); `v` = its y-coordinate (control) — `v` > 1 wraps forward past the cycle (uint32, one wrap: v < 2), `v` < 0 saturates to 0. Classic phase distortion is the v=0.5 case (`phase_dist`). Both are control-rate (the slopes are block_derived).",
+  "ins": { "phase": { "rate": "audio", "format": "phase" }, "v": { "rate": "control", "default": "16384" } },
   "outs": { "phase": { "rate": "audio", "format": "phase" } },
-  "params": {},
+  "params": { "d": { "kind": "q15", "default": "16384", "modulatable": true } },
   "state": { "d_c": "q15", "v_c": "q15", "s0": "q16", "s1": "q16" },
   "block_derived": {
-    "d_c": "(${in.d} < 1 ? 1 : (${in.d} > 32767 ? 32767 : ${in.d}))",
+    "d_c": "(${param.d} < 1 ? 1 : (${param.d} > 32767 ? 32767 : ${param.d}))",
     "v_c": "(${in.v} < 0 ? 0 : (${in.v} > 65535 ? 65535 : ${in.v}))",
     "s0": "(int32_t)(((int64_t)${state.v_c} * 32768) / ${state.d_c})",
     "s1": "(int32_t)(((int64_t)(32768 - ${state.v_c}) * 32768) / (32768 - ${state.d_c}))"

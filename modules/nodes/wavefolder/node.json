@@ -1,8 +1,8 @@
 {
   "name": "wavefolder",
-  "summary": "Sine wavefolder: crossfades the input into sin(pi*x) by `amount` (Q15).",
+  "summary": "Sine wavefolder: crossfades the input into sin(pi*x) by `amount` (Q15, modulatable — wired `amount_mod` + `amount_depth`).",
   "ins": { "audio": "audio" },
   "outs": { "audio": "audio" },
-  "params": { "amount": "q15" },
+  "params": { "amount": { "kind": "q15", "modulatable": true } },
   "state": {}
 }
