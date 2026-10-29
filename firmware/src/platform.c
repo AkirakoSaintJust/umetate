@@ -79,6 +79,16 @@ static void fm1_led_key_glow(uint32_t id, int on)   /* as fm1_led_key, the dim l
 #include "bootguard.h"
 #if FM1_CPU1_USED
 #include "fm1_cpu1.h"
+/* Thin non-inline wrappers over fm1_cpu1.h's static-inline mailbox, so a generated
+ * TU (the split render) can hand core 1 work without pulling in fm1_c1_main. */
+int fm1_cpu1_dispatch(void (*fn)(uint32_t), uint32_t arg)
+{
+    return fm1_cpu1_run(fn, arg);
+}
+int fm1_cpu1_join(void)
+{
+    return fm1_cpu1_wait();
+}
 #endif
 
 #ifndef APP_NAME

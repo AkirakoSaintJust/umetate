@@ -77,14 +77,12 @@ static synth_runtime_ctx runtime_ctx = {
     part_bank, multi_bank,
 };
 
-/* ---- audio callback (dual-core by default: CPU1 renders; single-core fallback) */
+/* ---- audio callback (split-core by default: CPU0 drains + renders its range,
+   dispatching CPU1 for the other half; single-core fallback) */
 static void app_audio(int32_t *out, uint32_t n)
 {
 #if FM1_CPU1_USED
-    if (fm1_c1_on && fm1_cpu1_run(fourop_fm_render_block, (uint32_t)(uintptr_t)out) &&
-        fm1_cpu1_wait() == 0)
-        return;
-    fourop_fm_render_block((uint32_t)(uintptr_t)out);
+    fourop_fm_render_block((uint32_t)(uintptr_t)out);   /* CPU0: drain + split render */
 #else
     fourop_fm_dsp_render(out, n);
 #endif

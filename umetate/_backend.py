@@ -202,15 +202,82 @@ def _render(
                 lines.append(f"static int32_t {i.c}_{port}_x[NVOICE] UMETATE_CPU1;")
             else:
                 lines.append(f"static int32_t {i.c}_{port}_x UMETATE_CPU1;")
-    lines.append(f"static int32_t {graph.name}_render_bus[CONTROL_BLOCK] UMETATE_CPU1;")
+    lines.append(
+        f"static int32_t {graph.name}_render_bus0[CONTROL_BLOCK] UMETATE_CPU1;"
+    )
+    lines.append(
+        f"static int32_t {graph.name}_render_bus1[CONTROL_BLOCK] UMETATE_CPU1;"
+    )
     lines.append("")
 
+    lines.extend(_render_pre_block(graph, by_id, table_names, global_ctrl))
     lines.extend(
         _render_voices_block(graph, by_id, table_names, voice_ctrl, voice_audio)
     )
+    lines.extend(_render_post_block(graph, by_id, table_names, global_audio))
+    lines.extend(_render_dsp_render(graph))
+    lines.extend(_render_split(graph))
+    return lines
+
+
+def _dedent4(lines: list[str]) -> list[str]:
+    """De-indent block-loop-level lines (8-space base) to a per-block function body."""
+    return [line[4:] if line.startswith("    ") else line for line in lines]
+
+
+def _render_pre_block(
+    graph: CompiledGraph,
+    by_id: dict[str, NodeInstance],
+    table_names: set[str],
+    global_ctrl: list[NodeInstance],
+) -> list[str]:
+    """One CONTROL_BLOCK's global control prologue (single core): the delay
+    countdown, patch gate, global control-rate nodes, and the portamento glide —
+    writing the file-scope temps that `render_voices_block` reads."""
+    name = graph.name
+    per_part = graph.n_parts > 1
+    lines = [f"UMETATE_DSP_API void {name}_render_pre_block(void) {{"]
+    if per_part:
+        lines.extend(_dedent4(_voice.delay_countdown(name)))
     lines.extend(
-        _render_dsp_render(graph, by_id, table_names, global_ctrl, global_audio)
+        _dedent4(
+            [
+                "        patch_gate = 0u;",
+                "        for (uint32_t _pg = 0; _pg < NVOICE; _pg++)",
+                "            if (voice_gate[_pg]) { patch_gate = 1u; break; }",
+            ]
+        )
     )
+    for i in global_ctrl:
+        lines.extend(_dedent4(_emit_body(i, "0", "        ", table_names, per_part)))
+    lines.extend(_dedent4(_voice.glide(name)))
+    lines.append("}")
+    lines.append("")
+    return lines
+
+
+def _render_post_block(
+    graph: CompiledGraph,
+    by_id: dict[str, NodeInstance],
+    table_names: set[str],
+    global_audio: list[NodeInstance],
+) -> list[str]:
+    """One CONTROL_BLOCK's global audio post (single core): the filter/wavefolder
+    over the (already combined) bus `src`, then the output write."""
+    name, cb = graph.name, graph.control_block
+    per_part = graph.n_parts > 1
+    lines = [
+        f"UMETATE_DSP_API void {name}_render_post_block(int32_t *out, const int32_t *src, uint32_t b, uint32_t frames) {{",
+        f"    for (uint32_t f = b; f < b + {cb}u && f < frames; f++) {{",
+        "        int32_t bus = src[f - b];",
+    ]
+    for i in global_audio:
+        lines.extend(_emit_body(i, "0", "        ", table_names, per_part))
+    out_expr = _final_out(graph, by_id)
+    lines.append(f"        out[f * 2] = {out_expr}; out[f * 2 + 1] = {out_expr};")
+    lines.append("    }")
+    lines.append("}")
+    lines.append("")
     return lines
 
 
@@ -293,52 +360,57 @@ def _render_voices_block(
     return lines
 
 
-def _render_dsp_render(
-    graph: CompiledGraph,
-    by_id: dict[str, NodeInstance],
-    table_names: set[str],
-    global_ctrl: list[NodeInstance],
-    global_audio: list[NodeInstance],
-) -> list[str]:
-    """The single-core block loop: global control prologue → voice synthesis (via
-    `render_voices_block`) → global audio + output. The block loop is the seam the
-    split-core dispatch will own (per-block pre / parallel voices / post)."""
+def _render_dsp_render(graph: CompiledGraph) -> list[str]:
+    """The single-core block loop: pre → voices([0, NVOICE)) → post. This is the
+    reference path (host tests + CPU0-only fallback)."""
     name, cb = graph.name, graph.control_block
-    per_part = graph.n_parts > 1
-    lines = [
+    return [
         f"UMETATE_DSP_API void {name}_dsp_render(int32_t *out, uint32_t frames) {{",
         f"    for ({_CONTROL_BLOCK_TYPE} b = 0; b < frames; b += {cb}u) {{",
+        f"        {name}_render_pre_block();",
+        f"        {name}_render_voices_block({name}_render_bus0, 0u, NVOICE, b, frames);",
+        f"        {name}_render_post_block(out, {name}_render_bus0, b, frames);",
+        "    }",
+        "}",
+        "",
     ]
-    if per_part:
-        lines.extend(_voice.delay_countdown(name))
-    lines.extend(
-        [
-            "        patch_gate = 0u;",
-            "        for (uint32_t _pg = 0; _pg < NVOICE; _pg++)",
-            "            if (voice_gate[_pg]) { patch_gate = 1u; break; }",
-        ]
-    )
-    # global control-rate nodes (scalar, single writer): write the shared temps.
-    for i in global_ctrl:
-        lines.extend(_emit_body(i, "0", "        ", table_names, per_part))
-    # portamento glide (control rate): ramp each voice's base increment.
-    lines.extend(_voice.glide(name))
-    # voice synthesis (the parallel phase — all voices on this core today).
-    lines.append(
-        f"        {name}_render_voices_block({name}_render_bus, 0, NVOICE, b, frames);"
-    )
-    # global audio (filter/wavefolder) + output (single core).
-    lines.append(f"        for (uint32_t f = b; f < b + {cb}u && f < frames; f++) {{")
-    lines.append(f"            int32_t bus = {name}_render_bus[f - b];")
-    for i in global_audio:
-        lines.extend(_emit_body(i, "0", "            ", table_names, per_part))
-    out_expr = _final_out(graph, by_id)
-    lines.append(f"            out[f * 2] = {out_expr}; out[f * 2 + 1] = {out_expr};")
-    lines.append("        }")
-    lines.append("    }")
-    lines.append("}")
-    lines.append("")
-    return lines
+
+
+def _render_split(graph: CompiledGraph) -> list[str]:
+    """The split-core dispatch (target only): per block, the pre on CPU0, then CPU0
+    renders [0, half) while CPU1 renders [half, NVOICE) via the mailbox, then the
+    combine and the post on CPU0. Falls back to CPU0-only when core 1 is off or
+    gave up (`fm1_cpu1_wait` returns non-zero and holds core 1)."""
+    name, cb = graph.name, graph.control_block
+    half = graph.voices // 2
+    return [
+        "#if FM1_CPU1_USED",
+        f"typedef struct {{ int32_t *bus; uint32_t v0, v1, b, frames; }} {name}_render_job_t;",
+        f"static {name}_render_job_t {name}_render_job;",
+        f"static void {name}_render_voices_job(uint32_t arg) {{",
+        "    (void)arg;",
+        f"    {name}_render_voices_block({name}_render_job.bus, {name}_render_job.v0,",
+        f"        {name}_render_job.v1, {name}_render_job.b, {name}_render_job.frames);",
+        "}",
+        f"void {name}_render_split(int32_t *out, uint32_t frames) {{",
+        f"    for ({_CONTROL_BLOCK_TYPE} b = 0; b < frames; b += {cb}u) {{",
+        "        int dispatched;",
+        f"        {name}_render_pre_block();",
+        f"        {name}_render_job.bus = {name}_render_bus1;",
+        f"        {name}_render_job.v0 = {half}u; {name}_render_job.v1 = NVOICE;",
+        f"        {name}_render_job.b = b; {name}_render_job.frames = frames;",
+        f"        dispatched = fm1_cpu1_dispatch({name}_render_voices_job, 0u);",
+        f"        {name}_render_voices_block({name}_render_bus0, 0u, {half}u, b, frames);",
+        "        if (!dispatched || fm1_cpu1_join() != 0)",
+        f"            {name}_render_voices_block({name}_render_bus1, {half}u, NVOICE, b, frames);",
+        f"        for (uint32_t f = b; f < b + {cb}u && f < frames; f++)",
+        f"            {name}_render_bus0[f - b] = fm1_sat_add32({name}_render_bus0[f - b], {name}_render_bus1[f - b]);",
+        f"        {name}_render_post_block(out, {name}_render_bus0, b, frames);",
+        "    }",
+        "}",
+        "#endif",
+        "",
+    ]
 
 
 def _zone(
@@ -594,7 +666,7 @@ def _seam(graph: CompiledGraph, by_id: dict[str, NodeInstance]) -> list[str]:
             "        else",
             f"            {name}_dsp_all_notes_off();",
             "    }",
-            f"    {name}_dsp_render(out, UMETATE_DSP_BLOCK_FRAMES);",
+            f"    {name}_render_split(out, UMETATE_DSP_BLOCK_FRAMES);",
             f"    dsp_status.lit = {name}_dsp_lit(lit_base);",
             f"    dsp_status.quiet = (uint32_t){name}_dsp_quiet();",
             "    FM1_CSYNC();",

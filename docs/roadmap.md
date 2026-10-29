@@ -243,6 +243,18 @@ param tables) are produced by a generator, never hand-edited.
   21.7→23.0 @ 8 voices, bit-identical output) — the price of the split-ready seam;
   the parallel speedup dwarfs it.
 
+- **Split dispatch (implemented).** The seam's `render_block` now runs on CPU0 and
+  calls the generated `render_split`: per block it runs `render_pre_block`, hands
+  CPU1 the `[N0, NVOICE)` range through the mailbox, runs `[0, N0)` on CPU0 in
+  parallel, joins, sums the two `render_bus` buffers, then `render_post_block`.
+  `N0 = NVOICE/2`. The mailbox is reached through thin non-inline wrappers
+  `fm1_cpu1_dispatch`/`fm1_cpu1_join` (declared in `fm1_ipc.h`, defined in
+  `platform.c`), because `fm1_cpu1.h` owns `fm1_c1_main` and must stay a single TU.
+  Measured (emulator, 320 MHz, 8 voices): output bit-identical; CPU0's ISR rises to
+  ~26% (its 4-voice half) from ~7% (the spin-wait), i.e. the render now spans both
+  cores. The ceiling test (raise `NVOICE` toward 16–20 and re-measure) is the next
+  increment.
+
 - **CPU1 code lives in RAM** (`.c1_text`, its waiting loop) so it never fetches
   from flash while flash is busy (AC79 §7.40).
 - **IPC:** the one-job mailbox (`fm1_c1_mb`, Felucca `fm1_cpu1.h`) for the render

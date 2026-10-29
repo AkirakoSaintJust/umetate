@@ -53,6 +53,15 @@ extern volatile dsp_status_t dsp_status;
 extern volatile int32_t     bend_q16;                     /* core 0 writes */
 extern volatile uint32_t    lit_base;                     /* core 0 writes: the octave's base note */
 
+/* ------------------------------------------------------------------ mailbox */
+/* Thin non-inline wrappers over fm1_cpu1.h's static-inline mailbox, so a generated
+ * TU (the split render) can hand core 1 work without pulling in fm1_cpu1_main (the
+ * core-1 loop must stay a single TU). Defined in platform.c (which owns fm1_cpu1.h). */
+#if FM1_CPU1_USED
+int fm1_cpu1_dispatch(void (*fn)(uint32_t), uint32_t arg);   /* 1 = handed off */
+int fm1_cpu1_join(void);                                     /* 0 = done; -1 = gave up */
+#endif
+
 /* ------------------------------------------------------------------ barrier */
 #if FM1_CPU1_USED
 #define FM1_CSYNC() __asm__ volatile("csync" ::: "memory")
