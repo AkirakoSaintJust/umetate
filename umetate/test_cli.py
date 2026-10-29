@@ -690,7 +690,7 @@ def _budget_measures() -> None:
         assert len(rows) == 2, f"expected two measured rows, got {out}"
         t4, t8 = float(rows[0][1]), float(rows[1][1])
         assert t4 > 0 and t8 >= t4, "the 8-voice render is not >= the 4-voice"
-        assert "blocked" in out, "the device fit is not reported blocked"
+        assert "emulator" in out, "the device fit does not point at the emulator"
 
 
 def _synth_build_composes() -> None:
@@ -728,6 +728,28 @@ def _synth_build_composes() -> None:
         assert pkg.is_file(), "with the toolchain, the synth package must exist"
 
 
+def _emu_package_preference() -> None:
+    """`emu` boots the newest composed synth package, falling back to the demo."""
+    import os
+
+    from . import emu
+
+    with tempfile.TemporaryDirectory() as tmp:
+        build = Path(tmp)
+        demo = build / "umetate-fm1-pro.fwsc"
+        demo.write_bytes(b"demo")
+        assert emu._default_fwsc("fm1", build) == demo, "no synth package -> the demo"  # pyright: ignore[reportPrivateUsage]
+        synth_a = build / "umetate-fm1-pro-a.fwsc"
+        synth_b = build / "umetate-fm1-pro-b.fwsc"
+        synth_a.write_bytes(b"a")
+        synth_b.write_bytes(b"b")
+        old = synth_b.stat().st_mtime - 10.0
+        os.utime(synth_a, (old, old))
+        assert emu._default_fwsc("fm1", build) == synth_b, (  # pyright: ignore[reportPrivateUsage]
+            "the newest synth package wins"
+        )
+
+
 def main() -> int:
     tests: _Tests = [
         ("no import side effects", _no_import_side_effects),
@@ -740,6 +762,7 @@ def main() -> int:
         ("lint --c catches a MAXP violation", _lint_catches_violation),
         ("setup --dry-run plans the install", _setup_dry_run_plans),
         ("the fm1-emu binary paths resolve", _emu_paths),
+        ("emu prefers the newest synth package", _emu_package_preference),
         ("evidence validates a matrix", _evidence_validates),
         ("the wasm import parser counts imports", _wasm_import_parser),
         ("flash gates + wrong-model exit 6", _flash_gates),

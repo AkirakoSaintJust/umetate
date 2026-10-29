@@ -925,9 +925,11 @@ overflow the 7-bit CC space, so the patch declares its surface: the patch-level
 **Polyphony budget tool.** A new `umetate budget --voices N` (and `--parts N`)
 that generates the patch at N voices, compiles on host, times a worst-case
 `render(256)` (all voices sounding, envelope open), and reports the render time
-against the 2.9 ms budget — with the emulator (`umetate emu --check --mhz 240`)
-as the target-accurate confirmation. The development skill's interview gains a
-**polyphony budget** step: the voice count is a measured claim, not an estimate.
+against the 2.9 ms budget. The device fit is the **emulator leg** (F7e):
+`umetate emu --check --mhz 240` boots the built package and holds a chord — the
+dogfood run halts never and peaks at full scale, so the fit is measured, not
+estimated. The development skill's interview gains a **polyphony budget** step:
+the voice count is a measured claim, not an estimate.
 
 **Voice modes (retrigger / mono / unison / legato / portamento).** The voice
 manager is a **generator emission** — a reusable `umetate/_voice.py` module, F3's
@@ -1010,8 +1012,8 @@ Still open: mono/unison with parts (parts allocate poly); per-part mode is defer
 | F3 | **Voice-management rails.** — **done** | `_voice.py` rails + `trigger`/retrigger + mono (note_priority/legato) + unison (detune) + portamento (glide) + the six mode params + `parts:` (per-part param arrays, `voice_part[v]`, `note_on_ch` channel/keyzone routing, layering, per-part `level`/`delay`); host tests prove mono/unison/legato/glide/routing+layering+level+delay. Deferred (noted): per-part mono/unison mode. |
 | F4 | **Presets + settings + SysEx.** — **done** | 32-slot part-patch store + 32-slot multi-patch store (the slot area's measured 16 372 B ceiling; F7d) + settings record (`_records.py`/`presets.c`, byte-parity-tested), the shared SysEx envelope + 7-bit packing (`_sysex.py`), the generated `sysex-layout`, the bank ↔ `.syx` export/import (`_presets.py`), the `umetate preset export/import` CLI, and the C bank save/load over `store.h` (silent-only writes). Host tests prove the export→import round-trip and the C/Python byte parity. The device-side SysEx command handler joins F7's MIDI layer. |
 | F5 | **MIDI CC map.** — **done** | `generate_cc_map` + `generate_cc_header`: one CC per param, ascending from base 16, skipping the reserved CCs (sustain 64, channel-mode 120..127), plus the reversed `param → cc`; a GenError when the params don't fit. Host tests prove the map is complete/unique/ascending and that a CC write through the generated `cc_map.h` table reaches a real, writable param. |
-| F6 | **Polyphony budget tool.** — **done (host leg)** | `umetate budget` generates the patch at each `--voices`/`--parts`, compiles for host, and times a worst-case `render(256)` (all voices sounding, envelopes open) — per-voice cost + linearity; the skill interview consumes it (a measured claim, not an estimate). The 2.9 ms device fit is reported `blocked` until the emulator + built firmware (F7). |
-| F7 | **fourop-fm firmware assembly** (F7a–F7d done — the handlers, the runtime, and the composition). | `examples/fourop-fm/` builds a firmware: 2 independent-timbre parts, velocity, CC, presets, settings, sustain/panic, `app_main`/`app_audio` glue on the shipped framework. Landed: F7a `synth_sysex` (envelope + five commands + 7-bit packing, byte-parity with `_sysex.py`); F7b `synth_midi` (note routing, CC→param with 7-bit→[min,max] scaling, sustain, panic, bend); F7c `synth_runtime` (a multi patch applies its part-patch refs + routing through set_param) + the generated `synth_layout.h` (model byte, param counts, the routing base) + the patch-level `model` field; F7d `umetate build --synth <dir>` — the composition (rib.c is now the frozen framework: platform + UI kit + the synth services, the demo moved to `rib_app.c`), the generated `dsp.h` seam header + `.dsp_text` SRAM placement, the patch-level `cc:` list (the multitimbral CC surface), 32 preset slots (the slot-area ceiling), and the dogfood app glue (`examples/fourop-fm/app.c`): the host leg renders sound on cue and the target leg builds `umetate-fm1-pro-fourop_fm.fwsc` through the JieLi toolchain (82 060 B image, `.dsp_text` 8 796 B in SRAM, checks green). Remaining: the emulator run (F7e). |
+| F6 | **Polyphony budget tool.** — **done** | `umetate budget` generates the patch at each `--voices`/`--parts`, compiles for host, and times a worst-case `render(256)` (all voices sounding, envelopes open) — per-voice cost + linearity; the skill interview consumes it (a measured claim, not an estimate). The device fit is the emulator's job (F7e: `umetate emu --check --mhz 240` boots the built firmware and holds a chord — no halt, full-scale audio). |
+| F7 | **fourop-fm firmware assembly** — **done** | `examples/fourop-fm/` builds a firmware: 2 independent-timbre parts, velocity, CC, presets, settings, sustain/panic, `app_main`/`app_audio` glue on the shipped framework. Landed: F7a `synth_sysex` (envelope + five commands + 7-bit packing, byte-parity with `_sysex.py`); F7b `synth_midi` (note routing, CC→param with 7-bit→[min,max] scaling, sustain, panic, bend); F7c `synth_runtime` (a multi patch applies its part-patch refs + routing through set_param) + the generated `synth_layout.h` (model byte, param counts, the routing base) + the patch-level `model` field; F7d `umetate build --synth <dir>` — the composition (rib.c is now the frozen framework: platform + UI kit + the synth services, the demo moved to `rib_app.c`), the generated `dsp.h` seam header + `.dsp_text` SRAM placement, the patch-level `cc:` list (the multitimbral CC surface), 32 preset slots (the slot-area ceiling), and the dogfood app glue (`examples/fourop-fm/app.c`): the host leg renders sound on cue and the target leg builds `umetate-fm1-pro-fourop_fm.fwsc` through the JieLi toolchain (82 060 B image, `.dsp_text` 8 796 B in SRAM, checks green); F7e the emulator run — `umetate emu --check --mhz 240` boots the package and holds a chord: **no halt, full-scale audio peak (16 383)** — the device fit is measured, not estimated. |
 | F8 | **Docs / tutorial / skill finalization.** | tutorial + README + skill describe the full path; roadmap §6.11/§7/§12 updated; every milestone green. |
 
 Each milestone: mypy + ruff + pyright clean; all test modules green; `_skill` +
@@ -1094,10 +1096,9 @@ count is the *measured* hardware answer: the slot area holds 16 372 B (store.h
 `SLOT_MAX`), the fourop-fm 293 B part record would fit 55 — 32 keeps the classic
 count with headroom.
 
-**The gaps** (what's still hand-written or missing): the emulator run against
-the built dogfood package (F7e — `umetate emu --check --mhz 240`); the docs/
-tutorial/skill finalization (F8); device acceptance, flash, debrick, the FPU
-probe, and the clock soak stay blocked until hardware arrives.
+**The gaps** (what's still hand-written or missing): the docs/tutorial/skill
+finalization (F8); device acceptance, flash, debrick, the FPU probe, and the
+clock soak stay blocked until hardware arrives.
 
 **Universal vs fourop-fm-specific.** Of the four-op-FM work, the *universal*
 tooling is: `gain`/`cmul`/`csum` (the control/audio-separated gain family),

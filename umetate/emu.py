@@ -24,10 +24,20 @@ from . import _emu
 
 _ROOT = Path(__file__).resolve().parents[1]
 _BUILD = _ROOT / "firmware" / "build"
-_BOARD_PACKAGE = {
-    "fm1": _BUILD / "umetate-fm1-pro.fwsc",
-    "smk37": _BUILD / "umetate-smk37-pro.fwsc",
-}
+
+
+def _default_fwsc(board: str, build: Path | None = None) -> Path:
+    """The built package to boot: the newest composed synth package (the product
+    firmware — `umetate build --synth` names it with the synth's stem), else the
+    demo package."""
+    build = build or _BUILD
+    synth = sorted(
+        build.glob(f"umetate-{board}-pro-*.fwsc"),
+        key=lambda p: p.stat().st_mtime,
+    )
+    if synth:
+        return synth[-1]
+    return build / f"umetate-{board}-pro.fwsc"
 
 
 def _flash(args: argparse.Namespace) -> str:
@@ -51,6 +61,8 @@ def _check(args: argparse.Namespace, fwsc: Path) -> int:
     out.mkdir(parents=True, exist_ok=True)
     panel = out / f"{args.board}.ppm"
     cmd = [str(_emu.LIVE_BIN), "--shot", str(args.ms), "--fwsc", str(fwsc)]
+    if args.mhz:
+        cmd += ["--mhz", str(args.mhz)]
     if args.persist:
         cmd += ["--flash", _flash(args)]
     env = dict(os.environ)
@@ -93,7 +105,7 @@ def main(argv: list[str] | None = None) -> int:
         print("emu: fm1-emu not built — run `umetate setup` first", file=sys.stderr)
         return 1
 
-    fwsc: Path = args.fwsc or _BOARD_PACKAGE[str(args.board)]
+    fwsc: Path = args.fwsc or _default_fwsc(str(args.board))
     if not fwsc.is_file():
         print(f"emu: {fwsc} not built — run `umetate build` first", file=sys.stderr)
         return 1

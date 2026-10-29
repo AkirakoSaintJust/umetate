@@ -140,9 +140,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  {n:>6}  {us:>14.1f} us  {us / n:>7.2f} us")
 
     print(
-        "device fit (2.9 ms): blocked — needs a built firmware + the emulator "
-        "(umetate emu --check --mhz 240), F7; the host figures are a relative "
-        "per-voice measure."
+        "device fit (2.9 ms): measured by the emulator — `umetate emu --check "
+        "--mhz 240` boots the built firmware and holds a chord (F7e); the host "
+        "figures above are the relative per-voice measure."
     )
     return 0
 
