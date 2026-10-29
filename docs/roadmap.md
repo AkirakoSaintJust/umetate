@@ -934,11 +934,16 @@ strengthening below.
   composable "one node = one algorithm" model is untouched. First kernels:
   `fm1_kernel_sum_i32` (rep sum) and `fm1_kernel_dot_i32` (rep + memory-MAC dot,
   64-bit accumulate), host-tested for bit-parity.
-  Wiring a kernel into the generated render is a **committed default**, not an
-  option: the mix/route/dot inner loops emit `fm1_kernel_dot_i32`/`fm1_kernel_sum_i32`
-  so the proven `rep` + memory-MAC path is what every project gets, with a
-  render-time budget regression guard (§12.7.3). Still open: SIMD `+|+`/`*|*`
-  (syntax known from the stock, semantics TBD) and re-measuring against clang.
+  The kernels target *vector* inner loops (a sum/dot over N-element arrays). The
+  shipped node set is entirely scalar — every `node.c` is a per-sample expression
+  with no loop — and the two hot accumulators don't map onto them without breaking
+  bit-parity: the voice mix is a *saturating* add (a guard, not a plain wrap-sum),
+  and the `route4` dot is 4 terms against `int16_t` 0/1 weights (already unrolled).
+  So the kernels are **ready, not yet emitted**: they become the default the moment
+  a vector-shaped node ships (`ifft`/additive, a multi-tap filter, the granular
+  engine), and a render-time budget regression guard (§12.7.3) proves any future
+  kernel emission is a real win. Still open: SIMD `+|+`/`*|*` (syntax known from the
+  stock, semantics TBD) and re-measuring against clang.
 
 #### 6.11.4 Design (concrete)
 
