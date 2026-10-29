@@ -591,6 +591,62 @@ def _preset_c_parity() -> None:
         ), "settings record parity"
 
 
+def _sysex_c_parity() -> None:
+    """The C SysEx handler's responses byte-match `_sysex.encode` (parity)."""
+    import subprocess
+
+    from . import _records, _sysex
+
+    root = Path(__file__).resolve().parents[1]
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                "-Wall",
+                "-Wextra",
+                "-Werror",
+                "-I",
+                str(root / "firmware" / "src"),
+                "-o",
+                str(d / "t"),
+                str(root / "firmware" / "tests" / "sysex_test.c"),
+            ],
+            capture_output=True,
+            text=True,
+        )
+        assert proc.returncode == 0, f"sysex_test.c does not compile: {proc.stderr}"
+        run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+        assert run.returncode == 0, f"sysex_test.c failed: {run.stdout}"
+
+        hexes: dict[str, str] = {}
+        for line in run.stdout.splitlines():
+            tag, sep, value = line.partition(":")
+            if sep and tag.strip() in ("identity-hex", "partread-hex"):
+                hexes[tag.strip()] = value.strip()
+
+        assert (
+            hexes.get("identity-hex")
+            == _sysex.encode(
+                0x42,
+                _sysex.CMD_IDENTITY | _sysex.RESPONSE,
+                bytes([0x42, 1, 4, 0, 2]),
+            ).hex()
+        ), "identity response parity"
+        assert (
+            hexes.get("partread-hex")
+            == _sysex.encode(
+                0x42,
+                _sysex.CMD_PART_DUMP | _sysex.RESPONSE,
+                bytes([3])
+                + _records.pack_part_patch(
+                    {"name": "Slot3", "params": [7, 8, 9, 10]}, 4
+                ),
+            ).hex()
+        ), "part-patch read parity"
+
+
 def _budget_measures() -> None:
     """`umetate budget` measures the host polyphony scaling (a measured claim)."""
     import json
@@ -661,6 +717,7 @@ def main() -> int:
         ("the preset bank exports + imports", _bank_roundtrip),
         ("preset export/import round-trips via the CLI", _preset_export_import),
         ("the C preset store matches the Python records", _preset_c_parity),
+        ("the C SysEx handler matches the Python envelope", _sysex_c_parity),
         ("umetate budget measures the polyphony scaling", _budget_measures),
     ]
     failures = 0

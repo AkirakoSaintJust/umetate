@@ -312,6 +312,25 @@ static void midi_send(uint32_t st, uint32_t d1, uint32_t d2)   /* USB out, from 
     midi_out_event((st >> 4) | st << 8 | (d1 & 0x7Fu) << 16 | (d2 & 0x7Fu) << 24);
 }
 
+static void midi_send_sysex(const uint8_t *frame, uint32_t n)   /* a full F0..F7 frame, chunked into USB-MIDI packets */
+{
+    uint32_t i;
+    if (n < 3u)
+        return;
+    midi_out_event(0x4u | (uint32_t)frame[0] << 8 | (uint32_t)frame[1] << 16 | (uint32_t)frame[2] << 24);
+    i = 3u;
+    while (i + 4u <= n) {                                      /* three more bytes: a full continue packet */
+        midi_out_event(0x6u | (uint32_t)frame[i] << 8 | (uint32_t)frame[i + 1u] << 16 |
+                       (uint32_t)frame[i + 2u] << 24);
+        i += 3u;
+    }
+    if (i == n)
+        return;
+    midi_out_event((0x5u + (n - i - 1u)) | (uint32_t)frame[i] << 8 |
+                   (i + 1u < n ? (uint32_t)frame[i + 1u] << 16 : 0u) |
+                   (i + 2u < n ? (uint32_t)frame[i + 2u] << 24 : 0u));
+}
+
 /* ---- the timer: 10 kHz key scan, milliseconds, USB at 2 kHz. It outranks the audio ISR; nested in a
  * render it only scans, counts and feeds the USB audio stream (as sloopDX main.c) */
 static volatile uint8_t in_audio;

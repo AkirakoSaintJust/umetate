@@ -126,6 +126,13 @@ add_custom_target(presets_test
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     DEPENDS src/presets.c src/presets.h tests/presets_test.c
     USES_TERMINAL VERBATIM)
+add_custom_target(sysex_test
+    COMMAND "${UMETATE_HOST_CC}" -std=c11 -Wall -Wextra -Werror -Isrc
+        -o "${UMETATE_HOST_DIR}/sysex_test" "${CMAKE_SOURCE_DIR}/tests/sysex_test.c"
+    COMMAND "${UMETATE_HOST_DIR}/sysex_test"
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    DEPENDS src/presets.c src/presets.h src/synth_sysex.c src/synth_sysex.h tests/sysex_test.c
+    USES_TERMINAL VERBATIM)
 
 if(UMETATE_BOARD STREQUAL "smk37")
     add_custom_target(test-host
@@ -154,6 +161,7 @@ add_custom_target(test_all
     COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target bootguard_test
     COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target ui_test
     COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target presets_test
+    COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target sysex_test
     COMMAND "${CMAKE_COMMAND}" -E env "UMETATE_TEST_BUILD=${CMAKE_BINARY_DIR}/test-artifacts" "CC=${UMETATE_HOST_CC}" "BOARD=smk37"
         "${CMAKE_SOURCE_DIR}/tests/run_host.sh" "${CMAKE_SOURCE_DIR}/tests/scripts/smk37.txt"
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"

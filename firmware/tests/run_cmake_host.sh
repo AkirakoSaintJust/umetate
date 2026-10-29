@@ -10,5 +10,6 @@ CMAKE="${CMAKE:-cmake}"
 "$CMAKE" --build "$BUILD_DIR" --target uac_test
 "$CMAKE" --build "$BUILD_DIR" --target bootguard_test
 "$CMAKE" --build "$BUILD_DIR" --target presets_test
+"$CMAKE" --build "$BUILD_DIR" --target sysex_test
 "$CMAKE" -E env "UMETATE_TEST_BUILD=${BUILD_DIR}/test-artifacts" "CC=${CC:-cc}" BOARD=smk37 \
     sh tests/run_host.sh tests/scripts/smk37.txt

@@ -687,10 +687,12 @@ stall:
     sie_wr(S_CSR0, 0x60);
 }
 
-/* SysEx assembly: only short commands matter here */
+/* SysEx assembly: only short commands matter here; the app's frames go to the
+ * framework's synth_sysex_feed (the same byte stream, the handler sorts them out) */
 static void sysex_byte(uint8_t b)
 {
     static const uint8_t UBOOT_KEY[6] = {0xF0, 0x22, 0x24, 0x35, 0x7D, 0xF7};
+    synth_sysex_feed(b);
     if (b >= 0xF8u)
         return;                                        /* realtime may occur anywhere in SysEx */
     if ((b & 0x80u) && b != 0xF0u && b != 0xF7u) {

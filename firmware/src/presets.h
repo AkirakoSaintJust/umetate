@@ -24,6 +24,7 @@
 #define MP_BANK(P) (PRESET_SLOTS * MP_RECORD(P))
 
 uint32_t preset_crc32(const uint8_t *p, uint32_t n);
+uint16_t preset_crc16(const uint8_t *p, uint32_t n); /* the SysEx envelope's CRC-16-CCITT */
 
 /* pack -> the record length; the name is truncated to PRESET_NAME_LEN-1 chars. */
 uint32_t preset_part_pack(uint8_t *out, const char *name, const int32_t *params, uint32_t n);

@@ -31,6 +31,18 @@ uint32_t preset_crc32(const uint8_t *p, uint32_t n)
     return ~c;
 }
 
+uint16_t preset_crc16(const uint8_t *p, uint32_t n)
+{
+    uint16_t c = 0xFFFFu;
+    uint32_t k;
+    while (n--) {
+        c ^= (uint16_t)((uint16_t)*p++ << 8);
+        for (k = 0; k < 8u; k++)
+            c = c & 0x8000u ? (uint16_t)((uint16_t)c << 1) ^ 0x1021u : (uint16_t)((uint16_t)c << 1);
+    }
+    return c;
+}
+
 static void name_put(uint8_t *out, const char *name)
 {
     uint32_t i;
