@@ -358,6 +358,41 @@ def _records_roundtrip() -> None:
     )
 
 
+def _sysex_roundtrip() -> None:
+    """The SysEx envelope frames + CRC-16 + 7-bit packing round-trip (§6.11.4)."""
+    from . import _records, _sysex
+
+    # 7-bit packing round-trips; every packed byte stays a MIDI data byte
+    for n in (0, 1, 6, 7, 8, 100):
+        data = bytes((i * 37 + 11) % 256 for i in range(n))
+        packed = _sysex.pack7(data)
+        assert all(b <= 0x7F for b in packed), "packed byte > 0x7F"
+        assert _sysex.unpack7(packed, n) == data, f"pack7 round-trip n={n}"
+
+    # frame round-trip + parse
+    payload = _records.pack_part_patch({"name": "EPiano", "params": [1, -2, 3, -4]}, 4)
+    frame = _sysex.encode(0x42, _sysex.CMD_PART_DUMP, payload)
+    got = _sysex.decode(frame)
+    assert got is not None and got == (
+        0x42,
+        _sysex.CMD_PART_DUMP,
+        _sysex.VERSION,
+        _sysex.pack7(payload),
+    ), "frame round-trip"
+    assert _sysex.unpack7(got[3], len(payload)) == payload, "payload unpack"
+
+    # CRC + framing failures are rejected
+    bad = bytearray(frame)
+    bad[8] ^= 0x01
+    assert _sysex.decode(bytes(bad)) is None, "CRC failure undetected"
+    assert _sysex.decode(frame[:-1]) is None, "missing F7 undetected"
+    assert _sysex.decode(b"\x00" + frame[1:]) is None, "bad F0 undetected"
+
+    # the response bit echoes the command; unknown-cmd classification
+    assert _sysex.known(_sysex.CMD_IDENTITY | _sysex.RESPONSE), "response cmd"
+    assert not _sysex.known(0x7F), "unknown cmd classified as known"
+
+
 def main() -> int:
     tests: _Tests = [
         ("no import side effects", _no_import_side_effects),
@@ -378,6 +413,7 @@ def main() -> int:
         ("the skill bundles are in sync", _skill_check),
         ("the docs cross-references resolve", _links_check),
         ("the preset records round-trip", _records_roundtrip),
+        ("the SysEx envelope round-trips", _sysex_roundtrip),
     ]
     failures = 0
     for name, test in tests:
