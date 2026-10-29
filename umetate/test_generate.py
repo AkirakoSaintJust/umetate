@@ -442,7 +442,7 @@ ALGO_HARNESS = """\
 #include <stdint.h>
 void __NAME___dsp_reset(void);
 void __NAME___dsp_note_on(uint32_t note, uint32_t velocity);
-void __NAME___dsp_set_param(uint32_t id, int32_t value);
+int __NAME___dsp_set_param(uint32_t id, int32_t value);
 void __NAME___dsp_render(int32_t *out, uint32_t frames);
 void __NAME___dsp_all_notes_off(void);
 static int32_t out[512];
@@ -633,7 +633,7 @@ MODE_HARNESS = """\
 void __NAME___dsp_reset(void);
 void __NAME___dsp_note_on(uint32_t note, uint32_t velocity);
 void __NAME___dsp_note_off(uint32_t note);
-void __NAME___dsp_set_param(uint32_t id, int32_t value);
+int __NAME___dsp_set_param(uint32_t id, int32_t value);
 uint32_t __NAME___dsp_lit(uint32_t base);
 int main(void) {
     /* mono: one voice, last-note priority, note_off takeover */
@@ -704,7 +704,7 @@ LEGATO_HARNESS = """\
 void __NAME___dsp_reset(void);
 void __NAME___dsp_note_on(uint32_t note, uint32_t velocity);
 void __NAME___dsp_render(int32_t *out, uint32_t frames);
-void __NAME___dsp_set_param(uint32_t id, int32_t value);
+int __NAME___dsp_set_param(uint32_t id, int32_t value);
 static int32_t out[1024];
 int main(int argc, char **argv) {
     int legato = atoi(argv[1]);
@@ -748,7 +748,7 @@ GLIDE_HARNESS = """\
 void __NAME___dsp_reset(void);
 void __NAME___dsp_note_on(uint32_t note, uint32_t velocity);
 void __NAME___dsp_render(int32_t *out, uint32_t frames);
-void __NAME___dsp_set_param(uint32_t id, int32_t value);
+int __NAME___dsp_set_param(uint32_t id, int32_t value);
 static int32_t out[2048];
 int main(int argc, char **argv) {
     int portamento = atoi(argv[1]);
@@ -820,7 +820,7 @@ LEVEL_DELAY_HARNESS = """\
 void __NAME___dsp_reset(void);
 void __NAME___dsp_note_on_ch(uint32_t note, uint32_t velocity, uint32_t channel);
 void __NAME___dsp_render(int32_t *out, uint32_t frames);
-void __NAME___dsp_set_param(uint32_t id, int32_t value);
+int __NAME___dsp_set_param(uint32_t id, int32_t value);
 static int32_t out[512];
 static int64_t energy(void) {
     int64_t e = 0;
@@ -852,6 +852,46 @@ int main(void) {
         return 1;
     }
     printf("ok: __NAME__ per-part level + delay\\n");
+    return 0;
+}
+"""
+
+# The §12.1 set_param seam contract: a bad id is rejected (-1, no write) and an
+# out-of-range value is clamped to the param's [min, max] (the dsp_param table).
+SET_PARAM_HARNESS = """\
+#include <stdio.h>
+#include <stdint.h>
+int __NAME___dsp_set_param(uint32_t id, int32_t value);
+int32_t __NAME___dsp_get_param(uint32_t id);
+uint32_t __NAME___dsp_param_count(void);
+int main(void) {
+    uint32_t n = __NAME___dsp_param_count();
+    if (__NAME___dsp_set_param(n, 1) != -1) {
+        printf("FAIL: bad id n\\n");
+        return 1;
+    }
+    if (__NAME___dsp_set_param(n + 100, 1) != -1) {
+        printf("FAIL: bad id n+100\\n");
+        return 1;
+    }
+    /* the universal `mode` param is min 0, max 2 */
+    if (__NAME___dsp_set_param(__MODE_ID__, 999) != 0) {
+        printf("FAIL: clamp hi\\n");
+        return 1;
+    }
+    if (__NAME___dsp_get_param(__MODE_ID__) != 2) {
+        printf("FAIL: hi not clamped\\n");
+        return 1;
+    }
+    if (__NAME___dsp_set_param(__MODE_ID__, -5) != 0) {
+        printf("FAIL: clamp lo\\n");
+        return 1;
+    }
+    if (__NAME___dsp_get_param(__MODE_ID__) != 0) {
+        printf("FAIL: lo not clamped\\n");
+        return 1;
+    }
+    printf("ok: __NAME__ set_param rejects bad ids and clamps values\\n");
     return 0;
 }
 """
@@ -1224,6 +1264,38 @@ def _parts_level_delay(patch: Patch) -> tuple[bool, str]:
         return run.returncode == 0, run.stdout.strip()
 
 
+def _set_param_contract(patch: Patch) -> tuple[bool, str]:
+    """Generate + compile + run the §12.1 set_param contract (bad-id rejection +
+    value clamp)."""
+    src = generate(patch)
+    mode_id = str(param_ids(patch)["mode"])
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        cname = patch["name"].replace("-", "_").replace(".", "_")
+        (d / "harness.c").write_text(
+            SET_PARAM_HARNESS.replace("__NAME__", cname).replace("__MODE_ID__", mode_id)
+        )
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            return False, "compile failed:\n" + proc.stderr
+        run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+        return run.returncode == 0, run.stdout.strip()
+
+
 def _sound_tables(patch: Patch) -> tuple[bool, str]:
     """Generate + compile (with tables.c) + run the sound contract for a table patch."""
     src = generate(patch)
@@ -1438,7 +1510,7 @@ _MUTE_HARNESS = """\
 #include <stdint.h>
 void __NAME___dsp_reset(void);
 void __NAME___dsp_note_on(uint32_t note, uint32_t velocity);
-void __NAME___dsp_set_param(uint32_t id, int32_t value);
+int __NAME___dsp_set_param(uint32_t id, int32_t value);
 void __NAME___dsp_render(int32_t *out, uint32_t frames);
 static int32_t out[1024];
 int main(void) {
@@ -1723,6 +1795,14 @@ def main() -> int:
     # per-part level (gain) + delay (onset offset).
     ok, msg = _parts_level_delay(PARTS_PATCH)
     print(("ok: " if ok else "FAIL: ") + (msg or "per-part level + delay"))
+    failures += 0 if ok else 1
+
+    # the §12.1 set_param seam contract: bad-id rejection + value clamp.
+    ok, msg = _set_param_contract(MODE_PATCH)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "set_param rejects bad ids and clamps values")
+    )
     failures += 0 if ok else 1
 
     # per-part params occupy a `part × param` id space (part-major, contiguous).
