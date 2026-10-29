@@ -271,6 +271,22 @@ class SysexLayout(TypedDict):
     multi_patch_bank_size: int
 
 
+class CcEntry(TypedDict):
+    """One fixed `cc -> param` assignment (roadmap §6.11.4)."""
+
+    cc: int
+    param: int
+    name: str
+
+
+class CcMap(TypedDict):
+    """The generated cc-map: one CC per param, ascending from `base`, skipping the
+    reserved CCs (sustain 64 and the channel-mode 120..127)."""
+
+    base: int
+    entries: list[CcEntry]
+
+
 # ------------------------------------------------- fm1tk strangler-fig ----
 
 

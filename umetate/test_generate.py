@@ -896,6 +896,38 @@ int main(void) {
 }
 """
 
+# The fixed cc-map contract (F5): every mapped CC's param id is a real, writable
+# engine param (set accepted), the reverse table is consistent, and the coverage
+# is complete (CC_PARAMS == the engine's param count).
+CC_HARNESS = """\
+#include <stdio.h>
+#include <stdint.h>
+#include "cc_map.h"
+int __NAME___dsp_set_param(uint32_t id, int32_t value);
+uint32_t __NAME___dsp_param_count(void);
+int main(void) {
+    uint32_t n = __NAME___dsp_param_count();
+    uint32_t seen = 0;
+    for (uint32_t cc = 0; cc < 128; cc++) {
+        if (cc_to_param[cc] == CC_NONE) continue;
+        uint32_t id = cc_to_param[cc];
+        if (id >= n) { printf("FAIL: id out of range\\n"); return 1; }
+        if (__NAME___dsp_set_param(id, 1) != 0) {
+            printf("FAIL: set rejected\\n");
+            return 1;
+        }
+        if (param_to_cc[id] != cc) {
+            printf("FAIL: reverse mismatch\\n");
+            return 1;
+        }
+        seen++;
+    }
+    if (seen != CC_PARAMS || CC_PARAMS != n) { printf("FAIL: coverage\\n"); return 1; }
+    printf("ok: __NAME__ a CC write reaches its mapped param\\n");
+    return 0;
+}
+"""
+
 
 def _include_args() -> list[str]:
     root = Path(__file__).resolve().parents[1]
@@ -1281,6 +1313,41 @@ def _set_param_contract(patch: Patch) -> tuple[bool, str]:
                 "cc",
                 "-std=c11",
                 *_include_args(),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            return False, "compile failed:\n" + proc.stderr
+        run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+        return run.returncode == 0, run.stdout.strip()
+
+
+def _cc_map_reaches(patch: Patch) -> tuple[bool, str]:
+    """Generate + compile + run the cc-map contract: a CC write through the generated
+    `cc_map.h` table reaches a real, writable engine param."""
+    from .generate import generate_cc_header
+
+    src = generate(patch)
+    header = generate_cc_header(patch)
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        (d / "cc_map.h").write_text(header)
+        cname = patch["name"].replace("-", "_").replace(".", "_")
+        (d / "harness.c").write_text(CC_HARNESS.replace("__NAME__", cname))
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-I",
+                str(d),
                 "-o",
                 str(d / "t"),
                 str(d / "harness.c"),
@@ -1837,6 +1904,42 @@ def main() -> int:
         failures += 1
     else:
         print("ok: sysex-layout pins the record geometry (2 params, 2 parts)")
+
+    # the fixed cc map: one CC per param, ascending from base 16, skipping the
+    # reserved CCs (sustain 64 + the channel-mode 120..127).
+    from .generate import cc_map_reverse, generate_cc_map
+
+    cm = generate_cc_map(PARTS_PATCH)
+    real = set(param_ids(PARTS_PATCH).values())
+    mapped_ids = [e["param"] for e in cm["entries"]]
+    mapped_ccs = [e["cc"] for e in cm["entries"]]
+    reserved = {64} | set(range(120, 128))
+    if not (
+        cm["base"] == 16
+        and set(mapped_ids) == real
+        and len(mapped_ids) == len(real)
+        and mapped_ccs == sorted(mapped_ccs)
+        and all(c not in reserved and c <= 127 for c in mapped_ccs)
+        and set(cc_map_reverse(cm)) == real
+    ):
+        print("FAIL: the cc map is not complete/ascending/reserved-free")
+        failures += 1
+    else:
+        print(
+            f"ok: the cc map covers {len(mapped_ids)} params from CC 16 "
+            "(reserved skipped)"
+        )
+    try:
+        generate_cc_map(PARTS_PATCH, base=120)
+        print("FAIL: an overflowing cc map was not rejected")
+        failures += 1
+    except GenError:
+        print("ok: an overflowing cc map is rejected")
+
+    # a CC write through the generated cc_map.h table reaches the mapped param.
+    ok, msg = _cc_map_reaches(PARTS_PATCH)
+    print(("ok: " if ok else "FAIL: ") + (msg or "a CC write reaches its mapped param"))
+    failures += 0 if ok else 1
 
     # the dogfood panel (examples/fourop-fm/panel.json) resolves against the patch's
     # params (every widget/binding names a real set_param id).
