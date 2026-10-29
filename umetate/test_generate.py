@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import subprocess
 import sys
 import tempfile
@@ -1224,6 +1225,135 @@ def _retrigger_on_steal(patch: Patch) -> tuple[bool, str]:
         if steal > 3 * fresh:
             return False, f"steal did not retrigger (fresh={fresh} steal={steal})"
         return True, "a voice steal retriggers the envelope"
+
+
+def _voice_ceiling() -> tuple[bool, str]:
+    """The polyphony ceiling + steal-policy contract: a 4-voice patch holding a 5th
+    note steals the *oldest* gated voice — the pool never grows past NVOICE.
+    Observed through `dsp_lit` (the gated-note bitmask in a 27-note window)."""
+    patch: Patch = {
+        "name": "ceiling_test",
+        "voices": 4,
+        "voice": {
+            "nodes": [
+                {"id": "ph", "type": "phasor"},
+                {"id": "osc", "type": "osc"},
+            ],
+            "wires": [{"from": "ph.phase", "to": "osc.phase"}],
+            "voice_out": "osc.audio",
+        },
+        "global": {"nodes": [], "wires": []},
+    }
+    src = generate(patch)
+    cname = "ceiling_test"
+    harness = (
+        "#include <stdio.h>\n#include <stdint.h>\n"
+        f"void {cname}_dsp_reset(void);\n"
+        f"void {cname}_dsp_note_on(uint32_t note, uint32_t velocity);\n"
+        f"uint32_t {cname}_dsp_lit(uint32_t base);\n"
+        "int main(void) {\n"
+        f"    {cname}_dsp_reset();\n"
+        f"    {cname}_dsp_note_on(60, 100);\n"
+        f"    {cname}_dsp_note_on(61, 100);\n"
+        f"    {cname}_dsp_note_on(62, 100);\n"
+        f"    {cname}_dsp_note_on(63, 100);\n"
+        f"    uint32_t full = {cname}_dsp_lit(60);\n"
+        f"    {cname}_dsp_note_on(64, 100);\n"
+        f"    uint32_t after = {cname}_dsp_lit(60);\n"
+        '    if (full != 0xFu) { printf("FAIL: 4 notes did not fill 4 voices '
+        '(lit=%x)\\n", full); return 1; }\n'
+        '    if (after != 0x1Eu) { printf("FAIL: 5th note did not steal the oldest '
+        '(lit=%x)\\n", after); return 1; }\n'
+        '    printf("ok: voice ceiling: the 5th note steals the oldest of 4\\n");\n'
+        "    return 0;\n"
+        "}\n"
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        (d / "harness.c").write_text(harness)
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            return False, "compile failed:\n" + proc.stderr
+        run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+        if run.returncode != 0:
+            return False, run.stdout.strip() or run.stderr.strip()
+        return True, run.stdout.strip()
+
+
+def _asan_clean() -> tuple[bool, str]:
+    """The generated fourop-fm DSP is ASan/UBSan-clean under worst-case load (128
+    held notes -> repeated voice steals across the 20-voice pool). A sanitizer abort
+    fails the test. `-fno-sanitize-recover=all` fails on the first error."""
+    root = Path(__file__).resolve().parents[1]
+    patch = as_patch(
+        json.loads(
+            (root / "examples" / "fourop-fm" / "patch.json").read_text(encoding="utf-8")
+        )
+    )
+    src = generate(patch)
+    tables_h, tables_c = generate_tables(patch)
+    cname = "fourop_fm"
+    harness = (
+        "#include <stdint.h>\n"
+        f"void {cname}_dsp_reset(void);\n"
+        f"void {cname}_dsp_note_on(uint32_t note, uint32_t velocity);\n"
+        f"void {cname}_dsp_render(int32_t *out, uint32_t frames);\n"
+        "static int32_t out[512];\n"
+        "int main(void) {\n"
+        f"    {cname}_dsp_reset();\n"
+        "    for (uint32_t n = 0; n < 128; n++) "
+        f"{cname}_dsp_note_on(n, 100);\n"
+        "    for (int s = 0; s < 32; s++) "
+        f"{cname}_dsp_render(out, 256);\n"
+        "    return 0;\n"
+        "}\n"
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        (d / "tables.h").write_text(tables_h)
+        (d / "tables.c").write_text(tables_c)
+        (d / "harness.c").write_text(harness)
+        sources = [str(d / "harness.c"), str(d / "dsp.c"), str(d / "tables.c")]
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                "-fsanitize=address,undefined",
+                "-fno-sanitize-recover=all",
+                "-g",
+                *_include_args(),
+                "-I",
+                str(d),
+                "-o",
+                str(d / "t"),
+                *sources,
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            return False, "compile failed:\n" + proc.stderr
+        env = dict(os.environ, ASAN_OPTIONS="detect_leaks=0")
+        run = subprocess.run([str(d / "t")], capture_output=True, text=True, env=env)
+        if run.returncode != 0:
+            return False, "sanitizer flagged:\n" + (run.stderr or run.stdout)
+        return True, "ASan/UBSan-clean (128 held notes)"
 
 
 def _modes_behave(patch: Patch) -> tuple[bool, str]:
@@ -2788,6 +2918,14 @@ def main() -> int:
     except AssertionError as exc:
         print(f"FAIL: table placeholder: {exc}")
         failures += 1
+
+    ok, msg = _voice_ceiling()
+    print(("ok: " if ok else "FAIL: ") + (msg or "voice ceiling + steal policy"))
+    failures += 0 if ok else 1
+
+    ok, msg = _asan_clean()
+    print(("ok: " if ok else "FAIL: ") + (msg or "generated DSP is sanitizer-clean"))
+    failures += 0 if ok else 1
 
     print("generator tests " + ("FAILED" if failures else "passed"))
     return 1 if failures else 0

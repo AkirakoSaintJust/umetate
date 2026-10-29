@@ -2389,6 +2389,13 @@ it compile everywhere. `generate.py` is deterministic (same inputs → byte-iden
   on the next redraw; a mode override beats the global; no display in the audio
   callback.
 - **ring tests:** SPSC wrap-around, overrun counter, no lost note-off.
+- **safety regressions (UB/OOB/voice-alloc):** the generated fourop-fm DSP is built
+  with `-fsanitize=address,undefined -fno-sanitize-recover=all` and run under
+  worst-case load (128 held notes → repeated voice steals across the 20-voice pool),
+  so an OOB read/write, signed overflow, shift, or divide-by-zero fails the gate;
+  the polyphony ceiling + steal policy (a 5th note steals the oldest of 4, the pool
+  never grows past NVOICE) is asserted through `dsp_lit`. Both live in
+  `umetate/test_generate.py`.
 - **performance regression guard:** compile the generated `dsp.c` and time a fixed
   render on host; fail over a per-patch threshold. The emulator ISR% (`emu --check
   --mhz 320`) is the higher-fidelity gate when the toolchain is present. Implemented
