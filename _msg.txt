@@ -1,0 +1,29 @@
+Safety pass: fix out-of-bounds table reads and a divide-by-zero
+
+A debugging/consistency sweep (ASan/UBSan over the generated DSP, plus a review of
+every table index and note-on reciprocal) found several latent bugs — all in
+bounds that only a bad param/mod would hit, but real OOB/UB nonetheless.
+
+- table node: indexed a 256-entry wavetable with `phase >> 22` (10 bits, 0..1023),
+  so 3/4 of reads were OOB (confirmed by ASan). Its summary/comment say "256
+  entries, top 8 bits" — the code now uses `>> 24` to match.
+- fm1_sin_wave: masked `ws & 15` but the table has 12 waves, so ws 12..15 read OOB
+  while the comment promised "bad ws degrades to sine". Now `if (ws > 11) ws = 0`.
+- osc / naive_osc: `waveform`/`shape` are uint32 with no clamp, so a value past
+  the table (12 / 4) read OOB. Both block_derived bases now clamp to a valid shape
+  (0 = sine).
+- algo / route / route4: index the 7-algorithm routing table by `algorithm`/`dest`
+  without clamping, so an out-of-range algorithm read past the 140-entry table.
+  Now clamped (algorithm 0..6, dest 0..4).
+- note_reciprocal (`inv_inc = 2^32/inc` in saw/pulse/triangle): divided by `inc`
+  with no guard, so a ratio param of 0 was a division by zero. Now guarded.
+- phase_shape: `v` had no upper bound, so `v >= 2` (Q15 > 65535) overflowed the
+  s0/s1 slopes. Now clamped to v < 2 (one wrap), matching the documented wrap.
+
+Consistency: the table/fm1_sin_wave comments and phase_shape summary now match the
+code (the summary said "top 8 bits" but the code was 10 bits; the "degrades to
+sine" promise was previously unmet).
+
+Verified: test_generate (incl. a new fm1_sin_wave clamp check), math_test,
+kernel_test, mypy --strict, ruff, deep-check --all (pyright still missing from this
+env), and the fourop-fm dogfood runs clean under ASan/UBSan with all 128 notes held.

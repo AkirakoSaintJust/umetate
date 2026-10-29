@@ -1,5 +1,8 @@
 /* routing-matrix row mixer: out = a*w0 + b*w1 + c*w2 + d*w3, where the four 0/1
-   Q15 weights are row (algorithm, dest) of the selected `routing` table. */
+   Q15 weights are row (algorithm, dest) of the selected `routing` table. Both
+   indices are clamped to the table (7 algorithms x 5 rows). */
+uint32_t alg = ${param.algorithm} > 6u ? 6u : ${param.algorithm};
+uint32_t dst = ${param.dest} > 4u ? 4u : ${param.dest};
 int32_t ${out.audio} = fm1_route4(
-    &${table.@}[(${param.algorithm} * 20u) + (${param.dest} * 4u)],
+    &${table.@}[(alg * 20u) + (dst * 4u)],
     ${in.a}, ${in.b}, ${in.c}, ${in.d});

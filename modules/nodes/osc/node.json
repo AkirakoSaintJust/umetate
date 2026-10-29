@@ -5,5 +5,5 @@
   "outs": { "audio": "audio" },
   "params": { "waveform": "uint32" },
   "state": { "base": "uint32" },
-  "block_derived": { "base": "${param.waveform} << 10" }
+  "block_derived": { "base": "((${param.waveform} > 11u) ? 0u : ${param.waveform}) << 10" }
 }

@@ -596,7 +596,8 @@ def _note_derived_fn(graph: CompiledGraph) -> list[str]:
         for field, src in i.spec.reciprocals.items():
             body.append(
                 f"    {i.state_ref(field, 'v')} = "
-                f"(uint32_t)(0x100000000ull / {i.state_ref(src, 'v')});"
+                f"({i.state_ref(src, 'v')} != 0u) ? "
+                f"(uint32_t)(0x100000000ull / {i.state_ref(src, 'v')}) : 0u;"
             )
     if not body:
         body.append("    (void)v;")

@@ -1657,6 +1657,11 @@ int main(void) {
         printf("FAIL: square not full-scale (%d, %d)\n", sq_max, sq_min);
         return 1;
     }
+    /* out-of-range ws (12..15, or any >11) degrades to sine, not an OOB read */
+    if (fm1_sin_wave(0x20000000u, 12) != fm1_sin_wave(0x20000000u, 0)) {
+        printf("FAIL: bad waveform does not degrade to sine\n");
+        return 1;
+    }
     printf("ok: 12 waveforms (OPZ + OPL shapes correct)\n");
     return 0;
 }

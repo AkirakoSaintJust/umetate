@@ -5,5 +5,5 @@
   "outs": { "audio": "audio" },
   "params": { "shape": "uint32" },
   "state": { "base": "uint32" },
-  "block_derived": { "base": "${param.shape} << 10" }
+  "block_derived": { "base": "((${param.shape} > 3u) ? 0u : ${param.shape}) << 10" }
 }

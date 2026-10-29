@@ -101,7 +101,8 @@ FM1_MATH_INLINE int32_t fm1_cos(uint32_t phase) { return fm1_sin(phase + 0x40000
    oscillator node hoists it with its block_derived. */
 FM1_MATH_INLINE int32_t fm1_sin_wave(uint32_t phase, uint32_t ws)
 {
-    return fm1_wave[((ws & 15u) << 10) | (phase >> 22)];
+    if (ws > 11u) ws = 0u;   /* out of range degrades to sine (not a masked OOB read) */
+    return fm1_wave[(ws << 10) | (phase >> 22)];
 }
 
 /* 4-input weighted sum against a routing-matrix row (a `const int16_t *` of four
