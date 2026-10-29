@@ -529,6 +529,68 @@ def _preset_export_import() -> None:
         assert rc == 1, "wrong-model import not rejected"
 
 
+def _preset_c_parity() -> None:
+    """The C preset store's record bytes equal `_records.pack_*` (parity)."""
+    import subprocess
+
+    from . import _records
+
+    root = Path(__file__).resolve().parents[1]
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                "-Wall",
+                "-Wextra",
+                "-Werror",
+                "-I",
+                str(root / "firmware" / "src"),
+                "-o",
+                str(d / "t"),
+                str(root / "firmware" / "tests" / "presets_test.c"),
+            ],
+            capture_output=True,
+            text=True,
+        )
+        assert proc.returncode == 0, f"presets_test.c does not compile: {proc.stderr}"
+        run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+        assert run.returncode == 0, f"presets_test.c failed: {run.stdout}"
+
+        hexes: dict[str, str] = {}
+        for line in run.stdout.splitlines():
+            tag, sep, value = line.partition(":")
+            if sep and tag.strip() in ("part-hex", "multi-hex", "settings-hex"):
+                hexes[tag.strip()] = value.strip()
+
+        assert (
+            hexes.get("part-hex")
+            == _records.pack_part_patch(
+                {"name": "EPiano", "params": [100, -5, 65536, 0]}, 4
+            ).hex()
+        ), "part record parity"
+        assert (
+            hexes.get("multi-hex")
+            == _records.pack_multi_patch(
+                {
+                    "name": "Layers",
+                    "part_slot": [0, 1],
+                    "level": [32768, 32768],
+                    "delay": [0, 40],
+                    "channel": [0, 1],
+                    "low": [0, 60],
+                    "high": [127, 127],
+                },
+                2,
+            ).hex()
+        ), "multi record parity"
+        assert (
+            hexes.get("settings-hex")
+            == _records.pack_settings({"base_channel": -1, "master_tune": 12}).hex()
+        ), "settings record parity"
+
+
 def main() -> int:
     tests: _Tests = [
         ("no import side effects", _no_import_side_effects),
@@ -552,6 +614,7 @@ def main() -> int:
         ("the SysEx envelope round-trips", _sysex_roundtrip),
         ("the preset bank exports + imports", _bank_roundtrip),
         ("preset export/import round-trips via the CLI", _preset_export_import),
+        ("the C preset store matches the Python records", _preset_c_parity),
     ]
     failures = 0
     for name, test in tests:
