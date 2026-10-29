@@ -20,6 +20,13 @@ def main():
     parser.add_argument("--profile", choices=("baseline", "performance"), default="baseline")
     parser.add_argument("--release")
     parser.add_argument("--defs", default="")
+    parser.add_argument("--dsp-tus", nargs="*", default=None,
+                        help="the DSP translation units (default: src/rib_dsp.c); a "
+                             "`build --synth` composition passes its generated engine")
+    parser.add_argument("--synth", default=None,
+                        help="the composed synth's stem: the package is named "
+                             "umetate-<board>-<model>-<synth>.fwsc (the device identity is "
+                             "unchanged)")
     parser.add_argument("--docker", action="store_true")
     parser.add_argument("--docker-image", default="umetate-host-build:latest")
     parser.add_argument("--sdk-assets", type=Path,
@@ -49,6 +56,8 @@ def main():
     build_module.GEN = out / "gen"
     build_module.LDR = out / "loader"
     build_module.BOARD = args.board
+    if args.dsp_tus:
+        build_module.DSP_TUS = list(args.dsp_tus)
     build_module.APP_SLOT = build_module.fm1pkg_make.BOARDS[args.board][1]
     build_module.DSP_PROFILE = args.profile
     build_module.fm1pkg_make.SDK = args.sdk.resolve()
@@ -68,7 +77,9 @@ def main():
         build_module.VERSION = match[1] + "." + match[2] + (match[3] or "")
     else:
         build_module.PRODUCT = build_module.BOARD_PREFIX[args.board] + "0"
-    package_name = build_module.package_filename(args.board, args.model, args.release)
+    package_name = build_module.package_filename(
+        args.board, args.model, args.release, args.synth
+    )
     flags = [*build_module.CFLAGS, "-O3"]
     if args.profile == "performance":
         flags.extend(("-mcpu=r3", "-mfprev1", "-DUMETATE_TARGET_DSP=1"))

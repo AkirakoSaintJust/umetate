@@ -100,7 +100,7 @@ def note_on(name: str, n_parts: int) -> list[str]:
     channel/keyzone routing for parts) + the frozen `<name>_dsp_note_on` forwarder."""
     impl = _note_on_ch_parts(name) if n_parts > 1 else _note_on_ch_single(name)
     return impl + [
-        f"void {name}_dsp_note_on(uint32_t note, uint32_t velocity) {{",
+        f"UMETATE_DSP_API void {name}_dsp_note_on(uint32_t note, uint32_t velocity) {{",
         f"    {name}_dsp_note_on_ch(note, velocity, 0xFFFFFFFFu); /* omni */",
         "}",
         "",
@@ -110,7 +110,7 @@ def note_on(name: str, n_parts: int) -> list[str]:
 def _note_on_ch_single(name: str) -> list[str]:
     """The mode-aware allocation (mono/unison/poly), as `<name>_dsp_note_on_ch`."""
     return [
-        f"void {name}_dsp_note_on_ch(uint32_t note, uint32_t velocity, uint32_t channel) {{",
+        f"UMETATE_DSP_API void {name}_dsp_note_on_ch(uint32_t note, uint32_t velocity, uint32_t channel) {{",
         "    (void)channel;",
         "    if (note > 127u || !velocity) return;",
         "    uint8_t picked[NVOICE];",
@@ -187,7 +187,7 @@ def _note_on_ch_parts(name: str) -> list[str]:
     """The multitimbral routing: a note fires every matching part (channel +
     keyzone), each allocating one poly voice from the shared pool."""
     return [
-        f"void {name}_dsp_note_on_ch(uint32_t note, uint32_t velocity, uint32_t channel) {{",
+        f"UMETATE_DSP_API void {name}_dsp_note_on_ch(uint32_t note, uint32_t velocity, uint32_t channel) {{",
         "    if (note > 127u || !velocity) return;",
         "    uint8_t picked[NVOICE];",
         "    uint8_t chosen[NVOICE];",
@@ -240,14 +240,14 @@ def note_off(name: str, n_parts: int) -> list[str]:
     plain poly release for parts (mono/unison with parts is deferred)."""
     if n_parts > 1:
         return [
-            f"void {name}_dsp_note_off(uint32_t note) {{",
+            f"UMETATE_DSP_API void {name}_dsp_note_off(uint32_t note) {{",
             "    for (uint32_t v = 0; v < NVOICE; v++)",
             "        if (voice_note[v] == note) { voice_gate[v] = 0; voice_delay[v] = 0; }",
             "}",
             "",
         ]
     return [
-        f"void {name}_dsp_note_off(uint32_t note) {{",
+        f"UMETATE_DSP_API void {name}_dsp_note_off(uint32_t note) {{",
         "    if (note > 127u) return;",
         "    if (vm_mode == 1) {",
         "        if (mono_held[note]) mono_held[note]--;",

@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
 """The preset bank ↔ SysEx export/import (docs/roadmap.md §6.11.4): the host-side
-half of the preset store — a 64+64-slot bank, exchanged as a sequence of
-part-patch / multi-patch dump frames (the `.syx` stream). The device store (F4d)
-uses the same records.
+half of the preset store — a SLOTS+SLOTS-slot bank (32 each; the slot area's
+measured ceiling), exchanged as a sequence of part-patch / multi-patch dump
+frames (the `.syx` stream). The device store (F4d) uses the same records.
 
 A dump frame's payload is `slot byte + record` (7-bit packed by the envelope).
 Export emits every slot in order (empty slots as version-0xFF records); import
@@ -39,14 +39,15 @@ from ._sysex import (
 
 
 class Bank(TypedDict):
-    """The host-side preset bank: 64 part patches + 64 multi patches (None = empty)."""
+    """The host-side preset bank: SLOTS part patches + SLOTS multi patches
+    (None entries = empty)."""
 
     part_patches: list[PartPatch | None]
     multi_patches: list[MultiPatch | None]
 
 
 def as_bank(raw: object) -> Bank:
-    """Narrow a JSON object to a Bank (64 slots each; None entries = empty)."""
+    """Narrow a JSON object to a Bank (SLOTS slots each; None entries = empty)."""
     if not isinstance(raw, dict):
         raise ValueError("bank: expected a JSON object")
     obj = cast(dict[str, object], raw)

@@ -41,7 +41,7 @@ int main(void)
     static const int32_t rec2[4] = {10, 20, 30, 40};
     static const int32_t lv[2] = {32768, 16384}, dl[2] = {0, 5}, ch[2] = {0, 1};
     static const int32_t lo[2] = {0, 48}, hi[2] = {127, 96};
-    static const uint8_t slots[2] = {2, 63};
+    static const uint8_t slots[2] = {2, 31};
     synth_runtime_ctx ctx = {4, 2, 8, st_set_param, part_bank, multi_bank};
     uint32_t n0;
 
@@ -52,7 +52,7 @@ int main(void)
 
     synth_preset_apply(&ctx, 5);
     /* part 0: slot 2's timbre (ids 0..3) + routing channel/low/high/level/delay
-       (ids 8, 10, 12, 14, 16); part 1: slot 63 is empty -> no timbre, just routing
+       (ids 8, 10, 12, 14, 16); part 1: slot 31 is empty -> no timbre, just routing
        (ids 9, 11, 13, 15, 17) */
     check("the multi patch applies part patches + routing",
           set_n == 14u && set_id[0] == 0 && set_val[0] == 10 && set_id[3] == 3 &&
@@ -65,7 +65,7 @@ int main(void)
 
     /* a bad slot is a no-op */
     n0 = set_n;
-    synth_preset_apply(&ctx, 64);
+    synth_preset_apply(&ctx, 32);
     check("a bad slot is a no-op", set_n == n0);
 
     printf("%s\n", bad ? "RUNTIME TEST FAILED" : "runtime test passed");

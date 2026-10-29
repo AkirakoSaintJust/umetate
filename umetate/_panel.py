@@ -409,6 +409,10 @@ def generate_panel(
     n_params = (
         (max(ids.values()) + 1 if ids else 0) if param_ids is not None else len(params)
     )
+    if n_params > 256:
+        raise GenError(
+            f"panel: {n_params} params exceed the UI kit's UI_PARAM_MAX (256)"
+        )
     mute = panel.get("mute") or []
     mute_ids = [str(param_id(p)) for p in mute[:4]]
     mute_ids += ["0xFFFF"] * (4 - len(mute_ids))

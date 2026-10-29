@@ -11,11 +11,17 @@ below.
 
 ## 1. The app contract
 
-An app provides two functions:
+`src/rib.c` is the **frozen framework**: the platform, the UI kit, and the synth
+services (`presets.c`, `synth_sysex.c`, `synth_midi.c`, `synth_runtime.c`). The
+**app half** is included at its bottom — the shipped demo (`src/rib_app.c`, a sine
+wave on the keys) or a synth project's `app.c` (the `umetate build --synth <dir>`
+composition, `-DUMETATE_SYNTH_APP=1`, resolved from `gen/`). An app provides two
+functions (plus the UI hooks):
 
 ```c
 static void app_audio(int32_t *out, uint32_t n);   /* audio ISR: fill n=256 stereo frames @ 44.1 kHz */
 static void app_main(void);                        /* main loop; never returns */
+static void app_idle(void);                        /* runs while the screen's DMA draws (MIDI in) */
 ```
 
 - `app_audio` runs in the audio interrupt, once per 256-frame block (~5.8 ms).
@@ -129,7 +135,9 @@ them with `umetate lint --c`, `.clang-tidy`, and code review:
    dispatch per sample**. Select models at **block rate**, with a `switch` or a
    `static const` table indexed once per block. Prefer **model-as-data**: one
    monomorphic loop reads the selected table. The only per-call function pointers
-   are the fixed platform seams `app_audio`, `app_main`, and `LCD_IDLE`.
+   are the fixed platform seams `app_audio`, `app_main`, and `LCD_IDLE`, and the
+   synth services' contexts (`synth_midi_ctx`, `synth_sysex_ctx`,
+   `synth_runtime_ctx` — set up once at boot, never in the hot loop).
 10. **Treat warnings as errors from the start.** Run the static analyzers daily.
 
 **Data layout:** Store parallel per-voice state as **SoA**: separate arrays such

@@ -15,7 +15,7 @@
 #define PRESET_NAME_LEN 16u
 #define PRESET_VERSION 1u
 #define PRESET_EMPTY 0xFFu
-#define PRESET_SLOTS 64u
+#define PRESET_SLOTS 32u /* 32 slots each: the slot area's 16 372 B ceiling (store.h SLOT_MAX) */
 
 #define PP_RECORD(N) (1u + PRESET_NAME_LEN + (N) * 4u + 4u)
 #define MP_RECORD(P) (1u + PRESET_NAME_LEN + (P) + (P) * 5u * 4u + 4u)

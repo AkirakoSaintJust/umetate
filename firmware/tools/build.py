@@ -49,11 +49,17 @@ SCREEN_NAME = "RIB"
 SCREEN_COLOUR = 0xB47F
 PRODUCT = "FM-1_990"
 VERSION = None
+# The DSP translation units (relative to FW). The demo build compiles rib_dsp.c;
+# a `umetate build --synth` composition overrides this with the generated engine
+# (gen/<name>_dsp.c, gen/tables.c) via cmake_target.py's --dsp-tus.
+DSP_TUS = ["src/rib_dsp.c"]
 
 
-def package_filename(board, model, release=None):
+def package_filename(board, model, release=None, synth=None):
     """Installable package name; the on-device identity stays separate and frozen."""
     stem = f"umetate-{board}-{model}"
+    if synth:
+        stem += f"-{synth}"
     if release:
         stem += f"-{release}"
     return f"{stem}.fwsc"
@@ -156,12 +162,16 @@ def build_app():
                 ("cc", "-c", FW / "hal" / "fm1_isr.S", "-o", OUT / "fm1_isr.o"),
                 ("cc", "-c", FW / "hal" / "fm1_cpu1.S", "-o", OUT / "fm1_cpu1.o"),
                 ("cc", *flags, "-c", FW / "src" / "rib.c", "-o", OUT / "rib.o")]
-    if DSP_PROFILE == "performance":
-        dsp_flags = [*flags, "-O3", "-mcpu=r3", "-mfprev1", "-DUMETATE_TARGET_DSP=1",
-                     "-c", FW / "src" / "rib_dsp.c", "-o", OUT / "rib_dsp.o"]
-    else:
-        dsp_flags = [*flags, "-c", FW / "src" / "rib_dsp.c", "-o", OUT / "rib_dsp.o"]
-    commands.append(("cc", *dsp_flags))
+    dsp_objects = []
+    for tu in DSP_TUS:
+        obj = OUT / (Path(tu).stem + ".o")
+        dsp_objects.append(obj)
+        if DSP_PROFILE == "performance":
+            dsp_flags = [*flags, "-O3", "-mcpu=r3", "-mfprev1", "-DUMETATE_TARGET_DSP=1",
+                         "-c", FW / tu, "-o", obj]
+        else:
+            dsp_flags = [*flags, "-c", FW / tu, "-o", obj]
+        commands.append(("cc", *dsp_flags))
     tc_all(*commands)
 
     elf = OUT / "rib.elf"
@@ -173,7 +183,8 @@ def build_app():
         linker = OUT / "app.ld"
         linker.write_text(text.replace("LENGTH = 0x8DFBC", f"LENGTH = {APP_SLOT:#x}"))
     tc("pi32v2/bin/ld", "--Map", OUT / "rib.link.map", "--gc-sections", "-e", "_start", "-T", linker,
-       OUT / "crt0.o", OUT / "fm1_vec.o", OUT / "fm1_isr.o", OUT / "fm1_cpu1.o", OUT / "rib.o", OUT / "rib_dsp.o", "-o", elf)
+       OUT / "crt0.o", OUT / "fm1_vec.o", OUT / "fm1_isr.o", OUT / "fm1_cpu1.o", OUT / "rib.o",
+       *dsp_objects, "-o", elf)
     for section in ("text.bin", "data.bin", "ramtext.bin", "c1.bin", "dsp.bin"):
         (OUT / section).unlink(missing_ok=True)
     *_, symbols, disassembly, ram_disassembly = tc_all(

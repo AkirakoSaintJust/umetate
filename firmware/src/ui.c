@@ -51,7 +51,7 @@ static void ui_itoa(int32_t v, char *s)
 
 /* ---- runtime state (the only mutable state; the tables are const) ---- */
 static const ui_tables *ui_t;
-static int32_t ui_param_v[64];
+static int32_t ui_param_v[UI_PARAM_MAX];
 static uint8_t ui_stack[UI_MAX_DEPTH], ui_sp;   /* context ids; top = active */
 static uint8_t ui_pagei[UI_MAX_DEPTH];          /* the page within each context */
 static int32_t ui_last[UI_MAX_WIDGETS];         /* last-drawn value per widget slot */
@@ -72,6 +72,8 @@ static void ui_reset_page(void)
 
 void ui_init(const ui_tables *t)
 {
+    if (t->n_params > UI_PARAM_MAX)
+        return; /* a panel beyond the kit's param cap: not rendered (the generator checks too) */
     ui_t = t;
     ui_sp = 0;
     ui_stack[0] = t->home;

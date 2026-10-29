@@ -1887,9 +1887,11 @@ def main() -> int:
         print("ok: per-part params are part-major (channel.p0/p1 present)")
 
     # the generated sysex-layout pins the per-firmware record geometry (F4c).
+    from ._records import SLOTS
     from .generate import generate_sysex_layout
 
     layout = generate_sysex_layout(PARTS_PATCH)
+    slots = SLOTS
     expect = {
         "model": 0,
         "n_params": 2,
@@ -1897,8 +1899,8 @@ def main() -> int:
         "part_patch_size": 1 + 16 + 2 * 4 + 4,
         "multi_patch_size": 1 + 16 + 2 + 5 * 2 * 4 + 4,
         "settings_size": 1 + 4 + 4 + 4,
-        "part_patch_bank_size": 64 * (1 + 16 + 2 * 4 + 4),
-        "multi_patch_bank_size": 64 * (1 + 16 + 2 + 5 * 2 * 4 + 4),
+        "part_patch_bank_size": slots * (1 + 16 + 2 * 4 + 4),
+        "multi_patch_bank_size": slots * (1 + 16 + 2 + 5 * 2 * 4 + 4),
     }
     if layout != expect:
         print(f"FAIL: sysex-layout geometry is wrong ({layout})")
@@ -1971,6 +1973,23 @@ def main() -> int:
         failures += 1
     else:
         print("ok: the cc header carries the per-param [min, max] ranges")
+
+    # the patch-level `cc:` list limits the CC map (the fourop patch's 161 params
+    # overflow the CC space; it declares its 45-param surface).
+    cm_sub = generate_cc_map(ffm)
+    if len(cm_sub["entries"]) == 45 and all(
+        e["cc"] != 64 and not 120 <= e["cc"] <= 127 for e in cm_sub["entries"]
+    ):
+        print("ok: the cc: list limits the map (45 exposed, reserved skipped)")
+    else:
+        print("FAIL: the cc: list does not limit the map as declared")
+        failures += 1
+    try:
+        generate_cc_map({**ffm, "cc": ["not_a_param"]})
+        print("FAIL: an unknown cc: name was not rejected")
+        failures += 1
+    except GenError:
+        print("ok: an unknown cc: name is rejected")
 
     # the dogfood panel (examples/fourop-fm/panel.json) resolves against the patch's
     # params (every widget/binding names a real set_param id).

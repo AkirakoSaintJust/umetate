@@ -1,0 +1,12 @@
+# fourop-fm on a computer (the `build --synth` host leg): two notes on the two
+# parts, a CC into the algorithm, panic; shots for the screen evidence.
+200 midi 0x90 60 100
+800 midi 0x91 64 90
+1000 shot
+1400 midi 0x80 60 0
+1600 midi 0x81 64 0
+1800 midi 0xB0 16 64
+2000 shot
+2200 midi 0xB0 123 0
+2400 shot
+2600 end

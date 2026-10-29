@@ -46,6 +46,14 @@ def emit(graph: CompiledGraph) -> str:
     lines.append("#define UMETATE_POOL")
     lines.append("#endif")
     lines.append("")
+    lines.append("#if defined(UMETATE_TARGET_DSP)")
+    lines.append(
+        '#define UMETATE_DSP_API __attribute__((section(".dsp_text"), noinline, used))'
+    )
+    lines.append("#else")
+    lines.append("#define UMETATE_DSP_API")
+    lines.append("#endif")
+    lines.append("")
     lines.append(f"#define NVOICE {graph.voices}")
     lines.append(f"#define N_PART {graph.n_parts}")
     lines.append(f"#define CONTROL_BLOCK {graph.control_block}")
@@ -181,7 +189,7 @@ def _render(
     global_ctrl = _zone(graph.global_order, by_id, audio_only=False)
 
     lines = [
-        f"void {name}_dsp_render(int32_t *out, uint32_t frames) {{",
+        f"UMETATE_DSP_API void {name}_dsp_render(int32_t *out, uint32_t frames) {{",
         f"    for ({_CONTROL_BLOCK_TYPE} b = 0; b < frames; b += {cb}u) {{",
     ]
     if per_part:
@@ -439,7 +447,14 @@ def _note_derived_fn(graph: CompiledGraph) -> list[str]:
             )
     if not body:
         body.append("    (void)v;")
-    return [f"static inline void {name}_note_derived(uint32_t v) {{", *body, "}", ""]
+    # always_inline: the pi32v2 clang does not inline a plain `static inline`
+    # (as fm1_math.h); the perf profile calls this from .dsp_text (SRAM).
+    return [
+        f"static inline __attribute__((always_inline)) void {name}_note_derived(uint32_t v) {{",
+        *body,
+        "}",
+        "",
+    ]
 
 
 def _seam(graph: CompiledGraph, by_id: dict[str, NodeInstance]) -> list[str]:
@@ -447,7 +462,7 @@ def _seam(graph: CompiledGraph, by_id: dict[str, NodeInstance]) -> list[str]:
     lines: list[str] = []
     lines.extend(
         [
-            f"void {name}_dsp_reset(void) {{",
+            f"UMETATE_DSP_API void {name}_dsp_reset(void) {{",
             *_voice.reset(),
             "}",
             "",
@@ -457,13 +472,13 @@ def _seam(graph: CompiledGraph, by_id: dict[str, NodeInstance]) -> list[str]:
     lines.extend(_voice.note_off(name, graph.n_parts))
     lines.extend(
         [
-            f"void {name}_dsp_all_notes_off(void) {{",
+            f"UMETATE_DSP_API void {name}_dsp_all_notes_off(void) {{",
             *_voice.all_off(),
             "}",
             "",
-            f"void {name}_dsp_set_bend_q16(uint32_t bend) {{ (void)bend; }}",
+            f"UMETATE_DSP_API void {name}_dsp_set_bend_q16(uint32_t bend) {{ (void)bend; }}",
             "",
-            f"uint32_t {name}_dsp_lit(uint32_t base) {{",
+            f"UMETATE_DSP_API uint32_t {name}_dsp_lit(uint32_t base) {{",
             "    uint32_t lit = 0;",
             "    for (uint32_t v = 0; v < NVOICE; v++)",
             "        if (voice_gate[v] && voice_note[v] >= base && voice_note[v] < base + 27u)",
@@ -471,12 +486,12 @@ def _seam(graph: CompiledGraph, by_id: dict[str, NodeInstance]) -> list[str]:
             "    return lit;",
             "}",
             "",
-            f"int {name}_dsp_quiet(void) {{",
+            f"UMETATE_DSP_API int {name}_dsp_quiet(void) {{",
             "    for (uint32_t v = 0; v < NVOICE; v++) if (voice_gate[v]) return 0;",
             "    return 1;",
             "}",
             "",
-            f"int {name}_dsp_set_param(uint32_t id, int32_t value) {{",
+            f"UMETATE_DSP_API int {name}_dsp_set_param(uint32_t id, int32_t value) {{",
             "    if (id >= PARAM_COUNT) return -1;",
             f"    if (value < {name}_dsp_params[id].min) value = {name}_dsp_params[id].min;",
             f"    if (value > {name}_dsp_params[id].max) value = {name}_dsp_params[id].max;",
@@ -484,11 +499,11 @@ def _seam(graph: CompiledGraph, by_id: dict[str, NodeInstance]) -> list[str]:
             "    return 0;",
             "}",
             "",
-            f"int32_t {name}_dsp_get_param(uint32_t id) {{",
+            f"UMETATE_DSP_API int32_t {name}_dsp_get_param(uint32_t id) {{",
             "    return id < PARAM_COUNT ? *synth_param_slots[id] : 0;",
             "}",
             "",
-            f"uint32_t {name}_dsp_param_count(void) {{ return PARAM_COUNT; }}",
+            f"UMETATE_DSP_API uint32_t {name}_dsp_param_count(void) {{ return PARAM_COUNT; }}",
             "",
         ]
     )
@@ -501,7 +516,7 @@ def _note_to_inc() -> list[str]:
         "static const uint32_t note_inc_c9[12] = {",
         "    815363807u, 863847862u, 915214929u, 969636441u, 1027294024u, 1088380105u,",
         "    1153098554u, 1221665363u, 1294309365u, 1371273005u, 1452813141u, 1539201906u};",
-        "static inline uint32_t note_to_inc(uint32_t note) {",
+        "static inline __attribute__((always_inline)) uint32_t note_to_inc(uint32_t note) {",
         "    return note_inc_c9[note % 12u] >> (10u - note / 12u);",
         "}",
         "",

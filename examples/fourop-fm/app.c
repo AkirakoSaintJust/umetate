@@ -1,0 +1,198 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+/* Copyright (C) 2026 P1Onken (umetate) */
+/* fourop-fm's app half of the frozen contract (docs/roadmap.md §6.11.4, F7): the
+ * glue between the generated engine, the generated panel, the platform, and the
+ * framework's synth services. Included by src/rib.c (the framework) in the
+ * `umetate build --synth examples/fourop-fm` composition.
+ *
+ * Two independent-timbre parts: part 0 = MIDI channel 0 (the panel + the CC
+ * surface edit part 0's timbre), part 1 = channel 1 (its timbre comes from the
+ * multi patch / SysEx). The engine owns the param truth; the panel's values are
+ * mirrored in and out every pass. */
+#include "dsp.h"            /* the generated seam prototypes (gen/dsp.h) */
+#include "cc_map.h"         /* the generated cc -> param + [min, max] tables */
+#include "synth_layout.h"   /* the generated model byte + param/part counts */
+#include "panel.h"          /* the generated UI tables (gen/panel.h) */
+#include "presets.h"        /* the framework's record store */
+#include "synth_midi.h"     /* the framework's MIDI handler */
+#include "synth_sysex.h"    /* the framework's SysEx handler */
+#include "synth_runtime.h"  /* the framework's preset apply */
+
+/* ---- the preset store's writable memory (the banks + the settings record) */
+static uint8_t part_bank[PP_BANK(SYNTH_N_PARAMS)];
+static uint8_t multi_bank[MP_BANK(SYNTH_N_PARTS)];
+static uint8_t settings[ST_RECORD], saved_settings[ST_RECORD];
+static uint32_t idle_ok, bank_dirty, set_dirty, t_change;
+
+/* ---- the engine seam wrappers (the synth_midi / synth_runtime seams) */
+static void note_on_seam(uint32_t note, uint32_t velocity, uint32_t channel)
+{
+    fourop_fm_dsp_note_on_ch(note, velocity, channel);
+}
+static void note_off_seam(uint32_t note) { fourop_fm_dsp_note_off(note); }
+static void all_off_seam(void) { fourop_fm_dsp_all_notes_off(); }
+static int set_param_seam(uint32_t id, int32_t value)
+{
+    return fourop_fm_dsp_set_param(id, value);
+}
+static void bend_seam(uint32_t bend) { fourop_fm_dsp_set_bend_q16(bend); }
+
+static synth_midi_ctx midi_ctx = {
+    note_on_seam, note_off_seam, all_off_seam, set_param_seam, bend_seam,
+    cc_to_param, param_min, param_max,
+};
+static synth_sysex_ctx sysex_ctx = {
+    SYNTH_MODEL, SYNTH_N_PARAMS, SYNTH_N_PARTS, fourop_fm_dsp_get_param,
+    part_bank, multi_bank, settings,
+};
+static synth_runtime_ctx runtime_ctx = {
+    SYNTH_N_PARAMS, SYNTH_N_PARTS, SYNTH_ROUTING_BASE, set_param_seam,
+    part_bank, multi_bank,
+};
+
+/* ---- audio callback (single core: CPU0 renders the generated engine) */
+static void app_audio(int32_t *out, uint32_t n)
+{
+    fourop_fm_dsp_render(out, n);
+}
+
+/* ---- the panel <-> engine mirror: the engine owns the truth */
+static int32_t last_ui[UI_PARAM_MAX];
+static void ui_sync(void)
+{
+    int32_t *v = ui_params();
+    uint32_t i;
+    for (i = 0; i < PANEL.n_params; i++) {
+        int32_t e = fourop_fm_dsp_get_param(i);
+        if (v[i] != e) {
+            if (last_ui[i] != v[i]) {                 /* the panel wrote it */
+                fourop_fm_dsp_set_param(i, v[i]);
+                e = fourop_fm_dsp_get_param(i);      /* the clamped value */
+            }
+            v[i] = e;
+        }
+        last_ui[i] = v[i];
+    }
+}
+
+/* ---- the app's action hooks (called by ui.c) */
+void ui_act_note_on(uint8_t note, uint8_t vel)
+{
+    fourop_fm_dsp_note_on(note, vel);                /* omni: every matching part */
+}
+void ui_act_note_off(uint8_t note) { fourop_fm_dsp_note_off(note); }
+void ui_act_set_step(uint8_t step) { (void)step; }
+void ui_act_panic(void) { fourop_fm_dsp_all_notes_off(); }
+void ui_act_play(void) { }
+void ui_act_stop(void) { }
+void ui_act_save(void)
+{
+    /* save part 0's timbre as part-patch slot 0 (persisted once the engine is silent) */
+    int32_t params[SYNTH_PARAM_MAX];
+    uint32_t i;
+    for (i = 0; i < SYNTH_N_PARAMS; i++)
+        params[i] = fourop_fm_dsp_get_param(i);
+    preset_part_pack(part_bank, "saved", params, SYNTH_N_PARAMS);
+    bank_dirty = 1;
+    t_change = fm1_ms;
+}
+void ui_draw_custom(const ui_widget *w) { (void)w; }   /* no custom widgets in this panel */
+
+/* ---- MIDI: the framework handlers, from the main loop and while the screen draws */
+static void app_idle(void)
+{
+    if (idle_ok)
+        synth_midi_poll(&midi_ctx);
+}
+
+#define KEY0 53u   /* key 0 = F3 */
+
+static void app_main(void)
+{
+    uint32_t prev = 0, k, lit = 0;
+    uint8_t held[27] = {0};
+    int32_t bc, mt;
+
+    fourop_fm_dsp_reset();
+    preset_part_bank_load(part_bank, SYNTH_N_PARAMS);   /* an unreadable slot: 0xFF = empty */
+    preset_multi_bank_load(multi_bank, SYNTH_N_PARTS);
+    if (preset_settings_load(settings) || !preset_settings_unpack(settings, &bc, &mt))
+        bc = 0, mt = 0;
+    if (bc >= 0 && bc <= 15)
+        set_param_seam(SYNTH_ROUTING_BASE + 0u * SYNTH_N_PARTS + 0u, bc);  /* part 0's channel */
+    /* master_tune has no pitch-tune param in this patch; it rides along for later */
+    (void)mt;
+    memcpy(saved_settings, settings, ST_RECORD);
+    synth_preset_apply(&runtime_ctx, 0u);              /* multi slot 0: a valid record applies */
+
+    ui_init(&PANEL);
+    ui_sync();                                         /* the engine's defaults reach the screen */
+
+    for (;;) {
+        uint32_t keys, down, up, b, rel;
+        int32_t e, ch0;
+        platform_poll();
+
+        keys = fm1_in.notes;
+        down = keys & ~prev;
+        up = prev & ~keys;
+        prev = keys;
+        ch0 = fourop_fm_dsp_get_param(SYNTH_ROUTING_BASE + 0u * SYNTH_N_PARTS + 0u);
+        if (ch0 < 0 || ch0 > 15)
+            ch0 = 0;
+        for (k = 0; k < 27u; k++) {                    /* the keys: play + echo on part 0's channel */
+            if (down >> k & 1u) {
+                held[k] = (uint8_t)(KEY0 + k);
+                ui_handle(UI_SRC_KEY, held[k]);
+                midi_send(0x90u | (uint32_t)ch0, held[k], 100);
+            }
+            if (up >> k & 1u) {
+                ui_act_note_off(held[k]);
+                midi_send(0x80u | (uint32_t)ch0, held[k], 0);
+            }
+        }
+
+        b = fm1_input_edges(&rel);
+        if (b & (1u << BTN_EDIT)) ui_handle(UI_SRC_BTN_EDIT, -1);
+        if (b & (1u << BTN_HOME)) ui_handle(UI_SRC_BTN_HOME, -1);
+        if (b & (1u << BTN_FX)) ui_handle(UI_SRC_BTN_FX, -1);
+        if (b & (1u << BTN_GLO)) ui_handle(UI_SRC_BTN_GLO, -1);
+        if (b & (1u << BTN_SEL)) ui_handle(UI_SRC_BTN_SEL, -1);
+        if ((e = fm1_enc_take(ENC_ALGORITHM)) != 0) ui_handle(UI_SRC_ENC_ALGORITHM, e);
+        if ((e = fm1_enc_take(ENC_SELECT)) != 0) ui_handle(UI_SRC_ENC_SELECT, e);
+        if ((e = fm1_enc_take(ENC_KNOB1)) != 0) ui_handle(UI_SRC_ENC_KNOB1, e);
+        if ((e = fm1_enc_take(ENC_KNOB2)) != 0) ui_handle(UI_SRC_ENC_KNOB2, e);
+        if ((e = fm1_enc_take(ENC_KNOB3)) != 0) ui_handle(UI_SRC_ENC_KNOB3, e);
+        if ((e = fm1_enc_take(ENC_KNOB4)) != 0) ui_handle(UI_SRC_ENC_KNOB4, e);
+
+        synth_midi_poll(&midi_ctx);
+        synth_sysex_poll(&sysex_ctx);
+        ui_sync();
+
+        /* the SysEx settings write reached `settings`: persist it once silent */
+        if (memcmp(settings, saved_settings, ST_RECORD)) {
+            set_dirty = 1;
+            t_change = fm1_ms;
+        }
+
+        lit = fourop_fm_dsp_lit(KEY0);
+        for (k = 0; k < 27u; k++)
+            fm1_led_key(KEY_LED(k), lit >> k & 1u);
+
+        idle_ok = 1;
+        ui_redraw(fm1_ms);
+        idle_ok = 0;
+
+        if (fourop_fm_dsp_quiet() && fm1_ms - t_change > 2000u) {
+            if (bank_dirty) {                          /* silent-only saves (the store erases) */
+                preset_part_bank_save(part_bank, SYNTH_N_PARAMS);
+                bank_dirty = 0;
+            }
+            if (set_dirty) {
+                preset_settings_save(settings);
+                memcpy(saved_settings, settings, ST_RECORD);
+                set_dirty = 0;
+            }
+        }
+    }
+}

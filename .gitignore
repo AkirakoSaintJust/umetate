@@ -22,6 +22,18 @@ dist/
 *.elf
 *.map
 
+# the `build --synth` composition outputs (regenerated from the project dir)
+firmware/gen/*_dsp.c
+firmware/gen/app.c
+firmware/gen/dsp.h
+firmware/gen/cc_map.h
+firmware/gen/synth_layout.h
+firmware/gen/panel.h
+firmware/gen/tables.c
+firmware/gen/tables.h
+firmware/gen/params.json
+firmware/gen/sysex-layout.json
+
 # local environment (per-checkout, written by `umetate setup`)
 .env
 .local-env

@@ -110,7 +110,8 @@ Patch = TypedDict(
         "voice": NotRequired[Zone],
         "global": NotRequired[Zone],
         "parts": NotRequired[Parts],
-        "model": NotRequired[int],  # the firmware's SysEx <model> byte (0-255)
+        "model": NotRequired[int],  # the firmware's SysEx <model> byte (0-127)
+        "cc": NotRequired[list[str]],  # the CC-exposed params (names); absent = all
     },
 )
 
@@ -329,6 +330,9 @@ def as_patch(raw: object) -> Patch:
         raise ValueError("patch: 'name' must be a string")
     if not isinstance(obj.get("voices"), int):
         raise ValueError("patch: 'voices' must be an integer")
+    model = obj.get("model")
+    if model is not None and (not isinstance(model, int) or not 0 <= model <= 0x7F):
+        raise ValueError("patch: 'model' must be a byte in 0..127")
     return cast(Patch, obj)
 
 

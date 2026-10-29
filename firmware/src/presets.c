@@ -5,7 +5,8 @@
  * services (`slot_load/slot_save/settings_load/settings_save`), which the includer
  * provides (platform.c on device, stubs in the host test). */
 #include "presets.h"
-#include <string.h>
+/* no <string.h> here: the device TU gets memset/memcpy/memcmp from the platform's
+ * libc.c (included before this file); the standalone host tests include it first. */
 
 static void wr32(uint8_t *p, uint32_t u)
 {

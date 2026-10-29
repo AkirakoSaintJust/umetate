@@ -1,7 +1,30 @@
 {
   "name": "fourop-fm",
   "voices": 8,
+  "model": 64,
+  "cc": [
+    "algorithm", "cutoff", "res", "fold", "feedback",
+    "attack.p0", "release.p0",
+    "op1_ratio.p0", "op1_level.p0", "op1_waveform.p0", "op1_feedback.p0", "op1_mute.p0",
+    "op2_ratio.p0", "op2_level.p0", "op2_waveform.p0", "op2_feedback.p0", "op2_mute.p0",
+    "op3_ratio.p0", "op3_level.p0", "op3_waveform.p0", "op3_feedback.p0", "op3_mute.p0",
+    "op4_ratio.p0", "op4_level.p0", "op4_waveform.p0", "op4_feedback.p0", "op4_mute.p0",
+    "op1_trem_rate.p0", "op1_trem_depth.p0",
+    "op2_trem_rate.p0", "op2_trem_depth.p0",
+    "op3_trem_rate.p0", "op3_trem_depth.p0",
+    "op4_trem_rate.p0", "op4_trem_depth.p0",
+    "pitch_rate", "pitch_depth", "penv_base", "penv_rate",
+    "mode", "unison_count", "unison_detune", "legato", "portamento", "note_priority"
+  ],
   "tables": { "routing": { "kind": "routing" } },
+  "parts": {
+    "count": 2,
+    "channel": [0, 1],
+    "low": [0, 0],
+    "high": [127, 127],
+    "level": [32768, 32768],
+    "delay": [0, 0]
+  },
   "params": {
     "algorithm":    { "target": "algo.algorithm", "min": 0, "max": 6, "curve": "linear" },
     "cutoff":       { "target": "lp.f", "min": 0, "max": 65535, "curve": "log", "unit": "Hz" },

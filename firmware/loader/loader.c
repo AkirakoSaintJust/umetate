@@ -33,6 +33,9 @@
 #endif
 #include "fm1_flash.h"
 #include "../src/libc.c"
+/* the rescue firmware has no synth handler: drop the app's SysEx frames (the
+ * boot/OTA magic checks in usb.c are independent and still run) */
+void synth_sysex_feed(uint8_t b) { (void)b; }
 #include "../src/usb.c"
 #if !BOARD_SMK37                                /* the screen: UPDATE MODE, WRITING (ldr_screen.c, the hub's look) */
 #define fm1_irq_off() ((void)0)                 /* (lcd.c's, around port A: interrupts are off for the whole loader) */

@@ -111,16 +111,16 @@ int main(void)
         static const int32_t a[4] = {1, 2, 3, 4}, b[4] = {-1, -2, -3, -4};
         memset(bank, 0xFF, sizeof bank);
         preset_part_pack(bank + 0 * PP_RECORD(4), "One", a, 4);
-        preset_part_pack(bank + 63 * PP_RECORD(4), "Sixty", b, 4);
+        preset_part_pack(bank + 31 * PP_RECORD(4), "Thirty", b, 4);
         check("part bank saves", preset_part_bank_save(bank, 4) == 0);
         memset(back, 0, sizeof back);
         check("part bank loads", preset_part_bank_load(back, 4) == 0);
-        check("bank round-trips (slots 0 + 63, the rest empty)",
+        check("bank round-trips (slots 0 + 31, the rest empty)",
               !memcmp(bank, back, PP_BANK(4)) &&
                   preset_part_unpack(back + 0 * PP_RECORD(4), 4, name, params) &&
                   !strcmp(name, "One") &&
-                  preset_part_unpack(back + 63 * PP_RECORD(4), 4, name, params) &&
-                  !strcmp(name, "Sixty") &&
+                  preset_part_unpack(back + 31 * PP_RECORD(4), 4, name, params) &&
+                  !strcmp(name, "Thirty") &&
                   !preset_part_unpack(back + 1 * PP_RECORD(4), 4, name, params));
     }
 

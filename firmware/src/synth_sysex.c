@@ -6,33 +6,35 @@
  * platform's (provided by the includer: platform.c on device, a stub in tests). */
 #include "synth_sysex.h"
 #include "presets.h"
-#include <string.h>
+/* no <string.h> here: the device TU gets memset/memcpy/memcmp from the platform's
+ * libc.c (included before this file); the standalone host tests include it first. */
 
 /* ---- the incoming frame assembly (fed from the platform's SysEx byte stream) */
-static uint8_t sx_buf[SYNTH_SX_MAX];
-static uint32_t sx_len, sx_on;
-static volatile uint32_t sx_ready; /* the USB context writes, the main loop clears */
+/* (`synth_sx_*`: the platform's usb.c owns the `sx_*` names for its boot/OTA magic) */
+static uint8_t synth_sx_buf[SYNTH_SX_MAX];
+static uint32_t synth_sx_len, synth_sx_on;
+static volatile uint32_t synth_sx_ready; /* the USB context writes, the main loop clears */
 
 void synth_sysex_feed(uint8_t b)
 {
     if (b >= 0xF8u)
         return; /* realtime may occur anywhere in SysEx */
     if (b == 0xF0) {
-        sx_on = !sx_ready; /* drop a new frame while the last is unread */
-        sx_len = 0;
+        synth_sx_on = !synth_sx_ready; /* drop a new frame while the last is unread */
+        synth_sx_len = 0;
     }
-    if (!sx_on)
+    if (!synth_sx_on)
         return;
-    if (b != 0xF7u && sx_len >= SYNTH_SX_MAX) {
-        sx_on = 0; /* too long: not ours */
+    if (b != 0xF7u && synth_sx_len >= SYNTH_SX_MAX) {
+        synth_sx_on = 0; /* too long: not ours */
         return;
     }
     /* USB-MIDI SysEx bytes are 8-bit (the CRC-16 trailer may set bit 7); a stray
      * status byte mid-frame only corrupts the CRC, which the poll rejects */
-    sx_buf[sx_len++] = b;
+    synth_sx_buf[synth_sx_len++] = b;
     if (b == 0xF7u) {
-        sx_ready = 1;
-        sx_on = 0;
+        synth_sx_ready = 1;
+        synth_sx_on = 0;
     }
 }
 
@@ -112,11 +114,11 @@ void synth_sysex_poll(const synth_sysex_ctx *ctx)
     const uint8_t *payload;
     uint8_t *bank;
 
-    if (!sx_ready)
+    if (!synth_sx_ready)
         return;
-    n = sx_len;
-    memcpy(frame, sx_buf, n); /* copy: the feed may already assemble the next frame */
-    sx_ready = 0;
+    n = synth_sx_len;
+    memcpy(frame, synth_sx_buf, n); /* copy: the feed may already assemble the next frame */
+    synth_sx_ready = 0;
     if (!sx_parse(frame, n, &model, &cmd, &ver, &payload, &pn) || model != ctx->model)
         return;
 
@@ -125,7 +127,7 @@ void synth_sysex_poll(const synth_sysex_ctx *ctx)
                          (uint8_t)(ctx->n_params >> 8), (uint8_t)ctx->n_parts};
         midi_send_sysex(out, sx_build(out, ctx->model, 0x81u, ver, id, 5u));
     } else if (cmd == 0x02u) { /* param dump: the current timbre params */
-        if (ctx->n_params <= 64u && ctx->get_param) {
+        if (ctx->n_params <= 128u && ctx->get_param) {
             for (i = 0; i < ctx->n_params; i++) {
                 uint32_t v = (uint32_t)ctx->get_param(i);
                 raw[4u * i] = (uint8_t)v;

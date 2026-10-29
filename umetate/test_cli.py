@@ -421,7 +421,7 @@ def _bank_roundtrip() -> None:
         "multi_patches": [None] * _records.SLOTS,
     }
     bank["part_patches"][0] = {"name": "EPiano", "params": [100, -5]}
-    bank["part_patches"][63] = {"name": "Glass", "params": [0, 65536]}
+    bank["part_patches"][_records.SLOTS - 1] = {"name": "Glass", "params": [0, 65536]}
     bank["multi_patches"][3] = {
         "name": "Layers",
         "part_slot": [0],
@@ -693,6 +693,41 @@ def _budget_measures() -> None:
         assert "blocked" in out, "the device fit is not reported blocked"
 
 
+def _synth_build_composes() -> None:
+    """`umetate build --synth examples/fourop-fm` composes the dogfood firmware:
+    the generated engine/panel/CC/layout files, a sounding host run, and — with
+    the toolchain — the target package."""
+    import struct
+    import wave
+
+    root = Path(__file__).resolve().parents[1]
+    ffm = root / "examples" / "fourop-fm"
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+        rc = cli.main(["build", "--synth", str(ffm)])
+    assert rc == 0, f"build --synth failed:\n{buf.getvalue()}"
+    out = buf.getvalue()
+    gen = root / "firmware" / "gen"
+    for filename in (
+        "fourop_fm_dsp.c",
+        "dsp.h",
+        "cc_map.h",
+        "synth_layout.h",
+        "panel.h",
+        "app.c",
+    ):
+        assert (gen / filename).is_file(), f"build --synth did not write gen/{filename}"
+    wav_path = root / "firmware" / "build" / "host" / "fourop_fm.wav"
+    assert wav_path.is_file(), "build --synth produced no host WAV"
+    with wave.open(str(wav_path), "rb") as w:
+        frames = w.readframes(w.getnframes())
+    peak = max(abs(v) for (v,) in struct.iter_unpack("<h", frames))
+    assert peak > 1000, f"the dogfood host run is silent (peak {peak})"
+    pkg = root / "firmware" / "build" / "umetate-fm1-pro-fourop_fm.fwsc"
+    if "target package blocked" not in out:
+        assert pkg.is_file(), "with the toolchain, the synth package must exist"
+
+
 def main() -> int:
     tests: _Tests = [
         ("no import side effects", _no_import_side_effects),
@@ -719,6 +754,7 @@ def main() -> int:
         ("the C preset store matches the Python records", _preset_c_parity),
         ("the C SysEx handler matches the Python envelope", _sysex_c_parity),
         ("umetate budget measures the polyphony scaling", _budget_measures),
+        ("build --synth composes the dogfood firmware", _synth_build_composes),
     ]
     failures = 0
     for name, test in tests:
