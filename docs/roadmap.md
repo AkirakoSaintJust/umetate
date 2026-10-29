@@ -918,8 +918,12 @@ strengthening below.
   either**: the pi32v2 has a single-cycle 32×32→64 MAC (`r3_r2 += r1*r0`), so our
   integer Q15 multiply is already ~2 instructions, and float loses phase precision
   (24-bit mantissa < 32-bit phase). Remaining levers: hand-written asm for the hot
-  loop (what the stock did; breaks the generated-C model), the global-algo routing
-  select, and constant-folding the `fm1_q15_mul(x, 32768)` identity.
+  loop (what the stock did; breaks the generated-C model) and the global-algo routing
+  select. The `fm1_q15_mul(x, 32768)` identity was **tried and rejected**: folding the
+  route's 0/1 weights to boolean selects (`w ? a : 0`) measured *no faster* (a
+  data-dependent branch per term vs the straight-line MAC — the guard in §12.7.3
+  caught the wash). The 32767 "1" keeps its 0.003% routing rounding (inaudible,
+  documented in `dsp-algorithm.md`).
 
   **The asm lever is now a reusable library, not a break of the model.** The
   pi32v2 assembler syntax was pinned by experiment (the disassembler's "arithmetic"

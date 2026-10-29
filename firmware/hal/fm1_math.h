@@ -106,7 +106,9 @@ FM1_MATH_INLINE int32_t fm1_sin_wave(uint32_t phase, uint32_t ws)
 }
 
 /* 4-input weighted sum against a routing-matrix row (a `const int16_t *` of four
-   0/1 Q15 weights): out = a*w0 + b*w1 + c*w2 + d*w3. */
+   0/1 Q15 weights): out = a*w0 + b*w1 + c*w2 + d*w3. The multiply stays (not a
+   boolean select): the weights are runtime table data, so a select is a
+   data-dependent branch per term — measured slower than the straight-line MAC. */
 FM1_MATH_INLINE int32_t fm1_route4(const int16_t *w, int32_t a, int32_t b, int32_t c, int32_t d)
 {
     return fm1_q15_mul(a, w[0]) + fm1_q15_mul(b, w[1])
