@@ -19,7 +19,7 @@
 #include <stdint.h>
 #include "math_tables.h"                       /* fm1_sin_q15 / fm1_exp2_q16 / fm1_log2_q16 */
 #include "wavetable.h"                         /* fm1_wave (the 12-wave OPZ+OPL union) */
-#include "analog_wave.h"                       /* fm1_analog_wave (the 4 analogue shapes) */
+#include "naive_wave.h"                        /* fm1_naive_wave (the 4 naive shapes) */
 
 /* These helpers must inline into the hot loop: `.dsp_text` (SRAM) may not call into
  * XIP flash (a flash write would hang the core). `always_inline` makes the intent
@@ -114,6 +114,26 @@ FM1_MATH_INLINE int32_t fm1_route4(const int16_t *w, int32_t a, int32_t b, int32
 
 /* fm1_exp2_q16[i] = 2^(-i/256) in Q16  (exponential decay: envelopes, note-to-inc).
  * fm1_log2_q16[i] = log2(1 + i/256) in Q16  (log-domain FM). Both indexed directly. */
+
+/* 2^(octave + semi/12 + cent/1200) in Q16 — the note-derived tuning ratio (the
+ * naive oscillator's octave/semi/cent knobs). `octave` -3..3, `semi` -11..11,
+ * `cent` -100..100 (clamped; the octave part is an exact shift, the semitone and
+ * cent parts are the fm1_semi_q16 / fm1_cent_q16 tables). */
+FM1_MATH_INLINE int32_t fm1_tune_q16(int32_t octave, int32_t semi, int32_t cent)
+{
+    if (octave < -3) octave = -3; else if (octave > 3) octave = 3;
+    if (semi < -11) semi = -11; else if (semi > 11) semi = 11;
+    if (cent < -100) cent = -100; else if (cent > 100) cent = 100;
+    int32_t cents = octave * 1200 + semi * 100 + cent;   /* -4800..4800 */
+    int32_t oct = cents / 1200;                          /* floor division */
+    int32_t rem = cents - oct * 1200;
+    if (rem < 0) { rem += 1200; oct -= 1; }              /* rem in [0, 1200) */
+    int32_t r = fm1_semi_q16[rem / 100];
+    r = (int32_t)(((int64_t)r * fm1_cent_q16[rem % 100]) >> 16);
+    if (oct >= 0) return (int32_t)((uint32_t)r << oct);
+    return (int32_t)((uint32_t)r >> (-oct));
+}
+
 
 /* ------------------------------------------------------ ROM transcendentals */
 /* The pi32v2's on-chip ROM math (driver/cpu/wl82/asm/math.h, Apache-2.0): hardware

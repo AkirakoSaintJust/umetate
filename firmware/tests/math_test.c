@@ -73,6 +73,28 @@ int main(void)
         ok(mono, "exp2: strictly decreasing decay curve");
     }
 
+    /* ---- tuning parity (fm1_tune_q16 vs libm) ---- */
+    ok(fm1_tune_q16(0, 0, 0) == 65536, "tune: 0 oct / 0 semi / 0 cent = 1.0");
+    ok(fm1_tune_q16(1, 0, 0) == 131072, "tune: +1 octave = 2.0");
+    ok(fm1_tune_q16(-1, 0, 0) == 32768, "tune: -1 octave = 0.5");
+    {
+        static const struct { int o, s, c; } cases[] = {
+            {0, 0, 0}, {1, 0, 0}, {-1, 0, 0}, {0, 12 - 12, 0}, {0, -11, 0},
+            {0, 7, 0}, {0, 0, 100}, {0, 0, -100}, {2, 5, 42}, {-3, -11, -100},
+            {3, 11, 100}, {0, 0, 50},
+        };
+        int k, worst = 0;
+        for (k = 0; k < (int)(sizeof cases / sizeof cases[0]); k++) {
+            int o = cases[k].o, s = cases[k].s, c = cases[k].c;
+            int32_t approx = fm1_tune_q16(o, s, c);
+            double exact = pow(2.0, o + s / 12.0 + c / 1200.0) * 65536.0;
+            int err = (int)(approx - (int32_t)lrint(exact));
+            if (err < 0) err = -err;
+            if (err > worst) worst = err;
+        }
+        ok(worst <= 512, "tune: 2^(octave+semi/12+cent/1200) within ~512 LSB of libm");
+    }
+
 #ifdef FM1_MATH_FFT
     /* ---- FFT round-trip (kiss_fft, float) ---- */
     {

@@ -577,6 +577,17 @@ def _note_derived_fn(graph: CompiledGraph) -> list[str]:
                 f"    {i.state_ref(field, 'v')} = (uint32_t)(((uint64_t)voice_inc[v] * "
                 f"(uint32_t){ratio_expr}) >> 16);"
             )
+        for field, tune in i.note_tune.items():
+            o, s, c = tune
+            o_expr, s_expr, c_expr = (i.param_expr(p) for p in (o, s, c))
+            if per_part:
+                o_expr = f"{o_expr}[voice_part[v]]"
+                s_expr = f"{s_expr}[voice_part[v]]"
+                c_expr = f"{c_expr}[voice_part[v]]"
+            body.append(
+                f"    {i.state_ref(field, 'v')} = (uint32_t)(((uint64_t)voice_inc[v] * "
+                f"(uint32_t)fm1_tune_q16({o_expr}, {s_expr}, {c_expr})) >> 16);"
+            )
         for field, ratio in i.note_cutoff.items():
             body.append(
                 f"    {i.state_ref(field, 'v')} = "

@@ -10,6 +10,8 @@ Tables (all `const`, XIP):
   fm1_sin_q15[256]   quarter-sine, Q15, midpoint sampling (sin(pi/2*(i+.5)/256))
   fm1_exp2_q16[256]  exp2 decay 2^(-i/256), Q16  (envelopes / note-to-inc)
   fm1_log2_q16[256]  log2(1 + i/256), Q16        (log-domain FM)
+  fm1_semi_q16[12]   2^(i/12), Q16, i=0..11      (tuning: semitone step)
+  fm1_cent_q16[100]  2^(i/1200), Q16, i=0..99    (tuning: cent step)
 """
 
 import math
@@ -47,6 +49,8 @@ def main() -> None:
     sin_q15 = [q15(math.sin(math.pi / 2.0 * i / N)) for i in range(N)]
     exp2_q16 = [q16(2.0 ** (-i / N)) for i in range(N)]
     log2_q16 = [q16(math.log2(1.0 + i / N)) for i in range(N)]
+    semi_q16 = [q16(2.0 ** (i / 12.0)) for i in range(12)]
+    cent_q16 = [q16(2.0 ** (i / 1200.0)) for i in range(100)]
 
     h = [
         "/* SPDX-License-Identifier: GPL-3.0-only",
@@ -62,6 +66,10 @@ def main() -> None:
     h += c_array("int32_t", "fm1_exp2_q16", exp2_q16, 8)
     h += [""]
     h += c_array("int32_t", "fm1_log2_q16", log2_q16, 8)
+    h += [""]
+    h += c_array("int32_t", "fm1_semi_q16", semi_q16, 8)
+    h += [""]
+    h += c_array("int32_t", "fm1_cent_q16", cent_q16, 8)
     h += [""]
 
     OUT.write_text("\n".join(h) + "\n")

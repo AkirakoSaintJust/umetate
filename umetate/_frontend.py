@@ -304,6 +304,7 @@ def _expand(
                 params=params,
                 note_derived=dict(spec.note_derived),
                 note_cutoff=dict(spec.note_cutoff),
+                note_tune=dict(spec.note_tune),
                 block_derived=dict(spec.block_derived),
                 table=table,
             )

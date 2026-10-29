@@ -142,13 +142,13 @@ PHASE_DIST: Patch = {
 }
 
 
-# the analogue oscillator macro (phasor -> phase_dist PWM -> analog_osc table).
-ANALOG_VCO: Patch = {
-    "name": "analog_vco_test",
+# the naive oscillator macro (tuned_phasor -> phase_dist PWM -> naive_osc table).
+NAIVE_VCO: Patch = {
+    "name": "naive_vco_test",
     "voices": 4,
     "voice": {
         "nodes": [
-            {"id": "vco", "type": "analog_vco", "params": {"shape": 3}},
+            {"id": "vco", "type": "naive_vco", "params": {"shape": 3}},
             {"id": "env", "type": "env"},
             {"id": "vca", "type": "vca"},
         ],
@@ -1814,6 +1814,107 @@ def _table_placeholder_resolves() -> None:
         pass
 
 
+def _tune_pitch() -> None:
+    """The tuned_phasor octave/semi/cent tuning shifts the fundamental by the
+    expected ratio (octave +1 = ×2, semi +12 = ×2, cent +100 = ×2^(1/12))."""
+    fs = 44100.0
+
+    def fundamental(o: int, s: int, c: int) -> float:
+        patch: Patch = {
+            "name": f"tune_{o}_{s}_{c}".replace("-", "m"),
+            "voices": 1,
+            "voice": {
+                "nodes": [
+                    {
+                        "id": "ph",
+                        "type": "tuned_phasor",
+                        "params": {"octave": o, "semi": s, "cent": c},
+                    },
+                    {"id": "osc", "type": "naive_osc", "params": {"shape": 1}},
+                    {"id": "env", "type": "env"},
+                    {"id": "vca", "type": "vca"},
+                ],
+                "wires": [
+                    {"from": "ph.phase", "to": "osc.phase"},
+                    {"from": "osc.audio", "to": "vca.audio"},
+                    {"from": "env.cv", "to": "vca.cv"},
+                ],
+                "voice_out": "vca.audio",
+            },
+            "global": {"nodes": [], "wires": []},
+        }
+        src = generate(patch)
+        cname = patch["name"]
+        with tempfile.TemporaryDirectory() as tmp:
+            d = Path(tmp)
+            (d / "dsp.c").write_text(src)
+            (d / "harness.c").write_text(DUMP_HARNESS.replace("__NAME__", cname))
+            proc = subprocess.run(
+                [
+                    "cc",
+                    "-std=c11",
+                    *_include_args(),
+                    "-o",
+                    str(d / "t"),
+                    str(d / "harness.c"),
+                    str(d / "dsp.c"),
+                    "-lm",
+                ],
+                capture_output=True,
+                text=True,
+            )
+            if proc.returncode != 0:
+                raise AssertionError("compile failed:\n" + proc.stderr)
+            run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+            samples = [int(x) for x in run.stdout.split()]
+        # scan 200..4000 Hz for the peak (sine), return its frequency
+        f0 = fs * 42852281 / (1 << 32)  # note 69 = 440 Hz
+        lo, hi = max(20.0, f0 / 4.0), min(fs / 2.0, f0 * 16.0)
+        best_f, best_m = 0.0, -1.0
+        f = lo
+        while f < hi:
+            m = _goertzel(samples, f, fs)
+            if m > best_m:
+                best_m, best_f = m, f
+            f *= 1.005
+        return best_f
+
+    f_oct1 = fundamental(1, 0, 0)
+    f_oct0 = fundamental(0, 0, 0)
+    ratio_oct = f_oct1 / f_oct0
+    assert 1.98 <= ratio_oct <= 2.02, f"octave +1 ratio {ratio_oct:.3f} not ≈2"
+    print(f"ok: tuned_phasor octave +1 doubles the fundamental ({ratio_oct:.3f})")
+
+    # semi +12 is out of range (−11..+11) and clamps to semi +11 = 2^(11/12)
+    f_semi = fundamental(0, 12, 0)
+    ratio_semi = f_semi / f_oct0
+    expect_semi = 2.0 ** (11.0 / 12.0)
+    assert expect_semi * 0.99 <= ratio_semi <= expect_semi * 1.01, (
+        f"semi +12 clamps to 2^(11/12): ratio {ratio_semi:.3f} vs {expect_semi:.3f}"
+    )
+    print(
+        "ok: tuned_phasor semi +12 clamps to 2^(11/12) "
+        f"({ratio_semi:.3f} vs {expect_semi:.3f})"
+    )
+
+    f_cent = fundamental(0, 1, 0)
+    ratio_cent = f_cent / f_oct0
+    expect = 2.0 ** (1.0 / 12.0)
+    assert expect * 0.99 <= ratio_cent <= expect * 1.01, (
+        f"semi +1 ratio {ratio_cent:.3f} not ≈2^(1/12)={expect:.3f}"
+    )
+    print(f"ok: tuned_phasor semi +1 ≈ 2^(1/12) ({ratio_cent:.3f} vs {expect:.3f})")
+
+    f_cent100 = fundamental(0, 0, 100)
+    ratio_cent100 = f_cent100 / f_oct0
+    assert expect * 0.99 <= ratio_cent100 <= expect * 1.01, (
+        f"cent +100 ratio {ratio_cent100:.3f} not ≈2^(1/12)={expect:.3f}"
+    )
+    print(
+        f"ok: tuned_phasor cent +100 ≈ 2^(1/12) ({ratio_cent100:.3f} vs {expect:.3f})"
+    )
+
+
 def main() -> int:
     failures = 0
 
@@ -2188,12 +2289,26 @@ def main() -> int:
     )
     failures += 0 if ok else 1
 
-    ok, msg = _sound(ANALOG_VCO)
+    ok, msg = _sound(NAIVE_VCO)
     print(
         ("ok: " if ok else "FAIL: ")
-        + (msg or "analog_vco (analogue oscillator) renders non-silent then silent")
+        + (msg or "naive_vco (naive oscillator) renders non-silent then silent")
     )
     failures += 0 if ok else 1
+
+    # the octave/semi/cent tuning must be emitted as fm1_tune_q16 (per voice)
+    src = generate(NAIVE_VCO)
+    if "fm1_tune_q16(" not in src:
+        print("FAIL: the note-derived tuning (fm1_tune_q16) was not emitted")
+        failures += 1
+    else:
+        print("ok: the note-derived tuning (fm1_tune_q16) is emitted")
+
+    try:
+        _tune_pitch()
+    except AssertionError as exc:
+        print(f"FAIL: tuned_phasor tuning: {exc}")
+        failures += 1
 
     ok, msg = _sound_tables(TABLE_OSC)
     print(

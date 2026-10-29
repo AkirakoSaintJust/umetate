@@ -33,6 +33,21 @@
       "type": "object",
       "description": "field -> source state; at note-on, field = 2^32 / source (the note-derived increment's reciprocal, for polyBLEP).",
       "additionalProperties": { "type": "string" }
+    },
+    "note_tune": {
+      "type": "object",
+      "description": "field -> [octave, semi, cent] param names; at note-on, field = note_to_inc(note) * 2^(octave + semi/12 + cent/1200) (fm1_tune_q16).",
+      "additionalProperties": {
+        "type": "array",
+        "items": { "type": "string" },
+        "minItems": 3,
+        "maxItems": 3
+      }
+    },
+    "block_derived": {
+      "type": "object",
+      "description": "field -> template; recomputed once per control block (before the audio loop), e.g. the phasor's pitch-scaled increment.",
+      "additionalProperties": { "type": "string" }
     }
   },
   "$defs": {

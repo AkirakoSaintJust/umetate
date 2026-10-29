@@ -1,9 +1,0 @@
-{
-  "name": "analog_osc",
-  "summary": "Analogue oscillator wave reader: the classic shapes — 0 = saw, 1 = sine, 2 = triangle, 3 = square — as a single Q15 table (fm1_analog_wave), selected by a `shape` param. Pulse width is *not* a shape: apply a `phase_dist` (PWM) bend before this read.",
-  "ins": { "phase": { "rate": "audio", "format": "phase" } },
-  "outs": { "audio": "audio" },
-  "params": { "shape": "uint32" },
-  "state": { "base": "uint32" },
-  "block_derived": { "base": "${param.shape} << 10" }
-}

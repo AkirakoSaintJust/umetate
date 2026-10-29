@@ -1,0 +1,9 @@
+{
+  "name": "naive_osc",
+  "summary": "Naive (non-band-limited) wave reader: the classic shapes — 0 = saw, 1 = sine, 2 = triangle, 3 = square — as a single Q15 table (fm1_naive_wave), selected by a `shape` param. Aliases (no polyBLEP); pulse width is *not* a shape: apply a `phase_dist` bend before this read (PWM on square/pulse, a phase-distortion timbre on the other shapes).",
+  "ins": { "phase": { "rate": "audio", "format": "phase" } },
+  "outs": { "audio": "audio" },
+  "params": { "shape": "uint32" },
+  "state": { "base": "uint32" },
+  "block_derived": { "base": "${param.shape} << 10" }
+}

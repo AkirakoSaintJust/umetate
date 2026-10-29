@@ -733,8 +733,13 @@ host-side by a spectral test (the near-Nyquist harmonic is ~2.5× lower than a n
 saw, and the full-scale wrap jump is gone). The **note-derived cutoff** feature
 (`note_cutoff`, `field = 2·sin(π·note_to_inc·ratio/2^32)`) and its consumer
 `track_bp` + the `pitched_noise` macro (`noise` → note-tracked band-pass) closed
-out the generator feature list. Shipped macros live in `modules/macros/`; a
-patch's own `macros:` section shadows them.
+out the generator feature list. The **phase shaping** pair (`phase_shape` = VPS,
+`phase_dist` = classic PD with `v=0.5`) and the **naive oscillator** (`naive_osc` +
+`naive_vco` macro, saw/sine/triangle/square, non-band-limited by design) followed:
+the naive VCO is `tuned_phasor` (octave/semi/cent tuning, note-derived via
+`fm1_tune_q16` = 2^(octave+semi/12+cent/1200)) → `phase_dist` (PWM) → `naive_osc`.
+Shipped macros live in `modules/macros/`; a patch's own `macros:` section shadows
+them.
 
 The **fourop-fm dogfood** (`examples/fourop-fm/`) closed the runtime-algorithm
 gap: `dx_env`, `osc.waveform` (12 waveforms, the OPZ+OPL union), `vca.level`,
@@ -2142,7 +2147,8 @@ generator) + a host parity test. The generator composes nodes into the §12.1 se
 | `osc` / `table` | wave reader | `phase`(c/a) | `audio`(a) | `shape`, `level`, `phase_map` | — |
 | `phase_shape` | vector phaseshaper (VPS): one 2-D inflection `(d,v)` | `phase`(a), `d`(c), `v`(c) | `phase`(a) | — | `s0`,`s1`(q16) |
 | `phase_dist` | classic phase distortion (VPS with `v=0.5`) | `phase`(a), `d`(c) | `phase`(a) | — | `s0`,`s1`(q16) |
-| `analog_osc` | analogue wave reader (saw/sine/triangle/square, `fm1_analog_wave`) | `phase`(a) | `audio`(a) | `shape`(0–3) | `base`(u32) |
+| `naive_osc` | naive (non-band-limited) wave reader (saw/sine/triangle/square, `fm1_naive_wave`) | `phase`(a) | `audio`(a) | `shape`(0–3) | `base`(u32) |
+| `tuned_phasor` | phase accumulator with octave/semi/cent tuning | `mod`(c), `fm`(a), `pitch`(c) | `phase`(a) | `octave`(−3..3), `semi`(−11..11), `cent`(−100..100) | `inc`(q32), `phase`(phase), `step`(q32) |
 | `env` / `seg` | segment generator | `gate`(e) | `cv`(c) | — (segments = data) | `stage`, `level`(q16) |
 | `vca` | gain | `audio`(a), `cv`(c) | `audio`(a) | `level` | — |
 | `mix` / `add` | summer | `in0..inN`(a) | `audio`(a) | — | — |

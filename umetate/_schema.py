@@ -140,6 +140,7 @@ class NodeManifest(TypedDict):
     note_derived: NotRequired[dict[str, str]]
     note_cutoff: NotRequired[dict[str, str]]
     note_reciprocal: NotRequired[dict[str, str]]
+    note_tune: NotRequired[dict[str, list[str]]]
     block_derived: NotRequired[dict[str, str]]
 
 

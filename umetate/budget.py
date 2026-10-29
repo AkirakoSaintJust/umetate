@@ -141,6 +141,11 @@ def main(argv: list[str] | None = None) -> int:
             print(f"budget: bad voice count {n}", file=sys.stderr)
             return 1
         measured: Patch = {**patch, "voices": n}
+        # a `--voices` override that drops below the patch's `cpu0_voices` split
+        # must clamp the split, or the front-end rejects it (0..voices).
+        cpu0 = patch.get("cpu0_voices")
+        if cpu0 is not None:
+            measured["cpu0_voices"] = min(cpu0, n)
         if args.parts is not None:
             measured["parts"] = {"count": args.parts}
         us = _measure(measured)
