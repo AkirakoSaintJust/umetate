@@ -310,7 +310,7 @@ The gate is one command — run it after every increment:
 
 ```sh
 umetate deep-check --all                       # mypy + ruff + pyright + the test modules + host + skill + links + lint
-umetate budget patch.json --voices 8           # the measured polyphony claim
+umetate budget patch.json --voices 20           # the measured polyphony claim
 umetate build --synth examples/my-synth        # compose + host run + target package
 umetate emu --check --mhz 240                  # boot the built package, hold a chord
 umetate preset export examples/my-synth        # the bank as .syx (import reverses it)

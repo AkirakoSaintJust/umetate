@@ -861,11 +861,11 @@ strengthening below.
 - **SysEx**: a shared, versioned envelope every firmware uses, with a
   per-firmware payload.
 - **Polyphony**: `voices` is the **total shared pool** across both parts (not
-  per-part — §6.11.4); the dogfood ships **8 voices**. Measured (emulator): the
-  render costs ~9% of a 240 MHz core (0.52 ms) or ~6.5% of a 320 MHz core
-  (0.38 ms) per active voice, linear — so on CPU1's 5.8 ms block the ceiling is
-  ~15 voices at 320 MHz (12 comfortable, 16+ overruns). 8 is a *choice*, not the
-  ceiling. Two render passes landed — the phasor's block-constant pitch multiply
+  per-part — §6.11.4); the dogfood ships **20 voices**. Per-voice render cost is
+  ~6.5% of a 320 MHz core block, linear. The **split-core render** (D3, §4.2)
+  distributes the pool across both cores — 20 voices runs at ~61% ISR per core, no
+  halt, with headroom to ~28–30 voices (single-core, before the split, the ceiling
+  was ~15 voices at 320 MHz). Two render passes landed — the phasor's block-constant pitch multiply
   moved out of the sample loop, and the 12-wave `osc` switch became a precomputed
   `fm1_wave[12·1024]` table with a block-rate base — ~30% less render time.
 

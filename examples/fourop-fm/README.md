@@ -12,7 +12,7 @@ glue `app.c` onto the frozen `rib.c` framework (`umetate build --synth`).
 
 ## 1. The synth
 
-- **Voice (8 voices):** four `fm_op` operators, each built from `phasor → osc →
+- **Voice (20 voices):** four `fm_op` operators, each built from `phasor → osc →
   dx_env → vca`, with one-sample self-feedback and a tremolo LFO. Four `delay1`
   nodes provide the feedback paths, and a `route` node applies the selected
   algorithm's routing matrix at runtime. Because modulation reads delayed outputs,
@@ -50,7 +50,7 @@ umetate deep-check --all                       # the gate (renders the patch, re
 umetate build --synth examples/fourop-fm       # compose + host run + target package (needs the toolchain)
 umetate emu --check --mhz 240                  # boot the package, hold a chord (no halt, full-scale peak)
 umetate preset export examples/fourop-fm       # the 32+32 bank as .syx (import reverses it)
-umetate budget examples/fourop-fm/patch.json --voices 8   # the measured polyphony claim
+umetate budget examples/fourop-fm/patch.json --voices 20   # the measured polyphony claim
 ```
 
 ## 4. Lessons (what the example exposed)

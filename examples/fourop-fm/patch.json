@@ -1,6 +1,6 @@
 {
   "name": "fourop-fm",
-  "voices": 8,
+  "voices": 20,
   "model": 64,
   "cc": [
     "algorithm", "cutoff", "res", "fold", "feedback",

@@ -22,7 +22,7 @@
 - **Synthesis method(s):** 4-operator phase-modulation FM, per-operator
   self-feedback, 12 waveforms per operator (the OPZ + OPL union), rate/level
   envelopes.
-- **Polyphony and voice stealing:** 8 voices; oldest-steal on overflow.
+- **Polyphony and voice stealing:** 20 voices; oldest-steal on overflow.
 - **Pitch range and tuning:** 12-TET, full MIDI note range; per-op `ratio`
   (note-derived, non-integer ratios stay in tune).
 - **Oscillators / operators / noise:** 4 operators, each `phasor → osc →
@@ -42,7 +42,7 @@
 
 ### 2.1 Voice architecture (the node/macro graph)
 
-- **Voice-zone graph** (8 voices): four `fm_op` instances `op1..op4`, four
+- **Voice-zone graph** (20 voices): four `fm_op` instances `op1..op4`, four
   `delay1` instances `d1..d4`, one `route` instance:
   ```
   op1.audio → d1.in      op2.audio → d2.in
@@ -65,7 +65,7 @@
   self-modulation), `trem_rate`, `trem_depth`, `r1..r4`, `l1..l3` mapped inward,
   and inputs `fm` (audio) + `pitch` (control) + `car_fb` (control, the carrier
   feedback master).
-- **Voice count / sample rate:** 8 voices / 44100 Hz (the default).
+- **Voice count / sample rate:** 20 voices / 44100 Hz (the default).
 - **Feedback paths:** each operator's self-feedback is one `delay1` (out ×
   feedback → sum with external fm + pitch → `ph.fm`). Feedback is **per-op +
   carrier**: each operator's `opN_feedback` (its own self-modulation, on the op
@@ -151,7 +151,7 @@ one-pole decay rate toward the specified pitch. All block rate.)
   defers note-offs until the pedal lifts; `all_notes_off` (CC123) = panic.
 - **Clock and transport:** none (ignored).
 - **USB roles:** MIDI in/out; firmware update via the normal flash path.
-- **Overflow and back-pressure:** voice stealing (oldest) on >8 voices.
+- **Overflow and back-pressure:** voice stealing (oldest) on >20 voices.
 
 ## 5. State and persistence
 
