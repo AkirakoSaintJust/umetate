@@ -844,6 +844,22 @@ strengthening below.
   loop (what the stock did; breaks the generated-C model), the global-algo routing
   select, and constant-folding the `fm1_q15_mul(x, 32768)` identity.
 
+  **The asm lever is now a reusable library, not a break of the model.** The
+  pi32v2 assembler syntax was pinned by experiment (the disassembler's "arithmetic"
+  form is *not* what the parser accepts — the parser form is in the header): `rep
+  <counter> { <body> }` (zero-overhead loop, body size auto-computed, counter is a
+  runtime register that is clobbered and wraps on 0); `ins1 # ins2` VLIW dual-issue
+  (an A-slot arith op pairs with a B-slot load/store — two ALU ops do not pair);
+  `rA_rB += [rC ++= i1]*[rD ++= i2]` 64-bit memory-MAC (two auto-incrementing
+  loads, immediate strides, `h[..]` for a 16-bit operand); `r1_r0 = r0 * r0` square.
+  These are wrapped in `hal/fm1_dsp_kernels.h` as `static inline` helpers with a
+  bit-identical C fallback for host/WASM — RIB and the generator both call the same
+  kernels (the generator emits node bodies that *call* them, so the composable
+  "one node = one algorithm" model is untouched). First kernels: `fm1_kernel_sum_i32`
+  (rep sum) and `fm1_kernel_dot_i32` (rep + memory-MAC dot, 64-bit accumulate).
+  Still open: SIMD `+|+`/`*|*` (syntax known from the stock, semantics TBD), wiring
+  a kernel into the generated render, and re-measuring against clang.
+
 #### 6.11.4 Design (concrete)
 
 **Velocity routing.** Add `static int32_t voice_velocity[NVOICE]` (velocity 0..127
