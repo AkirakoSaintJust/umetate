@@ -802,7 +802,8 @@ strengthening below.
 - **Velocity** is a per-voice **control signal** (routable), applied to **three
   separate depth targets**: `vel_amp` (amplitude), `vel_rate` (envelope
   rate/time), `vel_fm` (FM index) — each 0..32767, default 0.
-- **Parts**: 2, each an **independent timbre** (its own 39-param 4-op voice) plus
+- **Parts**: 2, each an **independent timbre** (its own 68-param 4-op voice — the
+  `fm_op` macro's 17 × 4 operators) plus
   `level` (amplitude), `delay` (note-onset offset, ms), `channel` (MIDI channel
   or omni), `low`/`high` (keyzone). Notes route by **channel + keyzone**;
   **layering** (two parts on the same channel/keyzone) is allowed and must be
@@ -819,8 +820,10 @@ strengthening below.
   master tune) are a separate global record.
 - **SysEx**: a shared, versioned envelope every firmware uses, with a
   per-firmware payload.
-- **Polyphony**: measure with the emulator; **12 voices × 2 parts** ideal, fall
-  back to 10 or 8 per part if the budget is exceeded.
+- **Polyphony**: `voices` is the **total shared pool** across both parts (not
+  per-part — §6.11.4); the dogfood ships **8 voices**, and the emulator run (F7e)
+  confirms it at 240 MHz. (The earlier "12 × 2 ideal, fall back to 8" target
+  resolved to 8.)
 
 #### 6.11.4 Design (concrete)
 
