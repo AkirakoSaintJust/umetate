@@ -178,6 +178,16 @@ def settings_size() -> int:
     return 1 + 4 + 4 + 4
 
 
+def empty_part_patch(n_params: int) -> bytes:
+    """An empty part-patch slot on the wire (version 0xFF, zeroed body, valid CRC)."""
+    return _seal(bytes([EMPTY]) + b"\x00" * (NAME_LEN + 4 * n_params))
+
+
+def empty_multi_patch(n_parts: int) -> bytes:
+    """An empty multi-patch slot on the wire (version 0xFF, zeroed body, valid CRC)."""
+    return _seal(bytes([EMPTY]) + b"\x00" * (NAME_LEN + n_parts + 5 * n_parts * 4))
+
+
 def pack_settings(rec: Settings) -> bytes:
     """Encode the settings record into its on-the-wire bytes."""
     body = bytes([RECORD_VERSION])

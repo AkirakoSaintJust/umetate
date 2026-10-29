@@ -393,6 +393,60 @@ def _sysex_roundtrip() -> None:
     assert not _sysex.known(0x7F), "unknown cmd classified as known"
 
 
+def _bank_roundtrip() -> None:
+    """The preset bank <-> .syx export/import round-trip (§6.11.4)."""
+    from . import _presets, _records
+    from ._schema import as_patch
+    from .generate import generate_sysex_layout
+
+    patch = as_patch(
+        {
+            "name": "t",
+            "voices": 2,
+            "voice": {
+                "nodes": [
+                    {"id": "ph", "type": "phasor"},
+                    {"id": "osc", "type": "osc"},
+                ],
+                "wires": [{"from": "ph.phase", "to": "osc.phase"}],
+                "voice_out": "osc.audio",
+            },
+            "global": {"nodes": [], "wires": []},
+        }
+    )
+    layout = generate_sysex_layout(patch)
+
+    bank: _presets.Bank = {
+        "part_patches": [None] * _records.SLOTS,
+        "multi_patches": [None] * _records.SLOTS,
+    }
+    bank["part_patches"][0] = {"name": "EPiano", "params": [100, -5]}
+    bank["part_patches"][63] = {"name": "Glass", "params": [0, 65536]}
+    bank["multi_patches"][3] = {
+        "name": "Layers",
+        "part_slot": [0],
+        "level": [32768],
+        "delay": [40],
+        "channel": [0],
+        "low": [0],
+        "high": [127],
+    }
+
+    stream = _presets.export_bank(layout, bank, 0x42)
+    back = _presets.import_bank(stream, layout, 0x42)
+    assert back is not None and back == bank, "bank round-trip"
+
+    bad = bytearray(stream)
+    bad[len(bad) // 2] ^= 0x01
+    assert _presets.import_bank(bytes(bad), layout, 0x42) is None, (
+        "corruption undetected"
+    )
+    assert _presets.import_bank(stream[:-1], layout, 0x42) is None, (
+        "truncation undetected"
+    )
+    assert _presets.import_bank(stream, layout, 0x41) is None, "wrong model undetected"
+
+
 def main() -> int:
     tests: _Tests = [
         ("no import side effects", _no_import_side_effects),
@@ -414,6 +468,7 @@ def main() -> int:
         ("the docs cross-references resolve", _links_check),
         ("the preset records round-trip", _records_roundtrip),
         ("the SysEx envelope round-trips", _sysex_roundtrip),
+        ("the preset bank exports + imports", _bank_roundtrip),
     ]
     failures = 0
     for name, test in tests:
