@@ -737,11 +737,15 @@ out the generator feature list. The **phase shaping** pair (`phase_shape` = VPS,
 the naive VCO is `tuned_phasor` (octave/semi/cent tuning, note-derived via
 `fm1_tune_q16` = 2^(octave+semi/12+cent/1200)) → `phase_dist` (PWM) → `naive_osc`.
 The **band-limited oscillator trio** is complete: `saw`, `pulse` (square/PWM via a
-`width` control input, two BLEPs), and `triangle` (the polyBLEP'd square through a
-leaky integrator) share one `fm1_poly_blep` residual in `fm1_math.h` (Tale /
+modulatable `width` param, two BLEPs), and `triangle` (the polyBLEP'd square through
+a leaky integrator) share one `fm1_poly_blep` residual in `fm1_math.h` (Tale /
 Martin Finke); `saw`/`pulse` attenuation and the triangle's 1/n² spectrum are
-verified host-side. Shipped macros live in `modules/macros/`; a patch's own
-`macros:` section shadows them.
+verified host-side. The **D23 modulation mechanism** is now implemented: a
+`modulatable` param (e.g. `pulse.width`) gets a synthesized `<param>_mod` control
+input + `<param>_depth` param, and its value becomes `base + mod·depth` at block
+rate (verified by a host test that an LFO wired to `width_mod` changes the output
+only when `width_depth` is non-zero). Shipped macros live in `modules/macros/`; a
+patch's own `macros:` section shadows them.
 
 The **fourop-fm dogfood** (`examples/fourop-fm/`) closed the runtime-algorithm
 gap: `dx_env`, `osc.waveform` (12 waveforms, the OPZ+OPL union), `vca.level`,

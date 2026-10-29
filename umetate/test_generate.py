@@ -417,6 +417,24 @@ PULSE_TEST: Patch = {
     "global": {"nodes": [], "wires": []},
 }
 
+# D23 modulation: a modulatable param gets a wired `<param>_mod` control input + a
+# `<param>_depth` param (effective value = base + mod·depth at block rate). `width`
+# on the band-limited `pulse` is modulatable; an LFO wired to `osc.width_mod` sweeps
+# the duty when `width_depth` is non-zero (and is inert when it is zero).
+MOD_PULSE_TEST: Patch = {
+    "name": "mod_pulse_test",
+    "voices": 1,
+    "voice": {
+        "nodes": [
+            {"id": "osc", "type": "pulse"},
+            {"id": "lfo", "type": "lfo", "params": {"rate": 4194304, "depth": 32767}},
+        ],
+        "wires": [{"from": "lfo.cv", "to": "osc.width_mod"}],
+        "voice_out": "osc.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
 TRIANGLE_TEST: Patch = {
     "name": "triangle_test",
     "voices": 4,
@@ -1825,6 +1843,66 @@ def _render_samples(patch: Patch, frames: int) -> list[int]:
     return [int(x) for x in run.stdout.split()]
 
 
+def _mod_pulse_samples(patch: Patch, width_depth: int, frames: int) -> list[int]:
+    """Generate + compile + run the pulse-modulation patch with a given `width_depth`,
+    returning `frames` left-channel samples. One fresh process per call (the engine's
+    static phase/envelope are shared across renders within a process)."""
+    src = generate(patch)
+    cname = patch["name"].replace("-", "_").replace(".", "_")
+    wid = str(param_ids(patch)["osc.width_depth"])
+    harness = (
+        "#include <stdio.h>\n#include <stdint.h>\n"
+        f"void {cname}_dsp_reset(void);\n"
+        f"void {cname}_dsp_note_on(uint32_t note, uint32_t velocity);\n"
+        f"void {cname}_dsp_render(int32_t *out, uint32_t frames);\n"
+        f"int {cname}_dsp_set_param(uint32_t id, int32_t value);\n"
+        f"static int32_t out[{2 * frames}];\n"
+        "int main(void) {\n"
+        f"    {cname}_dsp_reset();\n"
+        f"    {cname}_dsp_set_param({wid}, {width_depth});\n"
+        f"    {cname}_dsp_note_on(69, 100);\n"
+        f"    {cname}_dsp_render(out, {frames});\n"
+        f'    for (int i = 0; i < {frames}; i++) printf("%d\\n", out[2 * i]);\n'
+        "    return 0;\n"
+        "}\n"
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        (d / "harness.c").write_text(harness)
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            raise AssertionError("compile failed:\n" + proc.stderr)
+        run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+        if run.returncode != 0:
+            raise AssertionError("run failed:\n" + run.stderr)
+    return [int(x) for x in run.stdout.split()]
+
+
+def _modulation_works() -> None:
+    """A wired `<param>_mod` input changes the output only when `<param>_depth` is
+    non-zero (D23: effective = base + mod·depth). At depth 0 the LFO is inert (a
+    constant square); at full depth it sweeps the duty, so the two renders differ."""
+    base = _mod_pulse_samples(MOD_PULSE_TEST, 0, 512)
+    modded = _mod_pulse_samples(MOD_PULSE_TEST, 32767, 512)
+    diff = sum(abs(a - b) for a, b in zip(base, modded, strict=True))
+    assert diff > 100_000, f"width modulation did not change the output (diff={diff})"
+    print(f"ok: width modulation changes the output (sum|diff|={diff})")
+
+
 def _saw_antialias() -> None:
     """The polyBLEP saw removes the wrap discontinuity and attenuates high
     harmonics vs a naive saw (the anti-aliasing claim, verified spectrally)."""
@@ -2518,6 +2596,12 @@ def main() -> int:
         failures += 1
     else:
         print("ok: pulse width is a settable param (default 0.5)")
+
+    try:
+        _modulation_works()
+    except AssertionError as exc:
+        print(f"FAIL: width modulation: {exc}")
+        failures += 1
 
     ok, msg = _sound(TRIANGLE_TEST)
     print(

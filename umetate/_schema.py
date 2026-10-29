@@ -129,11 +129,15 @@ class PortDict(TypedDict):
 
 
 class ParamSpec(TypedDict):
-    """A node.json param in object form: `{kind, default?}` (the default overrides
-    the kind's default)."""
+    """A node.json param in object form: `{kind, default?, modulatable?}`.
+
+    `default` overrides the kind's default. `modulatable` (D23) gives the param a
+    paired control input `<param>_mod` + a depth param `<param>_depth`; the effective
+    value is base + mod·depth at block rate."""
 
     kind: str
     default: NotRequired[str]
+    modulatable: NotRequired[bool]
 
 
 class NodeManifest(TypedDict):

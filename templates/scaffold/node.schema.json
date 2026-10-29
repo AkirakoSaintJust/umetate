@@ -22,7 +22,8 @@
             "additionalProperties": false,
             "properties": {
               "kind": { "enum": ["q12", "q15", "q16", "q32", "phase", "int16", "int32", "uint32", "table"] },
-              "default": { "type": "string", "description": "a numeric DSP default (overrides the kind default)" }
+              "default": { "type": "string", "description": "a numeric DSP default (overrides the kind default)" },
+              "modulatable": { "type": "boolean", "description": "add a paired `<param>_mod` control input + `<param>_depth` param (D23); effective value = base + mod·depth at block rate" }
             }
           }
         ]

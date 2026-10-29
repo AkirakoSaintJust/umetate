@@ -252,6 +252,13 @@ def _render_pre_block(
     )
     for i in global_ctrl:
         lines.extend(_dedent4(_emit_body(i, "0", "        ", table_names, per_part)))
+    # global block-derived state (e.g. a modulatable param's effective value),
+    # after the control prologue so its control inputs are available
+    gblock = [by_id[iid] for iid in graph.global_order if by_id[iid].block_derived]
+    for i in gblock:
+        for field, template in i.block_derived.items():
+            expr = substitute(i, template, "0", table_names, per_part)
+            lines.append(f"    {i.state_ref(field, '0')} = {expr};")
     lines.extend(_dedent4(_voice.glide(name)))
     lines.append("}")
     lines.append("")
@@ -533,10 +540,20 @@ def substitute(
     for name in inst.spec.state:
         out = out.replace(f"${{state.{name}}}", inst.state_ref(name, v))
     for name in inst.spec.params:
+        if name in inst.spec.modulatable:
+            # a modulatable param's value is its effective (base + mod·depth) state
+            expr = inst.state_ref(f"{name}_eff", v)
+        else:
+            expr = inst.param_expr(name)
+            if per_part and inst.zone == "voice":
+                expr = f"{expr}[voice_part[{v}]]"
+        out = out.replace(f"${{param.{name}}}", expr)
+    for name in inst.spec.modulatable:
+        # ${base.<name>} = the raw param backing (for the synthesized _eff block_derived)
         expr = inst.param_expr(name)
         if per_part and inst.zone == "voice":
             expr = f"{expr}[voice_part[{v}]]"
-        out = out.replace(f"${{param.{name}}}", expr)
+        out = out.replace(f"${{base.{name}}}", expr)
     out = out.replace("${const.mask}", f"{inst.c}_delay_mask")
     if inst.table is not None:
         if inst.table not in table_names:

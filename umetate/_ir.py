@@ -80,6 +80,9 @@ class NodeSpec:
     param_defaults: dict[str, str] = field(
         default_factory=lambda: {}
     )  # param -> explicit default (overrides the kind default)
+    modulatable: set[str] = field(
+        default_factory=lambda: set()
+    )  # params with a paired `<param>_mod` input + `<param>_depth` param (D23)
     state: dict[str, str] = field(
         default_factory=lambda: {}
     )  # state -> type (or "pool")
@@ -299,6 +302,7 @@ def node_spec_from_manifest(manifest: NodeManifest, body: str) -> NodeSpec:
     outs = {p: _parse_port(v) for p, v in manifest["outs"].items()}
     params: dict[str, str] = {}
     param_defaults: dict[str, str] = {}
+    modulatable: set[str] = set()
     for pname, spec in manifest.get("params", {}).items():
         if isinstance(spec, str):
             params[pname] = spec
@@ -306,18 +310,39 @@ def node_spec_from_manifest(manifest: NodeManifest, body: str) -> NodeSpec:
             params[pname] = spec["kind"]
             if "default" in spec:
                 param_defaults[pname] = str(spec["default"])
+            if spec.get("modulatable"):
+                modulatable.add(pname)
+
+    # D23: a modulatable param gets a paired control input `<p>_mod` + a depth
+    # param `<p>_depth`; the effective value `base + mod·depth` is a block-derived
+    # state `<p>_eff`. Synthesized before the node's own block_derived so that
+    # `${param.<p>}` (redirected to `<p>_eff`) is available to it.
+    state = dict(manifest.get("state", {}))
+    block_derived: dict[str, str] = {}
+    for pname in sorted(modulatable):
+        ins[f"{pname}_mod"] = PortSpec("control", None, "0")
+        params[f"{pname}_depth"] = "q15"
+        param_defaults[f"{pname}_depth"] = "0"
+        state[f"{pname}_eff"] = params[pname]
+        block_derived[f"{pname}_eff"] = (
+            f"${{base.{pname}}} + fm1_q15_mul("
+            f"${{in.{pname}_mod}}, ${{param.{pname}_depth}})"
+        )
+    block_derived.update(manifest.get("block_derived", {}))
+
     return NodeSpec(
         name=name,
         ins=ins,
         outs=outs,
         params=params,
         param_defaults=param_defaults,
-        state=dict(manifest.get("state", {})),
+        modulatable=modulatable,
+        state=state,
         note_derived=dict(manifest.get("note_derived", {})),
         note_cutoff=dict(manifest.get("note_cutoff", {})),
         reciprocals=dict(manifest.get("note_reciprocal", {})),
         note_tune=dict(manifest.get("note_tune", {})),
-        block_derived=dict(manifest.get("block_derived", {})),
+        block_derived=block_derived,
         body=body,
     )
 
