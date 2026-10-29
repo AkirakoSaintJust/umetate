@@ -720,7 +720,7 @@ planned half of each shipped node; the full follow-up, classified by the "one no
 | `comb` | — | `delayN` with feedback (already shipped); no macro needed |
 | `pulse` (band-limited) | node | the `saw` polyBLEP with a `width` param (two BLEPs, PWM) |
 | `apc` / `dual_apc` | macro | square `table` + env / two cross-modulated squares |
-| `vps` | macro | DAFx-11 (Kleimola et al.): 2-D inflection point `p=(d,v)`, multi-breakpoint, audio-rate modulation — dynamic phase distortion, generalizes `phase_map`. The single-breakpoint, control-rate case is now `phase_shape` (and `phase_dist` = the `v=0.5` classic); the multi-breakpoint/audio-rate macro is the remaining extension |
+| `vps` | macro | DAFx-11 (Kleimola et al.): 2-D inflection point `p=(d,v)`, multi-breakpoint, audio-rate modulation — dynamic phase distortion, generalizes `phase_map`. The single-breakpoint, control-rate case is now `phase_shape` (and `phase_dist` = the `v=0.5` classic); the multi-breakpoint/audio-rate macro is the remaining extension. Follow-up: the `phase_shape` slope divisions (2 signed 64-bit per voice per block, ~10–20% of a block at 20 voices) should be hoisted to note-rate when `d`/`v` are unmodulated, or replaced with reciprocals |
 | `formant` (K5000-style) | macro | bank of `svf` band-passes + vowel presets |
 | `granulator` (Xenakis) | node(s) | phase-granular (no audio buffer) + a separate stochastic/GENDYN node |
 
