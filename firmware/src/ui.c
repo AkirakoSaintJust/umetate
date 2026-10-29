@@ -139,6 +139,7 @@ static int32_t ui_scale(int32_t v, uint8_t curve)
 }
 
 /* the param of the current page's Nth param-bearing widget (UI_BIND_PAGE_SLOT) */
+static uint16_t ui_widget_param(const ui_widget *w); /* defined below */
 static uint16_t ui_slot_param(uint8_t slot)
 {
     const ui_page *p = ui_cur_page();
