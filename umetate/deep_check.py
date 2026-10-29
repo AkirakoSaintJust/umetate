@@ -79,7 +79,15 @@ def _pyright() -> int:
     """The Python type-check (pyright strict, §6.8; reads `[tool.pyright]`)."""
     if runner.probe().docker:
         return runner.run(["pyright"], cwd="/work")
-    return subprocess.run(["pyright"], cwd=runner.REPO_ROOT).returncode
+    try:
+        return subprocess.run(["pyright"], cwd=runner.REPO_ROOT).returncode
+    except FileNotFoundError:
+        print(
+            "deep-check --pyright: pyright not found — rebuild the image "
+            "(docker/build.sh) and recreate `umetate-host`",
+            file=sys.stderr,
+        )
+        return 1
 
 
 # the Python layer: lint + format + types + the owned test modules. One list, so

@@ -2149,7 +2149,7 @@ def _tune_pitch() -> None:
 
 
 def main() -> int:
-    failures = 0
+    failures: int = 0
 
     ok, msg = _compile(POCKET_DRONE)
     print(
