@@ -1650,6 +1650,103 @@ def _parts_modes(patch: Patch) -> tuple[bool, str]:
         return run.returncode == 0, run.stdout.strip()
 
 
+TAP_HARNESS = """\
+#include <stdio.h>
+#include <stdint.h>
+void __NAME___dsp_reset(void);
+void __NAME___dsp_note_on_ch(uint32_t note, uint32_t velocity, uint32_t channel);
+void __NAME___dsp_render(int32_t *out, uint32_t frames);
+int __NAME___dsp_set_param(uint32_t id, int32_t value);
+const int32_t *__NAME___dsp_tap(uint32_t ch);
+static int32_t out[512];
+static int64_t energy(const int32_t *p, uint32_t n) {
+    int64_t e = 0;
+    for (uint32_t i = 0; i < n; i++) e += (int64_t)p[i] * p[i];
+    return e;
+}
+int main(void) {
+    /* part 0 only (channel 0): its 4 operator taps are live, part 1's are silent */
+    __NAME___dsp_reset();
+    __NAME___dsp_note_on_ch(60, 100, 0u);
+    __NAME___dsp_render(out, 256);
+    __NAME___dsp_render(out, 256);
+    __NAME___dsp_render(out, 256);
+    int64_t e00 = energy(__NAME___dsp_tap(0), 256);
+    int64_t e02 = energy(__NAME___dsp_tap(2), 256);
+    int64_t e04 = energy(__NAME___dsp_tap(4), 256);
+    int64_t e06 = energy(__NAME___dsp_tap(6), 256);
+    int64_t e11 = energy(__NAME___dsp_tap(1), 256);
+    if (e00 <= 0 || e02 <= 0 || e04 <= 0 || e06 <= 0) {
+        printf("FAIL: part 0 taps silent (%lld %lld %lld %lld)\\n",
+               (long long)e00, (long long)e02, (long long)e04, (long long)e06);
+        return 1;
+    }
+    if (e11 != 0) {
+        printf("FAIL: part 1 tap non-silent with no note (e=%lld)\\n", (long long)e11);
+        return 1;
+    }
+    /* mute op2 -> its tap (channel 2) goes silent, op1 stays live */
+    __NAME___dsp_set_param(__OP2_MUTE_ID__, 1);
+    __NAME___dsp_reset();
+    __NAME___dsp_note_on_ch(60, 100, 0u);
+    __NAME___dsp_render(out, 256);
+    __NAME___dsp_render(out, 256);
+    __NAME___dsp_render(out, 256);
+    int64_t e2 = energy(__NAME___dsp_tap(2), 256);
+    int64_t e0 = energy(__NAME___dsp_tap(0), 256);
+    if (e2 != 0) {
+        printf("FAIL: muted op2 tap non-silent (%lld)\\n", (long long)e2);
+        return 1;
+    }
+    if (e0 <= 0) { printf("FAIL: op1 tap silent after op2 mute\\n"); return 1; }
+    printf("ok: __NAME__ per-op taps (4 ops x 2 parts, per-part + mute)\\n");
+    return 0;
+}
+"""
+
+
+def _taps_expose() -> tuple[bool, str]:
+    """Generate + compile + run the per-op scope-tap contract: the `taps:` sources
+    expose each operator's audio, per part, and a mute silences its tap."""
+    root = Path(__file__).resolve().parents[1]
+    patch = as_patch(
+        json.loads(
+            (root / "examples" / "fourop-fm" / "patch.json").read_text(encoding="utf-8")
+        )
+    )
+    src = generate(patch)
+    tables_h, tables_c = generate_tables(patch)
+    ids = param_ids(patch)
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        (d / "tables.h").write_text(tables_h)
+        (d / "tables.c").write_text(tables_c)
+        harness = TAP_HARNESS.replace(
+            "__NAME__", patch["name"].replace("-", "_").replace(".", "_")
+        ).replace("__OP2_MUTE_ID__", str(ids["op2_mute.p0"]))
+        (d / "harness.c").write_text(harness)
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                str(d / "tables.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            return False, "compile failed:\n" + proc.stderr
+        run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+        return run.returncode == 0, run.stdout.strip()
+
+
 def _set_param_contract(patch: Patch) -> tuple[bool, str]:
     """Generate + compile + run the §12.1 set_param contract (bad-id rejection +
     value clamp)."""
@@ -2491,6 +2588,11 @@ def main() -> int:
     print(("ok: " if ok else "FAIL: ") + (msg or "per-part voice modes"))
     failures += 0 if ok else 1
 
+    # the per-op scope taps (the `taps:` sources, per part, mute-aware).
+    ok, msg = _taps_expose()
+    print(("ok: " if ok else "FAIL: ") + (msg or "per-op scope taps"))
+    failures += 0 if ok else 1
+
     # the §12.1 set_param seam contract: bad-id rejection + value clamp.
     ok, msg = _set_param_contract(MODE_PATCH)
     print(
@@ -2960,6 +3062,30 @@ def main() -> int:
         failures += 1
     except GenError as exc:
         print(f"ok: reserved node id rejected ({exc})")
+
+    # a scope tap must name an audio-rate voice-zone output
+    tap_patch: Patch = {
+        "name": "tap_val",
+        "voices": 1,
+        "voice": {
+            "nodes": [{"id": "osc", "type": "osc"}],
+            "wires": [],
+            "voice_out": "osc.audio",
+        },
+        "global": {"nodes": [], "wires": []},
+    }
+    try:
+        generate({**tap_patch, "taps": ["nope.audio"]})
+        print("FAIL: an unknown tap node was not rejected")
+        failures += 1
+    except GenError as exc:
+        print(f"ok: unknown tap node rejected ({exc})")
+    try:
+        generate({**tap_patch, "taps": ["osc.phase"]})
+        print("FAIL: a tap naming an input was not rejected")
+        failures += 1
+    except GenError as exc:
+        print(f"ok: tap naming an input rejected ({exc})")
 
     # the flattened param table maps a named param to its set_param id
     params = generate_params(POCKET_DRONE)["params"]

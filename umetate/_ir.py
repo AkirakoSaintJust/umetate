@@ -221,6 +221,9 @@ class CompiledGraph:
     n_voice_params: int = 0  # the per-part timbre-param count (a part patch's N)
     n_global_params: int = 0  # the shared global-zone param count
     cpu0_voices: int = -1  # split-core: CPU0's voice count; -1 = default (voices//2)
+    taps: list[Port] = field(
+        default_factory=lambda: []
+    )  # scope taps: audio-rate voice-zone outputs, exposed per-part
 
 
 def to_c_identifier(name: str) -> str:

@@ -168,6 +168,15 @@ one-pole decay rate toward the specified pitch. All block rate.)
   sub-rows × 4 Q15 0/1 weights = 160 entries), ymfm's `s_algorithm_ops`
   {0,1,2,3,4,5,6,7} (the full standard TX81Z/DX100/DX21 4-op set).
 
+### 2.4 Scope taps
+
+`taps: ["op1.audio", "op2.audio", "op3.audio", "op4.audio"]` — four per-operator
+audio tap points (resolved to each operator's post-mute output), exposed per part
+as `N_TAP × N_PART` = 8 channels via `fourop_fm_dsp_tap(ch)` (`ch = tap × 2 +
+part`, the last block's Q15 samples). These feed the HOME 4-op scope/spectro
+pages (§3.3): the active part's four operators are its four channels, so the
+"active part" label stays true when both parts layer.
+
 ## 3. Controls and display
 
 ### 3.1 The control surface (fixed)

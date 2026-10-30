@@ -100,6 +100,8 @@ def compile(
     voice_out_ref = voice_zone.get("voice_out")
     voice_out, global_out = _typecheck(edges, by_id, voice_out_ref, bindings)
 
+    taps = _resolve_taps(patch.get("taps") or [], by_id, bindings)
+
     parts = patch.get("parts")
     n_parts = parts["count"] if parts else 1
     if n_parts < 1:
@@ -134,6 +136,7 @@ def compile(
         n_parts=n_parts,
         n_voice_params=n_voice_params,
         n_global_params=n_global_params,
+        taps=taps,
     )
 
 
@@ -420,6 +423,36 @@ def _resolve_ref(ref: str, bindings: Mapping[tuple[str, str], tuple[str, str]]) 
     while (node, port) in bindings:
         node, port = bindings[(node, port)]
     return Port(node, port)
+
+
+def _resolve_taps(
+    refs: list[str],
+    by_id: dict[str, NodeInstance],
+    bindings: Mapping[tuple[str, str], tuple[str, str]],
+) -> list[Port]:
+    """Resolve the patch's `taps:` list into (node, port) references, each an
+    audio-rate voice-zone output (the per-op scope/spectro channels, §6.11.4 L11)."""
+    taps: list[Port] = []
+    seen: set[tuple[str, str]] = set()
+    for ref in refs:
+        tap = _resolve_ref(ref, bindings)
+        if tap in seen:
+            raise GenError(f"tap {ref!r} is listed twice")
+        seen.add(tap)
+        inst = by_id.get(tap.node)
+        if inst is None:
+            raise GenError(f"tap {ref!r} names an unknown node")
+        out = inst.spec.outs.get(tap.port)
+        if out is None:
+            raise GenError(f"tap {ref!r}: {tap.node} has no output port {tap.port!r}")
+        if out.kind != AUDIO:
+            raise GenError(
+                f"tap {ref!r} must be an audio-rate output (got {out.kind!r})"
+            )
+        if inst.zone != "voice":
+            raise GenError(f"tap {ref!r} must be in the voice zone (per-op taps)")
+        taps.append(tap)
+    return taps
 
 
 def _split(ref: str) -> tuple[str, str]:

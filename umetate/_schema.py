@@ -121,6 +121,9 @@ Patch = TypedDict(
         "parts": NotRequired[Parts],
         "model": NotRequired[int],  # the firmware's SysEx <model> byte (0-127)
         "cc": NotRequired[list[str]],  # the CC-exposed params (names); absent = all
+        # scope taps: "<instance>.<port>" audio-rate voice-zone outputs, exposed
+        # per-part as per-op scope/spectro channels (§6.11.4, L11).
+        "taps": NotRequired[list[str]],
     },
 )
 

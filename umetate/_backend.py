@@ -182,6 +182,20 @@ def _param_tables(graph: CompiledGraph) -> list[str]:
 # ----------------------------------------------------------------- render ----
 
 
+def _tap_clear_fn(name: str) -> list[str]:
+    """The per-block zero of the tap buffers (one pass before the block loop, so
+    `render_voices_block`'s `fm1_sat_add32` accumulation starts from silence)."""
+    return [
+        f"static inline __attribute__((always_inline)) void {name}_taps_clear(",
+        "        int32_t (*taps)[UMETATE_DSP_BLOCK_FRAMES]) {",
+        "    for (uint32_t k = 0; k < N_TAP_CH; k++)",
+        "        for (uint32_t f = 0; f < UMETATE_DSP_BLOCK_FRAMES; f++)",
+        "            taps[k][f] = 0;",
+        "}",
+        "",
+    ]
+
+
 def _render(
     graph: CompiledGraph, by_id: dict[str, NodeInstance], table_names: set[str]
 ) -> list[str]:
@@ -211,6 +225,17 @@ def _render(
     lines.append(
         f"static int32_t {graph.name}_render_bus1[CONTROL_BLOCK] UMETATE_CPU1;"
     )
+    if graph.taps:
+        n_ch = len(graph.taps) * graph.n_parts
+        lines.append(f"#define N_TAP {len(graph.taps)}u")
+        lines.append(f"#define N_TAP_CH {n_ch}u")
+        lines.append(
+            f"static int32_t {graph.name}_tap0[N_TAP_CH][UMETATE_DSP_BLOCK_FRAMES] UMETATE_CPU1;"
+        )
+        lines.append(
+            f"static int32_t {graph.name}_tap1[N_TAP_CH][UMETATE_DSP_BLOCK_FRAMES] UMETATE_CPU1;"
+        )
+        lines.extend(_tap_clear_fn(graph.name))
     lines.append("")
 
     lines.extend(_render_pre_block(graph, by_id, table_names, global_ctrl))
@@ -303,9 +328,13 @@ def _render_voices_block(
     temps written by `dsp_render`'s prologue for this block."""
     name, cb = graph.name, graph.control_block
     per_part = graph.n_parts > 1
-    lines = [
-        f"UMETATE_DSP_API void {name}_render_voices_block(int32_t *bus, uint32_t v0, uint32_t v1, uint32_t b, uint32_t frames) {{",
-    ]
+    taps = graph.taps
+    sig = (
+        f"UMETATE_DSP_API void {name}_render_voices_block(int32_t *bus, "
+        + ("int32_t (*taps)[UMETATE_DSP_BLOCK_FRAMES], " if taps else "")
+        + "uint32_t v0, uint32_t v1, uint32_t b, uint32_t frames) {"
+    )
+    lines = [sig]
 
     # control prologue: voice control-rate nodes (per voice, this core's range)
     if voice_ctrl:
@@ -360,6 +389,29 @@ def _render_voices_block(
                 f"            bus[f - b] = fm1_sat_add32(bus[f - b], {mix_expr});"
             )
 
+    if taps:
+        # per-op scope taps (§6.11.4 L11): accumulate each tap source's output
+        # local, per part (so the HOME 4-op scope shows the active part's ops).
+        # `f < UMETATE_DSP_BLOCK_FRAMES` bounds the tap window to one block (the
+        # scope snapshot); host tests render larger `frames` than the target.
+        lines.append("            if (f < UMETATE_DSP_BLOCK_FRAMES) {")
+        if per_part:
+            lines.append("                uint32_t _tp = voice_part[v];")
+            for k, t in enumerate(taps):
+                expr = by_id[t.node].out_local(t.port)
+                idx = f"{k} * {graph.n_parts} + _tp"
+                lines.append(
+                    f"                taps[{idx}][f] = fm1_sat_add32(taps[{idx}][f], "
+                    f"fm1_q15_mul({expr}, part_level[_tp]));"
+                )
+        else:
+            for k, t in enumerate(taps):
+                expr = by_id[t.node].out_local(t.port)
+                lines.append(
+                    f"                taps[{k}][f] = fm1_sat_add32(taps[{k}][f], {expr});"
+                )
+        lines.append("            }")
+
     for i in breakers:
         _, write = _split_template(i.spec.body)
         lines.extend(_emit_lines(write, i, "v", "            ", table_names, per_part))
@@ -374,6 +426,18 @@ def _render_dsp_render(graph: CompiledGraph) -> list[str]:
     """The single-core block loop: pre → voices([0, NVOICE)) → post. This is the
     reference path (host tests + CPU0-only fallback)."""
     name, cb = graph.name, graph.control_block
+    if graph.taps:
+        return [
+            f"UMETATE_DSP_API void {name}_dsp_render(int32_t *out, uint32_t frames) {{",
+            f"    {name}_taps_clear({name}_tap0);",
+            f"    for ({_CONTROL_BLOCK_TYPE} b = 0; b < frames; b += {cb}u) {{",
+            f"        {name}_render_pre_block();",
+            f"        {name}_render_voices_block({name}_render_bus0, {name}_tap0, 0u, NVOICE, b, frames);",
+            f"        {name}_render_post_block(out, {name}_render_bus0, b, frames);",
+            "    }",
+            "}",
+            "",
+        ]
     return [
         f"UMETATE_DSP_API void {name}_dsp_render(int32_t *out, uint32_t frames) {{",
         f"    for ({_CONTROL_BLOCK_TYPE} b = 0; b < frames; b += {cb}u) {{",
@@ -394,34 +458,65 @@ def _render_split(graph: CompiledGraph) -> list[str]:
     (`fm1_cpu1_wait` returns non-zero and holds core 1)."""
     name, cb = graph.name, graph.control_block
     n0 = graph.cpu0_voices if graph.cpu0_voices >= 0 else graph.voices // 2
-    return [
+    has_taps = bool(graph.taps)
+    taps_field = "int32_t (*taps)[UMETATE_DSP_BLOCK_FRAMES]; " if has_taps else ""
+    tap_arg = f", {name}_tap0" if has_taps else ""
+    tap_arg1 = f", {name}_tap1" if has_taps else ""
+    job_tap_arg = f", {name}_render_job.taps" if has_taps else ""
+    lines = [
         "#if FM1_CPU1_USED",
-        f"typedef struct {{ int32_t *bus; uint32_t v0, v1, b, frames; }} {name}_render_job_t;",
+        f"typedef struct {{ int32_t *bus; {taps_field}uint32_t v0, v1, b, frames; }} {name}_render_job_t;",
         f"static {name}_render_job_t {name}_render_job;",
         f"static void {name}_render_voices_job(uint32_t arg) {{",
         "    (void)arg;",
-        f"    {name}_render_voices_block({name}_render_job.bus, {name}_render_job.v0,",
+        f"    {name}_render_voices_block({name}_render_job.bus{job_tap_arg}, {name}_render_job.v0,",
         f"        {name}_render_job.v1, {name}_render_job.b, {name}_render_job.frames);",
         "}",
         f"void {name}_render_split(int32_t *out, uint32_t frames) {{",
-        f"    for ({_CONTROL_BLOCK_TYPE} b = 0; b < frames; b += {cb}u) {{",
-        "        int dispatched;",
-        f"        {name}_render_pre_block();",
-        f"        {name}_render_job.bus = {name}_render_bus1;",
-        f"        {name}_render_job.v0 = {n0}u; {name}_render_job.v1 = NVOICE;",
-        f"        {name}_render_job.b = b; {name}_render_job.frames = frames;",
-        f"        dispatched = fm1_cpu1_dispatch({name}_render_voices_job, 0u);",
-        f"        {name}_render_voices_block({name}_render_bus0, 0u, {n0}u, b, frames);",
-        "        if (!dispatched || fm1_cpu1_join() != 0)",
-        f"            {name}_render_voices_block({name}_render_bus1, {n0}u, NVOICE, b, frames);",
-        f"        for (uint32_t f = b; f < b + {cb}u && f < frames; f++)",
-        f"            {name}_render_bus0[f - b] = fm1_sat_add32({name}_render_bus0[f - b], {name}_render_bus1[f - b]);",
-        f"        {name}_render_post_block(out, {name}_render_bus0, b, frames);",
-        "    }",
-        "}",
-        "#endif",
-        "",
     ]
+    if has_taps:
+        lines.append(f"    {name}_taps_clear({name}_tap0);")
+        lines.append(f"    {name}_taps_clear({name}_tap1);")
+    lines.append(f"    for ({_CONTROL_BLOCK_TYPE} b = 0; b < frames; b += {cb}u) {{")
+    lines.append("        int dispatched;")
+    lines.append(f"        {name}_render_pre_block();")
+    lines.append(f"        {name}_render_job.bus = {name}_render_bus1;")
+    if has_taps:
+        lines.append(f"        {name}_render_job.taps = {name}_tap1;")
+    lines.append(
+        f"        {name}_render_job.v0 = {n0}u; {name}_render_job.v1 = NVOICE;"
+    )
+    lines.append(f"        {name}_render_job.b = b; {name}_render_job.frames = frames;")
+    lines.append(
+        f"        dispatched = fm1_cpu1_dispatch({name}_render_voices_job, 0u);"
+    )
+    lines.append(
+        f"        {name}_render_voices_block({name}_render_bus0{tap_arg}, 0u, {n0}u, b, frames);"
+    )
+    lines.append("        if (!dispatched || fm1_cpu1_join() != 0)")
+    lines.append(
+        f"            {name}_render_voices_block({name}_render_bus1{tap_arg1}, {n0}u, NVOICE, b, frames);"
+    )
+    lines.append(f"        for (uint32_t f = b; f < b + {cb}u && f < frames; f++)")
+    lines.append(
+        f"            {name}_render_bus0[f - b] = fm1_sat_add32({name}_render_bus0[f - b], {name}_render_bus1[f - b]);"
+    )
+    if has_taps:
+        lines.append(
+            f"        for (uint32_t f = b; f < b + {cb}u && f < frames && f < UMETATE_DSP_BLOCK_FRAMES; f++)"
+        )
+        lines.append("            for (uint32_t k = 0; k < N_TAP_CH; k++)")
+        lines.append(
+            f"                {name}_tap0[k][f] = fm1_sat_add32({name}_tap0[k][f], {name}_tap1[k][f]);"
+        )
+    lines.append(
+        f"        {name}_render_post_block(out, {name}_render_bus0, b, frames);"
+    )
+    lines.append("    }")
+    lines.append("}")
+    lines.append("#endif")
+    lines.append("")
+    return lines
 
 
 def _zone(
@@ -709,6 +804,17 @@ def _seam(graph: CompiledGraph, by_id: dict[str, NodeInstance]) -> list[str]:
             "",
         ]
     )
+    if graph.taps:
+        lines.extend(
+            [
+                # the per-op scope tap channels (§6.11.4 L11): `ch` = tap × N_PART +
+                # part, each the last block's Q15 samples (UMETATE_DSP_BLOCK_FRAMES).
+                f"UMETATE_DSP_API const int32_t *{name}_dsp_tap(uint32_t ch) {{",
+                f"    return ch < N_TAP_CH ? {name}_tap0[ch] : {name}_tap0[0];",
+                "}",
+                "",
+            ]
+        )
     return lines
 
 

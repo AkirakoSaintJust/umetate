@@ -1131,6 +1131,20 @@ overflow the 7-bit CC space, so the patch declares its surface: the patch-level
 `cc:` list names the CC-exposed params (absent = every param). Documented in
 `control-map.md`.
 
+**Scope taps (`taps:`).** The patch declares per-op scope/spectro taps — a list
+of `<instance>.<port>` audio-rate voice-zone outputs (fourop-fm: `op1..op4.audio`,
+resolved through the macro bindings to each operator's post-mute output). The
+generator emits `N_TAP × N_PART` tap channels (`N_TAP_CH`), one per operator per
+part, accumulated in `render_voices_block` as the sum over that part's gated
+voices (part-level scaled, so a muted part reads silence) into a per-block
+`[N_TAP_CH][UMETATE_DSP_BLOCK_FRAMES]` buffer, and a seam getter
+`<name>_dsp_tap(ch)` (channel `ch` = `tap × N_PART + part`) returning the last
+block's Q15 samples. This is the HOME 4-op scope/spectro feed: the active part's
+four operators are its four channels; the per-part split is what makes the
+"active part" label true when both parts layer. The tap write is bounded to one
+`UMETATE_DSP_BLOCK_FRAMES` window (host tests render larger `frames`), and the
+zero/combine live in the block loop (`taps_clear`, split-core `tap0 += tap1`).
+
 **Polyphony budget tool.** A new `umetate budget --voices N` (and `--parts N`)
 that generates the patch at N voices, compiles on host, times a worst-case
 `render(256)` (all voices sounding, envelope open), and reports the render time
@@ -1329,7 +1343,9 @@ tooling is: `gain`/`cmul`/`csum` (the control/audio-separated gain family),
 `mute`, `pitch_env`, the separation invariant + its generic test, the `velocity`
 reserved input, the `trigger` reserved input, the `parts:` multitimbral model, the
 two-tier preset model, the shared SysEx envelope, the generator CC map (with the
-patch-level `cc:` surface for multitimbral patches), the polyphony budget tool,
+patch-level `cc:` surface for multitimbral patches), the per-op scope `taps:`
+surface (patch-declared audio tap points → per-part channels, §6.11.4), the
+polyphony budget tool,
 the source-vocabulary check, the firmware framework (`rib.c` + `synth_midi` /
 `synth_sysex` / `synth_runtime` + `presets.c`), and the `build --synth`
 composition. The *fourop-fm-specific* bits are `algo`/`route`/`route4`, the

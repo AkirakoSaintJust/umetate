@@ -18,6 +18,7 @@
     "mode.p0", "unison_count.p0", "unison_detune.p0", "legato.p0", "portamento.p0", "note_priority.p0",
     "mode.p1", "unison_count.p1", "unison_detune.p1", "legato.p1", "portamento.p1", "note_priority.p1"
   ],
+  "taps": ["op1.audio", "op2.audio", "op3.audio", "op4.audio"],
   "tables": { "routing": { "kind": "routing" } },
   "parts": {
     "count": 2,
