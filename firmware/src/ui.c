@@ -610,13 +610,23 @@ static void ui_draw_envelope(const ui_widget *w)
     cv_blit(x, y);
 }
 
+/* the scope channel a widget selects: `w->param` = the op index (0..3 -> "op N of
+ * the active part", resolved to 1 + N*n_part + part), or 0x80|part -> "part N mix"
+ * (resolved to 1 + n_op*n_part + part). */
+static uint32_t ui_scope_channel(const ui_widget *w)
+{
+    uint32_t p = (uint32_t)w->param;
+    if (p & 0x80u)
+        return 1u + (uint32_t)ui_t->n_op * (uint32_t)ui_t->n_part + (p & 0x7Fu);
+    return 1u + p * (uint32_t)ui_t->n_part + (uint32_t)ui_selected_part;
+}
+
 /* the oscilloscope: the selected channel's snapshot, downsampled to the widget
- * width, drawn as a line with a mid-line. `w->param` is the scope channel
- * (0 = the final mix, 1.. = the per-op/per-part taps). Time-varying — redraws
- * whenever the snapshot advances (scope_seq), which the ISR bumps every block. */
+ * width, drawn as a line with a mid-line. Time-varying — redraws whenever the
+ * snapshot advances (scope_seq), which the ISR bumps every block. */
 static void ui_draw_scope(const ui_widget *w)
 {
-    uint32_t ch = (uint32_t)w->param, x, y, wd, ht, i;
+    uint32_t ch = ui_scope_channel(w), x, y, wd, ht, i;
     int32_t mid, lx, ly;
     ui_region(w, &x, &y, &wd, &ht);
     if (wd < 2u)
@@ -637,15 +647,14 @@ static void ui_draw_scope(const ui_widget *w)
 }
 
 /* the spectrogram: SCOPE_BINS linearly-spaced Goertzel bars (power-normalized),
- * log-free and integer — the ear hears power, and the harmonic series is visible.
- * `w->param` is the scope channel. */
+ * log-free and integer — the ear hears power, and the harmonic series is visible. */
 static void ui_draw_spectro(const ui_widget *w)
 {
     uint32_t x, y, wd, ht, i;
     uint16_t mag[SCOPE_BINS];
     uint32_t bw;
     ui_region(w, &x, &y, &wd, &ht);
-    scope_spectrum_ch((uint32_t)w->param, mag, SCOPE_BINS);
+    scope_spectrum_ch(ui_scope_channel(w), mag, SCOPE_BINS);
     bw = wd / SCOPE_BINS;
     if (bw < 1u)
         bw = 1u;

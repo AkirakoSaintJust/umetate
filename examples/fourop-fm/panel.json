@@ -43,9 +43,9 @@
           "widgets": [
             { "type": "subheader", "row": 2, "text": "SCOPE" },
             { "type": "scope", "row": 3, "span": 3, "channel": 0 },
-            { "type": "scope", "row": 6, "span": 3, "channel": 2 },
-            { "type": "scope", "row": 9, "span": 3, "channel": 4 },
-            { "type": "scope", "row": 12, "span": 3, "channel": 6 }
+            { "type": "scope", "row": 6, "span": 3, "channel": 1 },
+            { "type": "scope", "row": 9, "span": 3, "channel": 2 },
+            { "type": "scope", "row": 12, "span": 3, "channel": 3 }
           ]
         },
         {
@@ -53,25 +53,25 @@
           "widgets": [
             { "type": "subheader", "row": 2, "text": "SPECTRO" },
             { "type": "spectro", "row": 3, "span": 3, "channel": 0 },
-            { "type": "spectro", "row": 6, "span": 3, "channel": 2 },
-            { "type": "spectro", "row": 9, "span": 3, "channel": 4 },
-            { "type": "spectro", "row": 12, "span": 3, "channel": 6 }
+            { "type": "spectro", "row": 6, "span": 3, "channel": 1 },
+            { "type": "spectro", "row": 9, "span": 3, "channel": 2 },
+            { "type": "spectro", "row": 12, "span": 3, "channel": 3 }
           ]
         },
         {
           "id": "part-scope",
           "widgets": [
             { "type": "subheader", "row": 2, "text": "PARTS" },
-            { "type": "scope", "row": 4, "span": 4, "channel": 0 },
-            { "type": "scope", "row": 9, "span": 4, "channel": 1 }
+            { "type": "scope", "row": 4, "span": 4, "mix_part": 0 },
+            { "type": "scope", "row": 9, "span": 4, "mix_part": 1 }
           ]
         },
         {
           "id": "part-spectro",
           "widgets": [
             { "type": "subheader", "row": 2, "text": "PARTS" },
-            { "type": "spectro", "row": 4, "span": 4, "channel": 0 },
-            { "type": "spectro", "row": 9, "span": 4, "channel": 1 }
+            { "type": "spectro", "row": 4, "span": 4, "mix_part": 0 },
+            { "type": "spectro", "row": 9, "span": 4, "mix_part": 1 }
           ]
         }
       ],

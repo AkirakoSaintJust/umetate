@@ -181,7 +181,10 @@ class Widget(TypedDict):
     unit: NotRequired[str]
     fmt: NotRequired[str]
     items: NotRequired[list[str]]
-    channel: NotRequired[int]  # scope/spectro: the tap channel (0 = mix, 1.. = taps)
+    channel: NotRequired[
+        int
+    ]  # scope/spectro: the op index (0..3) -> "op N of the active part"
+    mix_part: NotRequired[int]  # scope/spectro: the part index (0..1) -> "part N mix"
     part: NotRequired[bool]  # subheader: 1 = "PART N", 0 = "OP N"
 
 

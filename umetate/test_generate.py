@@ -1676,6 +1676,8 @@ int main(void) {
     int64_t e04 = energy(__NAME___dsp_tap(4), 256);
     int64_t e06 = energy(__NAME___dsp_tap(6), 256);
     int64_t e11 = energy(__NAME___dsp_tap(1), 256);
+    int64_t e08 = energy(__NAME___dsp_tap(8), 256);  /* part 0 mix */
+    int64_t e09 = energy(__NAME___dsp_tap(9), 256);  /* part 1 mix */
     if (e00 <= 0 || e02 <= 0 || e04 <= 0 || e06 <= 0) {
         printf("FAIL: part 0 taps silent (%lld %lld %lld %lld)\\n",
                (long long)e00, (long long)e02, (long long)e04, (long long)e06);
@@ -1683,6 +1685,14 @@ int main(void) {
     }
     if (e11 != 0) {
         printf("FAIL: part 1 tap non-silent with no note (e=%lld)\\n", (long long)e11);
+        return 1;
+    }
+    if (e08 <= 0) {
+        printf("FAIL: part 0 mix tap silent\\n");
+        return 1;
+    }
+    if (e09 != 0) {
+        printf("FAIL: part 1 mix tap non-silent (e=%lld)\\n", (long long)e09);
         return 1;
     }
     /* mute op2 -> its tap (channel 2) goes silent, op1 stays live */
@@ -1699,7 +1709,7 @@ int main(void) {
         return 1;
     }
     if (e0 <= 0) { printf("FAIL: op1 tap silent after op2 mute\\n"); return 1; }
-    printf("ok: __NAME__ per-op taps (4 ops x 2 parts, per-part + mute)\\n");
+    printf("ok: __NAME__ per-op + per-part taps (4 ops x 2 parts + 2 part mixes)\\n");
     return 0;
 }
 """

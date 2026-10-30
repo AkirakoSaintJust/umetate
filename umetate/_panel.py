@@ -306,8 +306,14 @@ def generate_panel(
             param = "0"  # unused; the runtime reads the env group
         elif w["type"] in ("scope", "spectro"):
             typ = _WIDGETS[w["type"]]
-            # the scope channel (0 = the final mix, 1.. = the per-op/per-part taps)
-            param = str(w.get("channel", 0))
+            # the scope source: `channel` = the op index (0..3 -> "op N of the
+            # active part"); `mix_part` = the part index (0..1 -> "part N mix",
+            # encoded with the high bit so the runtime can tell them apart).
+            mix_part = w.get("mix_part")
+            if mix_part is not None:
+                param = str(0x80 | mix_part)
+            else:
+                param = str(w.get("channel", 0))
         elif w["type"] == "subheader":
             typ = "UI_SUBHEADER"
             # param 0 = the active operator, 1 = the active part (text = the suffix)

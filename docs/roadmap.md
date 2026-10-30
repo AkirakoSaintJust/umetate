@@ -1138,18 +1138,21 @@ overflow the 7-bit CC space, so the patch declares its surface: the patch-level
 `control-map.md`.
 
 **Scope taps (`taps:`).** The patch declares per-op scope/spectro taps — a list
-of `<instance>.<port>` audio-rate voice-zone outputs (fourop-fm: `op1..op4.audio`,
-resolved through the macro bindings to each operator's post-mute output). The
-generator emits `N_TAP × N_PART` tap channels (`N_TAP_CH`), one per operator per
-part, accumulated in `render_voices_block` as the sum over that part's gated
-voices (part-level scaled, so a muted part reads silence) into a per-block
+of `<instance>.<port>` audio-rate voice-zone outputs (fourop-fm: `op1..op4.audio`
++ `route.car`, resolved through the macro bindings to each operator's post-mute
+output and the per-part voice mix). The generator emits `N_TAP × N_PART` tap
+channels (`N_TAP_CH`), one per operator per part plus the per-part mix, accumulated
+in `render_voices_block` as the sum over that part's gated voices (part-level
+scaled, so a muted part reads silence) into a per-block
 `[N_TAP_CH][UMETATE_DSP_BLOCK_FRAMES]` buffer, and a seam getter
 `<name>_dsp_tap(ch)` (channel `ch` = `tap × N_PART + part`) returning the last
-block's Q15 samples. This is the HOME 4-op scope/spectro feed: the active part's
-four operators are its four channels; the per-part split is what makes the
-"active part" label true when both parts layer. The tap write is bounded to one
-`UMETATE_DSP_BLOCK_FRAMES` window (host tests render larger `frames`), and the
-zero/combine live in the block loop (`taps_clear`, split-core `tap0 += tap1`).
+block's Q15 samples. The scope widget resolves its source dynamically: `channel`
+0..3 = "op N of the active part" (`1 + N·n_part + part`), `mix_part` = "part N
+mix" (`1 + n_op·n_part + part`, the `route.car` tap) — so the HOME 4-op scope
+follows the active part and the 2-part scope shows each part's mix. The tap write
+is bounded to one `UMETATE_DSP_BLOCK_FRAMES` window (host tests render larger
+`frames`), and the zero/combine live in the block loop (`taps_clear`, split-core
+`tap0 += tap1`).
 
 **Polyphony budget tool.** A new `umetate budget --voices N` (and `--parts N`)
 that generates the patch at N voices, compiles on host, times a worst-case

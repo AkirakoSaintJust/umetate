@@ -212,7 +212,8 @@ def main() -> int:
     failures += 0 if bad_sources == ["ENC_KNOB5"] else 1
 
     # the scope + spectro widgets generate (and compile against ui.h); the
-    # `channel` field selects the tap channel (0 = mix, 1.. = per-op taps).
+    # `channel` field selects the op index (0..3 -> "op N of the active part"), and
+    # `mix_part` selects a part mix (0x80|part).
     vis: PanelManifest = {
         "name": "vis",
         "contexts": {
@@ -222,7 +223,7 @@ def main() -> int:
                         "id": "home",
                         "widgets": [
                             {"type": "scope", "row": 1, "span": 3, "channel": 2},
-                            {"type": "spectro", "row": 4, "span": 3, "channel": 6},
+                            {"type": "spectro", "row": 4, "span": 3, "mix_part": 1},
                         ],
                     }
                 ]
@@ -235,9 +236,9 @@ def main() -> int:
         "UI_SCOPE" in vis_src
         and "UI_SPECTRO" in vis_src
         and ", 2," in vis_src
-        and ", 6," in vis_src
+        and ", 129," in vis_src  # 0x80 | 1 = the part-1 mix selector
     ):
-        print("ok: scope/spectro widgets map to UI_SCOPE/UI_SPECTRO + channel")
+        print("ok: scope/spectro widgets map to UI_SCOPE/UI_SPECTRO + op/part selector")
     else:
         print("FAIL: scope/spectro widgets did not map")
         failures += 1
