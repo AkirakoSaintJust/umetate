@@ -1,27 +1,73 @@
 {
   "name": "fourop-fm",
   "home": "home",
+  "alg": "algorithm",
+  "parts": 2,
   "operators": ["op1", "op2", "op3", "op4"],
   "mute": ["op1_mute", "op2_mute", "op3_mute", "op4_mute"],
   "global": [
     { "source": "KEY", "action": "note_on" },
     { "source": "ENC_ALGORITHM", "target": "algorithm", "behavior": "relative" },
-    { "source": "BTN_EDIT", "action": "switch", "arg": "op" },
-    { "source": "BTN_HOME", "action": "pop_home" },
+    { "source": "BTN_EDIT", "action": "switch", "arg": "edit" },
+    { "source": "BTN_ENV", "action": "switch", "arg": "env" },
+    { "source": "BTN_LFO", "action": "switch", "arg": "lfo" },
     { "source": "BTN_FX", "action": "switch", "arg": "fx" },
-    { "source": "BTN_GLO", "action": "switch", "arg": "glo" }
+    { "source": "BTN_GLO", "action": "switch", "arg": "glo" },
+    { "source": "BTN_HOME", "action": "pop_home" },
+    { "source": "BTN_SEL", "action": "op_next" },
+    { "source": "ENC_SELECT", "action": "page" }
   ],
   "contexts": {
     "home": {
       "pages": [
         {
-          "id": "main",
+          "id": "env",
           "widgets": [
-            { "type": "status", "row": 1, "span": 2, "param": "algorithm" },
-            { "type": "param_row", "row": 4, "param": "cutoff", "text": "CUTOFF" },
-            { "type": "param_row", "row": 5, "param": "res", "text": "RES" },
-            { "type": "param_row", "row": 6, "param": "fold", "text": "FOLD" },
-            { "type": "param_row", "row": 7, "param": "feedback", "text": "FEEDBACK" }
+            { "type": "subheader", "row": 2, "text": "ENV" },
+            { "type": "envelope", "row": 3, "span": 3,
+              "params": ["op1.eg.r1", "op1.eg.r2", "op1.eg.r3", "op1.eg.r4", "op1.eg.l1", "op1.eg.l2", "op1.eg.l3"] },
+            { "type": "envelope", "row": 6, "span": 3,
+              "params": ["op2.eg.r1", "op2.eg.r2", "op2.eg.r3", "op2.eg.r4", "op2.eg.l1", "op2.eg.l2", "op2.eg.l3"] },
+            { "type": "envelope", "row": 9, "span": 3,
+              "params": ["op3.eg.r1", "op3.eg.r2", "op3.eg.r3", "op3.eg.r4", "op3.eg.l1", "op3.eg.l2", "op3.eg.l3"] },
+            { "type": "envelope", "row": 12, "span": 3,
+              "params": ["op4.eg.r1", "op4.eg.r2", "op4.eg.r3", "op4.eg.r4", "op4.eg.l1", "op4.eg.l2", "op4.eg.l3"] }
+          ]
+        },
+        {
+          "id": "scope",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "SCOPE" },
+            { "type": "scope", "row": 3, "span": 3, "channel": 0 },
+            { "type": "scope", "row": 6, "span": 3, "channel": 2 },
+            { "type": "scope", "row": 9, "span": 3, "channel": 4 },
+            { "type": "scope", "row": 12, "span": 3, "channel": 6 }
+          ]
+        },
+        {
+          "id": "spectro",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "SPECTRO" },
+            { "type": "spectro", "row": 3, "span": 3, "channel": 0 },
+            { "type": "spectro", "row": 6, "span": 3, "channel": 2 },
+            { "type": "spectro", "row": 9, "span": 3, "channel": 4 },
+            { "type": "spectro", "row": 12, "span": 3, "channel": 6 }
+          ]
+        },
+        {
+          "id": "part-scope",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "PARTS" },
+            { "type": "scope", "row": 4, "span": 4, "channel": 0 },
+            { "type": "scope", "row": 9, "span": 4, "channel": 1 }
+          ]
+        },
+        {
+          "id": "part-spectro",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "PARTS" },
+            { "type": "spectro", "row": 4, "span": 4, "channel": 0 },
+            { "type": "spectro", "row": 9, "span": 4, "channel": 1 }
           ]
         }
       ],
@@ -32,57 +78,16 @@
         { "source": "ENC_KNOB4", "slot": 3, "behavior": "relative" }
       ]
     },
-    "op": {
+    "edit": {
       "pages": [
         {
-          "id": "pitch",
+          "id": "op",
           "widgets": [
-            { "type": "status", "row": 1, "span": 2, "param": "algorithm" },
-            { "type": "param_row", "row": 4, "param": "op1.ph.inc_ratio", "text": "RATIO", "unit": "x" },
-            { "type": "param_row", "row": 5, "param": "op1.vca.level", "text": "LEVEL" },
-            { "type": "param_row", "row": 6, "param": "op1.fb.level", "text": "FEEDBACK" },
-            { "type": "param_row", "row": 7, "param": "op1.osc.waveform", "text": "WAVE" }
-          ]
-        },
-        {
-          "id": "env-rates",
-          "widgets": [
-            { "type": "status", "row": 1, "span": 2, "param": "algorithm" },
-            { "type": "param_row", "row": 4, "param": "op1.eg.r1", "text": "ATK" },
-            { "type": "param_row", "row": 5, "param": "op1.eg.r2", "text": "DCY1" },
-            { "type": "param_row", "row": 6, "param": "op1.eg.r3", "text": "DCY2" },
-            { "type": "param_row", "row": 7, "param": "op1.eg.r4", "text": "REL" },
-            { "type": "envelope", "row": 9, "span": 5,
-              "params": ["op1.eg.r1", "op1.eg.r2", "op1.eg.r3", "op1.eg.r4", "op1.eg.l1", "op1.eg.l2", "op1.eg.l3"] }
-          ]
-        },
-        {
-          "id": "env-levels",
-          "widgets": [
-            { "type": "status", "row": 1, "span": 2, "param": "algorithm" },
-            { "type": "param_row", "row": 4, "param": "op1.eg.l1", "text": "L1" },
-            { "type": "param_row", "row": 5, "param": "op1.eg.l2", "text": "L2" },
-            { "type": "param_row", "row": 6, "param": "op1.eg.l3", "text": "SUS" },
-            { "type": "envelope", "row": 8, "span": 5,
-              "params": ["op1.eg.r1", "op1.eg.r2", "op1.eg.r3", "op1.eg.r4", "op1.eg.l1", "op1.eg.l2", "op1.eg.l3"] }
-          ]
-        },
-        {
-          "id": "trem",
-          "widgets": [
-            { "type": "status", "row": 1, "span": 2, "param": "algorithm" },
-            { "type": "param_row", "row": 4, "param": "op1.lfo.rate", "text": "RATE" },
-            { "type": "param_row", "row": 5, "param": "op1.lfo.depth", "text": "DEPTH" }
-          ]
-        },
-        {
-          "id": "mute",
-          "widgets": [
-            { "type": "status", "row": 1, "span": 2, "param": "algorithm" },
-            { "type": "param_row", "row": 4, "param": "op1_mute", "text": "OP1" },
-            { "type": "param_row", "row": 5, "param": "op2_mute", "text": "OP2" },
-            { "type": "param_row", "row": 6, "param": "op3_mute", "text": "OP3" },
-            { "type": "param_row", "row": 7, "param": "op4_mute", "text": "OP4" }
+            { "type": "subheader", "row": 2, "text": "OP" },
+            { "type": "param_row", "row": 3, "param": "op1.ph.inc_ratio", "text": "RATIO" },
+            { "type": "param_row", "row": 4, "param": "op1.vca.level", "text": "LEVEL" },
+            { "type": "param_row", "row": 5, "param": "op1.fb.level", "text": "FEEDBACK" },
+            { "type": "param_row", "row": 6, "param": "op1.osc.waveform", "text": "WAVE" }
           ]
         }
       ],
@@ -90,20 +95,107 @@
         { "source": "ENC_KNOB1", "slot": 0, "behavior": "relative" },
         { "source": "ENC_KNOB2", "slot": 1, "behavior": "relative" },
         { "source": "ENC_KNOB3", "slot": 2, "behavior": "relative" },
-        { "source": "ENC_KNOB4", "slot": 3, "behavior": "relative" },
-        { "source": "ENC_SELECT", "action": "page" },
-        { "source": "BTN_SEL", "action": "op_next" }
+        { "source": "ENC_KNOB4", "slot": 3, "behavior": "relative" }
+      ]
+    },
+    "env": {
+      "pages": [
+        {
+          "id": "a-env-rates",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "A-ENV" },
+            { "type": "param_row", "row": 3, "param": "op1.eg.r1", "text": "ATK" },
+            { "type": "param_row", "row": 4, "param": "op1.eg.r2", "text": "DCY1" },
+            { "type": "param_row", "row": 5, "param": "op1.eg.r3", "text": "DCY2" },
+            { "type": "param_row", "row": 6, "param": "op1.eg.r4", "text": "REL" },
+            { "type": "envelope", "row": 7, "span": 5,
+              "params": ["op1.eg.r1", "op1.eg.r2", "op1.eg.r3", "op1.eg.r4", "op1.eg.l1", "op1.eg.l2", "op1.eg.l3"] }
+          ]
+        },
+        {
+          "id": "a-env-levels",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "A-ENV" },
+            { "type": "param_row", "row": 3, "param": "op1.eg.l1", "text": "L1" },
+            { "type": "param_row", "row": 4, "param": "op1.eg.l2", "text": "L2" },
+            { "type": "param_row", "row": 5, "param": "op1.eg.l3", "text": "SUS" },
+            { "type": "envelope", "row": 6, "span": 5,
+              "params": ["op1.eg.r1", "op1.eg.r2", "op1.eg.r3", "op1.eg.r4", "op1.eg.l1", "op1.eg.l2", "op1.eg.l3"] }
+          ]
+        },
+        {
+          "id": "p-env",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "P-ENV", "part": true },
+            { "type": "param_row", "row": 3, "param": "penv_base", "text": "BASE" },
+            { "type": "param_row", "row": 4, "param": "penv_rate", "text": "RATE" }
+          ]
+        }
+      ],
+      "bindings": [
+        { "source": "ENC_KNOB1", "slot": 0, "behavior": "relative" },
+        { "source": "ENC_KNOB2", "slot": 1, "behavior": "relative" },
+        { "source": "ENC_KNOB3", "slot": 2, "behavior": "relative" },
+        { "source": "ENC_KNOB4", "slot": 3, "behavior": "relative" }
+      ]
+    },
+    "lfo": {
+      "pages": [
+        {
+          "id": "a-lfo",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "A-LFO" },
+            { "type": "param_row", "row": 3, "param": "op1.lfo.rate", "text": "RATE" },
+            { "type": "param_row", "row": 4, "param": "op1.lfo.depth", "text": "DEPTH" }
+          ]
+        },
+        {
+          "id": "p-lfo",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "P-LFO", "part": true },
+            { "type": "param_row", "row": 3, "param": "pitch_rate", "text": "RATE" },
+            { "type": "param_row", "row": 4, "param": "pitch_depth", "text": "DEPTH" }
+          ]
+        }
+      ],
+      "bindings": [
+        { "source": "ENC_KNOB1", "slot": 0, "behavior": "relative" },
+        { "source": "ENC_KNOB2", "slot": 1, "behavior": "relative" },
+        { "source": "ENC_KNOB3", "slot": 2, "behavior": "relative" },
+        { "source": "ENC_KNOB4", "slot": 3, "behavior": "relative" }
       ]
     },
     "fx": {
       "pages": [
         {
-          "id": "fx",
+          "id": "filter",
           "widgets": [
-            { "type": "label", "row": 1, "span": 2, "text": "FX" },
+            { "type": "subheader", "row": 2, "text": "FILTER" },
+            { "type": "param_row", "row": 3, "param": "filter_on", "text": "ON" },
             { "type": "param_row", "row": 4, "param": "cutoff", "text": "CUTOFF" },
             { "type": "param_row", "row": 5, "param": "res", "text": "RES" },
-            { "type": "param_row", "row": 6, "param": "fold", "text": "FOLD" }
+            { "type": "param_row", "row": 6, "param": "filter_type", "text": "TYPE" }
+          ]
+        },
+        {
+          "id": "filter-env",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "FILTER ADSR" },
+            { "type": "param_row", "row": 3, "param": "fenv_a", "text": "ATK" },
+            { "type": "param_row", "row": 4, "param": "fenv_d", "text": "DCY" },
+            { "type": "param_row", "row": 5, "param": "fenv_s", "text": "SUS" },
+            { "type": "param_row", "row": 6, "param": "fenv_r", "text": "REL" },
+            { "type": "param_row", "row": 7, "param": "fenv_depth", "text": "DEPTH" }
+          ]
+        },
+        {
+          "id": "fold",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "FOLD" },
+            { "type": "param_row", "row": 3, "param": "fold_on", "text": "ON" },
+            { "type": "param_row", "row": 4, "param": "fold_threshold", "text": "THRESH" },
+            { "type": "param_row", "row": 5, "param": "fold_folds", "text": "FOLDS" },
+            { "type": "param_row", "row": 6, "param": "fold_type", "text": "TYPE" }
           ]
         }
       ],
@@ -117,13 +209,23 @@
     "glo": {
       "pages": [
         {
-          "id": "mod",
+          "id": "part-level",
           "widgets": [
-            { "type": "label", "row": 1, "span": 2, "text": "GLOBAL" },
-            { "type": "param_row", "row": 4, "param": "pitch_rate", "text": "VIB RATE" },
-            { "type": "param_row", "row": 5, "param": "pitch_depth", "text": "VIB DEPTH" },
-            { "type": "param_row", "row": 6, "param": "penv_base", "text": "P-ENV BASE" },
-            { "type": "param_row", "row": 7, "param": "penv_rate", "text": "P-ENV RATE" }
+            { "type": "subheader", "row": 2, "text": "PART LEVEL", "part": true },
+            { "type": "param_row", "row": 3, "param": "level.p0", "text": "LEVEL" },
+            { "type": "param_row", "row": 4, "param": "delay.p0", "text": "DELAY" }
+          ]
+        },
+        {
+          "id": "voice-mode",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "VOICE MODE", "part": true },
+            { "type": "param_row", "row": 3, "param": "mode.p0", "text": "MODE" },
+            { "type": "param_row", "row": 4, "param": "unison_count.p0", "text": "UNISON" },
+            { "type": "param_row", "row": 5, "param": "unison_detune.p0", "text": "DETUNE" },
+            { "type": "param_row", "row": 6, "param": "legato.p0", "text": "LEGATO" },
+            { "type": "param_row", "row": 7, "param": "portamento.p0", "text": "PORTAM" },
+            { "type": "param_row", "row": 8, "param": "note_priority.p0", "text": "PRIOR" }
           ]
         }
       ],
