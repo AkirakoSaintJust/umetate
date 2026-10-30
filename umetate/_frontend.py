@@ -43,7 +43,7 @@ from ._schema import (
     Zone,
 )
 from ._tables import build_tables
-from ._voice import mode_param_entries
+from ._voice import MODE_PARAMS, mode_param_entries
 
 
 def compile(
@@ -110,6 +110,8 @@ def compile(
         for i in instances
         if i.zone == "voice"
     )
+    if n_parts > 1:
+        n_voice_params += len(MODE_PARAMS)  # the per-part voice-mode params
     n_global_params = sum(
         sum(1 for k in i.spec.params.values() if k != TABLE)
         for i in instances
@@ -117,7 +119,6 @@ def compile(
     )
 
     params = _build_params(instances, patch.get("params") or {}, n_parts, parts)
-    params.extend(mode_param_entries(len(params)))
 
     return CompiledGraph(
         name=name,
@@ -234,6 +235,9 @@ def _build_params(
                         meta.get(target),
                     )
                 )
+            # the six per-part voice-mode params, in the part's voice block (so a
+            # part patch carries them)
+            entries.extend(mode_param_entries(len(entries), n_parts, only_part=p))
     else:
         for cname, target, default, kind in voice:
             base = by_target.get(target, target)
@@ -267,6 +271,8 @@ def _build_params(
                         display="raw",
                     )
                 )
+    else:
+        entries.extend(mode_param_entries(len(entries), 1))
     return entries
 
 

@@ -101,22 +101,35 @@ global six to a per-part array.
 
 ### 2.2 Parameter manifest
 
-> The 39 friendly names below are what the panel exposes. The engine is
+> The friendly names below are what the panel exposes. The engine is
 > **two-timbre** (`parts: 2`, channels 0 and 1): every voice-zone param is a
-> per-part array, so the full id space is 68 voice params (the `fm_op` macro's
-> 17 × 4 operators) × 2 parts + 9 global + 10 routing + 6 voice-mode = **161
-> `set_param` ids**, part-major (`part × param`). The patch's `cc:` list exposes
-> 45 of them (part 0's timbre + the global FX + the mode params) as the fixed CC
-> surface; part 1's timbre comes from the multi patch / SysEx. The 6 voice-mode
-> params (`mode`, `unison_count`, `unison_detune`, `legato`, `portamento`,
-> `note_priority`) are per-preset.
+> per-part array, so the full id space is **74 voice params per part** (the
+> `fm_op` macro's 17 × 4 operators + the six voice-mode params) × 2 parts + 21
+> global (the filter + fold output chain) + 10 routing = **179 `set_param` ids**,
+> part-major (`part × param`). The patch's `cc:` list exposes 51 of them (part 0's
+> timbre + the global FX + both parts' mode params) as the fixed CC surface; part
+> 1's timbre comes from the multi patch / SysEx. The six voice-mode params
+> (`mode`, `unison_count`, `unison_detune`, `legato`, `portamento`,
+> `note_priority`) are **per-part** (each part its own poly/unison/legato +
+> counts + times).
 
 | Param (name) | Target | Min | Max | Curve | Unit | Display |
 | --- | --- | --- | --- | --- | --- | --- |
 | algorithm | algo.algorithm | 0 | 7 | linear | | raw (0–7) |
 | cutoff | lp.f | 0 | 65535 | log | | off_pct ("off" at 0) |
 | res | lp.q | 0 | 65535 | linear | | pct_inv (100% = least damping) |
+| filter_type | lp.type | 0 | 2 | linear | | raw (0=LP 1=BP 2=HP) |
+| filter_on | lp.on | 0 | 1 | linear | | onoff (off/on) |
+| fenv_a | fenv.a | 0 | 65535 | log | | raw |
+| fenv_d | fenv.d | 0 | 65535 | log | | raw |
+| fenv_s | fenv.s | 0 | 32767 | linear | | pct |
+| fenv_r | fenv.r | 0 | 65535 | log | | raw |
+| fenv_depth | lp.fenv_depth | 0 | 65535 | linear | | raw |
 | fold | wf.amount | 0 | 32767 | linear | | pct |
+| fold_on | wf.on | 0 | 1 | linear | | onoff (off/on) |
+| fold_threshold | wf.threshold | 0 | 32767 | linear | | pct |
+| fold_folds | wf.folds | 1 | 8 | linear | | raw |
+| fold_type | wf.type | 0 | 0 | linear | | raw |
 | feedback | algo.car_fb | 0 | 32767 | linear | | pct |
 | attack | op1.eg.r1 | 0 | 65535 | log | | raw |
 | release | op1.eg.r4 | 0 | 65535 | log | | raw |

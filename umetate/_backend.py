@@ -59,16 +59,17 @@ def emit(graph: CompiledGraph) -> str:
     lines.append(f"#define N_PART {graph.n_parts}")
     lines.append(f"#define CONTROL_BLOCK {graph.control_block}")
     lines.append("")
+    per_part = graph.n_parts > 1
     lines.extend(_note_to_inc())
     lines.extend(_state_decls(graph))
-    lines.extend(_voice.voice_state_decls())
-    lines.extend(_voice.mode_param_decls())
+    lines.extend(_voice.voice_state_decls(per_part))
+    lines.extend(_voice.mode_param_decls(graph.n_parts))
     lines.extend(_routing_decls(graph))
     lines.append("static uint32_t patch_gate UMETATE_CPU1;")
     lines.extend(_param_decls(graph))
     lines.extend(_param_tables(graph))
     lines.append("")
-    lines.extend(_voice.helpers())  # voice_mono_active (used by note_on/off)
+    lines.extend(_voice.helpers(per_part))  # voice_mono_active (used by note_on/off)
     lines.extend(_note_derived_fn(graph))  # <name>_note_derived (render + seam)
     lines.extend(_render(graph, by_id, table_names))
     lines.extend(_seam(graph, by_id))
@@ -259,7 +260,7 @@ def _render_pre_block(
         for field, template in i.block_derived.items():
             expr = substitute(i, template, "0", table_names, per_part)
             lines.append(f"    {i.state_ref(field, '0')} = {expr};")
-    lines.extend(_dedent4(_voice.glide(name)))
+    lines.extend(_dedent4(_voice.glide(name, graph.n_parts > 1)))
     lines.append("}")
     lines.append("")
     return lines
@@ -632,11 +633,12 @@ def _note_derived_fn(graph: CompiledGraph) -> list[str]:
 
 def _seam(graph: CompiledGraph, by_id: dict[str, NodeInstance]) -> list[str]:
     name = graph.name
+    per_part = graph.n_parts > 1
     lines: list[str] = []
     lines.extend(
         [
             f"UMETATE_DSP_API void {name}_dsp_reset(void) {{",
-            *_voice.reset(),
+            *_voice.reset(per_part),
             "}",
             "",
         ]
@@ -646,7 +648,7 @@ def _seam(graph: CompiledGraph, by_id: dict[str, NodeInstance]) -> list[str]:
     lines.extend(
         [
             f"UMETATE_DSP_API void {name}_dsp_all_notes_off(void) {{",
-            *_voice.all_off(),
+            *_voice.all_off(per_part),
             "}",
             "",
             f"UMETATE_DSP_API void {name}_dsp_set_bend_q16(uint32_t bend) {{ (void)bend; }}",

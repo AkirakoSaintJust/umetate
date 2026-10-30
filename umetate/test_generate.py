@@ -989,6 +989,60 @@ int main(void) {
 }
 """
 
+# The per-part voice-mode contract: the six mode params are per-part, so part 0
+# (mono) and part 1 (poly) allocate independently. Part 0's mono priority is
+# last-note; note_off takes over to the previous held note. Observed through
+# `dsp_lit` (the gated-note bitmask in a 27-note window).
+PARTS_MODE_HARNESS = """\
+#include <stdio.h>
+#include <stdint.h>
+void __NAME___dsp_reset(void);
+void __NAME___dsp_note_on_ch(uint32_t note, uint32_t velocity, uint32_t channel);
+void __NAME___dsp_note_off(uint32_t note);
+int __NAME___dsp_set_param(uint32_t id, int32_t value);
+uint32_t __NAME___dsp_lit(uint32_t base);
+int main(void) {
+    /* part 0 mono (last-note priority), part 1 poly */
+    __NAME___dsp_reset();
+    __NAME___dsp_set_param(__MODE_P0_ID__, 1);
+    __NAME___dsp_set_param(__MODE_P1_ID__, 0);
+    __NAME___dsp_note_on_ch(60, 100, 0u);
+    __NAME___dsp_note_on_ch(62, 100, 0u);
+    __NAME___dsp_note_on_ch(64, 100, 0u);
+    __NAME___dsp_note_on_ch(70, 100, 1u);
+    __NAME___dsp_note_on_ch(72, 100, 1u);
+    uint32_t lit = __NAME___dsp_lit(60);
+    /* part 0: only note 64 (bit 4); part 1: 70 + 72 (bits 10, 12) */
+    if (lit != ((1u << 4) | (1u << 10) | (1u << 12))) {
+        printf("FAIL: per-part mono/poly isolation (lit=%u)\\n", lit);
+        return 1;
+    }
+    __NAME___dsp_note_off(64);
+    lit = __NAME___dsp_lit(60);
+    /* part 0 mono takeover to 62 (bit 2); part 1 unchanged */
+    if (lit != ((1u << 2) | (1u << 10) | (1u << 12))) {
+        printf("FAIL: per-part mono takeover (lit=%u)\\n", lit);
+        return 1;
+    }
+
+    /* part 1 unison (count 2): the third stack steals the oldest stack */
+    __NAME___dsp_reset();
+    __NAME___dsp_set_param(__MODE_P1_ID__, 2);
+    __NAME___dsp_set_param(__UNISON_COUNT_P1_ID__, 2);
+    __NAME___dsp_note_on_ch(60, 100, 1u);
+    __NAME___dsp_note_on_ch(72, 100, 1u);
+    __NAME___dsp_note_on_ch(84, 100, 1u);
+    lit = __NAME___dsp_lit(60);
+    /* 6 unison voices wanted, 4 available -> the oldest stack (60) is stolen */
+    if (lit != ((1u << 12) | (1u << 24))) {
+        printf("FAIL: per-part unison stacking (lit=%u)\\n", lit);
+        return 1;
+    }
+    printf("ok: __NAME__ per-part mono priority/takeover + poly isolation + unison\\n");
+    return 0;
+}
+"""
+
 # The §12.1 set_param seam contract: a bad id is rejected (-1, no write) and an
 # out-of-range value is clamped to the param's [min, max] (the dsp_param table).
 SET_PARAM_HARNESS = """\
@@ -1537,6 +1591,44 @@ def _parts_level_delay(patch: Patch) -> tuple[bool, str]:
             .replace("__LEVEL_P0_ID__", level_id)
             .replace("__DELAY_P0_ID__", delay_id)
         )
+        (d / "harness.c").write_text(harness)
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            return False, "compile failed:\n" + proc.stderr
+        run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+        return run.returncode == 0, run.stdout.strip()
+
+
+def _parts_modes(patch: Patch) -> tuple[bool, str]:
+    """Generate + compile + run the per-part voice-mode contract: the six mode
+    params are per-part (mono for part 0, poly/unison for part 1)."""
+    src = generate(patch)
+    ids = param_ids(patch)
+    subs = {
+        "__NAME__": patch["name"].replace("-", "_").replace(".", "_"),
+        "__MODE_P0_ID__": str(ids["mode.p0"]),
+        "__MODE_P1_ID__": str(ids["mode.p1"]),
+        "__UNISON_COUNT_P1_ID__": str(ids["unison_count.p1"]),
+    }
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        harness = PARTS_MODE_HARNESS
+        for k, v in subs.items():
+            harness = harness.replace(k, v)
         (d / "harness.c").write_text(harness)
         proc = subprocess.run(
             [
@@ -2394,6 +2486,11 @@ def main() -> int:
     print(("ok: " if ok else "FAIL: ") + (msg or "per-part level + delay"))
     failures += 0 if ok else 1
 
+    # the six voice-mode params are per-part (mono/poly/unison independence).
+    ok, msg = _parts_modes(PARTS_PATCH)
+    print(("ok: " if ok else "FAIL: ") + (msg or "per-part voice modes"))
+    failures += 0 if ok else 1
+
     # the §12.1 set_param seam contract: bad-id rejection + value clamp.
     ok, msg = _set_param_contract(MODE_PATCH)
     print(
@@ -2407,7 +2504,7 @@ def main() -> int:
     if pids.get("osc.waveform.p0") is None or pids.get("osc.waveform.p1") is None:
         print("FAIL: per-part voice params are not in the param id space")
         failures += 1
-    elif pids["osc.waveform.p0"] != pids["osc.waveform.p1"] - 2:
+    elif pids["osc.waveform.p0"] != pids["osc.waveform.p1"] - 8:
         print("FAIL: per-part params are not part-major contiguous")
         failures += 1
     elif pids.get("channel.p0") is None or pids.get("channel.p1") is None:
@@ -2422,21 +2519,22 @@ def main() -> int:
 
     layout = generate_sysex_layout(PARTS_PATCH)
     slots = SLOTS
+    n_params = 8  # 2 voice params + 6 per-part voice-mode params
     expect = {
         "model": 0,
-        "n_params": 2,
+        "n_params": n_params,
         "n_parts": 2,
-        "part_patch_size": 1 + 16 + 2 * 4 + 4,
+        "part_patch_size": 1 + 16 + n_params * 4 + 4,
         "multi_patch_size": 1 + 16 + 2 + 5 * 2 * 4 + 4,
         "settings_size": 1 + 4 + 4 + 4,
-        "part_patch_bank_size": slots * (1 + 16 + 2 * 4 + 4),
+        "part_patch_bank_size": slots * (1 + 16 + n_params * 4 + 4),
         "multi_patch_bank_size": slots * (1 + 16 + 2 + 5 * 2 * 4 + 4),
     }
     if layout != expect:
         print(f"FAIL: sysex-layout geometry is wrong ({layout})")
         failures += 1
     else:
-        print("ok: sysex-layout pins the record geometry (2 params, 2 parts)")
+        print("ok: sysex-layout pins the record geometry (8 params, 2 parts)")
 
     # the generated synth_layout.h carries the runtime constants the framework uses.
     from .generate import generate_synth_header
@@ -2444,7 +2542,7 @@ def main() -> int:
     hdr = generate_synth_header(PARTS_PATCH)
     want = (
         "#define SYNTH_MODEL 0u\n"
-        "#define SYNTH_N_PARAMS 2u\n"
+        "#define SYNTH_N_PARAMS 8u\n"
         "#define SYNTH_N_PARTS 2u\n"
         "#define SYNTH_N_GLOBAL 0u\n"
         "#define SYNTH_ROUTING_BASE (SYNTH_N_PARTS * SYNTH_N_PARAMS + SYNTH_N_GLOBAL)\n"
@@ -2504,13 +2602,13 @@ def main() -> int:
     else:
         print("ok: the cc header carries the per-param [min, max] ranges")
 
-    # the patch-level `cc:` list limits the CC map (the fourop patch's 161 params
-    # overflow the CC space; it declares its 45-param surface).
+    # the patch-level `cc:` list limits the CC map (the fourop patch's 173 params
+    # overflow the CC space; it declares its 51-param surface).
     cm_sub = generate_cc_map(ffm)
-    if len(cm_sub["entries"]) == 45 and all(
+    if len(cm_sub["entries"]) == 51 and all(
         e["cc"] != 64 and not 120 <= e["cc"] <= 127 for e in cm_sub["entries"]
     ):
-        print("ok: the cc: list limits the map (45 exposed, reserved skipped)")
+        print("ok: the cc: list limits the map (51 exposed, reserved skipped)")
     else:
         print("FAIL: the cc: list does not limit the map as declared")
         failures += 1

@@ -11,6 +11,10 @@ the per-voice base increment `voice_inc[v]` (note_to_inc × detune) that the
 note-derived increments scale. Portamento (glide) ramps `voice_inc[v]` toward
 `voice_target_inc[v]` at a constant rate (linear in the increment, no LUT); the
 ramp lives in `glide()` and re-runs the note→increment glue each block.
+
+The six mode params are **per-part** when the patch is multitimbral (`n_parts > 1`):
+each part has its own poly/unison/legato + counts + times. Single-timbre keeps them
+global. `mode_ref` emits the right accessor for the current addressing mode.
 """
 
 from __future__ import annotations
@@ -18,7 +22,8 @@ from __future__ import annotations
 from ._ir import ParamEntry
 
 # (cname, default, friendly name, min, max, unit) for the six universal voice-mode
-# params, appended after a patch's own node params (ids N..N+5).
+# params. Multi-timbre: per-part arrays addressed through the part index; the
+# single-timbre fallback keeps them global scalars.
 MODE_PARAMS: tuple[tuple[str, int, str, int, int, str], ...] = (
     ("vm_mode", 0, "mode", 0, 2, ""),  # 0=poly 1=mono 2=unison
     ("vm_unison_count", 1, "unison_count", 1, 8, ""),
@@ -29,31 +34,79 @@ MODE_PARAMS: tuple[tuple[str, int, str, int, int, str], ...] = (
 )
 
 
-def mode_param_entries(start_id: int) -> list[ParamEntry]:
-    """The six mode params as ParamEntrys with ids `start_id`..`start_id+5`."""
+def mode_param_entries(
+    start_id: int, n_parts: int = 1, only_part: int | None = None
+) -> list[ParamEntry]:
+    """The six mode params as ParamEntrys. Single-timbre (n_parts == 1): global
+    (part=None). Multi-timbre: per-part (part 0..n_parts-1, `.p{p}` names);
+    `only_part` restricts to one part (the voice block builds them part-major)."""
+    entries: list[ParamEntry] = []
+    for cname, default_, name, lo, hi, unit in MODE_PARAMS:
+        if n_parts > 1:
+            parts = [only_part] if only_part is not None else list(range(n_parts))
+            for p in parts:
+                entries.append(
+                    ParamEntry(
+                        id=start_id + len(entries),
+                        name=f"{name}.p{p}",
+                        target=cname,
+                        cname=cname,
+                        part=p,
+                        min=lo,
+                        max=hi,
+                        default=default_,
+                        curve="linear",
+                        unit=unit,
+                        rate="block",
+                        modulatable=False,
+                        display="raw",
+                    )
+                )
+        else:
+            entries.append(
+                ParamEntry(
+                    id=start_id + len(entries),
+                    name=name,
+                    target=cname,
+                    cname=cname,
+                    part=None,
+                    min=lo,
+                    max=hi,
+                    default=default_,
+                    curve="linear",
+                    unit=unit,
+                    rate="block",
+                    modulatable=False,
+                    display="raw",
+                )
+            )
+    return entries
+
+
+def mode_param_decls(n_parts: int) -> list[str]:
+    """The `static int32_t vm_*` backing variables: global scalars (single-timbre)
+    or per-part arrays (multi-timbre)."""
+    if n_parts > 1:
+        return [
+            f"static int32_t {cname}[{n_parts}] = {{ "
+            + ", ".join(str(default_) for _ in range(n_parts))
+            + " };"
+            for cname, default_, *_ in MODE_PARAMS
+        ]
     return [
-        ParamEntry(
-            id=start_id + i,
-            name=name,
-            target=cname,
-            cname=cname,
-            part=None,
-            min=lo,
-            max=hi,
-            default=default_,
-            curve="linear",
-            unit=unit,
-            rate="block",
-            modulatable=False,
-            display="raw",
-        )
-        for i, (cname, default_, name, lo, hi, unit) in enumerate(MODE_PARAMS)
+        f"static int32_t {cname} = {default_};" for cname, default_, *_ in MODE_PARAMS
     ]
 
 
-def voice_state_decls() -> list[str]:
+def mode_ref(cname: str, per_part: bool, part_expr: str) -> str:
+    """The C accessor for a mode param: `cname[part_expr]` when per-part, else the
+    global scalar `cname`."""
+    return f"{cname}[{part_expr}]" if per_part else cname
+
+
+def voice_state_decls(per_part: bool) -> list[str]:
     """Per-voice SoA state + the mono held-note tracker (all CPU1)."""
-    return [
+    lines = [
         "static uint8_t voice_gate[NVOICE] UMETATE_CPU1;",
         "static uint8_t voice_note[NVOICE] UMETATE_CPU1;",
         "static uint32_t voice_age[NVOICE] UMETATE_CPU1;",
@@ -64,24 +117,48 @@ def voice_state_decls() -> list[str]:
         "static uint32_t voice_inc[NVOICE] UMETATE_CPU1; /* current base increment */",
         "static uint32_t voice_target_inc[NVOICE] UMETATE_CPU1; /* glide target */",
         "static int32_t voice_detune[NVOICE] UMETATE_CPU1;",
-        "static uint8_t mono_held[128] UMETATE_CPU1;",
-        "static uint32_t mono_order[128] UMETATE_CPU1;",
-        "static uint32_t mono_serial;",
-        "static uint32_t ages;",
     ]
+    if per_part:
+        lines += [
+            "static uint8_t mono_held[N_PART][128] UMETATE_CPU1;",
+            "static uint32_t mono_order[N_PART][128] UMETATE_CPU1;",
+            "static uint32_t mono_serial[N_PART] UMETATE_CPU1;",
+            "static uint8_t part_mono_voice[N_PART] UMETATE_CPU1; /* the part's mono voice */",
+        ]
+    else:
+        lines += [
+            "static uint8_t mono_held[128] UMETATE_CPU1;",
+            "static uint32_t mono_order[128] UMETATE_CPU1;",
+            "static uint32_t mono_serial;",
+        ]
+    lines.append("static uint32_t ages;")
+    return lines
 
 
-def mode_param_decls() -> list[str]:
-    """The six `static int32_t vm_*` backing variables (in the param slot table)."""
+def helpers(per_part: bool) -> list[str]:
+    """Static helpers shared by note_on/note_off. `voice_mono_active` is emitted
+    into the SRAM `.dsp_text` section (it is called from the note handlers that run
+    on the DSP core), so it must be `always_inline` — a compiler-chosen call would
+    branch from SRAM into the XIP `.text` section (rejected by build.py)."""
+    if per_part:
+        return [
+            "static inline __attribute__((always_inline)) uint32_t voice_mono_active(",
+            "        uint32_t p, int32_t priority) {",
+            "    uint32_t active = 0xFFu;",
+            "    for (uint32_t n = 0; n < 128u; n++) {",
+            "        if (!mono_held[p][n]) continue;",
+            "        if (active == 0xFFu) { active = n; continue; }",
+            "        if (priority == 2) { if (n < active) active = n; }",
+            "        else if (priority == 1) { if (n > active) active = n; }",
+            "        else { if (mono_order[p][n] > mono_order[p][active]) active = n; }",
+            "    }",
+            "    return active;",
+            "}",
+            "",
+        ]
     return [
-        f"static int32_t {cname} = {default_};" for cname, default_, *_ in MODE_PARAMS
-    ]
-
-
-def helpers() -> list[str]:
-    """Static helpers shared by note_on/note_off."""
-    return [
-        "static inline uint32_t voice_mono_active(int32_t priority) {",
+        "static inline __attribute__((always_inline)) uint32_t voice_mono_active(",
+        "        int32_t priority) {",
         "    uint32_t active = 0xFFu;",
         "    for (uint32_t n = 0; n < 128u; n++) {",
         "        if (!mono_held[n]) continue;",
@@ -98,7 +175,7 @@ def helpers() -> list[str]:
 
 def note_on(name: str, n_parts: int) -> list[str]:
     """The `<name>_dsp_note_on_ch` implementation (mode-aware single-timbre, or
-    channel/keyzone routing for parts) + the frozen `<name>_dsp_note_on` forwarder."""
+    per-part mode/channel/keyzone routing for parts) + the frozen forwarder."""
     impl = _note_on_ch_parts(name) if n_parts > 1 else _note_on_ch_single(name)
     return impl + [
         f"UMETATE_DSP_API void {name}_dsp_note_on(uint32_t note, uint32_t velocity) {{",
@@ -186,7 +263,8 @@ def _note_on_ch_single(name: str) -> list[str]:
 
 def _note_on_ch_parts(name: str) -> list[str]:
     """The multitimbral routing: a note fires every matching part (channel +
-    keyzone), each allocating one poly voice from the shared pool."""
+    keyzone), each allocating per its own voice mode — poly (one voice), unison
+    (count voices, detuned), or mono (the part's single voice, legato/priority)."""
     return [
         f"UMETATE_DSP_API void {name}_dsp_note_on_ch(uint32_t note, uint32_t velocity, uint32_t channel) {{",
         "    if (note > 127u || !velocity) return;",
@@ -198,24 +276,73 @@ def _note_on_ch_parts(name: str) -> list[str]:
         "        if (part_channel[p] != -1 && channel != 0xFFFFFFFFu &&",
         "            part_channel[p] != (int32_t)channel) continue;",
         "        if (note < (uint32_t)part_low[p] || note > (uint32_t)part_high[p]) continue;",
-        "        uint32_t best = 0xFFFFFFFFu, bp = 0;",
-        "        for (uint32_t v = 0; v < NVOICE; v++) {",
-        "            if (chosen[v]) continue;",
-        "            uint32_t score = (voice_gate[v] || voice_delay[v] > 0u)",
-        "                             ? 0x80000000u + voice_age[v] : voice_age[v] + 1u;",
-        "            if (score < best) { best = score; bp = v; }",
+        "        uint32_t m = (uint32_t)vm_mode[p];",
+        "        if (m == 1u) {",
+        "            /* mono: the part's single voice, with legato/priority/portamento */",
+        "            mono_held[p][note]++;",
+        "            mono_order[p][note] = ++mono_serial[p];",
+        "            uint32_t mv = part_mono_voice[p];",
+        "            if (mv == 0xFFu) {",
+        "                uint32_t best = 0xFFFFFFFFu;",
+        "                for (uint32_t v = 0; v < NVOICE; v++) {",
+        "                    if (chosen[v]) continue;",
+        "                    uint32_t score = voice_gate[v] ? 0x80000000u + voice_age[v]",
+        "                                     : voice_age[v] + 1u;",
+        "                    if (score < best) { best = score; mv = v; }",
+        "                }",
+        "                part_mono_voice[p] = (uint8_t)mv;",
+        "            }",
+        "            chosen[mv] = 1;",
+        "            uint32_t active = voice_mono_active(p, vm_note_priority[p]);",
+        "            uint8_t was = voice_gate[mv];",
+        "            voice_part[mv] = (uint8_t)p;",
+        "            voice_detune[mv] = 65536;",
+        "            voice_delay[mv] = (uint32_t)(part_delay[p] > 0 ? part_delay[p] * 44 : 0);",
+        "            voice_note[mv] = (uint8_t)active;",
+        "            voice_age[mv] = ++ages;",
+        "            voice_velocity[mv] = (int32_t)(velocity * 258u);",
+        "            voice_gate[mv] = 1;",
+        "            voice_trig[mv] = (uint8_t)((vm_legato[p] && was) ? 0u : 1u);",
+        "            voice_target_inc[mv] = (uint32_t)(((uint64_t)note_to_inc(active) * ",
+        "(uint32_t)voice_detune[mv]) >> 16);",
+        "            if (!vm_portamento[p] || !was) voice_inc[mv] = voice_target_inc[mv];",
+        f"            {name}_note_derived(mv);",
+        "            continue;",
         "        }",
-        "        chosen[bp] = 1;",
-        "        voice_part[bp] = (uint8_t)p;",
-        "        voice_detune[bp] = 65536;",
-        "        /* per-part onset offset (ms) -> samples, held silent while pending */",
-        "        voice_delay[bp] = (uint32_t)(part_delay[p] > 0 ? part_delay[p] * 44 : 0);",
-        "        picked[npicked++] = bp;",
+        "        uint32_t count = 1u;",
+        "        int32_t span = 0;",
+        "        if (m == 2u) {",
+        "            count = (uint32_t)vm_unison_count[p];",
+        "            if (count < 1u) count = 1u;",
+        "            if (count > NVOICE) count = NVOICE;",
+        "            span = vm_unison_detune[p];",
+        "        }",
+        "        for (uint32_t k = 0; k < count; k++) {",
+        "            uint32_t best = 0xFFFFFFFFu, bp = 0;",
+        "            for (uint32_t v = 0; v < NVOICE; v++) {",
+        "                if (chosen[v]) continue;",
+        "                uint32_t score = (voice_gate[v] || voice_delay[v] > 0u)",
+        "                                 ? 0x80000000u + voice_age[v] : voice_age[v] + 1u;",
+        "                if (score < best) { best = score; bp = v; }",
+        "            }",
+        "            chosen[bp] = 1;",
+        "            voice_part[bp] = (uint8_t)p;",
+        "            if (count <= 1u) {",
+        "                voice_detune[bp] = 65536;",
+        "            } else {",
+        "                int32_t step = span / (int32_t)(count - 1u);",
+        "                int32_t cents = -span / 2 + (int32_t)k * step;",
+        "                voice_detune[bp] = 65536 + cents * 38;",
+        "            }",
+        "            voice_delay[bp] = (uint32_t)(part_delay[p] > 0 ? part_delay[p] * 44 : 0);",
+        "            picked[npicked++] = bp;",
+        "        }",
         "    }",
         "    uint8_t trig = 1;",
         "    uint32_t snote = note;",
         "    for (uint32_t k = 0; k < npicked; k++) {",
         "        uint32_t pick = picked[k];",
+        "        uint32_t p = (uint32_t)voice_part[pick];",
         "        uint8_t was = voice_gate[pick];",
         "        voice_note[pick] = (uint8_t)snote;",
         "        voice_age[pick] = ++ages;",
@@ -227,7 +354,7 @@ def _note_on_ch_parts(name: str) -> list[str]:
         "            voice_trig[pick] = trig;",
         "            voice_target_inc[pick] = (uint32_t)(((uint64_t)note_to_inc(snote) * ",
         "(uint32_t)voice_detune[pick]) >> 16);",
-        "            if (!vm_portamento || !was) voice_inc[pick] = voice_target_inc[pick];",
+        "            if (!vm_portamento[p] || !was) voice_inc[pick] = voice_target_inc[pick];",
         f"            {name}_note_derived(pick);",
         "        }",
         "    }",
@@ -238,10 +365,28 @@ def _note_on_ch_parts(name: str) -> list[str]:
 
 def note_off(name: str, n_parts: int) -> list[str]:
     """The `<name>_dsp_note_off` body: mode-aware (mono takeover) single-timbre, or
-    plain poly release for parts (mono/unison with parts is deferred)."""
+    per-part mode-aware release for parts."""
     if n_parts > 1:
         return [
             f"UMETATE_DSP_API void {name}_dsp_note_off(uint32_t note) {{",
+            "    if (note > 127u) return;",
+            "    for (uint32_t p = 0; p < N_PART; p++) {",
+            "        if ((uint32_t)vm_mode[p] == 1u) {",
+            "            uint32_t mv = part_mono_voice[p];",
+            "            if (mono_held[p][note]) mono_held[p][note]--;",
+            "            uint32_t active = voice_mono_active(p, vm_note_priority[p]);",
+            "            if (mv == 0xFFu) continue;",
+            "            if (active == 0xFFu) { voice_gate[mv] = 0; continue; }",
+            "            if (active != (uint32_t)voice_note[mv]) {",
+            "                voice_note[mv] = (uint8_t)active;",
+            "                if (!vm_legato[p]) voice_trig[mv] = 1;",
+            "                voice_target_inc[mv] = (uint32_t)(((uint64_t)note_to_inc(active) * ",
+            "(uint32_t)voice_detune[mv]) >> 16);",
+            "                if (!vm_portamento[p]) voice_inc[mv] = voice_target_inc[mv];",
+            f"                {name}_note_derived(mv);",
+            "            }",
+            "        }",
+            "    }",
             "    for (uint32_t v = 0; v < NVOICE; v++)",
             "        if (voice_note[v] == note) { voice_gate[v] = 0; voice_delay[v] = 0; }",
             "}",
@@ -271,29 +416,29 @@ def note_off(name: str, n_parts: int) -> list[str]:
     ]
 
 
-def glide(name: str) -> list[str]:
+def glide(name: str, per_part: bool) -> list[str]:
     """The per-block portamento ramp (indented for the render loop): move each
     gated voice's `voice_inc[v]` toward `voice_target_inc[v]` at a constant rate
     (linear in the increment, one add per voice per block), re-deriving the
     note→increment glue when the increment moves."""
+    rate = mode_ref("vm_portamento", per_part, "voice_part[v]")
     return [
-        "        if (vm_portamento) {",
-        "            for (uint32_t v = 0; v < NVOICE; v++) {",
-        "                if (!voice_gate[v]) continue;",
-        "                uint32_t cur = voice_inc[v];",
-        "                uint32_t tgt = voice_target_inc[v];",
-        "                if (cur != tgt) {",
-        "                    uint32_t step = (uint32_t)(((uint64_t)tgt *",
-        "                        (uint32_t)vm_portamento) >> 16);",
-        "                    if (step < 1u) step = 1u;",
-        "                    if (tgt > cur) {",
-        "                        cur += step; if (cur > tgt) cur = tgt;",
-        "                    } else {",
-        "                        cur -= step; if (cur < tgt) cur = tgt;",
-        "                    }",
-        "                    voice_inc[v] = cur;",
-        f"                    {name}_note_derived(v);",
+        "        for (uint32_t v = 0; v < NVOICE; v++) {",
+        "            if (!voice_gate[v]) continue;",
+        f"            if (!{rate}) continue;",
+        "            uint32_t cur = voice_inc[v];",
+        "            uint32_t tgt = voice_target_inc[v];",
+        "            if (cur != tgt) {",
+        "                uint32_t step = (uint32_t)(((uint64_t)tgt *",
+        f"                    (uint32_t){rate}) >> 16);",
+        "                if (step < 1u) step = 1u;",
+        "                if (tgt > cur) {",
+        "                    cur += step; if (cur > tgt) cur = tgt;",
+        "                } else {",
+        "                    cur -= step; if (cur < tgt) cur = tgt;",
         "                }",
+        "                voice_inc[v] = cur;",
+        f"                {name}_note_derived(v);",
         "            }",
         "        }",
     ]
@@ -320,21 +465,37 @@ def delay_countdown(name: str) -> list[str]:
     ]
 
 
-def all_off() -> list[str]:
+def all_off(per_part: bool) -> list[str]:
     """The all-notes-off (panic) body: release every voice + the mono tracker."""
-    return [
+    lines = [
         "    for (uint32_t v = 0; v < NVOICE; v++) voice_gate[v] = 0;",
         "    for (uint32_t v = 0; v < NVOICE; v++) voice_delay[v] = 0;",
-        "    for (uint32_t n = 0; n < 128u; n++) mono_held[n] = 0;",
     ]
+    if per_part:
+        lines += [
+            "    for (uint32_t p = 0; p < N_PART; p++)",
+            "        for (uint32_t n = 0; n < 128u; n++) mono_held[p][n] = 0;",
+        ]
+    else:
+        lines.append("    for (uint32_t n = 0; n < 128u; n++) mono_held[n] = 0;")
+    return lines
 
 
-def reset() -> list[str]:
+def reset(per_part: bool) -> list[str]:
     """The reset body: all-off + age/serial zero."""
-    return [
+    lines = [
         "    for (uint32_t v = 0; v < NVOICE; v++) voice_gate[v] = 0;",
         "    for (uint32_t v = 0; v < NVOICE; v++) voice_delay[v] = 0;",
-        "    for (uint32_t n = 0; n < 128u; n++) mono_held[n] = 0;",
-        "    ages = 0;",
-        "    mono_serial = 0;",
     ]
+    if per_part:
+        lines += [
+            "    for (uint32_t p = 0; p < N_PART; p++)",
+            "        for (uint32_t n = 0; n < 128u; n++) mono_held[p][n] = 0;",
+            "    for (uint32_t p = 0; p < N_PART; p++) mono_serial[p] = 0;",
+            "    for (uint32_t p = 0; p < N_PART; p++) part_mono_voice[p] = 0xFFu;",
+        ]
+    else:
+        lines.append("    for (uint32_t n = 0; n < 128u; n++) mono_held[n] = 0;")
+        lines.append("    mono_serial = 0;")
+    lines.append("    ages = 0;")
+    return lines

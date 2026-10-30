@@ -15,7 +15,8 @@
     "op3_trem_rate.p0", "op3_trem_depth.p0",
     "op4_trem_rate.p0", "op4_trem_depth.p0",
     "pitch_rate", "pitch_depth", "penv_base", "penv_rate",
-    "mode", "unison_count", "unison_detune", "legato", "portamento", "note_priority"
+    "mode.p0", "unison_count.p0", "unison_detune.p0", "legato.p0", "portamento.p0", "note_priority.p0",
+    "mode.p1", "unison_count.p1", "unison_detune.p1", "legato.p1", "portamento.p1", "note_priority.p1"
   ],
   "tables": { "routing": { "kind": "routing" } },
   "parts": {

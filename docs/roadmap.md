@@ -1020,7 +1020,8 @@ self-validating unit — a `u8 version` (`0xFF` = empty slot), a body, and a
 **CRC-32** (poly `0xEDB88320`, init `0xFFFFFFFF`, reflected — the platform's
 `crc32`) over version+body — so a corrupt record is skipped, never the whole bank.
 
-- **Part patch** (one timbre; `N` = the per-part voice-param count, fourop-fm 68):
+- **Part patch** (one timbre; `N` = the per-part voice-param count, fourop-fm 74 —
+  the node voice params + the six per-part voice-mode params):
 
   ```
   u8 version | char name[16] | i32 params[N] | u32 crc32
@@ -1046,7 +1047,7 @@ self-validating unit — a `u8 version` (`0xFF` = empty slot), a body, and a
 record in the settings sector — reusing `slot_load`/`slot_save`/`settings_load`/
 `settings_save` (magic + length + crc32 + header-last commit stays the transport
 integrity). The slot count is the measured hardware answer: `SLOT_MAX` = 16 372 B,
-the fourop-fm 293 B part record would fit 55 slots — 32 keeps the classic count
+the fourop-fm 317 B part record would fit 51 slots — 32 keeps the classic count
 with headroom. Per-record CRC + version on top: a fresh (erased) bank reads
 all-empty (`0xFF`); a cut save is caught by the area CRC, a single flipped bit by
 the record CRC. Writes happen only when silent (`dsp_quiet`, the existing rule)
@@ -1093,7 +1094,9 @@ settled):
 - **Takeover retrigger** (mono note-off → next held note): retriggers iff `legato`
   is off; `portamento` (glide) is orthogonal and applies whenever it is set.
 - All mode params — `mode`, `unison_count`, `unison_detune`, `legato`,
-  `portamento`, `note_priority` — are **per-preset**.
+  `portamento`, `note_priority` — are **per-part** in a multitimbral patch (each
+  part has its own poly/mono/unison + counts + times) and **per-preset** (global)
+  in a single-timbre patch.
 
 Per-voice state (SoA, `.cpu1_bss`): `voice_gate`/`voice_note`/`voice_age`/
 `voice_velocity` (existing) + `voice_trig` (uint8 one-shot), `voice_target_inc`
@@ -1104,8 +1107,9 @@ assigned voice indices), `voice_note_off`, `voice_all_off`, and `voice_glide`
 
 **Status (F3):** the voice manager is now the generator rails module
 `umetate/_voice.py` (per-voice SoA state, the `voice_mono_active` priority helper,
-and the `note_on`/`note_off`/`all_notes_off`/`reset` emission), and the six mode
-params are appended to every patch's param set (ids N..N+5). Landed:
+and the `note_on`/`note_off`/`all_notes_off`/`reset` emission). The six mode
+params are per-part in a multitimbral patch (in each part's voice block, so a part
+patch carries them) and global (appended last) in a single-timbre patch. Landed:
 
 - **`trigger` reserved input** — `voice_trig[v]` (one-shot, set in `note_on`,
   cleared after the control prologue); `dx_env` retriggers on it regardless of
@@ -1137,8 +1141,15 @@ params are appended to every patch's param set (ids N..N+5). Landed:
   silent (gate off) until it expires, then it attacks (`gate`+`trig`+increment), so
   the envelope attacks `delay` ms after note-on. Allocator treats pending voices as
   taken; `note_off`/panic/reset clear the countdown.
+- **Per-part voice modes** — the six mode params are per-part arrays when
+  `n_parts > 1`: each part allocates by its own `mode` (poly one-voice / mono with
+  a per-part held-note tracker + `part_mono_voice[p]` + legato/priority / unison
+  `unison_count` stacked voices), read through `vm_mode[voice_part[v]]` etc. A
+  mono part's takeover and a unison part's stack-steal are per-part; the
+  `voice_mono_active` helper takes the part index. The single-timbre path is
+  unchanged (global scalars, voice 0 mono).
 
-Still open: mono/unison with parts (parts allocate poly); per-part mode is deferred.
+Still open: none — per-part mono/unison landed (F3, this increment).
 
 #### 6.11.5 Milestones (ordered)
 
@@ -1146,7 +1157,7 @@ Still open: mono/unison with parts (parts allocate poly); per-part mode is defer
 | --- | --- | --- |
 | F1 | **Interview loop hardening** (L1–L7). | synth-brief semantics column + multi-timbrality + MIDI-spec prompts; control-map menu→page→mode-tree prompt; skill non-goal rule + two-tier example definition; source-vocabulary check runs. |
 | F2 | **Velocity routing.** — **done** | `voice_velocity[]` + `velocity` reserved input + `vel_amp`/`vel_fm`/`vel_rate` in `fm_op` (velocity → amplitude, → FM, → envelope rate via a `dx_env` rate-scale input); host tests prove a higher velocity is louder and attacks faster. |
-| F3 | **Voice-management rails.** — **done** | `_voice.py` rails + `trigger`/retrigger + mono (note_priority/legato) + unison (detune) + portamento (glide) + the six mode params + `parts:` (per-part param arrays, `voice_part[v]`, `note_on_ch` channel/keyzone routing, layering, per-part `level`/`delay`); host tests prove mono/unison/legato/glide/routing+layering+level+delay. Deferred (noted): per-part mono/unison mode. |
+| F3 | **Voice-management rails.** — **done** | `_voice.py` rails + `trigger`/retrigger + mono (note_priority/legato) + unison (detune) + portamento (glide) + the six mode params (per-part in multitimbral patches) + `parts:` (per-part param arrays, `voice_part[v]`, `note_on_ch` channel/keyzone routing, layering, per-part `level`/`delay`, and per-part poly/mono/unison); host tests prove mono/unison/legato/glide/routing+layering+level+delay + per-part mono priority/takeover + poly isolation + unison stacking. |
 | F4 | **Presets + settings + SysEx.** — **done** | 32-slot part-patch store + 32-slot multi-patch store (the slot area's measured 16 372 B ceiling; F7d) + settings record (`_records.py`/`presets.c`, byte-parity-tested), the shared SysEx envelope + 7-bit packing (`_sysex.py`), the generated `sysex-layout`, the bank ↔ `.syx` export/import (`_presets.py`), the `umetate preset export/import` CLI, and the C bank save/load over `store.h` (silent-only writes). Host tests prove the export→import round-trip and the C/Python byte parity. The device-side SysEx command handler landed with F7a. |
 | F5 | **MIDI CC map.** — **done** | `generate_cc_map` + `generate_cc_header`: one CC per param, ascending from base 16, skipping the reserved CCs (sustain 64, channel-mode 120..127), plus the reversed `param → cc`; a GenError when the params don't fit. Host tests prove the map is complete/unique/ascending and that a CC write through the generated `cc_map.h` table reaches a real, writable param. |
 | F6 | **Polyphony budget tool.** — **done** | `umetate budget` generates the patch at each `--voices`/`--parts`, compiles for host, and times a worst-case `render(256)` (all voices sounding, envelopes open) — per-voice cost + linearity; the skill interview consumes it (a measured claim, not an estimate). The device fit is the emulator's job (F7e: `umetate emu --check --mhz 240` boots the built firmware and holds a chord — no halt, full-scale audio). |
@@ -1234,7 +1245,7 @@ omni) *and* whose keyzone contains it — one note may fire many parts (layering
 timing, 32 slots), and **system settings** (base channel, tune — one global
 record). This mirrors the classic patch / performance / system split. The slot
 count is the *measured* hardware answer: the slot area holds 16 372 B (store.h
-`SLOT_MAX`), the fourop-fm 293 B part record would fit 55 — 32 keeps the classic
+`SLOT_MAX`), the fourop-fm 317 B part record would fit 51 — 32 keeps the classic
 count with headroom.
 
 **The gaps** (what's still hand-written or missing): the docs/tutorial/skill

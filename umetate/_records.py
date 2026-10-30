@@ -19,7 +19,7 @@ NAME_LEN = 16
 RECORD_VERSION = 1
 EMPTY = 0xFF
 # Part patches and multi patches: 32 slots each. The slot area's measured ceiling
-# is 16 372 B (store.h SLOT_MAX); the fourop-fm 293 B part record would fit 55
+# is 16 372 B (store.h SLOT_MAX); the fourop-fm 317 B part record would fit 51
 # slots, 32 keeps the classic count and headroom (roadmap §6.11.4).
 SLOTS = 32
 
