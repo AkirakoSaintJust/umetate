@@ -170,7 +170,9 @@ _ACTIONS = {
     "op_next": "UI_ACT_OP_NEXT",
     "op_prev": "UI_ACT_OP_PREV",
     "op_mute": "UI_ACT_OP_MUTE",
+    "op_mute_n": "UI_ACT_OP_MUTE_N",
     "part_next": "UI_ACT_PART_NEXT",
+    "part_mute": "UI_ACT_PART_MUTE",
 }
 
 _BEHAVIORS = {
@@ -268,10 +270,10 @@ def generate_panel(
     def arg_expr(arg: str | None, action: str) -> str:
         if arg is None:
             return "0"
+        if arg.isdigit():
+            return arg
         if arg in ctx_ids:
             return str(ctx_ids[arg])
-        if action == "set_step" and arg.isdigit():
-            return arg
         return "0"
 
     def cstr(value: str | None) -> str:

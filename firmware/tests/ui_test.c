@@ -168,6 +168,13 @@ int main(void)
     /* the active part starts at 0; part_next is a no-op with one part */
     CHECK(ui_part() == 0, "ui_part starts at 0");
 
+    /* part mute toggle + query (the header's part ON/OFF) */
+    CHECK(ui_part_muted(0u) == 0, "part 0 starts unmuted");
+    ui_part_mute_toggle(0u);
+    CHECK(ui_part_muted(0u) == 1, "part mute toggle mutes part 0");
+    ui_part_mute_toggle(0u);
+    CHECK(ui_part_muted(0u) == 0, "part mute toggle unmutes part 0");
+
     if (failures) {
         printf("%d UI failures\n", failures);
         return 1;

@@ -59,6 +59,7 @@ static int32_t ui_custom_v[UI_MAX_WIDGETS];     /* UI_CUSTOM widgets' dirty valu
 static int32_t ui_cursor;                        /* list/grid selection */
 static uint8_t ui_selected_op;                   /* the selected operator (0..3) for OP_* */
 static uint8_t ui_selected_part;                 /* the active part (0..n_part-1) */
+static uint8_t ui_part_mute[4];                  /* part mute flags (up to 4 parts) */
 
 static const ui_context *ui_ctx(void) { return &ui_t->ctx[ui_stack[ui_sp]]; }
 static const ui_page *ui_cur_page(void) { return &ui_ctx()->pages[ui_pagei[ui_sp]]; }
@@ -132,6 +133,32 @@ uint8_t ui_top(void) { return ui_stack[ui_sp]; }
 int32_t *ui_params(void) { return ui_param_v; }
 
 uint8_t ui_part(void) { return ui_selected_part; }
+
+void ui_part_mute_toggle(uint8_t part)
+{
+    if (part < ui_t->n_part)
+        ui_part_mute[part] = ui_part_mute[part] ? 0u : 1u;
+}
+
+uint8_t ui_part_muted(uint8_t part)
+{
+    return part < ui_t->n_part && ui_part_mute[part];
+}
+
+void ui_part_next(void)
+{
+    if (ui_t->n_part > 1u)
+        ui_selected_part = (uint8_t)((ui_selected_part + 1u) % ui_t->n_part);
+}
+
+void ui_op_mute_active(void)
+{
+    if (ui_t->mute && ui_selected_op < 4u) {
+        uint16_t p = ui_t->mute[ui_selected_op];
+        if (p < ui_t->n_params)
+            ui_param_v[p] = ui_param_v[p] ? 0 : 1;
+    }
+}
 
 /* resolve a source to its binding: the top context's bindings first, then global */
 static const ui_binding *ui_resolve(uint16_t source)
@@ -255,16 +282,31 @@ static void ui_do_action(uint8_t action, uint8_t arg)
             ui_selected_op = ui_selected_op ? (uint8_t)(ui_selected_op - 1u)
                                             : (uint8_t)(ui_t->n_op - 1u);
         break;
-    case UI_ACT_OP_MUTE:
+    case UI_ACT_OP_MUTE: {
+        /* mute the *selected* operator (the SCL + key chord; arg is ignored) */
         if (ui_t->mute && ui_selected_op < 4u) {
             uint16_t p = ui_t->mute[ui_selected_op];
             if (p < ui_t->n_params)
                 ui_param_v[p] = ui_param_v[p] ? 0 : 1;
         }
         break;
+    }
+    case UI_ACT_OP_MUTE_N: {
+        /* mute operator `arg` (ARP/SEQ/PLAY/REC -> 0..3) */
+        if (ui_t->mute && arg < ui_t->n_op && arg < 4u) {
+            uint16_t p = ui_t->mute[arg];
+            if (p < ui_t->n_params)
+                ui_param_v[p] = ui_param_v[p] ? 0 : 1;
+        }
+        break;
+    }
     case UI_ACT_PART_NEXT:
         if (ui_t->n_part > 1u)
             ui_selected_part = (uint8_t)((ui_selected_part + 1u) % ui_t->n_part);
+        break;
+    case UI_ACT_PART_MUTE:
+        if (arg < ui_t->n_part)
+            ui_part_mute[arg] = ui_part_mute[arg] ? 0u : 1u;
         break;
     default: break;                              /* BANK_*, LOAD, LATCH: no-op for now */
     }
@@ -674,28 +716,40 @@ static void ui_draw_subheader(const ui_widget *w)
 }
 
 /* the always-visible header (rows 0-1, full width): the active part + operator,
- * the algorithm, the menu name, the page N/M, and each operator's ON/OFF (ON =
- * not muted). Drawn every redraw; its value folds all of those into one word. */
+ * the algorithm, the menu name, the page N/M, and every part's + operator's
+ * mute/active state. Drawn every redraw; its value folds all of those into one
+ * word (distinct bit fields, no overlap). */
 static int32_t ui_header_value(void)
 {
-    int32_t v = (int32_t)ui_selected_part * 1000000 + (int32_t)ui_selected_op * 100000
-              + (int32_t)ui_stack[ui_sp] * 1000 + (int32_t)ui_pagei[ui_sp] * 10;
+    int32_t v = (int32_t)ui_selected_part | ((int32_t)ui_selected_op << 2)
+              | ((int32_t)ui_stack[ui_sp] << 5) | ((int32_t)ui_pagei[ui_sp] << 8);
     uint32_t i;
     if (ui_t->alg < ui_t->n_params)
-        v += ui_param_v[ui_t->alg] & 0x3F;
+        v |= (ui_param_v[ui_t->alg] & 0x3F) << 11;
     for (i = 0; i < 4u && i < ui_t->n_op; i++) {
         uint16_t p = ui_t->mute ? ui_t->mute[i] : UI_NO_PARAM;
         if (p < ui_t->n_params && ui_param_v[p])
-            v += 1 << (int32_t)(16u + i);
+            v |= 1 << (int32_t)(17u + i);
     }
+    for (i = 0; i < 4u && i < ui_t->n_part; i++)
+        if (ui_part_mute[i])
+            v |= 1 << (int32_t)(21u + i);
     return v;
+}
+
+/* one header token at x: `current` = the accent colour (where we are), `muted` =
+ * dim with an `x` marker (not colour-alone), else bright. Returns the next x. */
+static int32_t ui_htok(int32_t x, const char *s, int cur, int muted)
+{
+    uint16_t c = cur ? C_WHITE : (muted ? C_DIM : C_HI);
+    return cv_text(x, UI_ROW_H, &FONT_S, s, c);
 }
 
 static void ui_draw_header(void)
 {
-    char s[40], t[12];
+    char s[40], t[12], tok[4];
     uint32_t i;
-    int32_t alg = ui_t->alg < ui_t->n_params ? ui_param_v[ui_t->alg] : 0;
+    int32_t x, alg = ui_t->alg < ui_t->n_params ? ui_param_v[ui_t->alg] : 0;
 
     cv_begin(240u, 2u * UI_ROW_H, C_BLACK);
     /* row 0: P<part> OP<op> ALG<alg>  <menu> <page>/<n> */
@@ -721,19 +775,27 @@ static void ui_draw_header(void)
     ui_strcat(s, t);
     cv_text(0, 0, &FONT_S, s, C_HI);
 
-    /* row 1: each operator's ON/OFF (ON = not muted, OFF = muted) */
-    ui_strcpy(s, "");
+    /* row 1: every part (P1/P2) and operator (1..4), colour-coded — current =
+     * accent, muted = dim `x`, active = bright. */
+    x = 0;
+    for (i = 0; i < ui_t->n_part; i++) {
+        tok[0] = 'P';
+        tok[1] = (char)('1' + i);
+        tok[2] = ui_part_mute[i] ? 'x' : 0;
+        tok[3] = 0;
+        x = ui_htok(x, tok, i == ui_selected_part, ui_part_mute[i]);
+        x = ui_htok(x, " ", 0, 0);
+    }
+    x = ui_htok(x, "  ", 0, 0);
     for (i = 0; i < 4u && i < ui_t->n_op; i++) {
         uint16_t p = ui_t->mute ? ui_t->mute[i] : UI_NO_PARAM;
         int muted = p < ui_t->n_params ? ui_param_v[p] != 0 : 0;
-        t[0] = (char)('1' + i);
-        t[1] = 0;
-        if (i)
-            ui_strcat(s, " ");
-        ui_strcat(s, t);
-        ui_strcat(s, muted ? ":OFF" : ":ON");
+        tok[0] = (char)('1' + i);
+        tok[1] = muted ? 'x' : 0;
+        tok[2] = 0;
+        x = ui_htok(x, tok, i == ui_selected_op, muted);
+        x = ui_htok(x, " ", 0, 0);
     }
-    cv_text(0, UI_ROW_H, &FONT_S, s, C_HI);
     cv_blit(0, 0);
 }
 

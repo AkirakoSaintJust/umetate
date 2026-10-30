@@ -118,6 +118,14 @@ static void ui_sync(void)
         }
         last_ui[i] = v[i];
     }
+    /* part mute: force a muted part's `level` routing param to 0 (the UI's level
+     * value is preserved; unmuting restores it through the normal mirror). The
+     * routing layout is field-major (channel/low/high/level/delay), so part p's
+     * level is SYNTH_ROUTING_BASE + 3*SYNTH_N_PARTS + p. */
+    for (i = 0; i < SYNTH_N_PARTS; i++) {
+        if (ui_part_muted((uint8_t)i))
+            fourop_fm_dsp_set_param(SYNTH_ROUTING_BASE + 3u * SYNTH_N_PARTS + i, 0);
+    }
 }
 
 /* ---- the app's action hooks (called by ui.c) */
@@ -181,6 +189,7 @@ static void app_main(void)
     uint32_t prev = 0, k, lit = 0;
     uint8_t held[27] = {0};
     int32_t bc, mt;
+    uint32_t last_scl_ms = 0, scl_pending = 0, scl_pending_ms = 0;
 
     fourop_fm_dsp_reset();
 #if FM1_CPU1_USED
@@ -216,27 +225,76 @@ static void app_main(void)
         down = keys & ~prev;
         up = prev & ~keys;
         prev = keys;
-        ch0 = fourop_fm_dsp_get_param(SYNTH_ROUTING_BASE + 0u * SYNTH_N_PARTS + 0u);
-        if (ch0 < 0 || ch0 > 15)
-            ch0 = 0;
-        for (k = 0; k < 27u; k++) {                    /* the keys: play + echo on part 0's channel */
-            if (down >> k & 1u) {
-                held[k] = (uint8_t)(KEY0 + k);
-                ui_handle(UI_SRC_KEY, held[k]);
-                midi_send(0x90u | (uint32_t)ch0, held[k], 100);
+        {
+            uint32_t now = fm1_ms;
+            uint32_t scl = fm1_in.buttons & (1u << BTN_SEL);
+            ch0 = fourop_fm_dsp_get_param(SYNTH_ROUTING_BASE + 0u * SYNTH_N_PARTS + 0u);
+            if (ch0 < 0 || ch0 > 15)
+                ch0 = 0;
+            for (k = 0; k < 27u; k++) {                /* the keys: play + echo, or SCL chords */
+                if (down >> k & 1u) {
+                    if (scl) {
+                        ui_op_mute_active();           /* SCL + key: mute the active op, no note */
+                        held[k] = 0u;
+                    } else {
+                        held[k] = (uint8_t)(KEY0 + k);
+                        ui_handle(UI_SRC_KEY, held[k]);
+                        midi_send(0x90u | (uint32_t)ch0, held[k], 100);
+                    }
+                }
+                if (up >> k & 1u && held[k]) {
+                    ui_act_note_off(held[k]);
+                    midi_send(0x80u | (uint32_t)ch0, held[k], 0);
+                    held[k] = 0u;
+                }
             }
-            if (up >> k & 1u) {
-                ui_act_note_off(held[k]);
-                midi_send(0x80u | (uint32_t)ch0, held[k], 0);
+
+            b = fm1_input_edges(&rel);
+            if (b & (1u << BTN_EDIT)) ui_handle(UI_SRC_BTN_EDIT, -1);
+            if (b & (1u << BTN_HOME)) ui_handle(UI_SRC_BTN_HOME, -1);
+            if (b & (1u << BTN_ENV)) ui_handle(UI_SRC_BTN_ENV, -1);
+            if (b & (1u << BTN_LFO)) ui_handle(UI_SRC_BTN_LFO, -1);
+            if (b & (1u << BTN_FX)) ui_handle(UI_SRC_BTN_FX, -1);
+            if (b & (1u << BTN_GLO)) ui_handle(UI_SRC_BTN_GLO, -1);
+
+            /* SCL: a tap advances the operator (deferred so a second tap within the
+             * window is a part switch instead); a double-tap switches the part. */
+            if (b & (1u << BTN_SEL)) {
+                if (now - last_scl_ms < 300u) {
+                    ui_part_next();
+                    scl_pending = 0;
+                } else {
+                    scl_pending = 1;
+                    scl_pending_ms = now;
+                }
+                last_scl_ms = now;
+            }
+
+            /* ARP/SEQ/PLAY/REC: plain = operator mutes 1-4; SCL+ARP/PLAY = part 1
+             * mute, SCL+SEQ/REC = part 2 mute. */
+            if (b & (1u << BTN_ARP)) {
+                if (scl) ui_part_mute_toggle(0u);
+                else ui_handle(UI_SRC_BTN_ARP, -1);
+            }
+            if (b & (1u << BTN_PLAY)) {
+                if (scl) ui_part_mute_toggle(0u);
+                else ui_handle(UI_SRC_BTN_PLAY, -1);
+            }
+            if (b & (1u << BTN_SEQ)) {
+                if (scl) ui_part_mute_toggle(1u);
+                else ui_handle(UI_SRC_BTN_SEQ, -1);
+            }
+            if (b & (1u << BTN_REC)) {
+                if (scl) ui_part_mute_toggle(1u);
+                else ui_handle(UI_SRC_BTN_REC, -1);
+            }
+
+            /* the deferred single-tap (no second tap within the window) */
+            if (scl_pending && now - scl_pending_ms >= 300u) {
+                ui_handle(UI_SRC_BTN_SEL, -1);
+                scl_pending = 0;
             }
         }
-
-        b = fm1_input_edges(&rel);
-        if (b & (1u << BTN_EDIT)) ui_handle(UI_SRC_BTN_EDIT, -1);
-        if (b & (1u << BTN_HOME)) ui_handle(UI_SRC_BTN_HOME, -1);
-        if (b & (1u << BTN_FX)) ui_handle(UI_SRC_BTN_FX, -1);
-        if (b & (1u << BTN_GLO)) ui_handle(UI_SRC_BTN_GLO, -1);
-        if (b & (1u << BTN_SEL)) ui_handle(UI_SRC_BTN_SEL, -1);
         if ((e = fm1_enc_take(ENC_ALGORITHM)) != 0) ui_handle(UI_SRC_ENC_ALGORITHM, e);
         if ((e = fm1_enc_take(ENC_SELECT)) != 0) ui_handle(UI_SRC_ENC_SELECT, e);
         if ((e = fm1_enc_take(ENC_KNOB1)) != 0) ui_handle(UI_SRC_ENC_KNOB1, e);

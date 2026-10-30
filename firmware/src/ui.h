@@ -58,7 +58,8 @@ enum {
     UI_ACT_PAGE, UI_ACT_BANK_NEXT, UI_ACT_BANK_PREV, UI_ACT_TOGGLE, UI_ACT_LATCH, UI_ACT_SAVE,
     UI_ACT_LOAD, UI_ACT_PANIC, UI_ACT_PLAY, UI_ACT_STOP,
     UI_ACT_OP_NEXT, UI_ACT_OP_PREV, UI_ACT_OP_MUTE,   /* the selected-operator group */
-    UI_ACT_PART_NEXT,                                  /* cycle the active part (0..n_part-1) */
+    UI_ACT_OP_MUTE_N,                                  /* mute operator `arg` (0..3) */
+    UI_ACT_PART_NEXT, UI_ACT_PART_MUTE,                /* cycle / mute the active part */
 };
 
 /* ---- the fixed input-source vocabulary (the generator maps panel strings to these) ---- */
@@ -145,6 +146,10 @@ uint8_t ui_top(void);                            /* the active context id */
 void ui_handle(uint16_t source, int32_t value);  /* resolve the source -> param/action */
 int32_t *ui_params(void);                        /* the shared param_values[] */
 uint8_t ui_part(void);                           /* the active part (0-based) */
+void ui_part_next(void);                         /* cycle the active part (the SCL double-tap) */
+void ui_part_mute_toggle(uint8_t part);          /* mute/unmute a part (the header + chords) */
+uint8_t ui_part_muted(uint8_t part);             /* 1 = the part is muted */
+void ui_op_mute_active(void);                    /* mute/unmute the active operator (SCL + key) */
 void ui_param_fmt(uint16_t p, const char *unit, char *out, uint32_t n); /* format a value */
 void ui_redraw(uint32_t now_ms);                 /* the retained-mode, rate-bounded redraw */
 void ui_custom_set(uint32_t slot, int32_t value); /* drive a UI_CUSTOM widget's dirty value */
