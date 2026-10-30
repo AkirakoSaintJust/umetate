@@ -25,8 +25,10 @@
 - **Controls explicitly unmapped (and why):** `MASTER` (platform volume);
   `PRESETS` (the 128+64 preset store is reached via the browser encoder, SysEx,
   and the boot-time multi-slot apply); `SAVE` (opens the save chooser — single
-  part / multi-patch + slot — not a direct param write); `OCT−/OCT+` (octave is
-  firmware-level, not a patch param); `ARP SEQ PLAY REC` (no sequencer/transport).
+  part / multi-patch + slot — not a direct param write); `ARP SEQ PLAY REC`
+  (no sequencer/transport).
+- **Firmware-level controls (app glue, not panel params):** `OCT−`/`OCT+` shift
+  the keybed base note a whole octave (`lit_base`, clamped ±2) in `app.c`.
 
 ## 2. Player model
 

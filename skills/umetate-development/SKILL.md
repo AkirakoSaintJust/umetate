@@ -111,7 +111,10 @@ of asking the user to repeat them.
 - **Voice architecture** must name, concretely: the node/macro graph (ids, types,
   wires), the `voice` vs `global` zones, the `voice_out` signal, the voice count,
   the sample rate, and any feedback (only `delay1`/`delayN` break cycles — the
-  graph is a DAG).
+  graph is a DAG). In FM, tap operator **self-feedback from the oscillator output**
+  (pre-envelope/pre-tremolo) — tapping the enveloped VCA output leaks the
+  amplitude LFO and envelope into `ph.fm` as spurious pitch modulation (fourop-fm
+  carriers warbled with the A-LFO until the tap moved to `osc.audio`).
 - **Parameter manifest** must list every parameter: its flattened
   `<instance>.<param>` target, min/max/default, curve, unit, rate
   (`sample`/`block`), and whether it is `modulatable`. This is the source of the
@@ -301,6 +304,11 @@ umetate scaffold patch --name "My Synth" --out examples/my-synth
   `examples/fourop-fm/app.c`). `umetate build --synth examples/<project>` composes
   framework + generated code + glue — host-build, run the project's
   `host-script.txt` (a silent run fails), then package through the toolchain.
+- **Firmware-level controls are app glue, not panel params.** Any button the synth
+  uses but the patch doesn't model (the FM-1's `OCT−`/`OCT+`) is handled directly
+  in `app.c` — shift the keybed base note (`lit_base`) and clamp; the demo
+  `rib_app.c` binds them, but a synth project must re-map them (a silent bug:
+  octave buttons that do nothing).
 - Bound queues and define overflow; velocity-zero is note-off; persist versioned
   records with CRC/commit, saving when silent.
 

@@ -300,7 +300,7 @@ static void app_main(void)
 {
     uint32_t prev = 0, k, lit = 0;
     uint8_t held[27] = {0};
-    int32_t bc, mt;
+    int32_t bc, mt, oct = 0;                       /* oct = the keybed's octave shift (-2..+2) */
     uint32_t last_scl_ms = 0, scl_pending = 0, scl_pending_ms = 0;
     uint32_t browser_open = 0, browser_slot = 0, browser_ms = 0;
     uint32_t pbro_open = 0, pbro_slot = 0, pbro_ms = 0;
@@ -337,7 +337,7 @@ static void app_main(void)
     ui_sync();                                         /* the engine's defaults reach the screen */
 
     for (;;) {
-        uint32_t keys, down, up, b, rel;
+        uint32_t keys, down, up, b, rel, base;
         int32_t e, ch0;
         platform_poll();
 
@@ -345,6 +345,7 @@ static void app_main(void)
         down = keys & ~prev;
         up = prev & ~keys;
         prev = keys;
+        base = (uint32_t)((int32_t)KEY0 + 12 * oct);
         {
             uint32_t now = fm1_ms;
             uint32_t scl = fm1_in.buttons & (1u << BTN_SEL);
@@ -395,7 +396,7 @@ static void app_main(void)
                         ui_op_mute_active();           /* SCL + key: mute the active op, no note */
                         held[k] = 0u;
                     } else {
-                        held[k] = (uint8_t)(KEY0 + k);
+                        held[k] = (uint8_t)(base + k);
                         ui_handle(UI_SRC_KEY, held[k]);
                         midi_send(0x90u | (uint32_t)ch0, held[k], 100);
                     }
@@ -414,6 +415,10 @@ static void app_main(void)
             if (b & (1u << BTN_LFO)) ui_handle(UI_SRC_BTN_LFO, -1);
             if (b & (1u << BTN_FX)) ui_handle(UI_SRC_BTN_FX, -1);
             if (b & (1u << BTN_GLO)) ui_handle(UI_SRC_BTN_GLO, -1);
+
+            /* OCT-/OCT+: shift the keybed base note a whole octave (clamped ±2) */
+            if (b & (1u << BTN_OCT_DOWN)) oct = oct > -2 ? oct - 1 : oct;
+            if (b & (1u << BTN_OCT_UP))   oct = oct <  2 ? oct + 1 : oct;
 
             /* SCL: a tap advances the operator (deferred so a second tap within the
              * window is a part switch instead); a double-tap switches the part. */
@@ -554,12 +559,15 @@ static void app_main(void)
         }
 
 #if FM1_CPU1_USED
+        lit_base = base;
         lit = dsp_status.lit;                    /* published by the render job */
 #else
-        lit = fourop_fm_dsp_lit(KEY0);
+        lit = fourop_fm_dsp_lit(base);
 #endif
         for (k = 0; k < 27u; k++)
             fm1_led_key(KEY_LED(k), lit >> k & 1u);
+        fm1_led_key(BTN_OCT_DOWN, oct < 0);
+        fm1_led_key(BTN_OCT_UP, oct > 0);
 
         idle_ok = 1;
         ui_redraw(fm1_ms);

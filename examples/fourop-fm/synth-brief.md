@@ -91,13 +91,14 @@ global six to a per-part array.
   and inputs `fm` (audio) + `pitch` (control) + `car_fb` (control, the carrier
   feedback master).
 - **Voice count / sample rate:** 20 voices / 44100 Hz (the default).
-- **Feedback paths:** each operator's self-feedback is one `delay1` (out ×
-  feedback → sum with external fm + pitch → `ph.fm`). Feedback is **per-op +
-  carrier**: each operator's `opN_feedback` (its own self-modulation, on the op
-  page) is summed with the carrier-gated `feedback` master (`algo.car_fb`, the
-  HOME knob) — the `algo` node gates the master by the carrier mask into
-  `op1..op4.car_fb`, so only the carrier gets the master on top of its per-op
-  amount.
+- **Feedback paths:** each operator's self-feedback is one `delay1` (the
+  **oscillator** output × feedback → sum with external fm + pitch → `ph.fm`,
+  tapped *pre*-envelope/pre-tremolo so the amplitude LFO never leaks into pitch).
+  Feedback is **per-op + carrier**: each operator's `opN_feedback` (its own
+  self-modulation, on the op page) is summed with the carrier-gated `feedback`
+  master (`algo.car_fb`, the HOME knob) — the `algo` node gates the master by the
+  carrier mask into `op1..op4.car_fb`, so only the carrier gets the master on top
+  of its per-op amount.
 
 ### 2.2 Parameter manifest
 
@@ -186,8 +187,8 @@ pages (§3.3): the active part's four operators are its four channels, so the
 `EDIT` (operator pitch), `ENV` (envelopes), `LFO` (modulation), `FX` (filter +
 fold), `GLO` (parts + patch), `HOME` (the visual pages), `ARP`/`SEQ`/`PLAY`/`REC`
 (operator mutes 1–4), `SCL` (operator select + part switch + part mute combos),
-`PRESETS` (the patch-browser popup). The keybed plays notes; `SCL`+key is the
-mute chord.
+`PRESETS` (the patch-browser popup), `OCT−`/`OCT+` (shift the keybed a whole
+octave, ±2, firmware-level). The keybed plays notes; `SCL`+key is the mute chord.
 
 ### 3.2 Always visible (every page, a fixed header)
 
