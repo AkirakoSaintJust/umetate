@@ -869,7 +869,78 @@ strengthening below.
 | L7 | Nodes added reactively (`gain`, `cmul`, `csum`, `algo`, `mute`, `pitch_env`). | Review the node/macro library against the full-synth target for completeness. |
 | L8 | The UI was **underspecified** — button meanings, page contents, and per-param semantics were decided during implementation, so the first emulator pass was "buggy, incomplete, cryptic" and a whole navigation/control map had to be re-derived *after* code existed. | **The UI interview must be written before the panel is coded** (control-map.md + synth-brief §3 as a *checked gate*, not a note): every button's meaning, every page's contents, the always-visible header, the shortcuts/chords, and each param's display form, all in one place. §3.1–3.5 + §2.1a/2.1b below are that spec now; a change to the panel must change them in the same commit. |
 | L9 | A per-param *display scale* was missing — the panel showed raw integers (cutoff `8000`, ratio `65536`, mute `0/1`), and a relative encoder moved ±1 raw (thousands of detents across a 0..65535 range). | The `params:` `display` form + the curve-driven stepping (linear = a fraction of the range, log = multiplicative, clamped) — `ui_param_disp[]` (§12.6). |
-| L10 | The *development skill* did not force a UI spec deep enough — it asked for a "context stack + pages + bindings", but not the **button-by-button meaning, page-by-page contents, the always-visible header, the modifier chords, the per-param display form, or the exact INIT-patch defaults** — so those were invented during code. | **Revamp the dev skill's GUI interview** so its *minimum bar* is the user's fourop-fm restructure spec (the `EDIT`/`ENV`/`LFO`/`FX`/`GLO`/`HOME` page map, the `SCL` tap/double-tap/hold chords, the `ARP/SEQ/PLAY/REC` mute remap, the preset-browser popup + 2 s timeout, and the full `INIT PATCH` default set) — a worked example of the depth the interview must reach *before* any code. **Open** — not yet written back into `skills/umetate-development/SKILL.md`/templates. |
+| L10 | The *development skill* did not force a UI spec deep enough — it asked for a "context stack + pages + bindings", but not the **button-by-button meaning, page-by-page contents, the always-visible header, the modifier chords, the per-param display form, or the exact INIT-patch defaults** — so those were invented during code. | **Revamp the dev skill's GUI interview** so its *minimum bar* is the exact 10-item checklist below (button map · page map · header · param placement · per-param display + stepping · widget layout · preset browser · exact INIT PATCH/PART defaults · screen rules) — the fourop-fm restructure is the worked example. **Open** — not yet written back into `skills/umetate-development/SKILL.md`/templates. |
+
+**The GUI interview's minimum bar (L10 — exact).** The development skill's GUI
+interview must treat the UI as *unspecified* until it has pinned, in writing, every
+one of the following — a checkable list, not a sketch. fourop-fm (synth-brief §3)
+is the worked example of the depth; the skill generalizes it to any synth.
+
+1. **Button map, button-by-button.** Every physical button and encoder — its exact
+   single-press meaning, *and* every multi-tap and hold-chord, *and* what each chord
+   *replaces* (a chord that mutes must not also fire a note; a page removed from a
+   menu is named as removed). fourop-fm: `ENV`/`LFO`/`EDIT`/`FX`/`GLO`/`HOME` select
+   menus; `ARP`/`SEQ`/`PLAY`/`REC` are **operator mutes 1–4** (the EDIT mute
+   sub-page is removed); `SCL` tap = next active operator, double-tap = switch the
+   active part, `SCL`+`ARP`/`PLAY` = part 1 mute, `SCL`+`SEQ`/`REC` = part 2 mute,
+   `SCL`+key = operator mute chord (not a note); the `PRESETS` encoder opens the
+   patch browser; `KNOB1–4` edit the current page's params; `SELECT` = page up/down
+   (wrapping).
+
+2. **Menu/page map, page-by-page.** Every menu, its pages *in order*, the exact
+   page count, and each page's exact contents. fourop-fm: `HOME` = 5 pages — (1)
+   4-op envelope graphs, (2) 4-op oscilloscope, (3) 4-op spectrogram, (4) 2-part
+   oscilloscope, (5) 2-part spectrogram; `ENV` = the op amplitude envelope in two
+   pages (rates r1–r4, then levels l1–l3) followed by the per-part pitch envelope;
+   `LFO` = the op amplitude LFO, then the per-part vibrato; `EDIT` = ratio · level ·
+   feedback · waveform (one page); `FX` = filter (on/off, cutoff, rez, type, then
+   its ADSR → cutoff) then fold (on/off, threshold, folds, type); `GLO` = per-part
+   level + delay, part name, per-part voice mode (poly / unison / legato + unison
+   voice count + detune + portamento time), part save/load from the preset store,
+   MIDI channel, keyboard split, `INIT PART`; then patch settings — `PATCH NAME`,
+   `INIT PATCH`.
+
+3. **The always-visible header.** The exact fields shown on *every* page, at all
+   times — fourop-fm: active part, active operator, each part's and operator's
+   ON/OFF (mute) state, the current algorithm, the current menu, and the page N/M
+   (`HOME 1/5`). No page may hide any of it.
+
+4. **Param placement.** Which menu *owns* each param — no param is reachable only
+   by accident. fourop-fm: filter + fold live in `FX` (the per-part pitch envelope
+   lives in `ENV` after the per-op amplitude envelope, and the per-part vibrato in
+   `LFO` — *not* in `FX`).
+
+5. **Per-param display form + stepping.** Every editable param's `display` form
+   (raw / ratio / pct / pct_inv / onoff / off_pct / hz / semi) and curve-driven
+   stepping (linear = a fraction of the range, log = multiplicative, clamped) —
+   §12.6.
+
+6. **Widget layout.** Which widget each visual page draws and the ordering —
+   fourop-fm: one widget per row in a column layout, part 1 / operator 1 on top.
+
+7. **The preset browser.** The popup trigger, timeout, and load/erase rule —
+   fourop-fm: the `PRESETS` encoder opens the **PATCH (2-part)** browser as a popup;
+   after 2 s with no preset-encoder input the selected patch loads and the popup
+   clears, unless it is already loaded (then it just clears). Single-part presets
+   load from `GLO`.
+
+8. **`INIT PATCH` defaults, exact.** fourop-fm: the **additive** algorithm; every
+   operator gate-type envelope (instant rise to max on note-on, instant fall to 0
+   on note-off), waveform 0, no feedback, ratio 1, all operators ON, part 2 OFF,
+   part 1 active, operator 1 active, no pitch envelope / vibrato / tremolo, level 75.
+
+9. **`INIT PART` defaults, exact.** The single-part equivalent of item 8, pinned as
+   a list — the skill must not accept "same as INIT PATCH" without the values.
+   (fourop-fm's exact `INIT PART` values are written when the `GLO` menu lands.)
+
+10. **Screen rules.** Redraw model + rate, no display in the audio callback, full
+    clear on page/menu change, held notes stay playable.
+
+The GUI interview is *done* only when items 1–10 are all written in the brief;
+L8's gate (§3.1–3.5 + §2.1a/2.1b) is that written spec, re-checked on every panel
+change. **Open:** rewrite `skills/umetate-development/SKILL.md` and the
+`templates/control-map.md` prompt to *require* items 1–10 and refuse to author the
+panel until each is filled in — this list is that rewrite's spec.
 
 #### 6.11.3 Locked decisions
 
@@ -1579,6 +1650,12 @@ schemas). The 5 synth-project templates (`synth-brief`/`project-plan`/
 now live in `templates/` and are referenced by repo path (not copied into the
 bundle). *Acceptance:* `deep-check --skill` passes; it drives `scaffold`/patch
 authoring and refuses device writes without §8 gates. **Layer: docs.**
+*Follow-up (open, L10):* the GUI interview's **minimum bar** is now pinned at
+§6.11.2 — the 10-item checklist (button map, page map, header, param placement,
+per-param display + stepping, widget layout, preset browser, exact INIT
+PATCH/PART defaults, screen rules); the `SKILL.md` GUI-interview step and the
+`templates/control-map.md` prompt must be rewritten to require it before authoring
+any panel.
 
 **P5-2 — umetate-safety skill.** **done** — `SKILL.md` (the threat model + surface
 map, memory-safety + attack-surface workflow, package identity, the §8 device-write
