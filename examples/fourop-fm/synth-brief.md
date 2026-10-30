@@ -233,7 +233,10 @@ preset browser** as a popup; after 2 s with no preset-encoder input, the selecte
 patch loads and the popup clears (unless it is already loaded — then it just
 clears). Single-part presets load from the `GLO` menu. `SAVE` opens the **save
 chooser** — a two-row `single part` / `multi-patch` dialog (`KNOB1` = row,
-`KNOB2` = slot, `SAVE` = commit, `HOME` = cancel; no idle timeout).
+`KNOB2` = slot, `SAVE` = commit, `HOME` = cancel; no idle timeout). Saving a
+multi-patch then asks what to do with the active part's live edits — **discard
+edits**, **save as a new part**, or **mutate in place** (`KNOB1` picks, `SAVE`
+commits, `HOME` goes back).
 
 ### 3.5 Screen rules
 

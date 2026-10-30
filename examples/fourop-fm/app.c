@@ -172,11 +172,10 @@ void ui_act_play(void) { }
 void ui_act_stop(void) { }
 /* ---- the app's save/load/apply helpers (the "single part" / "multi-patch" split) ---- */
 
-/* save the active part's timbre into a single-part slot; remember it as that
- * part's source so a multi-patch can reference it. */
-static void save_part(uint16_t slot)
+/* save one part's timbre into a single-part slot; remember it as that part's
+ * source so a multi-patch can reference it. */
+static void save_part_to(uint8_t part, uint16_t slot)
 {
-    uint8_t part = ui_part();
     int32_t params[SYNTH_PARAM_MAX];
     uint32_t i, base = (uint32_t)part * SYNTH_N_PARAMS;
     if (slot >= PRESET_PART_SLOTS)
@@ -190,15 +189,37 @@ static void save_part(uint16_t slot)
     t_change = fm1_ms;
 }
 
+static void save_part(uint16_t slot) { save_part_to(ui_part(), slot); }
+
+/* the first empty single-part slot (0xFF), or 0xFF when the bank is full */
+static uint8_t empty_part_slot(void)
+{
+    uint32_t i;
+    for (i = 0; i < PRESET_PART_SLOTS; i++)
+        if (part_bank[i * PP_RECORD(SYNTH_N_PARAMS)] == PRESET_EMPTY)
+            return (uint8_t)i;
+    return 0xFFu;
+}
+
 /* save the composition (each part's source single part + the routing) into a
- * multi-patch slot. */
-static void save_multi(uint16_t slot)
+ * multi-patch slot. `mode` = what to do with the active part's live edits:
+ * 0 = discard, 1 = save-as-new, 2 = mutate in place. */
+static void save_multi(uint16_t slot, uint8_t mode)
 {
     int32_t lv[SYNTH_N_PARTS], dl[SYNTH_N_PARTS], ch[SYNTH_N_PARTS];
     int32_t lo[SYNTH_N_PARTS], hi[SYNTH_N_PARTS];
     uint32_t i;
     if (slot >= PRESET_MULTI_SLOTS)
         return;
+    if (mode != 0u) {
+        uint8_t part = ui_part(), dst = part_slot_cur[part];
+        if (mode == 1u || dst == 0xFFu) {          /* save-as-new, or no source yet */
+            dst = empty_part_slot();
+            if (dst == 0xFFu)
+                return;                            /* bank full: nothing to save */
+        }
+        save_part_to(part, dst);                   /* mode 2 overwrites the source slot */
+    }
     for (i = 0; i < SYNTH_N_PARTS; i++) {
         ch[i] = fourop_fm_dsp_get_param(SYNTH_ROUTING_BASE + 0u * SYNTH_N_PARTS + i);
         lo[i] = fourop_fm_dsp_get_param(SYNTH_ROUTING_BASE + 1u * SYNTH_N_PARTS + i);
@@ -368,6 +389,24 @@ static void app_main(void)
                     ui_name_editor_commit();
                 if (b & (1u << BTN_HOME))
                     ui_name_editor_cancel();
+            } else if (ui_save_mode_open()) {
+                /* the save-mode chooser (step 2 of a multi-patch save): KNOB1 =
+                   mode, SAVE = save, HOME = back to the slot chooser. */
+                int32_t k1 = fm1_enc_take(ENC_KNOB1);
+                int32_t k2 = fm1_enc_take(ENC_KNOB2);
+                if (k1)
+                    ui_save_mode_move(k1);
+                (void)k2;                              /* the slot is fixed in step 2 */
+                b = fm1_input_edges(&rel);
+                if (b & (1u << BTN_SAVE)) {
+                    uint8_t mode = ui_save_mode();
+                    uint16_t slot = ui_save_slot();
+                    ui_save_mode_commit();
+                    ui_save_commit();
+                    save_multi(slot, mode);
+                }
+                if (b & (1u << BTN_HOME))
+                    ui_save_mode_cancel();
             } else if (ui_save_open()) {
                 /* the save chooser: KNOB1 = kind, KNOB2 = slot, SAVE = save,
                    HOME = cancel; the keys + page are inert while open. */
@@ -381,11 +420,12 @@ static void app_main(void)
                 if (b & (1u << BTN_SAVE)) {
                     uint8_t kind = ui_save_kind();
                     uint16_t slot = ui_save_slot();
-                    ui_save_commit();
-                    if (kind == 0u)
+                    if (kind == 0u) {
+                        ui_save_commit();
                         save_part(slot);
-                    else
-                        save_multi(slot);
+                    } else {
+                        ui_save_mode_begin();          /* step 2 for a multi-patch */
+                    }
                 }
                 if (b & (1u << BTN_HOME))
                     ui_save_cancel();

@@ -181,6 +181,15 @@ void ui_save_slot_move(int32_t delta);           /* step the selected row's slot
 void ui_save_commit(void);                       /* keep the choice, close */
 void ui_save_cancel(void);                       /* discard, close */
 
+/* ---- the save-mode chooser (step 2 of a multi-patch save: what to do with the
+ * active part's live edits) ---- */
+uint8_t ui_save_mode_open(void);                 /* 1 = the mode chooser is showing */
+void ui_save_mode_begin(void);                   /* open (0 = discard edits) */
+uint8_t ui_save_mode(void);                      /* 0 = discard, 1 = save-as-new, 2 = mutate in place */
+void ui_save_mode_move(int32_t delta);           /* cycle the mode (wrap) */
+void ui_save_mode_commit(void);                  /* keep the mode, close */
+void ui_save_mode_cancel(void);                  /* back to the save chooser, close */
+
 void ui_param_fmt(uint16_t p, const char *unit, char *out, uint32_t n); /* format a value */
 void ui_redraw(uint32_t now_ms);                 /* the retained-mode, rate-bounded redraw */
 void ui_custom_set(uint32_t slot, int32_t value); /* drive a UI_CUSTOM widget's dirty value */

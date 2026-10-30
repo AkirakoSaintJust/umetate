@@ -221,6 +221,26 @@ int main(void)
         CHECK(ui_save_open() == 0, "save chooser commit closes");
     }
 
+    /* the save-mode chooser (step 2 of a multi-patch save: discard/new/mutate) */
+    {
+        ui_save_mode_begin();
+        CHECK(ui_save_mode_open() == 1 && ui_save_mode() == 0u,
+              "save-mode chooser opens on discard");
+        ui_save_mode_move(1u);                   /* -> save-as-new */
+        CHECK(ui_save_mode() == 1u, "save-mode chooser advances to save-as-new");
+        ui_save_mode_move(1u);                   /* -> mutate */
+        CHECK(ui_save_mode() == 2u, "save-mode chooser advances to mutate");
+        ui_save_mode_move(1u);                   /* wraps -> discard */
+        CHECK(ui_save_mode() == 0u, "save-mode chooser wraps to discard");
+        ui_save_mode_move(-1u);                  /* -> mutate */
+        CHECK(ui_save_mode() == 2u, "save-mode chooser wraps backwards");
+        ui_save_mode_commit();
+        CHECK(ui_save_mode_open() == 0, "save-mode chooser commit closes");
+        ui_save_mode_begin();
+        ui_save_mode_cancel();
+        CHECK(ui_save_mode_open() == 0, "save-mode chooser cancel closes");
+    }
+
     if (failures) {
         printf("%d UI failures\n", failures);
         return 1;

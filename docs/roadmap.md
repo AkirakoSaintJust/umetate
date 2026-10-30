@@ -931,7 +931,10 @@ is the worked example of the depth; the skill generalizes it to any synth.
    just clears). Single-part presets load from `GLO`. **Saving** is a modal
    chooser (not a silent write): `SAVE` opens a two-row dialog — `single part` /
    `multi-patch` — `KNOB1` selects the row, `KNOB2` picks the slot, `SAVE` commits
-   and `HOME` cancels (no idle timeout: a save is destructive and persistent).
+   and `HOME` cancels (no idle timeout: a save is destructive and persistent). A
+   multi-patch save is **two-step**: the second popup asks what to do with the
+   active part's live edits — **discard**, **save-as-new**, or **mutate in place**
+   (`KNOB1` picks, `SAVE` commits, `HOME` goes back).
 
 8. **`INIT PATCH` defaults, exact.** fourop-fm: the **additive** algorithm; every
    operator gate-type envelope (instant rise to max on note-on, instant fall to 0

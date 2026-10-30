@@ -69,6 +69,7 @@ static char ui_name_saved[UI_NAME_LEN];          /* the pre-edit copy (for cance
 static uint8_t ui_name_which, ui_name_cursor, ui_name_on;  /* the name-editor state */
 static uint8_t ui_save_on, ui_save_which;        /* the save chooser: open flag + selected row */
 static uint16_t ui_save_slots[2];                /* [0] single-part slot, [1] multi-patch slot */
+static uint8_t ui_save_mode_on, ui_save_mode_which;  /* step 2: the multi-patch save mode */
 
 static const ui_context *ui_ctx(void) { return &ui_t->ctx[ui_stack[ui_sp]]; }
 static const ui_page *ui_cur_page(void) { return &ui_ctx()->pages[ui_pagei[ui_sp]]; }
@@ -1197,6 +1198,65 @@ static void ui_draw_save(void)
     cv_blit(0, 4 * UI_ROW_H);
 }
 
+/* ---- the save-mode chooser (step 2 of a multi-patch save) ---- */
+
+uint8_t ui_save_mode_open(void) { return ui_save_mode_on; }
+
+void ui_save_mode_begin(void)
+{
+    ui_save_mode_which = 0u;
+    if (!ui_save_mode_on)
+        ui_reset_page();
+    ui_save_mode_on = 1;
+}
+
+uint8_t ui_save_mode(void) { return ui_save_mode_which; }
+
+void ui_save_mode_move(int32_t delta)
+{
+    if (!ui_save_mode_on)
+        return;
+    if (delta > 0)
+        ui_save_mode_which = ui_save_mode_which == 2u ? 0u : (uint8_t)(ui_save_mode_which + 1u);
+    else
+        ui_save_mode_which = ui_save_mode_which == 0u ? 2u : (uint8_t)(ui_save_mode_which - 1u);
+}
+
+void ui_save_mode_commit(void)
+{
+    if (ui_save_mode_on) {
+        ui_save_mode_on = 0;
+        ui_reset_page();
+    }
+}
+
+void ui_save_mode_cancel(void)
+{
+    if (ui_save_mode_on) {
+        ui_save_mode_on = 0;
+        ui_reset_page();                           /* back to the save chooser (still open) */
+    }
+}
+
+/* the save-mode chooser pop-up: title + three rows (the selected in the accent). */
+static void ui_draw_save_mode(void)
+{
+    static const char *const ui_save_mode_text[3] = {
+        "discard edits", "save as new part", "mutate in place"};
+    uint32_t i;
+    cv_begin(240u, 5u * UI_ROW_H, C_DIM);
+    cv_text(6, 2, &FONT_S, "SAVE multi-patch", C_HI);
+    for (i = 0; i < 3u; i++) {
+        char row[24];
+        ui_strcpy(row, i == ui_save_mode_which ? "> " : "  ");
+        ui_strcat(row, ui_save_mode_text[i]);
+        cv_text(6, (int32_t)(i + 1u) * UI_ROW_H, &FONT_S, row,
+                i == ui_save_mode_which ? C_WHITE : C_HI);
+    }
+    cv_text(6, 4 * UI_ROW_H, &FONT_S, "K1=mode SAVE=save HOME=back", C_DIM);
+    cv_blit(0, 4 * UI_ROW_H);
+}
+
 void ui_redraw(uint32_t now_ms)
 {
     static uint32_t last_draw;
@@ -1225,6 +1285,8 @@ void ui_redraw(uint32_t now_ms)
         ui_draw_name_editor();
     if (ui_save_on)
         ui_draw_save();
+    if (ui_save_mode_on)
+        ui_draw_save_mode();
 }
 
 /* the safe-failure screen: drawn independently, never through the widget engine */
