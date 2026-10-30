@@ -155,6 +155,24 @@ void ui_part_next(void)
         ui_selected_part = (uint8_t)((ui_selected_part + 1u) % ui_t->n_part);
 }
 
+void ui_part_set(uint8_t part)
+{
+    if (part < ui_t->n_part)
+        ui_selected_part = part;
+}
+
+void ui_op_set(uint8_t op)
+{
+    if (op < ui_t->n_op)
+        ui_selected_op = op;
+}
+
+void ui_part_mute_set(uint8_t part, uint8_t muted)
+{
+    if (part < ui_t->n_part)
+        ui_part_mute[part] = muted ? 1u : 0u;
+}
+
 void ui_op_mute_active(void)
 {
     if (ui_t->mute && ui_selected_op < 4u) {
@@ -312,6 +330,8 @@ static void ui_do_action(uint8_t action, uint8_t arg)
         if (arg < ui_t->n_part)
             ui_part_mute[arg] = ui_part_mute[arg] ? 0u : 1u;
         break;
+    case UI_ACT_INIT_PATCH: ui_act_init_patch(); break;
+    case UI_ACT_INIT_PART: ui_act_init_part(); break;
     default: break;                              /* BANK_*, LOAD, LATCH: no-op for now */
     }
 }

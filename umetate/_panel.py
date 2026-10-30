@@ -173,6 +173,8 @@ _ACTIONS = {
     "op_mute_n": "UI_ACT_OP_MUTE_N",
     "part_next": "UI_ACT_PART_NEXT",
     "part_mute": "UI_ACT_PART_MUTE",
+    "init_patch": "UI_ACT_INIT_PATCH",
+    "init_part": "UI_ACT_INIT_PART",
 }
 
 _BEHAVIORS = {

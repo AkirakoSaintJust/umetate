@@ -173,6 +173,28 @@ void ui_act_save(void)
     bank_dirty = 1;
     t_change = fm1_ms;
 }
+void ui_act_init_patch(void)
+{
+    uint32_t i;
+    for (i = 0; i < fourop_fm_INIT_N; i++)
+        fourop_fm_dsp_set_param(fourop_fm_init[i].id, fourop_fm_init[i].value);
+    /* the spec's init state: part 1 active, op 1 active, part 1 unmuted, part 2 muted */
+    ui_part_set(0u);
+    ui_op_set(0u);
+    ui_part_mute_set(0u, 0u);
+    ui_part_mute_set(1u, 1u);
+}
+void ui_act_init_part(void)
+{
+    uint8_t part = ui_part();
+    uint32_t i;
+    for (i = 0; i < fourop_fm_INIT_N; i++) {
+        uint16_t id = fourop_fm_init[i].id;
+        if (id >= (uint32_t)part * SYNTH_N_PARAMS &&
+            id < (uint32_t)(part + 1u) * SYNTH_N_PARAMS)
+            fourop_fm_dsp_set_param(id, fourop_fm_init[i].value);
+    }
+}
 void ui_draw_custom(const ui_widget *w) { (void)w; }   /* no custom widgets in this panel */
 
 /* ---- MIDI: the framework handlers, from the main loop and while the screen draws */

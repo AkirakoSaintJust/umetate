@@ -221,6 +221,33 @@ def generate_dsp_header(
     if graph.taps:
         lines.append(f"#define {name}_N_TAP_CH {len(graph.taps) * graph.n_parts}u")
         lines.append(f"const int32_t *{name}_dsp_tap(uint32_t ch);")
+    init = patch.get("init") or {}
+    if init:
+        # the INIT PATCH/PART defaults, emitted as a `static const` {id, value}
+        # table (per-part params expand to every part of the same backing variable).
+        ids = param_ids(patch, nodes, macros)
+        by_id = {p.id: p for p in graph.params}
+        entries: list[tuple[int, int]] = []
+        for pname, value in init.items():
+            base_id = ids.get(pname)
+            if base_id is None:
+                raise GenError(f"init: {pname!r} does not name a patch param")
+            base = by_id.get(base_id)
+            if base is not None and base.part is not None:
+                for p in graph.params:
+                    if p.cname == base.cname and p.part is not None:
+                        entries.append((p.id, value))
+            else:
+                entries.append((base_id, value))
+        lines.append(
+            f"typedef struct {{ uint16_t id; int32_t value; }} {name}_init_entry;"
+        )
+        lines.append(f"static const {name}_init_entry {name}_init[] = {{")
+        lines.extend(f"    {{ {eid}u, {value} }}," for eid, value in entries)
+        lines.append("};")
+        lines.append(
+            f"#define {name}_INIT_N (sizeof {name}_init / sizeof {name}_init[0])"
+        )
     lines.append("")
     return "\n".join(lines)
 

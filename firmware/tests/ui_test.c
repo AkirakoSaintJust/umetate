@@ -37,7 +37,7 @@ uint32_t scope_seq(void) { return 0; }
 #include "ui.c"
 
 /* action hooks: record calls for the assertions */
-static int n_note_on, n_set_step, n_panic, n_save;
+static int n_note_on, n_set_step, n_panic, n_save, n_init_patch, n_init_part;
 void ui_act_note_on(uint8_t note, uint8_t vel) { (void)note; (void)vel; n_note_on++; }
 void ui_act_note_off(uint8_t note) { (void)note; }
 void ui_act_set_step(uint8_t step) { (void)step; n_set_step++; }
@@ -45,6 +45,8 @@ void ui_act_save(void) { n_save++; }
 void ui_act_panic(void) { n_panic++; }
 void ui_act_play(void) {}
 void ui_act_stop(void) {}
+void ui_act_init_patch(void) { n_init_patch++; }
+void ui_act_init_part(void) { n_init_part++; }
 void ui_draw_custom(const ui_widget *w) { (void)w; }
 
 static int failures;

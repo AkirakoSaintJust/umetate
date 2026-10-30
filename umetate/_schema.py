@@ -124,6 +124,9 @@ Patch = TypedDict(
         # scope taps: "<instance>.<port>" audio-rate voice-zone outputs, exposed
         # per-part as per-op scope/spectro channels (§6.11.4, L11).
         "taps": NotRequired[list[str]],
+        # INIT PATCH/PART defaults: friendly name -> value (per-part params apply to
+        # every part), emitted as the synth's init table (§6.11.4).
+        "init": NotRequired[dict[str, int]],
     },
 )
 

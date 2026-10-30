@@ -16,6 +16,7 @@
     { "source": "BTN_HOME", "action": "pop_home" },
     { "source": "BTN_SEL", "action": "op_next" },
     { "source": "ENC_SELECT", "action": "page" },
+    { "source": "BTN_SAVE", "action": "init_patch" },
     { "source": "BTN_ARP", "action": "op_mute_n", "arg": "0" },
     { "source": "BTN_SEQ", "action": "op_mute_n", "arg": "1" },
     { "source": "BTN_PLAY", "action": "op_mute_n", "arg": "2" },
@@ -231,13 +232,28 @@
             { "type": "param_row", "row": 7, "param": "portamento.p0", "text": "PORTAM" },
             { "type": "param_row", "row": 8, "param": "note_priority.p0", "text": "PRIOR" }
           ]
+        },
+        {
+          "id": "part",
+          "widgets": [
+            { "type": "label", "row": 2, "span": 2, "text": "INIT PART" },
+            { "type": "label", "row": 4, "text": "SAVE = reset the part" }
+          ]
+        },
+        {
+          "id": "patch",
+          "widgets": [
+            { "type": "label", "row": 2, "span": 2, "text": "INIT PATCH" },
+            { "type": "label", "row": 4, "text": "SAVE = reset the patch" }
+          ]
         }
       ],
       "bindings": [
         { "source": "ENC_KNOB1", "slot": 0, "behavior": "relative" },
         { "source": "ENC_KNOB2", "slot": 1, "behavior": "relative" },
         { "source": "ENC_KNOB3", "slot": 2, "behavior": "relative" },
-        { "source": "ENC_KNOB4", "slot": 3, "behavior": "relative" }
+        { "source": "ENC_KNOB4", "slot": 3, "behavior": "relative" },
+        { "source": "BTN_SAVE", "action": "init_part" }
       ]
     }
   }

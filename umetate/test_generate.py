@@ -24,6 +24,7 @@ from ._panel import generate_panel
 from ._schema import Patch, as_panel, as_patch
 from .generate import (
     generate,
+    generate_dsp_header,
     generate_params,
     generate_tables,
     load_library,
@@ -2525,6 +2526,20 @@ def main() -> int:
         + (msg or "fourop-fm (4-op FM) renders non-silent then decays to near-silence")
     )
     failures += 0 if ok else 1
+
+    # the INIT PATCH/PART defaults emit as a per-part-expanded init table
+    hdr = generate_dsp_header(ffm)
+    if (
+        "fourop_fm_init_entry fourop_fm_init[]" in hdr
+        and "fourop_fm_INIT_N" in hdr
+        and "{ 148u, 7 }" in hdr  # algorithm 7 (the additive algorithm)
+        and "{ 0u, 65536 }" in hdr  # op1 ratio, part 0
+        and "{ 74u, 65536 }" in hdr  # op1 ratio, part 1 (per-part expansion)
+    ):
+        print("ok: the init: table emits (algorithm 7 + per-part op params)")
+    else:
+        print("FAIL: the init: table did not emit correctly")
+        failures += 1
 
     ok, msg = _algorithms_render(ffm)
     print(

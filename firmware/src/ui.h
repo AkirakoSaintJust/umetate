@@ -60,6 +60,7 @@ enum {
     UI_ACT_OP_NEXT, UI_ACT_OP_PREV, UI_ACT_OP_MUTE,   /* the selected-operator group */
     UI_ACT_OP_MUTE_N,                                  /* mute operator `arg` (0..3) */
     UI_ACT_PART_NEXT, UI_ACT_PART_MUTE,                /* cycle / mute the active part */
+    UI_ACT_INIT_PATCH, UI_ACT_INIT_PART,               /* the INIT PATCH/PART reset */
 };
 
 /* ---- the fixed input-source vocabulary (the generator maps panel strings to these) ---- */
@@ -147,7 +148,10 @@ void ui_handle(uint16_t source, int32_t value);  /* resolve the source -> param/
 int32_t *ui_params(void);                        /* the shared param_values[] */
 uint8_t ui_part(void);                           /* the active part (0-based) */
 void ui_part_next(void);                         /* cycle the active part (the SCL double-tap) */
+void ui_part_set(uint8_t part);                  /* set the active part (INIT) */
+void ui_op_set(uint8_t op);                      /* set the active operator (INIT) */
 void ui_part_mute_toggle(uint8_t part);          /* mute/unmute a part (the header + chords) */
+void ui_part_mute_set(uint8_t part, uint8_t muted); /* set a part's mute (INIT) */
 uint8_t ui_part_muted(uint8_t part);             /* 1 = the part is muted */
 void ui_op_mute_active(void);                    /* mute/unmute the active operator (SCL + key) */
 void ui_popup_show(uint32_t slot, const char *name); /* the PATCH preset-browser popup */
@@ -164,6 +168,8 @@ void ui_act_save(void);
 void ui_act_panic(void);
 void ui_act_play(void);
 void ui_act_stop(void);
+void ui_act_init_patch(void);                  /* INIT PATCH: reset the whole patch */
+void ui_act_init_part(void);                   /* INIT PART: reset the active part */
 
 /* ---- the canvas escape hatch: the app draws a UI_CUSTOM widget (the widget is
  * passed so the app can key off w->param or w->text) ---- */
