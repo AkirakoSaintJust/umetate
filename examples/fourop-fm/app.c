@@ -86,6 +86,10 @@ static void app_audio(int32_t *out, uint32_t n)
 #else
     fourop_fm_dsp_render(out, n);
 #endif
+    /* the per-op scope taps: channel 0 = the final mix (platform.c), channels
+     * 1..N_TAP_CH = the 4 operators x 2 parts (the HOME 4-op scope/spectro). */
+    for (uint32_t k = 0; k < fourop_fm_N_TAP_CH; k++)
+        scope_push_ch(1u + k, fourop_fm_dsp_tap(k), n);
 }
 
 static int quiet_seam(void)

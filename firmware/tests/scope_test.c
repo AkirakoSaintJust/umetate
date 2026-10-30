@@ -72,7 +72,34 @@ int main(void)
     ok(peak >= 9u && peak <= 11u, "spectrum: 2000 Hz peaks at bin ~10");
     ok(mag[peak] > 0u && mag[0] < mag[peak], "spectrum: the peak bin dominates");
 
-    /* 4. budget: 120 bins over 256 samples must be well under a UI frame (33 ms). */
+    /* 4. per-op channels: a tap channel stores + reads back independently of ch 0
+     *    and of its siblings (the HOME 4-op scope shows each operator's own tap). */
+    {
+        static int32_t mono[SCOPE_N];
+        uint32_t phase = 0, inc = (uint32_t)(((uint64_t)2000u << 32) / SCOPE_FS);
+        fill_sine(stereo, SCOPE_N, 1000u);
+        scope_push(stereo, SCOPE_N);                       /* ch 0: 1000 Hz */
+        for (i = 0; i < SCOPE_N; i++) {                    /* ch 1: 2000 Hz */
+            mono[i] = fm1_sin(phase);
+            phase += inc;
+        }
+        scope_push_ch(1u, mono, SCOPE_N);
+        ok(scope_at_ch(0u, 0) == scope_at(0),
+           "channel: ch 0 matches the legacy scope_at");
+        ok(scope_at_ch(1u, 0) == mono[0] && scope_at_ch(1u, 1) == mono[1],
+           "channel: ch 1 holds its own samples");
+        ok(scope_at(0) == (int16_t)stereo[0], "channel: ch 0 is untouched by a tap push");
+        ok(scope_at_ch(SCOPE_CH + 5u, 0) == scope_at_ch(0u, 0),
+           "channel: an out-of-range channel reads ch 0");
+        scope_spectrum_ch(1u, mag, SCOPE_BINS);
+        peak = 0;
+        for (i = 1; i < SCOPE_BINS; i++)
+            if (mag[i] > mag[peak])
+                peak = i;
+        ok(peak >= 9u && peak <= 11u, "channel: ch 1 spectrogram peaks at 2000 Hz (~bin 10)");
+    }
+
+    /* 5. budget: 120 bins over 256 samples must be well under a UI frame (33 ms). */
     t0 = now_ms();
     for (i = 0; i < 8; i++)
         scope_spectrum(mag, SCOPE_BINS);

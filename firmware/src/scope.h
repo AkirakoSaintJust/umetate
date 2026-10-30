@@ -7,8 +7,14 @@
 #define SCOPE_N 256u          /* the snapshot window (one render block) */
 #define SCOPE_FS 44100u       /* the fixed DSP sample rate */
 #define SCOPE_BINS 120u       /* the spectrogram bar count (2 px each on 240 px) */
+#define SCOPE_CH 8u           /* the simultaneous per-op/per-part scope channels */
 
-void scope_push(const int32_t *stereo, uint32_t n);   /* the audio ISR stores the left channel */
-int16_t scope_at(uint32_t i);                         /* the last snapshot (downsampled) */
-void scope_spectrum(uint16_t *mag, uint32_t nbins);   /* Q15 Goertzel magnitudes */
-uint32_t scope_seq(void);                             /* snapshot sequence (for the UI dirty check) */
+/* Channel 0 (the legacy single-channel entry points) is the final mixed output;
+ * channels 1..SCOPE_CH-1 are the synth's scope taps (`<name>_dsp_tap`, §6.11.4). */
+void scope_push(const int32_t *stereo, uint32_t n);      /* the audio ISR stores the left channel -> ch 0 */
+void scope_push_ch(uint32_t ch, const int32_t *mono, uint32_t n);  /* store one tap channel */
+int16_t scope_at(uint32_t i);                            /* ch 0 sample (downsampled) */
+int16_t scope_at_ch(uint32_t ch, uint32_t i);            /* ch `ch` sample */
+void scope_spectrum(uint16_t *mag, uint32_t nbins);      /* ch 0 Goertzel magnitudes */
+void scope_spectrum_ch(uint32_t ch, uint16_t *mag, uint32_t nbins); /* ch `ch` */
+uint32_t scope_seq(void);                                /* snapshot sequence (for the UI dirty check) */

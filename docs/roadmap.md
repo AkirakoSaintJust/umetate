@@ -790,8 +790,12 @@ The shipped, tested UI base every project builds on:
   and the spectrogram is an integer **Goertzel bank** over linearly-spaced bins
   (log-power, log2 scale — no float, no 64-bit divide on the soft-FP target). Both
   redraw on `scope_seq` (a new snapshot), bounded by the ~30 Hz retained-mode
-  redraw. Host-tested: snapshot round-trip, a 2000 Hz sine peaks at the right bin,
-  and the 120-bin spectrum costs ~0.08 ms (well under a UI frame).
+  redraw. The core is **multi-channel** (`SCOPE_CH`): `scope_push_ch`/`scope_at_ch`/
+  `scope_spectrum_ch` address a per-op/per-part tap channel (`<name>_dsp_tap`,
+  §6.11.4), ch 0 = the final mix; the app glue pushes `N_TAP_CH` tap channels each
+  block. Host-tested: snapshot round-trip, a 2000 Hz sine peaks at the right bin,
+  per-channel isolation, and the 120-bin spectrum costs ~0.08 ms (well under a UI
+  frame).
 
 The panel schema is `templates/scaffold/panel.schema.json`; the interview fills
 `templates/control-map.md`.
