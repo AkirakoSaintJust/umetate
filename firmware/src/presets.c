@@ -179,9 +179,67 @@ int preset_settings_unpack(const uint8_t *raw, int32_t *base_channel, int32_t *m
     return 1;
 }
 
-int preset_part_bank_save(const uint8_t *bank, uint32_t n) { return slot_save(0, bank, PP_BANK(n)); }
-int preset_part_bank_load(uint8_t *bank, uint32_t n) { return slot_load(0, bank, PP_BANK(n)); }
-int preset_multi_bank_save(const uint8_t *bank, uint32_t p) { return slot_save(1, bank, MP_BANK(p)); }
-int preset_multi_bank_load(uint8_t *bank, uint32_t p) { return slot_load(1, bank, MP_BANK(p)); }
+/* A bank is a contiguous byte array of records, chunked across consecutive flash
+ * slots at record boundaries — a record never straddles a slot, so a corrupt slot
+ * never splits a record. `PRESET_SLOT_MAX` (the byte ceiling, mirroring store.h
+ * `SLOT_MAX`) gives the records-per-slot; the device build asserts the two agree
+ * below. */
+#ifdef SLOT_MAX
+_Static_assert(PRESET_SLOT_MAX == SLOT_MAX, "PRESET_SLOT_MAX must equal store.h SLOT_MAX");
+#endif
+
+static uint32_t bank_per(uint32_t rec) { return PRESET_SLOT_MAX / rec; }
+
+/* the number of flash slots a bank of `count` records of `rec` bytes spans */
+static uint32_t bank_slots(uint32_t count, uint32_t rec)
+{
+    uint32_t per = bank_per(rec);
+    return (count + per - 1u) / per;
+}
+
+static int bank_save(const uint8_t *bank, uint32_t count, uint32_t rec, uint32_t slot0)
+{
+    uint32_t per = bank_per(rec), off = 0;
+    while (off < count) {
+        uint32_t n = count - off < per ? count - off : per;
+        if (slot_save(slot0++, bank + off * rec, n * rec) != 0)
+            return -1;
+        off += n;
+    }
+    return 0;
+}
+
+static int bank_load(uint8_t *bank, uint32_t count, uint32_t rec, uint32_t slot0)
+{
+    uint32_t per = bank_per(rec), off = 0;
+    while (off < count) {
+        uint32_t n = count - off < per ? count - off : per;
+        if (slot_load(slot0++, bank + off * rec, n * rec) != 0)
+            return -1;
+        off += n;
+    }
+    return 0;
+}
+
+#define PART_BANK_SLOT 0u /* the part bank starts at flash slot 0; the multi bank follows */
+
+int preset_part_bank_save(const uint8_t *bank, uint32_t n)
+{
+    return bank_save(bank, PRESET_PART_SLOTS, PP_RECORD(n), PART_BANK_SLOT);
+}
+int preset_part_bank_load(uint8_t *bank, uint32_t n)
+{
+    return bank_load(bank, PRESET_PART_SLOTS, PP_RECORD(n), PART_BANK_SLOT);
+}
+int preset_multi_bank_save(const uint8_t *bank, uint32_t n, uint32_t p)
+{
+    return bank_save(bank, PRESET_MULTI_SLOTS, MP_RECORD(p),
+                     PART_BANK_SLOT + bank_slots(PRESET_PART_SLOTS, PP_RECORD(n)));
+}
+int preset_multi_bank_load(uint8_t *bank, uint32_t n, uint32_t p)
+{
+    return bank_load(bank, PRESET_MULTI_SLOTS, MP_RECORD(p),
+                     PART_BANK_SLOT + bank_slots(PRESET_PART_SLOTS, PP_RECORD(n)));
+}
 int preset_settings_save(const uint8_t *rec) { return settings_save(rec, ST_RECORD); }
 int preset_settings_load(uint8_t *rec) { return settings_load(rec, ST_RECORD); }

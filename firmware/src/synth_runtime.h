@@ -13,9 +13,10 @@ typedef struct {
     uint32_t n_parts;
     uint32_t routing_base;  /* the id of part 0's channel param (the generated layout) */
     int (*set_param)(uint32_t id, int32_t value);
-    const uint8_t *part_bank;   /* 64 part-patch records */
+    const uint8_t *part_bank;   /* 128 single-part records */
     const uint8_t *multi_bank;  /* 64 multi-patch records */
 } synth_runtime_ctx;
 
-/* apply the multi patch in `multi_slot` (0..63); a bad slot or record is a no-op */
+/* apply the multi patch in `multi_slot` (0..PRESET_MULTI_SLOTS-1); a bad slot or
+ * record is a no-op */
 void synth_preset_apply(const synth_runtime_ctx *ctx, uint32_t multi_slot);

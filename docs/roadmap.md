@@ -900,10 +900,10 @@ is the worked example of the depth; the skill generalizes it to any synth.
    `LFO` = the op amplitude LFO, then the per-part vibrato; `EDIT` = ratio · level ·
    feedback · waveform (one page); `FX` = filter (on/off, cutoff, rez, type, then
    its ADSR → cutoff) then fold (on/off, threshold, folds, type); `GLO` = per-part
-   level + delay, part name, per-part voice mode (poly / unison / legato + unison
-   voice count + detune + portamento time), part save/load from the preset store,
-   MIDI channel, keyboard split, `INIT PART`; then patch settings — `PATCH NAME`,
-   `INIT PATCH`.
+   level + delay, single-part name, per-part voice mode (poly / unison / legato +
+   unison voice count + detune + portamento time), single-part save/load from the
+   preset store, MIDI channel, keyboard split, `INIT PART`; then multi-patch
+   settings — multi-patch name, `INIT PATCH`.
 
 3. **The always-visible header.** The exact fields shown on *every* page, at all
    times — fourop-fm: active part, active operator, each part's and operator's
@@ -924,11 +924,14 @@ is the worked example of the depth; the skill generalizes it to any synth.
 6. **Widget layout.** Which widget each visual page draws and the ordering —
    fourop-fm: one widget per row in a column layout, part 1 / operator 1 on top.
 
-7. **The preset browser.** The popup trigger, timeout, and load/erase rule —
-   fourop-fm: the `PRESETS` encoder opens the **PATCH (2-part)** browser as a popup;
-   after 2 s with no preset-encoder input the selected patch loads and the popup
-   clears, unless it is already loaded (then it just clears). Single-part presets
-   load from `GLO`.
+7. **The preset browser + the save chooser.** The popup trigger, timeout, and
+   load/erase rule — fourop-fm: the `PRESETS` encoder opens the **multi-patch
+   (2-part)** browser as a popup; after 2 s with no preset-encoder input the
+   selected patch loads and the popup clears, unless it is already loaded (then it
+   just clears). Single-part presets load from `GLO`. **Saving** is a modal
+   chooser (not a silent write): `SAVE` opens a two-row dialog — `single part` /
+   `multi-patch` — `KNOB1` selects the row, `KNOB2` picks the slot, `SAVE` commits
+   and `HOME` cancels (no idle timeout: a save is destructive and persistent).
 
 8. **`INIT PATCH` defaults, exact.** fourop-fm: the **additive** algorithm; every
    operator gate-type envelope (instant rise to max on note-on, instant fall to 0
@@ -963,13 +966,13 @@ panel until each is filled in — this list is that rewrite's spec.
   voice-management rails must support.
 - **MIDI CC**: fixed, generator-assigned (one CC per param, emitted from
   `params.json`), documented — not user-editable on-device.
-- **Presets**: two tiers, as most synths do — **part patches** (a single timbre:
-  its 68 params + name) and **multi patches** (a composition: which part patch
+- **Presets**: two tiers, as most synths do — **single parts** (one timbre:
+  its 68 params + name) and **multi-patches** (a composition: which single part
   each of the 2 parts uses + each part's `level`/`delay`/`channel`/`keyzone` +
-  name). 32 part-patch slots and 32 multi-patch slots (the slot area's measured
-  16 372 B ceiling), flash, CRC + version; save / load / name; SysEx export /
-  import. System settings (base MIDI channel, master tune) are a separate global
-  record.
+  name). 128 single-part slots and 64 multi-patch slots (chunked across the
+  flash slot area's measured 16 372 B ceiling), flash, CRC + version; save /
+  load / name; SysEx export / import. System settings (base MIDI channel, master
+  tune) are a separate global record.
 - **SysEx**: a shared, versioned envelope every firmware uses, with a
   per-firmware payload.
 - **Polyphony**: `voices` is the **total shared pool** across both parts (not
@@ -1119,16 +1122,20 @@ self-validating unit — a `u8 version` (`0xFF` = empty slot), a body, and a
   u8 version | i32 base_channel | i32 master_tune | u32 crc32
   ```
 
-**Flash layout (on the existing `store.h`).** The 32 part patches are one bank
-(≤ `SLOT_MAX`) in slot 0, the 32 multi patches one bank in slot 1, the settings
-record in the settings sector — reusing `slot_load`/`slot_save`/`settings_load`/
-`settings_save` (magic + length + crc32 + header-last commit stays the transport
-integrity). The slot count is the measured hardware answer: `SLOT_MAX` = 16 372 B,
-the fourop-fm 317 B part record would fit 51 slots — 32 keeps the classic count
-with headroom. Per-record CRC + version on top: a fresh (erased) bank reads
-all-empty (`0xFF`); a cut save is caught by the area CRC, a single flipped bit by
-the record CRC. Writes happen only when silent (`dsp_quiet`, the existing rule)
-and only on an explicit save, never on a knob step.
+**Flash layout (on the existing `store.h`).** The 128 single parts are one bank
+chunked across three flash slots (51 records per `SLOT_MAX` = 16 372 B slot; a
+record never straddles a slot), the 64 multi patches one bank in the slot that
+follows (all 64 fit one slot), the settings record in the settings sector —
+reusing `slot_load`/`slot_save`/`settings_load`/`settings_save` (magic + length +
+crc32 + header-last commit stays the transport integrity). The 40 576 B part bank
+does not fit CPU0's 96 KiB `.bss`, so both banks live in `.pool` (app.ld's big-
+buffer region): flash is the persistence, RAM is a per-boot working copy. The slot
+count is the measured hardware answer: `SLOT_MAX` = 16 372 B, the fourop-fm 317 B
+part record fits 51 per slot — 128 spans 3 slots, 64 multi patches fit 1. Per-record
+CRC + version on top: a fresh (erased) bank reads all-empty (`0xFF`); a cut save is
+caught by the area CRC, a single flipped bit by the record CRC. Writes happen only
+when silent (`dsp_quiet`, the existing rule) and only on an explicit save, never on
+a knob step.
 
 **MIDI CC map.** The generator emits a `const` `cc -> param id` table from
 `params.json` (one CC per param, ascending from a base), plus the reversed
@@ -1252,10 +1259,10 @@ Still open: none — per-part mono/unison landed (F3, this increment).
 | F1 | **Interview loop hardening** (L1–L7). | synth-brief semantics column + multi-timbrality + MIDI-spec prompts; control-map menu→page→mode-tree prompt; skill non-goal rule + two-tier example definition; source-vocabulary check runs. |
 | F2 | **Velocity routing.** — **done** | `voice_velocity[]` + `velocity` reserved input + `vel_amp`/`vel_fm`/`vel_rate` in `fm_op` (velocity → amplitude, → FM, → envelope rate via a `dx_env` rate-scale input); host tests prove a higher velocity is louder and attacks faster. |
 | F3 | **Voice-management rails.** — **done** | `_voice.py` rails + `trigger`/retrigger + mono (note_priority/legato) + unison (detune) + portamento (glide) + the six mode params (per-part in multitimbral patches) + `parts:` (per-part param arrays, `voice_part[v]`, `note_on_ch` channel/keyzone routing, layering, per-part `level`/`delay`, and per-part poly/mono/unison); host tests prove mono/unison/legato/glide/routing+layering+level+delay + per-part mono priority/takeover + poly isolation + unison stacking. |
-| F4 | **Presets + settings + SysEx.** — **done** | 32-slot part-patch store + 32-slot multi-patch store (the slot area's measured 16 372 B ceiling; F7d) + settings record (`_records.py`/`presets.c`, byte-parity-tested), the shared SysEx envelope + 7-bit packing (`_sysex.py`), the generated `sysex-layout`, the bank ↔ `.syx` export/import (`_presets.py`), the `umetate preset export/import` CLI, and the C bank save/load over `store.h` (silent-only writes). Host tests prove the export→import round-trip and the C/Python byte parity. The device-side SysEx command handler landed with F7a. |
+| F4 | **Presets + settings + SysEx.** — **done** | 128-slot single-part store + 64-slot multi-patch store (chunked across the slot area's measured 16 372 B ceiling; F7d) + settings record (`_records.py`/`presets.c`, byte-parity-tested), the shared SysEx envelope + 7-bit packing (`_sysex.py`), the generated `sysex-layout`, the bank ↔ `.syx` export/import (`_presets.py`), the `umetate preset export/import` CLI, and the C bank save/load over `store.h` (silent-only writes). Host tests prove the export→import round-trip and the C/Python byte parity. The device-side SysEx command handler landed with F7a. |
 | F5 | **MIDI CC map.** — **done** | `generate_cc_map` + `generate_cc_header`: one CC per param, ascending from base 16, skipping the reserved CCs (sustain 64, channel-mode 120..127), plus the reversed `param → cc`; a GenError when the params don't fit. Host tests prove the map is complete/unique/ascending and that a CC write through the generated `cc_map.h` table reaches a real, writable param. |
 | F6 | **Polyphony budget tool.** — **done** | `umetate budget` generates the patch at each `--voices`/`--parts`, compiles for host, and times a worst-case `render(256)` (all voices sounding, envelopes open) — per-voice cost + linearity; the skill interview consumes it (a measured claim, not an estimate). The device fit is the emulator's job (F7e: `umetate emu --check --mhz 240` boots the built firmware and holds a chord — no halt, full-scale audio). |
-| F7 | **fourop-fm firmware assembly** — **done** | `examples/fourop-fm/` builds a firmware: 2 independent-timbre parts, velocity, CC, presets, settings, sustain/panic, `app_main`/`app_audio` glue on the shipped framework. Landed: F7a `synth_sysex` (envelope + five commands + 7-bit packing, byte-parity with `_sysex.py`); F7b `synth_midi` (note routing, CC→param with 7-bit→[min,max] scaling, sustain, panic, bend); F7c `synth_runtime` (a multi patch applies its part-patch refs + routing through set_param) + the generated `synth_layout.h` (model byte, param counts, the routing base) + the patch-level `model` field; F7d `umetate build --synth <dir>` — the composition (rib.c is now the frozen framework: platform + UI kit + the synth services, the demo moved to `rib_app.c`), the generated `dsp.h` seam header + `.dsp_text` SRAM placement, the patch-level `cc:` list (the multitimbral CC surface), 32 preset slots (the slot-area ceiling), and the dogfood app glue (`examples/fourop-fm/app.c`): the host leg renders sound on cue and the target leg builds `umetate-fm1-pro-fourop_fm.fwsc` through the JieLi toolchain (82 060 B image, `.dsp_text` 8 796 B in SRAM, checks green); F7e the emulator run — `umetate emu --check --mhz 240` boots the package and holds a chord: **no halt, full-scale audio peak (16 383)** — the device fit is measured, not estimated. |
+| F7 | **fourop-fm firmware assembly** — **done** | `examples/fourop-fm/` builds a firmware: 2 independent-timbre parts, velocity, CC, presets, settings, sustain/panic, `app_main`/`app_audio` glue on the shipped framework. Landed: F7a `synth_sysex` (envelope + five commands + 7-bit packing, byte-parity with `_sysex.py`); F7b `synth_midi` (note routing, CC→param with 7-bit→[min,max] scaling, sustain, panic, bend); F7c `synth_runtime` (a multi patch applies its part-patch refs + routing through set_param) + the generated `synth_layout.h` (model byte, param counts, the routing base) + the patch-level `model` field; F7d `umetate build --synth <dir>` — the composition (rib.c is now the frozen framework: platform + UI kit + the synth services, the demo moved to `rib_app.c`), the generated `dsp.h` seam header + `.dsp_text` SRAM placement, the patch-level `cc:` list (the multitimbral CC surface), 128 single-part + 64 multi-patch preset slots (chunked across the slot area), and the dogfood app glue (`examples/fourop-fm/app.c`): the host leg renders sound on cue and the target leg builds `umetate-fm1-pro-fourop_fm.fwsc` through the JieLi toolchain (82 060 B image, `.dsp_text` 8 796 B in SRAM, checks green); F7e the emulator run — `umetate emu --check --mhz 240` boots the package and holds a chord: **no halt, full-scale audio peak (16 383)** — the device fit is measured, not estimated. |
 | F8 | **Docs / tutorial / skill finalization** — **done** | tutorial + README + skill describe the full path; roadmap §6.11/§7/§12 updated; every milestone green. |
 
 Each milestone: mypy + ruff + pyright clean; all test modules green; `_skill` +
@@ -1318,8 +1325,8 @@ One patch + one panel → byte-identical output every time.
 recovery, the UI kit) and the **synth services** — `synth_midi` (notes / CC /
 sustain / panic / bend; a CC value scales to the param's [min, max], the CC
 surface is the patch's `cc:` list), `synth_sysex` (the envelope + the five
-commands), `synth_runtime` (a multi patch applies its parts through `set_param`),
-over `presets.c` (the 32+32-slot record store, sized to the measured slot area).
+commands), `synth_runtime` (a multi-patch applies its parts through `set_param`),
+over `presets.c` (the 128+64-slot record store, chunked across the measured slot area).
 The *per-voice* allocator (assignment, mono/unison/legato/portamento/retrigger/
 glide, `parts:`) is **generator rails** (`umetate/_voice.py`, F3) — not
 hand-written C. A synth project supplies only the **app glue** (`app.c`:
@@ -1334,13 +1341,13 @@ tagged `voice_part[v]` at note-on and reads its part's params. `note_on_ch(note,
 velocity, channel)` routes a note to every part whose channel matches (or is
 omni) *and* whose keyzone contains it — one note may fire many parts (layering).
 
-**The persistence model** (F4). Three records: **part patches** (one timbre,
-32 slots), **multi patches** (which part patch each part uses + routing + gain/
-timing, 32 slots), and **system settings** (base channel, tune — one global
+**The persistence model** (F4). Three records: **single parts** (one timbre,
+128 slots), **multi-patches** (which single part each part uses + routing + gain/
+timing, 64 slots), and **system settings** (base channel, tune — one global
 record). This mirrors the classic patch / performance / system split. The slot
 count is the *measured* hardware answer: the slot area holds 16 372 B (store.h
-`SLOT_MAX`), the fourop-fm 317 B part record would fit 51 — 32 keeps the classic
-count with headroom.
+`SLOT_MAX`), the fourop-fm 317 B part record fits 51 per slot — 128 single parts
+span 3 slots, 64 multi patches fit 1.
 
 **The gaps** (what's still hand-written or missing): the docs/tutorial/skill
 finalization (F8); the **dev-skill GUI interview revamp** (L10 — raise its minimum

@@ -2641,11 +2641,10 @@ def main() -> int:
         print("ok: per-part params are part-major (channel.p0/p1 present)")
 
     # the generated sysex-layout pins the per-firmware record geometry (F4c).
-    from ._records import SLOTS
+    from ._records import MULTI_SLOTS, PART_SLOTS
     from .generate import generate_sysex_layout
 
     layout = generate_sysex_layout(PARTS_PATCH)
-    slots = SLOTS
     n_params = 8  # 2 voice params + 6 per-part voice-mode params
     expect = {
         "model": 0,
@@ -2654,8 +2653,8 @@ def main() -> int:
         "part_patch_size": 1 + 16 + n_params * 4 + 4,
         "multi_patch_size": 1 + 16 + 2 + 5 * 2 * 4 + 4,
         "settings_size": 1 + 4 + 4 + 4,
-        "part_patch_bank_size": slots * (1 + 16 + n_params * 4 + 4),
-        "multi_patch_bank_size": slots * (1 + 16 + 2 + 5 * 2 * 4 + 4),
+        "part_patch_bank_size": PART_SLOTS * (1 + 16 + n_params * 4 + 4),
+        "multi_patch_bank_size": MULTI_SLOTS * (1 + 16 + 2 + 5 * 2 * 4 + 4),
     }
     if layout != expect:
         print(f"FAIL: sysex-layout geometry is wrong ({layout})")

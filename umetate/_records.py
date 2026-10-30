@@ -18,10 +18,14 @@ from typing import TypedDict
 NAME_LEN = 16
 RECORD_VERSION = 1
 EMPTY = 0xFF
-# Part patches and multi patches: 32 slots each. The slot area's measured ceiling
-# is 16 372 B (store.h SLOT_MAX); the fourop-fm 317 B part record would fit 51
-# slots, 32 keeps the classic count and headroom (roadmap §6.11.4).
-SLOTS = 32
+# The preset store's logical slot counts: 128 single-part slots + 64 multi-patch
+# slots. Each bank is a contiguous byte array chunked across the flash slots at
+# record boundaries (a record never straddles a slot). The flash slot byte ceiling
+# is store.h `SLOT_MAX` = 16 372 B; the fourop-fm 317 B part record spans the 128
+# parts over 3 flash slots (51 per slot), the 63 B multi record fits 64 in one
+# (roadmap §6.11.4).
+PART_SLOTS = 128
+MULTI_SLOTS = 64
 
 
 def crc32(data: bytes | bytearray) -> int:

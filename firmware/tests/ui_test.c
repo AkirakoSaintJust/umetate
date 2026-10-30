@@ -201,6 +201,26 @@ int main(void)
         CHECK(ui_name_editing() == 0xFFu, "name editor closed after commit");
     }
 
+    /* the save chooser (kind toggle + slot wrap + commit/cancel) */
+    {
+        ui_save_begin(0u, 5u, 3u);
+        CHECK(ui_save_open() == 1 && ui_save_kind() == 0u && ui_save_slot() == 5u,
+              "save chooser opens on the single part + its slot");
+        ui_save_kind_move(1u);                   /* -> multi-patch */
+        CHECK(ui_save_kind() == 1u && ui_save_slot() == 3u,
+              "save chooser kind toggles to multi-patch");
+        ui_save_slot_move(1u);                   /* slot 3 -> 4 */
+        ui_save_slot_move(-1u);                  /* back to 3 */
+        CHECK(ui_save_slot() == 3u, "save chooser slot steps + wraps back");
+        ui_save_kind_move(1u);                   /* back to single part */
+        CHECK(ui_save_kind() == 0u, "save chooser kind toggles back");
+        ui_save_cancel();
+        CHECK(ui_save_open() == 0, "save chooser cancel closes");
+        ui_save_begin(1u, 5u, 3u);
+        ui_save_commit();
+        CHECK(ui_save_open() == 0, "save chooser commit closes");
+    }
+
     if (failures) {
         printf("%d UI failures\n", failures);
         return 1;

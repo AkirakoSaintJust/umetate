@@ -7,7 +7,7 @@ includes per-operator and carrier feedback, eight runtime-selectable algorithms,
 rate/level envelopes, and 12 waveforms. It also has a shared pitch LFO and pitch
 envelope, plus an amplitude LFO for each operator. It builds into a full
 firmware: **two independent timbres** (parts, channels 0/1), velocity, presets
-(32+32 + settings), SysEx, and MIDI CC/sustain/panic/bend, composed from the app
+(128+64 + settings), SysEx, and MIDI CC/sustain/panic/bend, composed from the app
 glue `app.c` onto the frozen `rib.c` framework (`umetate build --synth`).
 
 ## 1. The synth
@@ -48,7 +48,7 @@ The example's implementation lives in `modules/nodes/` (`dx_env`, `mix4`,
 umetate deep-check --all                       # the gate (renders the patch, resolves the panel, runs the composition)
 umetate build --synth examples/fourop-fm       # compose + host run + target package (needs the toolchain)
 umetate emu --check --mhz 240                  # boot the package, hold a chord (no halt, full-scale peak)
-umetate preset export examples/fourop-fm       # the 32+32 bank as .syx (import reverses it)
+umetate preset export examples/fourop-fm       # the 128+64 bank as .syx (import reverses it)
 umetate budget examples/fourop-fm/patch.json --voices 20   # the measured polyphony claim
 ```
 

@@ -16,10 +16,10 @@
 
 typedef struct {
     uint32_t model;          /* the firmware's SysEx model byte */
-    uint32_t n_params;       /* the timbre param count (the part-patch N, <= 64) */
+    uint32_t n_params;       /* the timbre param count (the single-part N, <= 128) */
     uint32_t n_parts;
     int32_t (*get_param)(uint32_t id);
-    uint8_t *part_bank;      /* 64 part-patch records (the writable bank) */
+    uint8_t *part_bank;      /* 128 single-part records (the writable bank) */
     uint8_t *multi_bank;     /* 64 multi-patch records */
     uint8_t *settings;       /* the settings record (ST_RECORD bytes) */
 } synth_sysex_ctx;

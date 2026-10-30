@@ -108,7 +108,7 @@ global six to a per-part array.
 > global (the filter + fold output chain) + 10 routing = **179 `set_param` ids**,
 > part-major (`part × param`). The patch's `cc:` list exposes 51 of them (part 0's
 > timbre + the global FX + both parts' mode params) as the fixed CC surface; part
-> 1's timbre comes from the multi patch / SysEx. The six voice-mode params
+> 1's timbre comes from the multi-patch / SysEx. The six voice-mode params
 > (`mode`, `unison_count`, `unison_detune`, `legato`, `portamento`,
 > `note_priority`) are **per-part** (each part its own poly/unison/legato +
 > counts + times).
@@ -216,9 +216,10 @@ part's and operator's **ON/OFF** (muted) state, the **current algorithm**, the
   amplitude) and **delay**; per-part **voice mode** (poly / unison / legato,
   with unison voice count + detune, legato voice count, portamento time); part
   **name**, MIDI **channel**, **keyboard split**, **INIT PART**; **save/load a
-  part patch into either part** from the preset store; patch settings — **PATCH
-  NAME**, **INIT PATCH** (additive algorithm, gate-type envelopes, waveform 0,
-  no feedback, ratio 1, all ops ON, part 2 OFF, part 1 active, level 75).
+  single part into either part** from the preset store; multi-patch settings —
+  **multi-patch name**, **INIT PATCH** (additive algorithm, gate-type envelopes,
+  waveform 0, no feedback, ratio 1, all ops ON, part 2 OFF, part 1 active,
+  level 75).
 
 ### 3.4 The shortcuts and modifiers
 
@@ -226,10 +227,12 @@ part's and operator's **ON/OFF** (muted) state, the **current algorithm**, the
 part. **Holding `SCL` + a key** mutes that operator (chord, not a note). **Holding
 `SCL` + `ARP` or `PLAY`** toggles part 1 mute; **`SCL` + `SEQ` or `REC`** toggles
 part 2 mute. `ARP`/`SEQ`/`PLAY`/`REC` (plain) toggle operator mutes 1–4 — the
-old mute sub-page is gone. The `PRESETS` encoder opens the **PATCH (2-part)
+old mute sub-page is gone. The `PRESETS` encoder opens the **multi-patch (2-part)
 preset browser** as a popup; after 2 s with no preset-encoder input, the selected
 patch loads and the popup clears (unless it is already loaded — then it just
-clears). Single-part presets load from the `GLO` menu.
+clears). Single-part presets load from the `GLO` menu. `SAVE` opens the **save
+chooser** — a two-row `single part` / `multi-patch` dialog (`KNOB1` = row,
+`KNOB2` = slot, `SAVE` = commit, `HOME` = cancel; no idle timeout).
 
 ### 3.5 Screen rules
 
@@ -251,17 +254,18 @@ page/context change, held notes stay playable. Per-param display scale (ratio
 
 ## 5. State and persistence
 
-- **What survives reboot:** 32 part patches + 32 multi patches + the settings
+- **What survives reboot:** 128 single parts + 64 multi patches + the settings
   record (base channel, master tune), saved to flash **only when silent** and
-  only on an explicit save; the multi patch in slot 0 applies at boot.
+  only on an explicit save; the multi-patch in slot 0 applies at boot.
 - **Patch/sequence format and version:** the preset records (`docs/roadmap.md`
-  §6.11.4): `u8 version | name[16] | params | crc32`, 32 slots each (the slot
-  area's measured 16 372 B ceiling).
+  §6.11.4): `u8 version | name[16] | params | crc32`, 128 single-part slots +
+  64 multi-patch slots (chunked across the slot area's measured 16 372 B
+  ceiling).
 - **Storage budget and CRC/commit rule:** per-record CRC-32 + the area CRC;
   a corrupt record is skipped, never the bank.
 - **Backup, import/export, migration, rollback:** `umetate preset export/import`
   (the bank ↔ `.syx`), and the five SysEx commands (identity / param dump /
-  part-patch / multi-patch / settings).
+  single-part / multi-patch / settings).
 
 ## 6. Browser prototype
 
@@ -279,7 +283,7 @@ page/context change, held notes stay playable. Per-param display scale (ratio
 - **Must-have features:** 8 runtime algorithms; 12 waveforms; per-op + carrier
   feedback; rate/level envelopes; a global pitch LFO + global pitch envelope +
   per-op amplitude LFO; the filter + wavefolder output chain; a panel; **two
-  timbres** (parts), **presets** (32+32 + settings), **SysEx**, **MIDI CC /
+  timbres** (parts), **presets** (128+64 + settings), **SysEx**, **MIDI CC /
   sustain / panic / bend**.
 - **Optional features (shipped, defaulted off):** velocity scaling (the depths
   default to 0).

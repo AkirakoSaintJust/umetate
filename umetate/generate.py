@@ -145,7 +145,13 @@ def generate_sysex_layout(
     """The generated `sysex-layout.json` (roadmap §6.11.4): the per-firmware SysEx
     payload geometry — the `<model>` byte (the patch's `model`) + record/bank sizes
     from the patch's param + part counts."""
-    from ._records import SLOTS, multi_patch_size, part_patch_size, settings_size
+    from ._records import (
+        MULTI_SLOTS,
+        PART_SLOTS,
+        multi_patch_size,
+        part_patch_size,
+        settings_size,
+    )
 
     graph = _graph(patch, nodes, macros)
     n_params = graph.n_voice_params
@@ -157,8 +163,8 @@ def generate_sysex_layout(
         "part_patch_size": part_patch_size(n_params),
         "multi_patch_size": multi_patch_size(n_parts),
         "settings_size": settings_size(),
-        "part_patch_bank_size": SLOTS * part_patch_size(n_params),
-        "multi_patch_bank_size": SLOTS * multi_patch_size(n_parts),
+        "part_patch_bank_size": PART_SLOTS * part_patch_size(n_params),
+        "multi_patch_bank_size": MULTI_SLOTS * multi_patch_size(n_parts),
     }
 
 

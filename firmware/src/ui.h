@@ -155,13 +155,13 @@ void ui_part_mute_toggle(uint8_t part);          /* mute/unmute a part (the head
 void ui_part_mute_set(uint8_t part, uint8_t muted); /* set a part's mute (INIT) */
 uint8_t ui_part_muted(uint8_t part);             /* 1 = the part is muted */
 void ui_op_mute_active(void);                    /* mute/unmute the active operator (SCL + key) */
-void ui_popup_show(uint32_t slot, const char *name); /* the PATCH preset-browser popup */
-void ui_popup_show_part(uint32_t slot, const char *name); /* the PART preset-browser popup */
+void ui_popup_show(uint32_t slot, const char *name); /* the multi-patch preset-browser popup */
+void ui_popup_show_part(uint32_t slot, const char *name); /* the single-part preset-browser popup */
 void ui_popup_hide(void);                        /* clear the popup */
 
-/* ---- the name strings + the name editor (the GLO PATCH NAME / PART NAME rows) ---- */
+/* ---- the name strings + the name editor (the GLO multi-patch / single-part rows) ---- */
 #define UI_NAME_LEN 16u                          /* 15 chars + NUL (the record's name field) */
-const char *ui_name_get(uint8_t which);          /* 0 = part, 1 = patch */
+const char *ui_name_get(uint8_t which);          /* 0 = single part, 1 = multi-patch */
 void ui_name_set(uint8_t which, const char *name);
 uint8_t ui_name_editing(void);                   /* 0xFF = none, else the name being edited */
 void ui_name_editor_begin(uint8_t which);        /* open the editor pre-filled + saved copy */
@@ -170,6 +170,16 @@ void ui_name_editor_cancel(void);                /* restore the saved name, clos
 void ui_name_editor_char(int32_t delta);         /* scroll the char at the cursor (wrap) */
 void ui_name_editor_move(int32_t delta);         /* move the cursor (wrap) */
 void ui_name_editor_backspace(void);             /* delete the char at the cursor */
+
+/* ---- the save chooser (the SAVE dialog: single part / multi-patch + slot) ---- */
+uint8_t ui_save_open(void);                      /* 1 = the chooser is showing */
+void ui_save_begin(uint8_t kind, uint16_t part_slot, uint16_t multi_slot); /* open, pre-filled */
+uint8_t ui_save_kind(void);                      /* the selected kind: 0 = single part, 1 = multi-patch */
+uint16_t ui_save_slot(void);                     /* the selected kind's slot */
+void ui_save_kind_move(int32_t delta);           /* switch the selected row (wrap) */
+void ui_save_slot_move(int32_t delta);           /* step the selected row's slot (wrap) */
+void ui_save_commit(void);                       /* keep the choice, close */
+void ui_save_cancel(void);                       /* discard, close */
 
 void ui_param_fmt(uint16_t p, const char *unit, char *out, uint32_t n); /* format a value */
 void ui_redraw(uint32_t now_ms);                 /* the retained-mode, rate-bounded redraw */

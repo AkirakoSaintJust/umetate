@@ -2,7 +2,7 @@
 # Copyright (C) 2026 P1Onken (umetate)
 """`umetate preset` — export/import the preset bank as SysEx (roadmap §6.11.4).
 
-The host-side round-trip: a JSON bank (64 part patches + 64 multi patches) <-> a
+The host-side round-trip: a JSON bank (128 single parts + 64 multi patches) <-> a
 `.syx` stream of dump frames. The device transfer (MIDI) is the firmware's job
 (F7); here the `.syx` file is the exchange format.
 """
@@ -60,7 +60,7 @@ def _export(argv: list[str]) -> int:
     except OSError as exc:
         print(f"preset: cannot write {args.out!r}: {exc}", file=sys.stderr)
         return 1
-    print(f"preset: exported 64 part patches + 64 multi patches to {args.out}")
+    print(f"preset: exported 128 single parts + 64 multi patches to {args.out}")
     return 0
 
 

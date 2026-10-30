@@ -131,6 +131,29 @@ int main(void)
                   preset_settings_unpack(rec, &bc, &mt) && bc == -1 && mt == 12);
     }
 
+    { /* the multi-patch bank: save, wipe, load back (the slot follows the part bank) */
+        static uint8_t mbank[MP_BANK(2)], mback[MP_BANK(2)];
+        static const uint8_t slots[2] = {0, 1};
+        static const int32_t lv[2] = {32768, 16384}, dl[2] = {0, 5}, ch[2] = {0, 1};
+        static const int32_t lo[2] = {0, 48}, hi[2] = {127, 96};
+        memset(mbank, 0xFF, sizeof mbank);
+        preset_multi_pack(mbank + 0 * MP_RECORD(2), "Comp", slots, lv, dl, ch, lo, hi, 2);
+        preset_multi_pack(mbank + 63 * MP_RECORD(2), "Last", slots, lv, dl, ch, lo, hi, 2);
+        check("multi bank saves", preset_multi_bank_save(mbank, 4, 2) == 0);
+        memset(mback, 0, sizeof mback);
+        check("multi bank loads", preset_multi_bank_load(mback, 4, 2) == 0);
+        check("multi bank round-trips (slots 0 + 63, the rest empty)",
+              !memcmp(mbank, mback, MP_BANK(2)) &&
+                  preset_multi_unpack(mback + 0 * MP_RECORD(2), 2, name, slot, level, delay,
+                                      channel, low, high) &&
+                  !strcmp(name, "Comp") &&
+                  preset_multi_unpack(mback + 63 * MP_RECORD(2), 2, name, slot, level, delay,
+                                      channel, low, high) &&
+                  !strcmp(name, "Last") &&
+                  !preset_multi_unpack(mback + 1 * MP_RECORD(2), 2, name, slot, level, delay,
+                                       channel, low, high));
+    }
+
     printf("%s\n", bad ? "PRESETS TEST FAILED" : "presets test passed");
     return bad != 0;
 }

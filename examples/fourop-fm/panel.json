@@ -254,19 +254,19 @@
         {
           "id": "part",
           "widgets": [
-            { "type": "label", "row": 2, "span": 2, "text": "PART" },
-            { "type": "name", "row": 3, "text": "PART NAME", "name": 0 },
+            { "type": "label", "row": 2, "span": 2, "text": "single part" },
+            { "type": "name", "row": 3, "text": "single part name", "name": 0 },
             { "type": "label", "row": 5, "text": "PRESETS = browse/load" },
-            { "type": "label", "row": 6, "text": "SAVE = save part" },
+            { "type": "label", "row": 6, "text": "SAVE = save single part" },
             { "type": "label", "row": 7, "text": "SCL+SAVE = init part" }
           ]
         },
         {
           "id": "patch",
           "widgets": [
-            { "type": "label", "row": 2, "span": 2, "text": "PATCH" },
-            { "type": "name", "row": 3, "text": "PATCH NAME", "name": 1 },
-            { "type": "label", "row": 5, "text": "SCL+SAVE = init patch" }
+            { "type": "label", "row": 2, "span": 2, "text": "multi-patch" },
+            { "type": "name", "row": 3, "text": "multi-patch name", "name": 1 },
+            { "type": "label", "row": 5, "text": "SCL+SAVE = init multi-patch" }
           ]
         }
       ],

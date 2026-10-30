@@ -3,6 +3,7 @@
 /* The UI runtime (docs/roadmap.md §12.6). Included into the app after gfx.c, so the
  * canvas (cv_*, FONT_S/FONT_L) and the palette colors (C_*) are in scope. */
 #include "ui.h"
+#include "presets.h"   /* PRESET_PART_SLOTS / PRESET_MULTI_SLOTS (the save chooser's slot ranges) */
 
 #define UI_MAX_DEPTH 8u
 #define UI_MAX_WIDGETS 24u
@@ -63,9 +64,11 @@ static uint8_t ui_part_mute[4];                  /* part mute flags (up to 4 par
 static int32_t ui_header_last = 0x7FFFFFFF;      /* the header's last-drawn value */
 static char ui_popup_line[40];                   /* the preset-browser popup text */
 static uint8_t ui_popup_on;                      /* 1 = the popup is showing */
-static char ui_name[2][UI_NAME_LEN];             /* [0] = part name, [1] = patch name */
+static char ui_name[2][UI_NAME_LEN];             /* [0] = single-part name, [1] = multi-patch name */
 static char ui_name_saved[UI_NAME_LEN];          /* the pre-edit copy (for cancel) */
 static uint8_t ui_name_which, ui_name_cursor, ui_name_on;  /* the name-editor state */
+static uint8_t ui_save_on, ui_save_which;        /* the save chooser: open flag + selected row */
+static uint16_t ui_save_slots[2];                /* [0] single-part slot, [1] multi-patch slot */
 
 static const ui_context *ui_ctx(void) { return &ui_t->ctx[ui_stack[ui_sp]]; }
 static const ui_page *ui_cur_page(void) { return &ui_ctx()->pages[ui_pagei[ui_sp]]; }
@@ -975,8 +978,8 @@ static void ui_popup_set(const char *title, uint32_t slot, const char *name)
         ui_reset_page();                           /* off -> on: clear + redraw under it */
 }
 
-void ui_popup_show(uint32_t slot, const char *name) { ui_popup_set("PATCH ", slot, name); }
-void ui_popup_show_part(uint32_t slot, const char *name) { ui_popup_set("PART ", slot, name); }
+void ui_popup_show(uint32_t slot, const char *name) { ui_popup_set("multi-patch ", slot, name); }
+void ui_popup_show_part(uint32_t slot, const char *name) { ui_popup_set("single part ", slot, name); }
 
 void ui_popup_hide(void)
 {
@@ -1096,7 +1099,7 @@ void ui_name_editor_backspace(void)
 static void ui_draw_name_editor(void)
 {
     char s[UI_NAME_LEN + 8];
-    const char *title = ui_name_which ? "PATCH NAME" : "PART NAME";
+    const char *title = ui_name_which ? "multi-patch name" : "single part name";
     uint32_t i;
     cv_begin(240u, 5u * UI_ROW_H, C_DIM);
     cv_text(6, 2, &FONT_S, title, C_HI);
@@ -1109,6 +1112,88 @@ static void ui_draw_name_editor(void)
                 i == ui_name_cursor ? C_WHITE : C_HI);
     }
     cv_text(6, 3 * UI_ROW_H, &FONT_S, "K1=char K2=cursor SCL=del SAVE=ok HOME=cancel", C_DIM);
+    cv_blit(0, 4 * UI_ROW_H);
+}
+
+/* ---- the save chooser (the SAVE dialog: single part / multi-patch + slot) ---- */
+
+/* the slot range per kind: 0 = single part (PRESET_PART_SLOTS), 1 = multi-patch */
+static uint16_t ui_save_max(uint8_t kind)
+{
+    return (uint16_t)(kind == 0u ? PRESET_PART_SLOTS : PRESET_MULTI_SLOTS);
+}
+
+uint8_t ui_save_open(void) { return ui_save_on; }
+
+void ui_save_begin(uint8_t kind, uint16_t part_slot, uint16_t multi_slot)
+{
+    ui_save_which = kind < 2u ? kind : 0u;
+    ui_save_slots[0] = part_slot < PRESET_PART_SLOTS ? part_slot : 0u;
+    ui_save_slots[1] = multi_slot < PRESET_MULTI_SLOTS ? multi_slot : 0u;
+    if (!ui_save_on)
+        ui_reset_page();
+    ui_save_on = 1;
+}
+
+uint8_t ui_save_kind(void) { return ui_save_which; }
+uint16_t ui_save_slot(void) { return ui_save_slots[ui_save_which]; }
+
+void ui_save_kind_move(int32_t delta)
+{
+    (void)delta;
+    if (!ui_save_on)
+        return;
+    ui_save_which = ui_save_which == 0u ? 1u : 0u; /* two rows: toggle */
+}
+
+void ui_save_slot_move(int32_t delta)
+{
+    uint16_t max = ui_save_max(ui_save_which);
+    int32_t s;
+    if (!ui_save_on)
+        return;
+    s = (int32_t)ui_save_slots[ui_save_which] + delta;
+    s %= (int32_t)max;
+    if (s < 0)
+        s += (int32_t)max;
+    ui_save_slots[ui_save_which] = (uint16_t)s;
+}
+
+void ui_save_commit(void)
+{
+    if (ui_save_on) {
+        ui_save_on = 0;
+        ui_reset_page();
+    }
+}
+
+void ui_save_cancel(void)
+{
+    if (ui_save_on) {
+        ui_save_on = 0;
+        ui_reset_page();
+    }
+}
+
+/* the save chooser pop-up: title + two rows (the selected in the accent) + the legend. */
+static void ui_draw_save(void)
+{
+    static const char *const ui_save_kind_text[2] = {"single part", "multi-patch"};
+    char t[12];
+    uint32_t i;
+    cv_begin(240u, 5u * UI_ROW_H, C_DIM);
+    cv_text(6, 2, &FONT_S, "SAVE", C_HI);
+    for (i = 0; i < 2u; i++) {
+        char row[32];
+        ui_strcpy(row, i == ui_save_which ? "> " : "  ");
+        ui_strcat(row, ui_save_kind_text[i]);
+        ui_strcat(row, "  slot ");
+        ui_itoa((int32_t)ui_save_slots[i], t);
+        ui_strcat(row, t);
+        cv_text(6, (int32_t)(i + 1u) * UI_ROW_H, &FONT_S, row,
+                i == ui_save_which ? C_WHITE : C_HI);
+    }
+    cv_text(6, 3 * UI_ROW_H, &FONT_S, "K1=kind K2=slot SAVE=save HOME=cancel", C_DIM);
     cv_blit(0, 4 * UI_ROW_H);
 }
 
@@ -1138,6 +1223,8 @@ void ui_redraw(uint32_t now_ms)
         ui_draw_popup();
     if (ui_name_on)
         ui_draw_name_editor();
+    if (ui_save_on)
+        ui_draw_save();
 }
 
 /* the safe-failure screen: drawn independently, never through the widget engine */

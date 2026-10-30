@@ -293,8 +293,9 @@ umetate scaffold patch --name "My Synth" --out examples/my-synth
 - The MIDI spec, presets, and SysEx are **shipped framework** (`firmware/src/`:
   `synth_midi`, `synth_sysex`, `synth_runtime`, `presets.c`). Declare the CC
   surface as the patch's `cc:` list (a multitimbral patch must — its params
-  overflow the 7-bit CC space); presets are 32 part + 32 multi patches (the slot
-  area's measured ceiling); the firmware answers the five SysEx commands.
+  overflow the 7-bit CC space); presets are 128 single parts + 64 multi patches
+  (chunked across the slot area's measured ceiling); the firmware answers the
+  five SysEx commands.
 - Write only the **app glue**: `app.c` with `app_audio` / `app_main` / `app_idle`,
   the `ui_act_*` hooks, and the three service contexts (see
   `examples/fourop-fm/app.c`). `umetate build --synth examples/<project>` composes

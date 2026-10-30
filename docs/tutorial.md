@@ -285,9 +285,10 @@ param's full `[min, max]`. A multitimbral patch's params overflow the CC space, 
 the list is the deliberate surface (the dogfood maps part 0's timbre + the global
 FX). Notes route to the parts by channel + keyzone, sustain defers note-offs,
 CC 123 is panic, and bend is ±2 semitones — all shipped in `synth_midi`. Presets
-are 32 part patches + 32 multi patches (the slot area's measured ceiling) plus one
-settings record; the firmware answers the five SysEx commands over the shared
-envelope, and `umetate preset export/import` moves the bank as `.syx`.
+are 128 single parts + 64 multi patches (chunked across the slot area's measured
+ceiling) plus one settings record; the firmware answers the five SysEx commands
+over the shared envelope, and `umetate preset export/import` moves the bank as
+`.syx`.
 
 Your project then needs only the **app glue**: `app.c` with `app_audio` (call the
 generated `<synth>_dsp_render`), `app_main` (keys + panel + the service polls +

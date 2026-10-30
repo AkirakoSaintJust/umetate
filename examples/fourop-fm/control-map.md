@@ -23,11 +23,10 @@
   op-relative `op_row`, the `envelope` graph, and the `status` readout); per-key
   and per-button LEDs.
 - **Controls explicitly unmapped (and why):** `MASTER` (platform volume);
-  `PRESETS` (the 32+32 preset store is reached via SysEx and the boot-time
-  multi-slot apply, not yet bound to the encoder); `SAVE` (writes part 0's
-  timbre to part-patch slot 0 via `ui_act_save` — no panel binding yet);
-  `OCT−/OCT+` (octave is firmware-level, not a patch param); `ARP SEQ PLAY REC`
-  (no sequencer/transport).
+  `PRESETS` (the 128+64 preset store is reached via the browser encoder, SysEx,
+  and the boot-time multi-slot apply); `SAVE` (opens the save chooser — single
+  part / multi-patch + slot — not a direct param write); `OCT−/OCT+` (octave is
+  firmware-level, not a patch param); `ARP SEQ PLAY REC` (no sequencer/transport).
 
 ## 2. Player model
 

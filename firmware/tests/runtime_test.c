@@ -65,7 +65,7 @@ int main(void)
 
     /* a bad slot is a no-op */
     n0 = set_n;
-    synth_preset_apply(&ctx, 32);
+    synth_preset_apply(&ctx, 64);
     check("a bad slot is a no-op", set_n == n0);
 
     printf("%s\n", bad ? "RUNTIME TEST FAILED" : "runtime test passed");

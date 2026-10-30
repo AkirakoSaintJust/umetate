@@ -417,11 +417,14 @@ def _bank_roundtrip() -> None:
     layout = generate_sysex_layout(patch)
 
     bank: _presets.Bank = {
-        "part_patches": [None] * _records.SLOTS,
-        "multi_patches": [None] * _records.SLOTS,
+        "part_patches": [None] * _records.PART_SLOTS,
+        "multi_patches": [None] * _records.MULTI_SLOTS,
     }
     bank["part_patches"][0] = {"name": "EPiano", "params": [100, -5]}
-    bank["part_patches"][_records.SLOTS - 1] = {"name": "Glass", "params": [0, 65536]}
+    bank["part_patches"][_records.PART_SLOTS - 1] = {
+        "name": "Glass",
+        "params": [0, 65536],
+    }
     bank["multi_patches"][3] = {
         "name": "Layers",
         "part_slot": [0],
@@ -474,8 +477,8 @@ def _preset_export_import() -> None:
             encoding="utf-8",
         )
         bank: _presets.Bank = {
-            "part_patches": [None] * _records.SLOTS,
-            "multi_patches": [None] * _records.SLOTS,
+            "part_patches": [None] * _records.PART_SLOTS,
+            "multi_patches": [None] * _records.MULTI_SLOTS,
         }
         bank["part_patches"][1] = {"name": "EPiano", "params": [100, -5]}
         (d / "bank.json").write_text(json.dumps(bank), encoding="utf-8")

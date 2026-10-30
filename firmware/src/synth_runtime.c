@@ -13,7 +13,7 @@ void synth_preset_apply(const synth_runtime_ctx *ctx, uint32_t multi_slot)
     uint32_t p, i;
     const uint8_t *rec;
 
-    if (multi_slot >= PRESET_SLOTS || ctx->n_params > SYNTH_PARAM_MAX || !ctx->multi_bank)
+    if (multi_slot >= PRESET_MULTI_SLOTS || ctx->n_params > SYNTH_PARAM_MAX || !ctx->multi_bank)
         return;
     rec = ctx->multi_bank + multi_slot * MP_RECORD(ctx->n_parts);
     {
@@ -24,8 +24,8 @@ void synth_preset_apply(const synth_runtime_ctx *ctx, uint32_t multi_slot)
                                  low, high))
             return;
         for (p = 0; p < ctx->n_parts; p++) {
-            /* the part patch: its params become part p's timbre block */
-            if (part_slot[p] < PRESET_SLOTS && ctx->part_bank &&
+            /* the single part: its params become part p's timbre block */
+            if (part_slot[p] < PRESET_PART_SLOTS && ctx->part_bank &&
                 preset_part_unpack(
                     ctx->part_bank + (uint32_t)part_slot[p] * PP_RECORD(ctx->n_params),
                     ctx->n_params, name, params)) {

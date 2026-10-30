@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
 """The preset bank ↔ SysEx export/import (docs/roadmap.md §6.11.4): the host-side
-half of the preset store — a SLOTS+SLOTS-slot bank (32 each; the slot area's
-measured ceiling), exchanged as a sequence of part-patch / multi-patch dump
-frames (the `.syx` stream). The device store (F4d) uses the same records.
+half of the preset store — a 128 single-part + 64 multi-patch bank (the slot
+area's measured ceiling), exchanged as a sequence of single-part / multi-patch
+dump frames (the `.syx` stream). The device store (F4d) uses the same records.
 
 A dump frame's payload is `slot byte + record` (7-bit packed by the envelope).
 Export emits every slot in order (empty slots as version-0xFF records); import
@@ -16,7 +16,8 @@ from __future__ import annotations
 from typing import TypedDict, cast
 
 from ._records import (
-    SLOTS,
+    MULTI_SLOTS,
+    PART_SLOTS,
     MultiPatch,
     PartPatch,
     empty_multi_patch,
@@ -39,15 +40,15 @@ from ._sysex import (
 
 
 class Bank(TypedDict):
-    """The host-side preset bank: SLOTS part patches + SLOTS multi patches
-    (None entries = empty)."""
+    """The host-side preset bank: PART_SLOTS single parts + MULTI_SLOTS multi
+    patches (None entries = empty)."""
 
     part_patches: list[PartPatch | None]
     multi_patches: list[MultiPatch | None]
 
 
 def as_bank(raw: object) -> Bank:
-    """Narrow a JSON object to a Bank (SLOTS slots each; None entries = empty)."""
+    """Narrow a JSON object to a Bank (PART_SLOTS / MULTI_SLOTS; None = empty)."""
     if not isinstance(raw, dict):
         raise ValueError("bank: expected a JSON object")
     obj = cast(dict[str, object], raw)
@@ -57,8 +58,10 @@ def as_bank(raw: object) -> Bank:
         raise ValueError("bank: 'part_patches'/'multi_patches' must be lists")
     part_list = cast(list[object], part)
     multi_list = cast(list[object], multi)
-    if len(part_list) != SLOTS or len(multi_list) != SLOTS:
-        raise ValueError(f"bank: each list must have {SLOTS} entries")
+    if len(part_list) != PART_SLOTS or len(multi_list) != MULTI_SLOTS:
+        raise ValueError(
+            f"bank: {PART_SLOTS} part_patches / {MULTI_SLOTS} multi_patches expected"
+        )
 
     def _part(r: object) -> PartPatch | None:
         if r is None:
@@ -121,11 +124,11 @@ def _frame_len(n_payload: int) -> int:
 
 
 def export_bank(layout: SysexLayout, bank: Bank, model: int) -> bytes:
-    """The bank as a `.syx` stream: a part-patch dump frame per slot (0..63) in
-    order, then a multi-patch dump frame per slot in order."""
+    """The bank as a `.syx` stream: a single-part dump frame per slot (0..127) in
+    order, then a multi-patch dump frame per slot (0..63) in order."""
     n_params, n_parts = layout["n_params"], layout["n_parts"]
     frames = bytearray()
-    for slot in range(SLOTS):
+    for slot in range(PART_SLOTS):
         part_rec = bank["part_patches"][slot]
         payload = (
             pack_part_patch(part_rec, n_params)
@@ -133,7 +136,7 @@ def export_bank(layout: SysexLayout, bank: Bank, model: int) -> bytes:
             else empty_part_patch(n_params)
         )
         frames += encode(model, CMD_PART_DUMP, bytes([slot]) + payload)
-    for slot in range(SLOTS):
+    for slot in range(MULTI_SLOTS):
         multi_rec = bank["multi_patches"][slot]
         payload = (
             pack_multi_patch(multi_rec, n_parts)
@@ -150,14 +153,14 @@ def import_bank(data: bytes, layout: SysexLayout, model: int) -> Bank | None:
     n_params, n_parts = layout["n_params"], layout["n_parts"]
     part_len = _frame_len(1 + part_patch_size(n_params))
     multi_len = _frame_len(1 + multi_patch_size(n_parts))
-    total = SLOTS * (part_len + multi_len)
+    total = PART_SLOTS * part_len + MULTI_SLOTS * multi_len
     if len(data) != total:
         return None
 
-    part: list[PartPatch | None] = [None] * SLOTS
-    multi: list[MultiPatch | None] = [None] * SLOTS
+    part: list[PartPatch | None] = [None] * PART_SLOTS
+    multi: list[MultiPatch | None] = [None] * MULTI_SLOTS
     i = 0
-    for slot in range(SLOTS):
+    for slot in range(PART_SLOTS):
         got = decode(data[i : i + part_len])
         if got is None or got[0] != model or got[1] != CMD_PART_DUMP:
             return None
@@ -168,7 +171,7 @@ def import_bank(data: bytes, layout: SysexLayout, model: int) -> Bank | None:
         if part_rec is not None:
             part[slot] = part_rec
         i += part_len
-    for slot in range(SLOTS):
+    for slot in range(MULTI_SLOTS):
         got = decode(data[i : i + multi_len])
         if got is None or got[0] != model or got[1] != CMD_MULTI_DUMP:
             return None

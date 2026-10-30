@@ -137,14 +137,15 @@ void synth_sysex_poll(const synth_sysex_ctx *ctx)
             }
             midi_send_sysex(out, sx_build(out, ctx->model, 0x82u, ver, raw, 4u * ctx->n_params));
         }
-    } else if (cmd == 0x03u || cmd == 0x04u) { /* part-patch / multi-patch dump */
+    } else if (cmd == 0x03u || cmd == 0x04u) { /* single-part / multi-patch dump */
+        uint32_t max_slot = cmd == 0x03u ? PRESET_PART_SLOTS : PRESET_MULTI_SLOTS;
         rec = cmd == 0x03u ? PP_RECORD(ctx->n_params) : MP_RECORD(ctx->n_parts);
         bank = cmd == 0x03u ? ctx->part_bank : ctx->multi_bank;
         rn = sx_unpack7(payload, pn, 1u + rec, raw);
-        if (rn == 1u && raw[0] < PRESET_SLOTS && bank) { /* a read: the slot's record */
+        if (rn == 1u && raw[0] < max_slot && bank) { /* a read: the slot's record */
             memcpy(raw + 1u, bank + (uint32_t)raw[0] * rec, rec);
             midi_send_sysex(out, sx_build(out, ctx->model, cmd | 0x80u, ver, raw, 1u + rec));
-        } else if (rn == 1u + rec && raw[0] < PRESET_SLOTS && bank) { /* a write */
+        } else if (rn == 1u + rec && raw[0] < max_slot && bank) { /* a write */
             memcpy(bank + (uint32_t)raw[0] * rec, raw + 1u, rec);
             midi_send_sysex(out, sx_build(out, ctx->model, cmd | 0x80u, ver, raw, 1u));
         }
