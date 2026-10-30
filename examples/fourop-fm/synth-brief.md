@@ -27,7 +27,9 @@
   (note-derived, non-integer ratios stay in tune).
 - **Oscillators / operators / noise:** 4 operators, each `phasor → osc →
   dx_env → vca` with 1-sample self-feedback (`fm_op` macro).
-- **Filter(s) and resonance:** one global `svf` low-pass, `q` = damping.
+- **Filter(s) and resonance:** one global `svf`, `type` selectable (LP/BP/HP),
+  `q` = damping, with an **on/off bypass** and an **ADSR envelope routed to
+  cutoff**.
 - **Envelopes and velocity:** DX rate/level (`dx_env`, 4 rates + 3 levels);
   velocity → amplitude/FM/envelope-rate is wired (F2), but the dogfood defaults
   the depths to 0 (off) — settable via `set_param` (`opN.velamp.depth` etc.),
@@ -37,8 +39,31 @@
   (vibrato, shared across voices), one **global pitch envelope** (the "pitch
   blip": a `base` offset that decays back at note-on), and one **amplitude LFO
   per operator** (tremolo, per-voice).
-- **Effects and output stage:** carrier sum → `svf` LP → `wavefolder` → `out`
-  (the `MASTER` pot is the volume; no output VCA).
+- **Effects and output stage:** carrier sum → `svf` (type LP/BP/HP + bypass +
+  a cutoff ADSR) → `wavefolder` (threshold + fold count + type) → `out` (the
+  `MASTER` pot is the volume; no output VCA).
+
+### 2.1a The output chain (filter + fold), specified
+
+- **Filter (`svf` extension).** Params: `type` (0 = LP, 1 = BP, 2 = HP — the
+  node already computes `low`/`band`/`high`, so `type` selects the output), `on`
+  (0 = bypass = pass the input straight through), `f` (cutoff, Q16), `q`
+  (damping, Q16). A **cutoff envelope** — a `dx_env` (rate/level, ADSR-shaped:
+  attack → sustain → release) whose Q15 output scales a `fenv_depth` and is
+  added to `f`. On a note-on it opens the filter; on note-off it closes.
+- **Fold (`wavefolder` extension).** Params: `on` (0 = dry), `threshold` (the
+  input level, Q15, above which folding engages), `folds` (the fold count —
+  number of sine folds applied; 1 = the current single fold), `type` (0 = sine
+  fold, others reserved). Folding applies to the signal above `threshold`; the
+  dry signal below `threshold` passes unmodified.
+
+### 2.1b Per-part voice modes (moved from global)
+
+`mode` (0 = poly, 1 = unison, 2 = legato), `unison_count`, `unison_detune`,
+`legato` (voice count), `portamento` (time), `note_priority` become **per-part**
+params (each part its own poly/unison/legato + counts + times), exposed in `GLO`.
+This is a breaking change to the voice-mode param layout: they move from the
+global six to a per-part array.
 
 ### 2.1 Voice architecture (the node/macro graph)
 
@@ -132,19 +157,63 @@ one-pole decay rate toward the specified pitch. All block rate.)
 
 ## 3. Controls and display
 
-- **Keys, buttons, encoders, MASTER:** keys = notes; `ALGORITHM` = always-on
-  algorithm; `KNOB1–4` = the current page's four params; `SELECT` cycles pages;
-  `SEL` selects the operator; `EDIT`/`FX`/`GLO` push their contexts; `HOME` pops
-  home; `MASTER` is the volume pot (platform, not a patch param).
-- **Performance and navigation modes:** `home` (the four perform knobs cutoff ·
-  res · fold · feedback), `op` (per-operator pitch/env/tremolo/mute sub-pages,
-  operator-relative), `fx` (the output chain), `glo` (vibrato + the pitch
-  envelope). Each op page opens with a `status` readout (`ALG n · OP n/4 · MUTE`).
-- **Screen content and update rules:** retained-mode, ~30 Hz redraw; no display
-  in the audio callback.
-- **LED feedback:** none specific.
-- **What must remain playable while the screen redraws:** held notes (redraw is
-  rate-bounded and DMA-integrated).
+### 3.1 The control surface (fixed)
+
+`MASTER` = volume (platform). `ALGORITHM` = always-on algorithm encoder. `KNOB1–4`
+= the current page's params. `SELECT` = page up/down (wrapping). The buttons:
+`EDIT` (operator pitch), `ENV` (envelopes), `LFO` (modulation), `FX` (filter +
+fold), `GLO` (parts + patch), `HOME` (the visual pages), `ARP`/`SEQ`/`PLAY`/`REC`
+(operator mutes 1–4), `SCL` (operator select + part switch + part mute combos),
+`PRESETS` (the patch-browser popup). The keybed plays notes; `SCL`+key is the
+mute chord.
+
+### 3.2 Always visible (every page, a fixed header)
+
+The header shows, at all times: the **active part** and **active operator**, each
+part's and operator's **ON/OFF** (muted) state, the **current algorithm**, the
+**current menu name**, and the **page number/total** within it (e.g.
+`HOME 1/5`). No page may hide any of these.
+
+### 3.3 Contexts (menus) and their pages
+
+- **HOME** (visual, column layout — each widget a row, part 1 / op 1 on top):
+  1. envelope graphs of all 4 operators of the active part;
+  2. oscilloscope of all 4 operators of the active part;
+  3. spectrogram of all 4 operators of the active part;
+  4. oscilloscope of both parts;
+  5. spectrogram of both parts.
+- **EDIT** (the active operator): ratio · level · feedback · waveform (one page).
+- **ENV**: the active operator's **amplitude envelope** in two pages — rates
+  (r1/r2/r3/r4) then levels (l1/l2/l3); then the **per-part pitch envelope**
+  (base + rate). The envelope graph is drawn on both amplitude-envelope pages.
+- **LFO**: the active operator's **amplitude LFO** (rate + depth); then the
+  **per-part pitch LFO** (vibrato rate + depth).
+- **FX** (the output chain): **filter** — on/off, cutoff, rez, type, and an ADSR
+  envelope routed to cutoff; **fold** — on/off, threshold, folds (count), type.
+- **GLO** (parts + patch): per-part **level** (scales the part's maximum
+  amplitude) and **delay**; per-part **voice mode** (poly / unison / legato,
+  with unison voice count + detune, legato voice count, portamento time); part
+  **name**, MIDI **channel**, **keyboard split**, **INIT PART**; **save/load a
+  part patch into either part** from the preset store; patch settings — **PATCH
+  NAME**, **INIT PATCH** (additive algorithm, gate-type envelopes, waveform 0,
+  no feedback, ratio 1, all ops ON, part 2 OFF, part 1 active, level 75).
+
+### 3.4 The shortcuts and modifiers
+
+`SCL` **taps** the next active operator; a **double-tap** switches the active
+part. **Holding `SCL` + a key** mutes that operator (chord, not a note). **Holding
+`SCL` + `ARP` or `PLAY`** toggles part 1 mute; **`SCL` + `SEQ` or `REC`** toggles
+part 2 mute. `ARP`/`SEQ`/`PLAY`/`REC` (plain) toggle operator mutes 1–4 — the
+old mute sub-page is gone. The `PRESETS` encoder opens the **PATCH (2-part)
+preset browser** as a popup; after 2 s with no preset-encoder input, the selected
+patch loads and the popup clears (unless it is already loaded — then it just
+clears). Single-part presets load from the `GLO` menu.
+
+### 3.5 Screen rules
+
+Retained-mode, ~30 Hz redraw, no display in the audio callback, full clear on
+page/context change, held notes stay playable. Per-param display scale (ratio
+`1.00`, on/off, `%`, Hz, semitones) as §2.2.
 
 ## 4. MIDI and connectivity
 

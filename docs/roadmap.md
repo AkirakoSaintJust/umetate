@@ -867,6 +867,8 @@ strengthening below.
 | L5 | App glue (voice alloc, MIDI, presets) is hand-written per synth. | Ship a reusable **app framework** + generator **voice-management rails** (below). |
 | L6 | Control/audio separation discovered late. | Already fixed (`cmul`/`csum` + the generic test); keep as a first-class invariant. |
 | L7 | Nodes added reactively (`gain`, `cmul`, `csum`, `algo`, `mute`, `pitch_env`). | Review the node/macro library against the full-synth target for completeness. |
+| L8 | The UI was **underspecified** — button meanings, page contents, and per-param semantics were decided during implementation, so the first emulator pass was "buggy, incomplete, cryptic" and a whole navigation/control map had to be re-derived *after* code existed. | **The UI interview must be written before the panel is coded** (control-map.md + synth-brief §3 as a *checked gate*, not a note): every button's meaning, every page's contents, the always-visible header, the shortcuts/chords, and each param's display form, all in one place. §3.1–3.5 + §2.1a/2.1b below are that spec now; a change to the panel must change them in the same commit. |
+| L9 | A per-param *display scale* was missing — the panel showed raw integers (cutoff `8000`, ratio `65536`, mute `0/1`), and a relative encoder moved ±1 raw (thousands of detents across a 0..65535 range). | The `params:` `display` form + the curve-driven stepping (linear = a fraction of the range, log = multiplicative, clamped) — `ui_param_disp[]` (§12.6). |
 
 #### 6.11.3 Locked decisions
 
