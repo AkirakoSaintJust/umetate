@@ -869,6 +869,7 @@ strengthening below.
 | L7 | Nodes added reactively (`gain`, `cmul`, `csum`, `algo`, `mute`, `pitch_env`). | Review the node/macro library against the full-synth target for completeness. |
 | L8 | The UI was **underspecified** — button meanings, page contents, and per-param semantics were decided during implementation, so the first emulator pass was "buggy, incomplete, cryptic" and a whole navigation/control map had to be re-derived *after* code existed. | **The UI interview must be written before the panel is coded** (control-map.md + synth-brief §3 as a *checked gate*, not a note): every button's meaning, every page's contents, the always-visible header, the shortcuts/chords, and each param's display form, all in one place. §3.1–3.5 + §2.1a/2.1b below are that spec now; a change to the panel must change them in the same commit. |
 | L9 | A per-param *display scale* was missing — the panel showed raw integers (cutoff `8000`, ratio `65536`, mute `0/1`), and a relative encoder moved ±1 raw (thousands of detents across a 0..65535 range). | The `params:` `display` form + the curve-driven stepping (linear = a fraction of the range, log = multiplicative, clamped) — `ui_param_disp[]` (§12.6). |
+| L10 | The *development skill* did not force a UI spec deep enough — it asked for a "context stack + pages + bindings", but not the **button-by-button meaning, page-by-page contents, the always-visible header, the modifier chords, the per-param display form, or the exact INIT-patch defaults** — so those were invented during code. | **Revamp the dev skill's GUI interview** so its *minimum bar* is the user's fourop-fm restructure spec (the `EDIT`/`ENV`/`LFO`/`FX`/`GLO`/`HOME` page map, the `SCL` tap/double-tap/hold chords, the `ARP/SEQ/PLAY/REC` mute remap, the preset-browser popup + 2 s timeout, and the full `INIT PATCH` default set) — a worked example of the depth the interview must reach *before* any code. **Open** — not yet written back into `skills/umetate-development/SKILL.md`/templates. |
 
 #### 6.11.3 Locked decisions
 
@@ -1237,8 +1238,9 @@ count is the *measured* hardware answer: the slot area holds 16 372 B (store.h
 count with headroom.
 
 **The gaps** (what's still hand-written or missing): the docs/tutorial/skill
-finalization (F8); device acceptance, flash, debrick, the FPU probe, and the
-clock soak stay blocked until hardware arrives.
+finalization (F8); the **dev-skill GUI interview revamp** (L10 — raise its minimum
+spec depth to the fourop-fm restructure spec); device acceptance, flash, debrick,
+the FPU probe, and the clock soak stay blocked until hardware arrives.
 
 **Universal vs fourop-fm-specific.** Of the four-op-FM work, the *universal*
 tooling is: `gain`/`cmul`/`csum` (the control/audio-separated gain family),
