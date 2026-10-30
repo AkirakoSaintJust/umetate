@@ -222,6 +222,24 @@
           ]
         },
         {
+          "id": "split",
+          "widgets": [
+            { "type": "label", "row": 2, "span": 2, "text": "KEY SPLIT" },
+            { "type": "param_row", "row": 4, "param": "low.p0", "text": "P1 LOW" },
+            { "type": "param_row", "row": 5, "param": "high.p0", "text": "P1 HIGH" },
+            { "type": "param_row", "row": 6, "param": "low.p1", "text": "P2 LOW" },
+            { "type": "param_row", "row": 7, "param": "high.p1", "text": "P2 HIGH" }
+          ]
+        },
+        {
+          "id": "channel",
+          "widgets": [
+            { "type": "label", "row": 2, "span": 2, "text": "MIDI CH" },
+            { "type": "param_row", "row": 4, "param": "channel.p0", "text": "P1 CH" },
+            { "type": "param_row", "row": 5, "param": "channel.p1", "text": "P2 CH" }
+          ]
+        },
+        {
           "id": "voice-mode",
           "widgets": [
             { "type": "subheader", "row": 2, "text": "VOICE MODE", "part": true },
