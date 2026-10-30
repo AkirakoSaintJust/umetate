@@ -190,6 +190,7 @@ static void app_main(void)
     uint8_t held[27] = {0};
     int32_t bc, mt;
     uint32_t last_scl_ms = 0, scl_pending = 0, scl_pending_ms = 0;
+    uint32_t browser_open = 0, browser_slot = 0, browser_ms = 0, cur_slot = 0;
 
     fourop_fm_dsp_reset();
 #if FM1_CPU1_USED
@@ -301,6 +302,45 @@ static void app_main(void)
         if ((e = fm1_enc_take(ENC_KNOB2)) != 0) ui_handle(UI_SRC_ENC_KNOB2, e);
         if ((e = fm1_enc_take(ENC_KNOB3)) != 0) ui_handle(UI_SRC_ENC_KNOB3, e);
         if ((e = fm1_enc_take(ENC_KNOB4)) != 0) ui_handle(UI_SRC_ENC_KNOB4, e);
+
+        /* the PATCH (2-part) preset browser: twisting the PRESETS encoder opens it,
+         * steps the slot, and after 2 s with no encoder input the selection loads
+         * (or, if it is the one already loaded, just clears). */
+        {
+            int32_t pe = fm1_enc_take(ENC_PRESETS);
+            if (pe != 0) {
+                if (!browser_open) {
+                    browser_open = 1;
+                    browser_slot = cur_slot;
+                }
+                if (pe > 0)
+                    browser_slot = (browser_slot + 1u) % PRESET_SLOTS;
+                else
+                    browser_slot = (browser_slot + PRESET_SLOTS - 1u) % PRESET_SLOTS;
+                browser_ms = fm1_ms;
+                {
+                    char name[PRESET_NAME_LEN];
+                    uint8_t ps[SYNTH_N_PARTS];
+                    int32_t lv[SYNTH_N_PARTS], dl[SYNTH_N_PARTS], ch[SYNTH_N_PARTS];
+                    int32_t lo[SYNTH_N_PARTS], hi[SYNTH_N_PARTS];
+                    const uint8_t *rec =
+                        multi_bank + browser_slot * MP_RECORD(SYNTH_N_PARTS);
+                    if (rec[0] != PRESET_EMPTY &&
+                        preset_multi_unpack(rec, SYNTH_N_PARTS, name, ps, lv, dl, ch, lo, hi))
+                        ui_popup_show(browser_slot, name);
+                    else
+                        ui_popup_show(browser_slot, 0);
+                }
+            }
+            if (browser_open && fm1_ms - browser_ms >= 2000u) {
+                if (browser_slot != cur_slot) {
+                    synth_preset_apply(&runtime_ctx, browser_slot);
+                    cur_slot = browser_slot;
+                }
+                ui_popup_hide();
+                browser_open = 0;
+            }
+        }
 
         synth_midi_poll(&midi_ctx);
         synth_sysex_poll(&sysex_ctx);

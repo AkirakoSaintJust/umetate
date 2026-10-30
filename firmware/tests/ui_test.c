@@ -175,6 +175,10 @@ int main(void)
     ui_part_mute_toggle(0u);
     CHECK(ui_part_muted(0u) == 0, "part mute toggle unmutes part 0");
 
+    /* the preset-browser popup shows + hides without crashing */
+    ui_popup_show(7u, "MYSOUND");
+    ui_popup_hide();
+
     if (failures) {
         printf("%d UI failures\n", failures);
         return 1;

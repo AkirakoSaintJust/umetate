@@ -150,6 +150,8 @@ void ui_part_next(void);                         /* cycle the active part (the S
 void ui_part_mute_toggle(uint8_t part);          /* mute/unmute a part (the header + chords) */
 uint8_t ui_part_muted(uint8_t part);             /* 1 = the part is muted */
 void ui_op_mute_active(void);                    /* mute/unmute the active operator (SCL + key) */
+void ui_popup_show(uint32_t slot, const char *name); /* the PATCH preset-browser popup */
+void ui_popup_hide(void);                        /* clear the popup */
 void ui_param_fmt(uint16_t p, const char *unit, char *out, uint32_t n); /* format a value */
 void ui_redraw(uint32_t now_ms);                 /* the retained-mode, rate-bounded redraw */
 void ui_custom_set(uint32_t slot, int32_t value); /* drive a UI_CUSTOM widget's dirty value */

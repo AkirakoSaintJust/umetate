@@ -60,6 +60,9 @@ static int32_t ui_cursor;                        /* list/grid selection */
 static uint8_t ui_selected_op;                   /* the selected operator (0..3) for OP_* */
 static uint8_t ui_selected_part;                 /* the active part (0..n_part-1) */
 static uint8_t ui_part_mute[4];                  /* part mute flags (up to 4 parts) */
+static int32_t ui_header_last = 0x7FFFFFFF;      /* the header's last-drawn value */
+static char ui_popup_line[40];                   /* the preset-browser popup text */
+static uint8_t ui_popup_on;                      /* 1 = the popup is showing */
 
 static const ui_context *ui_ctx(void) { return &ui_t->ctx[ui_stack[ui_sp]]; }
 static const ui_page *ui_cur_page(void) { return &ui_ctx()->pages[ui_pagei[ui_sp]]; }
@@ -70,6 +73,7 @@ static void ui_reset_page(void)
     for (i = 0; i < UI_MAX_WIDGETS; i++)
         ui_last[i] = 0x7FFFFFFF;                 /* sentinel: everything redraws */
     ui_cursor = 0;
+    ui_header_last = 0x7FFFFFFF;                 /* force the header to redraw too */
     lcd_fill(0, 0, 240, 240, C_BLACK);           /* drop the previous page's stale pixels */
 }
 
@@ -862,10 +866,43 @@ void ui_custom_set(uint32_t slot, int32_t value)
         ui_custom_v[slot] = value;
 }
 
+/* the preset-browser popup: a dim band over the page (rows 4-6) with a title + the
+ * selected slot/name. Drawn every redraw while active (its text is transient). */
+static void ui_draw_popup(void)
+{
+    cv_begin(240u, 3u * UI_ROW_H, C_DIM);
+    cv_text(6, UI_ROW_H, &FONT_S, ui_popup_line, C_HI);
+    cv_blit(0, 4 * UI_ROW_H);
+}
+
+void ui_popup_show(uint32_t slot, const char *name)
+{
+    char t[12];
+    uint8_t was = ui_popup_on;
+    ui_popup_on = 1;
+    ui_strcpy(ui_popup_line, "PATCH ");
+    ui_itoa((int32_t)slot, t);
+    ui_strcat(ui_popup_line, t);
+    ui_strcat(ui_popup_line, "  ");
+    if (name && name[0])
+        ui_strcat(ui_popup_line, name);
+    else
+        ui_strcat(ui_popup_line, "(empty)");
+    if (!was)
+        ui_reset_page();                           /* off -> on: clear + redraw under it */
+}
+
+void ui_popup_hide(void)
+{
+    if (ui_popup_on) {
+        ui_popup_on = 0;
+        ui_reset_page();                           /* on -> off: redraw the page beneath */
+    }
+}
+
 void ui_redraw(uint32_t now_ms)
 {
     static uint32_t last_draw;
-    static int32_t header_last = 0x7FFFFFFF;
     const ui_page *p = ui_cur_page();
     uint32_t i;
     if (now_ms - last_draw < UI_REDRAW_MS)
@@ -873,8 +910,8 @@ void ui_redraw(uint32_t now_ms)
     last_draw = now_ms;
     {
         int32_t hv = ui_header_value();
-        if (hv != header_last) {                     /* the header is always visible */
-            header_last = hv;
+        if (hv != ui_header_last) {                 /* the header is always visible */
+            ui_header_last = hv;
             ui_draw_header();
         }
     }
@@ -885,6 +922,8 @@ void ui_redraw(uint32_t now_ms)
             ui_draw_widget(&p->w[i]);
         }
     }
+    if (ui_popup_on)
+        ui_draw_popup();
 }
 
 /* the safe-failure screen: drawn independently, never through the widget engine */
