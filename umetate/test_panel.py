@@ -242,6 +242,39 @@ def main() -> int:
         print("FAIL: scope/spectro widgets did not map")
         failures += 1
 
+    # the subheader widget maps to UI_SUBHEADER with the op/part selector, and the
+    # panel carries the algorithm + part count for the always-visible header.
+    sub: PanelManifest = {
+        "name": "sub",
+        "alg": "algorithm",
+        "parts": 2,
+        "contexts": {
+            "home": {
+                "pages": [
+                    {
+                        "id": "home",
+                        "widgets": [
+                            {"type": "subheader", "row": 2, "text": "A-ENV"},
+                            {
+                                "type": "subheader",
+                                "row": 3,
+                                "text": "P-LFO",
+                                "part": True,
+                            },
+                        ],
+                    }
+                ]
+            }
+        },
+        "global": [],
+    }
+    sub_src = generate_panel(sub)
+    if "UI_SUBHEADER" in sub_src and ", 0," in sub_src and ", 1," in sub_src:
+        print("ok: subheader widgets map to UI_SUBHEADER (op + part)")
+    else:
+        print("FAIL: subheader widgets did not map")
+        failures += 1
+
     print("panel tests " + ("FAILED" if failures else "passed"))
     return 1 if failures else 0
 

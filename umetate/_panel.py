@@ -170,6 +170,7 @@ _ACTIONS = {
     "op_next": "UI_ACT_OP_NEXT",
     "op_prev": "UI_ACT_OP_PREV",
     "op_mute": "UI_ACT_OP_MUTE",
+    "part_next": "UI_ACT_PART_NEXT",
 }
 
 _BEHAVIORS = {
@@ -192,6 +193,7 @@ _WIDGETS = {
     "scope": "UI_SCOPE",
     "spectro": "UI_SPECTRO",
     "status": "UI_STATUS",
+    "subheader": "UI_SUBHEADER",
 }
 
 # the per-param display scale (a patch `params:` `display` string -> ui.h enum)
@@ -304,6 +306,10 @@ def generate_panel(
             typ = _WIDGETS[w["type"]]
             # the scope channel (0 = the final mix, 1.. = the per-op/per-part taps)
             param = str(w.get("channel", 0))
+        elif w["type"] == "subheader":
+            typ = "UI_SUBHEADER"
+            # param 0 = the active operator, 1 = the active part (text = the suffix)
+            param = "1" if w.get("part") else "0"
         else:
             wparam = w.get("param")
             rest = op_rest(wparam) if wparam else None
@@ -424,8 +430,8 @@ def generate_panel(
     lines.append("static const ui_context CTX[] = {")
     for ci, ctx in enumerate(ctx_names):
         lines.append(
-            f"    {{ PG_{ci}, {len(contexts[ctx].get('pages', []))}, BIND_{ci}, "
-            f"{len(contexts[ctx].get('bindings', []))}, 0, 0 }},"
+            f'    {{ "{ctx}", PG_{ci}, {len(contexts[ctx].get("pages", []))}, '
+            f"BIND_{ci}, {len(contexts[ctx].get('bindings', []))}, 0, 0 }},"
         )
     lines.append("};")
     lines.append("")
@@ -483,11 +489,14 @@ def generate_panel(
         disp_ptr = "0"
     lines.append("")
     lines.append("static const ui_tables PANEL = {")
+    alg_name = panel.get("alg")
+    alg_id = str(param_id(alg_name)) if alg_name else "0xFFFF"
+    n_part = str(panel.get("parts", 1))
     lines.append(
         f'    "{name}", {home}, CTX, {len(ctx_names)}, GLOBAL_BIND, '
         f"{len(panel.get('global', []))}, MUTE_TBL, {op_ptr}, "
         f"{len(operators)}, {len(op_names)}, {env_ptr}, {disp_ptr}, "
-        f"{n_params}, {widget_count},"
+        f"{alg_id}, {n_part}, {n_params}, {widget_count},"
     )
     lines.append("};")
     return "\n".join(lines) + "\n"

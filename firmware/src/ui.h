@@ -28,6 +28,7 @@ enum {
     UI_SCOPE,          /* the oscilloscope: the last render block's waveform */
     UI_SPECTRO,        /* the spectrogram: Goertzel magnitude bars */
     UI_STATUS,         /* a status readout (algorithm + selected operator + mute) */
+    UI_SUBHEADER,      /* a page's param-group title: "OP N <suffix>" / "PART N <suffix>" */
     UI_CUSTOM,         /* the cv_* canvas escape hatch: ui_draw_custom() draws it */
 };
 
@@ -57,6 +58,7 @@ enum {
     UI_ACT_PAGE, UI_ACT_BANK_NEXT, UI_ACT_BANK_PREV, UI_ACT_TOGGLE, UI_ACT_LATCH, UI_ACT_SAVE,
     UI_ACT_LOAD, UI_ACT_PANIC, UI_ACT_PLAY, UI_ACT_STOP,
     UI_ACT_OP_NEXT, UI_ACT_OP_PREV, UI_ACT_OP_MUTE,   /* the selected-operator group */
+    UI_ACT_PART_NEXT,                                  /* cycle the active part (0..n_part-1) */
 };
 
 /* ---- the fixed input-source vocabulary (the generator maps panel strings to these) ---- */
@@ -110,6 +112,7 @@ typedef struct {
 } ui_binding;
 
 typedef struct {
+    const char *name;                            /* the menu name (the panel.json context key) */
     const ui_page *pages; uint8_t n_pages;
     const ui_binding *bindings; uint8_t n_bindings;
     void (*on_enter)(void); void (*on_exit)(void);
@@ -126,6 +129,8 @@ typedef struct {
     uint8_t n_op_param;                          /* op-relative params per operator */
     const uint16_t *env;                         /* the envelope group: n_op * 7 params */
     const ui_param_disp *disp;                   /* per-param display scale (n_params) */
+    uint16_t alg;                                /* the algorithm param id (the header readout) */
+    uint8_t n_part;                              /* the number of parts (the header) */
     uint16_t n_params;                           /* ui_params[] size */
     uint16_t n_widgets;                          /* ui_dirty[] size (across all pages) */
 } ui_tables;
@@ -139,6 +144,7 @@ void ui_pop_home(void);
 uint8_t ui_top(void);                            /* the active context id */
 void ui_handle(uint16_t source, int32_t value);  /* resolve the source -> param/action */
 int32_t *ui_params(void);                        /* the shared param_values[] */
+uint8_t ui_part(void);                           /* the active part (0-based) */
 void ui_param_fmt(uint16_t p, const char *unit, char *out, uint32_t n); /* format a value */
 void ui_redraw(uint32_t now_ms);                 /* the retained-mode, rate-bounded redraw */
 void ui_custom_set(uint32_t slot, int32_t value); /* drive a UI_CUSTOM widget's dirty value */

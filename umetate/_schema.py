@@ -182,6 +182,7 @@ class Widget(TypedDict):
     fmt: NotRequired[str]
     items: NotRequired[list[str]]
     channel: NotRequired[int]  # scope/spectro: the tap channel (0 = mix, 1.. = taps)
+    part: NotRequired[bool]  # subheader: 1 = "PART N", 0 = "OP N"
 
 
 class Page(TypedDict):
@@ -217,6 +218,8 @@ PanelManifest = TypedDict(
         "global": NotRequired[list[PanelBinding]],
         "mute": NotRequired[list[str]],
         "operators": NotRequired[list[str]],
+        "alg": NotRequired[str],  # the algorithm param name (the header readout)
+        "parts": NotRequired[int],  # the part count (the header + part_next)
         "contexts": dict[str, Context],
     },
 )

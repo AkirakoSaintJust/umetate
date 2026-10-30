@@ -77,15 +77,15 @@ static const ui_binding GLOBAL_BIND[] = {
 };
 
 static const ui_context CTX[] = {
-    { PG_0, 1, BIND_0, 3, 0, 0 },
-    { PG_1, 1, BIND_1, 3, 0, 0 },
-    { PG_2, 1, BIND_2, 1, 0, 0 },
-    { PG_3, 1, BIND_3, 0, 0, 0 },
+    { "home", PG_0, 1, BIND_0, 3, 0, 0 },
+    { "edit", PG_1, 1, BIND_1, 3, 0, 0 },
+    { "step", PG_2, 1, BIND_2, 1, 0, 0 },
+    { "fx", PG_3, 1, BIND_3, 0, 0, 0 },
 };
 
 static const uint16_t MUTE_TBL[4] = { P_op1_level, P_op2_level, 0xFFFF, 0xFFFF };
 static const uint16_t OP_PARAM[2] = { P_op1_level, P_op2_level };
 
 static const ui_tables PANEL = {
-    "accept", 0, CTX, 4, GLOBAL_BIND, 5, MUTE_TBL, OP_PARAM, 2, 1, 0, DISP_TBL, N_PARAMS, 8,
+    "accept", 0, CTX, 4, GLOBAL_BIND, 5, MUTE_TBL, OP_PARAM, 2, 1, 0, DISP_TBL, P_alg, 1, N_PARAMS, 8,
 };

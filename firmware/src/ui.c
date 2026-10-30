@@ -58,6 +58,7 @@ static int32_t ui_last[UI_MAX_WIDGETS];         /* last-drawn value per widget s
 static int32_t ui_custom_v[UI_MAX_WIDGETS];     /* UI_CUSTOM widgets' dirty values (app-set) */
 static int32_t ui_cursor;                        /* list/grid selection */
 static uint8_t ui_selected_op;                   /* the selected operator (0..3) for OP_* */
+static uint8_t ui_selected_part;                 /* the active part (0..n_part-1) */
 
 static const ui_context *ui_ctx(void) { return &ui_t->ctx[ui_stack[ui_sp]]; }
 static const ui_page *ui_cur_page(void) { return &ui_ctx()->pages[ui_pagei[ui_sp]]; }
@@ -129,6 +130,8 @@ void ui_pop_home(void)
 uint8_t ui_top(void) { return ui_stack[ui_sp]; }
 
 int32_t *ui_params(void) { return ui_param_v; }
+
+uint8_t ui_part(void) { return ui_selected_part; }
 
 /* resolve a source to its binding: the top context's bindings first, then global */
 static const ui_binding *ui_resolve(uint16_t source)
@@ -258,6 +261,10 @@ static void ui_do_action(uint8_t action, uint8_t arg)
             if (p < ui_t->n_params)
                 ui_param_v[p] = ui_param_v[p] ? 0 : 1;
         }
+        break;
+    case UI_ACT_PART_NEXT:
+        if (ui_t->n_part > 1u)
+            ui_selected_part = (uint8_t)((ui_selected_part + 1u) % ui_t->n_part);
         break;
     default: break;                              /* BANK_*, LOAD, LATCH: no-op for now */
     }
@@ -639,6 +646,97 @@ static void ui_draw_status(const ui_widget *w)
     cv_blit(x, y);
 }
 
+/* the page's subheader: "OP N <suffix>" (param == 0) or "PART N <suffix>"
+ * (param == 1), where N is the active operator/part and `text` is the param-group
+ * name (e.g. "A-ENV", "P-LFO"). A page's params belong to exactly this group. */
+static void ui_draw_subheader(const ui_widget *w)
+{
+    uint32_t x, y, wd, ht;
+    char s[24], t[4];
+    ui_region(w, &x, &y, &wd, &ht);
+    if (w->param == 1u) {
+        ui_strcpy(s, "PART ");
+        t[0] = (char)('1' + ui_selected_part);
+        t[1] = 0;
+    } else {
+        ui_strcpy(s, "OP ");
+        t[0] = (char)('1' + ui_selected_op);
+        t[1] = 0;
+    }
+    ui_strcat(s, t);
+    if (w->text) {
+        ui_strcat(s, " ");
+        ui_strcat(s, w->text);
+    }
+    cv_begin(wd, ht, C_BLACK);
+    cv_text(0, 0, &FONT_S, s, C_HI);
+    cv_blit(x, y);
+}
+
+/* the always-visible header (rows 0-1, full width): the active part + operator,
+ * the algorithm, the menu name, the page N/M, and each operator's ON/OFF (ON =
+ * not muted). Drawn every redraw; its value folds all of those into one word. */
+static int32_t ui_header_value(void)
+{
+    int32_t v = (int32_t)ui_selected_part * 1000000 + (int32_t)ui_selected_op * 100000
+              + (int32_t)ui_stack[ui_sp] * 1000 + (int32_t)ui_pagei[ui_sp] * 10;
+    uint32_t i;
+    if (ui_t->alg < ui_t->n_params)
+        v += ui_param_v[ui_t->alg] & 0x3F;
+    for (i = 0; i < 4u && i < ui_t->n_op; i++) {
+        uint16_t p = ui_t->mute ? ui_t->mute[i] : UI_NO_PARAM;
+        if (p < ui_t->n_params && ui_param_v[p])
+            v += 1 << (int32_t)(16u + i);
+    }
+    return v;
+}
+
+static void ui_draw_header(void)
+{
+    char s[40], t[12];
+    uint32_t i;
+    int32_t alg = ui_t->alg < ui_t->n_params ? ui_param_v[ui_t->alg] : 0;
+
+    cv_begin(240u, 2u * UI_ROW_H, C_BLACK);
+    /* row 0: P<part> OP<op> ALG<alg>  <menu> <page>/<n> */
+    ui_strcpy(s, "P");
+    t[0] = (char)('1' + ui_selected_part);
+    t[1] = 0;
+    ui_strcat(s, t);
+    ui_strcat(s, " OP");
+    t[0] = (char)('1' + ui_selected_op);
+    t[1] = 0;
+    ui_strcat(s, t);
+    ui_strcat(s, " ALG");
+    ui_itoa(alg, t);
+    ui_strcat(s, t);
+    ui_strcat(s, "  ");
+    if (ui_ctx()->name)
+        ui_strcat(s, ui_ctx()->name);
+    ui_strcat(s, " ");
+    ui_itoa((int32_t)ui_pagei[ui_sp] + 1, t);
+    ui_strcat(s, t);
+    ui_strcat(s, "/");
+    ui_itoa((int32_t)ui_ctx()->n_pages, t);
+    ui_strcat(s, t);
+    cv_text(0, 0, &FONT_S, s, C_HI);
+
+    /* row 1: each operator's ON/OFF (ON = not muted, OFF = muted) */
+    ui_strcpy(s, "");
+    for (i = 0; i < 4u && i < ui_t->n_op; i++) {
+        uint16_t p = ui_t->mute ? ui_t->mute[i] : UI_NO_PARAM;
+        int muted = p < ui_t->n_params ? ui_param_v[p] != 0 : 0;
+        t[0] = (char)('1' + i);
+        t[1] = 0;
+        if (i)
+            ui_strcat(s, " ");
+        ui_strcat(s, t);
+        ui_strcat(s, muted ? ":OFF" : ":ON");
+    }
+    cv_text(0, UI_ROW_H, &FONT_S, s, C_HI);
+    cv_blit(0, 0);
+}
+
 static void ui_draw_widget(const ui_widget *w)
 {
     switch (w->type) {
@@ -654,6 +752,7 @@ static void ui_draw_widget(const ui_widget *w)
     case UI_SCOPE: ui_draw_scope(w); break;
     case UI_SPECTRO: ui_draw_spectro(w); break;
     case UI_STATUS: ui_draw_status(w); break;
+    case UI_SUBHEADER: ui_draw_subheader(w); break;
     case UI_CUSTOM: ui_draw_custom(w); break;
     default: break;
     }
@@ -667,6 +766,8 @@ static int32_t ui_widget_value(const ui_widget *w, uint32_t slot)
     case UI_CUSTOM: return ui_custom_v[slot];
     case UI_SCOPE:
     case UI_SPECTRO: return (int32_t)scope_seq();  /* redraw on each new snapshot */
+    case UI_SUBHEADER: return w->param == 1u ? (int32_t)ui_selected_part
+                                             : (int32_t)ui_selected_op;
     case UI_LIST:
     case UI_GRID: return ui_cursor;
     case UI_ENVELOPE: {                             /* redraw when any of the 7 change */
@@ -702,11 +803,19 @@ void ui_custom_set(uint32_t slot, int32_t value)
 void ui_redraw(uint32_t now_ms)
 {
     static uint32_t last_draw;
+    static int32_t header_last = 0x7FFFFFFF;
     const ui_page *p = ui_cur_page();
     uint32_t i;
     if (now_ms - last_draw < UI_REDRAW_MS)
         return;
     last_draw = now_ms;
+    {
+        int32_t hv = ui_header_value();
+        if (hv != header_last) {                     /* the header is always visible */
+            header_last = hv;
+            ui_draw_header();
+        }
+    }
     for (i = 0; i < p->n; i++) {
         int32_t v = ui_widget_value(&p->w[i], i);
         if (v != ui_last[i]) {                     /* redraw only what changed */

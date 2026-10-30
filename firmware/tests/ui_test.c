@@ -165,6 +165,9 @@ int main(void)
     ui_handle(UI_SRC_ENC_KNOB3, -9999);
     CHECK(ui_params()[P_fold] == 0, "a linear step clamps at min");
 
+    /* the active part starts at 0; part_next is a no-op with one part */
+    CHECK(ui_part() == 0, "ui_part starts at 0");
+
     if (failures) {
         printf("%d UI failures\n", failures);
         return 1;
