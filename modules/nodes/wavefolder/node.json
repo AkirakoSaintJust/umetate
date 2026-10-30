@@ -1,8 +1,14 @@
 {
   "name": "wavefolder",
-  "summary": "Sine wavefolder: crossfades the input into sin(pi*x) by `amount` (Q15, modulatable — wired `amount_mod` + `amount_depth`).",
+  "summary": "Sine wavefolder: folds the portion of the input above `threshold` (Q15) by `folds` sine folds, crossfaded by `amount` (Q15, modulatable — wired `amount_mod` + `amount_depth`). `on` 0 = dry bypass; `type` 0 = sine fold (reserved for others).",
   "ins": { "audio": "audio" },
   "outs": { "audio": "audio" },
-  "params": { "amount": { "kind": "q15", "modulatable": true } },
+  "params": {
+    "amount": { "kind": "q15", "modulatable": true },
+    "threshold": "q15",
+    "folds": "uint32",
+    "on": "uint32",
+    "type": "uint32"
+  },
   "state": {}
 }
