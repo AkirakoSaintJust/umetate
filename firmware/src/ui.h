@@ -155,6 +155,7 @@ void ui_part_mute_set(uint8_t part, uint8_t muted); /* set a part's mute (INIT) 
 uint8_t ui_part_muted(uint8_t part);             /* 1 = the part is muted */
 void ui_op_mute_active(void);                    /* mute/unmute the active operator (SCL + key) */
 void ui_popup_show(uint32_t slot, const char *name); /* the PATCH preset-browser popup */
+void ui_popup_show_part(uint32_t slot, const char *name); /* the PART preset-browser popup */
 void ui_popup_hide(void);                        /* clear the popup */
 void ui_param_fmt(uint16_t p, const char *unit, char *out, uint32_t n); /* format a value */
 void ui_redraw(uint32_t now_ms);                 /* the retained-mode, rate-bounded redraw */

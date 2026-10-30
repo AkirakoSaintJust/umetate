@@ -164,14 +164,31 @@ void ui_act_play(void) { }
 void ui_act_stop(void) { }
 void ui_act_save(void)
 {
-    /* save part 0's timbre as part-patch slot 0 (persisted once the engine is silent) */
+    /* save the active part's timbre into the part-patch bank at a fixed slot (the
+     * slot selector + naming are the follow-up); persisted once the engine is silent */
+    uint8_t part = ui_part();
     int32_t params[SYNTH_PARAM_MAX];
-    uint32_t i;
+    uint32_t i, base = (uint32_t)part * SYNTH_N_PARAMS;
     for (i = 0; i < SYNTH_N_PARAMS; i++)
-        params[i] = fourop_fm_dsp_get_param(i);
-    preset_part_pack(part_bank, "saved", params, SYNTH_N_PARAMS);
+        params[i] = fourop_fm_dsp_get_param(base + i);
+    preset_part_pack(part_bank + (uint32_t)part * PP_RECORD(SYNTH_N_PARAMS),
+                     "PART", params, SYNTH_N_PARAMS);
     bank_dirty = 1;
     t_change = fm1_ms;
+}
+
+/* load a part-patch slot into the active part (its params, not its routing) */
+static void load_part(uint32_t slot)
+{
+    char name[PRESET_NAME_LEN];
+    int32_t params[SYNTH_PARAM_MAX];
+    const uint8_t *rec = part_bank + slot * PP_RECORD(SYNTH_N_PARAMS);
+    uint32_t i, base = (uint32_t)ui_part() * SYNTH_N_PARAMS;
+    if (slot >= PRESET_SLOTS || rec[0] == PRESET_EMPTY ||
+        !preset_part_unpack(rec, SYNTH_N_PARAMS, name, params))
+        return;
+    for (i = 0; i < SYNTH_N_PARAMS; i++)
+        fourop_fm_dsp_set_param(base + i, params[i]);
 }
 void ui_act_init_patch(void)
 {
@@ -205,6 +222,7 @@ static void app_idle(void)
 }
 
 #define KEY0 53u   /* key 0 = F3 */
+#define GLO_CTX 5u /* the GLO context id (panel.json key order: home/edit/env/lfo/fx/glo) */
 
 static void app_main(void)
 {
@@ -213,6 +231,7 @@ static void app_main(void)
     int32_t bc, mt;
     uint32_t last_scl_ms = 0, scl_pending = 0, scl_pending_ms = 0;
     uint32_t browser_open = 0, browser_slot = 0, browser_ms = 0, cur_slot = 0;
+    uint32_t pbro_open = 0, pbro_slot = 0, pbro_ms = 0;
 
     fourop_fm_dsp_reset();
 #if FM1_CPU1_USED
@@ -312,6 +331,19 @@ static void app_main(void)
                 else ui_handle(UI_SRC_BTN_REC, -1);
             }
 
+            /* SAVE: plain = save the active part; SCL+SAVE = INIT PATCH (INIT PART
+             * in GLO). */
+            if (b & (1u << BTN_SAVE)) {
+                if (scl) {
+                    if (ui_top() == GLO_CTX)
+                        ui_act_init_part();
+                    else
+                        ui_act_init_patch();
+                } else {
+                    ui_handle(UI_SRC_BTN_SAVE, -1);
+                }
+            }
+
             /* the deferred single-tap (no second tap within the window) */
             if (scl_pending && now - scl_pending_ms >= 300u) {
                 ui_handle(UI_SRC_BTN_SEL, -1);
@@ -325,42 +357,72 @@ static void app_main(void)
         if ((e = fm1_enc_take(ENC_KNOB3)) != 0) ui_handle(UI_SRC_ENC_KNOB3, e);
         if ((e = fm1_enc_take(ENC_KNOB4)) != 0) ui_handle(UI_SRC_ENC_KNOB4, e);
 
-        /* the PATCH (2-part) preset browser: twisting the PRESETS encoder opens it,
-         * steps the slot, and after 2 s with no encoder input the selection loads
-         * (or, if it is the one already loaded, just clears). */
+        /* the preset browsers: the PRESETS encoder opens the PATCH (2-part) browser
+         * except in GLO, where it opens the PART (single-part) browser; 2 s with no
+         * encoder input loads the selection (or, if already loaded, just clears). */
         {
             int32_t pe = fm1_enc_take(ENC_PRESETS);
-            if (pe != 0) {
-                if (!browser_open) {
-                    browser_open = 1;
-                    browser_slot = cur_slot;
-                }
-                if (pe > 0)
-                    browser_slot = (browser_slot + 1u) % PRESET_SLOTS;
-                else
-                    browser_slot = (browser_slot + PRESET_SLOTS - 1u) % PRESET_SLOTS;
-                browser_ms = fm1_ms;
-                {
-                    char name[PRESET_NAME_LEN];
-                    uint8_t ps[SYNTH_N_PARTS];
-                    int32_t lv[SYNTH_N_PARTS], dl[SYNTH_N_PARTS], ch[SYNTH_N_PARTS];
-                    int32_t lo[SYNTH_N_PARTS], hi[SYNTH_N_PARTS];
-                    const uint8_t *rec =
-                        multi_bank + browser_slot * MP_RECORD(SYNTH_N_PARTS);
-                    if (rec[0] != PRESET_EMPTY &&
-                        preset_multi_unpack(rec, SYNTH_N_PARTS, name, ps, lv, dl, ch, lo, hi))
-                        ui_popup_show(browser_slot, name);
+            if (ui_top() == GLO_CTX) {
+                if (pe != 0) {
+                    if (!pbro_open) {
+                        pbro_open = 1;
+                        pbro_slot = 0u;
+                    }
+                    if (pe > 0)
+                        pbro_slot = (pbro_slot + 1u) % PRESET_SLOTS;
                     else
-                        ui_popup_show(browser_slot, 0);
+                        pbro_slot = (pbro_slot + PRESET_SLOTS - 1u) % PRESET_SLOTS;
+                    pbro_ms = fm1_ms;
+                    {
+                        char name[PRESET_NAME_LEN];
+                        int32_t params[SYNTH_PARAM_MAX];
+                        const uint8_t *rec =
+                            part_bank + pbro_slot * PP_RECORD(SYNTH_N_PARAMS);
+                        if (rec[0] != PRESET_EMPTY &&
+                            preset_part_unpack(rec, SYNTH_N_PARAMS, name, params))
+                            ui_popup_show_part(pbro_slot, name);
+                        else
+                            ui_popup_show_part(pbro_slot, 0);
+                    }
                 }
-            }
-            if (browser_open && fm1_ms - browser_ms >= 2000u) {
-                if (browser_slot != cur_slot) {
-                    synth_preset_apply(&runtime_ctx, browser_slot);
-                    cur_slot = browser_slot;
+                if (pbro_open && fm1_ms - pbro_ms >= 2000u) {
+                    load_part(pbro_slot);
+                    ui_popup_hide();
+                    pbro_open = 0;
                 }
-                ui_popup_hide();
-                browser_open = 0;
+            } else {
+                if (pe != 0) {
+                    if (!browser_open) {
+                        browser_open = 1;
+                        browser_slot = cur_slot;
+                    }
+                    if (pe > 0)
+                        browser_slot = (browser_slot + 1u) % PRESET_SLOTS;
+                    else
+                        browser_slot = (browser_slot + PRESET_SLOTS - 1u) % PRESET_SLOTS;
+                    browser_ms = fm1_ms;
+                    {
+                        char name[PRESET_NAME_LEN];
+                        uint8_t ps[SYNTH_N_PARTS];
+                        int32_t lv[SYNTH_N_PARTS], dl[SYNTH_N_PARTS], ch[SYNTH_N_PARTS];
+                        int32_t lo[SYNTH_N_PARTS], hi[SYNTH_N_PARTS];
+                        const uint8_t *rec =
+                            multi_bank + browser_slot * MP_RECORD(SYNTH_N_PARTS);
+                        if (rec[0] != PRESET_EMPTY &&
+                            preset_multi_unpack(rec, SYNTH_N_PARTS, name, ps, lv, dl, ch, lo, hi))
+                            ui_popup_show(browser_slot, name);
+                        else
+                            ui_popup_show(browser_slot, 0);
+                    }
+                }
+                if (browser_open && fm1_ms - browser_ms >= 2000u) {
+                    if (browser_slot != cur_slot) {
+                        synth_preset_apply(&runtime_ctx, browser_slot);
+                        cur_slot = browser_slot;
+                    }
+                    ui_popup_hide();
+                    browser_open = 0;
+                }
             }
         }
 

@@ -904,12 +904,12 @@ static void ui_draw_popup(void)
     cv_blit(0, 4 * UI_ROW_H);
 }
 
-void ui_popup_show(uint32_t slot, const char *name)
+static void ui_popup_set(const char *title, uint32_t slot, const char *name)
 {
     char t[12];
     uint8_t was = ui_popup_on;
     ui_popup_on = 1;
-    ui_strcpy(ui_popup_line, "PATCH ");
+    ui_strcpy(ui_popup_line, title);
     ui_itoa((int32_t)slot, t);
     ui_strcat(ui_popup_line, t);
     ui_strcat(ui_popup_line, "  ");
@@ -920,6 +920,9 @@ void ui_popup_show(uint32_t slot, const char *name)
     if (!was)
         ui_reset_page();                           /* off -> on: clear + redraw under it */
 }
+
+void ui_popup_show(uint32_t slot, const char *name) { ui_popup_set("PATCH ", slot, name); }
+void ui_popup_show_part(uint32_t slot, const char *name) { ui_popup_set("PART ", slot, name); }
 
 void ui_popup_hide(void)
 {
