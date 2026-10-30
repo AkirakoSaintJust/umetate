@@ -87,6 +87,7 @@ void ui_act_stop(void) { }
 void ui_act_save(void) { }
 void ui_act_init_patch(void) { }
 void ui_act_init_part(void) { }
+void ui_act_name(uint8_t which) { (void)which; }
 void ui_draw_custom(const ui_widget *w) { (void)w; }   /* no custom widgets in the demo panel */
 
 /* ---- MIDI in: from the main loop, and from app_idle while the screen draws (idle_ok) */

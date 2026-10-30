@@ -198,6 +198,7 @@ _WIDGETS = {
     "spectro": "UI_SPECTRO",
     "status": "UI_STATUS",
     "subheader": "UI_SUBHEADER",
+    "name": "UI_NAME",
 }
 
 # the per-param display scale (a patch `params:` `display` string -> ui.h enum)
@@ -320,6 +321,10 @@ def generate_panel(
             typ = "UI_SUBHEADER"
             # param 0 = the active operator, 1 = the active part (text = the suffix)
             param = "1" if w.get("part") else "0"
+        elif w["type"] == "name":
+            typ = "UI_NAME"
+            # param = the name index (0 = part, 1 = patch); text = the label
+            param = str(w.get("name", 0))
         else:
             wparam = w.get("param")
             rest = op_rest(wparam) if wparam else None

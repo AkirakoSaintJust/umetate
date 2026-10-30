@@ -29,6 +29,7 @@ enum {
     UI_SPECTRO,        /* the spectrogram: Goertzel magnitude bars */
     UI_STATUS,         /* a status readout (algorithm + selected operator + mute) */
     UI_SUBHEADER,      /* a page's param-group title: "OP N <suffix>" / "PART N <suffix>" */
+    UI_NAME,           /* a name row (label + the name string), a page slot -> the editor */
     UI_CUSTOM,         /* the cv_* canvas escape hatch: ui_draw_custom() draws it */
 };
 
@@ -157,6 +158,19 @@ void ui_op_mute_active(void);                    /* mute/unmute the active opera
 void ui_popup_show(uint32_t slot, const char *name); /* the PATCH preset-browser popup */
 void ui_popup_show_part(uint32_t slot, const char *name); /* the PART preset-browser popup */
 void ui_popup_hide(void);                        /* clear the popup */
+
+/* ---- the name strings + the name editor (the GLO PATCH NAME / PART NAME rows) ---- */
+#define UI_NAME_LEN 16u                          /* 15 chars + NUL (the record's name field) */
+const char *ui_name_get(uint8_t which);          /* 0 = part, 1 = patch */
+void ui_name_set(uint8_t which, const char *name);
+uint8_t ui_name_editing(void);                   /* 0xFF = none, else the name being edited */
+void ui_name_editor_begin(uint8_t which);        /* open the editor pre-filled + saved copy */
+void ui_name_editor_commit(void);                /* keep the edited name, close */
+void ui_name_editor_cancel(void);                /* restore the saved name, close */
+void ui_name_editor_char(int32_t delta);         /* scroll the char at the cursor (wrap) */
+void ui_name_editor_move(int32_t delta);         /* move the cursor (wrap) */
+void ui_name_editor_backspace(void);             /* delete the char at the cursor */
+
 void ui_param_fmt(uint16_t p, const char *unit, char *out, uint32_t n); /* format a value */
 void ui_redraw(uint32_t now_ms);                 /* the retained-mode, rate-bounded redraw */
 void ui_custom_set(uint32_t slot, int32_t value); /* drive a UI_CUSTOM widget's dirty value */
@@ -171,6 +185,7 @@ void ui_act_play(void);
 void ui_act_stop(void);
 void ui_act_init_patch(void);                  /* INIT PATCH: reset the whole patch */
 void ui_act_init_part(void);                   /* INIT PART: reset the active part */
+void ui_act_name(uint8_t which);               /* open the name editor for `which` (0/1) */
 
 /* ---- the canvas escape hatch: the app draws a UI_CUSTOM widget (the widget is
  * passed so the app can key off w->param or w->text) ---- */

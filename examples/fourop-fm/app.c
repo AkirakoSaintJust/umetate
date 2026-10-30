@@ -165,14 +165,14 @@ void ui_act_stop(void) { }
 void ui_act_save(void)
 {
     /* save the active part's timbre into the part-patch bank at a fixed slot (the
-     * slot selector + naming are the follow-up); persisted once the engine is silent */
+     * slot selector is the follow-up); persisted once the engine is silent */
     uint8_t part = ui_part();
     int32_t params[SYNTH_PARAM_MAX];
     uint32_t i, base = (uint32_t)part * SYNTH_N_PARAMS;
     for (i = 0; i < SYNTH_N_PARAMS; i++)
         params[i] = fourop_fm_dsp_get_param(base + i);
     preset_part_pack(part_bank + (uint32_t)part * PP_RECORD(SYNTH_N_PARAMS),
-                     "PART", params, SYNTH_N_PARAMS);
+                     ui_name_get(0u), params, SYNTH_N_PARAMS);
     bank_dirty = 1;
     t_change = fm1_ms;
 }
@@ -189,6 +189,7 @@ static void load_part(uint32_t slot)
         return;
     for (i = 0; i < SYNTH_N_PARAMS; i++)
         fourop_fm_dsp_set_param(base + i, params[i]);
+    ui_name_set(0u, name);                         /* reflect the loaded part's name */
 }
 void ui_act_init_patch(void)
 {
@@ -211,6 +212,10 @@ void ui_act_init_part(void)
             id < (uint32_t)(part + 1u) * SYNTH_N_PARAMS)
             fourop_fm_dsp_set_param(id, fourop_fm_init[i].value);
     }
+}
+void ui_act_name(uint8_t which)
+{
+    ui_name_editor_begin(which);
 }
 void ui_draw_custom(const ui_widget *w) { (void)w; }   /* no custom widgets in this panel */
 
@@ -256,6 +261,8 @@ static void app_main(void)
     synth_preset_apply(&runtime_ctx, 0u);              /* multi slot 0: a valid record applies */
 
     ui_init(&PANEL);
+    ui_name_set(0u, "INIT PART");
+    ui_name_set(1u, "INIT PATCH");
     ui_sync();                                         /* the engine's defaults reach the screen */
 
     for (;;) {
@@ -273,6 +280,23 @@ static void app_main(void)
             ch0 = fourop_fm_dsp_get_param(SYNTH_ROUTING_BASE + 0u * SYNTH_N_PARTS + 0u);
             if (ch0 < 0 || ch0 > 15)
                 ch0 = 0;
+            if (ui_name_editing() != 0xFFu) {
+                /* the name editor: KNOB1 = char, KNOB2 = cursor, SCL = backspace,
+                   SAVE = ok, HOME = cancel; the keys + page are inert while open. */
+                int32_t k1 = fm1_enc_take(ENC_KNOB1);
+                int32_t k2 = fm1_enc_take(ENC_KNOB2);
+                if (k1)
+                    ui_name_editor_char(k1);
+                if (k2)
+                    ui_name_editor_move(k2);
+                b = fm1_input_edges(&rel);
+                if (b & (1u << BTN_SEL))
+                    ui_name_editor_backspace();
+                if (b & (1u << BTN_SAVE))
+                    ui_name_editor_commit();
+                if (b & (1u << BTN_HOME))
+                    ui_name_editor_cancel();
+            } else {
             for (k = 0; k < 27u; k++) {                /* the keys: play + echo, or SCL chords */
                 if (down >> k & 1u) {
                     if (scl) {
@@ -348,6 +372,7 @@ static void app_main(void)
             if (scl_pending && now - scl_pending_ms >= 300u) {
                 ui_handle(UI_SRC_BTN_SEL, -1);
                 scl_pending = 0;
+            }
             }
         }
         if ((e = fm1_enc_take(ENC_ALGORITHM)) != 0) ui_handle(UI_SRC_ENC_ALGORITHM, e);

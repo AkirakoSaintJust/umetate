@@ -47,6 +47,7 @@ void ui_act_play(void) {}
 void ui_act_stop(void) {}
 void ui_act_init_patch(void) { n_init_patch++; }
 void ui_act_init_part(void) { n_init_part++; }
+void ui_act_name(uint8_t which) { (void)which; }
 void ui_draw_custom(const ui_widget *w) { (void)w; }
 
 static int failures;
@@ -180,6 +181,25 @@ int main(void)
     /* the preset-browser popup shows + hides without crashing */
     ui_popup_show(7u, "MYSOUND");
     ui_popup_hide();
+
+    /* the name strings + the name editor (char wheel + cursor + backspace) */
+    {
+        ui_name_set(0u, "ABC");
+        CHECK(ui_streq(ui_name_get(0u), "ABC"), "name set/get round-trips");
+        ui_name_editor_begin(0u);
+        CHECK(ui_name_editing() == 0u, "name editor opens on the part name");
+        ui_name_editor_move(1u);                 /* cursor -> 'B' */
+        ui_name_editor_char(1u);                 /* 'B' -> 'C' (charset next) */
+        ui_name_editor_char(-1u);                /* 'C' -> 'B' (back) */
+        ui_name_editor_backspace();              /* delete 'B': "AC" */
+        ui_name_editor_cancel();                 /* restore "ABC" */
+        CHECK(ui_streq(ui_name_get(0u), "ABC"), "name editor cancel restores the name");
+        ui_name_editor_begin(0u);
+        ui_name_editor_char(1u);                 /* 'A' -> 'B': "BBC" */
+        ui_name_editor_commit();                 /* keep "BBC" */
+        CHECK(ui_streq(ui_name_get(0u), "BBC"), "name editor commit keeps the edit");
+        CHECK(ui_name_editing() == 0xFFu, "name editor closed after commit");
+    }
 
     if (failures) {
         printf("%d UI failures\n", failures);

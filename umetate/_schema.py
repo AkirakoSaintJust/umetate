@@ -189,6 +189,7 @@ class Widget(TypedDict):
     ]  # scope/spectro: the op index (0..3) -> "op N of the active part"
     mix_part: NotRequired[int]  # scope/spectro: the part index (0..1) -> "part N mix"
     part: NotRequired[bool]  # subheader: 1 = "PART N", 0 = "OP N"
+    name: NotRequired[int]  # name row: the name index (0 = part, 1 = patch)
 
 
 class Page(TypedDict):

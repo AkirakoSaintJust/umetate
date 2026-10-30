@@ -63,6 +63,9 @@ static uint8_t ui_part_mute[4];                  /* part mute flags (up to 4 par
 static int32_t ui_header_last = 0x7FFFFFFF;      /* the header's last-drawn value */
 static char ui_popup_line[40];                   /* the preset-browser popup text */
 static uint8_t ui_popup_on;                      /* 1 = the popup is showing */
+static char ui_name[2][UI_NAME_LEN];             /* [0] = part name, [1] = patch name */
+static char ui_name_saved[UI_NAME_LEN];          /* the pre-edit copy (for cancel) */
+static uint8_t ui_name_which, ui_name_cursor, ui_name_on;  /* the name-editor state */
 
 static const ui_context *ui_ctx(void) { return &ui_t->ctx[ui_stack[ui_sp]]; }
 static const ui_page *ui_cur_page(void) { return &ui_ctx()->pages[ui_pagei[ui_sp]]; }
@@ -241,13 +244,16 @@ static void ui_step_param(uint16_t p, int32_t delta)
 /* the param of the current page's Nth param-bearing widget (UI_BIND_PAGE_SLOT) */
 static uint16_t ui_widget_param(const ui_widget *w); /* defined below */
 
-/* the widget types a page-slot encoder can edit (the param-bearing widgets) */
+/* the widget types a page-slot encoder can edit (the param-bearing widgets + the
+ * name row, which opens the name editor instead of stepping a value) */
 static int ui_is_param_slot(uint8_t type)
 {
     return type == UI_VALUE || type == UI_BAR || type == UI_PARAM_ROW ||
-           type == UI_PARAM_COLUMN || type == UI_OP_ROW;
+           type == UI_PARAM_COLUMN || type == UI_OP_ROW || type == UI_NAME;
 }
 
+/* the param id of the current page's Nth param-bearing widget (UI_BIND_PAGE_SLOT);
+ * a name widget returns UI_NO_PARAM (it is not a numeric param). */
 static uint16_t ui_slot_param(uint8_t slot)
 {
     const ui_page *p = ui_cur_page();
@@ -255,11 +261,27 @@ static uint16_t ui_slot_param(uint8_t slot)
     for (i = 0; i < p->n; i++) {
         if (ui_is_param_slot(p->w[i].type)) {
             if (n == slot)
-                return ui_widget_param(&p->w[i]);
+                return p->w[i].type == UI_NAME ? UI_NO_PARAM : ui_widget_param(&p->w[i]);
             n++;
         }
     }
     return UI_NO_PARAM;
+}
+
+/* the name index (0/1) of the current page's Nth slot when it is a name widget,
+ * else 0xFF. */
+static uint8_t ui_slot_name(uint8_t slot)
+{
+    const ui_page *p = ui_cur_page();
+    uint32_t i, n = 0;
+    for (i = 0; i < p->n; i++) {
+        if (ui_is_param_slot(p->w[i].type)) {
+            if (n == slot)
+                return p->w[i].type == UI_NAME ? (uint8_t)p->w[i].param : 0xFFu;
+            n++;
+        }
+    }
+    return 0xFFu;
 }
 
 static void ui_do_action(uint8_t action, uint8_t arg)
@@ -352,13 +374,18 @@ void ui_handle(uint16_t source, int32_t value)
             }
         }
     } else if (b->kind == UI_BIND_PAGE_SLOT) {
-        uint16_t p = ui_slot_param(b->arg);
-        if (p < ui_t->n_params) {
-            if (b->behavior == UI_REL)
-                ui_step_param(p, value);
-            else {
-                ui_param_v[p] = value;
-                ui_clamp_param(p);
+        uint8_t nm = ui_slot_name(b->arg);
+        if (nm != 0xFFu) {
+            ui_act_name(nm);                        /* a name row: open its editor */
+        } else {
+            uint16_t p = ui_slot_param(b->arg);
+            if (p < ui_t->n_params) {
+                if (b->behavior == UI_REL)
+                    ui_step_param(p, value);
+                else {
+                    ui_param_v[p] = value;
+                    ui_clamp_param(p);
+                }
             }
         }
     } else if (b->action == UI_ACT_NOTE_ON && value >= 0)
@@ -527,6 +554,25 @@ static void ui_draw_value(const ui_widget *w)
         if (w->text)
             cv_text(0, 0, &FONT_S, w->text, C_GRAY);   /* the name: dim */
         cv_text(vx, 0, &FONT_S, val, C_HI);            /* the value: bright */
+    }
+    cv_blit(x, y);
+}
+
+/* a name row: the label (text, dim) + the name string (bright). `w->param` is the
+ * name index (0 = part, 1 = patch). Twisting its page slot opens the editor. */
+static void ui_draw_name_row(const ui_widget *w)
+{
+    uint32_t x, y, wd, ht;
+    const char *name = ui_name_get(w->param < 2u ? w->param : 0u);
+    ui_region(w, &x, &y, &wd, &ht);
+    cv_begin(wd, ht, C_BLACK);
+    {
+        int32_t vx = (int32_t)wd - text_w(&FONT_S, name);
+        if (vx < 0)
+            vx = 0;
+        if (w->text)
+            cv_text(0, 0, &FONT_S, w->text, C_GRAY);  /* the label: dim */
+        cv_text(vx, 0, &FONT_S, name, C_HI);          /* the name: bright */
     }
     cv_blit(x, y);
 }
@@ -848,6 +894,7 @@ static void ui_draw_widget(const ui_widget *w)
     case UI_SPECTRO: ui_draw_spectro(w); break;
     case UI_STATUS: ui_draw_status(w); break;
     case UI_SUBHEADER: ui_draw_subheader(w); break;
+    case UI_NAME: ui_draw_name_row(w); break;
     case UI_CUSTOM: ui_draw_custom(w); break;
     default: break;
     }
@@ -863,6 +910,13 @@ static int32_t ui_widget_value(const ui_widget *w, uint32_t slot)
     case UI_SPECTRO: return (int32_t)scope_seq();  /* redraw on each new snapshot */
     case UI_SUBHEADER: return w->param == 1u ? (int32_t)ui_selected_part
                                              : (int32_t)ui_selected_op;
+    case UI_NAME: {                                 /* redraw when the name changes */
+        const char *n = ui_name_get(w->param < 2u ? w->param : 0u);
+        int32_t h = 0;
+        while (*n)
+            h += *n++;
+        return h;
+    }
     case UI_LIST:
     case UI_GRID: return ui_cursor;
     case UI_ENVELOPE: {                             /* redraw when any of the 7 change */
@@ -932,6 +986,132 @@ void ui_popup_hide(void)
     }
 }
 
+/* ---- the name strings + the name editor ---- */
+
+/* the name charset: uppercase + digits + space + a few symbols (no lowercase, so
+ * the name renders in both FONT_S and the uppercase-only FONT_L). */
+static const char ui_charset[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -._";
+#define UI_CHARSET_N (sizeof(ui_charset) - 1u)
+
+static uint8_t ui_charset_idx(char c)
+{
+    uint32_t i;
+    for (i = 0; i < UI_CHARSET_N; i++)
+        if (ui_charset[i] == c)
+            return (uint8_t)i;
+    return 0;                                      /* unknown -> 'A' */
+}
+
+const char *ui_name_get(uint8_t which)
+{
+    return ui_name[which < 2u ? which : 0u];
+}
+
+void ui_name_set(uint8_t which, const char *name)
+{
+    uint32_t i;
+    if (which >= 2u)
+        return;
+    for (i = 0; i < UI_NAME_LEN - 1u && name[i]; i++)
+        ui_name[which][i] = name[i];
+    ui_name[which][i] = 0;
+}
+
+uint8_t ui_name_editing(void) { return ui_name_on ? ui_name_which : 0xFFu; }
+
+void ui_name_editor_begin(uint8_t which)
+{
+    uint32_t i;
+    if (which >= 2u)
+        return;
+    ui_name_which = which;
+    ui_name_cursor = 0;
+    for (i = 0; i < UI_NAME_LEN; i++)
+        ui_name_saved[i] = ui_name[which][i];
+    if (!ui_name_on)
+        ui_reset_page();
+    ui_name_on = 1;
+}
+
+void ui_name_editor_commit(void)
+{
+    if (ui_name_on) {
+        ui_name_on = 0;
+        ui_reset_page();
+    }
+}
+
+void ui_name_editor_cancel(void)
+{
+    if (ui_name_on) {
+        ui_name_set(ui_name_which, ui_name_saved); /* restore the pre-edit name */
+        ui_name_on = 0;
+        ui_reset_page();
+    }
+}
+
+void ui_name_editor_char(int32_t delta)
+{
+    char c;
+    int32_t idx;
+    uint32_t i, len = 0;
+    if (!ui_name_on)
+        return;
+    while (ui_name[ui_name_which][len])
+        len++;
+    c = ui_name[ui_name_which][ui_name_cursor];
+    idx = (int32_t)ui_charset_idx(c) + delta;
+    idx %= (int32_t)UI_CHARSET_N;
+    if (idx < 0)
+        idx += (int32_t)UI_CHARSET_N;
+    ui_name[ui_name_which][ui_name_cursor] = ui_charset[idx];
+    (void)len;
+    (void)i;
+}
+
+void ui_name_editor_move(int32_t delta)
+{
+    if (!ui_name_on)
+        return;
+    if (delta > 0)
+        ui_name_cursor = (uint8_t)((ui_name_cursor + 1u) % (UI_NAME_LEN - 1u));
+    else
+        ui_name_cursor = (uint8_t)((ui_name_cursor + (UI_NAME_LEN - 1u) - 1u) %
+                                   (UI_NAME_LEN - 1u));
+}
+
+void ui_name_editor_backspace(void)
+{
+    uint32_t i;
+    char *n;
+    if (!ui_name_on)
+        return;
+    n = ui_name[ui_name_which];
+    for (i = ui_name_cursor; i < UI_NAME_LEN - 1u; i++)
+        n[i] = n[i + 1u];
+    n[UI_NAME_LEN - 1u] = 0;                       /* shift left: delete at the cursor */
+}
+
+/* the name editor pop-up: title + the name (cursor char in accent) + the legend. */
+static void ui_draw_name_editor(void)
+{
+    char s[UI_NAME_LEN + 8];
+    const char *title = ui_name_which ? "PATCH NAME" : "PART NAME";
+    uint32_t i;
+    cv_begin(240u, 5u * UI_ROW_H, C_DIM);
+    cv_text(6, 2, &FONT_S, title, C_HI);
+    /* the name: FONT_L, 15 fixed columns; the cursor char is the accent colour */
+    for (i = 0; i < UI_NAME_LEN - 1u; i++) {
+        char c = ui_name[ui_name_which][i];
+        s[0] = c ? c : ' ';
+        s[1] = 0;
+        cv_text(6 + (int32_t)i * 16, UI_ROW_H, &FONT_L, s,
+                i == ui_name_cursor ? C_WHITE : C_HI);
+    }
+    cv_text(6, 3 * UI_ROW_H, &FONT_S, "K1=char K2=cursor SCL=del SAVE=ok HOME=cancel", C_DIM);
+    cv_blit(0, 4 * UI_ROW_H);
+}
+
 void ui_redraw(uint32_t now_ms)
 {
     static uint32_t last_draw;
@@ -956,6 +1136,8 @@ void ui_redraw(uint32_t now_ms)
     }
     if (ui_popup_on)
         ui_draw_popup();
+    if (ui_name_on)
+        ui_draw_name_editor();
 }
 
 /* the safe-failure screen: drawn independently, never through the widget engine */
