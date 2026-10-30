@@ -38,6 +38,7 @@ enum {
     UI_DISP_PCT,       /* [min,max] -> "N%" */
     UI_DISP_PCT_INV,   /* [min,max] -> "N%" inverted (100% = min; e.g. damping) */
     UI_DISP_ONOFF,     /* 0/1 -> "off"/"on" */
+    UI_DISP_ONOFF_INV, /* 0/1 -> "on"/"off" (a mute: 0 = not muted = on) */
     UI_DISP_OFF_PCT,   /* <= 0 -> "off", else "N%" of [0,max] (e.g. a filter) */
     UI_DISP_HZ,        /* a Q32 rate -> "N.N Hz" */
     UI_DISP_SEMI,      /* a bipolar Q15 -> "+/-N.N st" (32768 = +1 octave) */

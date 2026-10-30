@@ -141,9 +141,9 @@ int main(void)
         ui_params()[P_ratio] = 131072;  ui_param_fmt(P_ratio, 0, s, sizeof s);
         CHECK(ui_streq(s, "2.00"), "ratio 131072 formats as 2.00");
         ui_params()[P_mute] = 1;        ui_param_fmt(P_mute, 0, s, sizeof s);
-        CHECK(ui_streq(s, "on"), "mute 1 formats as on");
+        CHECK(ui_streq(s, "off"), "mute 1 (muted) formats as off");
         ui_params()[P_mute] = 0;        ui_param_fmt(P_mute, 0, s, sizeof s);
-        CHECK(ui_streq(s, "off"), "mute 0 formats as off");
+        CHECK(ui_streq(s, "on"), "mute 0 (not muted) formats as on");
         ui_params()[P_cutoff] = 0;      ui_param_fmt(P_cutoff, 0, s, sizeof s);
         CHECK(ui_streq(s, "off"), "cutoff 0 formats as off");
         ui_params()[P_fold] = 16384;    ui_param_fmt(P_fold, 0, s, sizeof s);

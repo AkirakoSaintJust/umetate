@@ -144,6 +144,22 @@ static const ui_binding *ui_resolve(uint16_t source)
     return 0;
 }
 
+/* clamp a param's value to its [min, max] (the display scale's range, which the
+ * DSP's set_param also enforces). A value must never sit outside its range — the
+ * display forms assume it (an on/off that slid negative would read "on"). */
+static void ui_clamp_param(uint16_t p)
+{
+    const ui_param_disp *d = (ui_t->disp && p < ui_t->n_params) ? &ui_t->disp[p] : 0;
+    int32_t v = p < ui_t->n_params ? ui_param_v[p] : 0;
+    if (!d)
+        return;
+    if (v < d->min)
+        v = d->min;
+    if (v > d->max)
+        v = d->max;
+    ui_param_v[p] = v;
+}
+
 /* step a param by `delta` detents per its display scale: linear params move by a
  * fraction of the range (128 detents full-scale), log params move multiplicatively
  * (~3% per detent, so 0 stays reachable). The result is clamped to [min, max]. */
@@ -166,11 +182,8 @@ static void ui_step_param(uint16_t p, int32_t delta)
             step = 1;
         v += delta * step;
     }
-    if (d) {
-        if (v < d->min) v = d->min;
-        if (v > d->max) v = d->max;
-    }
     ui_param_v[p] = v;
+    ui_clamp_param(p);
 }
 
 /* the param of the current page's Nth param-bearing widget (UI_BIND_PAGE_SLOT) */
@@ -260,16 +273,20 @@ void ui_handle(uint16_t source, int32_t value)
         if (b->target < ui_t->n_params) {
             if (b->behavior == UI_REL)
                 ui_step_param(b->target, value);
-            else
+            else {
                 ui_param_v[b->target] = value;
+                ui_clamp_param(b->target);
+            }
         }
     } else if (b->kind == UI_BIND_PAGE_SLOT) {
         uint16_t p = ui_slot_param(b->arg);
         if (p < ui_t->n_params) {
             if (b->behavior == UI_REL)
                 ui_step_param(p, value);
-            else
+            else {
                 ui_param_v[p] = value;
+                ui_clamp_param(p);
+            }
         }
     } else if (b->action == UI_ACT_NOTE_ON && value >= 0)
         ui_act_note_on((uint8_t)value, 100u);
@@ -370,7 +387,10 @@ void ui_param_fmt(uint16_t p, const char *unit, char *out, uint32_t n)
         break;
     }
     case UI_DISP_ONOFF:
-        ui_strcat(out, v ? "on" : "off");
+        ui_strcat(out, v > 0 ? "on" : "off");
+        break;
+    case UI_DISP_ONOFF_INV:
+        ui_strcat(out, v > 0 ? "off" : "on");
         break;
     case UI_DISP_OFF_PCT: {
         if (v <= 0) {

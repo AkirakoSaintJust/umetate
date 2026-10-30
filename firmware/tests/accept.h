@@ -19,7 +19,7 @@ static const ui_param_disp DISP_TBL[N_PARAMS] = {
     { UI_DISP_PCT, 0, 0, 32767 },    /* P_op1_level */
     { UI_DISP_PCT, 0, 0, 32767 },    /* P_op2_level */
     { UI_DISP_RATIO, 0, 32768, 1048576 }, /* P_ratio */
-    { UI_DISP_ONOFF, 0, 0, 1 },      /* P_mute */
+    { UI_DISP_ONOFF_INV, 0, 0, 1 },      /* P_mute: 0 = not muted (on), 1 = muted (off) */
     { UI_DISP_HZ, 1, 0, 20000000 },  /* P_hz */
     { UI_DISP_SEMI, 0, -32768, 32767 }, /* P_semi */
 };

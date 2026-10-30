@@ -201,6 +201,7 @@ _DISPLAY = {
     "pct": "UI_DISP_PCT",
     "pct_inv": "UI_DISP_PCT_INV",
     "onoff": "UI_DISP_ONOFF",
+    "onoff_inv": "UI_DISP_ONOFF_INV",
     "off_pct": "UI_DISP_OFF_PCT",
     "hz": "UI_DISP_HZ",
     "semi": "UI_DISP_SEMI",

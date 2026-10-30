@@ -874,6 +874,7 @@ strengthening below.
 | L8 | The UI was **underspecified** — button meanings, page contents, and per-param semantics were decided during implementation, so the first emulator pass was "buggy, incomplete, cryptic" and a whole navigation/control map had to be re-derived *after* code existed. | **The UI interview must be written before the panel is coded** (control-map.md + synth-brief §3 as a *checked gate*, not a note): every button's meaning, every page's contents, the always-visible header, the shortcuts/chords, and each param's display form, all in one place. §3.1–3.5 + §2.1a/2.1b below are that spec now; a change to the panel must change them in the same commit. |
 | L9 | A per-param *display scale* was missing — the panel showed raw integers (cutoff `8000`, ratio `65536`, mute `0/1`), and a relative encoder moved ±1 raw (thousands of detents across a 0..65535 range). | The `params:` `display` form + the curve-driven stepping (linear = a fraction of the range, log = multiplicative, clamped) — `ui_param_disp[]` (§12.6). |
 | L10 | The *development skill* did not force a UI spec deep enough — it asked for a "context stack + pages + bindings", but not the **button-by-button meaning, page-by-page contents, the always-visible header, the modifier chords, the per-param display form, or the exact INIT-patch defaults** — so those were invented during code. | **Revamp the dev skill's GUI interview** so its *minimum bar* is the exact 10-item checklist below (button map · page map · header · param placement · per-param display + stepping · widget layout · preset browser · exact INIT PATCH/PART defaults · screen rules) — the fourop-fm restructure is the worked example. **Open** — not yet written back into `skills/umetate-development/SKILL.md`/templates. |
+| L11 | A knob could slide *below* its display's minimum — RATIO read "0.50" while the internal value had gone below it, so scrolling back up showed nothing until the value re-entered the range (and an on/off could read "on" from a *negative* value); the range/unit/step resolution hadn't been settled up front. | The **user-facing range + clamp + unit + resolution is part of the param spec** — `params:` `min`/`max` + `display` are the clamp the stepper *and* the display both honour (a value never sits outside its range, and the display never disagrees with it); a *mute* reads inverted (`onoff_inv`: 0 = not muted = "on"); the GUI interview must settle each param's range, unit, and detent resolution before authoring the panel. |
 
 **The GUI interview's minimum bar (L10 — exact).** The development skill's GUI
 interview must treat the UI as *unspecified* until it has pinned, in writing, every
@@ -914,10 +915,11 @@ is the worked example of the depth; the skill generalizes it to any synth.
    lives in `ENV` after the per-op amplitude envelope, and the per-part vibrato in
    `LFO` — *not* in `FX`).
 
-5. **Per-param display form + stepping.** Every editable param's `display` form
-   (raw / ratio / pct / pct_inv / onoff / off_pct / hz / semi) and curve-driven
-   stepping (linear = a fraction of the range, log = multiplicative, clamped) —
-   §12.6.
+5. **Per-param display form + range/clamp/unit/resolution.** Every editable param's
+   `display` form (raw / ratio / pct / pct_inv / onoff / onoff_inv / off_pct / hz /
+   semi), its user-facing **[min, max] range** and unit, and the curve-driven
+   stepping (linear = a fraction of the range, log = multiplicative, **clamped to
+   the range so the display and the value never disagree**) — §12.6, L11.
 
 6. **Widget layout.** Which widget each visual page draws and the ordering —
    fourop-fm: one widget per row in a column layout, part 1 / operator 1 on top.
