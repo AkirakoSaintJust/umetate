@@ -18,11 +18,17 @@ static void lcd_blit(uint32_t x, uint32_t y, uint32_t w, uint32_t h, const uint1
 /* ---- the scope core (ui.c's UI_SCOPE/UI_SPECTRO renderers call it) ---- */
 #include "scope.h"
 int16_t scope_at(uint32_t i) { (void)i; return 0; }
+int16_t scope_at_ch(uint32_t ch, uint32_t i) { (void)ch; (void)i; return 0; }
 void scope_spectrum(uint16_t *mag, uint32_t nbins)
 {
     uint32_t b;
     for (b = 0; b < nbins; b++)
         mag[b] = 0;
+}
+void scope_spectrum_ch(uint32_t ch, uint16_t *mag, uint32_t nbins)
+{
+    scope_spectrum(mag, nbins);
+    (void)ch;
 }
 uint32_t scope_seq(void) { return 0; }
 

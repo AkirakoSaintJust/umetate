@@ -537,12 +537,13 @@ static void ui_draw_envelope(const ui_widget *w)
     cv_blit(x, y);
 }
 
-/* the oscilloscope: the last render block's left channel, downsampled to the
- * widget width, drawn as a line with a mid-line. Time-varying — redraws whenever
- * the snapshot advances (scope_seq), which the ISR bumps every block. */
+/* the oscilloscope: the selected channel's snapshot, downsampled to the widget
+ * width, drawn as a line with a mid-line. `w->param` is the scope channel
+ * (0 = the final mix, 1.. = the per-op/per-part taps). Time-varying — redraws
+ * whenever the snapshot advances (scope_seq), which the ISR bumps every block. */
 static void ui_draw_scope(const ui_widget *w)
 {
-    uint32_t x, y, wd, ht, i;
+    uint32_t ch = (uint32_t)w->param, x, y, wd, ht, i;
     int32_t mid, lx, ly;
     ui_region(w, &x, &y, &wd, &ht);
     if (wd < 2u)
@@ -551,9 +552,9 @@ static void ui_draw_scope(const ui_widget *w)
     mid = (int32_t)ht / 2;
     cv_line(0, mid, (int32_t)wd - 1, mid, C_DIM);
     lx = 0;
-    ly = mid - (scope_at(0u) * (int32_t)ht) / 65536;
+    ly = mid - (scope_at_ch(ch, 0u) * (int32_t)ht) / 65536;
     for (i = 1; i < wd; i++) {
-        int32_t s = scope_at(i * SCOPE_N / wd);
+        int32_t s = scope_at_ch(ch, i * SCOPE_N / wd);
         int32_t px = (int32_t)i, py = mid - (s * (int32_t)ht) / 65536;
         cv_line(lx, ly, px, py, C_HI);
         lx = px;
@@ -563,14 +564,15 @@ static void ui_draw_scope(const ui_widget *w)
 }
 
 /* the spectrogram: SCOPE_BINS linearly-spaced Goertzel bars (power-normalized),
- * log-free and integer — the ear hears power, and the harmonic series is visible. */
+ * log-free and integer — the ear hears power, and the harmonic series is visible.
+ * `w->param` is the scope channel. */
 static void ui_draw_spectro(const ui_widget *w)
 {
     uint32_t x, y, wd, ht, i;
     uint16_t mag[SCOPE_BINS];
     uint32_t bw;
     ui_region(w, &x, &y, &wd, &ht);
-    scope_spectrum(mag, SCOPE_BINS);
+    scope_spectrum_ch((uint32_t)w->param, mag, SCOPE_BINS);
     bw = wd / SCOPE_BINS;
     if (bw < 1u)
         bw = 1u;

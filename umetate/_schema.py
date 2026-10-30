@@ -181,6 +181,7 @@ class Widget(TypedDict):
     unit: NotRequired[str]
     fmt: NotRequired[str]
     items: NotRequired[list[str]]
+    channel: NotRequired[int]  # scope/spectro: the tap channel (0 = mix, 1.. = taps)
 
 
 class Page(TypedDict):

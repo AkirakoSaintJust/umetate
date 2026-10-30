@@ -299,6 +299,10 @@ def generate_panel(
         if w["type"] == "envelope":
             typ = "UI_ENVELOPE"
             param = "0"  # unused; the runtime reads the env group
+        elif w["type"] in ("scope", "spectro"):
+            typ = _WIDGETS[w["type"]]
+            # the scope channel (0 = the final mix, 1.. = the per-op/per-part taps)
+            param = str(w.get("channel", 0))
         else:
             wparam = w.get("param")
             rest = op_rest(wparam) if wparam else None
