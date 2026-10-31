@@ -2844,8 +2844,8 @@ the two stay in sync).
 
 ### 13.3 Web-emulator + envelope follow-ups (recorded 2026-10-31)
 
-Status: **in progress** — 22, 23, 24, 31, 32 done (2026-10-31); 25–30 queued. Numbers
-continue §13.1.
+Status: **in progress** — 22, 23, 24, 28 (symptom), 31, 32, 33, 34 done
+(2026-10-31); 25–27, 29, 30 queued. Numbers continue §13.1.
 
 #### Web emulator
 
@@ -2894,11 +2894,11 @@ continue §13.1.
 31. **Rate/level ranges are wrong.** — **done.** A-ENV (and likely others): ATTACK
     RATE ~60 was audibly instant (no slow-attack travel); LEVEL ~50 read as 0;
     DECAY1/DECAY2 below ~58 held indefinitely. Three fixes: (a) `fm1_rate_coeff`
-    now `×2 per 8 steps` (was ×2 per 10) — 99 = instant, 0 ≈ 4 s — spreading the
-    musical times so slow attacks/decays have real travel; (b) `fm1_level_gain`
-    now 0.25 dB/step (was 0.75) — 99 = max, 50 ≈ −12 dB, 0 = silence; (c) a new
-    `fm1_onepole` helper floors the step at ±1 so a slow rate × small delta can't
-    round to 0 and stall short of the target (the "holds forever" mechanism).
+    re-scaled (then re-scaled again as the non-uniform curve of 34); (b)
+    `fm1_level_gain` now 0.25 dB/step (was 0.75) — 99 = max, 50 ≈ −12 dB, 0 =
+    silence; (c) a new `fm1_onepole` helper floors the step at ±1 so a slow rate ×
+    small delta can't round to 0 and stall short of the target (the "holds forever"
+    mechanism).
 
 32. **Envelope graph: LEVEL below ~50 falls off-screen.** — **done** (fixed by 31's
     level curve). The graph already maps level → height via `fm1_level_gain`, so the
@@ -2907,9 +2907,9 @@ continue §13.1.
 
 #### GLO
 
-28. **PART n PART LEVEL sets both parts.** The GLO `part-level` page edits part 0
-    regardless of the active part. Symptom of the planned GLO revamp (item 11
-    `SINGLE PART LAYERING`); fix there.
+28. **PART n PART LEVEL sets both parts.** — **symptom fixed** by 33 (the GLO
+    `part-level` + `voice-mode` pages now follow the active part). The broader GLO
+    revamp (item 11 `SINGLE PART LAYERING`) is still pending.
 
 #### Feature
 
@@ -2919,18 +2919,26 @@ continue §13.1.
 
 #### Per-part editing (reported 2026-10-31)
 
-33. **The active part is not honoured by any editor.** EDIT/ENV/LFO operator params,
-    the ARP/SEQ/PLAY/REC operator mutes, and the GLO `part-level` + `voice-mode`
-    pages all edit **part 1** (the part-0 params) regardless of `ui_selected_part`.
-    Part 2 is therefore impossible to mute or edit, and the UI never reflects the
-    active part's values. Root cause: the panel generator resolves operator-relative
-    params (`opN.tl.level`, the `mute` table, the `envelope` group) and the GLO
-    `.p0` rows to **part-0 ids only**; the runtime's `ui_widget_param` /
-    `ui_op_mute_*` / envelope/header reads index `op_param`/`env`/`mute` by
-    `ui_selected_op` but never by `ui_selected_part`. Fix: make those tables
-    per-part (2D) and index them by the active part; add a part-relative widget for
-    the GLO rows. (Subsumes 28's symptom; the split/channel pages stay two-part
-    explicit.)
+33. **The active part is not honoured by any editor.** — **done.** EDIT/ENV/LFO
+    operator params, the ARP/SEQ/PLAY/REC operator mutes, and the GLO `part-level` +
+    `voice-mode` pages all edited **part 1** (the part-0 params) regardless of
+    `ui_selected_part`. Part 2 was impossible to mute or edit, and the UI never
+    reflected the active part's values. Root cause: the panel generator resolved
+    operator-relative params (`opN.tl.level`, the `mute` table, the `envelope` group)
+    and the GLO `.p0` rows to **part-0 ids only**; the runtime indexed
+    `op_param`/`env`/`mute` by `ui_selected_op` but never `ui_selected_part`. Fix:
+    the tables are now per-part (part-major), and the runtime indexes them by the
+    active part (a `UI_PART_ROW` + `PART_PARAM` handle the GLO rows).
+
+#### Envelope rate rescale (reported 2026-10-31)
+
+34. **Release/decay read as instant at ~64.** — **done.** With the uniform `×2 per 8`
+    rate curve, everything above ~64 was audibly instant (35 dead settings) and the
+    musical decay/release range was crowded below ~40. Re-scaled `fm1_rate_coeff` to
+    a **non-uniform Yamaha-style curve** — time constant ≈ `2^(sqrt(99-r)/0.75)`
+    blocks — so the slow end is ~5 % finer per step (rate 0 ≈ 7 s, rate 50 ≈ 0.5 s,
+    rate 64 ≈ 170 ms) and "instant" is compressed to the very top (rate 99 ≈ 0.73 ms).
+    The UI value stays linear 0–99; the envelope shape stays the exponential one-pole.
 
 ### 13.4 Ordering note for §13.3
 

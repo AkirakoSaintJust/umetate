@@ -52,13 +52,16 @@ def main() -> None:
     semi_q16 = [q16(2.0 ** (i / 12.0)) for i in range(12)]
     cent_q16 = [q16(2.0 ** (i / 1200.0)) for i in range(100)]
 
-    # DX rate -> one-pole coefficient (Q16): 99 = instant, exponential (×2 per 8
-    # steps), 0 ≈ ~4 s time constant. The gentler slope (was ×2 per 10) spreads the
-    # musically useful times so a slow attack has real travel (r 60 ≈ 21 ms, r 30 ≈
-    # 190 ms, r 0 ≈ 4 s) instead of everything above ~50 being "instant". Drives the
-    # dx_env / pitch_env stages.
+    # DX rate -> one-pole coefficient (Q16). Yamaha-style *non-uniform* curve: the
+    # time constant is ~2^(sqrt(99-r) / 0.75) blocks, so the slow end has fine
+    # granularity (each step ~5% faster) while "instant" is compressed to the very
+    # top (rate 99 ≈ 0.73 ms). A uniform exponential (×2 per 8 steps) instead made
+    # everything above ~64 read as "instant" — 35 dead settings — and left the
+    # musical decay/release range (tens of ms .. ~1 s) crowded below ~40. Rate 0 ≈
+    # 7 s (a long release), rate 50 ≈ 0.5 s, rate 64 ≈ 170 ms, rate 99 = instant.
+    # Drives the dx_env / pitch_env stages.
     rate_coeff = [
-        min(65536, max(0, round(65536.0 * 2.0 ** (-(99 - r) / 8.0))))
+        min(65536, max(0, round(65536.0 * 2.0 ** (-((99 - r) ** 0.5) / 0.75))))
         for r in range(100)
     ]
     # DX total-level -> gain (Q15), 0.25 dB/step: 99 = 32767 (0 dB, maximum), 50 ≈

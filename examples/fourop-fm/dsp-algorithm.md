@@ -58,7 +58,7 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
 
   | param | kind | range | meaning |
   | --- | --- | --- | --- |
-  | `r1 r2 r3 r4` | rate | 0…99 | one-pole coefficient `fm1_rate_coeff[rate]` (99 = instant, ×2 per 8 steps) |
+  | `r1 r2 r3 r4` | rate | 0…99 | one-pole coefficient `fm1_rate_coeff[rate]` (non-uniform Yamaha-style: 99 = instant ≈ 0.73 ms, 0 ≈ 7 s) |
   | `l1` | level | 0…99 | attack peak (→ `fm1_level_gain[l1]`) |
   | `l2` | level | 0…99 | decay1 target |
   | `l3` | level | 0…99 | sustain level |

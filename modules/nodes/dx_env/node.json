@@ -1,6 +1,6 @@
 {
   "name": "dx_env",
-  "summary": "DX-style rate/level envelope: 4 rates + 3 levels, all 0..99 (the Yamaha scale), exponential one-pole per stage (attack → decay1 → decay2 → sustain → release). Q15 gain out. The rate is a one-pole coefficient from `fm1_rate_coeff[rate]` (99 = instant, ×2 per 8 steps, 0 ≈ 4 s); a `rate_scale` control input (default unity) scales it — velocity → envelope rate. Levels are total-level 0..99 → Q15 gain via `fm1_level_gain` (0.25 dB/step: 99 = max, 50 ≈ −12 dB, 0 = silence). A `trigger` event (default `voice_trig[v]`) resets to attack on every note-on edge, even mid-note (voice steal).",
+  "summary": "DX-style rate/level envelope: 4 rates + 3 levels, all 0..99 (the Yamaha scale), exponential one-pole per stage (attack → decay1 → decay2 → sustain → release). Q15 gain out. The rate is a one-pole coefficient from `fm1_rate_coeff[rate]` (a non-uniform Yamaha-style curve: 99 = instant ≈ 0.73 ms, 0 ≈ 7 s, ~5% finer per step at the slow end); a `rate_scale` control input (default unity) scales it — velocity → envelope rate. Levels are total-level 0..99 → Q15 gain via `fm1_level_gain` (0.25 dB/step: 99 = max, 50 ≈ −12 dB, 0 = silence). A `trigger` event (default `voice_trig[v]`) resets to attack on every note-on edge, even mid-note (voice steal).",
   "ins": {
     "gate": { "rate": "event", "default": "voice_gate[v]" },
     "trigger": { "rate": "event", "default": "voice_trig[v]" },

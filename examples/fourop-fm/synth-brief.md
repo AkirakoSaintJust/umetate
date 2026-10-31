@@ -155,7 +155,7 @@ output with −12 dB single-operator headroom (`fm1_level_gain[level] >> 2`), so
 solo carrier never clips and a four-carrier additive algorithm sums to ~0 dBFS;
 `opN_feedback` is each operator's own self-modulation depth. The DX rates
 (`r1..r4`, `penv_r1..r4`) are 0–99 → a one-pole coefficient via
-`fm1_rate_coeff` (99 = instant, ×2 per 8 steps); the DX levels (`l1..l3`) are
+`fm1_rate_coeff` (a non-uniform Yamaha-style curve: 99 = instant ≈ 0.73 ms, 0 ≈ 7 s); the DX levels (`l1..l3`) are
 0–99 → Q15 gain via `fm1_level_gain` (0.25 dB/step). `rate` is a Q32 phase
 increment per sample — `f · 2³² / 44100`, so ~97392 = 1 Hz. `depth` is `depth/32768` in the
 use's units: octaves of vibrato for `pitch_depth` (273 ≈ ±10 cents), fraction of

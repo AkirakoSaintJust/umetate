@@ -2346,8 +2346,8 @@ def _pm_semantics() -> tuple[bool, str]:
 def _release_tail() -> tuple[bool, str]:
     """note-off releases: after a key release the operator envelope keeps sounding
     (a release tail) and decays to silence — not an instant cut. The first 64
-    frames after note-off must be non-silent; the last 1024 of an ~186 ms release
-    render must be near-silent (the release at r4 = 60 is ~170 ms)."""
+    frames after note-off must be non-silent; the last 2048 of an ~2.9 s release
+    render must be near-silent (the release at r4 = 60 is ~1.9 s)."""
     src = generate(RELEASE_PATCH)
     cname = "release_test"
     harness = (
@@ -2355,7 +2355,7 @@ def _release_tail() -> tuple[bool, str]:
         f"void {cname}_dsp_note_on(uint32_t note, uint32_t velocity);\n"
         f"void {cname}_dsp_note_off(uint32_t note);\n"
         f"void {cname}_dsp_render(int32_t *out, uint32_t frames);\n"
-        "static int32_t out[16384];\n"
+        "static int32_t out[262144];\n"
         "int main(void) {\n"
         f"    {cname}_dsp_note_on(69, 100);\n"
         f"    {cname}_dsp_render(out, 512);\n"
@@ -2363,8 +2363,8 @@ def _release_tail() -> tuple[bool, str]:
         f"    {cname}_dsp_render(out, 64);\n"
         "    int64_t e0 = 0; for (int i = 0; i < 128; i++) "
         "e0 += (int64_t)out[i] * out[i];\n"
-        f"    {cname}_dsp_render(out, 8192);\n"
-        "    int64_t e1 = 0; for (int i = 14336; i < 16384; i++) "
+        f"    {cname}_dsp_render(out, 131072);\n"
+        "    int64_t e1 = 0; for (int i = 258048; i < 262144; i++) "
         "e1 += (int64_t)out[i] * out[i];\n"
         '    printf("%lld %lld\\n", (long long)e0, (long long)e1);\n'
         "    return 0;\n"
