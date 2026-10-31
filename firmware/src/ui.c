@@ -574,6 +574,13 @@ void ui_param_fmt(uint16_t p, const char *unit, char *out, uint32_t n)
         ui_itoa_dec((int32_t)(((int64_t)v * 1200) / 32768), 2, out);
         ui_strcat(out, "st");
         break;
+    case UI_DISP_CENT: {                           /* int cents -> "+/-Nc" */
+        if (v > 0)
+            ui_strcat(out, "+");
+        ui_itoa(v, out);
+        ui_strcat(out, "c");
+        break;
+    }
     case UI_DISP_WAVE: {                           /* a 0..11 waveform -> its name */
         static const char *const names[12] = {
             "sine", "tri", "half sine", "half tri", "2x sine", "2x tri",
@@ -770,9 +777,30 @@ static uint32_t ui_scope_channel(const ui_widget *w)
  * snapshot advances (scope_seq), which the ISR bumps every block. The tap is
  * ×4 (the operator's −12 dB total-level headroom) so a full-level operator fills
  * the height. */
+/* a scope sample -> the vertical pixel: a quarter-sine soft-clip (the existing
+ * fm1_sin_q15 table). `shift` sets the knee — a sample of 2^(shift+8) fills the
+ * widget and anything louder saturates at the edge, so the trace clips instead of
+ * overshooting. The expansive low end keeps normal levels readable (a level-75
+ * operator spans most of the widget). */
+static int32_t ui_scope_y(int32_t s, int32_t ht, uint32_t shift)
+{
+    uint32_t a = s < 0 ? (uint32_t)(-(int64_t)s) : (uint32_t)s;
+    uint32_t idx = a >> shift;
+    int32_t y;
+    if (idx >= 256u)
+        idx = 255u;
+    y = (int32_t)fm1_sin_q15[idx];
+    if (s < 0)
+        y = -y;
+    return (int32_t)ht / 2 - (y * (int32_t)ht) / 65536;
+}
+
 static void ui_draw_scope(const ui_widget *w)
 {
     uint32_t ch = ui_scope_channel(w), x, y, wd, ht, i;
+    /* the part mix (route.car) is ~4x hotter than a single operator: a 2x knee
+     * (shift 6 vs 5) keeps it at half the on-screen height. */
+    uint32_t shift = (w->param & 0x80u) ? 6u : 5u;
     int32_t mid, lx, ly;
     ui_region(w, &x, &y, &wd, &ht);
     if (wd < 2u)
@@ -780,15 +808,11 @@ static void ui_draw_scope(const ui_widget *w)
     cv_begin(wd, ht, C_BLACK);
     mid = (int32_t)ht / 2;
     cv_line(0, mid, (int32_t)wd - 1, mid, C_DIM);
-    /* vertical gain: a full-scale operator tap (~±8191 Q15, the level-99 output
-     * after the tl `>> 2` headroom) fills the widget, so a *normal* level (70–80,
-     * ~±2.5–3.5 k) reads clearly instead of as a thin line. Only very quiet levels
-     * look flat — the scope is a fixed-gain diagnostic, not auto-normalized. */
     lx = 0;
-    ly = mid - (scope_at_ch(ch, 0u) * (int32_t)ht) / 8192;
+    ly = ui_scope_y(scope_at_ch(ch, 0u), (int32_t)ht, shift);
     for (i = 1; i < wd; i++) {
         int32_t s = scope_at_ch(ch, i * SCOPE_N / wd);
-        int32_t px = (int32_t)i, py = mid - (s * (int32_t)ht) / 8192;
+        int32_t px = (int32_t)i, py = ui_scope_y(s, (int32_t)ht, shift);
         cv_line(lx, ly, px, py, C_AMB);              /* the waveform: the graph highlight */
         lx = px;
         ly = py;

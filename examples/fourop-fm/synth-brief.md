@@ -85,9 +85,9 @@ global six to a per-part array.
   note-on) + `plfo` (the per-part vibrato LFO) + `psum` (a `csum`):
   `plfo.cv + penv.cv → op1..op4.pitch`.
 - **Macros:** `fm_op` (shipped, `modules/macros/fm_op/`) — the operator, with
-  params `ratio` (note-derived), `waveform`, `level`, `feedback` (per-op
-  self-modulation), `trem_rate`, `trem_depth`, `r1..r4`, `l1..l3` mapped inward,
-  and inputs `fm` (audio) + `pitch` (control).
+  params `ratio` (note-derived), `detune` (cents −50..50), `waveform`, `level`,
+  `feedback` (per-op self-modulation), `trem_rate`, `trem_depth`, `r1..r4`,
+  `l1..l3` mapped inward, and inputs `fm` (audio) + `pitch` (control).
 - **Voice count / sample rate:** 20 voices / 44100 Hz (the default).
 - **Feedback paths:** each operator's self-feedback is one `delay1` (the
   **oscillator** output × feedback → sum with external fm + pitch → `ph.fm`,
@@ -139,6 +139,7 @@ global six to a per-part array.
 | op1_level … op4_level | opN.tl.level | 0 | 99 | linear | | raw (0–99) |
 | op1_waveform … op4_waveform | opN.osc.waveform | 0 | 11 | linear | | raw (0–11) |
 | op1_ratio … op4_ratio | opN.ph.inc_ratio | 32768 | 1048576 | linear | | ratio (1.00 = base) |
+| op1_detune … op4_detune | opN.ph.detune | -50 | 50 | linear | | cent (±c) |
 | op1_mute … op4_mute | opN.mute.mute | 0 | 1 | linear | | onoff (off/on) |
 | op1_feedback … op4_feedback | opN.fb.level | 0 | 32767 | linear | | pct |
 | op1_trem_rate … op4_trem_rate | opN.lfo.rate | 0 | 20000000 | log | | hz |
@@ -207,7 +208,9 @@ part's and operator's **ON/OFF** (muted) state, the **current algorithm**, the
   3. spectrogram of all 4 operators of the active part;
   4. oscilloscope of both parts;
   5. spectrogram of both parts.
-- **EDIT** (the active operator): ratio · level · feedback · waveform (one page).
+- **EDIT** (the active operator): ratio · level · feedback · waveform + a live
+  scope/spectro (one page); then **PART n OP DETUNES** — all four operators'
+  detunes (±50 cents) of the active part.
 - **ENV**: the active operator's **amplitude envelope** in two pages — rates
   (r1/r2/r3/r4) then levels (l1/l2/l3); then the **per-part pitch envelope**
   (base + rate). The envelope graph is drawn on both amplitude-envelope pages.

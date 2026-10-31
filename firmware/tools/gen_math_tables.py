@@ -51,6 +51,12 @@ def main() -> None:
     log2_q16 = [q16(math.log2(1.0 + i / N)) for i in range(N)]
     semi_q16 = [q16(2.0 ** (i / 12.0)) for i in range(12)]
     cent_q16 = [q16(2.0 ** (i / 1200.0)) for i in range(100)]
+    # Per-operator detune (the fm_op `detune` param, cents −50..+50) -> the Q15
+    # pitch offset the phasor adds to `32768 + pitch` so the frequency shift is
+    # *exact*: offset = 32768 · (2^(cents/1200) − 1). Indexed `[cents + 50]`.
+    detune_pitch = [
+        round(32768.0 * (2.0 ** (d / 1200.0) - 1.0)) for d in range(-50, 51)
+    ]
 
     # DX rate -> one-pole coefficient (Q16). Yamaha-style *non-uniform* curve: the
     # time constant is ~2^(sqrt(99-r) / 0.75) blocks, so the slow end has fine
@@ -92,6 +98,8 @@ def main() -> None:
     h += c_array("int32_t", "fm1_semi_q16", semi_q16, 8)
     h += [""]
     h += c_array("int32_t", "fm1_cent_q16", cent_q16, 8)
+    h += [""]
+    h += c_array("int32_t", "fm1_detune_pitch", detune_pitch, 8)
     h += [""]
     h += c_array("int32_t", "fm1_rate_coeff", rate_coeff, 8)
     h += [""]

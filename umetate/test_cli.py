@@ -420,10 +420,10 @@ def _bank_roundtrip() -> None:
         "part_patches": [None] * _records.PART_SLOTS,
         "multi_patches": [None] * _records.MULTI_SLOTS,
     }
-    bank["part_patches"][0] = {"name": "EPiano", "params": [100, -5]}
+    bank["part_patches"][0] = {"name": "EPiano", "params": [100, 0, -5]}
     bank["part_patches"][_records.PART_SLOTS - 1] = {
         "name": "Glass",
-        "params": [0, 65536],
+        "params": [0, 0, 65536],
     }
     bank["multi_patches"][3] = {
         "name": "Layers",
@@ -480,7 +480,7 @@ def _preset_export_import() -> None:
             "part_patches": [None] * _records.PART_SLOTS,
             "multi_patches": [None] * _records.MULTI_SLOTS,
         }
-        bank["part_patches"][1] = {"name": "EPiano", "params": [100, -5]}
+        bank["part_patches"][1] = {"name": "EPiano", "params": [100, 0, -5]}
         (d / "bank.json").write_text(json.dumps(bank), encoding="utf-8")
 
         rc = cli.main(

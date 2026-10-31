@@ -45,6 +45,7 @@ enum {
     UI_DISP_OFF_PCT,   /* <= 0 -> "off", else "N%" of [0,max] (e.g. a filter) */
     UI_DISP_HZ,        /* a Q32 rate -> "N.N Hz" */
     UI_DISP_SEMI,      /* a bipolar Q15 -> "+/-N.N st" (32768 = +1 octave) */
+    UI_DISP_CENT,      /* int cents -> "+/-Nc" (the operator detune) */
     UI_DISP_WAVE,      /* a 0..11 waveform index -> its name ("sine"/"tri"/…) */
 };
 

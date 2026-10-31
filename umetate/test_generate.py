@@ -2722,6 +2722,76 @@ def _tune_pitch() -> None:
     )
 
 
+def _phasor_detune() -> None:
+    """The per-op `detune` (cents) on the phasor shifts the fundamental by an exact
+    2^(cents/1200) ratio (via the fm1_detune_pitch table)."""
+    fs = 44100.0
+
+    def fundamental(detune: int) -> float:
+        patch: Patch = {
+            "name": f"detune_{detune}".replace("-", "m"),
+            "voices": 1,
+            "voice": {
+                "nodes": [
+                    {"id": "ph", "type": "phasor", "params": {"detune": detune}},
+                    {"id": "osc", "type": "naive_osc", "params": {"shape": 1}},
+                    {"id": "env", "type": "env"},
+                    {"id": "vca", "type": "vca"},
+                ],
+                "wires": [
+                    {"from": "ph.phase", "to": "osc.phase"},
+                    {"from": "osc.audio", "to": "vca.audio"},
+                    {"from": "env.cv", "to": "vca.cv"},
+                ],
+                "voice_out": "vca.audio",
+            },
+            "global": {"nodes": [], "wires": []},
+        }
+        src = generate(patch)
+        cname = patch["name"]
+        with tempfile.TemporaryDirectory() as tmp:
+            d = Path(tmp)
+            (d / "dsp.c").write_text(src)
+            (d / "harness.c").write_text(DUMP_HARNESS.replace("__NAME__", cname))
+            proc = subprocess.run(
+                [
+                    "cc",
+                    "-std=c11",
+                    *_include_args(),
+                    "-o",
+                    str(d / "t"),
+                    str(d / "harness.c"),
+                    str(d / "dsp.c"),
+                    "-lm",
+                ],
+                capture_output=True,
+                text=True,
+            )
+            if proc.returncode != 0:
+                raise AssertionError("compile failed:\n" + proc.stderr)
+            run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+            samples = [int(x) for x in run.stdout.split()]
+        f0 = fs * 42852281 / (1 << 32)
+        lo, hi = max(20.0, f0 / 4.0), min(fs / 2.0, f0 * 16.0)
+        best_f, best_m = 0.0, -1.0
+        f = lo
+        while f < hi:
+            m = _goertzel(samples, f, fs)
+            if m > best_m:
+                best_m, best_f = m, f
+            f *= 1.005
+        return best_f
+
+    f0 = fundamental(0)
+    f50 = fundamental(50)
+    ratio = f50 / f0
+    expect = 2.0 ** (50.0 / 1200.0)
+    assert expect * 0.99 <= ratio <= expect * 1.01, (
+        f"detune +50c ratio {ratio:.4f} not ≈ {expect:.4f}"
+    )
+    print(f"ok: phasor detune +50c ≈ 2^(50/1200) ({ratio:.4f} vs {expect:.4f})")
+
+
 def main() -> int:
     failures: int = 0
 
@@ -2776,9 +2846,9 @@ def main() -> int:
     if (
         "fourop_fm_init_entry fourop_fm_init[]" in hdr
         and "fourop_fm_INIT_N" in hdr
-        and "{ 168u, 7 }" in hdr  # algorithm 7 (the additive algorithm)
+        and "{ 176u, 7 }" in hdr  # algorithm 7 (the additive algorithm)
         and "{ 0u, 65536 }" in hdr  # op1 ratio, part 0
-        and "{ 84u, 65536 }" in hdr  # op1 ratio, part 1 (per-part expansion)
+        and "{ 88u, 65536 }" in hdr  # op1 ratio, part 1 (per-part expansion)
     ):
         print("ok: the init: table emits (algorithm 7 + per-part op params)")
     else:
@@ -2883,7 +2953,7 @@ def main() -> int:
     if pids.get("osc.waveform.p0") is None or pids.get("osc.waveform.p1") is None:
         print("FAIL: per-part voice params are not in the param id space")
         failures += 1
-    elif pids["osc.waveform.p0"] != pids["osc.waveform.p1"] - 8:
+    elif pids["osc.waveform.p0"] != pids["osc.waveform.p1"] - 9:
         print("FAIL: per-part params are not part-major contiguous")
         failures += 1
     elif pids.get("channel.p0") is None or pids.get("channel.p1") is None:
@@ -2897,7 +2967,7 @@ def main() -> int:
     from .generate import generate_sysex_layout
 
     layout = generate_sysex_layout(PARTS_PATCH)
-    n_params = 8  # 2 voice params + 6 per-part voice-mode params
+    n_params = 9  # 3 voice params (phasor inc_ratio+detune, osc waveform) + 6 mode
     expect = {
         "model": 0,
         "n_params": n_params,
@@ -2912,7 +2982,7 @@ def main() -> int:
         print(f"FAIL: sysex-layout geometry is wrong ({layout})")
         failures += 1
     else:
-        print("ok: sysex-layout pins the record geometry (8 params, 2 parts)")
+        print("ok: sysex-layout pins the record geometry (9 params, 2 parts)")
 
     # the generated synth_layout.h carries the runtime constants the framework uses.
     from .generate import generate_synth_header
@@ -2920,7 +2990,7 @@ def main() -> int:
     hdr = generate_synth_header(PARTS_PATCH)
     want = (
         "#define SYNTH_MODEL 0u\n"
-        "#define SYNTH_N_PARAMS 8u\n"
+        "#define SYNTH_N_PARAMS 9u\n"
         "#define SYNTH_N_PARTS 2u\n"
         "#define SYNTH_N_GLOBAL 0u\n"
         "#define SYNTH_ROUTING_BASE (SYNTH_N_PARTS * SYNTH_N_PARAMS + SYNTH_N_GLOBAL)\n"
@@ -3175,6 +3245,12 @@ def main() -> int:
         _tune_pitch()
     except AssertionError as exc:
         print(f"FAIL: tuned_phasor tuning: {exc}")
+        failures += 1
+
+    try:
+        _phasor_detune()
+    except AssertionError as exc:
+        print(f"FAIL: phasor detune: {exc}")
         failures += 1
 
     ok, msg = _sound_tables(TABLE_OSC)

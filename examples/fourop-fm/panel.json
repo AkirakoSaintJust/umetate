@@ -96,6 +96,16 @@
             { "type": "scope", "row": 7, "span": 4, "active": true },
             { "type": "spectro", "row": 11, "span": 4, "active": true }
           ]
+        },
+        {
+          "id": "detunes",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "OP DETUNES", "part": true },
+            { "type": "param_row", "row": 3, "param": "op1_detune", "part": true, "text": "OP1" },
+            { "type": "param_row", "row": 4, "param": "op2_detune", "part": true, "text": "OP2" },
+            { "type": "param_row", "row": 5, "param": "op3_detune", "part": true, "text": "OP3" },
+            { "type": "param_row", "row": 6, "param": "op4_detune", "part": true, "text": "OP4" }
+          ]
         }
       ],
       "bindings": [

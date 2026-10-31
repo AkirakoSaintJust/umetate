@@ -2844,8 +2844,7 @@ the two stay in sync).
 
 ### 13.3 Web-emulator + envelope follow-ups (recorded 2026-10-31)
 
-Status: **in progress** — 22–38 done except 27 (detune) remains queued. Numbers
-continue §13.1.
+Status: **done** — 22–39 complete (2026-10-31). Numbers continue §13.1.
 
 #### Web emulator
 
@@ -2915,9 +2914,11 @@ continue §13.1.
 
 #### Feature
 
-27. **Detune per operator.** A per-op detune needs a home (a new EDIT page). Lighter
-    alternative the user accepts: make the RATIO knob stop at ±0.01/0.02/0.03/0.04/0.05
-    landmarks around integer ratios.
+27. **Detune per operator.** — **done.** A new EDIT page "PART n OP DETUNES" shows the
+    active part's 4 operator detunes, ±50 cents (an exact per-operator pitch offset
+    via a new `fm1_detune_pitch` table + a `detune` param on the `phasor`/`fm_op`,
+    displayed with a new `cent` display). The lighter ratio-landmark alternative was
+    dropped.
 
 #### Per-part editing (reported 2026-10-31)
 
@@ -2962,6 +2963,15 @@ continue §13.1.
     `depth` become per-part params, its phase per-voice — consistent with tremolo),
     and the LFO page's params are now part-relative.
 
+#### Scope gain (reported 2026-10-31)
+
+39. **Scope trace overshoots the widget.** — **done.** A linear gain (÷8192) made the
+    part mix (~4× hotter than a single operator) and the level-99 operator overshoot
+    the widget. Replaced with a **quarter-sine soft-clip** (the existing
+    `fm1_sin_q15` table): the expansive low end keeps normal levels readable and the
+    trace saturates at the widget edge instead of overshooting. The part mix uses a
+    2× larger knee (shift 6 vs 5), so it sits at half the on-screen height.
+
 ### 13.4 Ordering note for §13.3
 
 1. ~~**Fix the web button edges (22, 23)**~~ — done (one root cause, unlocked SEL/mutes).
@@ -2971,5 +2981,6 @@ continue §13.1.
    scope + spectro now on the param page).
 4. ~~**Palette (25)**~~ — done (green base text, yellow values, purple graphs, pink
    accent).
-5. **Features (27 detune/ratio landmarks)**. ~~24 keyboard~~ done.
+5. ~~**Features (27 detune/ratio landmarks)**~~ — done (a PART n OP DETUNES page,
+   ±50 cents per operator). ~~24 keyboard~~ done.
 6. **GLO (28)** — folds into the §13.1 GLO revamp (items 7/10/11).

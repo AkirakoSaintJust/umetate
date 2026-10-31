@@ -212,6 +212,7 @@ _DISPLAY = {
     "off_pct": "UI_DISP_OFF_PCT",
     "hz": "UI_DISP_HZ",
     "semi": "UI_DISP_SEMI",
+    "cent": "UI_DISP_CENT",
     "wave": "UI_DISP_WAVE",
 }
 
