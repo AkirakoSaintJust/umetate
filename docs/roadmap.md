@@ -2727,13 +2727,13 @@ the two stay in sync).
 
 #### A. Header, navigation, legends
 
-1. **Single-line header.** Collapse the current 3-line header into 2 lines: line 1
-   = `P1 P2 op 1 2 3 4 ALG(n) menu, pg n/m`; line 2 = the page description.
-   Colours: parts + operators in one colour (a muted operator → grey; a muted part →
-   grey for itself and all of its operators); the active part and active operator in
-   a second highlighted colour; `ALG(n)` in a third colour; `menu, pg n/m` (with the
-   `n/m`) in a fourth colour. **Open question: confirm it fits 240 px at FONT_S**
-   before committing to the layout.
+1. **Single-line header.** — **done.** Collapsed the 3-line header into 2 lines:
+    line 1 = `P1 P2 op 1 2 3 4 ALG(n) menu, pg n/m`; line 2 = the page description
+    (the page's first widget — a `subheader`/two-line `label` — is promoted to the
+    `ui_page.title` and drawn in the header, so the widget rows shift up one).
+    Colours: parts + operators white (muted → grey `x`), the active part/operator
+    pink (the accent), `ALG(n)` yellow, `menu, pg n/m` purple, the description green.
+    Fits 240 px at FONT_S.
 
 3. **Part switching.** Make the active part switchable from every menu (like op
    mute/select already are). Settle the gesture in the interview cycle (candidate: a

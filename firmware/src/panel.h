@@ -7,14 +7,13 @@
 enum { P_note = 0, P_octave = 1, P_channel = 2, N_PARAMS };
 
 static const ui_widget W_0_0[] = {
-    { UI_LABEL, 1, 0, 2, UI_NO_PARAM, "RIB", 0, 0, 0, 0 },
-    { UI_LABEL, 3, 0, 1, UI_NO_PARAM, "a sine to build on", 0, 0, 0, 0 },
-    { UI_VALUE, 4, 0, 2, P_note, 0, 0, 0, 0, 0 },
-    { UI_PARAM_ROW, 7, 0, 1, P_octave, "OCT", 0, 0, 0, 0 },
-    { UI_PARAM_ROW, 8, 0, 1, P_channel, "MIDI", 0, 0, 0, 0 },
+    { UI_LABEL, 2, 0, 1, UI_NO_PARAM, "a sine to build on", 0, 0, 0, 0 },
+    { UI_VALUE, 3, 0, 2, P_note, 0, 0, 0, 0, 0 },
+    { UI_PARAM_ROW, 6, 0, 1, P_octave, "OCT", 0, 0, 0, 0 },
+    { UI_PARAM_ROW, 7, 0, 1, P_channel, "MIDI", 0, 0, 0, 0 },
 };
 static const ui_page PG_0[] = {
-    { "", W_0_0, (uint8_t)(sizeof W_0_0 / sizeof W_0_0[0]) },
+    { "RIB", W_0_0, (uint8_t)(sizeof W_0_0 / sizeof W_0_0[0]) },
 };
 static const ui_binding BIND_0[] = {
     { UI_BIND_PARAM, UI_SRC_BTN_OCT_DOWN, P_octave, 0, 0, UI_REL, 0 },
@@ -32,5 +31,5 @@ static const ui_context CTX[] = {
 static const uint16_t MUTE_TBL[4] = { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
 
 static const ui_tables PANEL = {
-    "rib", 0, CTX, 1, GLOBAL_BIND, 1, MUTE_TBL, 0, 0, 0, 0, 0, 0, 0, 0xFFFF, 1, 3, 5,
+    "rib", 0, CTX, 1, GLOBAL_BIND, 1, MUTE_TBL, 0, 0, 0, 0, 0, 0, 0, 0xFFFF, 1, 3, 4,
 };

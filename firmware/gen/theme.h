@@ -2,7 +2,7 @@
 #pragma once
 #define THEME_BACKGROUND 0x0000u
 #define THEME_SURFACE 0x08A2u
-#define THEME_TEXT 0x3FEAu
+#define THEME_TEXT 0xEF5Du
 #define THEME_MUTED 0x5D2Cu
 #define THEME_ACCENT 0xFAF0u
 #define THEME_SUCCESS 0x07E5u

@@ -357,8 +357,8 @@ def generate_panel(
             arg = arg_expr(b.get("arg"), action_name)
         return f"    {{ {kind}, {source}, {param}, {action}, {arg}, {behavior}, 0 }},"
 
-    def widget_line(w: Widget) -> str:
-        row = w.get("row", 0)
+    def widget_line(w: Widget, row_shift: int = 0) -> str:
+        row = w.get("row", 0) - row_shift
         col = w.get("col", 0)
         span = w.get("span", 1)
         if w["type"] == "envelope":
@@ -487,18 +487,33 @@ def generate_panel(
         lines.append("enum { N_PARAMS = 0 };")
     lines.append("")
 
+    def is_description(w: Widget) -> bool:
+        """The first widget of a page is its *description* (drawn in the always-
+        visible header) when it is a `subheader` or a two-line `label`."""
+        return w["type"] == "subheader" or (
+            w["type"] == "label" and w.get("span", 1) >= 2
+        )
+
     widget_count = 0
     for ci, ctx in enumerate(ctx_names):
         pages = contexts[ctx].get("pages", [])
         page_decls: list[str] = []
         for pi, page in enumerate(pages):
+            widgets = page.get("widgets", [])
+            desc = ""
+            shift = 0
+            if widgets and is_description(widgets[0]):
+                desc = widgets[0].get("text") or ""
+                widgets = widgets[1:]
+                shift = 1
             wname = f"W_{ci}_{pi}"
             lines.append(f"static const ui_widget {wname}[] = {{")
-            lines.extend(widget_line(w) for w in page.get("widgets", []))
+            lines.extend(widget_line(w, shift) for w in widgets)
             lines.append("};")
-            widget_count += len(page.get("widgets", []))
+            widget_count += len(widgets)
             page_decls.append(
-                f'    {{ "", {wname}, (uint8_t)(sizeof {wname} / sizeof {wname}[0]) }},'
+                f"    {{ {cstr(desc)}, {wname}, "
+                f"(uint8_t)(sizeof {wname} / sizeof {wname}[0]) }},"
             )
         lines.append(f"static const ui_page PG_{ci}[] = {{")
         lines.extend(page_decls)

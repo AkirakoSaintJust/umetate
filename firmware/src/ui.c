@@ -615,9 +615,9 @@ static void ui_format(const ui_widget *w, char *out, uint32_t n)
     ui_value_str(w, out + used, n > used ? n - used : 1);
 }
 
-/* a param row: the label in the label colour, the value + unit right-aligned in
- * the value colour — the value is what changes, so it is the bright/high-contrast
- * element and the label is the dim reference (the palette's C_GRAY/C_HI roles). */
+/* a param row: the label in white, the value + unit right-aligned in the value
+ * colour — the value is what changes, so it is the bright/high-contrast element
+ * and the label is the quiet white reference (the C_TEXT/C_HI roles). */
 static void ui_draw_value(const ui_widget *w)
 {
     uint32_t x, y, wd, ht;
@@ -630,7 +630,7 @@ static void ui_draw_value(const ui_widget *w)
         if (vx < 0)
             vx = 0;
         if (w->text)
-            cv_text(0, 0, &FONT_S, w->text, C_GRAY);   /* the name: dim */
+            cv_text(0, 0, &FONT_S, w->text, C_TEXT);   /* the name: white */
         cv_text(vx, 0, &FONT_S, val, C_HI);            /* the value: bright */
     }
     cv_blit(x, y);
@@ -649,7 +649,7 @@ static void ui_draw_name_row(const ui_widget *w)
         if (vx < 0)
             vx = 0;
         if (w->text)
-            cv_text(0, 0, &FONT_S, w->text, C_GRAY);  /* the label: dim */
+            cv_text(0, 0, &FONT_S, w->text, C_TEXT);  /* the label: white */
         cv_text(vx, 0, &FONT_S, name, C_HI);          /* the name: bright */
     }
     cv_blit(x, y);
@@ -934,65 +934,68 @@ static int32_t ui_header_value(void)
     return v;
 }
 
-/* one header token at x: `current` = the accent colour (where we are), `muted` =
- * dim with an `x` marker (not colour-alone), else the green base text. */
-static int32_t ui_htok(int32_t x, const char *s, int cur, int muted)
+/* one header token at (x, y): `current` = the accent colour (where we are),
+ * `muted` = dim with an `x` marker (not colour-alone), else the white base text.
+ * Returns the next x. */
+static int32_t ui_htok(int32_t x, int32_t y, const char *s, int cur, int muted)
 {
-    uint16_t c = cur ? C_WHITE : (muted ? C_DIM : C_GRAY);
-    return cv_text(x, UI_ROW_H, &FONT_S, s, c);
+    uint16_t c = cur ? C_WHITE : (muted ? C_DIM : C_TEXT);
+    return cv_text(x, y, &FONT_S, s, c);
 }
 
 static void ui_draw_header(void)
 {
-    char s[40], t[12], tok[4];
+    char s[40], t[12], tok[8];
     uint32_t i;
     int32_t x, alg = ui_t->alg < ui_t->n_params ? ui_param_v[ui_t->alg] : 0;
 
     cv_begin(240u, 2u * UI_ROW_H, C_BLACK);
-    /* row 0: P<part> OP<op> ALG<alg>  <menu> <page>/<n> */
-    ui_strcpy(s, "P");
-    t[0] = (char)('1' + ui_selected_part);
-    t[1] = 0;
-    ui_strcat(s, t);
-    ui_strcat(s, " OP");
-    t[0] = (char)('1' + ui_selected_op);
-    t[1] = 0;
-    ui_strcat(s, t);
-    ui_strcat(s, " ALG");
-    ui_itoa(alg, t);
-    ui_strcat(s, t);
-    ui_strcat(s, "  ");
-    if (ui_ctx()->name)
-        ui_strcat(s, ui_ctx()->name);
-    ui_strcat(s, " ");
-    ui_itoa((int32_t)ui_pagei[ui_sp] + 1, t);
-    ui_strcat(s, t);
-    ui_strcat(s, "/");
-    ui_itoa((int32_t)ui_ctx()->n_pages, t);
-    ui_strcat(s, t);
-    cv_text(0, 0, &FONT_S, s, C_GRAY);              /* the header line: green base text */
 
-    /* row 1: every part (P1/P2) and operator (1..4), colour-coded — current =
-     * accent, muted = dim `x`, active = bright. */
+    /* row 0 (one line): P1 P2 · op 1 2 3 4 · ALG<alg> · <menu> <page>/<n>. Parts +
+     * operators are the white base text (active = accent, muted = dim `x`); ALG is
+     * yellow; the menu + page is purple. */
     x = 0;
     for (i = 0; i < ui_t->n_part; i++) {
         tok[0] = 'P';
         tok[1] = (char)('1' + i);
         tok[2] = ui_part_mute[i] ? 'x' : 0;
         tok[3] = 0;
-        x = ui_htok(x, tok, i == ui_selected_part, ui_part_mute[i]);
-        x = ui_htok(x, " ", 0, 0);
+        x = ui_htok(x, 0, tok, i == ui_selected_part, ui_part_mute[i]);
+        x = ui_htok(x, 0, " ", 0, 0);
     }
-    x = ui_htok(x, "  ", 0, 0);
-    for (i = 0; i < 4u && i < ui_t->n_op; i++) {
-        uint16_t p = ui_t->mute ? ui_mute_param(i) : UI_NO_PARAM;
-        int muted = p < ui_t->n_params ? ui_param_v[p] != 0 : 0;
-        tok[0] = (char)('1' + i);
-        tok[1] = muted ? 'x' : 0;
-        tok[2] = 0;
-        x = ui_htok(x, tok, i == ui_selected_op, muted);
-        x = ui_htok(x, " ", 0, 0);
+    if (ui_t->n_op) {
+        x = ui_htok(x, 0, "op ", 0, 0);
+        for (i = 0; i < 4u && i < ui_t->n_op; i++) {
+            uint16_t p = ui_t->mute ? ui_mute_param(i) : UI_NO_PARAM;
+            int muted = p < ui_t->n_params ? ui_param_v[p] != 0 : 0;
+            tok[0] = (char)('1' + i);
+            tok[1] = muted ? 'x' : 0;
+            tok[2] = 0;
+            x = ui_htok(x, 0, tok, i == ui_selected_op, muted);
+            x = ui_htok(x, 0, " ", 0, 0);
+        }
     }
+    if (ui_t->alg < ui_t->n_params) {
+        ui_strcpy(s, "ALG");
+        ui_itoa(alg, t);
+        ui_strcat(s, t);
+        ui_strcat(s, " ");
+        x = cv_text(x, 0, &FONT_S, s, C_HI);      /* the algorithm: yellow */
+    }
+    s[0] = 0;
+    if (ui_ctx()->name)
+        ui_strcpy(s, ui_ctx()->name);
+    ui_strcat(s, " ");
+    ui_itoa((int32_t)ui_pagei[ui_sp] + 1, t);
+    ui_strcat(s, t);
+    ui_strcat(s, "/");
+    ui_itoa((int32_t)ui_ctx()->n_pages, t);
+    ui_strcat(s, t);
+    cv_text(x, 0, &FONT_S, s, C_AMB);            /* the menu + page: purple */
+
+    /* row 1: the page description (green) */
+    cv_text(0, UI_ROW_H, &FONT_S, ui_cur_page()->title, C_GRAY);
+
     cv_blit(0, 0);
 }
 

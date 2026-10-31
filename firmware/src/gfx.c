@@ -25,6 +25,7 @@ static int32_t cv_oy;            /* y offset for graph drawing */
 #define RGB(r, g, b) ((uint16_t)((((r) >> 3) << 11) | (((g) >> 2) << 5) | ((b) >> 3)))
 #define C_BLACK 0x0000u
 #define C_WHITE THEME_ACCENT            /* accent: what is being touched / where we are */
+#define C_TEXT  THEME_TEXT              /* the base text: param names (white) */
 #define C_OK    THEME_SUCCESS           /* status: ok / saved / playing */
 #define C_WARN  THEME_WARNING           /* status: muted / dirty / caution */
 #define C_ERR   THEME_ERROR             /* status: error / halted */
