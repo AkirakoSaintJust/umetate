@@ -2844,8 +2844,8 @@ the two stay in sync).
 
 ### 13.3 Web-emulator + envelope follow-ups (recorded 2026-10-31)
 
-Status: **in progress** — 22, 23, 24, 28 (symptom), 31, 32, 33, 34, 35, 36, 37, 38
-done (2026-10-31); 25–27, 29, 30 queued. Numbers continue §13.1.
+Status: **in progress** — 22–38 done except 25 (palette) and 27 (detune) remain
+queued. Numbers continue §13.1.
 
 #### Web emulator
 
@@ -2872,22 +2872,21 @@ done (2026-10-31); 25–27, 29, 30 queued. Numbers continue §13.1.
 
 #### Scope / spectro
 
-26. **Per-op scope + spectro on the param page.** Move the EDIT `op-scope` /
-    `op-spectro` onto the operator page, stacked as two rows in a column *below*
-    the params (so an edit is visible live), rather than on their own pages.
+26. **Per-op scope + spectro on the param page.** — **done.** The EDIT `op` page now
+    stacks a `scope` (rows 7–10) and a `spectro` (rows 11–14) *below* the four
+    params, both `active` (the selected operator of the active part), so an edit is
+    visible live; the separate `op-scope`/`op-spectro` pages are gone.
 
-29. **Scope height too low.** At normal operator levels (~70–80) the scope trace is
-    a few px tall and reads as silence below ~70. **Design settled (2026-10-31): fixed
-    gain** (not auto-normalize — that would hide level edits), sized so a *normal*
-    level (~70–80) is clearly readable and only extremely quiet levels look flat;
-    drop the current ×4 headroom gain for a gain matched to the real amplitude.
+29. **Scope height too low.** — **done.** At normal operator levels (~70–80) the
+    scope trace was a few px tall. Fixed gain (not auto-normalize): the vertical
+    divisor is now 8192 (was 16384), so a full-scale operator tap (~±8191, the
+    level-99 output after the `tl >> 2` headroom) fills the widget and ~70–80 reads
+    clearly; only very quiet levels look flat.
 
-30. **Part + EDIT op scopes/spectros show nothing.** The part-mix taps and the
-    active-op taps read silence. **Root cause:** `firmware/src/scope.h` hardcodes
-    `SCOPE_CH = 8`, but fourop-fm has 10 tap channels (`N_TAP_CH` = 5 taps × 2 parts),
-    so channels 8–10 (op4·part1, and the two `route.car` part mixes) are dropped by
-    `scope_store`'s `ch >= SCOPE_CH` guard and `scope_at_ch` falls back to the
-    never-pushed ch 0. Fix: size `SCOPE_CH` to fit the synth's taps.
+30. **Part + EDIT op scopes/spectros show nothing.** — **done** (by 37). The
+    part-mix taps and the active-op taps read silence because `SCOPE_CH = 8` dropped
+    fourop-fm's channels 8–10 (op4·part1 + the two `route.car` part mixes). `SCOPE_CH`
+    is now 12, so those channels are stored and the part/op scopes + spectros show.
 
 #### Envelope (dx_env / pitch_env)
 
@@ -2965,8 +2964,8 @@ done (2026-10-31); 25–27, 29, 30 queued. Numbers continue §13.1.
 1. ~~**Fix the web button edges (22, 23)**~~ — done (one root cause, unlocked SEL/mutes).
 2. ~~**Recalibrate the envelope rates/levels (31) + the envelope graph (32)**~~ — done
    (one `fm1_rate_coeff` / `fm1_level_gain` recalibration + the `fm1_onepole` floor).
-3. **Scope/spectro (29, 30) + layout (26)** — gain + tap-channel fix, then the
-   param-page placement.
+3. ~~**Scope/spectro (29, 30) + layout (26)**~~ — done (fixed gain, tap-channel fix,
+   scope + spectro now on the param page).
 4. **Palette (25)** — theme/gfx rebalance.
 5. **Features (27 detune/ratio landmarks)**. ~~24 keyboard~~ done.
 6. **GLO (28)** — folds into the §13.1 GLO revamp (items 7/10/11).

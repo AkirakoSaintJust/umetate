@@ -780,11 +780,15 @@ static void ui_draw_scope(const ui_widget *w)
     cv_begin(wd, ht, C_BLACK);
     mid = (int32_t)ht / 2;
     cv_line(0, mid, (int32_t)wd - 1, mid, C_DIM);
+    /* vertical gain: a full-scale operator tap (~±8191 Q15, the level-99 output
+     * after the tl `>> 2` headroom) fills the widget, so a *normal* level (70–80,
+     * ~±2.5–3.5 k) reads clearly instead of as a thin line. Only very quiet levels
+     * look flat — the scope is a fixed-gain diagnostic, not auto-normalized. */
     lx = 0;
-    ly = mid - (scope_at_ch(ch, 0u) * (int32_t)ht) / 16384;
+    ly = mid - (scope_at_ch(ch, 0u) * (int32_t)ht) / 8192;
     for (i = 1; i < wd; i++) {
         int32_t s = scope_at_ch(ch, i * SCOPE_N / wd);
-        int32_t px = (int32_t)i, py = mid - (s * (int32_t)ht) / 16384;
+        int32_t px = (int32_t)i, py = mid - (s * (int32_t)ht) / 8192;
         cv_line(lx, ly, px, py, C_HI);
         lx = px;
         ly = py;
