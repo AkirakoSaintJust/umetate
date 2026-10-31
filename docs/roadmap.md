@@ -2713,3 +2713,131 @@ options are flags. Exit: `0` ok, `1` error, `2` usage, `6` wrong-model; `quick-c
 `--help`; `quick-check --json` validates against the §5.5 layer/status shape; a fake
 device exercises `flash`/`resume` without hardware; `scaffold` output builds and
 passes `make test`.
+
+---
+
+## 13. Post-release backlog (UI / sound follow-up)
+
+Status: **queued** — recorded here so the list survives context loss. Implement in
+the order in §13.2. Items tagged **(process)** update docs/skills/tutorial/agent
+behaviour, not firmware. Item numbers match the backlog as dictated (kept stable so
+the two stay in sync).
+
+### 13.1 The items
+
+#### A. Header, navigation, legends
+
+1. **Single-line header.** Collapse the current 3-line header into 2 lines: line 1
+   = `P1 P2 op 1 2 3 4 ALG(n) menu, pg n/m`; line 2 = the page description.
+   Colours: parts + operators in one colour (a muted operator → grey; a muted part →
+   grey for itself and all of its operators); the active part and active operator in
+   a second highlighted colour; `ALG(n)` in a third colour; `menu, pg n/m` (with the
+   `n/m`) in a fourth colour. **Open question: confirm it fits 240 px at FONT_S**
+   before committing to the layout.
+
+3. **Part switching.** Make the active part switchable from every menu (like op
+   mute/select already are). Settle the gesture in the interview cycle (candidate: a
+   dedicated button or a short chord, shown in the §4 legend).
+
+4. **Bottom legend.** A legend at the bottom of every page for op-mute, part-mute,
+   and part-switch (row budget permitting).
+
+8. **Name-entry legend.** A legend inside the name editor (charset / SAVE = accept /
+   HOME = cancel).
+
+21. **Menu button → next page.** Pressing the menu's own button (no held chord)
+    advances to the next page in that menu. Bake into the default UI kit.
+
+#### B. Algorithm
+
+2. **Algorithm graph + scroll popup.** A new HOME page drawing the current algorithm
+   (operators + routing), page description `PART (current part) ALGORITHM`; while the
+   ALGORITHM knob turns, a popup shows the algorithms as they scroll, auto-closing
+   ~250 ms after the knob stops.
+
+#### C. Web build — very important
+
+5. **Fix the web build.** The standalone wasm app fails to boot in the browser
+   (`fetch` of the wasm/tables does not resolve; a couple of controls appear, the
+   synth never starts). Investigate against the x0x FM-1 firmware's web-app approach
+   for ideas. Target: run the synth in the browser for the user's human trial runs
+   (fm1-emu chokes on their Windows machine at any MHz).
+
+#### D. Popups and auto-close
+
+6. **Save popup auto-close.** The save popup silently closes (no write) after ~3 s
+   of idle.
+
+9. **Init patch / init part.** Fix SCL+SAVE (does not reset everything — the
+   algorithm is not reset). `init patch` asks for confirmation (a popup, ~3 s idle
+   auto-close without initialising). `init part` defaults: ALG 0, all FX off, P-ENV
+   off, all A-LFOs and the P-LFO off (DEPTH 0), every OP RATIO 1.00, LEVEL ~70–75,
+   FEEDBACK 0%, waveform sine, VOICE MODE poly, no portamento, unison voice count 1,
+   part name `INIT PART`, A-ENV organ (R1=R2=R3=R4=99, L1=L2=L3=99).
+
+12. **Save slot list.** The save slot chooser becomes a scrollable list of presets
+    (showing names) so the user sees what they overwrite; overwriting asks for
+    confirmation. Every load/save/init popup auto-closes after ~3 s idle WITHOUT
+    committing. Bake the auto-close (opt-in, settable duration) into the shipped
+    widget library.
+
+#### E. GLO menu
+
+7. **GLO pages.** KEY SPLIT, MIDI CH, SINGLE PART, MULTI-PATCH page descriptions are
+   clipped → shrink to normal. PART n VOICE MODE has 6 params (too many for 4
+   knobs) → split into pages, with descriptive values: MODE = `poly` / `mono retrig`
+   / `mono legato`; a MONO VOICE COUNT param with values; a LEGATO PORTA TIME (or
+   RATE) with a human value; NOTE PRIORITY = `last` / etc.
+
+10. **Name entry consolidation.** One GLO page holding SINGLE PART 1 NAME, SINGLE
+    PART 2 NAME, MULTI-PATCH NAME.
+
+11. **SINGLE PART LAYERING.** Rename `PART n PART LEVEL` → `SINGLE PART LAYERING`;
+    contents: SINGLE PART 1 LEVEL (0–99, Yamaha-like), SINGLE PART 1 DELAY (ms),
+    SINGLE PART 2 LEVEL (0–99), SINGLE PART 2 DELAY (ms). Move part load/save/init
+    and the legend into this menu; before each, a popup asks which SINGLE PART
+    (1 or 2).
+
+#### F. FX menu
+
+14. **F-ENV.** Turn FILTER ADSR (5 params, too many) into F-ENV = DEPTH + 7
+    Yamaha-style params (R1..R4, L1..L3) so it fits 2 pages.
+
+15. **Filter TYPE descriptive.** Show `lpf`/`hpf`/`bpf` (etc.) instead of a number.
+
+17. **WAVEFOLD.** Rename `FOLD` → `WAVEFOLD`; TYPE shows descriptive values (e.g.
+    `cheby`) instead of a number.
+
+#### G. Param display & clamping
+
+13. **KEY SPLIT note names.** Show both the MIDI note number and its note name
+    (C C# D E F G A B …).
+
+16. **Hard clamp.** A knob must never overshoot a param's min/max (no "scroll back
+    to get in range" with a blank UI). Remove the on/off wrap (revert the earlier
+    "boolean wraps infinitely" decision). Bake into the framework/UI kit.
+
+#### H. Process (docs/skills/tutorial/agent — no firmware)
+
+18. **(process)** Descriptive value names, ranges, and knob resolution are settled
+    in the interview cycle *before* authoring, not discovered after.
+
+19. **(process)** Record the carrier-feedback-removal lesson (removing an early
+    feature can leave a stray path that breaks later) in the tutorial, the agent
+    skill, and the workflow.
+
+20. **(process)** After each turn's edits, the agent shows them to the user and
+    walks through them line-by-line / block-by-block (rubber-ducking + keeping the
+    user aware of the code).
+
+### 13.2 Implementation order
+
+1. **Process first** (18, 19, 20, and the interview step in 3/7/14): update the
+   skill + tutorial so the later items are designed up front.
+2. **Framework defaults** (16, and the auto-close in 6/12): clamp + auto-close are
+   widget-library behaviour, so they land before the menus that use them.
+3. **Header & navigation** (1, 3, 4, 8, 21): the shared chrome everything sits on.
+4. **GLO / FX / KEY SPLIT rework** (7, 10, 11, 13, 14, 15, 17).
+5. **Algorithm** (2).
+6. **Save / init** (9, 12, 6).
+7. **Web build** (5) — independent of the above; can run in parallel.
