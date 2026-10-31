@@ -478,7 +478,7 @@ static void ui_draw_label(const ui_widget *w)
     uint32_t x, y, wd, ht;
     const felucca_font_t *f = w->span >= 2u ? &FONT_L : &FONT_S;
     ui_region(w, &x, &y, &wd, &ht);
-    draw_text_box(x, y, wd, f, w->text, w->span >= 2u ? C_HI : C_GRAY, 0);
+    draw_text_box(x, y, wd, f, w->text, C_GRAY, 0);   /* labels + page titles: the green base text */
 }
 
 /* the param id a widget reads: UI_OP_ROW/UI_ENVELOPE resolve through the selected
@@ -746,7 +746,7 @@ static void ui_draw_envelope(const ui_widget *w)
     }
     cv_begin(wd, ht, C_BLACK);
     for (i = 0; i < 5; i++)
-        cv_line(px[i], py[i], px[i + 1], py[i + 1], C_HI);
+        cv_line(px[i], py[i], px[i + 1], py[i + 1], C_AMB);   /* the envelope curve: the graph highlight */
     cv_blit(x, y);
 }
 
@@ -789,7 +789,7 @@ static void ui_draw_scope(const ui_widget *w)
     for (i = 1; i < wd; i++) {
         int32_t s = scope_at_ch(ch, i * SCOPE_N / wd);
         int32_t px = (int32_t)i, py = mid - (s * (int32_t)ht) / 8192;
-        cv_line(lx, ly, px, py, C_HI);
+        cv_line(lx, ly, px, py, C_AMB);              /* the waveform: the graph highlight */
         lx = px;
         ly = py;
     }
@@ -811,7 +811,7 @@ static void ui_draw_spectro(const ui_widget *w)
     cv_begin(wd, ht, C_BLACK);
     for (i = 0; i < SCOPE_BINS; i++) {
         int32_t bh = (int32_t)((mag[i] * (int32_t)ht) / 32767u);
-        cv_rect((int32_t)(i * bw), (int32_t)ht - bh, (int32_t)bw, bh, C_HI);
+        cv_rect((int32_t)(i * bw), (int32_t)ht - bh, (int32_t)bw, bh, C_AMB);   /* the bars: the graph highlight */
     }
     cv_blit(x, y);
 }
@@ -844,7 +844,7 @@ static void ui_draw_status(const ui_widget *w)
      * font height, so a previous page's header is fully erased. */
     cv_begin(wd, ht, C_BLACK);
     {
-        int32_t end = cv_text(0, 0, &FONT_S, s, C_HI);
+        int32_t end = cv_text(0, 0, &FONT_S, s, C_GRAY);
         if (muted)
             cv_text(end, 0, &FONT_S, "  MUTE", C_WARN);
     }
@@ -884,7 +884,7 @@ static void ui_draw_subheader(const ui_widget *w)
         ui_strcat(s, w->text);
     }
     cv_begin(wd, ht, C_BLACK);
-    cv_text(0, 0, &FONT_S, s, C_HI);
+    cv_text(0, 0, &FONT_S, s, C_GRAY);              /* the page title: green base text */
     cv_blit(x, y);
 }
 
@@ -911,10 +911,10 @@ static int32_t ui_header_value(void)
 }
 
 /* one header token at x: `current` = the accent colour (where we are), `muted` =
- * dim with an `x` marker (not colour-alone), else bright. Returns the next x. */
+ * dim with an `x` marker (not colour-alone), else the green base text. */
 static int32_t ui_htok(int32_t x, const char *s, int cur, int muted)
 {
-    uint16_t c = cur ? C_WHITE : (muted ? C_DIM : C_HI);
+    uint16_t c = cur ? C_WHITE : (muted ? C_DIM : C_GRAY);
     return cv_text(x, UI_ROW_H, &FONT_S, s, c);
 }
 
@@ -946,7 +946,7 @@ static void ui_draw_header(void)
     ui_strcat(s, "/");
     ui_itoa((int32_t)ui_ctx()->n_pages, t);
     ui_strcat(s, t);
-    cv_text(0, 0, &FONT_S, s, C_HI);
+    cv_text(0, 0, &FONT_S, s, C_GRAY);              /* the header line: green base text */
 
     /* row 1: every part (P1/P2) and operator (1..4), colour-coded — current =
      * accent, muted = dim `x`, active = bright. */
@@ -1053,7 +1053,7 @@ void ui_custom_set(uint32_t slot, int32_t value)
 static void ui_draw_popup(void)
 {
     cv_begin(240u, 3u * UI_ROW_H, C_DIM);
-    cv_text(6, UI_ROW_H, &FONT_S, ui_popup_line, C_HI);
+    cv_text(6, UI_ROW_H, &FONT_S, ui_popup_line, C_GRAY);
     cv_blit(0, 4 * UI_ROW_H);
 }
 
@@ -1198,7 +1198,7 @@ static void ui_draw_name_editor(void)
     const char *title = ui_name_which ? "multi-patch name" : "single part name";
     uint32_t i;
     cv_begin(240u, 5u * UI_ROW_H, C_DIM);
-    cv_text(6, 2, &FONT_S, title, C_HI);
+    cv_text(6, 2, &FONT_S, title, C_GRAY);
     /* the name: FONT_L, 15 fixed columns; the cursor char is the accent colour */
     for (i = 0; i < UI_NAME_LEN - 1u; i++) {
         char c = ui_name[ui_name_which][i];
@@ -1278,7 +1278,7 @@ static void ui_draw_save(void)
     char t[12];
     uint32_t i;
     cv_begin(240u, 5u * UI_ROW_H, C_DIM);
-    cv_text(6, 2, &FONT_S, "SAVE", C_HI);
+    cv_text(6, 2, &FONT_S, "SAVE", C_GRAY);
     for (i = 0; i < 2u; i++) {
         char row[32];
         ui_strcpy(row, i == ui_save_which ? "> " : "  ");
@@ -1340,7 +1340,7 @@ static void ui_draw_save_mode(void)
         "discard edits", "save as new part", "mutate in place"};
     uint32_t i;
     cv_begin(240u, 5u * UI_ROW_H, C_DIM);
-    cv_text(6, 2, &FONT_S, "SAVE multi-patch", C_HI);
+    cv_text(6, 2, &FONT_S, "SAVE multi-patch", C_GRAY);
     for (i = 0; i < 3u; i++) {
         char row[24];
         ui_strcpy(row, i == ui_save_mode_which ? "> " : "  ");

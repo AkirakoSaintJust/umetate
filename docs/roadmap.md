@@ -2844,8 +2844,8 @@ the two stay in sync).
 
 ### 13.3 Web-emulator + envelope follow-ups (recorded 2026-10-31)
 
-Status: **in progress** — 22–38 done except 25 (palette) and 27 (detune) remain
-queued. Numbers continue §13.1.
+Status: **in progress** — 22–38 done except 27 (detune) remains queued. Numbers
+continue §13.1.
 
 #### Web emulator
 
@@ -2865,10 +2865,13 @@ queued. Numbers continue §13.1.
     `Enter`=REC, `Esc`=HOME, `Z`/`X`=OCT−/OCT+, `↑`/`↓`=SELECT, `Tab` focuses, arrows
     turn a focused knob.
 
-25. **Palette rebalance.** The DEFAULT palette reads as "all pink"; the user wants
-    the green to stay the base text and the pink/purple/yellow to *differentiate*
-    sections (header vs page description vs params vs graphs), not dominate.
-    Re-tune `firmware/theme.json` + `gfx.c`'s `C_*`→palette mapping.
+25. **Palette rebalance.** — **done.** The DEFAULT palette read as "all pink" / green
+    vanished. Re-tuned `gfx.c`'s DEFAULT palette + the `C_*` roles so **green is the
+    base text** (labels, page titles, the header line), **yellow marks param values**
+    (the live numbers), **purple marks the graphs** (envelope/scope/spectro), and
+    **pink stays the accent** (cursor/selected/active). The label colour went from
+    pale-yellow to green (130,220,130) and the value colour from green to yellow
+    (255,235,130).
 
 #### Scope / spectro
 
@@ -2966,6 +2969,7 @@ queued. Numbers continue §13.1.
    (one `fm1_rate_coeff` / `fm1_level_gain` recalibration + the `fm1_onepole` floor).
 3. ~~**Scope/spectro (29, 30) + layout (26)**~~ — done (fixed gain, tap-channel fix,
    scope + spectro now on the param page).
-4. **Palette (25)** — theme/gfx rebalance.
+4. ~~**Palette (25)**~~ — done (green base text, yellow values, purple graphs, pink
+   accent).
 5. **Features (27 detune/ratio landmarks)**. ~~24 keyboard~~ done.
 6. **GLO (28)** — folds into the §13.1 GLO revamp (items 7/10/11).
