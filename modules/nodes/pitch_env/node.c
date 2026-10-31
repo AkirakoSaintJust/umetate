@@ -12,18 +12,18 @@ if (${in.gate}) {
 }
 
 if (${state.stage} == 0u) {
-    ${state.level} = fm1_madd_sat(${state.level}, ${param.l1} - ${state.level}, fm1_rate_coeff[${param.r1}], 16);
+    ${state.level} = fm1_onepole(${state.level}, ${param.l1}, fm1_rate_coeff[${param.r1}]);
     if ((${state.level} >= ${param.l1} ? ${state.level} - ${param.l1} : ${param.l1} - ${state.level}) <= 8) { ${state.level} = ${param.l1}; ${state.stage} = 1u; }
 } else if (${state.stage} == 1u) {
-    ${state.level} = fm1_madd_sat(${state.level}, ${param.l2} - ${state.level}, fm1_rate_coeff[${param.r2}], 16);
+    ${state.level} = fm1_onepole(${state.level}, ${param.l2}, fm1_rate_coeff[${param.r2}]);
     if ((${state.level} >= ${param.l2} ? ${state.level} - ${param.l2} : ${param.l2} - ${state.level}) <= 8) { ${state.level} = ${param.l2}; ${state.stage} = 2u; }
 } else if (${state.stage} == 2u) {
-    ${state.level} = fm1_madd_sat(${state.level}, ${param.l3} - ${state.level}, fm1_rate_coeff[${param.r3}], 16);
+    ${state.level} = fm1_onepole(${state.level}, ${param.l3}, fm1_rate_coeff[${param.r3}]);
     if ((${state.level} >= ${param.l3} ? ${state.level} - ${param.l3} : ${param.l3} - ${state.level}) <= 8) { ${state.level} = ${param.l3}; ${state.stage} = 3u; }
 } else if (${state.stage} == 3u) {
     ${state.level} = ${param.l3};
 } else {
-    ${state.level} = fm1_madd_sat(${state.level}, 0 - ${state.level}, fm1_rate_coeff[${param.r4}], 16);
+    ${state.level} = fm1_onepole(${state.level}, 0, fm1_rate_coeff[${param.r4}]);
     if (${state.level} < 8 && ${state.level} > -8) ${state.level} = 0;
 }
 ${out.cv} = ${param.on} ? ${state.level} : 0;

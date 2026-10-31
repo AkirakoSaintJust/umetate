@@ -76,6 +76,25 @@ FM1_MATH_INLINE int32_t fm1_madd_sat(int32_t acc, int32_t a, int32_t b, int shif
     return fm1_sat_add32(acc, p);
 }
 
+/* Robust one-pole toward `target`: level += (target - level) * coeff / 65536.
+ * When the rounded step is 0 (a small coeff times a small remaining delta) the
+ * step is forced to ±1, so the envelope always converges to `target` instead of
+ * stalling just short of it — the cause of "DECAY holds forever" at low rates. */
+FM1_MATH_INLINE int32_t fm1_onepole(int32_t level, int32_t target, int32_t coeff)
+{
+    int32_t d = target - level;
+    int32_t u = (int32_t)(((int64_t)d * coeff + ((int64_t)1 << 15)) >> 16);
+    if (u == 0) {
+        if (d > 0)
+            u = 1;
+        else if (d < 0)
+            u = -1;
+        else
+            return level;                       /* already at target */
+    }
+    return fm1_sat_add32(level, u);
+}
+
 /* ------------------------------------------------------ transcendental tables */
 
 /* Full-cycle sine, Q15, from the quarter table (fm1_sin_q15, midpoint-sampled).

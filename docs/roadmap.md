@@ -2844,7 +2844,7 @@ the two stay in sync).
 
 ### 13.3 Web-emulator + envelope follow-ups (recorded 2026-10-31)
 
-Status: **in progress** — 22, 23, 24 done (2026-10-31); 25–32 queued. Numbers
+Status: **in progress** — 22, 23, 24, 31, 32 done (2026-10-31); 25–30 queued. Numbers
 continue §13.1.
 
 #### Web emulator
@@ -2891,20 +2891,19 @@ continue §13.1.
 
 #### Envelope (dx_env / pitch_env)
 
-31. **Rate/level ranges are wrong.** A-ENV (and likely others): ATTACK RATE ~60 is
-    audibly instant, so there is almost no slow-attack travel; LEVEL ~50 reads as
-    0 — user-facing 0 should be silence and 99 maximum amplitude. DECAY1/DECAY2
-    below ~58 hold indefinitely (key held), ~58 is instant. Recalibrate
-    `fm1_rate_coeff` (rate→one-pole) and the level mapping so the 0–99 travel is
-    musically sensible. **Design settled (2026-10-31): level taper is dB** (like the
-    Yamaha total level), but **0 = silence and 99 = maximum amplitude** — not the
-    current curve where ~50 reads as ~0 (which comes from negative levels, per the
-    broken graph in 32).
+31. **Rate/level ranges are wrong.** — **done.** A-ENV (and likely others): ATTACK
+    RATE ~60 was audibly instant (no slow-attack travel); LEVEL ~50 read as 0;
+    DECAY1/DECAY2 below ~58 held indefinitely. Three fixes: (a) `fm1_rate_coeff`
+    now `×2 per 8 steps` (was ×2 per 10) — 99 = instant, 0 ≈ 4 s — spreading the
+    musical times so slow attacks/decays have real travel; (b) `fm1_level_gain`
+    now 0.25 dB/step (was 0.75) — 99 = max, 50 ≈ −12 dB, 0 = silence; (c) a new
+    `fm1_onepole` helper floors the step at ±1 so a slow rate × small delta can't
+    round to 0 and stall short of the target (the "holds forever" mechanism).
 
-32. **Envelope graph: LEVEL below ~50 falls off-screen.** The graph maps a level
-    below ~50 to negative height, implying 0–49 = negative amplitude. Pin the graph
-    to the same 0..99 → 0..full mapping (and to `fm1_level_gain`) so level 0 is the
-    floor and 99 the top.
+32. **Envelope graph: LEVEL below ~50 falls off-screen.** — **done** (fixed by 31's
+    level curve). The graph already maps level → height via `fm1_level_gain`, so the
+    recalibration pins level 0 to the floor, 99 to the top, and ~50 to ~¼ height
+    (was ~1.5 %, reading as "off the bottom").
 
 #### GLO
 
@@ -2921,8 +2920,8 @@ continue §13.1.
 ### 13.4 Ordering note for §13.3
 
 1. ~~**Fix the web button edges (22, 23)**~~ — done (one root cause, unlocked SEL/mutes).
-2. **Recalibrate the envelope rates/levels (31) + the envelope graph (32)** — the
-   same `fm1_rate_coeff` / `fm1_level_gain` tables drive both.
+2. ~~**Recalibrate the envelope rates/levels (31) + the envelope graph (32)**~~ — done
+   (one `fm1_rate_coeff` / `fm1_level_gain` recalibration + the `fm1_onepole` floor).
 3. **Scope/spectro (29, 30) + layout (26)** — gain + tap-channel fix, then the
    param-page placement.
 4. **Palette (25)** — theme/gfx rebalance.

@@ -2278,6 +2278,53 @@ def _up_crossings(samples: list[int]) -> int:
     return sum(1 for a, b in zip(samples, samples[1:], strict=False) if a < 0 <= b)
 
 
+def _level_taper() -> tuple[bool, str]:
+    """The operator level taper: 0 = silence, 99 = maximum, 50 = a meaningful
+    middle. Locks the 0.25 dB/step curve (0 = mute, 50 ≈ −12 dB) against the old
+    0.75 dB/step curve where 50 read as ~silence. A flat instant envelope keeps the
+    measurement about the level, not the EG."""
+
+    def patch(level: int) -> Patch:
+        return {
+            "name": f"level_taper_{level}",
+            "voices": 1,
+            "voice": {
+                "nodes": [
+                    {
+                        "id": "op",
+                        "type": "fm_op",
+                        "params": {
+                            "ratio": 65536,
+                            "level": level,
+                            "r1": 99,
+                            "r2": 99,
+                            "r3": 99,
+                            "r4": 99,
+                            "l1": 99,
+                            "l2": 99,
+                            "l3": 99,
+                        },
+                    }
+                ],
+                "wires": [],
+                "voice_out": "op.audio",
+            },
+            "global": {"nodes": [], "wires": []},
+        }
+
+    def energy(level: int) -> int:
+        samples = _render_samples(patch(level), 512)
+        return sum(s * s for s in samples)
+
+    e0, e50, e99 = energy(0), energy(50), energy(99)
+    if e0 == 0 and e99 > 4 * e50 and e50 > 0:
+        return True, ""
+    return (
+        False,
+        f"level taper: 0={e0} (want 0), 50={e50}, 99={e99} (want 99 > 4·50 > 0)",
+    )
+
+
 def _pm_semantics() -> tuple[bool, str]:
     """The phasor is a *phase* modulator, not an integrator: a DC-heavy modulator
     must not detune the carrier, and self-feedback must not collapse to a DC fixed
@@ -2299,8 +2346,8 @@ def _pm_semantics() -> tuple[bool, str]:
 def _release_tail() -> tuple[bool, str]:
     """note-off releases: after a key release the operator envelope keeps sounding
     (a release tail) and decays to silence — not an instant cut. The first 64
-    frames after note-off must be non-silent; the last 512 of a long render must
-    be near-silent."""
+    frames after note-off must be non-silent; the last 1024 of an ~186 ms release
+    render must be near-silent (the release at r4 = 60 is ~170 ms)."""
     src = generate(RELEASE_PATCH)
     cname = "release_test"
     harness = (
@@ -2308,7 +2355,7 @@ def _release_tail() -> tuple[bool, str]:
         f"void {cname}_dsp_note_on(uint32_t note, uint32_t velocity);\n"
         f"void {cname}_dsp_note_off(uint32_t note);\n"
         f"void {cname}_dsp_render(int32_t *out, uint32_t frames);\n"
-        "static int32_t out[8192];\n"
+        "static int32_t out[16384];\n"
         "int main(void) {\n"
         f"    {cname}_dsp_note_on(69, 100);\n"
         f"    {cname}_dsp_render(out, 512);\n"
@@ -2316,8 +2363,8 @@ def _release_tail() -> tuple[bool, str]:
         f"    {cname}_dsp_render(out, 64);\n"
         "    int64_t e0 = 0; for (int i = 0; i < 128; i++) "
         "e0 += (int64_t)out[i] * out[i];\n"
-        f"    {cname}_dsp_render(out, 4096);\n"
-        "    int64_t e1 = 0; for (int i = 7168; i < 8192; i++) "
+        f"    {cname}_dsp_render(out, 8192);\n"
+        "    int64_t e1 = 0; for (int i = 14336; i < 16384; i++) "
         "e1 += (int64_t)out[i] * out[i];\n"
         '    printf("%lld %lld\\n", (long long)e0, (long long)e1);\n'
         "    return 0;\n"
@@ -2750,6 +2797,14 @@ def main() -> int:
     ok, msg = _velocity_responds(VEL_PATCH)
     print(
         ("ok: " if ok else "FAIL: ") + (msg or "velocity scales the operator amplitude")
+    )
+    failures += 0 if ok else 1
+
+    # the level taper: 0 = silence, 99 = maximum, 50 = a meaningful middle.
+    ok, msg = _level_taper()
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "level taper: 0 silence / 99 max / 50 half")
     )
     failures += 0 if ok else 1
 

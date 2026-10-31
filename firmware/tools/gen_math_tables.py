@@ -52,17 +52,22 @@ def main() -> None:
     semi_q16 = [q16(2.0 ** (i / 12.0)) for i in range(12)]
     cent_q16 = [q16(2.0 ** (i / 1200.0)) for i in range(100)]
 
-    # DX rate -> one-pole coefficient (Q16): 99 = instant, exponential (×2 per 10
-    # steps), 0 ≈ ~5 s to −72 dB. Drives the dx_env / pitch_env stages.
+    # DX rate -> one-pole coefficient (Q16): 99 = instant, exponential (×2 per 8
+    # steps), 0 ≈ ~4 s time constant. The gentler slope (was ×2 per 10) spreads the
+    # musically useful times so a slow attack has real travel (r 60 ≈ 21 ms, r 30 ≈
+    # 190 ms, r 0 ≈ 4 s) instead of everything above ~50 being "instant". Drives the
+    # dx_env / pitch_env stages.
     rate_coeff = [
-        min(65536, max(0, round(65536.0 * 2.0 ** (-(99 - r) / 10.0))))
+        min(65536, max(0, round(65536.0 * 2.0 ** (-(99 - r) / 8.0))))
         for r in range(100)
     ]
-    # DX total-level -> gain (Q15), 0.75 dB/step: 99 = 32767 (0 dB), 0 = −∞ (0).
-    # The operator output level uses `fm1_level_gain[level] >> 2` for the −12 dB
-    # single-operator headroom (four additive carriers then sum to 0 dBFS).
+    # DX total-level -> gain (Q15), 0.25 dB/step: 99 = 32767 (0 dB, maximum), 50 ≈
+    # −12 dB (the perceptual half-loud point), 0 = silence. The gentler slope (was
+    # 0.75 dB/step, which put 50 at −37 dB ≈ inaudible) makes 0..99 a usable audio
+    # taper. The operator output level uses `fm1_level_gain[level] >> 2` for the
+    # −12 dB single-operator headroom (four additive carriers then sum to 0 dBFS).
     level_gain = [0] + [
-        max(1, min(32767, round(32767.0 * 10.0 ** (-(99 - l) * 0.75 / 20.0))))
+        max(1, min(32767, round(32767.0 * 10.0 ** (-(99 - l) * 0.25 / 20.0))))
         for l in range(1, 100)
     ]
 

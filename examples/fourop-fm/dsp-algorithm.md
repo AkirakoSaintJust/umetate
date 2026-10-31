@@ -36,7 +36,7 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
 
 - **Algorithm** (fixed-point, exactly):
   `level` is a Q15 gain (0…32767). Four stages, each an exponential one-pole toward
-  a target (`level += (target − level)·rate / 2¹⁶`, via `fm1_madd_sat`):
+  a target (`level += (target − level)·rate / 2¹⁶`, via `fm1_onepole`):
 
   | stage | target | advance when | on advance |
   | --- | --- | --- | --- |
@@ -58,17 +58,19 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
 
   | param | kind | range | meaning |
   | --- | --- | --- | --- |
-  | `r1 r2 r3 r4` | rate | 0…99 | one-pole coefficient `fm1_rate_coeff[rate]` (99 = instant, ×2 per 10 steps) |
+  | `r1 r2 r3 r4` | rate | 0…99 | one-pole coefficient `fm1_rate_coeff[rate]` (99 = instant, ×2 per 8 steps) |
   | `l1` | level | 0…99 | attack peak (→ `fm1_level_gain[l1]`) |
   | `l2` | level | 0…99 | decay1 target |
   | `l3` | level | 0…99 | sustain level |
 
   All block rate, modulatable. The rate is a table-looked one-pole coefficient; the
-  level is a table-looked gain (0.75 dB/step), so the UI knobs are linear 0–99.
+  level is a table-looked gain (0.25 dB/step: 99 = max, 50 ≈ −12 dB, 0 = silence),
+  so the UI knobs are linear 0–99.
 
 - **Coefficients / precompute:** `fm1_rate_coeff[100]` (Q16) and
   `fm1_level_gain[100]` (Q15) are the fixed tables (`gen/math_tables.h`); the
-  per-tick work is one `fm1_madd_sat` (a Q15×Q16 multiply-add) + two table loads.
+  per-tick work is one `fm1_onepole` (a Q15×Q16 multiply-add, with a ±1 floor so
+  the stage always converges) + two table loads.
 
 - **State:** `stage` (uint32, 0…4), `level` (q15).
 
@@ -86,7 +88,7 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   same exponential character (rate→time, level→dB), one multiply-add + two table
   loads. Recorded as *learned, re-implemented*.
 
-- **Performance note:** control rate (no audio ports), one `fm1_madd_sat` + one
+- **Performance note:** control rate (no audio ports), one `fm1_onepole` + one
   compare per tick; runs in the control prologue, not the sample loop.
 
 ---

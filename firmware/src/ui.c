@@ -683,7 +683,7 @@ static void ui_draw_grid(const ui_widget *w)
 /* the DX rate/level envelope as straight line segments: the selected operator's 7
  * envelope params (r1..r4, l1..l3) from the `env` group. Stage length = the
  * one-pole time constant 65536/fm1_rate_coeff[rate] (clamped); the level height =
- * fm1_level_gain[level] (0.75 dB/step). No cursor. */
+ * fm1_level_gain[level] (0.25 dB/step: 99 = max, 0 = silence). No cursor. */
 static void ui_draw_envelope(const ui_widget *w)
 {
     uint32_t x, y, wd, ht, i, cx;
