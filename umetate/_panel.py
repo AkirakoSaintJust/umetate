@@ -359,10 +359,13 @@ def generate_panel(
         elif w["type"] in ("scope", "spectro"):
             typ = _WIDGETS[w["type"]]
             # the scope source: `channel` = the op index (0..3 -> "op N of the
-            # active part"); `mix_part` = the part index (0..1 -> "part N mix",
-            # encoded with the high bit so the runtime can tell them apart).
+            # active part"); `active` = the active operator of the active part
+            # (0x40); `mix_part` = the part index (0..1 -> "part N mix", encoded
+            # with the high bit so the runtime can tell them apart).
             mix_part = w.get("mix_part")
-            if mix_part is not None:
+            if w.get("active"):
+                param = str(0x40)
+            elif mix_part is not None:
                 param = str(0x80 | mix_part)
             else:
                 param = str(w.get("channel", 0))

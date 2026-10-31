@@ -94,6 +94,20 @@
             { "type": "param_row", "row": 5, "param": "op1.fb.level", "text": "FEEDBACK" },
             { "type": "param_row", "row": 6, "param": "op1.osc.waveform", "text": "WAVE" }
           ]
+        },
+        {
+          "id": "op-scope",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "SCOPE" },
+            { "type": "scope", "row": 3, "span": 6, "active": true }
+          ]
+        },
+        {
+          "id": "op-spectro",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "SPECTRO" },
+            { "type": "spectro", "row": 3, "span": 6, "active": true }
+          ]
         }
       ],
       "bindings": [

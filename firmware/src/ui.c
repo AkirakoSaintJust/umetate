@@ -4,6 +4,7 @@
  * canvas (cv_*, FONT_S/FONT_L) and the palette colors (C_*) are in scope. */
 #include "ui.h"
 #include "presets.h"   /* PRESET_PART_SLOTS / PRESET_MULTI_SLOTS (the save chooser's slot ranges) */
+#include "math_tables.h"  /* fm1_rate_coeff / fm1_level_gain (the DX rate/level tables) */
 
 #define UI_MAX_DEPTH 8u
 #define UI_MAX_WIDGETS 24u
@@ -680,8 +681,9 @@ static void ui_draw_grid(const ui_widget *w)
 }
 
 /* the DX rate/level envelope as straight line segments: the selected operator's 7
- * envelope params (r1..r4, l1..l3) from the `env` group. Stage length = 65536/rate
- * (the one-pole time constant, clamped); a short flat sustain segment. No cursor. */
+ * envelope params (r1..r4, l1..l3) from the `env` group. Stage length = the
+ * one-pole time constant 65536/fm1_rate_coeff[rate] (clamped); the level height =
+ * fm1_level_gain[level] (0.75 dB/step). No cursor. */
 static void ui_draw_envelope(const ui_widget *w)
 {
     uint32_t x, y, wd, ht, i, cx;
@@ -695,7 +697,8 @@ static void ui_draw_envelope(const ui_widget *w)
     for (i = 0; i < 3; i++) {                       /* r1..r3: attack, decay1, decay2 */
         uint16_t p = ui_t->env[p0 + i];
         int32_t r = p < ui_t->n_params ? ui_param_v[p] : 0;
-        uint32_t t = r <= 0 ? 60u : (uint32_t)(65536u / (uint32_t)r);
+        int32_t c = fm1_rate_coeff[r < 0 ? 0 : (r > 99 ? 99 : r)];
+        uint32_t t = c <= 0 ? 60u : (uint32_t)(65536u / (uint32_t)c);
         len[i] = t < 2u ? 2u : (t > 60u ? 60u : t);
         total += len[i];
     }
@@ -704,7 +707,8 @@ static void ui_draw_envelope(const ui_widget *w)
     {
         uint16_t p = ui_t->env[p0 + 3];             /* r4: the release rate */
         int32_t r = p < ui_t->n_params ? ui_param_v[p] : 0;
-        uint32_t t = r <= 0 ? 60u : (uint32_t)(65536u / (uint32_t)r);
+        int32_t c = fm1_rate_coeff[r < 0 ? 0 : (r > 99 ? 99 : r)];
+        uint32_t t = c <= 0 ? 60u : (uint32_t)(65536u / (uint32_t)c);
         len[4] = t < 2u ? 2u : (t > 60u ? 60u : t);
         total += len[4];
     }
@@ -712,14 +716,11 @@ static void ui_draw_envelope(const ui_widget *w)
         total = 1u;
     for (i = 0; i < 3; i++) {
         uint16_t p = ui_t->env[p0 + 4u + i];
-        lvl[i] = p < ui_t->n_params ? ui_param_v[p] : 0;
+        int32_t l = p < ui_t->n_params ? ui_param_v[p] : 0;
+        lvl[i] = fm1_level_gain[l < 0 ? 0 : (l > 99 ? 99 : l)];
     }
     lvl[3] = lvl[2];
     lvl[4] = 0;
-    for (i = 0; i < 5; i++) {
-        if (lvl[i] < 0) lvl[i] = 0;
-        if (lvl[i] > 32767) lvl[i] = 32767;
-    }
     px[0] = 0;
     py[0] = (int32_t)ht;
     cx = 0;
@@ -735,11 +736,15 @@ static void ui_draw_envelope(const ui_widget *w)
 }
 
 /* the scope channel a widget selects: `w->param` = the op index (0..3 -> "op N of
- * the active part", resolved to 1 + N*n_part + part), or 0x80|part -> "part N mix"
+ * the active part", resolved to 1 + N*n_part + part), 0x40 -> the *active*
+ * operator of the active part, or 0x80|part -> "part N mix"
  * (resolved to 1 + n_op*n_part + part). */
 static uint32_t ui_scope_channel(const ui_widget *w)
 {
     uint32_t p = (uint32_t)w->param;
+    if (p == 0x40u)
+        return 1u + (uint32_t)ui_selected_op * (uint32_t)ui_t->n_part
+               + (uint32_t)ui_selected_part;
     if (p & 0x80u)
         return 1u + (uint32_t)ui_t->n_op * (uint32_t)ui_t->n_part + (p & 0x7Fu);
     return 1u + p * (uint32_t)ui_t->n_part + (uint32_t)ui_selected_part;
@@ -747,7 +752,9 @@ static uint32_t ui_scope_channel(const ui_widget *w)
 
 /* the oscilloscope: the selected channel's snapshot, downsampled to the widget
  * width, drawn as a line with a mid-line. Time-varying — redraws whenever the
- * snapshot advances (scope_seq), which the ISR bumps every block. */
+ * snapshot advances (scope_seq), which the ISR bumps every block. The tap is
+ * ×4 (the operator's −12 dB total-level headroom) so a full-level operator fills
+ * the height. */
 static void ui_draw_scope(const ui_widget *w)
 {
     uint32_t ch = ui_scope_channel(w), x, y, wd, ht, i;
@@ -759,10 +766,10 @@ static void ui_draw_scope(const ui_widget *w)
     mid = (int32_t)ht / 2;
     cv_line(0, mid, (int32_t)wd - 1, mid, C_DIM);
     lx = 0;
-    ly = mid - (scope_at_ch(ch, 0u) * (int32_t)ht) / 65536;
+    ly = mid - (scope_at_ch(ch, 0u) * (int32_t)ht) / 16384;
     for (i = 1; i < wd; i++) {
         int32_t s = scope_at_ch(ch, i * SCOPE_N / wd);
-        int32_t px = (int32_t)i, py = mid - (s * (int32_t)ht) / 65536;
+        int32_t px = (int32_t)i, py = mid - (s * (int32_t)ht) / 16384;
         cv_line(lx, ly, px, py, C_HI);
         lx = px;
         ly = py;
