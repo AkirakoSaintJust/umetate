@@ -196,12 +196,12 @@ octave, ±2, firmware-level). The keybed plays notes; `SCL`+key is the mute chor
 ### 3.2 Always visible (every page, a fixed header)
 
 The header is two lines. Line 1 shows, at all times: every **part** (`P1 P2`) and
-**operator** (`op 1 2 3 4`), each with its **ON/OFF** (muted, an `x`) state and the
+**operator** (`op 1 2 3 4`), each with its **ON/OFF** (muted, red) state and the
 active one highlighted; the **current algorithm** (`ALG n`); and the **current menu
 name + page number/total** (`EDIT 1/2`). Line 2 is the **page description** (the
 page's first widget, e.g. `OSCILLATOR`, `OP DETUNES`). Colours: parts + operators
-white, active pink, `ALG` yellow, menu/page purple, the description green. No page
-may hide any of it.
+white, active + `ALG` + values pink, muted red, menu/page purple, the description
+bright green. No page may hide any of it.
 
 ### 3.3 Contexts (menus) and their pages
 

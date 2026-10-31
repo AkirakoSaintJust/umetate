@@ -2731,9 +2731,9 @@ the two stay in sync).
     line 1 = `P1 P2 op 1 2 3 4 ALG(n) menu, pg n/m`; line 2 = the page description
     (the page's first widget — a `subheader`/two-line `label` — is promoted to the
     `ui_page.title` and drawn in the header, so the widget rows shift up one).
-    Colours: parts + operators white (muted → grey `x`), the active part/operator
-    pink (the accent), `ALG(n)` yellow, `menu, pg n/m` purple, the description green.
-    Fits 240 px at FONT_S.
+    Colours: parts + operators white, the active part/operator pink (the accent),
+    `ALG(n)` + param values pink, muted ops/parts red (no `x`), `menu, pg n/m`
+    purple, the description bright green. Fits 240 px at FONT_S.
 
 3. **Part switching.** Make the active part switchable from every menu (like op
    mute/select already are). Settle the gesture in the interview cycle (candidate: a
@@ -2844,7 +2844,7 @@ the two stay in sync).
 
 ### 13.3 Web-emulator + envelope follow-ups (recorded 2026-10-31)
 
-Status: **done** — 22–39 complete (2026-10-31). Numbers continue §13.1.
+Status: **done** — 22–40 complete (2026-11-01). Numbers continue §13.1.
 
 #### Web emulator
 
@@ -2865,12 +2865,10 @@ Status: **done** — 22–39 complete (2026-10-31). Numbers continue §13.1.
     turn a focused knob.
 
 25. **Palette rebalance.** — **done.** The DEFAULT palette read as "all pink" / green
-    vanished. Re-tuned `gfx.c`'s DEFAULT palette + the `C_*` roles so **green is the
-    base text** (labels, page titles, the header line), **yellow marks param values**
-    (the live numbers), **purple marks the graphs** (envelope/scope/spectro), and
-    **pink stays the accent** (cursor/selected/active). The label colour went from
-    pale-yellow to green (130,220,130) and the value colour from green to yellow
-    (255,235,130).
+    vanished. Re-tuned `gfx.c`'s DEFAULT palette + the `C_*` roles: **white** param
+    names, **bright-green** page descriptions, **pink** param values + `ALG`,
+    **red** muted ops/parts, **purple** graphs, **pink** accent (cursor/active).
+    (Refined again 2026-11-01; see 40 for the web colour-scramble fix.)
 
 #### Scope / spectro
 
@@ -2971,6 +2969,14 @@ Status: **done** — 22–39 complete (2026-10-31). Numbers continue §13.1.
     `fm1_sin_q15` table): the expansive low end keeps normal levels readable and the
     trace saturates at the widget edge instead of overshooting. The part mix uses a
     2× larger knee (shift 6 vs 5), so it sits at half the on-screen height.
+
+#### Web emulator colour (reported 2026-11-01)
+
+40. **Web screen colours scrambled.** — **done.** `index.html`'s `drawScreen` did an
+    extra byte-swap (`(v >> 8) | (v << 8)`) on the framebuffer, which `web_host.c`
+    already un-swaps in `lcd_blit` — so every colour was bit-scrambled (yellow→blue,
+    green→red, white→muted-green, purple→green). Removed the swap; the screen now
+    renders the true palette.
 
 ### 13.4 Ordering note for §13.3
 

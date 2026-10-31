@@ -23,16 +23,16 @@ from .theme import (
 
 ROOT = Path(__file__).resolve().parents[1]
 
-# the shipped gfx.c PALETTES (8-bit source), step 2 = C_GRAY (labels, the green
-# base text), 3 = C_AMB (graphs, purple), 4 = C_HI (values, yellow). Mirrors
+# the shipped gfx.c PALETTES (8-bit source), step 2 = C_GRAY (page descriptions,
+# bright green), 3 = C_AMB (graphs, purple), 4 = C_HI (values, pink). Mirrors
 # firmware/src/gfx.c — keep in sync.
 _SHIPPED: dict[str, list[tuple[int, int, int]]] = {
     "DEFAULT": [
         (46, 83, 51),
-        (92, 166, 102),
-        (130, 220, 130),
+        (255, 60, 60),
+        (90, 255, 90),
         (199, 128, 255),
-        (255, 235, 130),
+        (255, 120, 150),
     ],
     "AMBER": [(60, 26, 0), (110, 50, 0), (178, 98, 24), (225, 120, 8), (255, 166, 40)],
     "CYAN": [(0, 30, 50), (0, 62, 96), (38, 125, 169), (56, 172, 222), (140, 222, 255)],

@@ -312,10 +312,10 @@ const img = ctx.createImageData(240, 240);
 function drawScreen(fb) {
   const d = img.data;
   for (let i = 0; i < 240 * 240; i++) {
-    const v = fb[i], p = ((v >> 8) | (v << 8)) & 0xffff;
-    d[i * 4] = ((p >> 11) & 31) * 255 / 31;
-    d[i * 4 + 1] = ((p >> 5) & 63) * 255 / 63;
-    d[i * 4 + 2] = (p & 31) * 255 / 31;
+    const v = fb[i];                                 // little-endian RGB565 (R>>11, G>>5, B)
+    d[i * 4] = ((v >> 11) & 31) * 255 / 31;
+    d[i * 4 + 1] = ((v >> 5) & 63) * 255 / 63;
+    d[i * 4 + 2] = (v & 31) * 255 / 31;
     d[i * 4 + 3] = 255;
   }
   ctx.putImageData(img, 0, 0);

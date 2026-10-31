@@ -958,8 +958,7 @@ static void ui_draw_header(void)
     for (i = 0; i < ui_t->n_part; i++) {
         tok[0] = 'P';
         tok[1] = (char)('1' + i);
-        tok[2] = ui_part_mute[i] ? 'x' : 0;
-        tok[3] = 0;
+        tok[2] = 0;
         x = ui_htok(x, 0, tok, i == ui_selected_part, ui_part_mute[i]);
         x = ui_htok(x, 0, " ", 0, 0);
     }
@@ -969,8 +968,7 @@ static void ui_draw_header(void)
             uint16_t p = ui_t->mute ? ui_mute_param(i) : UI_NO_PARAM;
             int muted = p < ui_t->n_params ? ui_param_v[p] != 0 : 0;
             tok[0] = (char)('1' + i);
-            tok[1] = muted ? 'x' : 0;
-            tok[2] = 0;
+            tok[1] = 0;
             x = ui_htok(x, 0, tok, i == ui_selected_op, muted);
             x = ui_htok(x, 0, " ", 0, 0);
         }
