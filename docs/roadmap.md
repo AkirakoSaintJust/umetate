@@ -2844,27 +2844,26 @@ the two stay in sync).
 
 ### 13.3 Web-emulator + envelope follow-ups (recorded 2026-10-31)
 
-Status: **queued**. Items 22–23 are web-emulator button-edge bugs in the current
-build; 24–27 are features; 28–32 are firmware UI/scope/envelope bugs. Numbers
+Status: **in progress** — 22, 23, 24 done (2026-10-31); 25–32 queued. Numbers
 continue §13.1.
 
 #### Web emulator
 
-22. **ARP/SEQ/PLAY/REC mute is momentary.** On the web app, those buttons mute their
-    operator only *while held*, unmuting on release. Root cause: the page sends a
-    second press on the `click` event after `pointerup`, so a single click produces
-    press→release→press→release (two `op_mute_n` toggles + noise). Fix: drop the
-    `click` tap; rely on `pointerdown`/`pointerup` (and `keydown`/`keyup`).
+22. **ARP/SEQ/PLAY/REC mute is momentary.** — **done.** On the web app, those buttons
+    muted their operator only *while held*, unmuting on release. Root cause: the page
+    sent a second press on the `click` event after `pointerup`, so a single click
+    produced press→release→press→release (two `op_mute_n` toggles + noise). Fixed by
+    guarding `click` with a timestamp so a pointer/key press suppresses the bare-click
+    tap.
 
-23. **SEL changes the part, not the operator.** Same root cause as 22: the spurious
-    second press makes a single tap look like the firmware's double-tap (which is
-    the part switch); a long-press fires once on press and again on release. Fixing
-    22 fixes this.
+23. **SEL changes the part, not the operator.** — **done** (same root cause as 22: the
+    spurious second press made a single tap look like the firmware's double-tap =
+    part switch, and a long-press fired once on press and again on release).
 
-24. **Host keyboard control.** Map the computer keyboard to the emulator (as
-    fm1-x0x does): white keys `Q..I`/`A..K`, black keys `1..0`/`-`, `Space`=PLAY,
-    `Enter`=REC, `Esc`=HOME, `Z`/`X`=OCT−/OCT+, `↑`/`↓` (or arrows)=SELECT,
-    `Tab` focuses, arrows turn a focused knob.
+24. **Host keyboard control.** — **done.** Map the computer keyboard to the emulator
+    (as fm1-x0x does): white keys `Q..I`/`A..K`, black keys `1..0`/`-`, `Space`=PLAY,
+    `Enter`=REC, `Esc`=HOME, `Z`/`X`=OCT−/OCT+, `↑`/`↓`=SELECT, `Tab` focuses, arrows
+    turn a focused knob.
 
 25. **Palette rebalance.** The DEFAULT palette reads as "all pink"; the user wants
     the green to stay the base text and the pink/purple/yellow to *differentiate*
@@ -2878,13 +2877,17 @@ continue §13.1.
     the params (so an edit is visible live), rather than on their own pages.
 
 29. **Scope height too low.** At normal operator levels (~70–80) the scope trace is
-    a few px tall and reads as silence below ~70. The ×4 headroom gain is not
-    enough; switch the scope to a fixed gain sized for the *actual* amplitude, or
-    auto-normalize to the snapshot peak (like the spectro).
+    a few px tall and reads as silence below ~70. **Design settled (2026-10-31): fixed
+    gain** (not auto-normalize — that would hide level edits), sized so a *normal*
+    level (~70–80) is clearly readable and only extremely quiet levels look flat;
+    drop the current ×4 headroom gain for a gain matched to the real amplitude.
 
 30. **Part + EDIT op scopes/spectros show nothing.** The part-mix taps and the
-    active-op taps read silence. Investigate the tap channel mapping
-    (`scope_push_ch(1+k, …)` vs `ui_scope_channel`) and the `route.car` tap.
+    active-op taps read silence. **Root cause:** `firmware/src/scope.h` hardcodes
+    `SCOPE_CH = 8`, but fourop-fm has 10 tap channels (`N_TAP_CH` = 5 taps × 2 parts),
+    so channels 8–10 (op4·part1, and the two `route.car` part mixes) are dropped by
+    `scope_store`'s `ch >= SCOPE_CH` guard and `scope_at_ch` falls back to the
+    never-pushed ch 0. Fix: size `SCOPE_CH` to fit the synth's taps.
 
 #### Envelope (dx_env / pitch_env)
 
@@ -2893,7 +2896,10 @@ continue §13.1.
     0 — user-facing 0 should be silence and 99 maximum amplitude. DECAY1/DECAY2
     below ~58 hold indefinitely (key held), ~58 is instant. Recalibrate
     `fm1_rate_coeff` (rate→one-pole) and the level mapping so the 0–99 travel is
-    musically sensible.
+    musically sensible. **Design settled (2026-10-31): level taper is dB** (like the
+    Yamaha total level), but **0 = silence and 99 = maximum amplitude** — not the
+    current curve where ~50 reads as ~0 (which comes from negative levels, per the
+    broken graph in 32).
 
 32. **Envelope graph: LEVEL below ~50 falls off-screen.** The graph maps a level
     below ~50 to negative height, implying 0–49 = negative amplitude. Pin the graph
@@ -2914,11 +2920,11 @@ continue §13.1.
 
 ### 13.4 Ordering note for §13.3
 
-1. **Fix the web button edges (22, 23)** — one root cause, unlocks SEL/mutes.
+1. ~~**Fix the web button edges (22, 23)**~~ — done (one root cause, unlocked SEL/mutes).
 2. **Recalibrate the envelope rates/levels (31) + the envelope graph (32)** — the
    same `fm1_rate_coeff` / `fm1_level_gain` tables drive both.
 3. **Scope/spectro (29, 30) + layout (26)** — gain + tap-channel fix, then the
    param-page placement.
 4. **Palette (25)** — theme/gfx rebalance.
-5. **Features (24 keyboard, 27 detune/ratio landmarks)**.
+5. **Features (27 detune/ratio landmarks)**. ~~24 keyboard~~ done.
 6. **GLO (28)** — folds into the §13.1 GLO revamp (items 7/10/11).
