@@ -254,6 +254,8 @@ def param_default(kind: str, value: str | None) -> int:
         "int16": 0,
         "int32": 0,
         "uint32": 0,
+        "rate": 0,  # DX rate 0..99 (slowest..instant)
+        "level": 0,  # DX total-level 0..99 (silent..loudest)
     }.get(kind, 0)
 
 
@@ -268,6 +270,8 @@ def param_bounds(kind: str) -> tuple[int, int]:
         "int16": (-32768, 32767),
         "int32": (-0x80000000, 0x7FFFFFFF),
         "uint32": (0, 0xFFFFFFFF),
+        "rate": (0, 99),
+        "level": (0, 99),
     }.get(kind, (0, 0x7FFFFFFF))
 
 

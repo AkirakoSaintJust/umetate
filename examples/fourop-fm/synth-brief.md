@@ -78,41 +78,39 @@ global six to a per-part array.
   ```
   The four `delay1` make the graph acyclic for *every* algorithm (all modulation
   reads the 1-sample-delayed output of its sources).
-- **Global-zone graph:** `algo` (the algorithm selector + carrier-feedback master)
-  → `alg` into the `route` node + `fb1..fb4` into `op1..op4.car_fb`; `lp` (`svf`)
-  → `wf` (`wavefolder`) → `out`, plus the shared `plfo` (`lfo`) and `penv`
-  (`pitch_env`) whose `cv`s are summed by `psum` (`csum`) into every operator's
-  `pitch`:
-  `voice → lp.audio`, `lp.low → wf.audio`, `wf.audio → out`,
-  `plfo.cv + penv.cv → op1..op4.pitch`.
+- **Global-zone graph:** `algo` (the algorithm selector) → `alg` into the `route`
+  node; `lp` (`svf`) → `wf` (`wavefolder`) → `out`, plus the shared `plfo` (the
+  vibrato LFO): `voice → lp.audio`, `lp.low → wf.audio`, `wf.audio → out`,
+  `plfo.cv → psum.in0`.
+- **Voice-zone additions:** `penv` (a per-note `pitch_env`, retriggered on every
+  note-on) + `psum` (a `csum`): `plfo.cv + penv.cv → op1..op4.pitch`.
 - **Macros:** `fm_op` (shipped, `modules/macros/fm_op/`) — the operator, with
   params `ratio` (note-derived), `waveform`, `level`, `feedback` (per-op
   self-modulation), `trem_rate`, `trem_depth`, `r1..r4`, `l1..l3` mapped inward,
-  and inputs `fm` (audio) + `pitch` (control) + `car_fb` (control, the carrier
-  feedback master).
+  and inputs `fm` (audio) + `pitch` (control).
 - **Voice count / sample rate:** 20 voices / 44100 Hz (the default).
 - **Feedback paths:** each operator's self-feedback is one `delay1` (the
   **oscillator** output × feedback → sum with external fm + pitch → `ph.fm`,
   tapped *pre*-envelope/pre-tremolo so the amplitude LFO never leaks into pitch).
-  Feedback is **per-op + carrier**: each operator's `opN_feedback` (its own
-  self-modulation, on the op page) is summed with the carrier-gated `feedback`
-  master (`algo.car_fb`, the HOME knob) — the `algo` node gates the master by the
-  carrier mask into `op1..op4.car_fb`, so only the carrier gets the master on top
-  of its per-op amount.
+  Feedback is **per-op only**: `opN_feedback` (its own self-modulation, on the op
+  page) scales that operator's delayed oscillator output. (The earlier
+  carrier-gated `feedback` master — the scrapped HOME knob that pushed a master
+  amount onto whichever operator was the current carrier — is gone; it left a
+  spurious feedback floor on every carrier even at zero.)
 
 ### 2.2 Parameter manifest
 
 > The friendly names below are what the panel exposes. The engine is
 > **two-timbre** (`parts: 2`, channels 0 and 1): every voice-zone param is a
-> per-part array, so the full id space is **74 voice params per part** (the
-> `fm_op` macro's 17 × 4 operators + the six voice-mode params) × 2 parts + 21
-> global (the filter + fold output chain) + 10 routing = **179 `set_param` ids**,
-> part-major (`part × param`). The patch's `cc:` list exposes 51 of them (part 0's
-> timbre + the global FX + both parts' mode params) as the fixed CC surface; part
-> 1's timbre comes from the multi-patch / SysEx. The six voice-mode params
-> (`mode`, `unison_count`, `unison_detune`, `legato`, `portamento`,
-> `note_priority`) are **per-part** (each part its own poly/unison/legato +
-> counts + times).
+> per-part array, so the full id space is **82 voice params per part** (the
+> `fm_op` macro's 17 × 4 operators + the per-note pitch envelope's 8 + the six
+> voice-mode params) × 2 parts + 20 global (the filter + fold output chain) +
+> 10 routing = **194 `set_param` ids**, part-major (`part × param`). The patch's
+> `cc:` list exposes 56 of them (part 0's timbre + the global FX + both parts'
+> mode params) as the fixed CC surface; part 1's timbre comes from the
+> multi-patch / SysEx. The six voice-mode params (`mode`, `unison_count`,
+> `unison_detune`, `legato`, `portamento`, `note_priority`) are **per-part**
+> (each part its own poly/unison/legato + counts + times).
 
 | Param (name) | Target | Min | Max | Curve | Unit | Display |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -131,14 +129,14 @@ global six to a per-part array.
 | fold_threshold | wf.threshold | 0 | 32767 | linear | | pct |
 | fold_folds | wf.folds | 1 | 8 | linear | | raw |
 | fold_type | wf.type | 0 | 0 | linear | | raw |
-| feedback | algo.car_fb | 0 | 32767 | linear | | pct |
-| attack | op1.eg.r1 | 0 | 65535 | log | | raw |
-| release | op1.eg.r4 | 0 | 65535 | log | | raw |
+| attack | op1.eg.r1 | 0 | 99 | linear | | raw (0–99 rate) |
+| release | op1.eg.r4 | 0 | 99 | linear | | raw (0–99 rate) |
 | pitch_rate | plfo.rate | 0 | 20000000 | log | | hz |
 | pitch_depth | plfo.depth | 0 | 32767 | linear | | pct |
-| penv_base | penv.base | -32768 | 32767 | linear | | semi (±st) |
-| penv_rate | penv.rate | 0 | 65535 | log | | raw |
-| op1_level … op4_level | opN.vca.level | 0 | 32767 | linear | | pct |
+| penv_on | penv.on | 0 | 1 | linear | | onoff (off/on) |
+| penv_r1 … penv_r4 | penv.rN | 0 | 99 | linear | | raw (0–99 rate) |
+| penv_l1 … penv_l3 | penv.lN | -32768 | 32767 | linear | | semi (±st) |
+| op1_level … op4_level | opN.tl.level | 0 | 99 | linear | | raw (0–99) |
 | op1_waveform … op4_waveform | opN.osc.waveform | 0 | 11 | linear | | raw (0–11) |
 | op1_ratio … op4_ratio | opN.ph.inc_ratio | 32768 | 1048576 | linear | | ratio (1.00 = base) |
 | op1_mute … op4_mute | opN.mute.mute | 0 | 1 | linear | | onoff (off/on) |
@@ -151,17 +149,20 @@ field → a `ui_param_disp` entry in the generated panel). A relative encoder st
 per the curve (linear = a fraction of the range, log = multiplicative), so each
 knob reaches its whole range in a sane number of turns and clamps at the ends.
 
-(`level` is both the output amplitude and the FM index; `feedback` is the carrier
-feedback master (`algo.car_fb`, added to whichever operator is the current
-algorithm's carrier), and `opN_feedback` is each operator's own self-modulation
-depth (added on top). `rate` is a Q32 phase increment per
+(`level` is the Yamaha total-level (0–99, 0.75 dB/step) that gates the operator's
+output with −12 dB single-operator headroom (`fm1_level_gain[level] >> 2`), so a
+solo carrier never clips and a four-carrier additive algorithm sums to ~0 dBFS;
+`opN_feedback` is each operator's own self-modulation depth. The DX rates
+(`r1..r4`, `penv_r1..r4`) are 0–99 → a one-pole coefficient via
+`fm1_rate_coeff` (99 = instant, ×2 per 10 steps); the DX levels (`l1..l3`) are
+0–99 → Q15 gain via `fm1_level_gain`. `rate` is a Q32 phase increment per
 sample — `f · 2³² / 44100`, so ~97392 = 1 Hz. `depth` is `depth/32768` in the
 use's units: octaves of vibrato for `pitch_depth` (273 ≈ ±10 cents), fraction of
 full amplitude for `trem_depth` (~16000 ≈ ±50%). `ratio` is the q16 frequency
-multiplier — `ratio/65536` = the multiplier (65536 = 1.0, 32768 = 0.5). `penv_base`
-is the q15 starting pitch offset of the global pitch envelope (the `phasor.pitch`
-octave scale: 32767 = +1 octave, 2731 ≈ +1 semitone); `penv_rate` is its q16
-one-pole decay rate toward the specified pitch. All block rate.)
+multiplier — `ratio/65536` = the multiplier (65536 = 1.0, 32768 = 0.5). The
+per-note pitch envelope (`penv`) retriggers on every note-on, releases on
+note-off, and is off by default; its levels `l1..l3` are q15 pitch offsets
+(32768 = +1 octave, 2731 ≈ +1 semitone). All block rate.)
 
 ### 2.3 Tables
 

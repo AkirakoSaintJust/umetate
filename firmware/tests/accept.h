@@ -10,18 +10,22 @@
 
 enum { P_alg = 0, P_cutoff, P_res, P_fold, P_op1_level, P_op2_level, P_ratio, P_mute, P_hz, P_semi, N_PARAMS = 10 };
 
+/* P_ratio's landmark ladder: deliberately sparse (0.50, 1.00, 2.00) so the
+ * accept test proves one detent = one landmark and no entry is skipped. */
+static const int32_t RATIO_LM[3] = { 32768, 65536, 131072 };
+
 /* the per-param display scale for the test params */
 static const ui_param_disp DISP_TBL[N_PARAMS] = {
-    { UI_DISP_RAW, 0, 0, 0 },        /* P_alg: 0..0 placeholder (0..7 in real use) */
-    { UI_DISP_OFF_PCT, 1, 0, 65535 },/* P_cutoff: "off" at 0, else % */
-    { UI_DISP_PCT_INV, 0, 0, 65535 },/* P_res: 100% at min */
-    { UI_DISP_PCT, 0, 0, 32767 },    /* P_fold */
-    { UI_DISP_PCT, 0, 0, 32767 },    /* P_op1_level */
-    { UI_DISP_PCT, 0, 0, 32767 },    /* P_op2_level */
-    { UI_DISP_RATIO, 0, 32768, 1048576 }, /* P_ratio */
-    { UI_DISP_ONOFF_INV, 0, 0, 1 },      /* P_mute: 0 = not muted (on), 1 = muted (off) */
-    { UI_DISP_HZ, 1, 0, 20000000 },  /* P_hz */
-    { UI_DISP_SEMI, 0, -32768, 32767 }, /* P_semi */
+    { UI_DISP_RAW, 0, 0, 0, 0, 0, 0 },        /* P_alg: 0..0 placeholder (0..7 in real use) */
+    { UI_DISP_OFF_PCT, 1, 0, 65535, 0, 0, 0 },/* P_cutoff: "off" at 0, else % */
+    { UI_DISP_PCT_INV, 0, 0, 65535, 0, 0, 0 },/* P_res: 100% at min */
+    { UI_DISP_PCT, 0, 0, 32767, 0, 0, 0 },    /* P_fold */
+    { UI_DISP_PCT, 0, 0, 32767, 0, 0, 0 },    /* P_op1_level */
+    { UI_DISP_PCT, 0, 0, 32767, 0, 0, 0 },    /* P_op2_level */
+    { UI_DISP_RATIO, 0, 32768, 1048576, 1, 3, RATIO_LM }, /* P_ratio */
+    { UI_DISP_ONOFF_INV, 0, 0, 1, 0, 0, 0 },      /* P_mute: 0 = not muted (on), 1 = muted (off) */
+    { UI_DISP_HZ, 1, 0, 20000000, 0, 0, 0 },  /* P_hz */
+    { UI_DISP_SEMI, 0, -32768, 32767, 0, 0, 0 }, /* P_semi */
 };
 
 static const ui_widget W_0_0[] = {
@@ -57,6 +61,7 @@ static const ui_binding BIND_0[] = {
     { UI_BIND_PAGE_SLOT, UI_SRC_ENC_KNOB1, 0, 0, 0, UI_REL, 0 },
     { UI_BIND_PAGE_SLOT, UI_SRC_ENC_KNOB2, 0, 0, 1, UI_REL, 0 },
     { UI_BIND_PAGE_SLOT, UI_SRC_ENC_KNOB3, 0, 0, 2, UI_REL, 0 },
+    { UI_BIND_PARAM, UI_SRC_ENC_KNOB4, P_ratio, 0, 0, UI_REL, 0 },
 };
 static const ui_binding BIND_1[] = {
     { UI_BIND_PARAM, UI_SRC_ENC_PRESETS, P_cutoff, 0, 0, UI_REL, 0 },
@@ -77,7 +82,7 @@ static const ui_binding GLOBAL_BIND[] = {
 };
 
 static const ui_context CTX[] = {
-    { "home", PG_0, 1, BIND_0, 3, 0, 0 },
+    { "home", PG_0, 1, BIND_0, 4, 0, 0 },
     { "edit", PG_1, 1, BIND_1, 3, 0, 0 },
     { "step", PG_2, 1, BIND_2, 1, 0, 0 },
     { "fx", PG_3, 1, BIND_3, 0, 0, 0 },

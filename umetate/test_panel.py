@@ -12,6 +12,7 @@ Run: python3 -m umetate.test_panel
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -274,6 +275,50 @@ def main() -> int:
         print("ok: subheader widgets map to UI_SUBHEADER (op + part)")
     else:
         print("FAIL: subheader widgets did not map")
+        failures += 1
+
+    # ratio + semi params carry sorted landmark tables, and every emitted table is
+    # referenced from DISP_TBL (no orphan tables). The ratio first entries pin the
+    # 0.5 / 0.71 / 0.78 / 0.87 series; the semi ones pin integer-semitone detents.
+    lms: PanelManifest = {
+        "name": "lms",
+        "contexts": {
+            "home": {
+                "pages": [
+                    {
+                        "id": "home",
+                        "widgets": [
+                            {"type": "param_row", "row": 1, "param": "op1.ratio"},
+                            {"type": "param_row", "row": 2, "param": "penv.base"},
+                        ],
+                    }
+                ]
+            }
+        },
+        "global": [],
+    }
+    lm_ids = {"op1.ratio": 0, "penv.base": 1}
+    lm_meta = {
+        0: ("ratio", 32768, 1048576, "linear"),
+        1: ("semi", -32768, 32767, "linear"),
+    }
+    lm_src = generate_panel(lms, lm_ids, lm_meta)
+    ratio_ok = (
+        "UI_DISP_RATIO, 0, 32768, 1048576, 1, 92, LM_" in lm_src
+        and "32768, 46531, 51119, 57017, 65536" in lm_src
+    )
+    semi_ok = (
+        "UI_DISP_SEMI, 0, -32768, 32767, 1, 25, LM_" in lm_src
+        and "-32768" in lm_src
+        and "2731" in lm_src
+        and "32767" in lm_src
+    )
+    tables = re.findall(r"static const int32_t (LM_\d+)\[", lm_src)
+    referenced = bool(tables) and all(lm_src.count(name) > 1 for name in tables)
+    if ratio_ok and semi_ok and referenced:
+        print("ok: ratio/semi params carry sorted landmark tables (no orphans)")
+    else:
+        print("FAIL: ratio/semi landmarks missing or orphaned")
         failures += 1
 
     print("panel tests " + ("FAILED" if failures else "passed"))

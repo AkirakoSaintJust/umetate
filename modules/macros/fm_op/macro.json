@@ -1,11 +1,11 @@
 {
-  "summary": "The complete DX-style FM operator: phasor + osc(12 waveforms) + dx_env(rate/level) + vca(level), with per-op 1-sample self-feedback (the `feedback` param) plus a carrier-gated `car_fb` input, velocity → amplitude (`vel_amp`), velocity → FM (`vel_fm`), velocity → envelope rate (`vel_rate`), a q16 `ratio` frequency multiplier (runtime), a per-op amplitude LFO (tremolo), a per-op `mute` gate, and a `pitch` input (the shared vibrato LFO).",
-  "ins": { "fm": "audio", "pitch": "control", "car_fb": "control" },
+  "summary": "The complete DX-style FM operator: phasor + osc(12 waveforms) + dx_env(rate/level) + tl(total-level), with per-op 1-sample self-feedback (the `feedback` param), velocity → amplitude (`vel_amp`), velocity → FM (`vel_fm`), velocity → envelope rate (`vel_rate`), a q16 `ratio` frequency multiplier (runtime), a per-op amplitude LFO (tremolo), a per-op `mute` gate, and a `pitch` input (the shared vibrato LFO).",
+  "ins": { "fm": "audio", "pitch": "control" },
   "outs": { "audio": "audio" },
   "params": {
     "ratio": { "target": "ph.inc", "note_derived": true },
     "waveform": "osc.waveform",
-    "level": "vca.level",
+    "level": "tl.level",
     "feedback": "fb.level",
     "mute": "mute.mute",
     "vel_amp": "velamp.depth",
@@ -19,7 +19,7 @@
   "nodes": [
     { "id": "ph", "type": "phasor" },
     { "id": "osc", "type": "osc" },
-    { "id": "eg", "type": "dx_env" },
+    { "id": "eg", "type": "dx_env", "params": { "r1": 80, "r2": 60, "r3": 50, "r4": 80, "l1": 99, "l2": 93, "l3": 87 } },
     { "id": "lfo", "type": "lfo", "params": { "rate": 389566, "depth": 0 } },
     { "id": "trem", "type": "cmul" },
     { "id": "cvsum", "type": "csum" },
@@ -28,10 +28,8 @@
     { "id": "velfm", "type": "vel_depth", "params": { "depth": 0 } },
     { "id": "velrate", "type": "vel_depth", "params": { "depth": 0 } },
     { "id": "fmvel", "type": "gain" },
-    { "id": "vca", "type": "vca" },
-    { "id": "fb", "type": "vca" },
-    { "id": "carfb", "type": "gain" },
-    { "id": "fbsum", "type": "mix" },
+    { "id": "tl", "type": "tl", "params": { "level": 85 } },
+    { "id": "fb", "type": "vca", "params": { "level": 0 } },
     { "id": "d1", "type": "delay1" },
     { "id": "sum", "type": "mix" },
     { "id": "mute", "type": "mute" }
@@ -44,7 +42,7 @@
     { "from": "pitch", "to": "ph.pitch" },
     { "from": "sum.audio", "to": "ph.fm" },
     { "from": "ph.phase", "to": "osc.phase" },
-    { "from": "osc.audio", "to": "vca.audio" },
+    { "from": "osc.audio", "to": "tl.audio" },
     { "from": "velrate.cv", "to": "eg.rate_scale" },
     { "from": "eg.cv", "to": "trem.in0" },
     { "from": "lfo.cv", "to": "trem.in1" },
@@ -52,14 +50,10 @@
     { "from": "trem.cv", "to": "cvsum.in1" },
     { "from": "cvsum.cv", "to": "ampvel.in0" },
     { "from": "velamp.cv", "to": "ampvel.in1" },
-    { "from": "ampvel.cv", "to": "vca.cv" },
+    { "from": "ampvel.cv", "to": "tl.cv" },
     { "from": "osc.audio", "to": "fb.audio" },
-    { "from": "osc.audio", "to": "carfb.audio" },
-    { "from": "car_fb", "to": "carfb.cv" },
-    { "from": "fb.audio", "to": "fbsum.in0" },
-    { "from": "carfb.audio", "to": "fbsum.in1" },
-    { "from": "fbsum.audio", "to": "d1.in" },
-    { "from": "vca.audio", "to": "mute.audio" },
+    { "from": "fb.audio", "to": "d1.in" },
+    { "from": "tl.audio", "to": "mute.audio" },
     { "from": "mute.audio", "to": "audio" }
   ]
 }

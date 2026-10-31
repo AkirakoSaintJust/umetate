@@ -336,10 +336,16 @@ def _render_voices_block(
     )
     lines = [sig]
 
+    # release-tail countdown: a released (gate=0) voice stays allocated until its
+    # envelope finishes releasing; decrement its remaining hold once per block.
+    lines.append("    for (uint32_t v = v0; v < v1; v++) {")
+    lines.append("        if (!voice_gate[v] && voice_rel[v] > 0u) voice_rel[v]--;")
+    lines.append("    }")
+
     # control prologue: voice control-rate nodes (per voice, this core's range)
     if voice_ctrl:
         lines.append("    for (uint32_t v = v0; v < v1; v++) {")
-        lines.append("        if (!voice_gate[v]) continue;")
+        lines.append("        if (!voice_gate[v] && !voice_rel[v]) continue;")
         for i in voice_ctrl:
             lines.extend(_emit_body(i, "v", "        ", table_names, per_part))
         lines.append(
@@ -356,7 +362,7 @@ def _render_voices_block(
     ]
     if block_derived:
         lines.append("    for (uint32_t v = v0; v < v1; v++) {")
-        lines.append("        if (!voice_gate[v]) continue;")
+        lines.append("        if (!voice_gate[v] && !voice_rel[v]) continue;")
         for i in block_derived:
             for field, template in i.block_derived.items():
                 expr = substitute(i, template, "v", table_names, per_part)
@@ -367,7 +373,7 @@ def _render_voices_block(
     lines.append(f"    for (uint32_t f = b; f < b + {cb}u && f < frames; f++) {{")
     lines.append("        bus[f - b] = 0;")
     lines.append("        for (uint32_t v = v0; v < v1; v++) {")
-    lines.append("            if (!voice_gate[v]) continue;")
+    lines.append("            if (!voice_gate[v] && !voice_rel[v]) continue;")
 
     breakers = [i for i in voice_audio if i.is_breaker()]
     normal = [i for i in voice_audio if not i.is_breaker()]

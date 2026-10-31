@@ -90,8 +90,9 @@
 
 ### Context: `glo` (the global modulation)
 
-- **Pages:** `mod` — `pitch_rate · pitch_depth · penv_base · penv_rate` (vibrato +
-  the pitch envelope).
+- **Pages:** `mod` — `pitch_rate · pitch_depth` (vibrato); `env` — `p-env-rates`
+  (`penv_on · penv_r1 · penv_r2 · penv_r3`) + `p-env-levels`
+  (`penv_r4 · penv_l1 · penv_l2 · penv_l3`) — the per-note pitch envelope.
 - **Bindings:** ENC_KNOB1–4 → `slot` 0–3.
 
 ## 4. Global bindings (always-on, resolved last)

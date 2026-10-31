@@ -1,8 +1,15 @@
 {
   "name": "pitch_env",
-  "summary": "Global pitch envelope (the 'pitch blip'): on the patch gate rising the pitch is offset by `base` (q15), then decays back to the specified pitch at `rate` (q16 one-pole).",
-  "ins": { "gate": { "rate": "event", "default": "patch_gate" } },
+  "summary": "Per-note pitch envelope (control rate): on/off + 4 rates (0..99) + 3 levels (Q15 pitch offset, bipolar). Retriggers to attack on every note-on (`trigger` = voice_trig[v]); a gate edge starts release. The one-pole uses `fm1_rate_coeff[rate]`; the level targets are the signed Q15 levels l1..l3; `cv` is the pitch offset (0 when off).",
+  "ins": {
+    "gate": { "rate": "event", "default": "voice_gate[v]" },
+    "trigger": { "rate": "event", "default": "voice_trig[v]" }
+  },
   "outs": { "cv": "control" },
-  "params": { "base": "q15", "rate": "q16" },
-  "state": { "level": "q15", "prev": "uint32" }
+  "params": {
+    "on": "uint32",
+    "r1": "rate", "r2": "rate", "r3": "rate", "r4": "rate",
+    "l1": "q15", "l2": "q15", "l3": "q15"
+  },
+  "state": { "stage": "uint32", "level": "q15" }
 }

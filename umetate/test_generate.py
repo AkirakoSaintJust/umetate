@@ -291,6 +291,106 @@ FM_OP: Patch = {
     "global": {"nodes": [], "wires": []},
 }
 
+# The phase-modulation contract. A rectified sine has a large DC mean: under PM the
+# carrier's *frequency* is unchanged (the DC is a constant phase offset); under the
+# old accumulating-FM phasor it detuned the carrier by the mean. The flat envelope
+# (l1=l2=l3, zero decay) keeps the test about the oscillator, not the EG.
+_PM_ENV: dict[str, int] = {
+    "r1": 99,
+    "r2": 0,
+    "r3": 0,
+    "r4": 99,
+    "l1": 99,
+    "l2": 99,
+    "l3": 99,
+}
+PM_DC_MOD: Patch = {
+    "name": "pm_dc_mod",
+    "voices": 2,
+    "voice": {
+        "nodes": [
+            {
+                "id": "carrier",
+                "type": "fm_op",
+                "params": {"ratio": 65536, "level": 99, "feedback": 0, **_PM_ENV},
+            },
+            {
+                "id": "mod",
+                "type": "fm_op",
+                "params": {
+                    "ratio": 32768,
+                    "waveform": 8,  # rectified sine: nonzero mean
+                    "level": 85,
+                    "feedback": 0,
+                    **_PM_ENV,
+                },
+            },
+        ],
+        "wires": [{"from": "mod.audio", "to": "carrier.fm"}],
+        "voice_out": "carrier.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+PM_FEEDBACK: Patch = {
+    "name": "pm_feedback",
+    "voices": 2,
+    "voice": {
+        "nodes": [
+            {
+                "id": "carrier",
+                "type": "fm_op",
+                "params": {"ratio": 65536, "level": 99, "feedback": 8000, **_PM_ENV},
+            }
+        ],
+        "wires": [],
+        "voice_out": "carrier.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
+# A single operator with a non-instant release rate (r4 = 60), for the note-off
+# release-tail contract: releasing a key must keep sounding then decay to silence.
+RELEASE_PATCH: Patch = {
+    "name": "release_test",
+    "voices": 1,
+    "voice": {
+        "nodes": [{"id": "op", "type": "fm_op", "params": {"ratio": 65536, "r4": 60}}],
+        "wires": [],
+        "voice_out": "op.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
+# A single operator with a per-note pitch envelope wired into its pitch. With
+# `on` = 1 and a +1-octave sustain (l1 = l2 = l3 = 32768), the carrier's
+# frequency doubles; with `on` = 0 the pitch envelope contributes nothing.
+_PENV: dict[str, int] = {
+    "r1": 99,
+    "r2": 0,
+    "r3": 0,
+    "r4": 99,
+    "l1": 32768,
+    "l2": 32768,
+    "l3": 32768,
+}
+
+
+def _penv_patch(on: int) -> Patch:
+    return {
+        "name": "penv_test",
+        "voices": 1,
+        "voice": {
+            "nodes": [
+                {"id": "op", "type": "fm_op", "params": {"ratio": 65536}},
+                {"id": "penv", "type": "pitch_env", "params": {**_PENV, "on": on}},
+            ],
+            "wires": [{"from": "penv.cv", "to": "op.pitch"}],
+            "voice_out": "op.audio",
+        },
+        "global": {"nodes": [], "wires": []},
+    }
+
+
 LPG_TEST: Patch = {
     "name": "lpg_test",
     "voices": 4,
@@ -322,13 +422,13 @@ DX_ENV: Patch = {
                 "id": "eg",
                 "type": "dx_env",
                 "params": {
-                    "r1": 20000,
-                    "r2": 6000,
-                    "r3": 3000,
-                    "r4": 9000,
-                    "l1": 32767,
-                    "l2": 24576,
-                    "l3": 16384,
+                    "r1": 80,
+                    "r2": 60,
+                    "r3": 50,
+                    "r4": 80,
+                    "l1": 99,
+                    "l2": 93,
+                    "l3": 87,
                 },
             },
             {"id": "vca", "type": "vca"},
@@ -689,7 +789,7 @@ VEL_RATE_PATCH: Patch = {
             {
                 "id": "op",
                 "type": "fm_op",
-                "params": {"ratio": 65536, "vel_rate": 32767, "r1": 20000, "l1": 32767},
+                "params": {"ratio": 65536, "vel_rate": 32767, "r1": 60, "l1": 99},
             },
         ],
         "wires": [],
@@ -734,7 +834,7 @@ RETRIG_PATCH: Patch = {
             {
                 "id": "op",
                 "type": "fm_op",
-                "params": {"ratio": 65536, "r1": 2000, "l1": 32767},
+                "params": {"ratio": 65536, "r1": 45, "l1": 99},
             },
         ],
         "wires": [],
@@ -822,7 +922,7 @@ LEGATO_PATCH: Patch = {
             {
                 "id": "op",
                 "type": "fm_op",
-                "params": {"ratio": 65536, "r1": 2000, "l1": 32767},
+                "params": {"ratio": 65536, "r1": 45, "l1": 99},
             },
         ],
         "wires": [],
@@ -2173,6 +2273,103 @@ def _render_samples(patch: Patch, frames: int) -> list[int]:
     return [int(x) for x in run.stdout.split()]
 
 
+def _up_crossings(samples: list[int]) -> int:
+    """Count - → + zero crossings (the fundamental's cycle count)."""
+    return sum(1 for a, b in zip(samples, samples[1:], strict=False) if a < 0 <= b)
+
+
+def _pm_semantics() -> tuple[bool, str]:
+    """The phasor is a *phase* modulator, not an integrator: a DC-heavy modulator
+    must not detune the carrier, and self-feedback must not collapse to a DC fixed
+    point. 440 Hz over 8192 frames at 44.1 kHz is ~81.7 up-crossings."""
+    dc = _render_samples(PM_DC_MOD, 8192)
+    up_dc = _up_crossings(dc)
+    fb = _render_samples(PM_FEEDBACK, 8192)
+    up_fb = _up_crossings(fb)
+    p2p = max(fb) - min(fb)
+    ok = 70 <= up_dc <= 95 and 70 <= up_fb <= 95 and p2p > 12000
+    if ok:
+        return True, ""
+    return False, (
+        f"PM contract: DC-mod up-crossings {up_dc} (want ~82 at 440 Hz), "
+        f"feedback up-crossings {up_fb}, p2p {p2p} (want > 12000)"
+    )
+
+
+def _release_tail() -> tuple[bool, str]:
+    """note-off releases: after a key release the operator envelope keeps sounding
+    (a release tail) and decays to silence — not an instant cut. The first 64
+    frames after note-off must be non-silent; the last 512 of a long render must
+    be near-silent."""
+    src = generate(RELEASE_PATCH)
+    cname = "release_test"
+    harness = (
+        "#include <stdio.h>\n#include <stdint.h>\n"
+        f"void {cname}_dsp_note_on(uint32_t note, uint32_t velocity);\n"
+        f"void {cname}_dsp_note_off(uint32_t note);\n"
+        f"void {cname}_dsp_render(int32_t *out, uint32_t frames);\n"
+        "static int32_t out[8192];\n"
+        "int main(void) {\n"
+        f"    {cname}_dsp_note_on(69, 100);\n"
+        f"    {cname}_dsp_render(out, 512);\n"
+        f"    {cname}_dsp_note_off(69);\n"
+        f"    {cname}_dsp_render(out, 64);\n"
+        "    int64_t e0 = 0; for (int i = 0; i < 128; i++) "
+        "e0 += (int64_t)out[i] * out[i];\n"
+        f"    {cname}_dsp_render(out, 4096);\n"
+        "    int64_t e1 = 0; for (int i = 7168; i < 8192; i++) "
+        "e1 += (int64_t)out[i] * out[i];\n"
+        '    printf("%lld %lld\\n", (long long)e0, (long long)e1);\n'
+        "    return 0;\n"
+        "}\n"
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        (d / "harness.c").write_text(harness)
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            return False, "compile failed:\n" + proc.stderr
+        run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+        if run.returncode != 0:
+            return False, "run failed:\n" + run.stderr
+    e0, e1 = (int(x) for x in run.stdout.split())
+    ok = e0 > 1_000_000 and e1 < 1_000_000
+    if ok:
+        return True, ""
+    return (
+        False,
+        f"release tail: energy right after off {e0} (want > 1e6), "
+        f"late {e1} (want < 1e6)",
+    )
+
+
+def _pitch_env() -> tuple[bool, str]:
+    """The per-note pitch envelope moves pitch: with `on` and a +1-octave sustain,
+    the carrier's fundamental doubles (≈2× up-crossings vs `off`)."""
+    on = _render_samples(_penv_patch(1), 8192)
+    off = _render_samples(_penv_patch(0), 8192)
+    up_on = _up_crossings(on)
+    up_off = _up_crossings(off)
+    ok = up_off >= 60 and up_on >= 1.8 * up_off
+    if ok:
+        return True, ""
+    return False, f"pitch envelope: on {up_on} vs off {up_off} up-crossings (want ≈2×)"
+
+
 def _mod_pulse_samples(patch: Patch, width_depth: int, frames: int) -> list[int]:
     """Generate + compile + run the pulse-modulation patch with a given `width_depth`,
     returning `frames` left-channel samples. One fresh process per call (the engine's
@@ -2532,9 +2729,9 @@ def main() -> int:
     if (
         "fourop_fm_init_entry fourop_fm_init[]" in hdr
         and "fourop_fm_INIT_N" in hdr
-        and "{ 148u, 7 }" in hdr  # algorithm 7 (the additive algorithm)
+        and "{ 164u, 7 }" in hdr  # algorithm 7 (the additive algorithm)
         and "{ 0u, 65536 }" in hdr  # op1 ratio, part 0
-        and "{ 74u, 65536 }" in hdr  # op1 ratio, part 1 (per-part expansion)
+        and "{ 82u, 65536 }" in hdr  # op1 ratio, part 1 (per-part expansion)
     ):
         print("ok: the init: table emits (algorithm 7 + per-part op params)")
     else:
@@ -2729,12 +2926,12 @@ def main() -> int:
         print("ok: the cc header carries the per-param [min, max] ranges")
 
     # the patch-level `cc:` list limits the CC map (the fourop patch's 173 params
-    # overflow the CC space; it declares its 51-param surface).
+    # overflow the CC space; it declares its 50-param surface).
     cm_sub = generate_cc_map(ffm)
-    if len(cm_sub["entries"]) == 51 and all(
+    if len(cm_sub["entries"]) == 56 and all(
         e["cc"] != 64 and not 120 <= e["cc"] <= 127 for e in cm_sub["entries"]
     ):
-        print("ok: the cc: list limits the map (51 exposed, reserved skipped)")
+        print("ok: the cc: list limits the map (56 exposed, reserved skipped)")
     else:
         print("FAIL: the cc: list does not limit the map as declared")
         failures += 1
@@ -2764,24 +2961,25 @@ def main() -> int:
         print(f"FAIL: fourop-fm panel.json does not resolve ({exc})")
         failures += 1
 
-    # carrier feedback: `feedback` (algo.car_fb) is the carrier-gated master,
-    # summed with a per-op `opN_feedback` (opN.fb.level) in each operator. Test the
-    # param structure and the node contract — not the emitted C (which is free to
-    # change shape).
+    # feedback is per-operator only (opN.fb.level). The earlier carrier-feedback
+    # master (algo.car_fb → fb1..fb4, gated onto the carriers) was scrapped — its
+    # nonzero default left a spurious feedback floor on every carrier. Assert the
+    # leftover is gone: `algo` is now just the algorithm selector, and no carrier
+    # gets a master feed.
     ffm_ids = param_ids(ffm)
     algo_spec = load_library(LIBRARY_ROOT)["algo"]
     ok = (
-        ffm_ids.get("feedback") == ffm_ids.get("algo.car_fb")
+        "feedback" not in ffm_ids
+        and "algo.car_fb" not in ffm_ids
         and ffm_ids.get("algorithm") == ffm_ids.get("algo.algorithm")
         and ffm_ids.get("op1_feedback") == ffm_ids.get("op1.fb.level")
-        and all(f"fb{i}" in algo_spec.outs for i in range(1, 5))
-        and all(algo_spec.outs[f"fb{i}"].kind != AUDIO for i in range(1, 5))
-        and "car_fb" in algo_spec.params
-        and "alg" in algo_spec.outs
+        and set(algo_spec.outs) == {"alg"}
+        and "car_fb" not in algo_spec.params
+        and "fb1" not in algo_spec.outs
     )
     print(
         ("ok: " if ok else "FAIL: ")
-        + "feedback is a carrier master + per-op depth (algo.car_fb + opN.fb.level)"
+        + "feedback is per-operator only (no carrier master / feedback floor)"
     )
     failures += 0 if ok else 1
 
@@ -2848,6 +3046,33 @@ def main() -> int:
     print(
         ("ok: " if ok else "FAIL: ")
         + (msg or "shipped fm_op macro renders non-silent then silent")
+    )
+    failures += 0 if ok else 1
+
+    ok, msg = _pm_semantics()
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (
+            msg
+            or (
+                "phase modulation (not frequency integration): "
+                "DC-safe + feedback survives"
+            )
+        )
+    )
+    failures += 0 if ok else 1
+
+    ok, msg = _release_tail()
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "note-off keeps the voice and decays (release tail)")
+    )
+    failures += 0 if ok else 1
+
+    ok, msg = _pitch_env()
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "per-note pitch envelope bends the pitch (on/off)")
     )
     failures += 0 if ok else 1
 

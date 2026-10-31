@@ -3,9 +3,9 @@
   "colors": {
     "background": "#000000",
     "surface": "#0a1414",
-    "text": "#ffffff",
-    "muted": "#9ca3af",
-    "accent": "#00ffff",
+    "text": "#38ff54",
+    "muted": "#5ca666",
+    "accent": "#ff5e81",
     "success": "#00ff2a",
     "warning": "#ffaa00",
     "error": "#ff0000"

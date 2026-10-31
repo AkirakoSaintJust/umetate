@@ -44,6 +44,7 @@ enum {
     UI_DISP_OFF_PCT,   /* <= 0 -> "off", else "N%" of [0,max] (e.g. a filter) */
     UI_DISP_HZ,        /* a Q32 rate -> "N.N Hz" */
     UI_DISP_SEMI,      /* a bipolar Q15 -> "+/-N.N st" (32768 = +1 octave) */
+    UI_DISP_WAVE,      /* a 0..11 waveform index -> its name ("sine"/"tri"/…) */
 };
 
 /* ---- binding kinds ---- */
@@ -104,6 +105,9 @@ typedef struct {
     uint8_t kind;                                /* UI_DISP_* */
     uint8_t curve;                               /* 0 = linear step, 1 = log step */
     int32_t min, max;                            /* the raw value's [min, max] */
+    uint8_t quantize;                            /* non-zero => step landmark-to-landmark */
+    uint8_t lm_count;                            /* sorted landmark count (0 = none) */
+    const int32_t *landmarks;                    /* ascending, every value in [min,max] */
 } ui_param_disp;
 
 typedef struct {

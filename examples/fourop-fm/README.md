@@ -3,7 +3,7 @@
 This worked example puts the framework through a complete four-operator FM
 synth — the **fourop-fm program** in `docs/roadmap.md` §6.11 (the modules it
 shipped are documented in §6.9). The instrument follows the OPZ/DX21 lineage and
-includes per-operator and carrier feedback, eight runtime-selectable algorithms,
+includes per-operator feedback, eight runtime-selectable algorithms,
 rate/level envelopes, and 12 waveforms. It also has a shared pitch LFO and pitch
 envelope, plus an amplitude LFO for each operator. It builds into a full
 firmware: **two independent timbres** (parts, channels 0/1), velocity, presets
@@ -13,14 +13,14 @@ glue `app.c` onto the frozen `rib.c` framework (`umetate build --synth`).
 ## 1. The synth
 
 - **Voice (20 voices):** four `fm_op` operators, each built from `phasor → osc →
-  dx_env → vca`, with one-sample self-feedback and a tremolo LFO. Four `delay1`
+  dx_env → tl`, with one-sample self-feedback and a tremolo LFO. Four `delay1`
   nodes provide the feedback paths, and a `route` node applies the selected
   algorithm's routing matrix at runtime. Because modulation reads delayed outputs,
   the graph stays acyclic for every algorithm. The `algo` node selects the matrix
-  and routes the HOME `feedback` control to the carrier.
+  at runtime.
 - **Global:** the carrier sum passes through an `svf` low-pass and `wavefolder`
-  before `out`. A shared `plfo` (vibrato) and `penv` (pitch envelope) feed each
-  operator's `pitch` through `csum`.
+  before `out`. A shared `plfo` (vibrato) and a per-note `penv` (pitch envelope)
+  feed each operator's `pitch` through `csum`.
 - **Algorithms:** eight rows from ymfm's `s_algorithm_ops`: {0, 1, 2, 3, 4, 5, 6,
   7} — the full standard TX81Z/DX100/DX21 4-op set; see `dsp-algorithm.md`.
 
@@ -28,7 +28,7 @@ glue `app.c` onto the frozen `rib.c` framework (`umetate build --synth`).
 
 | File | What it holds |
 | --- | --- |
-| `patch.json` | the declarative synth (voice/global zones, the `routing` table, `parts: 2`, the `model` byte, the `cc:` list — 51 exposed params → 179 set_param ids) |
+| `patch.json` | the declarative synth (voice/global zones, the `routing` table, `parts: 2`, the `model` byte, the `cc:` list — 56 exposed params → 194 set_param ids) |
 | `panel.json` | the UI (`home` + `op` + `fx` + `glo` contexts) |
 | `app.c` | the app glue (the `app_audio`/`app_main`/`app_idle` + service contexts) the framework composes |
 | `host-script.txt` | the host leg's script (notes on both parts, a CC, panic → WAV + screens) |

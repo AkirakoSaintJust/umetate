@@ -68,7 +68,8 @@ class ParamBinding(TypedDict):
     (the integer), `"ratio"` (a Q16 frequency multiplier, `1.00` = base pitch),
     `"pct"` (0..100% of [min,max]), `"pct_inv"` (100..0%), `"onoff"` (off/on),
     `"off_pct"` (≤0 → "off", else %), `"hz"` (a Q32 rate as Hz), or `"semi"` (a
-    bipolar Q15 as ±semitones). Absent = `"raw"`.
+    bipolar Q15 as ±semitones), or `"wave"` (a 0..11 waveform index as its name).
+    Absent = `"raw"`.
     """
 
     target: str
@@ -189,6 +190,8 @@ class Widget(TypedDict):
     ]  # scope/spectro: the op index (0..3) -> "op N of the active part"
     mix_part: NotRequired[int]  # scope/spectro: the part index (0..1) -> "part N mix"
     part: NotRequired[bool]  # subheader: 1 = "PART N", 0 = "OP N"
+    plural: NotRequired[bool]  # subheader: drop the N ("OP" / "PART")
+    plain: NotRequired[bool]  # subheader: no prefix at all (a global page)
     name: NotRequired[int]  # name row: the name index (0 = part, 1 = patch)
 
 

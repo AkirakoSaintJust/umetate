@@ -28,14 +28,16 @@ static int32_t cv_oy;            /* y offset for graph drawing */
 #define C_OK    THEME_SUCCESS           /* status: ok / saved / playing */
 #define C_WARN  THEME_WARNING           /* status: muted / dirty / caution */
 #define C_ERR   THEME_ERROR             /* status: error / halted */
-/* The screen is five steps of one colour, darkest to brightest, plus white.
- * Palettes are picked in the HOME-hold menu (COLOR). */
+/* The screen is five steps, plus white (the accent). Palettes are picked in the
+ * HOME-hold menu (COLOR). DEFAULT is the colourblind-safe WCAG palette (muted
+ * green grey, pale-yellow labels, purple secondary, bright-green values); the
+ * rest are five steps of one colour, darkest to brightest. */
 typedef struct {
     const char *name;
     uint16_t c[5];
 } palette_t;
 static const palette_t PALETTES[] = {
-    {"GREEN", {RGB(0, 40, 12), RGB(0, 84, 30), RGB(16, 140, 54), RGB(56, 200, 92), RGB(120, 255, 146)}},
+    {"DEFAULT", {RGB(46, 83, 51), RGB(92, 166, 102), RGB(234, 242, 145), RGB(199, 128, 255), RGB(56, 255, 84)}},
     {"AMBER", {RGB(60, 26, 0), RGB(110, 50, 0), RGB(178, 98, 24), RGB(225, 120, 8), RGB(255, 166, 40)}},
     {"CYAN", {RGB(0, 30, 50), RGB(0, 62, 96), RGB(38, 125, 169), RGB(56, 172, 222), RGB(140, 222, 255)}},
     {"RED", {RGB(52, 8, 8), RGB(100, 18, 14), RGB(189, 84, 76), RGB(226, 64, 48), RGB(255, 112, 92)}},

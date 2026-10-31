@@ -834,10 +834,12 @@ deliberately **no "now-playing" stage cursor**: tracking live envelope state fro
 CPU1 is CPU-heavy and unsafe for the audio core. The widget declares its 7 params
 explicitly (`params: [r1..r4, l1..l3]`), resolved to a per-operator `ENV_PARAM[n_op ×
 7]` table — no "7 consecutive flattened ids" assumption. The `glo` page edits the
-global pitch envelope (`penv_base`/`penv_rate`) and the vibrato. `feedback` is
-**per-op + carrier**: each operator's `opN_feedback` (the op page) is summed with
-the carrier-gated `feedback` master (the HOME knob) via `algo.fb1..fb4`; `master`
-is dropped — the `MASTER` pot is the volume. `ratio` is the operator's **frequency
+vibrato; the `env` context's P-ENV pages edit the per-note pitch envelope
+(`penv_on`, `penv_r1..r4`, `penv_l1..l3`). `feedback` is
+**per-op only**: each operator's `opN_feedback` (the op page) scales its own
+delayed oscillator output — there is no carrier-gated master (the early
+HOME-knob "carrier feedback" feature was scrapped; it left a spurious feedback
+floor on every carrier). `ratio` is the operator's **frequency
 multiplier** — a q16 runtime param (`inc = note_to_inc(note) · ratio >> 16`, so
 65536 = 1.0), not a raw increment.
 

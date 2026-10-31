@@ -28,7 +28,7 @@
         {
           "id": "env",
           "widgets": [
-            { "type": "subheader", "row": 2, "text": "ENV" },
+            { "type": "subheader", "row": 2, "text": "ENVS", "plural": true },
             { "type": "envelope", "row": 3, "span": 3,
               "params": ["op1.eg.r1", "op1.eg.r2", "op1.eg.r3", "op1.eg.r4", "op1.eg.l1", "op1.eg.l2", "op1.eg.l3"] },
             { "type": "envelope", "row": 6, "span": 3,
@@ -42,7 +42,7 @@
         {
           "id": "scope",
           "widgets": [
-            { "type": "subheader", "row": 2, "text": "SCOPE" },
+            { "type": "subheader", "row": 2, "text": "SCOPES", "plural": true },
             { "type": "scope", "row": 3, "span": 3, "channel": 0 },
             { "type": "scope", "row": 6, "span": 3, "channel": 1 },
             { "type": "scope", "row": 9, "span": 3, "channel": 2 },
@@ -52,7 +52,7 @@
         {
           "id": "spectro",
           "widgets": [
-            { "type": "subheader", "row": 2, "text": "SPECTRO" },
+            { "type": "subheader", "row": 2, "text": "SPECTROS", "plural": true },
             { "type": "spectro", "row": 3, "span": 3, "channel": 0 },
             { "type": "spectro", "row": 6, "span": 3, "channel": 1 },
             { "type": "spectro", "row": 9, "span": 3, "channel": 2 },
@@ -62,7 +62,7 @@
         {
           "id": "part-scope",
           "widgets": [
-            { "type": "subheader", "row": 2, "text": "PARTS" },
+            { "type": "subheader", "row": 2, "text": "SCOPES", "part": true, "plural": true },
             { "type": "scope", "row": 4, "span": 4, "mix_part": 0 },
             { "type": "scope", "row": 9, "span": 4, "mix_part": 1 }
           ]
@@ -70,7 +70,7 @@
         {
           "id": "part-spectro",
           "widgets": [
-            { "type": "subheader", "row": 2, "text": "PARTS" },
+            { "type": "subheader", "row": 2, "text": "SPECTROS", "part": true, "plural": true },
             { "type": "spectro", "row": 4, "span": 4, "mix_part": 0 },
             { "type": "spectro", "row": 9, "span": 4, "mix_part": 1 }
           ]
@@ -88,9 +88,9 @@
         {
           "id": "op",
           "widgets": [
-            { "type": "subheader", "row": 2, "text": "OP" },
+            { "type": "subheader", "row": 2, "text": "OSCILLATOR" },
             { "type": "param_row", "row": 3, "param": "op1.ph.inc_ratio", "text": "RATIO" },
-            { "type": "param_row", "row": 4, "param": "op1.vca.level", "text": "LEVEL" },
+            { "type": "param_row", "row": 4, "param": "op1.tl.level", "text": "LEVEL" },
             { "type": "param_row", "row": 5, "param": "op1.fb.level", "text": "FEEDBACK" },
             { "type": "param_row", "row": 6, "param": "op1.osc.waveform", "text": "WAVE" }
           ]
@@ -109,10 +109,10 @@
           "id": "a-env-rates",
           "widgets": [
             { "type": "subheader", "row": 2, "text": "A-ENV" },
-            { "type": "param_row", "row": 3, "param": "op1.eg.r1", "text": "ATK" },
-            { "type": "param_row", "row": 4, "param": "op1.eg.r2", "text": "DCY1" },
-            { "type": "param_row", "row": 5, "param": "op1.eg.r3", "text": "DCY2" },
-            { "type": "param_row", "row": 6, "param": "op1.eg.r4", "text": "REL" },
+            { "type": "param_row", "row": 3, "param": "op1.eg.r1", "text": "ATTACK RATE" },
+            { "type": "param_row", "row": 4, "param": "op1.eg.r2", "text": "DECAY1 RATE" },
+            { "type": "param_row", "row": 5, "param": "op1.eg.r3", "text": "DECAY2 RATE" },
+            { "type": "param_row", "row": 6, "param": "op1.eg.r4", "text": "RELEASE RATE" },
             { "type": "envelope", "row": 7, "span": 5,
               "params": ["op1.eg.r1", "op1.eg.r2", "op1.eg.r3", "op1.eg.r4", "op1.eg.l1", "op1.eg.l2", "op1.eg.l3"] }
           ]
@@ -121,19 +121,31 @@
           "id": "a-env-levels",
           "widgets": [
             { "type": "subheader", "row": 2, "text": "A-ENV" },
-            { "type": "param_row", "row": 3, "param": "op1.eg.l1", "text": "L1" },
-            { "type": "param_row", "row": 4, "param": "op1.eg.l2", "text": "L2" },
-            { "type": "param_row", "row": 5, "param": "op1.eg.l3", "text": "SUS" },
+            { "type": "param_row", "row": 3, "param": "op1.eg.l1", "text": "LEVEL 1" },
+            { "type": "param_row", "row": 4, "param": "op1.eg.l2", "text": "LEVEL 2" },
+            { "type": "param_row", "row": 5, "param": "op1.eg.l3", "text": "SUSTAIN" },
             { "type": "envelope", "row": 6, "span": 5,
               "params": ["op1.eg.r1", "op1.eg.r2", "op1.eg.r3", "op1.eg.r4", "op1.eg.l1", "op1.eg.l2", "op1.eg.l3"] }
           ]
         },
         {
-          "id": "p-env",
+          "id": "p-env-rates",
           "widgets": [
-            { "type": "subheader", "row": 2, "text": "P-ENV", "part": true },
-            { "type": "param_row", "row": 3, "param": "penv_base", "text": "BASE" },
-            { "type": "param_row", "row": 4, "param": "penv_rate", "text": "RATE" }
+            { "type": "subheader", "row": 2, "text": "P-ENV", "plain": true },
+            { "type": "param_row", "row": 3, "param": "penv_on", "text": "ON" },
+            { "type": "param_row", "row": 4, "param": "penv_r1", "text": "ATTACK RATE" },
+            { "type": "param_row", "row": 5, "param": "penv_r2", "text": "DECAY1 RATE" },
+            { "type": "param_row", "row": 6, "param": "penv_r3", "text": "DECAY2 RATE" }
+          ]
+        },
+        {
+          "id": "p-env-levels",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "P-ENV", "plain": true },
+            { "type": "param_row", "row": 3, "param": "penv_r4", "text": "RELEASE RATE" },
+            { "type": "param_row", "row": 4, "param": "penv_l1", "text": "LEVEL 1" },
+            { "type": "param_row", "row": 5, "param": "penv_l2", "text": "LEVEL 2" },
+            { "type": "param_row", "row": 6, "param": "penv_l3", "text": "SUSTAIN" }
           ]
         }
       ],
@@ -175,7 +187,7 @@
         {
           "id": "filter",
           "widgets": [
-            { "type": "subheader", "row": 2, "text": "FILTER" },
+            { "type": "subheader", "row": 2, "text": "FILTER", "plain": true },
             { "type": "param_row", "row": 3, "param": "filter_on", "text": "ON" },
             { "type": "param_row", "row": 4, "param": "cutoff", "text": "CUTOFF" },
             { "type": "param_row", "row": 5, "param": "res", "text": "RES" },
@@ -185,18 +197,18 @@
         {
           "id": "filter-env",
           "widgets": [
-            { "type": "subheader", "row": 2, "text": "FILTER ADSR" },
-            { "type": "param_row", "row": 3, "param": "fenv_a", "text": "ATK" },
-            { "type": "param_row", "row": 4, "param": "fenv_d", "text": "DCY" },
-            { "type": "param_row", "row": 5, "param": "fenv_s", "text": "SUS" },
-            { "type": "param_row", "row": 6, "param": "fenv_r", "text": "REL" },
+            { "type": "subheader", "row": 2, "text": "FILTER ADSR", "plain": true },
+            { "type": "param_row", "row": 3, "param": "fenv_a", "text": "ATTACK RATE" },
+            { "type": "param_row", "row": 4, "param": "fenv_d", "text": "DECAY RATE" },
+            { "type": "param_row", "row": 5, "param": "fenv_s", "text": "SUSTAIN" },
+            { "type": "param_row", "row": 6, "param": "fenv_r", "text": "RELEASE RATE" },
             { "type": "param_row", "row": 7, "param": "fenv_depth", "text": "DEPTH" }
           ]
         },
         {
           "id": "fold",
           "widgets": [
-            { "type": "subheader", "row": 2, "text": "FOLD" },
+            { "type": "subheader", "row": 2, "text": "FOLD", "plain": true },
             { "type": "param_row", "row": 3, "param": "fold_on", "text": "ON" },
             { "type": "param_row", "row": 4, "param": "fold_threshold", "text": "THRESH" },
             { "type": "param_row", "row": 5, "param": "fold_folds", "text": "FOLDS" },

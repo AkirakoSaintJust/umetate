@@ -1,8 +1,8 @@
 {
   "name": "algo",
-  "summary": "The FM algorithm selector + carrier-feedback master (control rate): owns the `algorithm` param, outputs it as `alg` for the audio router, and gates the `car_fb` master by the algorithm's carrier mask into fb1..fb4.",
+  "summary": "The FM algorithm selector (control rate): owns the `algorithm` param and echoes it (clamped to the 8 shipped routings) as `alg` for the audio router.",
   "ins": {},
-  "outs": { "alg": "control", "fb1": "control", "fb2": "control", "fb3": "control", "fb4": "control" },
-  "params": { "which": "table", "algorithm": "uint32", "car_fb": "q15" },
+  "outs": { "alg": "control" },
+  "params": { "algorithm": "uint32" },
   "state": {}
 }

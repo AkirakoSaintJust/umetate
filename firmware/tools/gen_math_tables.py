@@ -52,6 +52,20 @@ def main() -> None:
     semi_q16 = [q16(2.0 ** (i / 12.0)) for i in range(12)]
     cent_q16 = [q16(2.0 ** (i / 1200.0)) for i in range(100)]
 
+    # DX rate -> one-pole coefficient (Q16): 99 = instant, exponential (×2 per 10
+    # steps), 0 ≈ ~5 s to −72 dB. Drives the dx_env / pitch_env stages.
+    rate_coeff = [
+        min(65536, max(0, round(65536.0 * 2.0 ** (-(99 - r) / 10.0))))
+        for r in range(100)
+    ]
+    # DX total-level -> gain (Q15), 0.75 dB/step: 99 = 32767 (0 dB), 0 = −∞ (0).
+    # The operator output level uses `fm1_level_gain[level] >> 2` for the −12 dB
+    # single-operator headroom (four additive carriers then sum to 0 dBFS).
+    level_gain = [0] + [
+        max(1, min(32767, round(32767.0 * 10.0 ** (-(99 - l) * 0.75 / 20.0))))
+        for l in range(1, 100)
+    ]
+
     h = [
         "/* SPDX-License-Identifier: GPL-3.0-only",
         " * Copyright (C) 2026 P1Onken (umetate)",
@@ -70,6 +84,10 @@ def main() -> None:
     h += c_array("int32_t", "fm1_semi_q16", semi_q16, 8)
     h += [""]
     h += c_array("int32_t", "fm1_cent_q16", cent_q16, 8)
+    h += [""]
+    h += c_array("int32_t", "fm1_rate_coeff", rate_coeff, 8)
+    h += [""]
+    h += c_array("int32_t", "fm1_level_gain", level_gain, 8)
     h += [""]
 
     OUT.write_text("\n".join(h) + "\n")

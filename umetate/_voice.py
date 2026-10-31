@@ -21,6 +21,13 @@ from __future__ import annotations
 
 from ._ir import ParamEntry
 
+# The release tail: a released voice stays allocated (rendered with gate=0, so its
+# envelope runs the release stage) for up to this many control blocks before it is
+# freed for stealing. 8192 blocks ≈ 5.9 s at 44100/32 — long enough for the
+# slowest DX rate (0 ≈ 5.7 s to −72 dB). The voice is silent (and steal-first)
+# once its envelope actually reaches zero; this only bounds the hold.
+RELEASE_BLOCKS = 8192
+
 # (cname, default, friendly name, min, max, unit) for the six universal voice-mode
 # params. Multi-timbre: per-part arrays addressed through the part index; the
 # single-timbre fallback keeps them global scalars.
@@ -114,6 +121,7 @@ def voice_state_decls(per_part: bool) -> list[str]:
         "static uint8_t voice_trig[NVOICE] UMETATE_CPU1;",
         "static uint8_t voice_part[NVOICE] UMETATE_CPU1; /* the part a voice belongs to */",
         "static uint32_t voice_delay[NVOICE] UMETATE_CPU1; /* onset-offset samples (0 = live) */",
+        "static uint16_t voice_rel[NVOICE] UMETATE_CPU1; /* release-tail blocks (0 = live or idle) */",
         "static uint32_t voice_inc[NVOICE] UMETATE_CPU1; /* current base increment */",
         "static uint32_t voice_target_inc[NVOICE] UMETATE_CPU1; /* glide target */",
         "static int32_t voice_detune[NVOICE] UMETATE_CPU1;",
@@ -247,6 +255,7 @@ def _note_on_ch_single(name: str) -> list[str]:
         "        voice_note[pick] = (uint8_t)snote;",
         "        voice_age[pick] = ++ages;",
         "        voice_gate[pick] = 1;",
+        "        voice_rel[pick] = 0;",
         "        voice_trig[pick] = trig;",
         "        /* 0..127 -> q15 (32767/127 ~= 258) */",
         "        voice_velocity[pick] = (int32_t)(velocity * 258u);",
@@ -302,6 +311,7 @@ def _note_on_ch_parts(name: str) -> list[str]:
         "            voice_age[mv] = ++ages;",
         "            voice_velocity[mv] = (int32_t)(velocity * 258u);",
         "            voice_gate[mv] = 1;",
+        "            voice_rel[mv] = 0;",
         "            voice_trig[mv] = (uint8_t)((vm_legato[p] && was) ? 0u : 1u);",
         "            voice_target_inc[mv] = (uint32_t)(((uint64_t)note_to_inc(active) * ",
         "(uint32_t)voice_detune[mv]) >> 16);",
@@ -347,6 +357,7 @@ def _note_on_ch_parts(name: str) -> list[str]:
         "        voice_note[pick] = (uint8_t)snote;",
         "        voice_age[pick] = ++ages;",
         "        voice_velocity[pick] = (int32_t)(velocity * 258u);",
+        "        voice_rel[pick] = 0;",
         "        if (voice_delay[pick] > 0u) {",
         "            voice_gate[pick] = 0; /* pending: the envelope attacks at expiry */",
         "        } else {",
@@ -376,7 +387,7 @@ def note_off(name: str, n_parts: int) -> list[str]:
             "            if (mono_held[p][note]) mono_held[p][note]--;",
             "            uint32_t active = voice_mono_active(p, vm_note_priority[p]);",
             "            if (mv == 0xFFu) continue;",
-            "            if (active == 0xFFu) { voice_gate[mv] = 0; continue; }",
+            f"            if (active == 0xFFu) {{ voice_gate[mv] = 0; voice_rel[mv] = {RELEASE_BLOCKS}u; continue; }}",
             "            if (active != (uint32_t)voice_note[mv]) {",
             "                voice_note[mv] = (uint8_t)active;",
             "                if (!vm_legato[p]) voice_trig[mv] = 1;",
@@ -388,7 +399,7 @@ def note_off(name: str, n_parts: int) -> list[str]:
             "        }",
             "    }",
             "    for (uint32_t v = 0; v < NVOICE; v++)",
-            "        if (voice_note[v] == note) { voice_gate[v] = 0; voice_delay[v] = 0; }",
+            f"        if (voice_note[v] == note) {{ voice_gate[v] = 0; voice_rel[v] = {RELEASE_BLOCKS}u; voice_delay[v] = 0; }}",
             "}",
             "",
         ]
@@ -398,7 +409,7 @@ def note_off(name: str, n_parts: int) -> list[str]:
         "    if (vm_mode == 1) {",
         "        if (mono_held[note]) mono_held[note]--;",
         "        uint32_t active = voice_mono_active(vm_note_priority);",
-        "        if (active == 0xFFu) { voice_gate[0] = 0; return; }",
+        f"        if (active == 0xFFu) {{ voice_gate[0] = 0; voice_rel[0] = {RELEASE_BLOCKS}u; return; }}",
         "        if (active != (uint32_t)voice_note[0]) {",
         "            voice_note[0] = (uint8_t)active;",
         "            if (!vm_legato) voice_trig[0] = 1;",
@@ -410,7 +421,7 @@ def note_off(name: str, n_parts: int) -> list[str]:
         "        return;",
         "    }",
         "    for (uint32_t v = 0; v < NVOICE; v++)",
-        "        if (voice_note[v] == note) voice_gate[v] = 0;",
+        f"        if (voice_note[v] == note) {{ voice_gate[v] = 0; voice_rel[v] = {RELEASE_BLOCKS}u; }}",
         "}",
         "",
     ]
@@ -466,9 +477,9 @@ def delay_countdown(name: str) -> list[str]:
 
 
 def all_off(per_part: bool) -> list[str]:
-    """The all-notes-off (panic) body: release every voice + the mono tracker."""
+    """The all-notes-off (panic) body: hard-cut every voice + the mono tracker."""
     lines = [
-        "    for (uint32_t v = 0; v < NVOICE; v++) voice_gate[v] = 0;",
+        "    for (uint32_t v = 0; v < NVOICE; v++) { voice_gate[v] = 0; voice_rel[v] = 0; }",
         "    for (uint32_t v = 0; v < NVOICE; v++) voice_delay[v] = 0;",
     ]
     if per_part:
@@ -484,7 +495,7 @@ def all_off(per_part: bool) -> list[str]:
 def reset(per_part: bool) -> list[str]:
     """The reset body: all-off + age/serial zero."""
     lines = [
-        "    for (uint32_t v = 0; v < NVOICE; v++) voice_gate[v] = 0;",
+        "    for (uint32_t v = 0; v < NVOICE; v++) { voice_gate[v] = 0; voice_rel[v] = 0; }",
         "    for (uint32_t v = 0; v < NVOICE; v++) voice_delay[v] = 0;",
     ]
     if per_part:

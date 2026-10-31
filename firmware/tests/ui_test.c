@@ -155,6 +155,8 @@ int main(void)
         CHECK(ui_streq(s, "100%"), "res (inverted) 0 formats as 100%");
         ui_params()[P_semi] = 2731;     ui_param_fmt(P_semi, 0, s, sizeof s);
         CHECK(ui_streq(s, "1.00st"), "semi 2731 formats as 1.00st");
+        ui_params()[P_semi] = -2731;    ui_param_fmt(P_semi, 0, s, sizeof s);
+        CHECK(ui_streq(s, "-1.00st"), "semi -2731 formats as -1.00st (sign-symmetric)");
         ui_params()[P_hz] = 97392;      ui_param_fmt(P_hz, 0, s, sizeof s);
         CHECK(ui_streq(s, "1.0Hz"), "hz 97392 formats as 1.0Hz");
     }
@@ -167,6 +169,22 @@ int main(void)
     ui_params()[P_fold] = 0;
     ui_handle(UI_SRC_ENC_KNOB3, -9999);
     CHECK(ui_params()[P_fold] == 0, "a linear step clamps at min");
+
+    /* a landmark param steps one landmark per detent, so no sparse entry is
+       skipped (0.50 -> 1.00 -> 2.00, not 0.50 -> 2.00). */
+    ui_params()[P_ratio] = 32768;
+    ui_handle(UI_SRC_ENC_KNOB4, 1);
+    CHECK(ui_params()[P_ratio] == 65536, "landmark step moves to the next ratio");
+    ui_handle(UI_SRC_ENC_KNOB4, 1);
+    CHECK(ui_params()[P_ratio] == 131072, "landmark step does not skip the last ratio");
+    ui_handle(UI_SRC_ENC_KNOB4, -1);
+    CHECK(ui_params()[P_ratio] == 65536, "landmark step moves back one ratio");
+    ui_params()[P_ratio] = 1;  /* below the first landmark (e.g. a stale load) */
+    ui_handle(UI_SRC_ENC_KNOB4, 1);
+    CHECK(ui_params()[P_ratio] == 32768, "a step from below lands on the first landmark");
+    ui_params()[P_ratio] = 131072;
+    ui_handle(UI_SRC_ENC_KNOB4, 9999);
+    CHECK(ui_params()[P_ratio] == 131072, "landmark stepping clamps at the last entry");
 
     /* the active part starts at 0; part_next is a no-op with one part */
     CHECK(ui_part() == 0, "ui_part starts at 0");

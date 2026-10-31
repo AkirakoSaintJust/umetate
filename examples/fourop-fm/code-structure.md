@@ -15,7 +15,7 @@
   - `modules/nodes/mix4/` — 4-input summer.
   - `modules/nodes/route4/` — the general routing-matrix row mixer.
   - `modules/nodes/route/` — the audio-rate 4-op FM router (reads `alg` + 4 rows).
-  - `modules/nodes/algo/` — the algorithm selector + carrier-feedback gater (control rate).
+  - `modules/nodes/algo/` — the algorithm selector (control rate).
   - `modules/nodes/lfo/` — the control-rate low-frequency oscillator.
   - `modules/nodes/mute/` — the output gate (per-operator mute).
   - `modules/nodes/gain/` — pure audio×cv gain (no static `level`).
@@ -45,19 +45,31 @@ No hand-written `dsp.c`: `generate(patch)` emits `<synth>_dsp_*` from the patch
 
 - **`dx_env`** — `node.json`: `ins { gate(event, default voice_gate[v]),
   trigger(event, default voice_trig[v]), rate_scale(control, default 32768) }`,
-  `outs { cv(control) }`, `params { r1 r2 r3 r4(q16), l1 l2 l3(q15) }`,
+  `outs { cv(control) }`, `params { r1 r2 r3 r4(rate 0..99), l1 l2 l3(level 0..99) }`,
   `state { stage(uint32), level(q15) }`. `node.c`: a 5-stage one-pole state
-  machine (control rate); `trigger` retriggers on a note-on edge, `rate_scale`
-  scales every stage's coefficient (velocity → envelope rate). Host test:
-  `test_generate.py` `DX_ENV`.
+  machine (control rate) whose stage coefficient is `fm1_rate_coeff[rate]`
+  (scaled by `rate_scale` — velocity → envelope rate) and whose level targets are
+  `fm1_level_gain[level]` (0.75 dB/step); `trigger` retriggers on a note-on edge.
+  Host test: `test_generate.py` `DX_ENV` + `RELEASE_PATCH`.
+- **`tl`** — `node.json`: `ins { audio, cv(control, default 32768) }`,
+  `outs { audio }`, `params { level(level 0..99) }`. `node.c`: the Yamaha
+  total-level cell `audio × cv × (fm1_level_gain[level] >> 2)` — the `>> 2` is the
+  −12 dB single-operator headroom. Host test: the fourop-fm render + clipping
+  headroom assertions.
+- **`pitch_env`** — `node.json`: `ins { gate(event, default voice_gate[v]),
+  trigger(event, default voice_trig[v]) }`, `outs { cv(control) }`,
+  `params { on(uint32), r1..r4(rate), l1..l3(q15) }`, `state { stage(uint32),
+  level(q15) }`. `node.c`: a per-note rate/level envelope with *signed* Q15
+  level targets (a pitch offset), retriggered on every note-on and gated by `on`.
+  Host test: `test_generate.py` `_release_tail`.
 - **`route`** — `node.json`: `ins { alg(control), a b c d(audio) }`,
   `outs { mod2 mod3 mod4 car(audio) }`, `params { which(table) }`. `node.c`: four
   `fm1_route4` calls reading rows 1–4 of the routing table, indexed by `alg`.
   Host test: the fourop-fm render + routing-table assertions in `test_generate.py`.
-- **`algo`** — `node.json`: `ins {}`, `outs { alg(control), fb1..fb4(control) }`,
-  `params { which(table), algorithm(uint32), car_fb(q15) }`. `node.c`: echoes
-  `algorithm` as `alg` and gates `car_fb` by the carrier mask into `fb1..fb4`
-  (control rate). Host test: `test_generate.py` feedback + separation assertions.
+- **`algo`** — `node.json`: `ins {}`, `outs { alg(control) }`,
+  `params { algorithm(uint32) }`. `node.c`: echoes `algorithm` (clamped to the 8
+  routings) as `alg` (control rate). Host test: `test_generate.py` algorithm +
+  separation assertions.
 - **`route4`** / **`mix4`** — the general primitive (row mixer) + 4-sum. Host
   test: `test_generate.py` `ROUTE4_TEST`.
 - **`lfo`** — `node.json`: `ins {}`, `outs { cv(control) }`,
@@ -81,8 +93,10 @@ No hand-written `dsp.c`: `generate(patch)` emits `<synth>_dsp_*` from the patch
 - **Per-voice state:** SoA (the generator default) — `opN_ph_phase[NVOICE]`,
   `opN_eg_level[NVOICE]`, `opN_lfo_phase[NVOICE]` (the per-op tremolo LFO),
   `dN_prev[NVOICE]`, etc.
-- **Single-instance control state:** the global `svf`/`wavefolder` scalars, the
-  `plfo` phase (the shared pitch LFO), and the `penv`/`psum` control scalars.
+- **Single-instance control state:** the global `svf`/`wavefolder` scalars and the
+  `plfo` phase (the shared pitch LFO).
+- **Per-voice control state:** `penv`/`psum` (the per-note pitch envelope + its
+  vibrato sum), run per voice in the control prologue.
 - **Section placement:** per-sample bodies in `.dsp_text`; `routing` + the
   quarter-sine tables `const` (XIP); engine state `.cpu1_bss`.
 

@@ -221,13 +221,54 @@ static void ui_clamp_param(uint16_t p)
 
 /* step a param by `delta` detents per its display scale: linear params move by a
  * fraction of the range (128 detents full-scale), log params move multiplicatively
- * (~3% per detent, so 0 stays reachable). The result is clamped to [min, max]. */
+ * (~3% per detent, so 0 stays reachable). The result is clamped to [min, max].
+ * A quantized param (`quantize` + a sorted landmark table) moves one landmark per
+ * detent instead, so sparse ladders (the coarse ratios) never skip an entry. */
 static void ui_step_param(uint16_t p, int32_t delta)
 {
     const ui_param_disp *d = (ui_t->disp && p < ui_t->n_params) ? &ui_t->disp[p] : 0;
     int32_t v = p < ui_t->n_params ? ui_param_v[p] : 0;
     if (!delta)
         return;
+    /* --- landmark quantization: one detent = the next/previous landmark --- */
+    if (d && d->quantize && d->lm_count && d->landmarks) {
+        int32_t step = delta;
+        if (step > (int32_t)d->lm_count)
+            step = (int32_t)d->lm_count;
+        if (step < -(int32_t)d->lm_count)
+            step = -(int32_t)d->lm_count;
+        while (step > 0) {
+            int32_t next = d->landmarks[d->lm_count - 1];
+            uint8_t i;
+            for (i = 0; i < d->lm_count; i++) {
+                if (d->landmarks[i] > v) {
+                    next = d->landmarks[i];
+                    break;
+                }
+            }
+            if (next <= v)
+                break;
+            v = next;
+            step--;
+        }
+        while (step < 0) {
+            int32_t prev = d->landmarks[0];
+            uint8_t i;
+            for (i = d->lm_count; i > 0; i--) {
+                if (d->landmarks[i - 1] < v) {
+                    prev = d->landmarks[i - 1];
+                    break;
+                }
+            }
+            if (prev >= v)
+                break;
+            v = prev;
+            step++;
+        }
+        ui_param_v[p] = v;
+        ui_clamp_param(p);
+        return;
+    }
     if (d && d->curve) {
         if (v == 0)
             v = delta > 0 ? 1 : -1;
@@ -240,6 +281,11 @@ static void ui_step_param(uint16_t p, int32_t delta)
         if (step < 1)
             step = 1;
         v += delta * step;
+    }
+    /* --- on/off wrap: 0 <-> 1 (only for ONOFF/ONOFF_INV display kinds) --- */
+    if (d && (d->kind == UI_DISP_ONOFF || d->kind == UI_DISP_ONOFF_INV)) {
+        /* wrap any integer into {0,1}: even -> 0, odd -> 1 */
+        v = (v % 2 + 2) % 2;
     }
     ui_param_v[p] = v;
     ui_clamp_param(p);
@@ -512,9 +558,17 @@ void ui_param_fmt(uint16_t p, const char *unit, char *out, uint32_t n)
         ui_strcat(out, "Hz");
         break;
     case UI_DISP_SEMI:                             /* bipolar Q15 -> signed semitones */
-        ui_itoa_dec((int32_t)(((int64_t)v * 1200) >> 15), 2, out);
+        ui_itoa_dec((int32_t)(((int64_t)v * 1200) / 32768), 2, out);
         ui_strcat(out, "st");
         break;
+    case UI_DISP_WAVE: {                           /* a 0..11 waveform -> its name */
+        static const char *const names[12] = {
+            "sine", "tri", "half sine", "half tri", "2x sine", "2x tri",
+            "2x half sine", "2x half tri", "rect sine", "pulse", "square", "saw"};
+        uint32_t i = v >= 0 && v < 12 ? (uint32_t)v : 0u;
+        ui_strcat(out, names[i]);
+        break;
+    }
     default:
         ui_itoa(v, out);
         break;
@@ -771,26 +825,36 @@ static void ui_draw_status(const ui_widget *w)
     cv_blit(x, y);
 }
 
-/* the page's subheader: "OP N <suffix>" (param == 0) or "PART N <suffix>"
- * (param == 1), where N is the active operator/part and `text` is the param-group
- * name (e.g. "A-ENV", "P-LFO"). A page's params belong to exactly this group. */
+/* the page's subheader (param = the prefix mode): 0 = "OP N <suffix>", 1 =
+ * "PART N <suffix>", 2 = "OP <suffix>", 3 = "PART <suffix>", 4 = "<suffix>" (a
+ * global page, no prefix). N is the active operator/part; `text` is the
+ * param-group name. */
 static void ui_draw_subheader(const ui_widget *w)
 {
     uint32_t x, y, wd, ht;
     char s[24], t[4];
     ui_region(w, &x, &y, &wd, &ht);
-    if (w->param == 1u) {
+    s[0] = 0;
+    switch (w->param) {
+    case 1u:                                       /* PART N */
         ui_strcpy(s, "PART ");
         t[0] = (char)('1' + ui_selected_part);
         t[1] = 0;
-    } else {
+        ui_strcat(s, t);
+        break;
+    case 2u: ui_strcpy(s, "OP "); break;           /* OP (no number) */
+    case 3u: ui_strcpy(s, "PART "); break;         /* PART (no number) */
+    case 4u: break;                                /* global: no prefix */
+    default:                                       /* OP N */
         ui_strcpy(s, "OP ");
         t[0] = (char)('1' + ui_selected_op);
         t[1] = 0;
+        ui_strcat(s, t);
+        break;
     }
-    ui_strcat(s, t);
     if (w->text) {
-        ui_strcat(s, " ");
+        if (s[0])
+            ui_strcat(s, " ");
         ui_strcat(s, w->text);
     }
     cv_begin(wd, ht, C_BLACK);
@@ -912,8 +976,12 @@ static int32_t ui_widget_value(const ui_widget *w, uint32_t slot)
     case UI_CUSTOM: return ui_custom_v[slot];
     case UI_SCOPE:
     case UI_SPECTRO: return (int32_t)scope_seq();  /* redraw on each new snapshot */
-    case UI_SUBHEADER: return w->param == 1u ? (int32_t)ui_selected_part
-                                             : (int32_t)ui_selected_op;
+    case UI_SUBHEADER:                               /* redraw on the active op/part change */
+        if (w->param == 0u)
+            return (int32_t)ui_selected_op;
+        if (w->param == 1u)
+            return (int32_t)ui_selected_part;
+        return 0;                                    /* 2/3/4: no number, static */
     case UI_NAME: {                                 /* redraw when the name changes */
         const char *n = ui_name_get(w->param < 2u ? w->param : 0u);
         int32_t h = 0;

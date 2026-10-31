@@ -56,18 +56,19 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
 
 - **Parameters** (Q-format, range, default, rate, modulatable):
 
-  | param | Q | range | meaning |
+  | param | kind | range | meaning |
   | --- | --- | --- | --- |
-  | `r1 r2 r3 r4` | q16 | 0…65535 | one-pole coefficient (0 = ∞, 65536 = instant) |
-  | `l1` | q15 | 0…32767 | attack peak |
-  | `l2` | q15 | 0…32767 | decay1 target |
-  | `l3` | q15 | 0…32767 | sustain level |
+  | `r1 r2 r3 r4` | rate | 0…99 | one-pole coefficient `fm1_rate_coeff[rate]` (99 = instant, ×2 per 10 steps) |
+  | `l1` | level | 0…99 | attack peak (→ `fm1_level_gain[l1]`) |
+  | `l2` | level | 0…99 | decay1 target |
+  | `l3` | level | 0…99 | sustain level |
 
-  All block rate, modulatable. The rate→time relationship is `t ≈ 1/rate` (one-pole),
-  so a UI "rate" knob should use a log curve.
+  All block rate, modulatable. The rate is a table-looked one-pole coefficient; the
+  level is a table-looked gain (0.75 dB/step), so the UI knobs are linear 0–99.
 
-- **Coefficients / precompute:** none — the rates are used directly as one-pole
-  coefficients; the per-tick work is one `fm1_madd_sat` (a Q15×Q16 multiply-add).
+- **Coefficients / precompute:** `fm1_rate_coeff[100]` (Q16) and
+  `fm1_level_gain[100]` (Q15) are the fixed tables (`gen/math_tables.h`); the
+  per-tick work is one `fm1_madd_sat` (a Q15×Q16 multiply-add) + two table loads.
 
 - **State:** `stage` (uint32, 0…4), `level` (q15).
 
@@ -80,9 +81,10 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   attack/decay/sustain/release decomposition and the "attack is the only stage that
   raises the level" rule). Cross-checked against **Dexed/msfa** (GPL-3.0 — consulted
   only). **Deviation:** ymfm/Dexed advance a log-domain *attenuation* by a table
-  increment and convert via a power table; here the rate is a Q16 one-pole
-  coefficient (the §3.3 exponential form) — the same exponential character, one
-  multiply-add, no log/power tables. Recorded as *learned, re-implemented*.
+  increment and convert via a power table; here the rate is a 0–99 index into a
+  one-pole coefficient table and the level a 0–99 index into a gain table — the
+  same exponential character (rate→time, level→dB), one multiply-add + two table
+  loads. Recorded as *learned, re-implemented*.
 
 - **Performance note:** control rate (no audio ports), one `fm1_madd_sat` + one
   compare per tick; runs in the control prologue, not the sample loop.
@@ -152,9 +154,7 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   ergonomic **audio-rate** 4-op router the patch uses — reads the `alg` control
   input (the selected algorithm) and all five rows (4 modulation + the carrier
   sum) at once. `algo` is the **control-rate** selector: it owns the `algorithm`
-  param (outputting it as `alg` for `route`) and gates the `car_fb` master by the
-  carrier mask into `fb1..fb4` — so the feedback gating runs once per block, not
-  per sample.
+  param and outputs it as `alg` for `route`.
 
 - **Algorithm** (fixed-point, exactly): all four operators compute in parallel, and
   every modulation reads the **1-sample-delayed** output of its sources (so the
@@ -169,15 +169,12 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   (audio) → `audio`. `route`: `alg` (control, the selected algorithm) + `a b c d`
   (audio, the four delayed operator outputs) → `mod2 mod3 mod4 car` (audio —
   modulation into op2/op3/op4 and the carrier sum). `algo`: (none) → `alg`
-  (control, = `algorithm`) + `fb1 fb2 fb3 fb4` (control — the carrier-gated
-  feedback master for op1..op4).
+  (control, = `algorithm`).
 
 - **Parameters:** `route4`: `which` (table — the routing table), `algorithm`
   (uint32, 0…7), `dest` (uint32, 0…4: 0–3 = modulation rows, 4 = carrier mask).
-  `route`: `which` (table). `algo`: `which` (table), `algorithm` (uint32, 0…7),
-  `car_fb` (q15 — the carrier feedback master). `algo.algorithm` is the one shared
-  selection (broadcast as `alg` to `route`); `car_fb` is gated by the carrier mask
-  into `fb1..fb4`.
+  `route`: `which` (table). `algo`: `algorithm` (uint32, 0…7). `algo.algorithm` is
+  the one shared selection (broadcast as `alg` to `route`).
 
 - **Coefficients / precompute:** the routing table is the `tables:` entry
   `{ "kind": "routing" }` → 8 algorithms × 5 rows × 4 weights (160 Q15 0/1). The
@@ -200,22 +197,20 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   sample (per destination); `route` = five such rows (4 modulation + carrier) per
   sample, reading the held `alg` control scalar — the one `route` node the patch
   uses replaces five `route4` instances (and their five would-be-duplicated
-  `algorithm` params). `algo` runs at control rate (once per block): one table row
-  read + four conditional selects for the `fb1..fb4` gates, which no longer live
-  in the audio loop. `mix4` is the general 4-sum (used by the standalone routing
-  test, not the patch, which takes its carrier sum from `route.car`). Memoryless,
-  no branching.
+  `algorithm` params). `algo` runs at control rate (once per block): one clamp
+  read, no audio-loop work. `mix4` is the general 4-sum (used by the standalone
+  routing test, not the patch, which takes its carrier sum from `route.car`).
+  Memoryless, no branching.
 
 ---
 
 ## Component: `fm_op` (the DX-style operator)
 
 - **Purpose:** one FM operator = `phasor → osc → dx_env → vca`, with per-op
-  1-sample self-feedback (`feedback`, a param) plus a carrier-gated `car_fb` input
-  (the HOME feedback master), a q16 `ratio`, a per-op amplitude LFO (tremolo), a
-  per-op `mute` gate, and a `pitch` input (the shared vibrato LFO). The complete
-  DX-style building block; an N-operator voice is N `fm_op` wired by the routing
-  matrix (§`route`).
+  1-sample self-feedback (`feedback`, a param), a q16 `ratio`, a per-op amplitude
+  LFO (tremolo), a per-op `mute` gate, and a `pitch` input (the shared vibrato
+  LFO). The complete DX-style building block; an N-operator voice is N `fm_op`
+  wired by the routing matrix (§`route`).
 
 - **Algorithm** (fixed-point, exactly):
   ```
@@ -226,7 +221,7 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   phase += inc_eff + (sum << 16)                   (FM index: full-scale = ±π phase)
   sine   = fm1_sin_wave(phase, waveform)          (12-wave OPZ+OPL union)
   out    = sine · eg_t · level                     (Q15)
-  feedback_prev = (out · (feedback + car_fb)) delayed 1 sample   (feedback = per-op, car_fb = carrier master)
+  feedback_prev = (out · feedback) delayed 1 sample                (per-op feedback)
   audio  = mute ? 0 : out                          (the per-op mute gate)
   ```
   `inc = note_to_inc(note) · ratio >> 16` (a q16 frequency multiplier, runtime —
@@ -241,16 +236,14 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   loop still runs internally.
 
 - **Inputs / outputs:** `fm` (audio, external modulation), `pitch` (control, the
-  shared vibrato LFO), `car_fb` (control, the carrier feedback master) → `audio`
-  (audio).
+  shared vibrato LFO) → `audio` (audio).
 
 - **Parameters** (mapped inward):
   `ratio` (q16, the frequency multiplier — runtime), `waveform` (uint32 0–11),
   `level` (q15, the FM index / output amplitude), `feedback` (q15, the per-op
   self-modulation depth), `mute` (uint32, 0/1 — the output gate), `trem_rate` (q32,
   the per-op LFO increment), `trem_depth` (q15, the tremolo depth), and the
-  `dx_env` params `r1..r4, l1..l3`. The `car_fb` *input* adds the carrier-gated
-  master (§`route`).
+  `dx_env` params `r1..r4, l1..l3`.
 
 - **Coefficients / precompute:** none; `inc` is note-derived at note-on (from the
   runtime `ratio`), the feedback is a `delay1` register, the LFO is a control-rate
@@ -321,41 +314,47 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
 
 ---
 
-## Component: `pitch_env` (the global pitch envelope)
+## Component: `pitch_env` (the per-note pitch envelope)
 
-- **Purpose:** a patch-level "pitch blip" — on the first note-on, every operator's
-  pitch is offset by `base`, then decays back to the specified (note-derived) pitch.
-  Summed with the vibrato (`csum`) into the operators' `pitch` input.
+- **Purpose:** a per-note pitch envelope — on every note-on each operator's pitch
+  runs a rate/level envelope (attack → decay1 → decay2 → sustain → release) with
+  *signed* Q15 level targets, retriggered by `voice_trig[v]` and gated by `on`
+  (off by default). Summed with the vibrato (`csum`) into the operators' `pitch`
+  input.
 
 - **Algorithm** (fixed-point, exactly):
   ```
-  on patch_gate rise:  level = base            (q15 pitch offset)
-  level -= level · rate >> 16                   (one-pole decay toward 0, q16)
-  cv = level                                    (q15 bipolar; feeds the pitch input)
+  on trigger:  stage = 0; level = 0
+  on gate-off: stage = 4 (release toward 0)
+  stage 0: level -> l1 (attack)   stage 1: l1 -> l2 (decay1)
+  stage 2: l2 -> l3 (decay2)      stage 3: hold l3    stage 4: level -> 0
+  cv = on ? level : 0               (q15 bipolar; feeds the pitch input)
   ```
-  `base` is the starting offset from the specified pitch (the same ±1 octave scale
-  as `phasor.pitch`: 32767 = +1 octave, 2731 ≈ +1 semitone). `rate` is a q16
-  one-pole coefficient (the decay speed toward 0).
+  `l1..l3` are the signed Q15 pitch offsets (the same ±1 octave scale as
+  `phasor.pitch`: 32768 = +1 octave, 2731 ≈ +1 semitone). `r1..r4` are 0–99 rates
+  (the `fm1_rate_coeff` one-pole table).
 
-- **Inputs / outputs:** `gate` (event, default `patch_gate` = any voice active) →
-  `cv` (control, q15 bipolar).
+- **Inputs / outputs:** `gate` (event, default `voice_gate[v]`), `trigger` (event,
+  default `voice_trig[v]`) → `cv` (control, q15 bipolar).
 
-- **Parameters:** `base` (q15, the starting offset), `rate` (q16, the decay rate).
+- **Parameters:** `on` (uint32, 0/1), `r1..r4` (rate 0–99), `l1..l3` (q15, the
+  signed pitch targets).
 
-- **Coefficients / precompute:** none — one `int64` multiply-add per tick.
+- **Coefficients / precompute:** `fm1_rate_coeff[100]` (Q16) — one table load +
+  one `int64` multiply-add per stage tick.
 
-- **State:** `level` (q15, the current offset), `prev` (uint32, the previous gate,
-  to detect the rise).
+- **State:** `stage` (uint32, 0–4), `level` (q15, the current offset).
 
-- **Edge cases:** `base = 0` → no blip; `rate` large → instant decay; the gate-fall
-  is a no-op (the blip has already settled — a release sweep is a later extension).
+- **Edge cases:** `on = 0` → `cv = 0` (no pitch change); a signed `l1` bends down
+  (the transition check uses the absolute distance); release returns to the note's
+  pitch (0 offset).
 
-- **Reference + credit:** the DX7's global pitch EG (rates + levels on the patch's
-  pitch), reduced to the "blip" use — a one-pole decay from the base offset. The
-  `patch_gate` (any voice active) is umetate's own global-envelope trigger.
+- **Reference + credit:** the DX7's pitch EG (rates + levels on the patch's pitch),
+  re-shaped as a per-note rate/level envelope — the same 0–99 rate/level tables as
+  `dx_env`. Per-note retrigger (via `voice_trig`) is umetate's own.
 
-- **Performance note:** control rate — one compare + one `int64` multiply per
-  sub-block (scalar). `csum` (control summer) is a single add per sub-block.
+- **Performance note:** control rate (per voice) — one compare + one `int64`
+  multiply per sub-block. `csum` (control summer) is a single add per sub-block.
 
 
 

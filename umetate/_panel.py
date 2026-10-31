@@ -212,7 +212,56 @@ _DISPLAY = {
     "off_pct": "UI_DISP_OFF_PCT",
     "hz": "UI_DISP_HZ",
     "semi": "UI_DISP_SEMI",
+    "wave": "UI_DISP_WAVE",
 }
+
+# The coarse-ratio detents: every integer multiple of these four bases, in Q16
+# (65536 = 1.00). The bases are the panel's decimal values, not their
+# irrational ideals: the raw landmark is rounded *up* so the 2-decimal display
+# shows 0.71/0.78/0.87 rather than the next lower hundredth.
+_RATIO_BASES: tuple[tuple[int, int], ...] = (
+    (1, 2),  # 0.50
+    (71, 100),  # 0.71
+    (78, 100),  # 0.78
+    (87, 100),  # 0.87
+)
+_Q16 = 65536
+_Q15_OCTAVE = 32768
+
+
+def _ratio_landmarks(lo: int, hi: int) -> list[int]:
+    """The sorted Q16 coarse-ratio landmarks in [lo, hi]."""
+    vals: set[int] = set()
+    for num, den in _RATIO_BASES:
+        k = 1
+        while True:
+            # ceil(base*k*65536), so the truncated 2-decimal display is the base.
+            v = (num * k * _Q16 + den - 1) // den
+            if v > hi:
+                break
+            if v >= lo:
+                vals.add(v)
+            k += 1
+    return sorted(vals)
+
+
+def _semi_landmarks(lo: int, hi: int) -> list[int]:
+    """Every integer semitone in [lo, hi] (Q15, 32768 = one octave), plus the
+    range endpoints. Values are rounded away from zero so the signed 2-decimal
+    display is exactly `N.00` for both signs; 32767 adds the +11.99 top."""
+    if lo > hi:
+        return []
+    first = -((-lo * 12) // _Q15_OCTAVE)  # ceil(lo * 12 / 32768)
+    last = (hi * 12) // _Q15_OCTAVE
+    vals: set[int] = set()
+    for k in range(first, last + 1):
+        mag = (abs(k) * _Q15_OCTAVE + 11) // 12  # ceil(|k| * 32768 / 12)
+        v = mag if k >= 0 else -mag
+        if lo <= v <= hi:
+            vals.add(v)
+    vals.add(lo)
+    vals.add(hi)
+    return sorted(vals)
 
 
 def generate_panel(
@@ -319,8 +368,14 @@ def generate_panel(
                 param = str(w.get("channel", 0))
         elif w["type"] == "subheader":
             typ = "UI_SUBHEADER"
-            # param 0 = the active operator, 1 = the active part (text = the suffix)
-            param = "1" if w.get("part") else "0"
+            # param = the prefix mode: 0 = "OP N", 1 = "PART N", 2 = "OP",
+            # 3 = "PART", 4 = plain (no prefix)
+            if w.get("plain"):
+                param = "4"
+            elif w.get("plural"):
+                param = "3" if w.get("part") else "2"
+            else:
+                param = "1" if w.get("part") else "0"
         elif w["type"] == "name":
             typ = "UI_NAME"
             # param = the name index (0 = part, 1 = patch); text = the label
@@ -480,19 +535,49 @@ def generate_panel(
     else:
         env_ptr = "0"
     # the per-param display scale: one ui_param_disp per param id (raw by default).
+    # Ratio + semitone params also carry a sorted landmark table; a quantized
+    # param steps landmark-to-landmark, so the sparse ratio series is never
+    # skipped (§6.11.4 L11).
+    landmark_tables: dict[tuple[str, int, int], str] = {}
+
+    def landmark_ref(display: str, lo: int, hi: int) -> tuple[str, str, str]:
+        """The (quantize, count, pointer) fields for a display scale's landmarks."""
+        if display == "ratio":
+            vals = _ratio_landmarks(lo, hi)
+        elif display == "semi":
+            vals = _semi_landmarks(lo, hi)
+        else:
+            return "0", "0", "0"
+        if not vals:
+            return "0", "0", "0"
+        if len(vals) > 255:
+            raise GenError(f"panel: {len(vals)} landmarks exceed the uint8 lm_count")
+        key = (display, lo, hi)
+        name = landmark_tables.get(key)
+        if name is None:
+            name = f"LM_{len(landmark_tables)}"
+            landmark_tables[key] = name
+            lines.append(f"static const int32_t {name}[{len(vals)}] = {{")
+            for i in range(0, len(vals), 12):
+                chunk = ", ".join(str(v) for v in vals[i : i + 12])
+                lines.append(f"    {chunk},")
+            lines.append("};")
+        return "1", str(len(vals)), name
+
     if param_meta is not None and n_params:
         disp_rows: list[str] = []
         for pid in range(n_params):
             m = param_meta.get(pid)
             if m is None:
-                disp_rows.append("{ UI_DISP_RAW, 0, 0, 0 }")
+                disp_rows.append("{ UI_DISP_RAW, 0, 0, 0, 0, 0, 0 }")
             else:
                 display, lo, hi, curve = m
                 if display not in _DISPLAY:
                     raise GenError(f"params: unknown display {display!r}")
+                quantize, lm_count, lm_ptr = landmark_ref(display, lo, hi)
                 disp_rows.append(
                     f"{{ {_DISPLAY[display]}, {'1' if curve == 'log' else '0'}, "
-                    f"{lo}, {hi} }}"
+                    f"{lo}, {hi}, {quantize}, {lm_count}, {lm_ptr} }}"
                 )
         lines.append(
             f"static const ui_param_disp DISP_TBL[{n_params}] = {{ "
