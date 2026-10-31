@@ -2841,3 +2841,84 @@ the two stay in sync).
 5. **Algorithm** (2).
 6. **Save / init** (9, 12, 6).
 7. **Web build** (5) — independent of the above; can run in parallel.
+
+### 13.3 Web-emulator + envelope follow-ups (recorded 2026-10-31)
+
+Status: **queued**. Items 22–23 are web-emulator button-edge bugs in the current
+build; 24–27 are features; 28–32 are firmware UI/scope/envelope bugs. Numbers
+continue §13.1.
+
+#### Web emulator
+
+22. **ARP/SEQ/PLAY/REC mute is momentary.** On the web app, those buttons mute their
+    operator only *while held*, unmuting on release. Root cause: the page sends a
+    second press on the `click` event after `pointerup`, so a single click produces
+    press→release→press→release (two `op_mute_n` toggles + noise). Fix: drop the
+    `click` tap; rely on `pointerdown`/`pointerup` (and `keydown`/`keyup`).
+
+23. **SEL changes the part, not the operator.** Same root cause as 22: the spurious
+    second press makes a single tap look like the firmware's double-tap (which is
+    the part switch); a long-press fires once on press and again on release. Fixing
+    22 fixes this.
+
+24. **Host keyboard control.** Map the computer keyboard to the emulator (as
+    fm1-x0x does): white keys `Q..I`/`A..K`, black keys `1..0`/`-`, `Space`=PLAY,
+    `Enter`=REC, `Esc`=HOME, `Z`/`X`=OCT−/OCT+, `↑`/`↓` (or arrows)=SELECT,
+    `Tab` focuses, arrows turn a focused knob.
+
+25. **Palette rebalance.** The DEFAULT palette reads as "all pink"; the user wants
+    the green to stay the base text and the pink/purple/yellow to *differentiate*
+    sections (header vs page description vs params vs graphs), not dominate.
+    Re-tune `firmware/theme.json` + `gfx.c`'s `C_*`→palette mapping.
+
+#### Scope / spectro
+
+26. **Per-op scope + spectro on the param page.** Move the EDIT `op-scope` /
+    `op-spectro` onto the operator page, stacked as two rows in a column *below*
+    the params (so an edit is visible live), rather than on their own pages.
+
+29. **Scope height too low.** At normal operator levels (~70–80) the scope trace is
+    a few px tall and reads as silence below ~70. The ×4 headroom gain is not
+    enough; switch the scope to a fixed gain sized for the *actual* amplitude, or
+    auto-normalize to the snapshot peak (like the spectro).
+
+30. **Part + EDIT op scopes/spectros show nothing.** The part-mix taps and the
+    active-op taps read silence. Investigate the tap channel mapping
+    (`scope_push_ch(1+k, …)` vs `ui_scope_channel`) and the `route.car` tap.
+
+#### Envelope (dx_env / pitch_env)
+
+31. **Rate/level ranges are wrong.** A-ENV (and likely others): ATTACK RATE ~60 is
+    audibly instant, so there is almost no slow-attack travel; LEVEL ~50 reads as
+    0 — user-facing 0 should be silence and 99 maximum amplitude. DECAY1/DECAY2
+    below ~58 hold indefinitely (key held), ~58 is instant. Recalibrate
+    `fm1_rate_coeff` (rate→one-pole) and the level mapping so the 0–99 travel is
+    musically sensible.
+
+32. **Envelope graph: LEVEL below ~50 falls off-screen.** The graph maps a level
+    below ~50 to negative height, implying 0–49 = negative amplitude. Pin the graph
+    to the same 0..99 → 0..full mapping (and to `fm1_level_gain`) so level 0 is the
+    floor and 99 the top.
+
+#### GLO
+
+28. **PART n PART LEVEL sets both parts.** The GLO `part-level` page edits part 0
+    regardless of the active part. Symptom of the planned GLO revamp (item 11
+    `SINGLE PART LAYERING`); fix there.
+
+#### Feature
+
+27. **Detune per operator.** A per-op detune needs a home (a new EDIT page). Lighter
+    alternative the user accepts: make the RATIO knob stop at ±0.01/0.02/0.03/0.04/0.05
+    landmarks around integer ratios.
+
+### 13.4 Ordering note for §13.3
+
+1. **Fix the web button edges (22, 23)** — one root cause, unlocks SEL/mutes.
+2. **Recalibrate the envelope rates/levels (31) + the envelope graph (32)** — the
+   same `fm1_rate_coeff` / `fm1_level_gain` tables drive both.
+3. **Scope/spectro (29, 30) + layout (26)** — gain + tap-channel fix, then the
+   param-page placement.
+4. **Palette (25)** — theme/gfx rebalance.
+5. **Features (24 keyboard, 27 detune/ratio landmarks)**.
+6. **GLO (28)** — folds into the §13.1 GLO revamp (items 7/10/11).
