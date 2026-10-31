@@ -222,10 +222,31 @@ for (const k of Object.values(knobs)) {
     e.preventDefault();
   });
 }
+const pointerAt = { t: -1e9 }, keyAt = { t: -1e9 };  // last pointer/key event time (to tell a real press from a bare `click`)
 for (const b of Object.values(buttons)) {
-  b.hit.addEventListener("pointerdown", (e) => { e.preventDefault(); b.hit.setPointerCapture(e.pointerId); btnHeld.set("p" + e.pointerId, b.bit); syncButtons(); });
-  b.hit.addEventListener("click", () => { const id = "c" + b.bit; btnHeld.set(id, b.bit); syncButtons(); setTimeout(() => { btnHeld.delete(id); syncButtons(); }, 120); });
-  b.hit.addEventListener("keydown", (e) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); if (!e.repeat) { btnHeld.set("k" + b.bit, b.bit); syncButtons(); } } });
+  b.hit.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    b.hit.focus({ preventScroll: true });
+    pointerAt.t = performance.now();
+    b.hit.setPointerCapture(e.pointerId);
+    btnHeld.set("p" + e.pointerId, b.bit);
+    syncButtons();
+  });
+  b.hit.addEventListener("click", () => {
+    const now = performance.now();
+    if (now - pointerAt.t < 800 || now - keyAt.t < 800) return;  // pointer/key already handled the press
+    const id = "c" + b.bit;                                       // a bare click (e.g. a screen reader): a short tap
+    btnHeld.set(id, b.bit);
+    syncButtons();
+    setTimeout(() => { btnHeld.delete(id); syncButtons(); }, 120);
+  });
+  b.hit.addEventListener("keydown", (e) => {
+    if (e.key === " " || e.key === "Enter") {
+      e.preventDefault();
+      keyAt.t = performance.now();
+      if (!e.repeat) { btnHeld.set("k" + b.bit, b.bit); syncButtons(); }
+    }
+  });
   b.hit.addEventListener("keyup", (e) => { if (e.key === " " || e.key === "Enter") { btnHeld.delete("k" + b.bit); syncButtons(); } });
 }
 function keyUp() {
@@ -236,9 +257,54 @@ function keyUp() {
 device.addEventListener("pointerup", keyUp);
 device.addEventListener("pointercancel", keyUp);
 for (let i = 0; i < 27; i++) {
-  keys[i].hit.addEventListener("pointerdown", (e) => { e.preventDefault(); keys[i].hit.setPointerCapture(e.pointerId); keyHeld.set("p" + e.pointerId, i); syncKeys(); });
-  keys[i].hit.addEventListener("click", () => { const id = "c" + i; keyHeld.set(id, i); syncKeys(); setTimeout(() => { keyHeld.delete(id); syncKeys(); }, 120); });
+  keys[i].hit.addEventListener("pointerdown", (e) => { e.preventDefault(); pointerAt.t = performance.now(); keys[i].hit.setPointerCapture(e.pointerId); keyHeld.set("p" + e.pointerId, i); syncKeys(); });
+  keys[i].hit.addEventListener("click", () => {
+    const now = performance.now();
+    if (now - pointerAt.t < 800 || now - keyAt.t < 800) return;
+    const id = "c" + i;
+    keyHeld.set(id, i);
+    syncKeys();
+    setTimeout(() => { keyHeld.delete(id); syncKeys(); }, 120);
+  });
 }
+
+// ---- the host keyboard (as fm1-x0x): Q..I / A..K are the white keys, 1..0 / - the
+// black keys, Space=PLAY, Enter=REC, Esc=HOME, Z/X=OCT-/+ , and the arrows turn SELECT.
+const KEYMAP = {};
+"qwertyui".split("").forEach((c, i) => { KEYMAP["Key" + c.toUpperCase()] = { key: WHITE[i] }; });
+"asdfghjk".split("").forEach((c, i) => { KEYMAP["Key" + c.toUpperCase()] = { key: WHITE[8 + i] }; });
+"1234567890".split("").forEach((c, i) => { KEYMAP["Digit" + c] = { key: BLACK[i] }; });
+KEYMAP.Minus = { key: BLACK[10] };
+Object.assign(KEYMAP, {
+  Space: { btn: BTN.PLAY }, Enter: { btn: BTN.REC }, Escape: { btn: BTN.HOME },
+  KeyZ: { btn: BTN.OCTd }, KeyX: { btn: BTN.OCTu },
+});
+addEventListener("keydown", (e) => {
+  if (!node || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.target instanceof Element && e.target.closest(".hit")) return;  // a focused control handles it itself
+  if (e.code === "ArrowUp" || e.code === "ArrowDown") {
+    send({ type: "enc", role: ENC.SELECT, n: e.code === "ArrowUp" ? 1 : -1 });
+    e.preventDefault();
+    return;
+  }
+  const m = KEYMAP[e.code];
+  if (!m) return;
+  e.preventDefault();
+  if (e.repeat) return;
+  if (m.key !== undefined) { keyHeld.set("k" + e.code, m.key); syncKeys(); }
+  else { btnHeld.set("k" + e.code, m.btn); syncButtons(); }
+});
+addEventListener("keyup", (e) => {
+  const m = KEYMAP[e.code];
+  if (!m) return;
+  if (m.key !== undefined) { keyHeld.delete("k" + e.code); syncKeys(); }
+  else { btnHeld.delete("k" + e.code); syncButtons(); }
+});
+addEventListener("blur", () => {
+  for (const id of [...btnHeld.keys()]) if (id[0] === "k") btnHeld.delete(id);
+  for (const id of [...keyHeld.keys()]) if (id[0] === "k") keyHeld.delete(id);
+  syncButtons(); syncKeys();
+});
 
 // ---- the screen
 const ctx = $("screen").getContext("2d");
