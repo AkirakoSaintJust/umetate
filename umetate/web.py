@@ -49,10 +49,15 @@ _INDEX_HTML = """\
 <!doctype html>
 <meta charset="utf-8">
 <title>umetate dsp.wasm — parity lab</title>
+<style>
+  body { background: #101410; color: #9f9; font: 14px monospace; }
+  button { margin: 2px; padding: 4px 10px; font: 13px monospace; }
+  #keys button { width: 44px; height: 96px; }
+</style>
 <button id="start">start</button>
-<button id="note" disabled>note on (A4)</button>
-<button id="off" disabled>note off</button>
+<button id="off" disabled>all notes off</button>
 <pre id="log"></pre>
+<div id="keys"></div>
 <script src="main.js"></script>
 """
 
@@ -70,7 +75,10 @@ document.getElementById("start").onclick = async () => {
     synth.port.onmessage = (e) => log(String(e.data));
     synth.connect(ctx.destination);
     await ctx.resume();
-    document.getElementById("note").disabled = false;
+    // fetch the wasm here, on the main thread (`fetch` is absent from the
+    // AudioWorkletGlobalScope), and transfer the bytes into the worklet.
+    const bytes = await (await fetch("/dsp.wasm")).arrayBuffer();
+    synth.port.postMessage({ v: 1, op: "init", wasm: bytes }, [bytes]);
     document.getElementById("off").disabled = false;
     log("started (44.1 kHz)");
   } catch (err) {
@@ -80,11 +88,24 @@ document.getElementById("start").onclick = async () => {
 
 const send = (op, extra = {}) =>
     synth && synth.port.postMessage({ v: 1, op, ...extra });
-document.getElementById("note").onclick = () => send("note_on", { note: 69, vel: 100 });
-document.getElementById("off").onclick = () => send("note_off", { note: 69 });
+document.getElementById("off").onclick = () => send("all_off");
+
+// a one-octave keyboard (C4..B4): mousedown = note on, mouseup/leave = note off.
+const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+const keys = document.getElementById("keys");
+for (let i = 0; i < 12; i++) {
+  const note = 60 + i;
+  const b = document.createElement("button");
+  b.textContent = NOTE_NAMES[i] + "4";
+  const off = () => send("note_off", { note });
+  b.onmousedown = () => send("note_on", { note, vel: 100 });
+  b.onmouseup = b.onmouseleave = off;
+  keys.appendChild(b);
+}
 """
 
-# the AudioWorklet: instantiates the wasm, block (128 -> 256) conversion, the protocol.
+# the AudioWorklet: instantiates the wasm (bytes come from the main thread, since
+# `fetch` is absent here), block (128 -> 256) conversion, the protocol.
 _WORKLET_JS = """\
 const SYNTH = "__SYNTH__";
 const OUT = 1024 * 1024;  // a fixed scratch offset in the (fixed) wasm memory
@@ -98,22 +119,21 @@ class SynthProcessor extends AudioWorkletProcessor {
     this.block = new Float32Array(BLOCK * 2);
     this.pos = BLOCK;  // render on the first process() call
     this.port.onmessage = (e) => this.onmsg(e.data);
-    (async () => {
-      try {
-        const bytes = await (await fetch("/dsp.wasm")).arrayBuffer();
-        const { instance } = await WebAssembly.instantiate(bytes, {});
+  }
+
+  onmsg(m) {
+    if (m.v !== 1) return;  // the versioned protocol: v1 only
+    if (m.op === "init") {
+      WebAssembly.instantiate(m.wasm, {}).then(({ instance }) => {
         this.e = instance.exports;
         this.out = new Int32Array(this.e.memory.buffer, OUT, BLOCK * 2);
         this.e[SYNTH + "_dsp_reset"]();
         this.port.postMessage("ready: " + SYNTH);
-      } catch (err) {
-        this.port.postMessage("error: " + (err && err.message ? err.message : err));
-      }
-    })();
-  }
-
-  onmsg(m) {
-    if (!this.e || m.v !== 1) return;  // the versioned protocol: v1 only
+      }).catch((err) =>
+        this.port.postMessage("error: " + (err && err.message ? err.message : err)));
+      return;
+    }
+    if (!this.e) return;
     const e = this.e;
     switch (m.op) {
       case "note_on": e[SYNTH + "_dsp_note_on"](m.note, m.vel); break;
