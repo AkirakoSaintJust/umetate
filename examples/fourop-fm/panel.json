@@ -184,8 +184,8 @@
           "id": "p-lfo",
           "widgets": [
             { "type": "subheader", "row": 2, "text": "P-LFO", "part": true },
-            { "type": "param_row", "row": 3, "param": "pitch_rate", "text": "RATE" },
-            { "type": "param_row", "row": 4, "param": "pitch_depth", "text": "DEPTH" }
+            { "type": "param_row", "row": 3, "param": "pitch_rate", "part": true, "text": "RATE" },
+            { "type": "param_row", "row": 4, "param": "pitch_depth", "part": true, "text": "DEPTH" }
           ]
         }
       ],

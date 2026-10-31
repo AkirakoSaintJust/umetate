@@ -2844,8 +2844,8 @@ the two stay in sync).
 
 ### 13.3 Web-emulator + envelope follow-ups (recorded 2026-10-31)
 
-Status: **in progress** — 22, 23, 24, 28 (symptom), 31, 32, 33, 34 done
-(2026-10-31); 25–27, 29, 30 queued. Numbers continue §13.1.
+Status: **in progress** — 22, 23, 24, 28 (symptom), 31, 32, 33, 34, 35, 36, 37, 38
+done (2026-10-31); 25–27, 29, 30 queued. Numbers continue §13.1.
 
 #### Web emulator
 
@@ -2939,6 +2939,26 @@ Status: **in progress** — 22, 23, 24, 28 (symptom), 31, 32, 33, 34 done
     blocks — so the slow end is ~5 % finer per step (rate 0 ≈ 7 s, rate 50 ≈ 0.5 s,
     rate 64 ≈ 170 ms) and "instant" is compressed to the very top (rate 99 ≈ 0.73 ms).
     The UI value stays linear 0–99; the envelope shape stays the exponential one-pole.
+
+#### Follow-ups (reported 2026-10-31)
+
+35. **Envelope graph time axis.** — **done.** The graph's segment length clamped
+    `65536/coeff` to `[2, 60]` px, so with the slower 34 curve every rate below ~78
+    read as the same full-width segment. Now the length is log2 of the time constant
+    (16 − floor(log2 coeff)), so the segments spread the exponential rate curve.
+
+36. **P-LFO depth too intense.** — **done.** `pitch_depth` mapped straight to
+    `plfo.depth` (Q15, 32767 = ±1 octave), so 1 % already warbled hard. Re-scaled
+    `pitch_depth` max to 3277 (~±1.2 semitones at 100 %, 10× subtler).
+
+37. **Part 2 op4 missing from scope/spectro.** — **done.** `SCOPE_CH` was 8 but
+    fourop-fm has 10 tap channels, so ch 8 (op4·part1) and the two part mixes were
+    dropped by `scope_store`. `SCOPE_CH` is now 12 (covers 1 + `N_TAP_CH`).
+
+38. **P-LFO is global, not per-part.** — **done.** `plfo` sat in the `global` zone,
+    so both parts shared one pitch LFO. Moved into the `voice` zone (its `rate`/
+    `depth` become per-part params, its phase per-voice — consistent with tremolo),
+    and the LFO page's params are now part-relative.
 
 ### 13.4 Ordering note for §13.3
 

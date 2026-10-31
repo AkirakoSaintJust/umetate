@@ -4,8 +4,9 @@ This worked example puts the framework through a complete four-operator FM
 synth — the **fourop-fm program** in `docs/roadmap.md` §6.11 (the modules it
 shipped are documented in §6.9). The instrument follows the OPZ/DX21 lineage and
 includes per-operator feedback, eight runtime-selectable algorithms,
-rate/level envelopes, and 12 waveforms. It also has a shared pitch LFO and pitch
-envelope, plus an amplitude LFO for each operator. It builds into a full
+rate/level envelopes, and 12 waveforms. It also has a per-part pitch LFO and a
+per-note pitch envelope, plus an amplitude LFO for each operator. It builds into
+a full
 firmware: **two independent timbres** (parts, channels 0/1), velocity, presets
 (128+64 + settings), SysEx, and MIDI CC/sustain/panic/bend, composed from the app
 glue `app.c` onto the frozen `rib.c` framework (`umetate build --synth`).
@@ -19,8 +20,8 @@ glue `app.c` onto the frozen `rib.c` framework (`umetate build --synth`).
   the graph stays acyclic for every algorithm. The `algo` node selects the matrix
   at runtime.
 - **Global:** the carrier sum passes through an `svf` low-pass and `wavefolder`
-  before `out`. A shared `plfo` (vibrato) and a per-note `penv` (pitch envelope)
-  feed each operator's `pitch` through `csum`.
+  before `out`. A per-part `plfo` (vibrato) and a per-note `penv` (pitch
+  envelope) feed each operator's `pitch` through `csum`.
 - **Algorithms:** eight rows from ymfm's `s_algorithm_ops`: {0, 1, 2, 3, 4, 5, 6,
   7} — the full standard TX81Z/DX100/DX21 4-op set; see `dsp-algorithm.md`.
 
@@ -81,8 +82,8 @@ The list below notes whether each is recorded, deferred, or shipped:
 6. **Control-rate LFO (shipped).** Each tick, the `lfo` node advances by
    `rate × CONTROL_BLOCK`, using the macro emitted by the generator. Its phase is
    therefore measured in samples, and its output holds for one sub-block. This
-   works for sub-audio rates without adding per-sample work. The pitch LFO is a
-   global scalar computed before the voice loop; tremolo LFOs run per voice.
+   works for sub-audio rates without adding per-sample work. The pitch LFO runs
+   per voice (its rate/depth are per-part params); tremolo LFOs run per voice.
    **Vibrato scales `inc`, not phase.** The `phasor`'s `pitch` input applies
    `inc × (1 + pitch/32768)`, producing a relative pitch change (constant cents
    across the keyboard) rather than the absolute-Hz wobble from reusing `fm`.

@@ -93,10 +93,9 @@ No hand-written `dsp.c`: `generate(patch)` emits `<synth>_dsp_*` from the patch
 - **Per-voice state:** SoA (the generator default) — `opN_ph_phase[NVOICE]`,
   `opN_eg_level[NVOICE]`, `opN_lfo_phase[NVOICE]` (the per-op tremolo LFO),
   `dN_prev[NVOICE]`, etc.
-- **Single-instance control state:** the global `svf`/`wavefolder` scalars and the
-  `plfo` phase (the shared pitch LFO).
-- **Per-voice control state:** `penv`/`psum` (the per-note pitch envelope + its
-  vibrato sum), run per voice in the control prologue.
+- **Single-instance control state:** the global `svf`/`wavefolder` scalars.
+- **Per-voice control state:** `penv`/`plfo`/`psum` (the per-note pitch envelope,
+  the per-part vibrato LFO, and their sum), run per voice in the control prologue.
 - **Section placement:** per-sample bodies in `.dsp_text`; `routing` + the
   quarter-sine tables `const` (XIP); engine state `.cpu1_bss`.
 

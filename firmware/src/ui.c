@@ -693,9 +693,10 @@ static void ui_draw_grid(const ui_widget *w)
 }
 
 /* the DX rate/level envelope as straight line segments: the selected operator's 7
- * envelope params (r1..r4, l1..l3) from the `env` group. Stage length = the
- * one-pole time constant 65536/fm1_rate_coeff[rate] (clamped); the level height =
- * fm1_level_gain[level] (0.25 dB/step: 99 = max, 0 = silence). No cursor. */
+ * envelope params (r1..r4, l1..l3) from the `env` group. Stage length = log2 of
+ * the one-pole time constant (so the exponential rate curve is shown on a log
+ * scale — a linear length would make every slow rate identical); the level height
+ * = fm1_level_gain[level] (0.25 dB/step: 99 = max, 0 = silence). No cursor. */
 static void ui_draw_envelope(const ui_widget *w)
 {
     uint32_t x, y, wd, ht, i, cx;
@@ -710,8 +711,9 @@ static void ui_draw_envelope(const ui_widget *w)
         uint16_t p = ui_t->env[p0 + i];
         int32_t r = p < ui_t->n_params ? ui_param_v[p] : 0;
         int32_t c = fm1_rate_coeff[r < 0 ? 0 : (r > 99 ? 99 : r)];
-        uint32_t t = c <= 0 ? 60u : (uint32_t)(65536u / (uint32_t)c);
-        len[i] = t < 2u ? 2u : (t > 60u ? 60u : t);
+        uint32_t lg = 0;                            /* floor(log2(coeff)) */
+        while (c > 1) { c >>= 1; lg++; }
+        len[i] = lg < 16u ? 16u - lg : 1u;          /* log2(65536/coeff), min 1 */
         total += len[i];
     }
     len[3] = 8u;                                    /* sustain: a short flat hold */
@@ -720,8 +722,9 @@ static void ui_draw_envelope(const ui_widget *w)
         uint16_t p = ui_t->env[p0 + 3];             /* r4: the release rate */
         int32_t r = p < ui_t->n_params ? ui_param_v[p] : 0;
         int32_t c = fm1_rate_coeff[r < 0 ? 0 : (r > 99 ? 99 : r)];
-        uint32_t t = c <= 0 ? 60u : (uint32_t)(65536u / (uint32_t)c);
-        len[4] = t < 2u ? 2u : (t > 60u ? 60u : t);
+        uint32_t lg = 0;
+        while (c > 1) { c >>= 1; lg++; }
+        len[4] = lg < 16u ? 16u - lg : 1u;
         total += len[4];
     }
     if (!total)

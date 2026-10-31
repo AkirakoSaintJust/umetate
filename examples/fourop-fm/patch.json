@@ -14,7 +14,7 @@
     "op2_trem_rate.p0", "op2_trem_depth.p0",
     "op3_trem_rate.p0", "op3_trem_depth.p0",
     "op4_trem_rate.p0", "op4_trem_depth.p0",
-    "pitch_rate", "pitch_depth",
+    "pitch_rate.p0", "pitch_depth.p0",
     "penv_on.p0", "penv_r1.p0", "penv_r2.p0", "penv_r3.p0", "penv_r4.p0", "penv_l1.p0", "penv_l2.p0", "penv_l3.p0",
     "mode.p0", "unison_count.p0", "unison_detune.p0", "legato.p0", "portamento.p0", "note_priority.p0",
     "mode.p1", "unison_count.p1", "unison_detune.p1", "legato.p1", "portamento.p1", "note_priority.p1"
@@ -94,7 +94,7 @@
     "op3_feedback": { "target": "op3.fb.level", "min": 0, "max": 32767, "curve": "linear", "display": "pct" },
     "op4_feedback": { "target": "op4.fb.level", "min": 0, "max": 32767, "curve": "linear", "display": "pct" },
     "pitch_rate":     { "target": "plfo.rate", "min": 0, "max": 20000000, "curve": "log", "display": "hz" },
-    "pitch_depth":    { "target": "plfo.depth", "min": 0, "max": 32767, "curve": "linear", "display": "pct" },
+    "pitch_depth":    { "target": "plfo.depth", "min": 0, "max": 3277, "curve": "linear", "display": "pct" },
     "penv_on":       { "target": "penv.on", "min": 0, "max": 1, "curve": "linear", "display": "onoff" },
     "penv_r1":       { "target": "penv.r1", "min": 0, "max": 99, "curve": "linear" },
     "penv_r2":       { "target": "penv.r2", "min": 0, "max": 99, "curve": "linear" },
@@ -124,7 +124,8 @@
       { "id": "d4", "type": "delay1" },
       { "id": "route", "type": "route", "params": { "which": "routing" } },
       { "id": "penv", "type": "pitch_env", "params": { "on": 0, "r1": 80, "r2": 60, "r3": 50, "r4": 80, "l1": 5461, "l2": 2731, "l3": 0 } },
-      { "id": "psum", "type": "csum" }
+      { "id": "psum", "type": "csum" },
+      { "id": "plfo", "type": "lfo", "params": { "rate": 486958, "depth": 273 } }
     ],
     "wires": [
       { "from": "op1.audio", "to": "d1.in" },
@@ -138,6 +139,7 @@
       { "from": "route.mod2", "to": "op2.fm" },
       { "from": "route.mod3", "to": "op3.fm" },
       { "from": "route.mod4", "to": "op4.fm" },
+      { "from": "plfo.cv", "to": "psum.in0" },
       { "from": "penv.cv", "to": "psum.in1" },
       { "from": "psum.cv", "to": "op1.pitch" },
       { "from": "psum.cv", "to": "op2.pitch" },
@@ -151,16 +153,14 @@
       { "id": "algo", "type": "algo", "params": { "algorithm": 4 } },
       { "id": "lp", "type": "svf", "params": { "f": 8000, "q": 40000, "type": 0, "on": 1, "fenv_depth": 0 } },
       { "id": "fenv", "type": "adsr", "params": { "a": 3277, "d": 16384, "s": 32767, "r": 8192 } },
-      { "id": "wf", "type": "wavefolder", "params": { "amount": 0, "threshold": 0, "folds": 1, "on": 1, "type": 0 } },
-      { "id": "plfo", "type": "lfo", "params": { "rate": 486958, "depth": 273 } }
+      { "id": "wf", "type": "wavefolder", "params": { "amount": 0, "threshold": 0, "folds": 1, "on": 1, "type": 0 } }
     ],
     "wires": [
       { "from": "algo.alg", "to": "route.alg" },
       { "from": "voice", "to": "lp.audio" },
       { "from": "fenv.cv", "to": "lp.fenv" },
       { "from": "lp.out", "to": "wf.audio" },
-      { "from": "wf.audio", "to": "out" },
-      { "from": "plfo.cv", "to": "psum.in0" }
+      { "from": "wf.audio", "to": "out" }
     ]
   }
 }

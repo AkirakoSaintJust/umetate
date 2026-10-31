@@ -35,10 +35,10 @@
   the depths to 0 (off) — settable via `set_param` (`opN.velamp.depth` etc.),
   not on the panel.
 - **Modulation:** the routing matrix (8 algorithms) selects which operator
-  phase-modulates which; feedback = self-modulation. One **global pitch LFO**
-  (vibrato, shared across voices), one **global pitch envelope** (the "pitch
-  blip": a `base` offset that decays back at note-on), and one **amplitude LFO
-  per operator** (tremolo, per-voice).
+  phase-modulates which; feedback = self-modulation. One **per-part pitch LFO**
+  (vibrato), one **per-note pitch envelope** (the "pitch blip": a `base` offset
+  that decays back at note-on), and one **amplitude LFO per operator** (tremolo,
+  per-voice).
 - **Effects and output stage:** carrier sum → `svf` (type LP/BP/HP + bypass +
   a cutoff ADSR) → `wavefolder` (threshold + fold count + type) → `out` (the
   `MASTER` pot is the volume; no output VCA).
@@ -79,11 +79,11 @@ global six to a per-part array.
   The four `delay1` make the graph acyclic for *every* algorithm (all modulation
   reads the 1-sample-delayed output of its sources).
 - **Global-zone graph:** `algo` (the algorithm selector) → `alg` into the `route`
-  node; `lp` (`svf`) → `wf` (`wavefolder`) → `out`, plus the shared `plfo` (the
-  vibrato LFO): `voice → lp.audio`, `lp.low → wf.audio`, `wf.audio → out`,
-  `plfo.cv → psum.in0`.
+  node; `lp` (`svf`) → `wf` (`wavefolder`) → `out`: `voice → lp.audio`,
+  `lp.low → wf.audio`, `wf.audio → out`.
 - **Voice-zone additions:** `penv` (a per-note `pitch_env`, retriggered on every
-  note-on) + `psum` (a `csum`): `plfo.cv + penv.cv → op1..op4.pitch`.
+  note-on) + `plfo` (the per-part vibrato LFO) + `psum` (a `csum`):
+  `plfo.cv + penv.cv → op1..op4.pitch`.
 - **Macros:** `fm_op` (shipped, `modules/macros/fm_op/`) — the operator, with
   params `ratio` (note-derived), `waveform`, `level`, `feedback` (per-op
   self-modulation), `trem_rate`, `trem_depth`, `r1..r4`, `l1..l3` mapped inward,
@@ -132,7 +132,7 @@ global six to a per-part array.
 | attack | op1.eg.r1 | 0 | 99 | linear | | raw (0–99 rate) |
 | release | op1.eg.r4 | 0 | 99 | linear | | raw (0–99 rate) |
 | pitch_rate | plfo.rate | 0 | 20000000 | log | | hz |
-| pitch_depth | plfo.depth | 0 | 32767 | linear | | pct |
+| pitch_depth | plfo.depth | 0 | 3277 | linear | | pct |
 | penv_on | penv.on | 0 | 1 | linear | | onoff (off/on) |
 | penv_r1 … penv_r4 | penv.rN | 0 | 99 | linear | | raw (0–99 rate) |
 | penv_l1 … penv_l3 | penv.lN | -32768 | 32767 | linear | | semi (±st) |
@@ -287,7 +287,7 @@ page/context change, held notes stay playable. Per-param display scale (ratio
 ## 7. Acceptance and evidence
 
 - **Must-have features:** 8 runtime algorithms; 12 waveforms; per-op + carrier
-  feedback; rate/level envelopes; a global pitch LFO + global pitch envelope +
+  feedback; rate/level envelopes; a per-part pitch LFO + per-note pitch envelope +
   per-op amplitude LFO; the filter + wavefolder output chain; a panel; **two
   timbres** (parts), **presets** (128+64 + settings), **SysEx**, **MIDI CC /
   sustain / panic / bend**.
