@@ -327,6 +327,65 @@ def main() -> int:
         print("FAIL: ratio/semi landmarks missing or orphaned")
         failures += 1
 
+    # the operator/mute/part-relative tables are per-part (part-major), so the
+    # runtime can index them by ui_selected_part (§13.3 item 33: the active part
+    # must drive the editor + mutes). Part 0 = the unsuffixed id, part 1 = `.p1`.
+    part_panel: PanelManifest = {
+        "name": "part",
+        "alg": "algorithm",
+        "parts": 2,
+        "operators": ["op1"],
+        "mute": ["op1_mute"],
+        "contexts": {
+            "home": {
+                "pages": [
+                    {
+                        "id": "home",
+                        "widgets": [
+                            {
+                                "type": "param_row",
+                                "row": 0,
+                                "param": "op1.tl.level",
+                                "text": "LEVEL",
+                            },
+                            {
+                                "type": "param_row",
+                                "row": 1,
+                                "param": "level",
+                                "part": True,
+                                "text": "P LEVEL",
+                            },
+                        ],
+                    }
+                ]
+            }
+        },
+        "global": [],
+    }
+    part_ids = {
+        "algorithm": 0,
+        "op1.tl.level": 1,
+        "op1.tl.level.p0": 1,
+        "op1.tl.level.p1": 7,
+        "op1_mute": 2,
+        "op1_mute.p0": 2,
+        "op1_mute.p1": 8,
+        "level": 3,
+        "level.p0": 3,
+        "level.p1": 9,
+    }
+    part_src = generate_panel(part_panel, part_ids)
+    part_ok = (
+        "OP_PARAM[2] = { 1, 7 }" in part_src
+        and "MUTE_TBL[8] = { 2, 0xFFFF, 0xFFFF, 0xFFFF, 8," in part_src
+        and "PART_PARAM[2] = { 3, 9 }" in part_src
+    )
+    if part_ok:
+        print("ok: operator/mute/part-relative tables are per-part (part-major)")
+    else:
+        print("FAIL: per-part tables did not resolve part 0 then part 1")
+        failures += 1
+
     print("panel tests " + ("FAILED" if failures else "passed"))
     return 1 if failures else 0
 

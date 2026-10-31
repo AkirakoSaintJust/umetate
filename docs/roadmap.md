@@ -2917,6 +2917,21 @@ continue §13.1.
     alternative the user accepts: make the RATIO knob stop at ±0.01/0.02/0.03/0.04/0.05
     landmarks around integer ratios.
 
+#### Per-part editing (reported 2026-10-31)
+
+33. **The active part is not honoured by any editor.** EDIT/ENV/LFO operator params,
+    the ARP/SEQ/PLAY/REC operator mutes, and the GLO `part-level` + `voice-mode`
+    pages all edit **part 1** (the part-0 params) regardless of `ui_selected_part`.
+    Part 2 is therefore impossible to mute or edit, and the UI never reflects the
+    active part's values. Root cause: the panel generator resolves operator-relative
+    params (`opN.tl.level`, the `mute` table, the `envelope` group) and the GLO
+    `.p0` rows to **part-0 ids only**; the runtime's `ui_widget_param` /
+    `ui_op_mute_*` / envelope/header reads index `op_param`/`env`/`mute` by
+    `ui_selected_op` but never by `ui_selected_part`. Fix: make those tables
+    per-part (2D) and index them by the active part; add a part-relative widget for
+    the GLO rows. (Subsumes 28's symptom; the split/channel pages stay two-part
+    explicit.)
+
 ### 13.4 Ordering note for §13.3
 
 1. ~~**Fix the web button edges (22, 23)**~~ — done (one root cause, unlocked SEL/mutes).

@@ -181,10 +181,17 @@ void ui_part_mute_set(uint8_t part, uint8_t muted)
         ui_part_mute[part] = muted ? 1u : 0u;
 }
 
+/* the mute param id for operator `op` of the active part (the table is part-major:
+ * n_part * 4 entries). */
+static uint16_t ui_mute_param(uint32_t op)
+{
+    return ui_t->mute[(uint32_t)ui_selected_part * 4u + op];
+}
+
 void ui_op_mute_active(void)
 {
     if (ui_t->mute && ui_selected_op < 4u) {
-        uint16_t p = ui_t->mute[ui_selected_op];
+        uint16_t p = ui_mute_param(ui_selected_op);
         if (p < ui_t->n_params)
             ui_param_v[p] = ui_param_v[p] ? 0 : 1;
     }
@@ -300,7 +307,8 @@ static uint16_t ui_widget_param(const ui_widget *w); /* defined below */
 static int ui_is_param_slot(uint8_t type)
 {
     return type == UI_VALUE || type == UI_BAR || type == UI_PARAM_ROW ||
-           type == UI_PARAM_COLUMN || type == UI_OP_ROW || type == UI_NAME;
+           type == UI_PARAM_COLUMN || type == UI_OP_ROW || type == UI_PART_ROW ||
+           type == UI_NAME;
 }
 
 /* the param id of the current page's Nth param-bearing widget (UI_BIND_PAGE_SLOT);
@@ -380,7 +388,7 @@ static void ui_do_action(uint8_t action, uint8_t arg)
     case UI_ACT_OP_MUTE: {
         /* mute the *selected* operator (the SCL + key chord; arg is ignored) */
         if (ui_t->mute && ui_selected_op < 4u) {
-            uint16_t p = ui_t->mute[ui_selected_op];
+            uint16_t p = ui_mute_param(ui_selected_op);
             if (p < ui_t->n_params)
                 ui_param_v[p] = ui_param_v[p] ? 0 : 1;
         }
@@ -389,7 +397,7 @@ static void ui_do_action(uint8_t action, uint8_t arg)
     case UI_ACT_OP_MUTE_N: {
         /* mute operator `arg` (ARP/SEQ/PLAY/REC -> 0..3) */
         if (ui_t->mute && arg < ui_t->n_op && arg < 4u) {
-            uint16_t p = ui_t->mute[arg];
+            uint16_t p = ui_mute_param(arg);
             if (p < ui_t->n_params)
                 ui_param_v[p] = ui_param_v[p] ? 0 : 1;
         }
@@ -473,12 +481,16 @@ static void ui_draw_label(const ui_widget *w)
     draw_text_box(x, y, wd, f, w->text, w->span >= 2u ? C_HI : C_GRAY, 0);
 }
 
-/* the param id a widget reads: UI_OP_ROW/UI_ENVELOPE resolve through the operator */
+/* the param id a widget reads: UI_OP_ROW/UI_ENVELOPE resolve through the selected
+ * operator *and* the active part; UI_PART_ROW resolves through the active part. */
 static uint16_t ui_widget_param(const ui_widget *w)
 {
+    if (w->type == UI_PART_ROW && ui_t->part_param && w->param < ui_t->n_part_param)
+        return ui_t->part_param[(uint32_t)ui_selected_part * ui_t->n_part_param + w->param];
     if ((w->type == UI_OP_ROW || w->type == UI_ENVELOPE) && ui_t->op_param
         && w->param < ui_t->n_op_param)
-        return ui_t->op_param[(uint32_t)ui_selected_op * ui_t->n_op_param + w->param];
+        return ui_t->op_param[(uint32_t)ui_selected_part * ui_t->n_op * ui_t->n_op_param
+                              + (uint32_t)ui_selected_op * ui_t->n_op_param + w->param];
     return w->param;
 }
 
@@ -693,7 +705,7 @@ static void ui_draw_envelope(const ui_widget *w)
     ui_region(w, &x, &y, &wd, &ht);
     if (!ui_t->env || ui_selected_op >= ui_t->n_op)
         return;
-    p0 = (uint32_t)ui_selected_op * 7u;
+    p0 = ((uint32_t)ui_selected_part * ui_t->n_op + (uint32_t)ui_selected_op) * 7u;
     for (i = 0; i < 3; i++) {                       /* r1..r3: attack, decay1, decay2 */
         uint16_t p = ui_t->env[p0 + i];
         int32_t r = p < ui_t->n_params ? ui_param_v[p] : 0;
@@ -807,7 +819,7 @@ static void ui_draw_status(const ui_widget *w)
     int muted = 0;
     ui_region(w, &x, &y, &wd, &ht);
     if (ui_t->mute && ui_selected_op < 4u) {
-        uint16_t p = ui_t->mute[ui_selected_op];
+        uint16_t p = ui_mute_param(ui_selected_op);
         if (p < ui_t->n_params)
             muted = ui_param_v[p] != 0;
     }
@@ -881,7 +893,7 @@ static int32_t ui_header_value(void)
     if (ui_t->alg < ui_t->n_params)
         v |= (ui_param_v[ui_t->alg] & 0x3F) << 11;
     for (i = 0; i < 4u && i < ui_t->n_op; i++) {
-        uint16_t p = ui_t->mute ? ui_t->mute[i] : UI_NO_PARAM;
+        uint16_t p = ui_t->mute ? ui_mute_param(i) : UI_NO_PARAM;
         if (p < ui_t->n_params && ui_param_v[p])
             v |= 1 << (int32_t)(17u + i);
     }
@@ -942,7 +954,7 @@ static void ui_draw_header(void)
     }
     x = ui_htok(x, "  ", 0, 0);
     for (i = 0; i < 4u && i < ui_t->n_op; i++) {
-        uint16_t p = ui_t->mute ? ui_t->mute[i] : UI_NO_PARAM;
+        uint16_t p = ui_t->mute ? ui_mute_param(i) : UI_NO_PARAM;
         int muted = p < ui_t->n_params ? ui_param_v[p] != 0 : 0;
         tok[0] = (char)('1' + i);
         tok[1] = muted ? 'x' : 0;
@@ -959,7 +971,8 @@ static void ui_draw_widget(const ui_widget *w)
     case UI_LABEL: ui_draw_label(w); break;
     case UI_VALUE:
     case UI_PARAM_ROW:
-    case UI_OP_ROW: ui_draw_value(w); break;
+    case UI_OP_ROW:
+    case UI_PART_ROW: ui_draw_value(w); break;
     case UI_BAR: ui_draw_bar(w); break;
     case UI_PARAM_COLUMN: ui_draw_list(w); break;   /* stacked name/value rows */
     case UI_LIST: ui_draw_list(w); break;
@@ -1000,7 +1013,7 @@ static int32_t ui_widget_value(const ui_widget *w, uint32_t slot)
     case UI_GRID: return ui_cursor;
     case UI_ENVELOPE: {                             /* redraw when any of the 7 change */
         int32_t sum = 0;
-        uint32_t i, p0 = (uint32_t)ui_selected_op * 7u;
+        uint32_t i, p0 = ((uint32_t)ui_selected_part * ui_t->n_op + (uint32_t)ui_selected_op) * 7u;
         if (ui_t->env && ui_selected_op < ui_t->n_op)
             for (i = 0; i < 7; i++) {
                 uint16_t p = ui_t->env[p0 + i];
@@ -1012,7 +1025,7 @@ static int32_t ui_widget_value(const ui_widget *w, uint32_t slot)
         int32_t alg = w->param < ui_t->n_params ? ui_param_v[w->param] : 0;
         int32_t m = 0;
         if (ui_t->mute && ui_selected_op < 4u) {
-            uint16_t p = ui_t->mute[ui_selected_op];
+            uint16_t p = ui_mute_param(ui_selected_op);
             if (p < ui_t->n_params) m = ui_param_v[p] != 0;
         }
         return alg * 4 + (int32_t)ui_selected_op * 2 + m;

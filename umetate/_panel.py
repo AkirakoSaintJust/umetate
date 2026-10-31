@@ -283,8 +283,10 @@ def generate_panel(
     ids = dict(param_ids or {})
     params: dict[str, int] = {}
     operators = panel.get("operators") or []
+    n_parts = panel.get("parts", 1)
     op_names: list[str] = []  # the operator-relative param "rest" parts, first-seen
     env_names: list[str] = []  # the envelope's 7 op-relative "rest" parts
+    part_names: list[str] = []  # the part-relative params (the GLO part pages)
 
     def op_rest(pname: str) -> str | None:
         """If `pname` is operator-relative (`opN.<rest>`), return the `<rest>` part."""
@@ -301,6 +303,11 @@ def generate_panel(
         if pname not in params:
             params[pname] = len(params)
         return params[pname]
+
+    def part_entry(pname: str, part: int) -> int:
+        """A param's id at `part`: part 0 is the unsuffixed (part-0) name, later
+        parts the `.pN` name. The names exist only for a multi-part patch."""
+        return param_id(pname) if part == 0 else param_id(f"{pname}.p{part}")
 
     def param_sym(pname: str) -> str:
         param_id(pname)
@@ -391,6 +398,13 @@ def generate_panel(
                     op_names.append(rest)
                 typ = "UI_OP_ROW"
                 param = str(op_names.index(rest))
+            elif wparam and w.get("part"):
+                # a part-relative param (the GLO part pages): resolved through the
+                # active part, so the param must be the unsuffixed (part-0) name.
+                if wparam not in part_names:
+                    part_names.append(wparam)
+                typ = "UI_PART_ROW"
+                param = str(part_names.index(wparam))
             else:
                 raw_typ = _WIDGETS.get(w["type"])
                 if raw_typ is None:
@@ -518,11 +532,24 @@ def generate_panel(
             f"panel: {n_params} params exceed the UI kit's UI_PARAM_MAX (256)"
         )
     mute = panel.get("mute") or []
-    mute_ids = [str(param_id(p)) for p in mute[:4]]
-    mute_ids += ["0xFFFF"] * (4 - len(mute_ids))
-    lines.append(f"static const uint16_t MUTE_TBL[4] = {{ {', '.join(mute_ids)} }};")
+    # the mute/operator/envelope/part-relative tables are per-part (part-major): the
+    # runtime indexes them by ui_selected_part so the editor + mutes follow the
+    # active part (§13.3 item 33). part 0 = the unsuffixed name, later parts = `.pN`.
+    mute_ids: list[str] = []
+    for part in range(n_parts):
+        for p in mute[:4]:
+            mute_ids.append(str(part_entry(p, part)))
+        mute_ids += ["0xFFFF"] * (4 - min(4, len(mute)))
+    lines.append(
+        f"static const uint16_t MUTE_TBL[{4 * n_parts}] = {{ {', '.join(mute_ids)} }};"
+    )
     if operators and op_names:
-        flat = [str(param_id(f"{op}.{n}")) for op in operators for n in op_names]
+        flat = [
+            str(part_entry(f"{op}.{n}", part))
+            for part in range(n_parts)
+            for op in operators
+            for n in op_names
+        ]
         lines.append(
             f"static const uint16_t OP_PARAM[{len(flat)}] = {{ {', '.join(flat)} }};"
         )
@@ -530,13 +557,26 @@ def generate_panel(
     else:
         op_ptr = "0"
     if operators and env_names:
-        flat = [str(param_id(f"{op}.{n}")) for op in operators for n in env_names]
+        flat = [
+            str(part_entry(f"{op}.{n}", part))
+            for part in range(n_parts)
+            for op in operators
+            for n in env_names
+        ]
         lines.append(
             f"static const uint16_t ENV_PARAM[{len(flat)}] = {{ {', '.join(flat)} }};"
         )
         env_ptr = "ENV_PARAM"
     else:
         env_ptr = "0"
+    if part_names:
+        flat = [str(part_entry(n, part)) for part in range(n_parts) for n in part_names]
+        lines.append(
+            f"static const uint16_t PART_PARAM[{len(flat)}] = {{ {', '.join(flat)} }};"
+        )
+        part_ptr = "PART_PARAM"
+    else:
+        part_ptr = "0"
     # the per-param display scale: one ui_param_disp per param id (raw by default).
     # Ratio + semitone params also carry a sorted landmark table; a quantized
     # param steps landmark-to-landmark, so the sparse ratio series is never
@@ -598,7 +638,8 @@ def generate_panel(
     lines.append(
         f'    "{name}", {home}, CTX, {len(ctx_names)}, GLOBAL_BIND, '
         f"{len(panel.get('global', []))}, MUTE_TBL, {op_ptr}, "
-        f"{len(operators)}, {len(op_names)}, {env_ptr}, {disp_ptr}, "
+        f"{len(operators)}, {len(op_names)}, {env_ptr}, {part_ptr}, "
+        f"{len(part_names)}, {disp_ptr}, "
         f"{alg_id}, {n_part}, {n_params}, {widget_count},"
     )
     lines.append("};")

@@ -24,6 +24,7 @@ enum {
     UI_LIST,           /* a list of items (the cursor selects) */
     UI_GRID,           /* a grid of cells (span lines tall) */
     UI_OP_ROW,         /* a param row resolved through the selected operator */
+    UI_PART_ROW,       /* a param row resolved through the selected part */
     UI_ENVELOPE,       /* the DX rate/level curve (straight-line approximation) */
     UI_SCOPE,          /* the oscilloscope: the last render block's waveform */
     UI_SPECTRO,        /* the spectrogram: Goertzel magnitude bars */
@@ -130,11 +131,13 @@ typedef struct {
     uint8_t home;                                /* the base context id (booted into) */
     const ui_context *ctx; uint8_t n_ctx;
     const ui_binding *global; uint8_t n_global;
-    const uint16_t *mute;                        /* the selected-operator mute params (4) */
-    const uint16_t *op_param;                    /* n_op * n_op_param operator-relative params */
+    const uint16_t *mute;                        /* the selected-operator mute params: n_part * 4 */
+    const uint16_t *op_param;                    /* n_part * n_op * n_op_param operator-relative params */
     uint8_t n_op;                                /* the number of operators (0 = none) */
     uint8_t n_op_param;                          /* op-relative params per operator */
-    const uint16_t *env;                         /* the envelope group: n_op * 7 params */
+    const uint16_t *env;                         /* the envelope group: n_part * n_op * 7 params */
+    const uint16_t *part_param;                  /* n_part * n_part_param part-relative params */
+    uint8_t n_part_param;                        /* part-relative params per part */
     const ui_param_disp *disp;                   /* per-param display scale (n_params) */
     uint16_t alg;                                /* the algorithm param id (the header readout) */
     uint8_t n_part;                              /* the number of parts (the header) */
