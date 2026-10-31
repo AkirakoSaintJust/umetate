@@ -32,7 +32,7 @@ COMMANDS: dict[str, tuple[str, str]] = {
     "theme": ("check/generate a WCAG-verified palette", "theme"),
     "lint": ("the C standing checks", "lint"),
     "fmt": ("clang-format the repo", "fmt"),
-    "web-build": ("emscripten -> standalone dsp.wasm", "web:build_main"),
+    "web-build": ("emscripten -> the FM-1 firmware emulator", "web:build_main"),
     "web-serve": ("loopback static server", "web:serve_main"),
     "status": ("the per-layer claim ledger from the roadmap", "status"),
     "evidence": ("validate an evidence matrix", "evidence"),

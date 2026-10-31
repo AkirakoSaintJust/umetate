@@ -317,14 +317,28 @@ static void app_idle(void)
 #define KEY0 53u   /* key 0 = F3 */
 #define GLO_CTX 5u /* the GLO context id (panel.json key order: home/edit/env/lfo/fx/glo) */
 
-static void app_main(void)
+/* ---- the main loop, split for the browser emulator: app_init (the setup) +
+   app_step (one millisecond of the loop). app_main keeps the frozen contract for
+   the host/target builds; a web build drives app_init + app_step from an
+   AudioWorklet instead of the blocking loop. */
+static uint32_t app_prev, app_lit;
+static uint8_t app_held[27];
+static int32_t app_oct;
+static uint32_t app_last_scl_ms, app_scl_pending, app_scl_pending_ms;
+static uint32_t app_browser_open, app_browser_slot, app_browser_ms;
+static uint32_t app_pbro_open, app_pbro_slot, app_pbro_ms;
+
+static void app_init(void)
 {
-    uint32_t prev = 0, k, lit = 0;
-    uint8_t held[27] = {0};
-    int32_t bc, mt, oct = 0;                       /* oct = the keybed's octave shift (-2..+2) */
-    uint32_t last_scl_ms = 0, scl_pending = 0, scl_pending_ms = 0;
-    uint32_t browser_open = 0, browser_slot = 0, browser_ms = 0;
-    uint32_t pbro_open = 0, pbro_slot = 0, pbro_ms = 0;
+    int32_t bc, mt;
+
+    app_prev = 0;
+    app_lit = 0;
+    memset(app_held, 0, sizeof app_held);
+    app_oct = 0;
+    app_last_scl_ms = app_scl_pending = app_scl_pending_ms = 0;
+    app_browser_open = app_browser_slot = app_browser_ms = 0;
+    app_pbro_open = app_pbro_slot = app_pbro_ms = 0;
 
     fourop_fm_dsp_reset();
 #if FM1_CPU1_USED
@@ -356,277 +370,286 @@ static void app_main(void)
     ui_name_set(0u, "INIT PART");
     ui_name_set(1u, "INIT MULTI");
     ui_sync();                                         /* the engine's defaults reach the screen */
+}
 
-    for (;;) {
-        uint32_t keys, down, up, b, rel, base;
-        int32_t e, ch0;
-        platform_poll();
+static void app_step(void)
+{
+    uint32_t keys, down, up, b, rel, base, k;
+    int32_t e, ch0;
 
-        keys = fm1_in.notes;
-        down = keys & ~prev;
-        up = prev & ~keys;
-        prev = keys;
-        base = (uint32_t)((int32_t)KEY0 + 12 * oct);
-        {
-            uint32_t now = fm1_ms;
-            uint32_t scl = fm1_in.buttons & (1u << BTN_SEL);
-            ch0 = fourop_fm_dsp_get_param(SYNTH_ROUTING_BASE + 0u * SYNTH_N_PARTS + 0u);
-            if (ch0 < 0 || ch0 > 15)
-                ch0 = 0;
-            if (ui_name_editing() != 0xFFu) {
-                /* the name editor: KNOB1 = char, KNOB2 = cursor, SCL = backspace,
-                   SAVE = ok, HOME = cancel; the keys + page are inert while open. */
-                int32_t k1 = fm1_enc_take(ENC_KNOB1);
-                int32_t k2 = fm1_enc_take(ENC_KNOB2);
-                if (k1)
-                    ui_name_editor_char(k1);
-                if (k2)
-                    ui_name_editor_move(k2);
-                b = fm1_input_edges(&rel);
-                if (b & (1u << BTN_SEL))
-                    ui_name_editor_backspace();
-                if (b & (1u << BTN_SAVE))
-                    ui_name_editor_commit();
-                if (b & (1u << BTN_HOME))
-                    ui_name_editor_cancel();
-            } else if (ui_save_mode_open()) {
-                /* the save-mode chooser (step 2 of a multi-patch save): KNOB1 =
-                   mode, SAVE = save, HOME = back to the slot chooser. */
-                int32_t k1 = fm1_enc_take(ENC_KNOB1);
-                int32_t k2 = fm1_enc_take(ENC_KNOB2);
-                if (k1)
-                    ui_save_mode_move(k1);
-                (void)k2;                              /* the slot is fixed in step 2 */
-                b = fm1_input_edges(&rel);
-                if (b & (1u << BTN_SAVE)) {
-                    uint8_t mode = ui_save_mode();
-                    uint16_t slot = ui_save_slot();
-                    ui_save_mode_commit();
-                    ui_save_commit();
-                    save_multi(slot, mode);
-                }
-                if (b & (1u << BTN_HOME))
-                    ui_save_mode_cancel();
-            } else if (ui_save_open()) {
-                /* the save chooser: KNOB1 = kind, KNOB2 = slot, SAVE = save,
-                   HOME = cancel; the keys + page are inert while open. */
-                int32_t k1 = fm1_enc_take(ENC_KNOB1);
-                int32_t k2 = fm1_enc_take(ENC_KNOB2);
-                if (k1)
-                    ui_save_kind_move(k1);
-                if (k2)
-                    ui_save_slot_move(k2);
-                b = fm1_input_edges(&rel);
-                if (b & (1u << BTN_SAVE)) {
-                    uint8_t kind = ui_save_kind();
-                    uint16_t slot = ui_save_slot();
-                    if (kind == 0u) {
-                        ui_save_commit();
-                        save_part(slot);
-                    } else {
-                        ui_save_mode_begin();          /* step 2 for a multi-patch */
-                    }
-                }
-                if (b & (1u << BTN_HOME))
-                    ui_save_cancel();
-            } else {
-            for (k = 0; k < 27u; k++) {                /* the keys: play + echo, or SCL chords */
-                if (down >> k & 1u) {
-                    if (scl) {
-                        ui_op_mute_active();           /* SCL + key: mute the active op, no note */
-                        held[k] = 0u;
-                    } else {
-                        held[k] = (uint8_t)(base + k);
-                        ui_handle(UI_SRC_KEY, held[k]);
-                        midi_send(0x90u | (uint32_t)ch0, held[k], 100);
-                    }
-                }
-                if (up >> k & 1u && held[k]) {
-                    ui_act_note_off(held[k]);
-                    midi_send(0x80u | (uint32_t)ch0, held[k], 0);
-                    held[k] = 0u;
-                }
-            }
+    platform_poll();
 
+    keys = fm1_in.notes;
+    down = keys & ~app_prev;
+    up = app_prev & ~keys;
+    app_prev = keys;
+    base = (uint32_t)((int32_t)KEY0 + 12 * app_oct);
+    {
+        uint32_t now = fm1_ms;
+        uint32_t scl = fm1_in.buttons & (1u << BTN_SEL);
+        ch0 = fourop_fm_dsp_get_param(SYNTH_ROUTING_BASE + 0u * SYNTH_N_PARTS + 0u);
+        if (ch0 < 0 || ch0 > 15)
+            ch0 = 0;
+        if (ui_name_editing() != 0xFFu) {
+            /* the name editor: KNOB1 = char, KNOB2 = cursor, SCL = backspace,
+               SAVE = ok, HOME = cancel; the keys + page are inert while open. */
+            int32_t k1 = fm1_enc_take(ENC_KNOB1);
+            int32_t k2 = fm1_enc_take(ENC_KNOB2);
+            if (k1)
+                ui_name_editor_char(k1);
+            if (k2)
+                ui_name_editor_move(k2);
             b = fm1_input_edges(&rel);
-            if (b & (1u << BTN_EDIT)) ui_handle(UI_SRC_BTN_EDIT, -1);
-            if (b & (1u << BTN_HOME)) ui_handle(UI_SRC_BTN_HOME, -1);
-            if (b & (1u << BTN_ENV)) ui_handle(UI_SRC_BTN_ENV, -1);
-            if (b & (1u << BTN_LFO)) ui_handle(UI_SRC_BTN_LFO, -1);
-            if (b & (1u << BTN_FX)) ui_handle(UI_SRC_BTN_FX, -1);
-            if (b & (1u << BTN_GLO)) ui_handle(UI_SRC_BTN_GLO, -1);
-
-            /* OCT-/OCT+: shift the keybed base note a whole octave (clamped ±2) */
-            if (b & (1u << BTN_OCT_DOWN)) oct = oct > -2 ? oct - 1 : oct;
-            if (b & (1u << BTN_OCT_UP))   oct = oct <  2 ? oct + 1 : oct;
-
-            /* SCL: a tap advances the operator (deferred so a second tap within the
-             * window is a part switch instead); a double-tap switches the part. */
-            if (b & (1u << BTN_SEL)) {
-                if (now - last_scl_ms < 300u) {
-                    ui_part_next();
-                    scl_pending = 0;
-                } else {
-                    scl_pending = 1;
-                    scl_pending_ms = now;
-                }
-                last_scl_ms = now;
-            }
-
-            /* ARP/SEQ/PLAY/REC: plain = operator mutes 1-4; SCL+ARP/PLAY = part 1
-             * mute, SCL+SEQ/REC = part 2 mute. */
-            if (b & (1u << BTN_ARP)) {
-                if (scl) ui_part_mute_toggle(0u);
-                else ui_handle(UI_SRC_BTN_ARP, -1);
-            }
-            if (b & (1u << BTN_PLAY)) {
-                if (scl) ui_part_mute_toggle(0u);
-                else ui_handle(UI_SRC_BTN_PLAY, -1);
-            }
-            if (b & (1u << BTN_SEQ)) {
-                if (scl) ui_part_mute_toggle(1u);
-                else ui_handle(UI_SRC_BTN_SEQ, -1);
-            }
-            if (b & (1u << BTN_REC)) {
-                if (scl) ui_part_mute_toggle(1u);
-                else ui_handle(UI_SRC_BTN_REC, -1);
-            }
-
-            /* SAVE: plain = open the save chooser (single part / multi-patch);
-             * SCL+SAVE = INIT PATCH (INIT PART in GLO). */
+            if (b & (1u << BTN_SEL))
+                ui_name_editor_backspace();
+            if (b & (1u << BTN_SAVE))
+                ui_name_editor_commit();
+            if (b & (1u << BTN_HOME))
+                ui_name_editor_cancel();
+        } else if (ui_save_mode_open()) {
+            /* the save-mode chooser (step 2 of a multi-patch save): KNOB1 =
+               mode, SAVE = save, HOME = back to the slot chooser. */
+            int32_t k1 = fm1_enc_take(ENC_KNOB1);
+            int32_t k2 = fm1_enc_take(ENC_KNOB2);
+            if (k1)
+                ui_save_mode_move(k1);
+            (void)k2;                              /* the slot is fixed in step 2 */
+            b = fm1_input_edges(&rel);
             if (b & (1u << BTN_SAVE)) {
-                if (scl) {
-                    if (ui_top() == GLO_CTX)
-                        ui_act_init_part();
-                    else
-                        ui_act_init_patch();
+                uint8_t mode = ui_save_mode();
+                uint16_t slot = ui_save_slot();
+                ui_save_mode_commit();
+                ui_save_commit();
+                save_multi(slot, mode);
+            }
+            if (b & (1u << BTN_HOME))
+                ui_save_mode_cancel();
+        } else if (ui_save_open()) {
+            /* the save chooser: KNOB1 = kind, KNOB2 = slot, SAVE = save,
+               HOME = cancel; the keys + page are inert while open. */
+            int32_t k1 = fm1_enc_take(ENC_KNOB1);
+            int32_t k2 = fm1_enc_take(ENC_KNOB2);
+            if (k1)
+                ui_save_kind_move(k1);
+            if (k2)
+                ui_save_slot_move(k2);
+            b = fm1_input_edges(&rel);
+            if (b & (1u << BTN_SAVE)) {
+                uint8_t kind = ui_save_kind();
+                uint16_t slot = ui_save_slot();
+                if (kind == 0u) {
+                    ui_save_commit();
+                    save_part(slot);
                 } else {
-                    ui_handle(UI_SRC_BTN_SAVE, -1);
+                    ui_save_mode_begin();          /* step 2 for a multi-patch */
                 }
             }
-
-            /* the deferred single-tap (no second tap within the window) */
-            if (scl_pending && now - scl_pending_ms >= 300u) {
-                ui_handle(UI_SRC_BTN_SEL, -1);
-                scl_pending = 0;
+            if (b & (1u << BTN_HOME))
+                ui_save_cancel();
+        } else {
+        for (k = 0; k < 27u; k++) {                /* the keys: play + echo, or SCL chords */
+            if (down >> k & 1u) {
+                if (scl) {
+                    ui_op_mute_active();           /* SCL + key: mute the active op, no note */
+                    app_held[k] = 0u;
+                } else {
+                    app_held[k] = (uint8_t)(base + k);
+                    ui_handle(UI_SRC_KEY, app_held[k]);
+                    midi_send(0x90u | (uint32_t)ch0, app_held[k], 100);
+                }
             }
+            if (up >> k & 1u && app_held[k]) {
+                ui_act_note_off(app_held[k]);
+                midi_send(0x80u | (uint32_t)ch0, app_held[k], 0);
+                app_held[k] = 0u;
             }
         }
-        if ((e = fm1_enc_take(ENC_ALGORITHM)) != 0) ui_handle(UI_SRC_ENC_ALGORITHM, e);
-        if ((e = fm1_enc_take(ENC_SELECT)) != 0) ui_handle(UI_SRC_ENC_SELECT, e);
-        if ((e = fm1_enc_take(ENC_KNOB1)) != 0) ui_handle(UI_SRC_ENC_KNOB1, e);
-        if ((e = fm1_enc_take(ENC_KNOB2)) != 0) ui_handle(UI_SRC_ENC_KNOB2, e);
-        if ((e = fm1_enc_take(ENC_KNOB3)) != 0) ui_handle(UI_SRC_ENC_KNOB3, e);
-        if ((e = fm1_enc_take(ENC_KNOB4)) != 0) ui_handle(UI_SRC_ENC_KNOB4, e);
 
-        /* the preset browsers: the PRESETS encoder opens the multi-patch (2-part)
-         * browser except in GLO, where it opens the single-part browser; 2 s with
-         * no encoder input loads the selection (or, if already loaded, just clears). */
-        {
-            int32_t pe = fm1_enc_take(ENC_PRESETS);
-            if (ui_top() == GLO_CTX) {
-                if (pe != 0) {
-                    if (!pbro_open) {
-                        pbro_open = 1;
-                        pbro_slot = 0u;
-                    }
-                    if (pe > 0)
-                        pbro_slot = (pbro_slot + 1u) % PRESET_PART_SLOTS;
-                    else
-                        pbro_slot = (pbro_slot + PRESET_PART_SLOTS - 1u) % PRESET_PART_SLOTS;
-                    pbro_ms = fm1_ms;
-                    {
-                        char name[PRESET_NAME_LEN];
-                        int32_t params[SYNTH_PARAM_MAX];
-                        const uint8_t *rec =
-                            part_bank + pbro_slot * PP_RECORD(SYNTH_N_PARAMS);
-                        if (rec[0] != PRESET_EMPTY &&
-                            preset_part_unpack(rec, SYNTH_N_PARAMS, name, params))
-                            ui_popup_show_part(pbro_slot, name);
-                        else
-                            ui_popup_show_part(pbro_slot, 0);
-                    }
-                }
-                if (pbro_open && fm1_ms - pbro_ms >= 2000u) {
-                    load_part(pbro_slot);
-                    ui_popup_hide();
-                    pbro_open = 0;
-                }
+        b = fm1_input_edges(&rel);
+        if (b & (1u << BTN_EDIT)) ui_handle(UI_SRC_BTN_EDIT, -1);
+        if (b & (1u << BTN_HOME)) ui_handle(UI_SRC_BTN_HOME, -1);
+        if (b & (1u << BTN_ENV)) ui_handle(UI_SRC_BTN_ENV, -1);
+        if (b & (1u << BTN_LFO)) ui_handle(UI_SRC_BTN_LFO, -1);
+        if (b & (1u << BTN_FX)) ui_handle(UI_SRC_BTN_FX, -1);
+        if (b & (1u << BTN_GLO)) ui_handle(UI_SRC_BTN_GLO, -1);
+
+        /* OCT-/OCT+: shift the keybed base note a whole octave (clamped ±2) */
+        if (b & (1u << BTN_OCT_DOWN)) app_oct = app_oct > -2 ? app_oct - 1 : app_oct;
+        if (b & (1u << BTN_OCT_UP))   app_oct = app_oct <  2 ? app_oct + 1 : app_oct;
+
+        /* SCL: a tap advances the operator (deferred so a second tap within the
+           window is a part switch instead); a double-tap switches the part. */
+        if (b & (1u << BTN_SEL)) {
+            if (now - app_last_scl_ms < 300u) {
+                ui_part_next();
+                app_scl_pending = 0;
             } else {
-                if (pe != 0) {
-                    if (!browser_open) {
-                        browser_open = 1;
-                        browser_slot = cur_slot;
-                    }
-                    if (pe > 0)
-                        browser_slot = (browser_slot + 1u) % PRESET_MULTI_SLOTS;
+                app_scl_pending = 1;
+                app_scl_pending_ms = now;
+            }
+            app_last_scl_ms = now;
+        }
+
+        /* ARP/SEQ/PLAY/REC: plain = operator mutes 1-4; SCL+ARP/PLAY = part 1
+           mute, SCL+SEQ/REC = part 2 mute. */
+        if (b & (1u << BTN_ARP)) {
+            if (scl) ui_part_mute_toggle(0u);
+            else ui_handle(UI_SRC_BTN_ARP, -1);
+        }
+        if (b & (1u << BTN_PLAY)) {
+            if (scl) ui_part_mute_toggle(0u);
+            else ui_handle(UI_SRC_BTN_PLAY, -1);
+        }
+        if (b & (1u << BTN_SEQ)) {
+            if (scl) ui_part_mute_toggle(1u);
+            else ui_handle(UI_SRC_BTN_SEQ, -1);
+        }
+        if (b & (1u << BTN_REC)) {
+            if (scl) ui_part_mute_toggle(1u);
+            else ui_handle(UI_SRC_BTN_REC, -1);
+        }
+
+        /* SAVE: plain = open the save chooser (single part / multi-patch);
+           SCL+SAVE = INIT PATCH (INIT PART in GLO). */
+        if (b & (1u << BTN_SAVE)) {
+            if (scl) {
+                if (ui_top() == GLO_CTX)
+                    ui_act_init_part();
+                else
+                    ui_act_init_patch();
+            } else {
+                ui_handle(UI_SRC_BTN_SAVE, -1);
+            }
+        }
+
+        /* the deferred single-tap (no second tap within the window) */
+        if (app_scl_pending && now - app_scl_pending_ms >= 300u) {
+            ui_handle(UI_SRC_BTN_SEL, -1);
+            app_scl_pending = 0;
+        }
+        }
+    }
+    if ((e = fm1_enc_take(ENC_ALGORITHM)) != 0) ui_handle(UI_SRC_ENC_ALGORITHM, e);
+    if ((e = fm1_enc_take(ENC_SELECT)) != 0) ui_handle(UI_SRC_ENC_SELECT, e);
+    if ((e = fm1_enc_take(ENC_KNOB1)) != 0) ui_handle(UI_SRC_ENC_KNOB1, e);
+    if ((e = fm1_enc_take(ENC_KNOB2)) != 0) ui_handle(UI_SRC_ENC_KNOB2, e);
+    if ((e = fm1_enc_take(ENC_KNOB3)) != 0) ui_handle(UI_SRC_ENC_KNOB3, e);
+    if ((e = fm1_enc_take(ENC_KNOB4)) != 0) ui_handle(UI_SRC_ENC_KNOB4, e);
+
+    /* the preset browsers: the PRESETS encoder opens the multi-patch (2-part)
+       browser except in GLO, where it opens the single-part browser; 2 s with
+       no encoder input loads the selection (or, if already loaded, just clears). */
+    {
+        int32_t pe = fm1_enc_take(ENC_PRESETS);
+        if (ui_top() == GLO_CTX) {
+            if (pe != 0) {
+                if (!app_pbro_open) {
+                    app_pbro_open = 1;
+                    app_pbro_slot = 0u;
+                }
+                if (pe > 0)
+                    app_pbro_slot = (app_pbro_slot + 1u) % PRESET_PART_SLOTS;
+                else
+                    app_pbro_slot = (app_pbro_slot + PRESET_PART_SLOTS - 1u) % PRESET_PART_SLOTS;
+                app_pbro_ms = fm1_ms;
+                {
+                    char name[PRESET_NAME_LEN];
+                    int32_t params[SYNTH_PARAM_MAX];
+                    const uint8_t *rec =
+                        part_bank + app_pbro_slot * PP_RECORD(SYNTH_N_PARAMS);
+                    if (rec[0] != PRESET_EMPTY &&
+                        preset_part_unpack(rec, SYNTH_N_PARAMS, name, params))
+                        ui_popup_show_part(app_pbro_slot, name);
                     else
-                        browser_slot = (browser_slot + PRESET_MULTI_SLOTS - 1u) % PRESET_MULTI_SLOTS;
-                    browser_ms = fm1_ms;
-                    {
-                        char name[PRESET_NAME_LEN];
-                        uint8_t ps[SYNTH_N_PARTS];
-                        int32_t lv[SYNTH_N_PARTS], dl[SYNTH_N_PARTS], ch[SYNTH_N_PARTS];
-                        int32_t lo[SYNTH_N_PARTS], hi[SYNTH_N_PARTS];
-                        const uint8_t *rec =
-                            multi_bank + browser_slot * MP_RECORD(SYNTH_N_PARTS);
-                        if (rec[0] != PRESET_EMPTY &&
-                            preset_multi_unpack(rec, SYNTH_N_PARTS, name, ps, lv, dl, ch, lo, hi))
-                            ui_popup_show(browser_slot, name);
-                        else
-                            ui_popup_show(browser_slot, 0);
-                    }
-                }
-                if (browser_open && fm1_ms - browser_ms >= 2000u) {
-                    if (browser_slot != cur_slot) {
-                        apply_multi(browser_slot);
-                        cur_slot = browser_slot;
-                    }
-                    ui_popup_hide();
-                    browser_open = 0;
+                        ui_popup_show_part(app_pbro_slot, 0);
                 }
             }
-        }
-
-        synth_midi_poll(&midi_ctx);
-        synth_sysex_poll(&sysex_ctx);
-        ui_sync();
-
-        /* the SysEx settings write reached `settings`: persist it once silent */
-        if (memcmp(settings, saved_settings, ST_RECORD)) {
-            set_dirty = 1;
-            t_change = fm1_ms;
-        }
-
-#if FM1_CPU1_USED
-        lit_base = base;
-        lit = dsp_status.lit;                    /* published by the render job */
-#else
-        lit = fourop_fm_dsp_lit(base);
-#endif
-        for (k = 0; k < 27u; k++)
-            fm1_led_key(KEY_LED(k), lit >> k & 1u);
-        fm1_led_key(BTN_OCT_DOWN, oct < 0);
-        fm1_led_key(BTN_OCT_UP, oct > 0);
-
-        idle_ok = 1;
-        ui_redraw(fm1_ms);
-        idle_ok = 0;
-
-        if (quiet_seam() && fm1_ms - t_change > 2000u) {
-            if (bank_dirty) {                          /* silent-only saves (the store erases) */
-                preset_part_bank_save(part_bank, SYNTH_N_PARAMS);
-                bank_dirty = 0;
+            if (app_pbro_open && fm1_ms - app_pbro_ms >= 2000u) {
+                load_part(app_pbro_slot);
+                ui_popup_hide();
+                app_pbro_open = 0;
             }
-            if (multi_dirty) {
-                preset_multi_bank_save(multi_bank, SYNTH_N_PARAMS, SYNTH_N_PARTS);
-                multi_dirty = 0;
+        } else {
+            if (pe != 0) {
+                if (!app_browser_open) {
+                    app_browser_open = 1;
+                    app_browser_slot = cur_slot;
+                }
+                if (pe > 0)
+                    app_browser_slot = (app_browser_slot + 1u) % PRESET_MULTI_SLOTS;
+                else
+                    app_browser_slot = (app_browser_slot + PRESET_MULTI_SLOTS - 1u) % PRESET_MULTI_SLOTS;
+                app_browser_ms = fm1_ms;
+                {
+                    char name[PRESET_NAME_LEN];
+                    uint8_t ps[SYNTH_N_PARTS];
+                    int32_t lv[SYNTH_N_PARTS], dl[SYNTH_N_PARTS], ch[SYNTH_N_PARTS];
+                    int32_t lo[SYNTH_N_PARTS], hi[SYNTH_N_PARTS];
+                    const uint8_t *rec =
+                        multi_bank + app_browser_slot * MP_RECORD(SYNTH_N_PARTS);
+                    if (rec[0] != PRESET_EMPTY &&
+                        preset_multi_unpack(rec, SYNTH_N_PARTS, name, ps, lv, dl, ch, lo, hi))
+                        ui_popup_show(app_browser_slot, name);
+                    else
+                        ui_popup_show(app_browser_slot, 0);
+                }
             }
-            if (set_dirty) {
-                preset_settings_save(settings);
-                memcpy(saved_settings, settings, ST_RECORD);
-                set_dirty = 0;
+            if (app_browser_open && fm1_ms - app_browser_ms >= 2000u) {
+                if (app_browser_slot != cur_slot) {
+                    apply_multi(app_browser_slot);
+                    cur_slot = app_browser_slot;
+                }
+                ui_popup_hide();
+                app_browser_open = 0;
             }
         }
     }
+
+    synth_midi_poll(&midi_ctx);
+    synth_sysex_poll(&sysex_ctx);
+    ui_sync();
+
+    /* the SysEx settings write reached `settings`: persist it once silent */
+    if (memcmp(settings, saved_settings, ST_RECORD)) {
+        set_dirty = 1;
+        t_change = fm1_ms;
+    }
+
+#if FM1_CPU1_USED
+    lit_base = base;
+    app_lit = dsp_status.lit;                    /* published by the render job */
+#else
+    app_lit = fourop_fm_dsp_lit(base);
+#endif
+    for (k = 0; k < 27u; k++)
+        fm1_led_key(KEY_LED(k), app_lit >> k & 1u);
+    fm1_led_key(BTN_OCT_DOWN, app_oct < 0);
+    fm1_led_key(BTN_OCT_UP, app_oct > 0);
+
+    idle_ok = 1;
+    ui_redraw(fm1_ms);
+    idle_ok = 0;
+
+    if (quiet_seam() && fm1_ms - t_change > 2000u) {
+        if (bank_dirty) {                          /* silent-only saves (the store erases) */
+            preset_part_bank_save(part_bank, SYNTH_N_PARAMS);
+            bank_dirty = 0;
+        }
+        if (multi_dirty) {
+            preset_multi_bank_save(multi_bank, SYNTH_N_PARAMS, SYNTH_N_PARTS);
+            multi_dirty = 0;
+        }
+        if (set_dirty) {
+            preset_settings_save(settings);
+            memcpy(saved_settings, settings, ST_RECORD);
+            set_dirty = 0;
+        }
+    }
+}
+
+static void app_main(void)
+{
+    app_init();
+    for (;;)
+        app_step();
 }

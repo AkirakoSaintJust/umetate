@@ -2,11 +2,12 @@
 # Copyright (C) 2026 P1Onken (umetate)
 """`umetate web-build` / `web-serve` (docs/roadmap.md §12.7.2, P4-1).
 
-`web-build` emscripten-compiles the generated `dsp.c` to a standalone `dsp.wasm`
-(no import section) + an AudioWorklet harness (`index.html`/`main.js`/`worklet.js`)
-with a versioned message protocol and gesture-gated start. `web-serve` is a loopback
-static server. `check_parity` proves the browser (wasm, via node) output matches the
-host (gcc) output exactly.
+`web-build` compiles the whole firmware (rib.c + the generated engine + the app)
+to a standalone `firmware.wasm` and writes the FM-1 emulator page (`index.html` +
+`worklet.js`, the 240x240 screen read back from the framebuffer). `web-serve` is a
+loopback static server. `build()`/`check_parity` prove the *engine* (host gcc vs
+wasm/node) output matches exactly — the CI parity check, now separate from the
+user-facing emulator build.
 """
 
 from __future__ import annotations
@@ -29,6 +30,24 @@ from .generate import generate, generate_tables
 _ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_PATCH = _ROOT / "examples" / "pocket-drone" / "patch.json"
 OUT = _ROOT / "build" / "web"
+
+# the firmware wasm the emulator exports (tests/web_host.c)
+_EMU_EXPORTS = (
+    "web_boot",
+    "web_step",
+    "web_render",
+    "web_out_l",
+    "web_out_r",
+    "web_fb",
+    "web_blits",
+    "web_buttons",
+    "web_keys",
+    "web_enc",
+    "web_lit_buttons",
+    "web_lit_keys",
+    "web_dim_keys",
+)
+_EMU_DIR = _ROOT / "firmware" / "web_emu"
 
 # the §12.1 seam functions the harness calls (exported from dsp.wasm)
 _SEAM_FUNCS = (
@@ -303,6 +322,110 @@ def build(patch: Patch, out: Path, name: str) -> int:
     return 0
 
 
+def _emcc_app_args(name: str, out: Path, host: bool) -> list[str]:
+    """The emcc command for the whole-firmware emulator (standalone, no-import)."""
+    hal = str(_ROOT / "firmware" / "hal") if host else "/work/firmware/hal"
+    src = str(_ROOT / "firmware" / "src") if host else "/work/firmware/src"
+    gen = str(_ROOT / "firmware" / "gen") if host else "/work/firmware/gen"
+    web = str(out) if host else _container_path(out)
+    exports = json.dumps([f"_{f}" for f in _EMU_EXPORTS])
+    return [
+        "emcc",
+        "-O2",
+        "-std=c11",
+        "-Wno-unused-function",
+        "-DUMETATE_HOST",
+        "-DUMETATE_WEB",
+        "-DUMETATE_SYNTH_APP=1",
+        '-DAPP_VER="dev"',
+        "-I",
+        hal,
+        "-I",
+        src,
+        "-I",
+        gen,
+        "-s",
+        "STANDALONE_WASM=1",
+        "-s",
+        f"EXPORTED_FUNCTIONS={exports}",
+        "-Wl,--no-entry",
+        f"{src}/rib.c",
+        f"{gen}/{name}_dsp.c",
+        f"{gen}/tables.c",
+        "-o",
+        f"{web}/firmware.wasm",
+    ]
+
+
+def build_app(synth_dir: Path, out: Path) -> int:
+    """Compile the *firmware* (rib.c + the generated engine + the app) to a
+    standalone `firmware.wasm`, and write the emulator page. Returns 0 on success."""
+    from ._ir import to_c_identifier
+    from ._panel import generate_panel
+    from ._schema import as_panel
+    from .generate import (
+        generate,
+        generate_cc_header,
+        generate_dsp_header,
+        generate_synth_header,
+        generate_tables,
+        param_ids,
+        param_meta,
+    )
+
+    try:
+        patch = as_patch(json.loads((synth_dir / "patch.json").read_text("utf-8")))
+        panel = as_panel(json.loads((synth_dir / "panel.json").read_text("utf-8")))
+        app_c = (synth_dir / "app.c").read_text("utf-8")
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        print(f"web-build: cannot read {synth_dir}: {exc}", file=sys.stderr)
+        return 1
+
+    name = to_c_identifier(patch["name"])
+    gen = _ROOT / "firmware" / "gen"
+    gen.mkdir(parents=True, exist_ok=True)
+    tables_h, tables_c = generate_tables(patch)
+    ids = param_ids(patch)
+    meta = param_meta(patch)
+    outputs: dict[str, str] = {
+        f"{name}_dsp.c": generate(patch),
+        "dsp.h": generate_dsp_header(patch),
+        "tables.h": tables_h,
+        "tables.c": tables_c,
+        "panel.h": generate_panel(panel, ids, meta),
+        "cc_map.h": generate_cc_header(patch),
+        "synth_layout.h": generate_synth_header(patch),
+        "app.c": app_c,
+    }
+    for filename, content in outputs.items():
+        (gen / filename).write_text(content, encoding="utf-8")
+
+    out.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(_EMU_DIR / "index.html", out / "index.html")
+    shutil.copyfile(_EMU_DIR / "worklet.js", out / "worklet.js")
+
+    if runner.probe().docker:
+        rc = runner.run(_emcc_app_args(name, out, host=False), cwd="/work")
+    elif shutil.which("emcc"):
+        rc = subprocess.run(_emcc_app_args(name, out, host=True)).returncode
+    else:
+        print("web-build: blocked — emcc not found (`umetate setup`)", file=sys.stderr)
+        return 1
+
+    wasm = out / "firmware.wasm"
+    if rc != 0 or not wasm.is_file():
+        return 1
+    imports = wasm_import_count(wasm.read_bytes())
+    if imports:
+        print(
+            f"web-build: firmware.wasm imports {imports} names (standalone expected)",
+            file=sys.stderr,
+        )
+        return 1
+    print(f"web-build: {wasm} ({wasm.stat().st_size} bytes, no import section)")
+    return 0
+
+
 def check_parity(out: Path, name: str) -> tuple[bool, str]:
     """Run the same render script on host (gcc) + wasm (node) and compare exactly."""
     (out / "harness.c").write_text(_HOST_HARNESS.replace("__NAME__", name))
@@ -366,28 +489,21 @@ def check_parity(out: Path, name: str) -> tuple[bool, str]:
 def build_main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="umetate web-build", description=__doc__)
     parser.add_argument(
-        "--patch",
+        "--synth",
         type=Path,
-        default=DEFAULT_PATCH,
-        help="a patch.json (default: examples/pocket-drone)",
+        default=_ROOT / "examples" / "fourop-fm",
+        help="a synth project (patch.json + panel.json + app.c)",
     )
     parser.add_argument("--out", type=Path, default=OUT, help="output directory")
     args = parser.parse_args(argv)
 
-    patch_path: Path = args.patch
+    synth_dir: Path = args.synth.resolve()
     out: Path = args.out
-    if not patch_path.is_file():
-        print(f"web-build: {patch_path} not found", file=sys.stderr)
+    if not (synth_dir / "patch.json").is_file():
+        print(f"web-build: {synth_dir / 'patch.json'} not found", file=sys.stderr)
         return 1
-    try:
-        patch = as_patch(json.loads(patch_path.read_text(encoding="utf-8")))
-    except (OSError, json.JSONDecodeError, ValueError) as exc:
-        print(f"web-build: cannot read {patch_path}: {exc}", file=sys.stderr)
-        return 1
-
-    name = patch["name"].replace("-", "_").replace(".", "_")
-    print(f"web-build: {name} -> {out}")
-    return build(patch, out, name)
+    print(f"web-build: {synth_dir} -> {out}")
+    return build_app(synth_dir, out)
 
 
 def serve_main(argv: list[str] | None = None) -> int:

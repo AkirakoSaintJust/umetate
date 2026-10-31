@@ -46,7 +46,11 @@ enum { ENC_SELECT = 0, ENC_ALGORITHM = 1, ENC_KNOB1 = 2, ENC_KNOB2 = 3, ENC_KNOB
 #endif
 
 #ifdef UMETATE_HOST
-#include "../tests/host.c"                   /* on a computer: a fake FM-1 (tests/host.c) */
+#ifdef UMETATE_WEB
+#include "../tests/web_host.c"                 /* in the browser: a fake FM-1 (tests/web_host.c) */
+#else
+#include "../tests/host.c"                     /* on a computer: a fake FM-1 (tests/host.c) */
+#endif
 #else
 #include <stdint.h>
 #include "fm1_time.h"

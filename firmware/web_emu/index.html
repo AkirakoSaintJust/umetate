@@ -1,0 +1,304 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-3.0-only
+     Copyright (C) 2026 P1Onken (umetate).
+     The FM-1 front panel drawing and the hit-area/knob handling follow the pattern
+     of fm1-x0x's web emulator (https://github.com/charlesvestal/fm1-x0x, GPL-3.0);
+     re-implemented for the umetate firmware (different button/encoder ids, and the
+     screen is read from our own framebuffer). -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>umetate — FM-1 emulator</title>
+<style>
+  body { background: #101316; color: #e6e8eb; margin: 0; padding: 16px 16px 40px;
+         font: 400 16px/1.5 system-ui, "Segoe UI", Arial, sans-serif; }
+  main { max-width: 1000px; margin: 0 auto; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: .4rem 1rem; margin-bottom: .6rem; }
+  h1 { font-size: 1.5rem; margin: 0; }
+  header p { margin: 0; color: #9aa1a9; font-size: .92rem; }
+  .devicebox { overflow-x: auto; }
+  .device { position: relative; width: 100%; min-width: 560px; aspect-ratio: 1000 / 640; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+  .device svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .device canvas { position: absolute; left: 30%; top: 6.875%; width: 23.6%; height: 36.875%; image-rendering: pixelated; background: #000; border-radius: 2px; }
+  .controls { position: absolute; inset: 0; pointer-events: none; }
+  .hit { position: absolute; touch-action: none; cursor: pointer; border-radius: 12px;
+         pointer-events: auto; margin: 0; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; appearance: none; }
+  .hit.knob { cursor: ns-resize; border-radius: 50%; }
+  .hit:focus-visible { outline: 2px solid #f0a043; outline-offset: 2px; }
+  .lit .btnface { fill: #f0a043; }
+  .lit text.btn { fill: #1b1205; }
+  .keyface { transition: fill .06s; }
+  .lit .keyface.white { fill: #f3b25c; }
+  .lit .keyface.black { fill: #e0902c; }
+  .dim .keyface.white { fill: #f6dcb6; }
+  .dim .keyface.black { fill: #7a5326; }
+  .start { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(10,11,13,.55); border-radius: 4.4% / 6.9%; }
+  .start button { font: 600 1.1rem system-ui; letter-spacing: .03em; padding: .6em 1.4em; border-radius: 999px; border: 0; background: #f0a043; color: #1b1205; cursor: pointer; }
+  .start[hidden] { display: none; }
+  .bar { display: flex; flex-wrap: wrap; gap: .4rem 1rem; align-items: center; margin-top: .7rem; color: #9aa1a9; font-size: .92rem; }
+  #alert:empty { display: none; }
+  #alert { color: #ffb4ab; font-weight: 600; }
+  kbd { font: 600 .85em ui-monospace, monospace; background: #1a1d21; border: 1px solid #2d3137; border-radius: 4px; padding: 0 .3em; }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>umetate · fourop-fm</h1>
+  <p>the FM-1 firmware, running in the browser (44.1 kHz)</p>
+</header>
+
+<div class="devicebox">
+<div class="device" id="device" role="group" aria-label="The FM-1">
+  <svg id="panel" viewBox="0 0 1000 640" aria-hidden="true"></svg>
+  <canvas id="screen" width="240" height="240" role="img" aria-label="The FM-1's screen"></canvas>
+  <div class="controls" id="controls" inert></div>
+  <div class="start" id="start"><button id="go" type="button">Switch on</button></div>
+</div>
+</div>
+
+<div class="bar">
+  <span id="status" role="status">Off. Sound starts when you switch it on.</span>
+  <span id="alert" role="alert"></span>
+  <button id="mute" type="button" aria-pressed="false">Mute</button>
+</div>
+<p style="color:#9aa1a9; font-size:.9rem; margin-top:.9rem">
+  Knobs: drag up/down or use the scroll wheel. Buttons/keys: click, or use the keyboard
+  (<kbd>Tab</kbd> to focus, <kbd>Space</kbd>/<kbd>Enter</kbd> to press, arrow keys turn a knob).</p>
+</main>
+
+<script type="module">
+const NS = "http://www.w3.org/2000/svg";
+
+// our firmware's control ids (firmware/src/platform.c): buttons 0..13, encoders 0..6,
+// note keys 14..40 (bit n = F3 + n).
+const BTN = { OCTd: 0, OCTu: 1, FX: 2, SEL: 3, ENV: 4, LFO: 5, EDIT: 6, GLO: 7, HOME: 8, SAVE: 9, ARP: 10, SEQ: 11, PLAY: 12, REC: 13 };
+const ENC = { SELECT: 0, ALGORITHM: 1, KNOB1: 2, KNOB2: 3, KNOB3: 4, KNOB4: 5, PRESETS: 6 };
+const WHITE = [0, 2, 4, 6, 7, 9, 11, 12, 14, 16, 18, 19, 21, 23, 24, 26];   // note offsets (from F3) of the white keys
+const BLACK = [1, 3, 5, 8, 10, 13, 15, 17, 20, 22, 25];                       // the black keys
+const BLACK_AFTER = [0, 1, 2, 4, 5, 7, 8, 9, 11, 12, 14];                     // the white key each black key follows
+
+const BODY = "#3a3d42", TRAY = "#26282c", KEY_W = "#d9dadc", KEY_B = "#c9cacd", KNOB = "#1f2124", BTNC = "#2e3135", LABEL = "#e8e8ea";
+const $ = (id) => document.getElementById(id);
+
+const svg = $("panel");
+function el(tag, attrs, parent = svg) {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  parent.appendChild(e);
+  return e;
+}
+function text(parent, x, y, s, size, fill = LABEL, weight = 600) {
+  const t = el("text", { x, y, "text-anchor": "middle", "font-family": "system-ui, sans-serif",
+                         "font-size": size, "font-weight": weight, fill, class: "btn", "pointer-events": "none" }, parent);
+  t.textContent = s;
+  return t;
+}
+
+// ---- the panel (a picture; the controls are hit-areas over it)
+el("rect", { x: 4, y: 4, width: 992, height: 632, rx: 44, fill: BODY });
+const knobs = {};
+function knob(x, y, r, label, role) {
+  const g = el("g", { class: "ctl knob" });
+  el("circle", { cx: x, cy: y, r: r + 5, fill: TRAY }, g);
+  el("circle", { cx: x, cy: y, r, fill: KNOB, stroke: "#44474c", "stroke-width": 2 }, g);
+  el("line", { x1: x, y1: y - r + 5, x2: x, y2: y - r + 15, stroke: LABEL, "stroke-width": 3, "stroke-linecap": "round" }, g);
+  text(g, x, y - r - 12, label, 15);
+  knobs[label] = { g, x, y, angle: 0, role };
+  return knobs[label];
+}
+knob(105, 100, 24, "MASTER", "master");
+knob(215, 100, 24, "SELECT", ENC.SELECT);
+knob(105, 205, 24, "PRESETS", ENC.PRESETS);
+knob(215, 205, 24, "ALGORITHM", ENC.ALGORITHM);
+for (let i = 0; i < 4; i++) knob(610 + i * 104, 100, 22, "KNOB" + (i + 1), ENC["KNOB" + (i + 1)]);
+
+const buttons = {};
+function button(x, y, w, h, label, bit, two) {
+  const g = el("g", { class: "ctl" });
+  el("rect", { x, y, width: w, height: h, rx: 9, fill: BTNC, stroke: "#4a4d52", "stroke-width": 1.5, class: "btnface" }, g);
+  if (two) { text(g, x + w / 2, y + h / 2 - 1, label, 11); text(g, x + w / 2, y + h / 2 + 12, two, 11); }
+  else text(g, x + w / 2, y + h / 2 + 5, label, 14);
+  buttons[label] = { g, bit };
+}
+el("rect", { x: 58, y: 258, width: 210, height: 58, rx: 14, fill: TRAY });
+button(72, 268, 82, 38, "OCT-", BTN.OCTd);
+button(170, 268, 82, 38, "OCT+", BTN.OCTu);
+el("rect", { x: 300, y: 44, width: 236, height: 236, rx: 26, fill: "#111214" });
+el("rect", { x: 568, y: 160, width: 400, height: 140, rx: 18, fill: TRAY });
+const ROW1 = [["FX", BTN.FX], ["SEL", BTN.SEL], ["ENV", BTN.ENV], ["LFO", BTN.LFO], ["EDIT", BTN.EDIT], ["GLO", BTN.GLO]];
+const ROW2 = [["HOME", BTN.HOME], ["SAVE", BTN.SAVE], ["ARP", BTN.ARP], ["SEQ", BTN.SEQ], ["PLAY", BTN.PLAY], ["REC", BTN.REC]];
+for (let i = 0; i < 6; i++) {
+  button(582 + i * 63, 174, 54, 48, ROW1[i][0], ROW1[i][1]);
+  button(582 + i * 63, 236, 54, 48, ROW2[i][0], ROW2[i][1], ROW2[i][0] === "PLAY" ? "STOP" : null);
+}
+
+const keys = [];
+(function keybed(x0, y0, w, h) {
+  el("rect", { x: x0, y: y0, width: w, height: h, rx: 18, fill: TRAY });
+  const pitch = (w - 24) / 16, kw = pitch * 0.78;
+  for (let i = 0; i < 16; i++) {
+    const g = el("g", { class: "ctl" });
+    el("rect", { x: x0 + 12 + i * pitch + (pitch - kw) / 2, y: y0 + h * 0.43, width: kw, height: h * 0.52, rx: kw / 2, fill: KEY_W, class: "keyface white" }, g);
+    keys[WHITE[i]] = { g };
+  }
+  BLACK_AFTER.forEach((a, k) => {
+    const g = el("g", { class: "ctl" });
+    el("rect", { x: x0 + 12 + (a + 1) * pitch - kw / 2, y: y0 + h * 0.06, width: kw, height: h * 0.33, rx: kw / 2, fill: KEY_B, class: "keyface black" }, g);
+    keys[BLACK[k]] = { g };
+  });
+})(36, 340, 928, 270);
+
+// ---- hit areas (invisible HTML controls over the picture, in reading order)
+const device = $("device"), controls = $("controls");
+function hit(c, kind, name) {
+  const b = c.g.getBBox(), d = document.createElement(kind === "knob" ? "div" : "button");
+  d.className = "hit" + (kind === "knob" ? " knob" : "");
+  Object.assign(d.style, { left: `${b.x / 10}%`, top: `${b.y / 6.4}%`, width: `${b.width / 10}%`, height: `${b.height / 6.4}%` });
+  if (kind !== "knob") d.type = "button";
+  d.setAttribute("aria-label", name);
+  d.addEventListener("touchstart", (e) => e.preventDefault(), { passive: false });
+  controls.append(d);
+  c.hit = d;
+}
+for (const n of ["MASTER", "SELECT", "PRESETS", "ALGORITHM"]) hit(knobs[n], "knob", n);
+for (let i = 1; i <= 4; i++) hit(knobs["KNOB" + i], "knob", "KNOB " + i);
+for (const n of ["OCT-", "OCT+"]) hit(buttons[n], "btn", n);
+for (const [n] of [...ROW1, ...ROW2]) hit(buttons[n], "btn", n);
+for (let i = 0; i < 27; i++) hit(keys[i], "key", "Key " + (i + 1));
+
+// ---- state and input
+let node = null, gain = null, btnMask = 0, keyMask = 0, litButtons = 0, dimKeys = 0;
+const btnHeld = new Map(), keyHeld = new Map();
+function send(m) { if (node) node.port.postMessage(m); }
+function syncButtons() {
+  let m = 0;
+  for (const b of btnHeld.values()) m |= 1 << b;
+  if (m !== btnMask) { btnMask = m; send({ type: "buttons", mask: m }); }
+  for (const b of Object.values(buttons)) b.g.classList.toggle("lit", !!(litButtons & (1 << b.bit)));
+}
+function syncKeys() {
+  let m = 0;
+  for (const k of keyHeld.values()) m |= 1 << k;
+  if (m !== keyMask) { keyMask = m; send({ type: "keys", mask: m }); }
+}
+function drawKnobAngle(k, angle) {
+  k.angle = angle;
+  const ind = k.g.querySelector("line");
+  ind.setAttribute("transform", `rotate(${angle} ${k.x} ${k.y})`);
+}
+
+// the MASTER knob is the volume; the rest are endless encoders (turn = detents)
+function turn(k, n) {
+  if (!n) return;
+  if (k.role === "master") {
+    const cur = gain ? gain.gain.value : 1;
+    const v = Math.max(0, Math.min(1, cur + n * 0.02));
+    if (gain) gain.gain.value = v;
+    drawKnobAngle(k, -135 + 270 * v);
+  } else {
+    send({ type: "enc", role: k.role, n });
+    drawKnobAngle(k, (k.angle || 0) + n * 18);
+  }
+}
+for (const k of Object.values(knobs)) {
+  k.hit.addEventListener("pointerdown", (e) => { e.preventDefault(); k.hit.setPointerCapture(e.pointerId); k.drag = { y: e.clientY, acc: 0 }; });
+  k.hit.addEventListener("pointermove", (e) => {
+    if (!k.drag) return;
+    k.drag.acc += k.drag.y - e.clientY;
+    k.drag.y = e.clientY;
+    const n = Math.trunc(k.drag.acc / 7);
+    if (n) { k.drag.acc -= n * 7; turn(k, n); }
+  });
+  const end = () => { k.drag = null; };
+  k.hit.addEventListener("pointerup", end);
+  k.hit.addEventListener("pointercancel", end);
+  k.hit.addEventListener("wheel", (e) => { e.preventDefault(); turn(k, e.deltaY < 0 ? 1 : -1); }, { passive: false });
+  k.hit.addEventListener("keydown", (e) => {
+    const n = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1, PageUp: 8, PageDown: -8 }[e.key];
+    if (n === undefined) return;
+    turn(k, n);
+    e.preventDefault();
+  });
+}
+for (const b of Object.values(buttons)) {
+  b.hit.addEventListener("pointerdown", (e) => { e.preventDefault(); b.hit.setPointerCapture(e.pointerId); btnHeld.set("p" + e.pointerId, b.bit); syncButtons(); });
+  b.hit.addEventListener("click", () => { const id = "c" + b.bit; btnHeld.set(id, b.bit); syncButtons(); setTimeout(() => { btnHeld.delete(id); syncButtons(); }, 120); });
+  b.hit.addEventListener("keydown", (e) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); if (!e.repeat) { btnHeld.set("k" + b.bit, b.bit); syncButtons(); } } });
+  b.hit.addEventListener("keyup", (e) => { if (e.key === " " || e.key === "Enter") { btnHeld.delete("k" + b.bit); syncButtons(); } });
+}
+function keyUp() {
+  for (const id of [...btnHeld.keys()]) if (id[0] === "p") btnHeld.delete(id);
+  for (const id of [...keyHeld.keys()]) if (id[0] === "p") keyHeld.delete(id);
+  syncButtons(); syncKeys();
+}
+device.addEventListener("pointerup", keyUp);
+device.addEventListener("pointercancel", keyUp);
+for (let i = 0; i < 27; i++) {
+  keys[i].hit.addEventListener("pointerdown", (e) => { e.preventDefault(); keys[i].hit.setPointerCapture(e.pointerId); keyHeld.set("p" + e.pointerId, i); syncKeys(); });
+  keys[i].hit.addEventListener("click", () => { const id = "c" + i; keyHeld.set(id, i); syncKeys(); setTimeout(() => { keyHeld.delete(id); syncKeys(); }, 120); });
+}
+
+// ---- the screen
+const ctx = $("screen").getContext("2d");
+const img = ctx.createImageData(240, 240);
+function drawScreen(fb) {
+  const d = img.data;
+  for (let i = 0; i < 240 * 240; i++) {
+    const v = fb[i], p = ((v >> 8) | (v << 8)) & 0xffff;
+    d[i * 4] = ((p >> 11) & 31) * 255 / 31;
+    d[i * 4 + 1] = ((p >> 5) & 63) * 255 / 63;
+    d[i * 4 + 2] = (p & 31) * 255 / 31;
+    d[i * 4 + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+}
+function drawLights(b, k, dim) {
+  litButtons = b;
+  for (const x of Object.values(buttons)) x.g.classList.toggle("lit", !!(b & (1 << x.bit)));
+  for (let i = 0; i < 27; i++) {
+    const lit = !!(k & (1 << i)), d = !lit && !!(dim & (1 << i));
+    keys[i].g.classList.toggle("lit", lit);
+    keys[i].g.classList.toggle("dim", d);
+  }
+}
+
+// ---- switching on
+let muted = false;
+$("mute").addEventListener("click", () => { muted = !muted; $("mute").setAttribute("aria-pressed", String(muted)); if (gain) gain.gain.value = muted ? 0 : 1; });
+async function switchOn() {
+  const go = $("go");
+  go.disabled = true;
+  go.textContent = "Starting...";
+  $("alert").textContent = "";
+  try {
+    const ac = new AudioContext({ sampleRate: 44100, latencyHint: "interactive" });
+    const [wasm] = await Promise.all([
+      fetch("firmware.wasm").then((r) => { if (!r.ok) throw new Error("firmware.wasm: " + r.status); return r.arrayBuffer(); }),
+      ac.audioWorklet.addModule("worklet.js"),
+    ]);
+    node = new AudioWorkletNode(ac, "synth", { numberOfOutputs: 1, outputChannelCount: [2] });
+    gain = ac.createGain();
+    gain.gain.value = muted ? 0 : 1;
+    node.connect(gain).connect(ac.destination);
+    node.port.onmessage = (e) => {
+      const m = e.data;
+      if (m.type === "ready") $("status").textContent = "On (44.1 kHz).";
+      else if (m.type === "error") $("alert").textContent = "Could not start: " + m.message;
+      else if (m.type === "frame") { drawScreen(new Uint16Array(m.fb)); drawLights(m.buttons, m.keys, m.dim); }
+    };
+    node.port.postMessage({ type: "load", wasm }, [wasm]);
+    await ac.resume();
+    $("start").hidden = true;
+    controls.inert = false;
+  } catch (err) {
+    go.disabled = false;
+    go.textContent = "Switch on";
+    $("alert").textContent = "Could not start: " + (err && err.message || err);
+  }
+}
+$("go").addEventListener("click", switchOn);
+</script>
+</body>
+</html>
