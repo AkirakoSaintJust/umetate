@@ -97,5 +97,5 @@ static const uint16_t MUTE_TBL[4] = { P_op1_level, P_op2_level, 0xFFFF, 0xFFFF }
 static const uint16_t OP_PARAM[2] = { P_op1_level, P_op2_level };
 
 static const ui_tables PANEL = {
-    "accept", 0, CTX, 4, GLOBAL_BIND, 5, MUTE_TBL, OP_PARAM, 2, 1, 0, 0, 0, DISP_TBL, P_alg, 1, N_PARAMS, 8,
+    "accept", 0, CTX, 4, GLOBAL_BIND, 5, MUTE_TBL, OP_PARAM, 2, 1, 0, 0, 0, DISP_TBL, P_alg, 1, N_PARAMS, 8, 0,
 };

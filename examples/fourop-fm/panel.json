@@ -3,6 +3,7 @@
   "home": "home",
   "alg": "algorithm",
   "parts": 2,
+  "legend": "SCLx2 part +key mute +ply Pmute",
   "operators": ["op1", "op2", "op3", "op4"],
   "mute": ["op1_mute", "op2_mute", "op3_mute", "op4_mute"],
   "global": [

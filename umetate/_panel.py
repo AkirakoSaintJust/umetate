@@ -658,6 +658,7 @@ def generate_panel(
         f"{len(part_names)}, {disp_ptr}, "
         f"{alg_id}, {n_part}, {n_params}, {widget_count},"
     )
+    lines.append(f"    {cstr(panel.get('legend'))},")
     lines.append("};")
     return "\n".join(lines) + "\n"
 

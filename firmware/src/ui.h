@@ -144,6 +144,7 @@ typedef struct {
     uint8_t n_part;                              /* the number of parts (the header) */
     uint16_t n_params;                           /* ui_params[] size */
     uint16_t n_widgets;                          /* ui_dirty[] size (across all pages) */
+    const char *legend;                          /* the footer gesture legend (row 14, when free) */
 } ui_tables;
 
 /* ---- the runtime API ---- */

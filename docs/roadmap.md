@@ -2736,15 +2736,21 @@ the two stay in sync).
     `ALG(n)` + param values hot pink, muted ops/parts red (no `x`), `menu, pg n/m`
     purple, the description bright green. Fits 240 px at FONT_S.
 
-3. **Part switching.** Make the active part switchable from every menu (like op
-   mute/select already are). Settle the gesture in the interview cycle (candidate: a
-   dedicated button or a short chord, shown in the §4 legend).
+3. **Part switching.** — **done.** The settled gesture is **SCL double-tap** (a tap
+   advances the operator, a second tap within ~300 ms switches the active part). It is
+   handled in the app loop outside the name/save popups, so it works from every menu
+   (HOME/EDIT/ENV/LFO/FX/GLO); the header shows the active part light blue.
 
-4. **Bottom legend.** A legend at the bottom of every page for op-mute, part-mute,
-   and part-switch (row budget permitting).
+4. **Bottom legend.** — **done.** A footer gesture legend (`panel.json`'s `legend`
+   field, drawn by `ui_redraw` at row 14): `SCLx2 part +key mute +ply Pmute`
+   (double-tap = part switch, SCL+key = operator mute, SCL+play = part mute). The
+   single-line-header promotion (item 1) already shifts every page's widgets up one
+   row, so row 14 is free on all pages; `ui_draw_legend` still skips it if a future
+   page reaches the last row (row budget permitting).
 
-8. **Name-entry legend.** A legend inside the name editor (charset / SAVE = accept /
-   HOME = cancel).
+8. **Name-entry legend.** — **done.** The name editor already shows its legend
+   (`K1=char K2=cursor SCL=del SAVE=ok HOME=cancel`) alongside the save/save-mode
+   choosers' own legends.
 
 21. **Menu button → next page.** — **done.** `ui_switch` now advances to the next
     page (wrapping) when the target context is already the top — so pressing a menu's

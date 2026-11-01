@@ -26,6 +26,9 @@
       "description": "the operator instance prefixes (opN); a widget param `opN.<rest>` is operator-relative",
       "items": { "type": "string" }
     },
+    "alg": { "type": "string", "description": "the algorithm param name (the header readout)" },
+    "parts": { "type": "integer", "minimum": 1, "description": "the part count (the header + part_next)" },
+    "legend": { "type": "string", "description": "the footer gesture legend, drawn at the bottom row when free" },
     "contexts": {
       "type": "object",
       "minProperties": 1,

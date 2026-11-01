@@ -231,6 +231,7 @@ PanelManifest = TypedDict(
         "operators": NotRequired[list[str]],
         "alg": NotRequired[str],  # the algorithm param name (the header readout)
         "parts": NotRequired[int],  # the part count (the header + part_next)
+        "legend": NotRequired[str],  # the footer gesture legend (drawn at the bottom)
         "contexts": dict[str, Context],
     },
 )

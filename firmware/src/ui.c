@@ -1382,6 +1382,26 @@ static void ui_draw_save_mode(void)
     cv_blit(0, 4 * UI_ROW_H);
 }
 
+/* the footer legend: a fixed gesture hint at the bottom row (row 14), drawn only
+ * when the page's widgets leave that row free (row budget permitting). */
+static void ui_draw_legend(void)
+{
+    const ui_page *p = ui_cur_page();
+    uint32_t i, bottom = 0;
+    if (!ui_t->legend || !ui_t->legend[0])
+        return;
+    for (i = 0; i < p->n; i++) {
+        uint32_t b = (uint32_t)p->w[i].row + (uint32_t)(p->w[i].span ? p->w[i].span : 1u);
+        if (b > bottom)
+            bottom = b;
+    }
+    if (bottom > 14u)
+        return;                     /* the last row is in use: skip the legend */
+    cv_begin(240u, UI_ROW_H, C_BLACK);
+    cv_text(0, 0, &FONT_S, ui_t->legend, C_DIM);
+    cv_blit(0, 14 * UI_ROW_H);
+}
+
 void ui_redraw(uint32_t now_ms)
 {
     static uint32_t last_draw;
@@ -1404,6 +1424,7 @@ void ui_redraw(uint32_t now_ms)
             ui_draw_widget(&p->w[i]);
         }
     }
+    ui_draw_legend();
     if (ui_popup_on)
         ui_draw_popup();
     if (ui_name_on)
