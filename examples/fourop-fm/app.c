@@ -382,6 +382,7 @@ static uint8_t app_pending_part;                    /* 0 = none, 1 = load, 2 = s
 static uint16_t app_pending_slot;                   /* the slot for a pending load/save */
 static uint32_t app_alg_ms;                         /* the last ALGORITHM-knob turn (popup auto-close) */
 static uint32_t app_saved_ms;                       /* the last save (the "SAVED SUCCESSFULLY" linger) */
+static uint32_t app_last_input_ms;                  /* the last control input (the popup idle auto-close) */
 
 static void app_init(void)
 {
@@ -392,6 +393,7 @@ static void app_init(void)
     memset(app_held, 0, sizeof app_held);
     app_oct = 0;
     app_credits_scroll = 0;
+    app_last_input_ms = 0;
     app_last_scl_ms = app_scl_pending = app_scl_pending_ms = 0;
     app_browser_open = app_browser_slot = app_browser_ms = 0;
     app_pbro_open = app_pbro_slot = app_pbro_ms = 0;
@@ -431,7 +433,7 @@ static void app_init(void)
 
 static void app_step(void)
 {
-    uint32_t keys, down, up, b, rel, base, k;
+    uint32_t keys, down, up, b, rel, base, k, input_seen;
     int32_t e, ch0;
 
     platform_poll();
@@ -440,6 +442,7 @@ static void app_step(void)
     down = keys & ~app_prev;
     up = app_prev & ~keys;
     app_prev = keys;
+    input_seen = down | up;
     base = (uint32_t)((int32_t)KEY0 + 12 * app_oct);
     {
         uint32_t now = fm1_ms;
@@ -452,6 +455,8 @@ static void app_step(void)
                SAVE = ok, HOME = cancel; the keys + page are inert while open. */
             int32_t k1 = fm1_enc_take(ENC_KNOB1);
             int32_t k2 = fm1_enc_take(ENC_KNOB2);
+            if (k1 || k2)
+                input_seen = 1;
             if (k1)
                 ui_name_editor_char(k1);
             if (k2)
@@ -471,6 +476,7 @@ static void app_step(void)
             if (k1)
                 ui_save_mode_move(k1);
             (void)k2;                              /* the slot is fixed in step 2 */
+            input_seen |= (uint32_t)(k1 != 0) | (uint32_t)(k2 != 0);
             b = fm1_input_edges(&rel);
             if (b & (1u << BTN_SAVE)) {
                 uint8_t mode = ui_save_mode();
@@ -492,6 +498,7 @@ static void app_step(void)
                 ui_save_kind_move(k1);
             if (k2)
                 ui_save_slot_move(k2);
+            input_seen |= (uint32_t)(k1 != 0) | (uint32_t)(k2 != 0);
             b = fm1_input_edges(&rel);
             if (b & (1u << BTN_SAVE)) {
                 uint8_t kind = ui_save_kind();
@@ -512,6 +519,7 @@ static void app_step(void)
             int32_t k1 = fm1_enc_take(ENC_KNOB1);
             if (k1)
                 ui_part_chooser_move(k1);
+            input_seen |= (uint32_t)(k1 != 0);
             b = fm1_input_edges(&rel);
             if (b & (1u << BTN_SAVE)) {
                 uint8_t part = ui_part_chooser_part(), pending = app_pending_part;
@@ -533,6 +541,7 @@ static void app_step(void)
             int32_t k1 = fm1_enc_take(ENC_KNOB1);
             if (k1)
                 ui_copy_move(k1);
+            input_seen |= (uint32_t)(k1 != 0);
             b = fm1_input_edges(&rel);
             if (b & (1u << BTN_SAVE)) {
                 uint8_t part, op;
@@ -631,6 +640,7 @@ static void app_step(void)
             ui_handle(UI_SRC_BTN_SEL, -1);
             app_scl_pending = 0;
         }
+        input_seen |= b;                        /* button edges (whichever branch consumed them) */
         }
     }
     if (ui_popup_active()) {
@@ -646,25 +656,38 @@ static void app_step(void)
     } else {
         if ((e = fm1_enc_take(ENC_ALGORITHM)) != 0) {
             ui_handle(UI_SRC_ENC_ALGORITHM, e);
+            input_seen = 1;
             app_alg_ms = fm1_ms;                   /* the algorithm scroll popup */
             ui_popup_alg((uint32_t)ui_params()[PANEL.alg]);
         }
         if ((e = fm1_enc_take(ENC_SELECT)) != 0) {
+            input_seen = 1;
             if (ui_top() == GLO_CTX && ui_pageno() == GLO_CREDITS)
                 app_credits_scroll += e;             /* scroll the credits page */
             else
                 ui_handle(UI_SRC_ENC_SELECT, e);
         }
-        if ((e = fm1_enc_take(ENC_KNOB1)) != 0) ui_handle(UI_SRC_ENC_KNOB1, e);
-        if ((e = fm1_enc_take(ENC_KNOB2)) != 0) ui_handle(UI_SRC_ENC_KNOB2, e);
-        if ((e = fm1_enc_take(ENC_KNOB3)) != 0) ui_handle(UI_SRC_ENC_KNOB3, e);
-        if ((e = fm1_enc_take(ENC_KNOB4)) != 0) ui_handle(UI_SRC_ENC_KNOB4, e);
+        if ((e = fm1_enc_take(ENC_KNOB1)) != 0) { input_seen = 1; ui_handle(UI_SRC_ENC_KNOB1, e); }
+        if ((e = fm1_enc_take(ENC_KNOB2)) != 0) { input_seen = 1; ui_handle(UI_SRC_ENC_KNOB2, e); }
+        if ((e = fm1_enc_take(ENC_KNOB3)) != 0) { input_seen = 1; ui_handle(UI_SRC_ENC_KNOB3, e); }
+        if ((e = fm1_enc_take(ENC_KNOB4)) != 0) { input_seen = 1; ui_handle(UI_SRC_ENC_KNOB4, e); }
     }
+
+    /* the popup idle auto-close: any input this step resets the timer */
+    if (input_seen)
+        app_last_input_ms = fm1_ms;
 
     /* the algorithm scroll popup auto-closes ~600 ms after the knob stops */
     if (app_alg_ms && fm1_ms - app_alg_ms >= 600u) {
         ui_popup_hide();
         app_alg_ms = 0u;
+    }
+
+    /* a modal popup with no input for ~3 s closes without committing */
+    if (ui_popup_active() && fm1_ms - app_last_input_ms >= 3000u) {
+        ui_popup_cancel_all();
+        app_pending_part = 0u;
+        app_last_input_ms = fm1_ms;
     }
 
     /* the "SAVED SUCCESSFULLY" acknowledgement lingers ~750 ms */
@@ -678,6 +701,8 @@ static void app_step(void)
        no encoder input loads the selection (or, if already loaded, just clears). */
     {
         int32_t pe = fm1_enc_take(ENC_PRESETS);
+        if (pe != 0)
+            input_seen = 1;
         if (ui_top() == GLO_CTX) {
             if (pe != 0) {
                 if (!app_pbro_open) {

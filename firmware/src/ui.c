@@ -1781,6 +1781,17 @@ void ui_copy_cancel(void)
     }
 }
 
+/* close every modal popup non-destructively (no save/load/init/copy). The app
+ * calls this on the 3-second idle auto-close. */
+void ui_popup_cancel_all(void)
+{
+    if (ui_name_on) ui_name_editor_cancel();
+    if (ui_save_on) ui_save_cancel();
+    if (ui_save_mode_on) ui_save_mode_cancel();
+    if (ui_part_sel_on) ui_part_chooser_cancel();
+    if (ui_copy_on) ui_copy_cancel();
+}
+
 /* the copy chooser pop-up: a title, the target rows (2 parts or 8 part+op), and
  * the legend. */
 static void ui_draw_copy(void)

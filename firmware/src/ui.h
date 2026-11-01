@@ -233,6 +233,7 @@ void ui_copy_target(uint8_t *part, uint8_t *op);  /* the selected target (part, 
 void ui_copy_apply(uint8_t part, uint8_t op);     /* copy the page's params to (part, op) */
 void ui_copy_commit(void);                        /* close the chooser */
 void ui_copy_cancel(void);                        /* discard, close */
+void ui_popup_cancel_all(void);                   /* close every modal popup (non-destructive) */
 
 void ui_param_fmt(uint16_t p, const char *unit, char *out, uint32_t n); /* format a value */
 void ui_redraw(uint32_t now_ms);                 /* the retained-mode, rate-bounded redraw */
