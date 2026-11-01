@@ -2803,11 +2803,14 @@ the two stay in sync).
 10. **Name entry consolidation.** One GLO page holding SINGLE PART 1 NAME, SINGLE
     PART 2 NAME, MULTI-PATCH NAME.
 
-11. **SINGLE PART LAYERING.** Rename `PART n PART LEVEL` → `SINGLE PART LAYERING`;
-    contents: SINGLE PART 1 LEVEL (0–99, Yamaha-like), SINGLE PART 1 DELAY (ms),
-    SINGLE PART 2 LEVEL (0–99), SINGLE PART 2 DELAY (ms). Move part load/save/init
-    and the legend into this menu; before each, a popup asks which SINGLE PART
-    (1 or 2).
+11. **SINGLE PART LAYERING.** — **partly done.** Renamed the GLO `PART LEVEL` page to
+    `SINGLE PART LAYERING` and it now shows both parts explicitly — `PART 1 LEVEL`,
+    `PART 1 DELAY`, `PART 2 LEVEL`, `PART 2 DELAY` — instead of the active part. The
+    per-part level is now **0–99 Yamaha total-level** (was Q15): the routing param's
+    range/default moved to 0..99 and the renderer applies `fm1_level_gain[level]`
+    (the same taper as the operator `tl` node), and delay carries a `ms` unit.
+    Remaining: moving part load/save/init + the legend into this menu with a
+    "which SINGLE PART" popup.
 
 #### F. FX menu
 

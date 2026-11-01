@@ -388,7 +388,7 @@ def _render_voices_block(
         if per_part:
             lines.append(
                 f"            bus[f - b] = fm1_sat_add32(bus[f - b], "
-                f"fm1_q15_mul({mix_expr}, part_level[voice_part[v]]));"
+                f"fm1_q15_mul({mix_expr}, fm1_level_gain[part_level[voice_part[v]]]));"
             )
         else:
             lines.append(
@@ -408,7 +408,7 @@ def _render_voices_block(
                 idx = f"{k} * {graph.n_parts} + _tp"
                 lines.append(
                     f"                taps[{idx}][f] = fm1_sat_add32(taps[{idx}][f], "
-                    f"fm1_q15_mul({expr}, part_level[_tp]));"
+                    f"fm1_q15_mul({expr}, fm1_level_gain[part_level[_tp]]));"
                 )
         else:
             for k, t in enumerate(taps):

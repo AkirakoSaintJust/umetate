@@ -87,14 +87,14 @@ int main(void)
     }
     { /* multi patch (2 parts) */
         static const uint8_t slots[2] = {0, 1};
-        static const int32_t lv[2] = {32768, 32768}, dl[2] = {0, 40}, ch[2] = {0, 1};
+        static const int32_t lv[2] = {99, 99}, dl[2] = {0, 40}, ch[2] = {0, 1};
         static const int32_t lo[2] = {0, 60}, hi[2] = {127, 127};
         len = preset_multi_pack(rec, "Layers", slots, lv, dl, ch, lo, hi, 2);
         print_hex("multi-hex", rec, len);
         check("multi record unpacks",
               preset_multi_unpack(rec, 2, name, slot, level, delay, channel, low, high) &&
                   !strcmp(name, "Layers") && slot[0] == 0 && slot[1] == 1 &&
-                  level[0] == 32768 && delay[1] == 40 && channel[1] == 1 && low[1] == 60 &&
+                  level[0] == 99 && delay[1] == 40 && channel[1] == 1 && low[1] == 60 &&
                   high[1] == 127);
     }
     { /* settings */
@@ -134,7 +134,7 @@ int main(void)
     { /* the multi-patch bank: save, wipe, load back (the slot follows the part bank) */
         static uint8_t mbank[MP_BANK(2)], mback[MP_BANK(2)];
         static const uint8_t slots[2] = {0, 1};
-        static const int32_t lv[2] = {32768, 16384}, dl[2] = {0, 5}, ch[2] = {0, 1};
+        static const int32_t lv[2] = {99, 75}, dl[2] = {0, 5}, ch[2] = {0, 1};
         static const int32_t lo[2] = {0, 48}, hi[2] = {127, 96};
         memset(mbank, 0xFF, sizeof mbank);
         preset_multi_pack(mbank + 0 * MP_RECORD(2), "Comp", slots, lv, dl, ch, lo, hi, 2);

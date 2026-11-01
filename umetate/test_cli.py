@@ -340,7 +340,7 @@ def _records_roundtrip() -> None:
     multi: _records.MultiPatch = {
         "name": "Layers",
         "part_slot": [0, 1],
-        "level": [32768, 32768],
+        "level": [99, 99],
         "delay": [0, 40],
         "channel": [0, 1],
         "low": [0, 60],
@@ -428,7 +428,7 @@ def _bank_roundtrip() -> None:
     bank["multi_patches"][3] = {
         "name": "Layers",
         "part_slot": [0],
-        "level": [32768],
+        "level": [99],
         "delay": [40],
         "channel": [0],
         "low": [0],
@@ -579,7 +579,7 @@ def _preset_c_parity() -> None:
                 {
                     "name": "Layers",
                     "part_slot": [0, 1],
-                    "level": [32768, 32768],
+                    "level": [99, 99],
                     "delay": [0, 40],
                     "channel": [0, 1],
                     "low": [0, 60],

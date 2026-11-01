@@ -239,11 +239,13 @@
     "glo": {
       "pages": [
         {
-          "id": "part-level",
+          "id": "layering",
           "widgets": [
-            { "type": "subheader", "row": 2, "text": "PART LEVEL", "part": true },
-            { "type": "param_row", "row": 3, "param": "level", "part": true, "text": "LEVEL" },
-            { "type": "param_row", "row": 4, "param": "delay", "part": true, "text": "DELAY" }
+            { "type": "subheader", "row": 2, "text": "SINGLE PART LAYERING", "plain": true },
+            { "type": "param_row", "row": 3, "param": "level.p0", "text": "PART 1 LEVEL" },
+            { "type": "param_row", "row": 4, "param": "delay.p0", "text": "PART 1 DELAY" },
+            { "type": "param_row", "row": 5, "param": "level.p1", "text": "PART 2 LEVEL" },
+            { "type": "param_row", "row": 6, "param": "delay.p1", "text": "PART 2 DELAY" }
           ]
         },
         {

@@ -140,13 +140,13 @@ def compile(
     )
 
 
-# per-part routing params (cname, field, min, max, fallback default)
-_ROUTING_PARAMS: tuple[tuple[str, str, int, int, int], ...] = (
-    ("part_channel", "channel", -1, 15, 0),
-    ("part_low", "low", 0, 127, 0),
-    ("part_high", "high", 0, 127, 127),
-    ("part_level", "level", 0, 32768, 32768),
-    ("part_delay", "delay", 0, 1000, 0),
+# per-part routing params (cname, field, min, max, fallback default, unit)
+_ROUTING_PARAMS: tuple[tuple[str, str, int, int, int, str], ...] = (
+    ("part_channel", "channel", -1, 15, 0, ""),
+    ("part_low", "low", 0, 127, 0, ""),
+    ("part_high", "high", 0, 127, 127, ""),
+    ("part_level", "level", 0, 99, 99, ""),  # Yamaha total-level 0..99
+    ("part_delay", "delay", 0, 1000, 0, "ms"),
 )
 
 
@@ -253,7 +253,7 @@ def _build_params(
         entries.append(add(cname, target, default, kind, base, None, meta.get(target)))
 
     if n_parts > 1:
-        for cname, field, lo, hi, fallback in _ROUTING_PARAMS:
+        for cname, field, lo, hi, fallback, unit in _ROUTING_PARAMS:
             arr = _routing_values(parts, field)
             for p in range(n_parts):
                 default = arr[p] if arr is not None and p < len(arr) else fallback
@@ -268,7 +268,7 @@ def _build_params(
                         max=hi,
                         default=default,
                         curve="linear",
-                        unit="",
+                        unit=unit,
                         rate="block",
                         modulatable=False,
                         display="raw",
