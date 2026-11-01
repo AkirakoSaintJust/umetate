@@ -387,9 +387,11 @@ def generate_panel(
         elif w["type"] == "subheader":
             typ = "UI_SUBHEADER"
             # param = the prefix mode: 0 = "OP N", 1 = "PART N", 2 = "OP",
-            # 3 = "PART", 4 = plain (no prefix)
+            # 3 = "PART", 4 = plain (no prefix), 5 = "PART N OP"
             if w.get("plain"):
                 param = "4"
+            elif w.get("partop"):
+                param = "5"
             elif w.get("plural"):
                 param = "3" if w.get("part") else "2"
             else:

@@ -982,6 +982,13 @@ static void ui_draw_subheader(const ui_widget *w)
     case 2u: ui_strcpy(s, "OP "); break;           /* OP (no number) */
     case 3u: ui_strcpy(s, "PART "); break;         /* PART (no number) */
     case 4u: break;                                /* global: no prefix */
+    case 5u:                                       /* PART n OP */
+        ui_strcpy(s, "PART ");
+        t[0] = (char)('1' + ui_selected_part);
+        t[1] = 0;
+        ui_strcat(s, t);
+        ui_strcat(s, " OP");
+        break;
     default:                                       /* OP N */
         ui_strcpy(s, "OP ");
         t[0] = (char)('1' + ui_selected_op);

@@ -29,14 +29,14 @@
         {
           "id": "algo",
           "widgets": [
-            { "type": "subheader", "row": 2, "text": "ALGORITHM", "plain": true },
+            { "type": "subheader", "row": 2, "text": "ALGORITHM", "part": true },
             { "type": "algo", "row": 3, "span": 9, "param": "algorithm" }
           ]
         },
         {
           "id": "env",
           "widgets": [
-            { "type": "subheader", "row": 2, "text": "ENVS", "plural": true },
+            { "type": "subheader", "row": 2, "text": "A-ENVS", "partop": true },
             { "type": "envelope", "row": 3, "span": 3,
               "params": ["op1.eg.r1", "op1.eg.r2", "op1.eg.r3", "op1.eg.r4", "op1.eg.l1", "op1.eg.l2", "op1.eg.l3"] },
             { "type": "envelope", "row": 6, "span": 3,
@@ -50,7 +50,7 @@
         {
           "id": "scope",
           "widgets": [
-            { "type": "subheader", "row": 2, "text": "SCOPES", "plural": true },
+            { "type": "subheader", "row": 2, "text": "SCOPES", "partop": true },
             { "type": "scope", "row": 3, "span": 3, "channel": 0 },
             { "type": "scope", "row": 6, "span": 3, "channel": 1 },
             { "type": "scope", "row": 9, "span": 3, "channel": 2 },
@@ -60,7 +60,7 @@
         {
           "id": "spectro",
           "widgets": [
-            { "type": "subheader", "row": 2, "text": "SPECTROS", "plural": true },
+            { "type": "subheader", "row": 2, "text": "SPECTROS", "partop": true },
             { "type": "spectro", "row": 3, "span": 3, "channel": 0 },
             { "type": "spectro", "row": 6, "span": 3, "channel": 1 },
             { "type": "spectro", "row": 9, "span": 3, "channel": 2 },

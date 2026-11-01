@@ -194,6 +194,7 @@ class Widget(TypedDict):
     part: NotRequired[bool]  # subheader: 1 = "PART N", 0 = "OP N"
     plural: NotRequired[bool]  # subheader: drop the N ("OP" / "PART")
     plain: NotRequired[bool]  # subheader: no prefix at all (a global page)
+    partop: NotRequired[bool]  # subheader: "PART N OP <text>"
     name: NotRequired[int]  # name row: the name index (0 = part, 1 = patch)
 
 
