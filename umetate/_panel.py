@@ -220,6 +220,7 @@ _DISPLAY = {
     "mode": "UI_DISP_MODE",
     "priority": "UI_DISP_PRIORITY",
     "note": "UI_DISP_NOTE",
+    "porta": "UI_DISP_PORTA",
 }
 
 # The coarse-ratio detents: every integer multiple of these four bases, in Q16

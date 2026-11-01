@@ -36,7 +36,15 @@ MODE_PARAMS: tuple[tuple[str, int, str, int, int, str, str], ...] = (
     ("vm_unison_count", 1, "unison_count", 1, 8, "", "raw"),
     ("vm_unison_detune", 0, "unison_detune", 0, 200, "cents", "raw"),
     ("vm_legato", 0, "legato", 0, 1, "", "onoff"),
-    ("vm_portamento", 0, "portamento", 0, 65536, "", "raw"),  # Q16 glide rate (0 = off)
+    (
+        "vm_portamento",
+        0,
+        "portamento",
+        0,
+        65536,
+        "",
+        "porta",
+    ),  # Q16 glide rate (0 = off)
     (
         "vm_note_priority",
         0,

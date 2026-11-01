@@ -41,7 +41,7 @@
         "curve": { "enum": ["linear", "log"] },
         "unit": { "type": "string" },
         "display": {
-          "enum": ["raw", "ratio", "pct", "pct_inv", "onoff", "onoff_inv", "off_pct", "hz", "semi", "cent", "wave", "filter", "fold", "mode", "priority", "note"],
+          "enum": ["raw", "ratio", "pct", "pct_inv", "onoff", "onoff_inv", "off_pct", "hz", "semi", "cent", "wave", "filter", "fold", "mode", "priority", "note", "porta"],
           "description": "the on-screen form of the value (the panel's per-param display scale): raw = the integer; ratio = a Q16 multiplier (65536 = 1.00 base pitch); pct = 0..100% of [min,max]; pct_inv = inverted % (100% at min); onoff = off/on; off_pct = \"off\" at <= 0, else %; hz = a Q32 rate as N.N Hz; semi = a bipolar Q15 as +/-N.NN st. Default raw."
         },
         "rate": { "enum": ["sample", "block"] },

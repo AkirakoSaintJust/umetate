@@ -53,6 +53,7 @@ enum {
     UI_DISP_MODE,      /* a 0..2 voice mode -> "poly"/"mono"/"unison" */
     UI_DISP_PRIORITY,  /* a 0..2 note priority -> "last"/"highest"/"lowest" */
     UI_DISP_NOTE,      /* a 0..127 MIDI note -> "N C#4" (number + name + octave) */
+    UI_DISP_PORTA,     /* a Q16 glide rate -> "off" / "N ms" (one-octave glide time) */
 };
 
 /* ---- binding kinds ---- */

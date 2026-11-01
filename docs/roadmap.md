@@ -2796,13 +2796,14 @@ the two stay in sync).
 
 #### E. GLO menu
 
-7. **GLO pages.** — **partly done.** The `VOICE MODE` page (6 params) is split into
-   two: **VOICE MODE** (MODE, PRIORITY, LEGATO, PORTA) and **UNISON** (VOICES,
-   DETUNE). Added descriptive display kinds — `UI_DISP_MODE` (`poly`/`mono`/`unison`,
-   the shipped semantics) and `UI_DISP_PRIORITY` (`last`/`highest`/`lowest`) — and
-   applied `mode`/`note_priority`/`legato` displays in the voice block. Remaining:
-   the KEY SPLIT / MIDI CH / SINGLE PART / MULTI-PATCH description clipping, and a
-   human value for PORTA (the Q16 glide rate).
+7. **GLO pages.** — **done.** The `VOICE MODE` page (6 params) is split into two:
+   **VOICE MODE** (MODE, PRIORITY, LEGATO, PORTA) and **UNISON** (VOICES, DETUNE).
+   Added descriptive display kinds — `UI_DISP_MODE` (`poly`/`mono`/`unison`, the
+   shipped semantics), `UI_DISP_PRIORITY` (`last`/`highest`/`lowest`), and
+   `UI_DISP_PORTA` (PORTA now reads `off` / `N ms`, the one-octave glide time of
+   its Q16 rate) — applied to `mode`/`note_priority`/`legato`/`portamento` in the
+   voice block. (The KEY SPLIT / MIDI CH / SINGLE PART / MULTI-PATCH "description
+   clipping" note was unreproducible against the current header — likely stale.)
 
 10. **Name entry consolidation.** — **done.** The name model is now three slots
     (part 1, part 2, multi-patch) instead of two (single-part, multi-patch), and the

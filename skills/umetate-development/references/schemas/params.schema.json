@@ -37,7 +37,7 @@
         "curve": { "enum": ["linear", "log"] },
         "unit": { "type": "string", "description": "Display unit, e.g. 'Hz', '%', 'cents'." },
         "display": {
-          "enum": ["raw", "ratio", "pct", "pct_inv", "onoff", "onoff_inv", "off_pct", "hz", "semi", "cent", "wave", "filter", "fold", "mode", "priority", "note"],
+          "enum": ["raw", "ratio", "pct", "pct_inv", "onoff", "onoff_inv", "off_pct", "hz", "semi", "cent", "wave", "filter", "fold", "mode", "priority", "note", "porta"],
           "description": "The on-screen form of the value (the panel's per-param display scale)."
         },
         "rate": {
