@@ -1,0 +1,8 @@
+{
+  "name": "key_bp",
+  "summary": "The key-follow breakpoint: the MIDI note (0..127) at which key scaling is neutral. Global — one key follower shared by every key_scale target. The param is passed straight through as a control signal.",
+  "ins": {},
+  "outs": { "bp": "control" },
+  "params": { "bp": "uint32" },
+  "state": {}
+}

@@ -142,6 +142,37 @@ FM1_MATH_INLINE uint32_t fm1_wave_mip(uint32_t step)
     return 0u;                            /* 32 harmonics */
 }
 
+/* ------------------------------------------------------ key scaling (key-follow) */
+/* The bipolar key-follow factor (Q15): 0 at the breakpoint, ramping linearly to
+ * `hi` at note 127 (the top octave) or `lo` at note 0 (the lowest octave).
+ * `lo`/`hi` are signed percent (-100..+100): +N pushes the target toward its
+ * maximum, -N toward its minimum. `note` and `bp` are 0..127 MIDI notes. */
+FM1_MATH_INLINE int32_t fm1_key_scale(uint32_t note, uint32_t bp, int32_t lo, int32_t hi)
+{
+    if (note > bp) {
+        uint32_t t = (uint32_t)(((note - bp) << 15) / (127u - bp));   /* 0..32767 */
+        return (int32_t)(((int64_t)hi * (int32_t)t) / 100);
+    }
+    if (note < bp) {
+        uint32_t t = (uint32_t)(((bp - note) << 15) / bp);            /* 0..32767 */
+        return (int32_t)(((int64_t)lo * (int32_t)t) / 100);
+    }
+    return 0;                                 /* at the breakpoint: no deviation */
+}
+
+/* Apply a bipolar key-follow factor `k` (Q15, fm1_key_scale) to a target value
+ * `v` in [min, max]: +k pushes toward `max`, -k toward `min` (proportional to the
+ * remaining range, so the value clamps at the extreme). */
+FM1_MATH_INLINE int32_t fm1_key_apply(int32_t v, int32_t k, int32_t min, int32_t max)
+{
+    if (k >= 0) {
+        int32_t push = (int32_t)(((int64_t)(max - v) * k) >> 15);
+        return v + push;
+    }
+    int32_t push = (int32_t)(((int64_t)(v - min) * k) >> 15);   /* k < 0: toward min */
+    return v + push;
+}
+
 /* 4-input weighted sum against a routing-matrix row (a `const int16_t *` of four
    0/1 Q15 weights): out = a*w0 + b*w1 + c*w2 + d*w3. The multiply stays (not a
    boolean select): the weights are runtime table data, so a select is a
