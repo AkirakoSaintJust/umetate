@@ -183,7 +183,8 @@
           "widgets": [
             { "type": "subheader", "row": 2, "text": "A-LFO" },
             { "type": "param_row", "row": 3, "param": "op1.lfo.rate", "text": "RATE" },
-            { "type": "param_row", "row": 4, "param": "op1.lfo.depth", "text": "DEPTH" }
+            { "type": "param_row", "row": 4, "param": "op1.lfo.depth", "text": "DEPTH" },
+            { "type": "param_row", "row": 5, "param": "op1.lfo.wave", "text": "WAVE" }
           ]
         },
         {
@@ -191,7 +192,8 @@
           "widgets": [
             { "type": "subheader", "row": 2, "text": "P-LFO", "part": true },
             { "type": "param_row", "row": 3, "param": "pitch_rate", "part": true, "text": "RATE" },
-            { "type": "param_row", "row": 4, "param": "pitch_depth", "part": true, "text": "DEPTH" }
+            { "type": "param_row", "row": 4, "param": "pitch_depth", "part": true, "text": "DEPTH" },
+            { "type": "param_row", "row": 5, "param": "pitch_wave", "part": true, "text": "WAVE" }
           ]
         }
       ],

@@ -14,6 +14,7 @@
     "vel_rate": "velrate.depth",
     "trem_rate": "lfo.rate",
     "trem_depth": "lfo.depth",
+    "trem_wave": "lfo.wave",
     "r1": "eg.r1", "r2": "eg.r2", "r3": "eg.r3", "r4": "eg.r4",
     "l1": "eg.l1", "l2": "eg.l2", "l3": "eg.l3"
   },
