@@ -434,7 +434,7 @@ static void app_step(void)
                 ui_save_mode_commit();
                 ui_save_commit();
                 save_multi(slot, mode);
-                ui_popup_saved();
+                ui_popup_msg("SAVED SUCCESSFULLY");
                 app_saved_ms = fm1_ms;
             }
             if (b & (1u << BTN_HOME))
@@ -475,7 +475,7 @@ static void app_step(void)
                 if (pending == 1u) load_part(part, app_pending_slot);
                 else if (pending == 2u) {
                     save_part(part, app_pending_slot);
-                    ui_popup_saved();
+                    ui_popup_msg("SAVED SUCCESSFULLY");
                     app_saved_ms = fm1_ms;
                 } else if (pending == 3u) init_part(part);
                 app_pending_part = 0u;
@@ -495,7 +495,7 @@ static void app_step(void)
                 ui_copy_target(&part, &op);
                 ui_copy_commit();
                 ui_copy_apply(part, op);
-                ui_popup_saved();
+                ui_popup_msg("COPIED SUCCESSFULLY");
                 app_saved_ms = fm1_ms;
             }
             if (b & (1u << BTN_HOME))

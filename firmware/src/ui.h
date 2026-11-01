@@ -179,7 +179,7 @@ uint8_t ui_part_muted(uint8_t part);             /* 1 = the part is muted */
 void ui_op_mute_active(void);                    /* mute/unmute the active operator (SEL + key) */
 void ui_popup_show(uint32_t slot, const char *name); /* the multi-patch preset-browser popup */
 void ui_popup_show_part(uint32_t slot, const char *name); /* the single-part preset-browser popup */
-void ui_popup_saved(void);                           /* the "SAVED SUCCESSFULLY" acknowledgement */
+void ui_popup_msg(const char *msg);                 /* a transient acknowledgement ("SAVED/COPIED …") */
 void ui_popup_alg(uint32_t alg);                 /* the algorithm scroll popup ("ALG n") */
 void ui_popup_hide(void);                        /* clear the popup */
 

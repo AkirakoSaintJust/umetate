@@ -1276,12 +1276,12 @@ static void ui_popup_set(const char *title, uint32_t slot, const char *name)
 void ui_popup_show(uint32_t slot, const char *name) { ui_popup_set("multi-patch ", slot, name); }
 void ui_popup_show_part(uint32_t slot, const char *name) { ui_popup_set("single part ", slot, name); }
 
-void ui_popup_saved(void)                       /* the "SAVED SUCCESSFULLY" acknowledgement */
+void ui_popup_msg(const char *msg)                /* a transient acknowledgement ("SAVED/COPIED …") */
 {
     uint8_t was = ui_popup_on;
     ui_popup_on = 1;
     ui_popup_alg_on = 0;                           /* the text and graph popups are exclusive */
-    ui_strcpy(ui_popup_line, "SAVED SUCCESSFULLY");
+    ui_strcpy(ui_popup_line, msg);
     if (!was)
         ui_reset_page();
 }
