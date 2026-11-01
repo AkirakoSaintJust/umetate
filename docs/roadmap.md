@@ -2792,11 +2792,13 @@ the two stay in sync).
 
 #### E. GLO menu
 
-7. **GLO pages.** KEY SPLIT, MIDI CH, SINGLE PART, MULTI-PATCH page descriptions are
-   clipped → shrink to normal. PART n VOICE MODE has 6 params (too many for 4
-   knobs) → split into pages, with descriptive values: MODE = `poly` / `mono retrig`
-   / `mono legato`; a MONO VOICE COUNT param with values; a LEGATO PORTA TIME (or
-   RATE) with a human value; NOTE PRIORITY = `last` / etc.
+7. **GLO pages.** — **partly done.** The `VOICE MODE` page (6 params) is split into
+   two: **VOICE MODE** (MODE, PRIORITY, LEGATO, PORTA) and **UNISON** (VOICES,
+   DETUNE). Added descriptive display kinds — `UI_DISP_MODE` (`poly`/`mono`/`unison`,
+   the shipped semantics) and `UI_DISP_PRIORITY` (`last`/`highest`/`lowest`) — and
+   applied `mode`/`note_priority`/`legato` displays in the voice block. Remaining:
+   the KEY SPLIT / MIDI CH / SINGLE PART / MULTI-PATCH description clipping, and a
+   human value for PORTA (the Q16 glide rate).
 
 10. **Name entry consolidation.** One GLO page holding SINGLE PART 1 NAME, SINGLE
     PART 2 NAME, MULTI-PATCH NAME.

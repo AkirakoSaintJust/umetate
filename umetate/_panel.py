@@ -216,6 +216,8 @@ _DISPLAY = {
     "wave": "UI_DISP_WAVE",
     "filter": "UI_DISP_FILTER",
     "fold": "UI_DISP_FOLD",
+    "mode": "UI_DISP_MODE",
+    "priority": "UI_DISP_PRIORITY",
 }
 
 # The coarse-ratio detents: every integer multiple of these four bases, in Q16

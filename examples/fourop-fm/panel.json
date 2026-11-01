@@ -269,11 +269,17 @@
           "widgets": [
             { "type": "subheader", "row": 2, "text": "VOICE MODE", "part": true },
             { "type": "param_row", "row": 3, "param": "mode", "part": true, "text": "MODE" },
-            { "type": "param_row", "row": 4, "param": "unison_count", "part": true, "text": "UNISON" },
-            { "type": "param_row", "row": 5, "param": "unison_detune", "part": true, "text": "DETUNE" },
-            { "type": "param_row", "row": 6, "param": "legato", "part": true, "text": "LEGATO" },
-            { "type": "param_row", "row": 7, "param": "portamento", "part": true, "text": "PORTAM" },
-            { "type": "param_row", "row": 8, "param": "note_priority", "part": true, "text": "PRIOR" }
+            { "type": "param_row", "row": 4, "param": "note_priority", "part": true, "text": "PRIORITY" },
+            { "type": "param_row", "row": 5, "param": "legato", "part": true, "text": "LEGATO" },
+            { "type": "param_row", "row": 6, "param": "portamento", "part": true, "text": "PORTA" }
+          ]
+        },
+        {
+          "id": "unison",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "UNISON", "part": true },
+            { "type": "param_row", "row": 3, "param": "unison_count", "part": true, "text": "VOICES" },
+            { "type": "param_row", "row": 4, "param": "unison_detune", "part": true, "text": "DETUNE" }
           ]
         },
         {

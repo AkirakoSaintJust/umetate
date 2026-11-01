@@ -28,16 +28,24 @@ from ._ir import ParamEntry
 # once its envelope actually reaches zero; this only bounds the hold.
 RELEASE_BLOCKS = 8192
 
-# (cname, default, friendly name, min, max, unit) for the six universal voice-mode
-# params. Multi-timbre: per-part arrays addressed through the part index; the
-# single-timbre fallback keeps them global scalars.
-MODE_PARAMS: tuple[tuple[str, int, str, int, int, str], ...] = (
-    ("vm_mode", 0, "mode", 0, 2, ""),  # 0=poly 1=mono 2=unison
-    ("vm_unison_count", 1, "unison_count", 1, 8, ""),
-    ("vm_unison_detune", 0, "unison_detune", 0, 200, "cents"),
-    ("vm_legato", 0, "legato", 0, 1, ""),
-    ("vm_portamento", 0, "portamento", 0, 65536, ""),  # Q16 glide rate (0 = off)
-    ("vm_note_priority", 0, "note_priority", 0, 2, ""),  # 0=last 1=highest 2=lowest
+# (cname, default, friendly name, min, max, unit, display) for the six universal
+# voice-mode params. Multi-timbre: per-part arrays addressed through the part
+# index; the single-timbre fallback keeps them global scalars.
+MODE_PARAMS: tuple[tuple[str, int, str, int, int, str, str], ...] = (
+    ("vm_mode", 0, "mode", 0, 2, "", "mode"),  # 0=poly 1=mono 2=unison
+    ("vm_unison_count", 1, "unison_count", 1, 8, "", "raw"),
+    ("vm_unison_detune", 0, "unison_detune", 0, 200, "cents", "raw"),
+    ("vm_legato", 0, "legato", 0, 1, "", "onoff"),
+    ("vm_portamento", 0, "portamento", 0, 65536, "", "raw"),  # Q16 glide rate (0 = off)
+    (
+        "vm_note_priority",
+        0,
+        "note_priority",
+        0,
+        2,
+        "",
+        "priority",
+    ),  # 0=last 1=highest 2=lowest
 )
 
 
@@ -48,7 +56,7 @@ def mode_param_entries(
     (part=None). Multi-timbre: per-part (part 0..n_parts-1, `.p{p}` names);
     `only_part` restricts to one part (the voice block builds them part-major)."""
     entries: list[ParamEntry] = []
-    for cname, default_, name, lo, hi, unit in MODE_PARAMS:
+    for cname, default_, name, lo, hi, unit, disp in MODE_PARAMS:
         if n_parts > 1:
             parts = [only_part] if only_part is not None else list(range(n_parts))
             for p in parts:
@@ -66,7 +74,7 @@ def mode_param_entries(
                         unit=unit,
                         rate="block",
                         modulatable=False,
-                        display="raw",
+                        display=disp,
                     )
                 )
         else:
@@ -84,7 +92,7 @@ def mode_param_entries(
                     unit=unit,
                     rate="block",
                     modulatable=False,
-                    display="raw",
+                    display=disp,
                 )
             )
     return entries
