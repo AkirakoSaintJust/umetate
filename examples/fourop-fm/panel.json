@@ -30,7 +30,7 @@
           "id": "algo",
           "widgets": [
             { "type": "subheader", "row": 2, "text": "ALGORITHM", "part": true },
-            { "type": "algo", "row": 3, "span": 9, "param": "algorithm" }
+            { "type": "algo", "row": 3, "span": 10, "param": "algorithm" }
           ]
         },
         {

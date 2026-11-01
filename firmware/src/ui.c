@@ -65,6 +65,8 @@ static uint8_t ui_part_mute[4];                  /* part mute flags (up to 4 par
 static int32_t ui_header_last = 0x7FFFFFFF;      /* the header's last-drawn value */
 static char ui_popup_line[40];                   /* the preset-browser popup text */
 static uint8_t ui_popup_on;                      /* 1 = the popup is showing */
+static uint8_t ui_popup_alg_on;                  /* 1 = the algorithm-graph popup is showing */
+static uint8_t ui_popup_alg_val;                 /* the algorithm the graph popup shows */
 static char ui_name[3][UI_NAME_LEN];              /* [0] part 1, [1] part 2, [2] multi-patch */
 static char ui_name_saved[UI_NAME_LEN];          /* the pre-edit copy (for cancel) */
 static uint8_t ui_name_which, ui_name_cursor, ui_name_on;  /* the name-editor state */
@@ -928,37 +930,80 @@ static void ui_draw_status(const ui_widget *w)
     cv_blit(x, y);
 }
 
-/* the 8 standard 4-op FM algorithms (ymfm s_algorithm_ops): ALGO_CAR[alg] is the
- * bitmask of carriers; ALGO_TXT[alg] is a compact routing string. Mirrors
- * umetate/_tables.py `_ROUTING` (op0..op3 = O1..O4). */
+/* the 8 standard 4-op FM algorithms (ymfm s_algorithm_ops, with alg 3 replaced —
+ * see umetate/_tables.py `_ROUTING`): ALGO_MOD[alg][i] is the bitmask of operators
+ * that phase-modulate operator i; ALGO_CAR[alg] is the carrier bitmask. */
+static const uint8_t ALGO_MOD[8][4] = {
+    {0, 1, 2, 4},   /* 0: 1->2->3->4 */
+    {0, 0, 3, 4},   /* 1: (1+2)->3->4 */
+    {0, 0, 2, 5},   /* 2: 1->4, 2->3->4 */
+    {0, 1, 1, 6},   /* 3: 1->2, 1->3, 2+3->4 */
+    {0, 1, 0, 4},   /* 4: (1->2)+(3->4) */
+    {0, 1, 1, 1},   /* 5: 1->2/3/4 */
+    {0, 1, 0, 0},   /* 6: (1->2)+3+4 */
+    {0, 0, 0, 0},   /* 7: all four carriers */
+};
 static const uint8_t ALGO_CAR[8] = {8, 8, 8, 8, 10, 14, 14, 15};
-static const char *const ALGO_TXT[8] = {
-    "1>2>3>4", "1+2>3>4", "1>4  2>3>4", "(1>2+3)>4",
-    "1>2  3>4", "1>2 1>3 1>4", "1>2 +3 +4", "1+2+3+4",
+/* the block centre per operator per algorithm (pixels; the widget is 240 wide). */
+static const int8_t ALGO_X[8][4] = {
+    {108, 108, 108, 108},  /* 0: vertical chain */
+    {44, 172, 108, 108},   /* 1: 1,2 on top -> 3 -> 4 */
+    {44, 172, 108, 108},   /* 2: 2 on top; 1,3 middle -> 4 */
+    {108, 44, 172, 108},   /* 3: 1 on top -> 2,3 -> 4 */
+    {44, 44, 172, 172},    /* 4: 1->2 and 3->4 */
+    {108, 44, 108, 172},   /* 5: 1 on top -> 2,3,4 */
+    {44, 44, 108, 172},    /* 6: 1->2, +3, +4 */
+    {210, 150, 90, 30},    /* 7: 4,3,2,1 in a row */
+};
+static const int8_t ALGO_Y[8][4] = {
+    {10, 46, 82, 118},     /* 0 */
+    {10, 10, 46, 82},      /* 1 */
+    {46, 10, 46, 82},      /* 2 */
+    {10, 46, 46, 82},      /* 3 */
+    {10, 46, 10, 46},      /* 4 */
+    {10, 46, 46, 46},      /* 5 */
+    {10, 46, 46, 46},      /* 6 */
+    {10, 10, 10, 10},      /* 7 */
 };
 
-/* the algorithm graph: four operator blocks (carriers pink) + a routing string.
- * The widget's `param` is the algorithm param. */
-static void ui_draw_algo(const ui_widget *w)
+/* draw the algorithm graph (modulation arrows + carrier outputs in purple,
+ * operator blocks in pink/white) into the current canvas, at origin (ox, oy). */
+static void algo_graph(int32_t alg, int32_t ox, int32_t oy)
 {
-    uint32_t x, y, wd, ht, i;
-    int32_t alg = w->param < ui_t->n_params ? ui_param_v[w->param] : 0;
+    uint32_t i, j;
     char s[2];
     if (alg < 0)
         alg = 0;
     else if (alg > 7)
         alg = 7;
-
-    ui_region(w, &x, &y, &wd, &ht);
-    cv_begin(wd, ht, C_BLACK);
-    for (i = 0; i < 4u; i++) {
-        int32_t oy = 4 + (int32_t)i * 26;
-        cv_rect(48, oy, 56, 16, (ALGO_CAR[alg] >> i) & 1u ? C_HI : C_TEXT);
+    for (i = 0; i < 4u; i++)                           /* modulation arrows */
+        for (j = 0; j < 4u; j++)
+            if (ALGO_MOD[alg][i] & (1u << j))
+                cv_line(ox + ALGO_X[alg][j], oy + ALGO_Y[alg][j],
+                        ox + ALGO_X[alg][i], oy + ALGO_Y[alg][i], C_AMB);
+    for (i = 0; i < 4u; i++)                           /* carrier -> output */
+        if ((ALGO_CAR[alg] >> i) & 1u) {
+            int32_t cx = ox + ALGO_X[alg][i];
+            cv_line(cx, oy + ALGO_Y[alg][i] + 7, cx, oy + 138, C_AMB);
+            cv_line(cx - 3, oy + 135, cx, oy + 138, C_AMB);      /* arrowhead */
+            cv_line(cx + 3, oy + 135, cx, oy + 138, C_AMB);
+        }
+    for (i = 0; i < 4u; i++) {                         /* the operator blocks */
+        int32_t bx = ox + ALGO_X[alg][i] - 20, by = oy + ALGO_Y[alg][i] - 7;
+        cv_rect(bx, by, 40, 14, (ALGO_CAR[alg] >> i) & 1u ? C_HI : C_TEXT);
         s[0] = (char)('1' + i);
         s[1] = 0;
-        cv_text(66, oy, &FONT_S, s, C_BLACK);
+        cv_text(bx + 15, by, &FONT_S, s, C_BLACK);
     }
-    cv_text(120, 38, &FONT_S, ALGO_TXT[alg], C_AMB);   /* the routing, right of the blocks */
+}
+
+/* the algorithm graph widget (the widget's `param` is the algorithm param). */
+static void ui_draw_algo(const ui_widget *w)
+{
+    uint32_t x, y, wd, ht;
+    ui_region(w, &x, &y, &wd, &ht);
+    cv_begin(wd, ht, C_BLACK);
+    algo_graph(w->param < ui_t->n_params ? ui_param_v[w->param] : 0, 0, 0);
     cv_blit(x, y);
 }
 
@@ -1178,11 +1223,24 @@ static void ui_draw_popup(void)
     cv_blit(0, 4 * UI_ROW_H);
 }
 
+/* the algorithm-graph popup: a tall dark band with "ALG n" + the routing graph. */
+static void ui_draw_alg_popup(void)
+{
+    char s[8];
+    cv_begin(240u, 11u * UI_ROW_H, C_POPUP_BG);
+    ui_strcpy(s, "ALG ");
+    ui_itoa((int32_t)ui_popup_alg_val, s + 4);
+    cv_text(6, 4, &FONT_S, s, C_POPUP_TXT);
+    algo_graph((int32_t)ui_popup_alg_val, 0, 28);   /* the graph, below the title */
+    cv_blit(0, 2 * UI_ROW_H);
+}
+
 static void ui_popup_set(const char *title, uint32_t slot, const char *name)
 {
     char t[12];
     uint8_t was = ui_popup_on;
     ui_popup_on = 1;
+    ui_popup_alg_on = 0;                           /* the text and graph popups are exclusive */
     ui_strcpy(ui_popup_line, title);
     ui_itoa((int32_t)slot, t);
     ui_strcat(ui_popup_line, t);
@@ -1198,22 +1256,21 @@ static void ui_popup_set(const char *title, uint32_t slot, const char *name)
 void ui_popup_show(uint32_t slot, const char *name) { ui_popup_set("multi-patch ", slot, name); }
 void ui_popup_show_part(uint32_t slot, const char *name) { ui_popup_set("single part ", slot, name); }
 
-void ui_popup_alg(uint32_t alg)               /* the algorithm scroll popup ("ALG n") */
+void ui_popup_alg(uint32_t alg)               /* the algorithm scroll popup (graph) */
 {
-    char t[12];
-    uint8_t was = ui_popup_on;
-    ui_popup_on = 1;
-    ui_strcpy(ui_popup_line, "ALG ");
-    ui_itoa((int32_t)alg, t);
-    ui_strcat(ui_popup_line, t);
+    uint8_t was = ui_popup_alg_on;
+    ui_popup_on = 0;                            /* the text and graph popups are exclusive */
+    ui_popup_alg_on = 1;
+    ui_popup_alg_val = (uint8_t)(alg & 7u);
     if (!was)
         ui_reset_page();
 }
 
 void ui_popup_hide(void)
 {
-    if (ui_popup_on) {
+    if (ui_popup_on || ui_popup_alg_on) {
         ui_popup_on = 0;
+        ui_popup_alg_on = 0;
         ui_reset_page();                           /* on -> off: redraw the page beneath */
     }
 }
@@ -1586,6 +1643,8 @@ void ui_redraw(uint32_t now_ms)
     ui_draw_legend();
     if (ui_popup_on)
         ui_draw_popup();
+    if (ui_popup_alg_on)
+        ui_draw_alg_popup();
     if (ui_name_on)
         ui_draw_name_editor();
     if (ui_save_on)
