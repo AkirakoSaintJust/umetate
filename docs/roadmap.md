@@ -2827,8 +2827,10 @@ the two stay in sync).
 
 #### G. Param display & clamping
 
-13. **KEY SPLIT note names.** Show both the MIDI note number and its note name
-    (C C# D E F G A B …).
+13. **KEY SPLIT note names.** — **done.** Added a `note` display kind
+    (`UI_DISP_NOTE` → `N C#4`, the MIDI number + note name + octave) and applied it
+    to the per-part `low`/`high` routing params, so the KEY SPLIT page reads
+    `60 C4`/`127 G9` instead of bare numbers.
 
 16. **Hard clamp.** — **done.** The value stepper (`ui_step_param`) already clamps to
     each param's `[min, max]` (the L11 fix); removed the remaining on/off wrap so a

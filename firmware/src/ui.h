@@ -51,6 +51,7 @@ enum {
     UI_DISP_FOLD,      /* a wavefolder type -> "sine" (reserved for others) */
     UI_DISP_MODE,      /* a 0..2 voice mode -> "poly"/"mono"/"unison" */
     UI_DISP_PRIORITY,  /* a 0..2 note priority -> "last"/"highest"/"lowest" */
+    UI_DISP_NOTE,      /* a 0..127 MIDI note -> "N C#4" (number + name + octave) */
 };
 
 /* ---- binding kinds ---- */

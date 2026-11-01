@@ -616,6 +616,18 @@ void ui_param_fmt(uint16_t p, const char *unit, char *out, uint32_t n)
         ui_strcat(out, names[i]);
         break;
     }
+    case UI_DISP_NOTE: {                           /* a 0..127 MIDI note -> "N C#4" */
+        static const char *const names[12] = {
+            "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+        int32_t n = v < 0 ? 0 : v > 127 ? 127 : v;
+        char t[12];
+        ui_itoa(n, out);                           /* the MIDI note number */
+        ui_strcat(out, " ");
+        ui_strcat(out, names[n % 12]);             /* the note name */
+        ui_itoa((int32_t)(n / 12 - 1), t);         /* the octave (-1..9) */
+        ui_strcat(out, t);
+        break;
+    }
     default:
         ui_itoa(v, out);
         break;

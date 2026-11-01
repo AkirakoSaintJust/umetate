@@ -140,13 +140,13 @@ def compile(
     )
 
 
-# per-part routing params (cname, field, min, max, fallback default, unit)
-_ROUTING_PARAMS: tuple[tuple[str, str, int, int, int, str], ...] = (
-    ("part_channel", "channel", -1, 15, 0, ""),
-    ("part_low", "low", 0, 127, 0, ""),
-    ("part_high", "high", 0, 127, 127, ""),
-    ("part_level", "level", 0, 99, 99, ""),  # Yamaha total-level 0..99
-    ("part_delay", "delay", 0, 1000, 0, "ms"),
+# per-part routing params (cname, field, min, max, fallback default, unit, display)
+_ROUTING_PARAMS: tuple[tuple[str, str, int, int, int, str, str], ...] = (
+    ("part_channel", "channel", -1, 15, 0, "", "raw"),
+    ("part_low", "low", 0, 127, 0, "", "note"),
+    ("part_high", "high", 0, 127, 127, "", "note"),
+    ("part_level", "level", 0, 99, 99, "", "raw"),  # Yamaha total-level 0..99
+    ("part_delay", "delay", 0, 1000, 0, "ms", "raw"),
 )
 
 
@@ -253,7 +253,7 @@ def _build_params(
         entries.append(add(cname, target, default, kind, base, None, meta.get(target)))
 
     if n_parts > 1:
-        for cname, field, lo, hi, fallback, unit in _ROUTING_PARAMS:
+        for cname, field, lo, hi, fallback, unit, disp in _ROUTING_PARAMS:
             arr = _routing_values(parts, field)
             for p in range(n_parts):
                 default = arr[p] if arr is not None and p < len(arr) else fallback
@@ -271,7 +271,7 @@ def _build_params(
                         unit=unit,
                         rate="block",
                         modulatable=False,
-                        display="raw",
+                        display=disp,
                     )
                 )
     else:
