@@ -234,6 +234,16 @@ notice preserved; incompatible-licensed code is consulted, never copied.
 allocation, no 64-bit division, no `double`, no per-sample dispatch in the hot
 loop; one writer per shared value or a snapshot protocol.
 
+**Oscillator anti-aliasing (a standing warning).** A *naive* table-based
+square/saw/pulse (and the shipped `naive_osc`) folds its above-Nyquist harmonics
+back into the band at high pitches — audible as inharmonic, warbly "ghost"
+partials that a filter cannot remove. When a design calls for these shapes, use a
+band-limited source: the polyBLEP `saw`/`pulse`/`triangle` nodes, or the
+mip-mapped `osc` (waves 9/10/11 are six band-limited levels selected from the
+note's increment via the phasor's `fm1_wave_mip(step)`). Sine-derived shapes (the
+OPZ set, `osc` waves 0-8) are already band-limited. Warn the user explicitly
+against excessive aliasing when a raw square/saw is pitched into the top octaves.
+
 **Exit:** the user confirms interfaces, milestone order, measurable limits, and
 the verification plan.
 

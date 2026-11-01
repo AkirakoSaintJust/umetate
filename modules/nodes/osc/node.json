@@ -1,9 +1,13 @@
 {
   "name": "osc",
-  "summary": "Wave reader: the 12-waveform OPZ + OPL union (0-7 = OPZ: sine/triangle/half/double derivatives; 8-11 = OPL: rectified/pulse/square/saw) as a single Q15 table (fm1_wave), selected by a `waveform` param (0 = sine).",
-  "ins": { "phase": { "rate": "audio", "format": "phase" } },
+  "summary": "Wave reader: the 12-waveform OPZ + OPL union (0-7 = OPZ: sine/triangle/half/double derivatives; 8-11 = OPL: rectified/pulse/square/saw) as one Q15 table (`fm1_wave`), selected by a `waveform` param (0 = sine). Waves 9/10/11 (pulse/square/saw) are six band-limited tables each (the top-octave anti-aliasing); the `mip` input (from the phasor's `fm1_wave_mip(step)`) selects the level whose top harmonic sits below Nyquist. Waves 0-8 ignore `mip` (a single, already-band-limited table).",
+  "ins": { "phase": { "rate": "audio", "format": "phase" }, "mip": { "rate": "control", "format": "q32" } },
   "outs": { "audio": "audio" },
   "params": { "waveform": "uint32" },
-  "state": { "base": "uint32" },
-  "block_derived": { "base": "((${param.waveform} > 11u) ? 0u : ${param.waveform}) << 10" }
+  "state": { "wave": "uint32", "base": "uint32", "bl": "uint32" },
+  "block_derived": {
+    "wave": "((${param.waveform} > 11u) ? 0u : ${param.waveform})",
+    "base": "((uint32_t)fm1_wave_base[${state.wave}] << 10)",
+    "bl": "((${state.wave} >= 9u) ? 1u : 0u)"
+  }
 }

@@ -987,7 +987,8 @@ panel until each is filled in — this list is that rewrite's spec.
   halt, with headroom to ~28–30 voices (single-core, before the split, the ceiling
   was ~15 voices at 320 MHz). Two render passes landed — the phasor's block-constant pitch multiply
   moved out of the sample loop, and the 12-wave `osc` switch became a precomputed
-  `fm1_wave[12·1024]` table with a block-rate base — ~30% less render time.
+  `fm1_wave` table with a block-rate base — ~30% less render time. (The table later
+  grew to 27648 samples when waves 9-11 gained six band-limited levels each — §13.5.)
 
   The **gap to the stock** is now pinned. The stock is a port of Google's **msfa**
   (the Dexed core, integer fixed-point, `AL-255/FM-1-RE`), and its efficiency over
@@ -3037,3 +3038,29 @@ Status: **done** — 22–41 complete (2026-11-01). Numbers continue §13.1.
 5. ~~**Features (27 detune/ratio landmarks)**~~ — done (a PART n OP DETUNES page,
    ±50 cents per operator). ~~24 keyboard~~ done.
 6. **GLO (28)** — folds into the §13.1 GLO revamp (items 7/10/11).
+
+### 13.5 Operator waveform anti-aliasing (multitables)
+
+**42. Pulse/square/saw "ghost" aliasing at top octaves.** — **done.** The
+operators' `osc` reads a single table per waveform, and waves 9 (pulse), 10
+(square), 11 (saw) were generated *naively* (hard edges / hard wrap), so at high
+notes their above-Nyquist harmonics folded back into the band as dense, inharmonic
+"ghost" partials (measured at C7: the naive square's six loudest spectral peaks
+were all aliases; a band-limited square showed only 1×/3×/5×). Waves 0-8 are
+sin-derived and were always fine.
+
+Fix — **mip-mapped band-limited tables** (the "multitable" option; a single
+"better" table is only correct at one note, and a runtime IFFT is far too heavy
+for the integer pi32v2): `tools/gen_wavetable.py` now emits waves 9/10/11 as six
+band-limited tables each (harmonic counts 32..1, an additive/truncated-Fourier
+synthesis of the naive shape), plus `fm1_wave_base[12]` (each wave's mip-0
+offset). The `phasor` computes the level `mip = fm1_wave_mip(step)` (block-rate)
+and outputs it; the `osc` adds `mip << 10` to its base for waves 9-11 only, so the
+top octaves read a table with fewer harmonics and stop aliasing. One octave of
+headroom covers vibrato/detune. Total table 27648 samples (54 KB const XIP; +30 KB
+over the old 24 KB). `fm1_sin_wave`, the `lfo` wave read, and the `osc` all index
+via `fm1_wave_base`. Verified by a new host spectral test (the folded harmonic 11
+at C7 is ~4× attenuated vs a naive square) and the existing wave-shape probe
+(updated for the pulse's Gibbs ringing). The agent skill + tutorial now warn
+against naive square/saw/pulse aliasing (use the polyBLEP `saw`/`pulse`/`triangle`
+or the mip-mapped `osc`).

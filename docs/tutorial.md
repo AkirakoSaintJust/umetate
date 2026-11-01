@@ -231,7 +231,17 @@ The generator compiles `patch.json` and `panel.json` ahead of time into the
 stable `<synth>_dsp_*` interface. The shipped library (run `umetate lib`) covers
 oscillators (`phasor`, `osc`, `naive_osc`, the band-limited `saw`/`pulse`/
 `triangle`, phase shaping), envelopes (`env`, `dx_env`), filters, gain/VCA, and
-routing. The two delay nodes are the only way to break a cycle; otherwise, the
+routing.
+
+> **Anti-aliasing warning.** A raw table-based square/saw/pulse aliases at high
+> pitches: its above-Nyquist harmonics fold back as inharmonic, warbly "ghost"
+> partials that no filter can remove. The `naive_osc` node is non-band-limited *by
+> design*; for clean top octaves use the polyBLEP `saw`/`pulse`/`triangle`, or the
+> `osc` node's mip-mapped pulse/square/saw (waves 9-11 — six band-limited levels
+> each, selected automatically from the note's increment). Sine-derived shapes
+> (the OPZ set, `osc` waves 0-8) are already band-limited and need no treatment.
+
+The two delay nodes are the only way to break a cycle; otherwise, the
 graph is a DAG. If needed, you can
 write `dsp.c` by hand against the same interface. In the patch, `params:` maps
 readable names to flattened `<instance>.<param>` IDs, while `tables:` adds

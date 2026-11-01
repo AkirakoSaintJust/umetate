@@ -44,6 +44,7 @@
     { "from": "pitch", "to": "ph.pitch" },
     { "from": "sum.audio", "to": "ph.fm" },
     { "from": "ph.phase", "to": "osc.phase" },
+    { "from": "ph.mip", "to": "osc.mip" },
     { "from": "osc.audio", "to": "tl.audio" },
     { "from": "velrate.cv", "to": "eg.rate_scale" },
     { "from": "eg.cv", "to": "trem.in0" },

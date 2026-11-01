@@ -115,13 +115,31 @@ FM1_MATH_INLINE int32_t fm1_cos(uint32_t phase) { return fm1_sin(phase + 0x40000
    0-7 are the OPZ set (sine, triangle, half sine, half triangle, double sine,
    double triangle, double half sine, double half triangle); 8-11 are the OPL-only
    shapes (rectified |sin|, pulse, square, saw). A bad `ws` degrades to sine.
-   Precomputed into gen/wavetable.h (`fm1_wave[12 * 1024]`, tools/gen_wavetable.py):
-   one load per sample, no switch. The `(ws << 10)` base is block-rate — the
-   oscillator node hoists it with its block_derived. */
+   Precomputed into gen/wavetable.h (`fm1_wave`, tools/gen_wavetable.py): waves
+   0-8 are one 1024-sample table each; 9 (pulse) / 10 (square) / 11 (saw) are six
+   band-limited tables each (harmonic counts 32..1) for the top-octave
+   anti-aliasing. `fm1_wave_base[ws]` is ws's mip-0 offset; this helper reads the
+   richest (mip-0) table — the oscillator node adds the `mip` selected from its
+   note's increment. */
 FM1_MATH_INLINE int32_t fm1_sin_wave(uint32_t phase, uint32_t ws)
 {
     if (ws > 11u) ws = 0u;   /* out of range degrades to sine (not a masked OOB read) */
-    return fm1_wave[(ws << 10) | (phase >> 22)];
+    return fm1_wave[((uint32_t)fm1_wave_base[ws] << 10) | (phase >> 22)];
+}
+
+/* The band-limited-table mip index for a carrier increment `step` (Q32, samples
+   per cycle): the level whose top harmonic sits below Nyquist. The harmonic
+   count per level is 2^(5-mip) (32,16,8,4,2,1); the selection is one octave
+   conservative (level mip keeps its top harmonic at <= Nyquist/2), so a vibrato
+   or detune of up to +/-1 octave never folds a harmonic above Nyquist. */
+FM1_MATH_INLINE uint32_t fm1_wave_mip(uint32_t step)
+{
+    if (step >= 0x40000000u) return 5u;   /* f0 >= ~11025 Hz: fundamental only */
+    if (step >= 0x20000000u) return 4u;   /* 2 harmonics */
+    if (step >= 0x10000000u) return 3u;   /* 4 harmonics */
+    if (step >= 0x08000000u) return 2u;   /* 8 harmonics */
+    if (step >= 0x04000000u) return 1u;   /* 16 harmonics */
+    return 0u;                            /* 32 harmonics */
 }
 
 /* 4-input weighted sum against a routing-matrix row (a `const int16_t *` of four

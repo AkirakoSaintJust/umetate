@@ -1,10 +1,10 @@
 {
   "name": "phasor",
-  "summary": "Q32 phase accumulator. `inc` (note-derived) is the pitch; `pitch` (control, Q15) scales it — full-scale = ±1 octave — and `detune` (cents −50..50) adds an exact per-operator offset via `fm1_detune_pitch`. `fm` (audio, Q15) is scaled `<<16` (full-scale = ±π, the FM index); `mod` (control) is a small additive offset.",
+  "summary": "Q32 phase accumulator. `inc` (note-derived) is the pitch; `pitch` (control, Q15) scales it — full-scale = ±1 octave — and `detune` (cents −50..50) adds an exact per-operator offset via `fm1_detune_pitch`. `fm` (audio, Q15) is scaled `<<16` (full-scale = ±π, the FM index); `mod` (control) is a small additive offset. Also outputs `mip` — the band-limited wave-table level `fm1_wave_mip(step)` — so a downstream `osc` can select the table whose top harmonic sits below Nyquist.",
   "ins": { "mod": "control", "fm": "audio", "pitch": "control" },
-  "outs": { "phase": { "rate": "audio", "format": "phase" } },
+  "outs": { "phase": { "rate": "audio", "format": "phase" }, "mip": { "rate": "control", "format": "q32" } },
   "params": { "inc_ratio": "q16", "detune": "int32" },
-  "state": { "inc": "q32", "phase": "phase", "step": "q32" },
+  "state": { "inc": "q32", "phase": "phase", "step": "q32", "mip": "uint32" },
   "note_derived": { "inc": "inc_ratio" },
-  "block_derived": { "step": "(uint32_t)(((int64_t)${state.inc} * (32768 + ${in.pitch} + fm1_detune_pitch[${param.detune} + 50])) >> 15)" }
+  "block_derived": { "step": "(uint32_t)(((int64_t)${state.inc} * (32768 + ${in.pitch} + fm1_detune_pitch[${param.detune} + 50])) >> 15)", "mip": "fm1_wave_mip(${state.step})" }
 }

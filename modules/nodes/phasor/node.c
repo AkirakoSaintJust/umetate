@@ -12,10 +12,15 @@
    integrate the modulator into the frequency (FM), which detunes the carrier with
    any modulator DC and lets a feedback loop settle on a DC fixed point. This is the
    Yamaha model: `out = wave(acc + modulator)`, `acc += step`. Multiplication (not
-   `<< 16`) so a negative (bipolar) modulator is well-defined. */
+   `<< 16`) so a negative (bipolar) modulator is well-defined.
+
+   `mip` (the band-limited table level) is block-constant (block_derived), so it is
+   copied to its output here — the per-sample body stays the two accumulator ops
+   plus this copy. */
 uint32_t ${out.phase} = (uint32_t)(
     (int64_t)${state.phase}
     + ((int64_t)${in.fm} * 65536)
     + (int64_t)${in.mod}
 );
 ${state.phase} = (uint32_t)((int64_t)${state.phase} + (int64_t)${state.step});
+uint32_t ${out.mip} = ${state.mip};

@@ -469,6 +469,26 @@ TABLE_OSC: Patch = {
     "global": {"nodes": [], "wires": []},
 }
 
+# the mip-mapped band-limited `osc` table: a phasor drives the square (waveform
+# 10); the phasor's `mip` selects the level whose top harmonic sits below Nyquist,
+# so a high note drops the odd harmonics that would otherwise fold back and alias.
+OSC_TABLE_BL: Patch = {
+    "name": "osc_table_bl",
+    "voices": 1,
+    "voice": {
+        "nodes": [
+            {"id": "ph", "type": "phasor"},
+            {"id": "osc", "type": "osc", "params": {"waveform": 10}},
+        ],
+        "wires": [
+            {"from": "ph.phase", "to": "osc.phase"},
+            {"from": "ph.mip", "to": "osc.mip"},
+        ],
+        "voice_out": "osc.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
 # the `saw` node uses the note-on reciprocal (inv_inc = 2^32/inc) via an inline
 # macro that sets the note-derived `inc`.
 SAW_TEST: Patch = {
@@ -2072,8 +2092,8 @@ _WAVE_PROBE = r"""
 #include "fm1_math.h"
 int main(void) {
     int32_t sine_max = 0, sine_min = 0, sq_max = 0, sq_min = 0;
-    int32_t half_min = 0, dhs_min = 0, rect_min = 0, pulse_min = 0;
-    int half_nonzero_second = 0, pulse_nonzero_q2 = 0;
+    int32_t half_min = 0, dhs_min = 0, rect_min = 0, pulse_peak = 0, pulse_odd_max = 0;
+    int half_nonzero_second = 0;
     for (uint32_t n = 0; n < 1024; n++) {
         uint32_t ph = n << 22;
         int32_t s = fm1_sin_wave(ph, 0);    /* sine */
@@ -2089,9 +2109,14 @@ int main(void) {
         if (h < half_min) half_min = h;
         if (d < dhs_min) dhs_min = d;
         if (r < rect_min) rect_min = r;
-        if (p < pulse_min) pulse_min = p;
+        if (p > pulse_peak) pulse_peak = p;
+        /* the band-limited pulse is |sin| in the even quadrants (q0/q2), ~zero in
+           the odd ones (q1/q3) up to its Gibbs ringing around the 1->0 step */
+        if (ph & 0x40000000u) {
+            int32_t ap = p < 0 ? -p : p;
+            if (ap > pulse_odd_max) pulse_odd_max = ap;
+        }
         if (ph >= 0x80000000u && h != 0) half_nonzero_second = 1;
-        if ((ph & 0x40000000u) && p != 0) pulse_nonzero_q2 = 1;
     }
     if (sine_max < 32000 || sine_min > -32000) {
         printf("FAIL: sine not full-scale (%d, %d)\n", sine_max, sine_min);
@@ -2100,7 +2125,12 @@ int main(void) {
     if (half_min < 0 || half_nonzero_second) { printf("FAIL: half sine\n"); return 1; }
     if (dhs_min < 0) { printf("FAIL: double half sine negative\n"); return 1; }
     if (rect_min < 0) { printf("FAIL: rectified negative\n"); return 1; }
-    if (pulse_min < 0 || pulse_nonzero_q2) { printf("FAIL: pulse\n"); return 1; }
+    /* a band-limited pulse: a full-scale bump in q0/q2, but the off-quadrants never
+       reach full scale (they ring around the 1->0 step, bounded well below 2^15) */
+    if (pulse_peak < 30000 || pulse_odd_max > 20000) {
+        printf("FAIL: pulse (peak %d, odd-max %d)\n", pulse_peak, pulse_odd_max);
+        return 1;
+    }
     if (sq_max < 32000 || sq_min > -32000) {
         printf("FAIL: square not full-scale (%d, %d)\n", sq_max, sq_min);
         return 1;
@@ -2231,7 +2261,7 @@ def _naive_square(n: int, inc: int) -> list[int]:
     return out
 
 
-def _render_samples(patch: Patch, frames: int) -> list[int]:
+def _render_samples(patch: Patch, frames: int, note: int = 69) -> list[int]:
     """Generate + compile + run the patch, returning `frames` left-channel samples."""
     src = generate(patch)
     cname = patch["name"].replace("-", "_").replace(".", "_")
@@ -2241,7 +2271,7 @@ def _render_samples(patch: Patch, frames: int) -> list[int]:
         f"void {cname}_dsp_render(int32_t *out, uint32_t frames);\n"
         f"static int32_t out[{2 * frames}];\n"
         "int main(void) {\n"
-        f"    {cname}_dsp_note_on(69, 100);\n"
+        f"    {cname}_dsp_note_on({note}, 100);\n"
         f"    {cname}_dsp_render(out, {frames});\n"
         f'    for (int i = 0; i < {frames}; i++) printf("%d\\n", out[2 * i]);\n'
         "    return 0;\n"
@@ -2554,6 +2584,24 @@ def _pulse_antialias() -> None:
             "ok: polyBLEP pulse harmonic "
             f"{h} attenuated ({blep:.3f} vs naive {naive_h:.3f})"
         )
+
+
+def _table_osc_antialias() -> None:
+    """The mip-mapped band-limited `osc` table removes the folded harmonics a naive
+    square produces at a high note: at C7 (2093 Hz) harmonic 11 sits above Nyquist
+    and folds to ~21077 Hz. The band-limited table (8 harmonics) has none of it —
+    only the (much weaker) Gibbs ringing of the truncation remains."""
+    note = 96  # C7
+    inc = 203840951  # note_to_inc(96) at 44.1 kHz
+    samples = _render_samples(OSC_TABLE_BL, 2048, note)
+    naive = _naive_square(len(samples), inc)
+    fs = 44100.0
+    f0 = fs * inc / (1 << 32)
+    alias = abs(fs - f0 * 11)  # harmonic 11 (23023 Hz) folds to 21077 Hz
+    bl = _goertzel(samples, alias, fs) / _goertzel(samples, f0, fs)
+    na = _goertzel(naive, alias, fs) / _goertzel(naive, f0, fs)
+    assert bl < na * 0.5, f"folded harmonic 11 not attenuated ({bl:.3f} vs {na:.3f})"
+    print(f"ok: table square drops folded harmonic 11 ({bl:.3f} vs {na:.3f})")
 
 
 def _triangle_bandlimited() -> None:
@@ -3294,6 +3342,12 @@ def main() -> int:
         _pulse_antialias()
     except AssertionError as exc:
         print(f"FAIL: polyBLEP pulse anti-aliasing: {exc}")
+        failures += 1
+
+    try:
+        _table_osc_antialias()
+    except AssertionError as exc:
+        print(f"FAIL: table-osc band-limited anti-aliasing: {exc}")
         failures += 1
 
     # the pulse width is a settable param (default 0.5 = square), not a wireable

@@ -5,5 +5,5 @@
   "outs": { "cv": "control" },
   "params": { "rate": "q32", "depth": "q15", "wave": "uint32" },
   "state": { "phase": "phase", "base": "uint32" },
-  "block_derived": { "base": "((${param.wave} > 11u) ? 0u : ${param.wave}) << 10" }
+  "block_derived": { "base": "((uint32_t)fm1_wave_base[((${param.wave} > 11u) ? 0u : ${param.wave})] << 10)" }
 }
