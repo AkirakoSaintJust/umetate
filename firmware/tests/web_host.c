@@ -18,6 +18,7 @@
 #define HALF_FRAMES 256u
 
 static volatile uint32_t fm1_ms;
+static uint32_t splash_left;            /* frames of logo to show before app_init */
 
 /* ---- input (the FM-1 matrix, driven from JS) ---- */
 #define HOST_NENC 7u
@@ -68,6 +69,7 @@ static void lcd_blit(uint32_t x, uint32_t y, uint32_t w, uint32_t h, const uint1
 #define CV_MAX (240u * 124u)
 #endif
 #include "gfx.c"
+#include "logo.c"
 
 /* ---- storage in RAM (lost at reload; the page could mirror it to localStorage) ---- */
 #include "store.h"
@@ -141,7 +143,8 @@ __attribute__((used, visibility("default"))) void web_boot(void)
     uint32_t i;
     for (i = 0; i < 240u * 240u; i++)
         fb[i] = 0;                                  /* black until the first draw */
-    app_init();
+    logo_draw();                                    /* the boot splash */
+    splash_left = SPLASH_MS * FS / 1000u;           /* ~0.7 s of logo before the app */
 }
 __attribute__((used, visibility("default"))) void web_step(void) { app_step(); }
 
@@ -151,6 +154,18 @@ __attribute__((used, visibility("default"))) void web_render(uint32_t n)
     uint32_t k;
     if (n > 1024u)
         n = 1024u;
+    if (splash_left) {                              /* hold the logo, silent, then boot */
+        if (n > splash_left)
+            n = splash_left;
+        splash_left -= n;
+        for (k = 0; k < n; k++) {
+            out_l[k] = 0.0f;
+            out_r[k] = 0.0f;
+        }
+        if (!splash_left)
+            app_init();
+        return;
+    }
     while (ring_frames - ring_read < n)
         app_step();
     for (k = 0; k < n; k++) {

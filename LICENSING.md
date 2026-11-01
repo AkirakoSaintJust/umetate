@@ -29,6 +29,7 @@ lineage, not the product boundary.
 | TRS MIDI IN ring read | Felucca / sloopDX / ChanceTheMaker | GPL-3.0-only |
 | Update loader screen | zvenson / illuminus5 (Skiff) | GPL-3.0-only |
 | Terminus font 8×16 | Terminus project | SIL OFL 1.1 |
+| Digital Desolation Plus (the umetate logo's typeface) | UkiyoMoji Fonts | free — edit/derive/commercial/embed OK; credit requested |
 | KISS FFT (`vendor/kiss_fft/`) | Mark Borgerding | BSD-3-Clause |
 | JieLi AC79 SDK math (`vendor/jieli/math.h`, `fftvec_math_drv.h`, `flfft_core_pi32v2.c`) | JieLi | Apache-2.0 |
 | JieLi AC79 SDK assets (uboot.boot, cfg_tool.bin, eq_cfg_hw.bin) | JieLi | Apache-2.0 |

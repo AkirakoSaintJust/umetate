@@ -119,6 +119,7 @@ static volatile uint32_t fm1_ms;                /* milliseconds since power-on (
 #define CV_MAX (240u * 64u)                     /* the biggest text box drawn at once (canvas in RAM: 2 B a pixel) */
 #endif
 #include "gfx.c"
+#include "logo.c"
 
 #define FS 44100u                               /* the sample rate */
 #define HALF_FRAMES 256u                        /* I2S half buffer: 5.8 ms (as sloopDX: the USB audio band is set for it) */
@@ -532,6 +533,7 @@ void fm1_cstart(void)
     ota_boot_cleanup();
     lcd_init();
     lcd_fill(0, 0, 240, 240, C_BLACK);
+    logo_draw();
     fm1_input_init();
     fm1_adc_init();
 #if BOARD_SMK37
@@ -546,6 +548,11 @@ void fm1_cstart(void)
     fm1_timer5_start(isr_timer5, 4);
     fm1_guard_lock_top();
     fm1_irq_enable_all();
+    {                                       /* the boot splash: hold the logo a beat */
+        uint32_t t0 = fm1_ms;
+        while (fm1_ms - t0 < SPLASH_MS)
+            platform_poll();
+    }
     app_main();
     for (;;)
         platform_poll();

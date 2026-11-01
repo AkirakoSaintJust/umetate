@@ -49,7 +49,7 @@ python_version = "3.11"
 strict = true
 disallow_any_explicit = true
 disallow_any_unimported = true
-files = ["umetate", "firmware/tools/gen_math_tables.py"]
+files = ["umetate", "firmware/tools/gen_math_tables.py", "firmware/tools/gen_logo.py"]
 
 # ---- strict typing (pyright / Pylance) ----
 # The same discipline, checked by a second engine: `Any` is banned (mypy enforces
@@ -59,4 +59,4 @@ files = ["umetate", "firmware/tools/gen_math_tables.py"]
 [tool.pyright]
 pythonVersion = "3.11"
 typeCheckingMode = "strict"
-include = ["umetate", "firmware/tools/gen_math_tables.py"]
+include = ["umetate", "firmware/tools/gen_math_tables.py", "firmware/tools/gen_logo.py"]

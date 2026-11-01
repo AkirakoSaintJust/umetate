@@ -1,0 +1,21 @@
+Digital Desolation Plus (デジタルデゾレーションプラス)
+Copyright (C) UkiyoMoji Fonts
+Source: https://ukiyomoji.booth.pm/items/5265551
+
+Licence terms (as stated on the item page):
+
+  - 原則、編集・派生も、商用利用も自由です。
+    In principle, editing, derivative works, and commercial use are all free.
+  - 派生フォント作品を公開する場合、名前が被らないように変更してください。
+    If you publish a derivative font work, change its name so it does not
+    clash with the original.
+  - ソフトの組み込みも可能です。
+    Embedding in software is permitted.
+  - このフォントを使った画像出力を更に編集するのも可能です。
+    Editing image output made with this font is permitted.
+  - できればフォントの出典をクレジットに記載していただければ幸いです。
+    Please credit the font source where possible.
+
+Used for the umetate wordmark logo (firmware/assets/umetate.png and
+firmware/assets/umetate240.png). The font itself is not redistributed here —
+only the logo image rendered with it is included.

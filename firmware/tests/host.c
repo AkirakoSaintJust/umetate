@@ -102,6 +102,7 @@ static void lcd_blit(uint32_t x, uint32_t y, uint32_t w, uint32_t h, const uint1
 #define CV_MAX (240u * 64u)
 #endif
 #include "gfx.c"
+#include "logo.c"
 
 /* storage in RAM (lost at exit), store.h's sizes */
 #include "store.h"
@@ -382,6 +383,7 @@ int main(int argc, char **argv)
     if (argc > 2) read_script(argv[2]);
     if (argc > 3) frame_fps = (uint32_t)atoi(argv[3]);
     perf_open();
+    logo_draw();                    /* the boot splash (no hold: the film starts at the app) */
     app_main();
     return 0;
 }
