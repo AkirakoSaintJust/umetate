@@ -334,6 +334,13 @@
             { "type": "label", "row": 8, "text": "SAVE = save part" },
             { "type": "label", "row": 9, "text": "SEL+SAVE = init part" }
           ]
+        },
+        {
+          "id": "credits",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "VERSION + CREDITS", "plain": true },
+            { "type": "custom", "row": 3, "span": 7 }
+          ]
         }
       ],
       "bindings": [

@@ -201,6 +201,7 @@ _WIDGETS = {
     "subheader": "UI_SUBHEADER",
     "name": "UI_NAME",
     "algo": "UI_ALGO",
+    "custom": "UI_CUSTOM",
 }
 
 # the per-param display scale (a patch `params:` `display` string -> ui.h enum)

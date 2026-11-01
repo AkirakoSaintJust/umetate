@@ -313,7 +313,49 @@ void ui_act_name(uint8_t which)
 {
     ui_name_editor_begin(which);
 }
-void ui_draw_custom(const ui_widget *w) { (void)w; }   /* no custom widgets in this panel */
+
+/* the credits page (a UI_CUSTOM widget): the firmware version + credits, scrolled
+ * with the SELECT encoder. The typeface credit is required by the font licence. */
+static const char *const CREDITS[] = {
+    "umetate",
+    "fourop-fm  (4-op FM)",
+    "",
+    "firmware  FM-1_990",
+    "",
+    "Typeface:",
+    "Digital Desolation Plus",
+    "",
+    "Copyright (C) 2026",
+    "P1Onken",
+    "",
+    "Licence: GPL-3.0-or-later",
+};
+#define CREDITS_N ((int32_t)(sizeof(CREDITS) / sizeof(CREDITS[0])))
+static int32_t app_credits_scroll;
+
+void ui_draw_custom(const ui_widget *w)
+{
+    /* the widget's pixel region (col 0 = full width; 16 px rows, 120 px cols). */
+    uint32_t x = (uint32_t)w->col * 120u;
+    uint32_t y = (uint32_t)w->row * 16u;
+    uint32_t wd = x ? 120u : 240u;
+    uint32_t ht = (uint32_t)(w->span ? w->span : 1u) * 16u;
+    uint32_t rows = ht / 16u;
+    int32_t i;
+    (void)wd;
+    if (app_credits_scroll < 0)
+        app_credits_scroll = 0;
+    if (app_credits_scroll > CREDITS_N - (int32_t)rows)
+        app_credits_scroll = CREDITS_N - (int32_t)rows;
+    cv_begin(wd, ht, C_BLACK);
+    for (i = 0; i < (int32_t)rows; i++) {
+        int32_t n = app_credits_scroll + i;
+        if (n < 0 || n >= CREDITS_N)
+            break;
+        cv_text(0, i * 16, &FONT_S, CREDITS[n], C_GRAY);
+    }
+    cv_blit(x, y);
+}
 
 /* ---- MIDI: the framework handlers, from the main loop and while the screen draws */
 static void app_idle(void)
@@ -324,6 +366,7 @@ static void app_idle(void)
 
 #define KEY0 53u   /* key 0 = F3 */
 #define GLO_CTX 5u /* the GLO context id (panel.json key order: home/edit/env/lfo/fx/glo) */
+#define GLO_CREDITS 6u /* the credits page's index within GLO (the last page) */
 
 /* ---- the main loop, split for the browser emulator: app_init (the setup) +
    app_step (one millisecond of the loop). app_main keeps the frozen contract for
@@ -348,6 +391,7 @@ static void app_init(void)
     app_lit = 0;
     memset(app_held, 0, sizeof app_held);
     app_oct = 0;
+    app_credits_scroll = 0;
     app_last_scl_ms = app_scl_pending = app_scl_pending_ms = 0;
     app_browser_open = app_browser_slot = app_browser_ms = 0;
     app_pbro_open = app_pbro_slot = app_pbro_ms = 0;
@@ -605,7 +649,12 @@ static void app_step(void)
             app_alg_ms = fm1_ms;                   /* the algorithm scroll popup */
             ui_popup_alg((uint32_t)ui_params()[PANEL.alg]);
         }
-        if ((e = fm1_enc_take(ENC_SELECT)) != 0) ui_handle(UI_SRC_ENC_SELECT, e);
+        if ((e = fm1_enc_take(ENC_SELECT)) != 0) {
+            if (ui_top() == GLO_CTX && ui_pageno() == GLO_CREDITS)
+                app_credits_scroll += e;             /* scroll the credits page */
+            else
+                ui_handle(UI_SRC_ENC_SELECT, e);
+        }
         if ((e = fm1_enc_take(ENC_KNOB1)) != 0) ui_handle(UI_SRC_ENC_KNOB1, e);
         if ((e = fm1_enc_take(ENC_KNOB2)) != 0) ui_handle(UI_SRC_ENC_KNOB2, e);
         if ((e = fm1_enc_take(ENC_KNOB3)) != 0) ui_handle(UI_SRC_ENC_KNOB3, e);
