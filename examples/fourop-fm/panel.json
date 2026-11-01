@@ -154,7 +154,9 @@
             { "type": "param_row", "row": 3, "param": "penv_on", "text": "ON" },
             { "type": "param_row", "row": 4, "param": "penv_r1", "text": "ATTACK RATE" },
             { "type": "param_row", "row": 5, "param": "penv_r2", "text": "DECAY1 RATE" },
-            { "type": "param_row", "row": 6, "param": "penv_r3", "text": "DECAY2 RATE" }
+            { "type": "param_row", "row": 6, "param": "penv_r3", "text": "DECAY2 RATE" },
+            { "type": "genv", "row": 7, "span": 5,
+              "params": ["penv_r1", "penv_r2", "penv_r3", "penv_r4", "penv_l1", "penv_l2", "penv_l3"] }
           ]
         },
         {
@@ -164,7 +166,9 @@
             { "type": "param_row", "row": 3, "param": "penv_r4", "text": "RELEASE RATE" },
             { "type": "param_row", "row": 4, "param": "penv_l1", "text": "LEVEL 1" },
             { "type": "param_row", "row": 5, "param": "penv_l2", "text": "LEVEL 2" },
-            { "type": "param_row", "row": 6, "param": "penv_l3", "text": "SUSTAIN" }
+            { "type": "param_row", "row": 6, "param": "penv_l3", "text": "SUSTAIN" },
+            { "type": "genv", "row": 7, "span": 5,
+              "params": ["penv_r1", "penv_r2", "penv_r3", "penv_r4", "penv_l1", "penv_l2", "penv_l3"] }
           ]
         }
       ],
@@ -222,7 +226,9 @@
             { "type": "param_row", "row": 3, "param": "fenv_r1", "text": "ATTACK RATE" },
             { "type": "param_row", "row": 4, "param": "fenv_r2", "text": "DECAY1 RATE" },
             { "type": "param_row", "row": 5, "param": "fenv_r3", "text": "DECAY2 RATE" },
-            { "type": "param_row", "row": 6, "param": "fenv_r4", "text": "RELEASE RATE" }
+            { "type": "param_row", "row": 6, "param": "fenv_r4", "text": "RELEASE RATE" },
+            { "type": "genv", "row": 7, "span": 5,
+              "params": ["fenv_r1", "fenv_r2", "fenv_r3", "fenv_r4", "fenv_l1", "fenv_l2", "fenv_l3"] }
           ]
         },
         {
@@ -232,7 +238,9 @@
             { "type": "param_row", "row": 3, "param": "fenv_l1", "text": "LEVEL 1" },
             { "type": "param_row", "row": 4, "param": "fenv_l2", "text": "LEVEL 2" },
             { "type": "param_row", "row": 5, "param": "fenv_l3", "text": "SUSTAIN" },
-            { "type": "param_row", "row": 6, "param": "fenv_depth", "text": "DEPTH" }
+            { "type": "param_row", "row": 6, "param": "fenv_depth", "text": "DEPTH" },
+            { "type": "genv", "row": 7, "span": 5,
+              "params": ["fenv_r1", "fenv_r2", "fenv_r3", "fenv_r4", "fenv_l1", "fenv_l2", "fenv_l3"] }
           ]
         },
         {

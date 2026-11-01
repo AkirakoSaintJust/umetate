@@ -26,6 +26,7 @@ enum {
     UI_OP_ROW,         /* a param row resolved through the selected operator */
     UI_PART_ROW,       /* a param row resolved through the selected part */
     UI_ENVELOPE,       /* the DX rate/level curve (straight-line approximation) */
+    UI_GENV,           /* a global envelope curve (7 fixed param ids, not per-op) */
     UI_SCOPE,          /* the oscilloscope: the last render block's waveform */
     UI_SPECTRO,        /* the spectrogram: Goertzel magnitude bars */
     UI_STATUS,         /* a status readout (algorithm + selected operator + mute) */
@@ -156,6 +157,8 @@ typedef struct {
     uint8_t n_part;                              /* the number of parts (the header) */
     uint16_t n_params;                           /* ui_params[] size */
     uint16_t n_widgets;                          /* ui_dirty[] size (across all pages) */
+    const uint16_t *genv;                        /* n_genv * 7 global-envelope param ids */
+    uint8_t n_genv;                              /* the global-envelope group count */
     const char *legend;                          /* the footer gesture legend (row 14, when free) */
 } ui_tables;
 

@@ -756,24 +756,18 @@ static void ui_draw_grid(const ui_widget *w)
     cv_blit(x, y);
 }
 
-/* the DX rate/level envelope as straight line segments: the selected operator's 7
- * envelope params (r1..r4, l1..l3) from the `env` group. Stage length = log2 of
- * the one-pole time constant (so the exponential rate curve is shown on a log
- * scale — a linear length would make every slow rate identical); the level height
- * = fm1_level_gain[level] (0.25 dB/step: 99 = max, 0 = silence). No cursor. */
-static void ui_draw_envelope(const ui_widget *w)
+/* draw a DX rate/level envelope curve for 7 param ids (r1,r2,r3,r4,l1,l2,l3) into
+ * the current canvas (wd x ht). Stage length = log2 of the one-pole time constant
+ * (so the exponential rate curve is shown on a log scale — a linear length would
+ * make every slow rate identical); the level height = fm1_level_gain[level]
+ * (0.25 dB/step: 99 = max, 0 = silence). No cursor. */
+static void ui_env_curve(uint32_t wd, uint32_t ht, const uint16_t *p)
 {
-    uint32_t x, y, wd, ht, i, cx;
-    uint32_t len[5], total = 0, p0;
+    uint32_t i, cx;
+    uint32_t len[5], total = 0;
     int32_t lvl[5], px[6], py[6];
-
-    ui_region(w, &x, &y, &wd, &ht);
-    if (!ui_t->env || ui_selected_op >= ui_t->n_op)
-        return;
-    p0 = ((uint32_t)ui_selected_part * ui_t->n_op + (uint32_t)ui_selected_op) * 7u;
     for (i = 0; i < 3; i++) {                       /* r1..r3: attack, decay1, decay2 */
-        uint16_t p = ui_t->env[p0 + i];
-        int32_t r = p < ui_t->n_params ? ui_param_v[p] : 0;
+        int32_t r = p[i] < ui_t->n_params ? ui_param_v[p[i]] : 0;
         int32_t c = fm1_rate_coeff[r < 0 ? 0 : (r > 99 ? 99 : r)];
         uint32_t lg = 0;                            /* floor(log2(coeff)) */
         while (c > 1) { c >>= 1; lg++; }
@@ -783,8 +777,7 @@ static void ui_draw_envelope(const ui_widget *w)
     len[3] = 8u;                                    /* sustain: a short flat hold */
     total += len[3];
     {
-        uint16_t p = ui_t->env[p0 + 3];             /* r4: the release rate */
-        int32_t r = p < ui_t->n_params ? ui_param_v[p] : 0;
+        int32_t r = p[3] < ui_t->n_params ? ui_param_v[p[3]] : 0;   /* r4: the release rate */
         int32_t c = fm1_rate_coeff[r < 0 ? 0 : (r > 99 ? 99 : r)];
         uint32_t lg = 0;
         while (c > 1) { c >>= 1; lg++; }
@@ -794,8 +787,7 @@ static void ui_draw_envelope(const ui_widget *w)
     if (!total)
         total = 1u;
     for (i = 0; i < 3; i++) {
-        uint16_t p = ui_t->env[p0 + 4u + i];
-        int32_t l = p < ui_t->n_params ? ui_param_v[p] : 0;
+        int32_t l = p[4u + i] < ui_t->n_params ? ui_param_v[p[4u + i]] : 0;
         lvl[i] = fm1_level_gain[l < 0 ? 0 : (l > 99 ? 99 : l)];
     }
     lvl[3] = lvl[2];
@@ -808,9 +800,32 @@ static void ui_draw_envelope(const ui_widget *w)
         px[i + 1] = (int32_t)cx;
         py[i + 1] = (int32_t)ht - (lvl[i] * (int32_t)ht) / 32768;
     }
-    cv_begin(wd, ht, C_BLACK);
     for (i = 0; i < 5; i++)
-        cv_line(px[i], py[i], px[i + 1], py[i + 1], C_AMB);   /* the envelope curve: the graph highlight */
+        cv_line(px[i], py[i], px[i + 1], py[i + 1], C_AMB);   /* the curve: graph highlight */
+}
+
+/* the operator-relative envelope (the active operator's env group). */
+static void ui_draw_envelope(const ui_widget *w)
+{
+    uint32_t x, y, wd, ht;
+    ui_region(w, &x, &y, &wd, &ht);
+    if (!ui_t->env || ui_selected_op >= ui_t->n_op)
+        return;
+    cv_begin(wd, ht, C_BLACK);
+    ui_env_curve(wd, ht, &ui_t->env[((uint32_t)ui_selected_part * ui_t->n_op
+                                     + (uint32_t)ui_selected_op) * 7u]);
+    cv_blit(x, y);
+}
+
+/* a global envelope (7 fixed param ids, e.g. the filter F-ENV / pitch P-ENV). */
+static void ui_draw_genv(const ui_widget *w)
+{
+    uint32_t x, y, wd, ht;
+    ui_region(w, &x, &y, &wd, &ht);
+    if (!ui_t->genv || w->param >= ui_t->n_genv)
+        return;
+    cv_begin(wd, ht, C_BLACK);
+    ui_env_curve(wd, ht, &ui_t->genv[(uint32_t)w->param * 7u]);
     cv_blit(x, y);
 }
 
@@ -1168,6 +1183,7 @@ static void ui_draw_widget(const ui_widget *w)
     case UI_LIST: ui_draw_list(w); break;
     case UI_GRID: ui_draw_grid(w); break;
     case UI_ENVELOPE: ui_draw_envelope(w); break;
+    case UI_GENV: ui_draw_genv(w); break;
     case UI_SCOPE: ui_draw_scope(w); break;
     case UI_SPECTRO: ui_draw_spectro(w); break;
     case UI_STATUS: ui_draw_status(w); break;
@@ -1208,6 +1224,16 @@ static int32_t ui_widget_value(const ui_widget *w, uint32_t slot)
         if (ui_t->env && ui_selected_op < ui_t->n_op)
             for (i = 0; i < 7; i++) {
                 uint16_t p = ui_t->env[p0 + i];
+                if (p < ui_t->n_params) sum += ui_param_v[p];
+            }
+        return sum;
+    }
+    case UI_GENV: {                                 /* redraw when any of the 7 change */
+        int32_t sum = 0;
+        uint32_t i;
+        if (ui_t->genv && w->param < ui_t->n_genv)
+            for (i = 0; i < 7; i++) {
+                uint16_t p = ui_t->genv[(uint32_t)w->param * 7u + i];
                 if (p < ui_t->n_params) sum += ui_param_v[p];
             }
         return sum;

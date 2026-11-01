@@ -194,6 +194,7 @@ _WIDGETS = {
     "list": "UI_LIST",
     "grid": "UI_GRID",
     "envelope": "UI_ENVELOPE",
+    "genv": "UI_GENV",
     "scope": "UI_SCOPE",
     "spectro": "UI_SPECTRO",
     "status": "UI_STATUS",
@@ -295,6 +296,9 @@ def generate_panel(
     op_names: list[str] = []  # the operator-relative param "rest" parts, first-seen
     env_names: list[str] = []  # the envelope's 7 op-relative "rest" parts
     part_names: list[str] = []  # the part-relative params (the GLO part pages)
+    genv_groups: list[
+        tuple[str, ...]
+    ] = []  # the global-envelope 7-param groups, first-seen
 
     def op_rest(pname: str) -> str | None:
         """If `pname` is operator-relative (`opN.<rest>`), return the `<rest>` part."""
@@ -382,6 +386,11 @@ def generate_panel(
         if w["type"] == "envelope":
             typ = "UI_ENVELOPE"
             param = "0"  # unused; the runtime reads the env group
+        elif w["type"] == "genv":
+            typ = "UI_GENV"
+            param = str(
+                genv_groups.index(tuple(w.get("params", [])))
+            )  # the group index
         elif w["type"] in ("scope", "spectro"):
             typ = _WIDGETS[w["type"]]
             # the scope source: `channel` = the op index (0..3 -> "op N of the
@@ -454,6 +463,16 @@ def generate_panel(
                             env_names.append(rest)
                         for op in operators:
                             param_id(f"{op}.{rest}")
+                elif w["type"] == "genv":
+                    group = tuple(w.get("params", []))
+                    if len(group) != 7:
+                        raise GenError(
+                            f"genv widget needs exactly 7 params (got {len(group)})"
+                        )
+                    if group not in genv_groups:
+                        genv_groups.append(group)
+                    for p in group:
+                        param_id(p)
                 else:
                     wparam = w.get("param")
                     if wparam:
@@ -600,6 +619,14 @@ def generate_panel(
         env_ptr = "ENV_PARAM"
     else:
         env_ptr = "0"
+    if genv_groups:
+        flat = [str(param_id(p)) for group in genv_groups for p in group]
+        lines.append(
+            f"static const uint16_t GENV_PARAM[{len(flat)}] = {{ {', '.join(flat)} }};"
+        )
+        genv_ptr = "GENV_PARAM"
+    else:
+        genv_ptr = "0"
     if part_names:
         flat = [str(part_entry(n, part)) for part in range(n_parts) for n in part_names]
         lines.append(
@@ -671,7 +698,8 @@ def generate_panel(
         f"{len(panel.get('global', []))}, MUTE_TBL, {op_ptr}, "
         f"{len(operators)}, {len(op_names)}, {env_ptr}, {part_ptr}, "
         f"{len(part_names)}, {disp_ptr}, "
-        f"{alg_id}, {n_part}, {n_params}, {widget_count},"
+        f"{alg_id}, {n_part}, {n_params}, {widget_count}, "
+        f"{genv_ptr}, {len(genv_groups)},"
     )
     lines.append(f"    {cstr(panel.get('legend'))},")
     lines.append("};")
