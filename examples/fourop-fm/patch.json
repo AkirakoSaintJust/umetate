@@ -23,7 +23,8 @@
   "init": {
     "algorithm": 7,
     "cutoff": 0, "res": 40000, "filter_type": 0, "filter_on": 0,
-    "fenv_a": 0, "fenv_d": 0, "fenv_s": 32767, "fenv_r": 0, "fenv_depth": 0,
+    "fenv_r1": 80, "fenv_r2": 60, "fenv_r3": 50, "fenv_r4": 80,
+    "fenv_l1": 99, "fenv_l2": 93, "fenv_l3": 87, "fenv_depth": 0,
     "fold": 0, "fold_on": 0, "fold_threshold": 0, "fold_folds": 1, "fold_type": 0,
     "pitch_rate": 0, "pitch_depth": 0,
     "penv_on": 0, "penv_r1": 80, "penv_r2": 60, "penv_r3": 50, "penv_r4": 80,
@@ -61,10 +62,13 @@
     "res":          { "target": "lp.q", "min": 0, "max": 65535, "curve": "linear", "display": "pct_inv" },
     "filter_type":  { "target": "lp.type", "min": 0, "max": 2, "curve": "linear", "display": "filter" },
     "filter_on":    { "target": "lp.on", "min": 0, "max": 1, "curve": "linear", "display": "onoff" },
-    "fenv_a":       { "target": "fenv.a", "min": 0, "max": 65535, "curve": "log" },
-    "fenv_d":       { "target": "fenv.d", "min": 0, "max": 65535, "curve": "log" },
-    "fenv_s":       { "target": "fenv.s", "min": 0, "max": 32767, "curve": "linear", "display": "pct" },
-    "fenv_r":       { "target": "fenv.r", "min": 0, "max": 65535, "curve": "log" },
+    "fenv_r1":       { "target": "fenv.r1", "min": 0, "max": 99, "curve": "linear" },
+    "fenv_r2":       { "target": "fenv.r2", "min": 0, "max": 99, "curve": "linear" },
+    "fenv_r3":       { "target": "fenv.r3", "min": 0, "max": 99, "curve": "linear" },
+    "fenv_r4":       { "target": "fenv.r4", "min": 0, "max": 99, "curve": "linear" },
+    "fenv_l1":       { "target": "fenv.l1", "min": 0, "max": 99, "curve": "linear" },
+    "fenv_l2":       { "target": "fenv.l2", "min": 0, "max": 99, "curve": "linear" },
+    "fenv_l3":       { "target": "fenv.l3", "min": 0, "max": 99, "curve": "linear" },
     "fenv_depth":   { "target": "lp.fenv_depth", "min": 0, "max": 65535, "curve": "linear" },
     "fold":         { "target": "wf.amount", "min": 0, "max": 32767, "curve": "linear", "display": "pct" },
     "fold_on":      { "target": "wf.on", "min": 0, "max": 1, "curve": "linear", "display": "onoff" },
@@ -156,7 +160,7 @@
     "nodes": [
       { "id": "algo", "type": "algo", "params": { "algorithm": 4 } },
       { "id": "lp", "type": "svf", "params": { "f": 8000, "q": 40000, "type": 0, "on": 1, "fenv_depth": 0 } },
-      { "id": "fenv", "type": "adsr", "params": { "a": 3277, "d": 16384, "s": 32767, "r": 8192 } },
+      { "id": "fenv", "type": "dx_env", "params": { "r1": 80, "r2": 60, "r3": 50, "r4": 80, "l1": 99, "l2": 93, "l3": 87 }, "ins": { "gate": "patch_gate", "trigger": "0" } },
       { "id": "wf", "type": "wavefolder", "params": { "amount": 0, "threshold": 0, "folds": 1, "on": 1, "type": 0 } }
     ],
     "wires": [

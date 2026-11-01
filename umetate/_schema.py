@@ -40,6 +40,7 @@ class Instance(TypedDict):
     id: str
     type: str
     params: NotRequired[dict[str, int | str]]  # int = value, str = table selector
+    ins: NotRequired[dict[str, str]]  # input port -> C expression override (zone-aware)
 
 
 class Zone(TypedDict):

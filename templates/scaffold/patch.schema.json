@@ -68,7 +68,8 @@
       "properties": {
         "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
         "type": { "type": "string", "description": "a node name or a macro name" },
-        "params": { "type": "object", "additionalProperties": { "type": ["integer", "string"] }, "description": "an integer value, or a string naming a `tables:` entry (the `table` param kind)" }
+        "params": { "type": "object", "additionalProperties": { "type": ["integer", "string"] }, "description": "an integer value, or a string naming a `tables:` entry (the `table` param kind)" },
+        "ins": { "type": "object", "additionalProperties": { "type": "string" }, "description": "input port -> C expression override (e.g. a global gate for a per-voice node)" }
       }
     },
     "wire": {

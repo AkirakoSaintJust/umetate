@@ -48,9 +48,10 @@
 - **Filter (`svf` extension).** Params: `type` (0 = LP, 1 = BP, 2 = HP — the
   node already computes `low`/`band`/`high`, so `type` selects the output), `on`
   (0 = bypass = pass the input straight through), `f` (cutoff, Q16), `q`
-  (damping, Q16). A **cutoff envelope** — a `dx_env` (rate/level, ADSR-shaped:
-  attack → sustain → release) whose Q15 output scales a `fenv_depth` and is
-  added to `f`. On a note-on it opens the filter; on note-off it closes.
+  (damping, Q16). A **cutoff envelope** (F-ENV) — a global `dx_env` (the Yamaha
+  rate/level envelope: 4 rates + 3 levels, gated by `patch_gate`) whose Q15 output
+  scales a `fenv_depth` and is added to `f`. On a note-on it opens the filter; on
+  note-off it closes.
 - **Fold (`wavefolder` extension).** Params: `on` (0 = dry), `threshold` (the
   input level, Q15, above which folding engages), `folds` (the fold count —
   number of sine folds applied; 1 = the current single fold), `type` (0 = sine
@@ -119,10 +120,13 @@ global six to a per-part array.
 | res | lp.q | 0 | 65535 | linear | | pct_inv (100% = least damping) |
 | filter_type | lp.type | 0 | 2 | linear | | raw (0=LP 1=BP 2=HP) |
 | filter_on | lp.on | 0 | 1 | linear | | onoff (off/on) |
-| fenv_a | fenv.a | 0 | 65535 | log | | raw |
-| fenv_d | fenv.d | 0 | 65535 | log | | raw |
-| fenv_s | fenv.s | 0 | 32767 | linear | | pct |
-| fenv_r | fenv.r | 0 | 65535 | log | | raw |
+| fenv_r1 | fenv.r1 | 0 | 99 | linear | | raw (Yamaha rate) |
+| fenv_r2 | fenv.r2 | 0 | 99 | linear | | raw (Yamaha rate) |
+| fenv_r3 | fenv.r3 | 0 | 99 | linear | | raw (Yamaha rate) |
+| fenv_r4 | fenv.r4 | 0 | 99 | linear | | raw (Yamaha rate) |
+| fenv_l1 | fenv.l1 | 0 | 99 | linear | | raw (Yamaha level) |
+| fenv_l2 | fenv.l2 | 0 | 99 | linear | | raw (Yamaha level) |
+| fenv_l3 | fenv.l3 | 0 | 99 | linear | | raw (Yamaha level) |
 | fenv_depth | lp.fenv_depth | 0 | 65535 | linear | | raw |
 | fold | wf.amount | 0 | 32767 | linear | | pct |
 | fold_on | wf.on | 0 | 1 | linear | | onoff (off/on) |

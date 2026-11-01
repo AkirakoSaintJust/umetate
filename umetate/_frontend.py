@@ -308,20 +308,23 @@ def _expand(
                         f"node {id_!r} (type {type_!r}) needs a table name "
                         f"(params: {{ {pname}: <name> }})"
                     )
-        instances.append(
-            NodeInstance(
-                id=id_,
-                type=type_,
-                zone=zone,
-                spec=spec,
-                params=params,
-                note_derived=dict(spec.note_derived),
-                note_cutoff=dict(spec.note_cutoff),
-                note_tune=dict(spec.note_tune),
-                block_derived=dict(spec.block_derived),
-                table=table,
-            )
+        node_inst = NodeInstance(
+            id=id_,
+            type=type_,
+            zone=zone,
+            spec=spec,
+            params=params,
+            note_derived=dict(spec.note_derived),
+            note_cutoff=dict(spec.note_cutoff),
+            note_tune=dict(spec.note_tune),
+            block_derived=dict(spec.block_derived),
+            table=table,
         )
+        for port, expr in (inst_dict.get("ins") or {}).items():
+            if port not in spec.ins:
+                raise GenError(f"node {id_!r} has no input {port!r} (ins override)")
+            node_inst.in_expr[port] = expr
+        instances.append(node_inst)
         return
 
     macro = macros[type_]

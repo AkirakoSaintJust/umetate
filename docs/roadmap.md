@@ -2814,8 +2814,12 @@ the two stay in sync).
 
 #### F. FX menu
 
-14. **F-ENV.** Turn FILTER ADSR (5 params, too many) into F-ENV = DEPTH + 7
-    Yamaha-style params (R1..R4, L1..L3) so it fits 2 pages.
+14. **F-ENV.** — **done.** The filter's 4-stage `adsr` is now a **F-ENV**: a global
+    `dx_env` (the Yamaha rate/level envelope — 4 rates + 3 levels, gated by
+    `patch_gate`) plus `fenv_depth`, split across two FX pages (**F-ENV** rates then
+    levels + DEPTH, four knobs each). This needed a per-instance input override —
+    a patch node instance can now set `ins: { gate: "patch_gate", trigger: "0" }` to
+    run a per-voice node in the global zone (schema + `_frontend.py`).
 
 15. **Filter TYPE descriptive.** — **done.** Added a `filter` display kind
     (`UI_DISP_FILTER` → `lpf`/`bpf`/`hpf`) and applied it to `filter_type`.

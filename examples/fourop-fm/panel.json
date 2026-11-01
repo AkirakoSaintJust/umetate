@@ -208,14 +208,23 @@
           ]
         },
         {
-          "id": "filter-env",
+          "id": "f-env-rates",
           "widgets": [
-            { "type": "subheader", "row": 2, "text": "FILTER ADSR", "plain": true },
-            { "type": "param_row", "row": 3, "param": "fenv_a", "text": "ATTACK RATE" },
-            { "type": "param_row", "row": 4, "param": "fenv_d", "text": "DECAY RATE" },
-            { "type": "param_row", "row": 5, "param": "fenv_s", "text": "SUSTAIN" },
-            { "type": "param_row", "row": 6, "param": "fenv_r", "text": "RELEASE RATE" },
-            { "type": "param_row", "row": 7, "param": "fenv_depth", "text": "DEPTH" }
+            { "type": "subheader", "row": 2, "text": "F-ENV", "plain": true },
+            { "type": "param_row", "row": 3, "param": "fenv_r1", "text": "ATTACK RATE" },
+            { "type": "param_row", "row": 4, "param": "fenv_r2", "text": "DECAY1 RATE" },
+            { "type": "param_row", "row": 5, "param": "fenv_r3", "text": "DECAY2 RATE" },
+            { "type": "param_row", "row": 6, "param": "fenv_r4", "text": "RELEASE RATE" }
+          ]
+        },
+        {
+          "id": "f-env-levels",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "F-ENV", "plain": true },
+            { "type": "param_row", "row": 3, "param": "fenv_l1", "text": "LEVEL 1" },
+            { "type": "param_row", "row": 4, "param": "fenv_l2", "text": "LEVEL 2" },
+            { "type": "param_row", "row": 5, "param": "fenv_l3", "text": "SUSTAIN" },
+            { "type": "param_row", "row": 6, "param": "fenv_depth", "text": "DEPTH" }
           ]
         },
         {
