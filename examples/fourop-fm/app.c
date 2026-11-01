@@ -183,13 +183,13 @@ static void save_part_to(uint8_t part, uint16_t slot)
     for (i = 0; i < SYNTH_N_PARAMS; i++)
         params[i] = fourop_fm_dsp_get_param(base + i);
     preset_part_pack(part_bank + (uint32_t)slot * PP_RECORD(SYNTH_N_PARAMS),
-                     ui_name_get(0u), params, SYNTH_N_PARAMS);
+                     ui_name_get(part), params, SYNTH_N_PARAMS);
     part_slot_cur[part] = (uint8_t)slot;
     bank_dirty = 1;
     t_change = fm1_ms;
 }
 
-static void save_part(uint16_t slot) { save_part_to(ui_part(), slot); }
+static void save_part(uint8_t part, uint16_t slot) { save_part_to(part, slot); }
 
 /* the first empty single-part slot (0xFF), or 0xFF when the bank is full */
 static uint8_t empty_part_slot(void)
@@ -228,25 +228,25 @@ static void save_multi(uint16_t slot, uint8_t mode)
         dl[i] = fourop_fm_dsp_get_param(SYNTH_ROUTING_BASE + 4u * SYNTH_N_PARTS + i);
     }
     preset_multi_pack(multi_bank + (uint32_t)slot * MP_RECORD(SYNTH_N_PARTS),
-                      ui_name_get(1u), part_slot_cur, lv, dl, ch, lo, hi, SYNTH_N_PARTS);
+                      ui_name_get(2u), part_slot_cur, lv, dl, ch, lo, hi, SYNTH_N_PARTS);
     multi_dirty = 1;
     t_change = fm1_ms;
 }
 
-/* load a single-part slot into the active part (its params, not its routing). */
-static void load_part(uint32_t slot)
+/* load a single-part slot into a part (its params, not its routing). */
+static void load_part(uint8_t part, uint32_t slot)
 {
     char name[PRESET_NAME_LEN];
     int32_t params[SYNTH_PARAM_MAX];
     const uint8_t *rec = part_bank + slot * PP_RECORD(SYNTH_N_PARAMS);
-    uint32_t i, base = (uint32_t)ui_part() * SYNTH_N_PARAMS;
+    uint32_t i, base = (uint32_t)part * SYNTH_N_PARAMS;
     if (slot >= PRESET_PART_SLOTS || rec[0] == PRESET_EMPTY ||
         !preset_part_unpack(rec, SYNTH_N_PARAMS, name, params))
         return;
     for (i = 0; i < SYNTH_N_PARAMS; i++)
         fourop_fm_dsp_set_param(base + i, params[i]);
-    ui_name_set(0u, name);                         /* reflect the loaded part's name */
-    part_slot_cur[ui_part()] = (uint8_t)slot;
+    ui_name_set(part, name);                        /* reflect the loaded part's name */
+    part_slot_cur[part] = (uint8_t)slot;
 }
 
 /* apply a multi patch and remember its name + each part's source single part. */
@@ -288,10 +288,13 @@ void ui_act_init_patch(void)
     ui_part_mute_set(0u, 0u);
     ui_part_mute_set(1u, 1u);
     part_slot_cur[0] = part_slot_cur[1] = 0xFFu;
+    ui_name_set(0u, "INIT PART");
+    ui_name_set(1u, "INIT PART");
+    ui_name_set(2u, "INIT MULTI");
 }
-void ui_act_init_part(void)
+/* reset one part's timbre to the spec's init values + clear its source slot + name. */
+static void init_part(uint8_t part)
 {
-    uint8_t part = ui_part();
     uint32_t i;
     for (i = 0; i < fourop_fm_INIT_N; i++) {
         uint16_t id = fourop_fm_init[i].id;
@@ -300,6 +303,11 @@ void ui_act_init_part(void)
             fourop_fm_dsp_set_param(id, fourop_fm_init[i].value);
     }
     part_slot_cur[part] = 0xFFu;
+    ui_name_set(part, "INIT PART");
+}
+void ui_act_init_part(void)
+{
+    init_part(ui_part());
 }
 void ui_act_name(uint8_t which)
 {
@@ -327,6 +335,8 @@ static int32_t app_oct;
 static uint32_t app_last_scl_ms, app_scl_pending, app_scl_pending_ms;
 static uint32_t app_browser_open, app_browser_slot, app_browser_ms;
 static uint32_t app_pbro_open, app_pbro_slot, app_pbro_ms;
+static uint8_t app_pending_part;                    /* 0 = none, 1 = load, 2 = save, 3 = init */
+static uint16_t app_pending_slot;                   /* the slot for a pending load/save */
 
 static void app_init(void)
 {
@@ -368,7 +378,8 @@ static void app_init(void)
 
     ui_init(&PANEL);
     ui_name_set(0u, "INIT PART");
-    ui_name_set(1u, "INIT MULTI");
+    ui_name_set(1u, "INIT PART");
+    ui_name_set(2u, "INIT MULTI");
     ui_sync();                                         /* the engine's defaults reach the screen */
 }
 
@@ -439,13 +450,33 @@ static void app_step(void)
                 uint16_t slot = ui_save_slot();
                 if (kind == 0u) {
                     ui_save_commit();
-                    save_part(slot);
+                    app_pending_part = 2u;             /* save a single part */
+                    app_pending_slot = slot;
+                    ui_part_chooser_begin(ui_part());
                 } else {
                     ui_save_mode_begin();          /* step 2 for a multi-patch */
                 }
             }
             if (b & (1u << BTN_HOME))
                 ui_save_cancel();
+        } else if (ui_part_chooser_open()) {
+            /* the "which single part" chooser: KNOB1 = part, SAVE = apply, HOME = cancel */
+            int32_t k1 = fm1_enc_take(ENC_KNOB1);
+            if (k1)
+                ui_part_chooser_move(k1);
+            b = fm1_input_edges(&rel);
+            if (b & (1u << BTN_SAVE)) {
+                uint8_t part = ui_part_chooser_part(), pending = app_pending_part;
+                ui_part_chooser_commit();
+                if (pending == 1u) load_part(part, app_pending_slot);
+                else if (pending == 2u) save_part(part, app_pending_slot);
+                else if (pending == 3u) init_part(part);
+                app_pending_part = 0u;
+            }
+            if (b & (1u << BTN_HOME)) {
+                ui_part_chooser_cancel();
+                app_pending_part = 0u;
+            }
         } else {
         for (k = 0; k < 27u; k++) {                /* the keys: play + echo, or SCL chords */
             if (down >> k & 1u) {
@@ -513,9 +544,10 @@ static void app_step(void)
            SCL+SAVE = INIT PATCH (INIT PART in GLO). */
         if (b & (1u << BTN_SAVE)) {
             if (scl) {
-                if (ui_top() == GLO_CTX)
-                    ui_act_init_part();
-                else
+                if (ui_top() == GLO_CTX) {
+                    app_pending_part = 3u;             /* init a single part */
+                    ui_part_chooser_begin(ui_part());
+                } else
                     ui_act_init_patch();
             } else {
                 ui_handle(UI_SRC_BTN_SAVE, -1);
@@ -565,7 +597,9 @@ static void app_step(void)
                 }
             }
             if (app_pbro_open && fm1_ms - app_pbro_ms >= 2000u) {
-                load_part(app_pbro_slot);
+                app_pending_part = 1u;                 /* load a single part */
+                app_pending_slot = app_pbro_slot;
+                ui_part_chooser_begin(ui_part());
                 ui_popup_hide();
                 app_pbro_open = 0;
             }

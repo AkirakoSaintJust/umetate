@@ -174,9 +174,9 @@ void ui_popup_show(uint32_t slot, const char *name); /* the multi-patch preset-b
 void ui_popup_show_part(uint32_t slot, const char *name); /* the single-part preset-browser popup */
 void ui_popup_hide(void);                        /* clear the popup */
 
-/* ---- the name strings + the name editor (the GLO multi-patch / single-part rows) ---- */
+/* ---- the name strings + the name editor (the GLO part / multi-patch rows) ---- */
 #define UI_NAME_LEN 16u                          /* 15 chars + NUL (the record's name field) */
-const char *ui_name_get(uint8_t which);          /* 0 = single part, 1 = multi-patch */
+const char *ui_name_get(uint8_t which);          /* 0 = part 1, 1 = part 2, 2 = multi-patch */
 void ui_name_set(uint8_t which, const char *name);
 uint8_t ui_name_editing(void);                   /* 0xFF = none, else the name being edited */
 void ui_name_editor_begin(uint8_t which);        /* open the editor pre-filled + saved copy */
@@ -204,6 +204,14 @@ uint8_t ui_save_mode(void);                      /* 0 = discard, 1 = save-as-new
 void ui_save_mode_move(int32_t delta);           /* cycle the mode (wrap) */
 void ui_save_mode_commit(void);                  /* keep the mode, close */
 void ui_save_mode_cancel(void);                  /* back to the save chooser, close */
+
+/* ---- the "which single part" chooser (before a part load/save/init) ---- */
+uint8_t ui_part_chooser_open(void);              /* 1 = the chooser is showing */
+void ui_part_chooser_begin(uint8_t part);         /* open, pre-selecting `part` (0/1) */
+uint8_t ui_part_chooser_part(void);               /* the selected part (0 = part 1, 1 = part 2) */
+void ui_part_chooser_move(int32_t delta);         /* toggle the selected part */
+void ui_part_chooser_commit(void);                /* keep the choice, close */
+void ui_part_chooser_cancel(void);                /* discard, close */
 
 void ui_param_fmt(uint16_t p, const char *unit, char *out, uint32_t n); /* format a value */
 void ui_redraw(uint32_t now_ms);                 /* the retained-mode, rate-bounded redraw */

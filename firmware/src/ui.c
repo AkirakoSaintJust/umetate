@@ -65,12 +65,13 @@ static uint8_t ui_part_mute[4];                  /* part mute flags (up to 4 par
 static int32_t ui_header_last = 0x7FFFFFFF;      /* the header's last-drawn value */
 static char ui_popup_line[40];                   /* the preset-browser popup text */
 static uint8_t ui_popup_on;                      /* 1 = the popup is showing */
-static char ui_name[2][UI_NAME_LEN];             /* [0] = single-part name, [1] = multi-patch name */
+static char ui_name[3][UI_NAME_LEN];              /* [0] part 1, [1] part 2, [2] multi-patch */
 static char ui_name_saved[UI_NAME_LEN];          /* the pre-edit copy (for cancel) */
 static uint8_t ui_name_which, ui_name_cursor, ui_name_on;  /* the name-editor state */
 static uint8_t ui_save_on, ui_save_which;        /* the save chooser: open flag + selected row */
 static uint16_t ui_save_slots[2];                /* [0] single-part slot, [1] multi-patch slot */
 static uint8_t ui_save_mode_on, ui_save_mode_which;  /* step 2: the multi-patch save mode */
+static uint8_t ui_part_sel_on, ui_part_sel_which;  /* the "which single part" chooser */
 
 static const ui_context *ui_ctx(void) { return &ui_t->ctx[ui_stack[ui_sp]]; }
 static const ui_page *ui_cur_page(void) { return &ui_ctx()->pages[ui_pagei[ui_sp]]; }
@@ -1166,13 +1167,13 @@ static uint8_t ui_charset_idx(char c)
 
 const char *ui_name_get(uint8_t which)
 {
-    return ui_name[which < 2u ? which : 0u];
+    return ui_name[which < 3u ? which : 0u];
 }
 
 void ui_name_set(uint8_t which, const char *name)
 {
     uint32_t i;
-    if (which >= 2u)
+    if (which >= 3u)
         return;
     for (i = 0; i < UI_NAME_LEN - 1u && name[i]; i++)
         ui_name[which][i] = name[i];
@@ -1184,7 +1185,7 @@ uint8_t ui_name_editing(void) { return ui_name_on ? ui_name_which : 0xFFu; }
 void ui_name_editor_begin(uint8_t which)
 {
     uint32_t i;
-    if (which >= 2u)
+    if (which >= 3u)
         return;
     ui_name_which = which;
     ui_name_cursor = 0;
@@ -1257,8 +1258,10 @@ void ui_name_editor_backspace(void)
 /* the name editor pop-up: title + the name (cursor char in purple) + the legend. */
 static void ui_draw_name_editor(void)
 {
+    static const char *const titles[3] = {
+        "single part 1 name", "single part 2 name", "multi-patch name"};
     char s[UI_NAME_LEN + 8];
-    const char *title = ui_name_which ? "multi-patch name" : "single part name";
+    const char *title = titles[ui_name_which < 3u ? ui_name_which : 2u];
     uint32_t i;
     cv_begin(240u, 5u * UI_ROW_H, C_POPUP_BG);
     cv_text(6, 2, &FONT_S, title, C_POPUP_TXT);
@@ -1415,6 +1418,60 @@ static void ui_draw_save_mode(void)
     cv_blit(0, 4 * UI_ROW_H);
 }
 
+/* ---- the "which single part" chooser (before a part load/save/init) ---- */
+
+uint8_t ui_part_chooser_open(void) { return ui_part_sel_on; }
+uint8_t ui_part_chooser_part(void) { return ui_part_sel_which; }
+
+void ui_part_chooser_begin(uint8_t part)
+{
+    ui_part_sel_which = part < 2u ? part : 0u;
+    if (!ui_part_sel_on)
+        ui_reset_page();
+    ui_part_sel_on = 1;
+}
+
+void ui_part_chooser_move(int32_t delta)
+{
+    (void)delta;
+    if (!ui_part_sel_on)
+        return;
+    ui_part_sel_which = ui_part_sel_which ? 0u : 1u;   /* two parts: toggle */
+}
+
+void ui_part_chooser_commit(void)
+{
+    if (ui_part_sel_on) {
+        ui_part_sel_on = 0;
+        ui_reset_page();
+    }
+}
+
+void ui_part_chooser_cancel(void)
+{
+    if (ui_part_sel_on) {
+        ui_part_sel_on = 0;
+        ui_reset_page();
+    }
+}
+
+/* the "which single part" chooser pop-up: title + two rows (selected in purple). */
+static void ui_draw_part_chooser(void)
+{
+    static const char *const ui_part_text[2] = {"PART 1", "PART 2"};
+    uint32_t i;
+    cv_begin(240u, 4u * UI_ROW_H, C_POPUP_BG);
+    cv_text(6, 2, &FONT_S, "WHICH SINGLE PART", C_POPUP_TXT);
+    for (i = 0; i < 2u; i++) {
+        char row[16];
+        ui_strcpy(row, i == ui_part_sel_which ? "> " : "  ");
+        ui_strcat(row, ui_part_text[i]);
+        cv_text(6, (int32_t)(i + 1u) * UI_ROW_H, &FONT_S, row,
+                i == ui_part_sel_which ? C_AMB : C_HI);
+    }
+    cv_blit(0, 4 * UI_ROW_H);
+}
+
 /* the footer legend: a fixed gesture hint at the bottom row (row 14), drawn only
  * when the page's widgets leave that row free (row budget permitting). */
 static void ui_draw_legend(void)
@@ -1466,6 +1523,8 @@ void ui_redraw(uint32_t now_ms)
         ui_draw_save();
     if (ui_save_mode_on)
         ui_draw_save_mode();
+    if (ui_part_sel_on)
+        ui_draw_part_chooser();
 }
 
 /* the safe-failure screen: drawn independently, never through the widget engine */

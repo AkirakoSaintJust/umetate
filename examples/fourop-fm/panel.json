@@ -294,21 +294,15 @@
           ]
         },
         {
-          "id": "part",
+          "id": "names",
           "widgets": [
-            { "type": "label", "row": 2, "span": 2, "text": "single part" },
-            { "type": "name", "row": 3, "text": "single part name", "name": 0 },
-            { "type": "label", "row": 5, "text": "PRESETS = browse/load" },
-            { "type": "label", "row": 6, "text": "SAVE = save single part" },
-            { "type": "label", "row": 7, "text": "SCL+SAVE = init part" }
-          ]
-        },
-        {
-          "id": "patch",
-          "widgets": [
-            { "type": "label", "row": 2, "span": 2, "text": "multi-patch" },
-            { "type": "name", "row": 3, "text": "multi-patch name", "name": 1 },
-            { "type": "label", "row": 5, "text": "SCL+SAVE = init multi-patch" }
+            { "type": "label", "row": 2, "span": 2, "text": "NAMES" },
+            { "type": "name", "row": 3, "text": "single part 1 name", "name": 0 },
+            { "type": "name", "row": 4, "text": "single part 2 name", "name": 1 },
+            { "type": "name", "row": 5, "text": "multi-patch name", "name": 2 },
+            { "type": "label", "row": 7, "text": "PRESETS = load part" },
+            { "type": "label", "row": 8, "text": "SAVE = save part" },
+            { "type": "label", "row": 9, "text": "SCL+SAVE = init part" }
           ]
         }
       ],

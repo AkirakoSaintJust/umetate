@@ -277,6 +277,22 @@ int main(void)
         CHECK(ui_save_mode_open() == 0, "save-mode chooser cancel closes");
     }
 
+    /* the "which single part" chooser: toggle + commit/cancel */
+    {
+        ui_part_chooser_begin(0u);
+        CHECK(ui_part_chooser_open() == 1 && ui_part_chooser_part() == 0u,
+              "part chooser opens on the active part");
+        ui_part_chooser_move(1u);                   /* -> part 2 */
+        CHECK(ui_part_chooser_part() == 1u, "part chooser toggles to part 2");
+        ui_part_chooser_move(1u);                   /* -> part 1 (toggle back) */
+        CHECK(ui_part_chooser_part() == 0u, "part chooser toggles back to part 1");
+        ui_part_chooser_commit();
+        CHECK(ui_part_chooser_open() == 0, "part chooser commit closes");
+        ui_part_chooser_begin(1u);
+        ui_part_chooser_cancel();
+        CHECK(ui_part_chooser_open() == 0, "part chooser cancel closes");
+    }
+
     if (failures) {
         printf("%d UI failures\n", failures);
         return 1;

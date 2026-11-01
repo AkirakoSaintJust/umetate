@@ -2800,17 +2800,19 @@ the two stay in sync).
    the KEY SPLIT / MIDI CH / SINGLE PART / MULTI-PATCH description clipping, and a
    human value for PORTA (the Q16 glide rate).
 
-10. **Name entry consolidation.** One GLO page holding SINGLE PART 1 NAME, SINGLE
-    PART 2 NAME, MULTI-PATCH NAME.
+10. **Name entry consolidation.** — **done.** The name model is now three slots
+    (part 1, part 2, multi-patch) instead of two (single-part, multi-patch), and the
+    GLO `part` + `patch` pages merge into one **NAMES** page holding `single part 1
+    name`, `single part 2 name`, `multi-patch name` + the load/save/init hints.
 
-11. **SINGLE PART LAYERING.** — **partly done.** Renamed the GLO `PART LEVEL` page to
+11. **SINGLE PART LAYERING.** — **done.** Renamed the GLO `PART LEVEL` page to
     `SINGLE PART LAYERING` and it now shows both parts explicitly — `PART 1 LEVEL`,
     `PART 1 DELAY`, `PART 2 LEVEL`, `PART 2 DELAY` — instead of the active part. The
     per-part level is now **0–99 Yamaha total-level** (was Q15): the routing param's
     range/default moved to 0..99 and the renderer applies `fm1_level_gain[level]`
     (the same taper as the operator `tl` node), and delay carries a `ms` unit.
-    Remaining: moving part load/save/init + the legend into this menu with a
-    "which SINGLE PART" popup.
+    Single-part load/save/init now ask **which SINGLE PART** via a new
+    `ui_part_chooser` popup before applying (part 1 / part 2).
 
 #### F. FX menu
 
