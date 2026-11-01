@@ -831,11 +831,13 @@ static void ui_draw_genv(const ui_widget *w)
 
 /* the scope channel a widget selects: `w->param` = the op index (0..3 -> "op N of
  * the active part", resolved to 1 + N*n_part + part), 0x40 -> the *active*
- * operator of the active part, or 0x80|part -> "part N mix"
- * (resolved to 1 + n_op*n_part + part). */
+ * operator of the active part, 0x80|part -> "part N mix"
+ * (resolved to 1 + n_op*n_part + part), or 0xC0 -> the final post-FX mix (ch 0). */
 static uint32_t ui_scope_channel(const ui_widget *w)
 {
     uint32_t p = (uint32_t)w->param;
+    if (p == 0xC0u)
+        return 0u;                                  /* the final mixed post-FX output */
     if (p == 0x40u)
         return 1u + (uint32_t)ui_selected_op * (uint32_t)ui_t->n_part
                + (uint32_t)ui_selected_part;

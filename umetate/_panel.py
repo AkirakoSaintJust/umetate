@@ -396,9 +396,12 @@ def generate_panel(
             # the scope source: `channel` = the op index (0..3 -> "op N of the
             # active part"); `active` = the active operator of the active part
             # (0x40); `mix_part` = the part index (0..1 -> "part N mix", encoded
-            # with the high bit so the runtime can tell them apart).
+            # with the high bit so the runtime can tell them apart); `final` =
+            # the final post-FX mix (0xC0, ch 0).
             mix_part = w.get("mix_part")
-            if w.get("active"):
+            if w.get("final"):
+                param = str(0xC0)
+            elif w.get("active"):
                 param = str(0x40)
             elif mix_part is not None:
                 param = str(0x80 | mix_part)
