@@ -112,9 +112,18 @@ void ui_push(uint8_t ctx)
 }
 
 /* switch to `ctx`, replacing the current non-home mode (EDIT/FX/GLO are siblings,
- * not a stack): pops back to home first, then pushes. From home it is a plain push. */
+ * not a stack): pops back to home first, then pushes. From home it is a plain push.
+ * Pressing the menu's *own* button again (ctx == top) advances to the next page
+ * (wrapping) instead of re-opening at page 0 — item 21. */
 void ui_switch(uint8_t ctx)
 {
+    if (ui_stack[ui_sp] == ctx) {
+        if (ui_ctx()->n_pages > 1u) {
+            ui_pagei[ui_sp] = (uint8_t)((ui_pagei[ui_sp] + 1u) % ui_ctx()->n_pages);
+            ui_reset_page();
+        }
+        return;
+    }
     if (ui_sp)
         ui_pop();                                  /* leave the current mode (home stays) */
     ui_push(ctx);
@@ -141,6 +150,8 @@ void ui_pop_home(void)
 }
 
 uint8_t ui_top(void) { return ui_stack[ui_sp]; }
+
+uint8_t ui_pageno(void) { return ui_pagei[ui_sp]; }
 
 int32_t *ui_params(void) { return ui_param_v; }
 

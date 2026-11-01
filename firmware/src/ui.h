@@ -153,6 +153,7 @@ void ui_pop(void);
 void ui_switch(uint8_t ctx);                      /* replace the current mode (siblings) */
 void ui_pop_home(void);
 uint8_t ui_top(void);                            /* the active context id */
+uint8_t ui_pageno(void);                         /* the current page index within the top context */
 void ui_handle(uint16_t source, int32_t value);  /* resolve the source -> param/action */
 int32_t *ui_params(void);                        /* the shared param_values[] */
 uint8_t ui_part(void);                           /* the active part (0-based) */

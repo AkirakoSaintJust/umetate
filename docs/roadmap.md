@@ -2746,8 +2746,10 @@ the two stay in sync).
 8. **Name-entry legend.** A legend inside the name editor (charset / SAVE = accept /
    HOME = cancel).
 
-21. **Menu button → next page.** Pressing the menu's own button (no held chord)
-    advances to the next page in that menu. Bake into the default UI kit.
+21. **Menu button → next page.** — **done.** `ui_switch` now advances to the next
+    page (wrapping) when the target context is already the top — so pressing a menu's
+    own button (EDIT/ENV/LFO/FX/GLO) again steps its pages instead of re-opening at
+    page 0. Added a `ui_pageno()` accessor + a `ui_test.c` page-walk check.
 
 #### B. Algorithm
 

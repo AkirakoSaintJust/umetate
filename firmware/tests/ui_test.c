@@ -129,6 +129,16 @@ int main(void)
     ui_handle(UI_SRC_BTN_HOME, 1);
     CHECK(ui_top() == 0, "BTN_HOME pops home from edit");
 
+    /* item 21: the menu's own button advances to the next page (wrapping) */
+    ui_handle(UI_SRC_BTN_EDIT, 1);
+    CHECK(ui_top() == 1 && ui_pageno() == 0, "switch opens edit at page 0");
+    ui_handle(UI_SRC_BTN_EDIT, 1);
+    CHECK(ui_pageno() == 1, "the menu button advances to the next page");
+    ui_handle(UI_SRC_BTN_EDIT, 1);
+    CHECK(ui_pageno() == 0, "the menu button wraps at the last page");
+    ui_handle(UI_SRC_BTN_HOME, 1);
+    CHECK(ui_top() == 0, "BTN_HOME pops home after the page walk");
+
     /* an unbound source is a no-op */
     ui_handle(UI_SRC_BTN_REC, 1);
     CHECK(n_note_on == 2 && n_set_step == 1, "unbound source is ignored");
