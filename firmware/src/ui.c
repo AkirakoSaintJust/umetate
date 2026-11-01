@@ -1676,12 +1676,13 @@ static void legend_line(const char *s, int32_t y)
     }
 }
 
-/* the footer legend: a two-line gesture hint at the bottom (rows 13-14), drawn
+/* the footer legend: a three-line gesture hint at the bottom (rows 12-14), drawn
  * only when the page's widgets leave those rows free. `~...~` = hot pink. */
 static void ui_draw_legend(void)
 {
     const ui_page *p = ui_cur_page();
-    uint32_t i, bottom = 0;
+    const char *line = ui_t->legend;
+    uint32_t i, bottom = 0, n = 0;
     if (!ui_t->legend || !ui_t->legend[0])
         return;
     for (i = 0; i < p->n; i++) {
@@ -1689,18 +1690,18 @@ static void ui_draw_legend(void)
         if (b > bottom)
             bottom = b;
     }
-    if (bottom > 13u)
-        return;                     /* the last two rows are in use: skip the legend */
-    cv_begin(240u, 2u * UI_ROW_H, C_BLACK);
-    legend_line(ui_t->legend, 0);
-    {
-        const char *nl = ui_t->legend;
-        while (*nl && *nl != '\n')
-            nl++;
-        if (*nl == '\n')
-            legend_line(nl + 1, UI_ROW_H);
+    if (bottom > 12u)
+        return;                     /* the last three rows are in use: skip the legend */
+    cv_begin(240u, 3u * UI_ROW_H, C_BLACK);
+    while (n < 3u && *line) {
+        legend_line(line, (int32_t)n * UI_ROW_H);
+        n++;
+        while (*line && *line != '\n')
+            line++;
+        if (*line == '\n')
+            line++;
     }
-    cv_blit(0, 13 * UI_ROW_H);
+    cv_blit(0, 12 * UI_ROW_H);
 }
 
 void ui_redraw(uint32_t now_ms)

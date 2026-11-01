@@ -3,7 +3,7 @@
   "home": "home",
   "alg": "algorithm",
   "parts": 2,
-  "legend": "~2xSEL~ pts  ~SEL+ARP-REC~ mute pt\\n~SEL~ ops  ~ARP-REC~ mute op",
+  "legend": "~SEL+EDIT~ copy page\\n~2xSEL~ pts  ~SEL+ARP-REC~ mute pt\\n~SEL~ ops  ~ARP-REC~ mute op",
   "operators": ["op1", "op2", "op3", "op4"],
   "mute": ["op1_mute", "op2_mute", "op3_mute", "op4_mute"],
   "global": [
@@ -101,8 +101,7 @@
             { "type": "param_row", "row": 4, "param": "op1.tl.level", "text": "LEVEL" },
             { "type": "param_row", "row": 5, "param": "op1.fb.level", "text": "FEEDBACK" },
             { "type": "param_row", "row": 6, "param": "op1.osc.waveform", "text": "WAVE" },
-            { "type": "scope", "row": 7, "span": 3, "active": true },
-            { "type": "spectro", "row": 10, "span": 3, "active": true }
+            { "type": "scope", "row": 7, "span": 4, "active": true }
           ]
         },
         {
