@@ -31,20 +31,21 @@ RELEASE_BLOCKS = 8192
 # (cname, default, friendly name, min, max, unit, display) for the six universal
 # voice-mode params. Multi-timbre: per-part arrays addressed through the part
 # index; the single-timbre fallback keeps them global scalars.
-MODE_PARAMS: tuple[tuple[str, int, str, int, int, str, str], ...] = (
-    ("vm_mode", 0, "mode", 0, 2, "", "mode"),  # 0=poly 1=mono 2=unison
-    ("vm_unison_count", 1, "unison_count", 1, 8, "", "raw"),
-    ("vm_unison_detune", 0, "unison_detune", 0, 200, "cents", "raw"),
-    ("vm_legato", 0, "legato", 0, 1, "", "onoff"),
+MODE_PARAMS: tuple[tuple[str, int, str, int, int, str, str, str], ...] = (
+    ("vm_mode", 0, "mode", 0, 2, "", "mode", "linear"),  # 0=poly 1=mono 2=unison
+    ("vm_unison_count", 1, "unison_count", 1, 8, "", "raw", "linear"),
+    ("vm_unison_detune", 0, "unison_detune", 0, 200, "cents", "raw", "linear"),
+    ("vm_legato", 0, "legato", 0, 1, "", "onoff", "linear"),
     (
         "vm_portamento",
         0,
         "portamento",
         0,
-        65536,
+        5000,
         "",
         "porta",
-    ),  # Q16 glide rate (0 = off)
+        "log",
+    ),  # the one-octave glide time in ms (0 = off), log-stepped
     (
         "vm_note_priority",
         0,
@@ -53,6 +54,7 @@ MODE_PARAMS: tuple[tuple[str, int, str, int, int, str, str], ...] = (
         2,
         "",
         "priority",
+        "linear",
     ),  # 0=last 1=highest 2=lowest
 )
 
@@ -64,7 +66,7 @@ def mode_param_entries(
     (part=None). Multi-timbre: per-part (part 0..n_parts-1, `.p{p}` names);
     `only_part` restricts to one part (the voice block builds them part-major)."""
     entries: list[ParamEntry] = []
-    for cname, default_, name, lo, hi, unit, disp in MODE_PARAMS:
+    for cname, default_, name, lo, hi, unit, disp, curve in MODE_PARAMS:
         if n_parts > 1:
             parts = [only_part] if only_part is not None else list(range(n_parts))
             for p in parts:
@@ -78,7 +80,7 @@ def mode_param_entries(
                         min=lo,
                         max=hi,
                         default=default_,
-                        curve="linear",
+                        curve=curve,
                         unit=unit,
                         rate="block",
                         modulatable=False,
@@ -96,7 +98,7 @@ def mode_param_entries(
                     min=lo,
                     max=hi,
                     default=default_,
-                    curve="linear",
+                    curve=curve,
                     unit=unit,
                     rate="block",
                     modulatable=False,
@@ -447,7 +449,9 @@ def glide(name: str, per_part: bool) -> list[str]:
     """The per-block portamento ramp (indented for the render loop): move each
     gated voice's `voice_inc[v]` toward `voice_target_inc[v]` at a constant rate
     (linear in the increment, one add per voice per block), re-deriving the
-    note→increment glue when the increment moves."""
+    note→increment glue when the increment moves. `vm_portamento` is the one-octave
+    glide time in ms (0 = off), converted here to the increment step
+    `step = tgt·23777/ms >> 16` (23777 = 32768·32·1000/44100)."""
     rate = mode_ref("vm_portamento", per_part, "voice_part[v]")
     return [
         "        for (uint32_t v = 0; v < NVOICE; v++) {",
@@ -456,7 +460,7 @@ def glide(name: str, per_part: bool) -> list[str]:
         "            uint32_t cur = voice_inc[v];",
         "            uint32_t tgt = voice_target_inc[v];",
         "            if (cur != tgt) {",
-        "                uint32_t step = (uint32_t)(((uint64_t)tgt *",
+        "                uint32_t step = (uint32_t)(((uint64_t)tgt * 23777u /",
         f"                    (uint32_t){rate}) >> 16);",
         "                if (step < 1u) step = 1u;",
         "                if (tgt > cur) {",

@@ -633,15 +633,11 @@ void ui_param_fmt(uint16_t p, const char *unit, char *out, uint32_t n)
         ui_strcat(out, t);
         break;
     }
-    case UI_DISP_PORTA: {                          /* a Q16 glide rate -> "off"/"N ms" */
+    case UI_DISP_PORTA: {                          /* the one-octave glide time in ms -> "off"/"N ms" */
         if (v <= 0) {
             ui_strcat(out, "off");
         } else {
-            /* one-octave glide time: 32768/rate blocks x 32 frames / 44.1 kHz */
-            int32_t ms = 23777 / v;
-            if (ms < 1)
-                ms = 1;
-            ui_itoa(ms, out);
+            ui_itoa(v, out);
             ui_strcat(out, "ms");
         }
         break;
