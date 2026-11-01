@@ -279,7 +279,7 @@ int main(void)
 
     /* the "which single part" chooser: toggle + commit/cancel */
     {
-        ui_part_chooser_begin(0u);
+        ui_part_chooser_begin(0u, 0);
         CHECK(ui_part_chooser_open() == 1 && ui_part_chooser_part() == 0u,
               "part chooser opens on the active part");
         ui_part_chooser_move(1u);                   /* -> part 2 */
@@ -288,7 +288,7 @@ int main(void)
         CHECK(ui_part_chooser_part() == 0u, "part chooser toggles back to part 1");
         ui_part_chooser_commit();
         CHECK(ui_part_chooser_open() == 0, "part chooser commit closes");
-        ui_part_chooser_begin(1u);
+        ui_part_chooser_begin(1u, 0);
         ui_part_chooser_cancel();
         CHECK(ui_part_chooser_open() == 0, "part chooser cancel closes");
     }

@@ -74,6 +74,7 @@ static uint8_t ui_save_on, ui_save_which;        /* the save chooser: open flag 
 static uint16_t ui_save_slots[2];                /* [0] single-part slot, [1] multi-patch slot */
 static uint8_t ui_save_mode_on, ui_save_mode_which;  /* step 2: the multi-patch save mode */
 static uint8_t ui_part_sel_on, ui_part_sel_which;  /* the "which single part" chooser */
+static const char *ui_part_title;                  /* the chooser's extra first line (0 = none) */
 
 static const ui_context *ui_ctx(void) { return &ui_t->ctx[ui_stack[ui_sp]]; }
 static const ui_page *ui_cur_page(void) { return &ui_ctx()->pages[ui_pagei[ui_sp]]; }
@@ -1274,6 +1275,16 @@ static void ui_popup_set(const char *title, uint32_t slot, const char *name)
 void ui_popup_show(uint32_t slot, const char *name) { ui_popup_set("multi-patch ", slot, name); }
 void ui_popup_show_part(uint32_t slot, const char *name) { ui_popup_set("single part ", slot, name); }
 
+void ui_popup_saved(void)                       /* the "SAVED SUCCESSFULLY" acknowledgement */
+{
+    uint8_t was = ui_popup_on;
+    ui_popup_on = 1;
+    ui_popup_alg_on = 0;                           /* the text and graph popups are exclusive */
+    ui_strcpy(ui_popup_line, "SAVED SUCCESSFULLY");
+    if (!was)
+        ui_reset_page();
+}
+
 void ui_popup_alg(uint32_t alg)               /* the algorithm scroll popup (graph) */
 {
     uint8_t was = ui_popup_alg_on;
@@ -1291,6 +1302,15 @@ void ui_popup_hide(void)
         ui_popup_alg_on = 0;
         ui_reset_page();                           /* on -> off: redraw the page beneath */
     }
+}
+
+/* 1 = a *modal* popup is open (name editor / save / save-mode / part chooser).
+ * The app uses this to let the popup capture all control: the page's encoders
+ * and the preset browser stay inert until the popup closes (their events are
+ * drained so a twist during the popup doesn't fire once it closes). */
+uint8_t ui_popup_active(void)
+{
+    return ui_name_on || ui_save_on || ui_save_mode_on || ui_part_sel_on;
 }
 
 /* ---- the name strings + the name editor ---- */
@@ -1407,7 +1427,7 @@ static void ui_draw_name_editor(void)
     char s[UI_NAME_LEN + 8];
     const char *title = titles[ui_name_which < 3u ? ui_name_which : 2u];
     uint32_t i;
-    cv_begin(240u, 5u * UI_ROW_H, C_POPUP_BG);
+    cv_begin(240u, 6u * UI_ROW_H, C_POPUP_BG);
     cv_text(6, 2, &FONT_S, title, C_POPUP_TXT);
     /* the name: FONT_L, 15 fixed columns; the cursor char is the accent colour */
     for (i = 0; i < UI_NAME_LEN - 1u; i++) {
@@ -1417,7 +1437,8 @@ static void ui_draw_name_editor(void)
         cv_text(6 + (int32_t)i * 16, UI_ROW_H, &FONT_L, s,
                 i == ui_name_cursor ? C_AMB : C_HI);
     }
-    cv_text(6, 3 * UI_ROW_H, &FONT_S, "K1=char K2=cursor SEL=del SAVE=ok HOME=cancel", C_POPUP_TXT);
+    cv_text(6, 3 * UI_ROW_H, &FONT_S, "K1=char K2=cursor SEL=del", C_POPUP_TXT);
+    cv_text(6, 4 * UI_ROW_H, &FONT_S, "SAVE=ok HOME=cancel", C_POPUP_TXT);
     cv_blit(0, 4 * UI_ROW_H);
 }
 
@@ -1487,7 +1508,7 @@ static void ui_draw_save(void)
     static const char *const ui_save_kind_text[2] = {"single part", "multi-patch"};
     char t[12];
     uint32_t i;
-    cv_begin(240u, 5u * UI_ROW_H, C_POPUP_BG);
+    cv_begin(240u, 6u * UI_ROW_H, C_POPUP_BG);
     cv_text(6, 2, &FONT_S, "SAVE", C_POPUP_TXT);
     for (i = 0; i < 2u; i++) {
         char row[32];
@@ -1499,7 +1520,8 @@ static void ui_draw_save(void)
         cv_text(6, (int32_t)(i + 1u) * UI_ROW_H, &FONT_S, row,
                 i == ui_save_which ? C_AMB : C_HI);
     }
-    cv_text(6, 3 * UI_ROW_H, &FONT_S, "K1=kind K2=slot SAVE=save HOME=cancel", C_POPUP_TXT);
+    cv_text(6, 3 * UI_ROW_H, &FONT_S, "K1=kind K2=slot", C_POPUP_TXT);
+    cv_text(6, 4 * UI_ROW_H, &FONT_S, "SAVE=save HOME=cancel", C_POPUP_TXT);
     cv_blit(0, 4 * UI_ROW_H);
 }
 
@@ -1567,9 +1589,10 @@ static void ui_draw_save_mode(void)
 uint8_t ui_part_chooser_open(void) { return ui_part_sel_on; }
 uint8_t ui_part_chooser_part(void) { return ui_part_sel_which; }
 
-void ui_part_chooser_begin(uint8_t part)
+void ui_part_chooser_begin(uint8_t part, const char *title)
 {
     ui_part_sel_which = part < 2u ? part : 0u;
+    ui_part_title = title;
     if (!ui_part_sel_on)
         ui_reset_page();
     ui_part_sel_on = 1;
@@ -1599,20 +1622,29 @@ void ui_part_chooser_cancel(void)
     }
 }
 
-/* the "which single part" chooser pop-up: title + two rows (selected in purple). */
+/* the "which single part" chooser pop-up: an optional extra first line (e.g.
+ * "INIT PATCH"), the title + two rows (selected in purple), and the legend. */
 static void ui_draw_part_chooser(void)
 {
     static const char *const ui_part_text[2] = {"PART 1", "PART 2"};
     uint32_t i;
-    cv_begin(240u, 4u * UI_ROW_H, C_POPUP_BG);
-    cv_text(6, 2, &FONT_S, "WHICH SINGLE PART", C_POPUP_TXT);
+    int32_t y = 2;
+    cv_begin(240u, (ui_part_title ? 6u : 5u) * UI_ROW_H, C_POPUP_BG);
+    if (ui_part_title) {
+        cv_text(6, y, &FONT_S, ui_part_title, C_POPUP_TXT);
+        y += UI_ROW_H;
+    }
+    cv_text(6, y, &FONT_S, "WHICH SINGLE PART", C_POPUP_TXT);
+    y += UI_ROW_H;
     for (i = 0; i < 2u; i++) {
         char row[16];
         ui_strcpy(row, i == ui_part_sel_which ? "> " : "  ");
         ui_strcat(row, ui_part_text[i]);
-        cv_text(6, (int32_t)(i + 1u) * UI_ROW_H, &FONT_S, row,
+        cv_text(6, y + (int32_t)i * UI_ROW_H, &FONT_S, row,
                 i == ui_part_sel_which ? C_AMB : C_HI);
     }
+    y += 2 * UI_ROW_H;
+    cv_text(6, y, &FONT_S, "K1=part SAVE=apply HOME=cancel", C_POPUP_TXT);
     cv_blit(0, 4 * UI_ROW_H);
 }
 

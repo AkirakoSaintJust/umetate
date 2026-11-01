@@ -338,6 +338,7 @@ static uint32_t app_pbro_open, app_pbro_slot, app_pbro_ms;
 static uint8_t app_pending_part;                    /* 0 = none, 1 = load, 2 = save, 3 = init */
 static uint16_t app_pending_slot;                   /* the slot for a pending load/save */
 static uint32_t app_alg_ms;                         /* the last ALGORITHM-knob turn (popup auto-close) */
+static uint32_t app_saved_ms;                       /* the last save (the "SAVED SUCCESSFULLY" linger) */
 
 static void app_init(void)
 {
@@ -433,6 +434,8 @@ static void app_step(void)
                 ui_save_mode_commit();
                 ui_save_commit();
                 save_multi(slot, mode);
+                ui_popup_saved();
+                app_saved_ms = fm1_ms;
             }
             if (b & (1u << BTN_HOME))
                 ui_save_mode_cancel();
@@ -453,7 +456,7 @@ static void app_step(void)
                     ui_save_commit();
                     app_pending_part = 2u;             /* save a single part */
                     app_pending_slot = slot;
-                    ui_part_chooser_begin(ui_part());
+                    ui_part_chooser_begin(ui_part(), 0);
                 } else {
                     ui_save_mode_begin();          /* step 2 for a multi-patch */
                 }
@@ -470,8 +473,11 @@ static void app_step(void)
                 uint8_t part = ui_part_chooser_part(), pending = app_pending_part;
                 ui_part_chooser_commit();
                 if (pending == 1u) load_part(part, app_pending_slot);
-                else if (pending == 2u) save_part(part, app_pending_slot);
-                else if (pending == 3u) init_part(part);
+                else if (pending == 2u) {
+                    save_part(part, app_pending_slot);
+                    ui_popup_saved();
+                    app_saved_ms = fm1_ms;
+                } else if (pending == 3u) init_part(part);
                 app_pending_part = 0u;
             }
             if (b & (1u << BTN_HOME)) {
@@ -547,7 +553,7 @@ static void app_step(void)
             if (scl) {
                 if (ui_top() == GLO_CTX) {
                     app_pending_part = 3u;             /* init a single part */
-                    ui_part_chooser_begin(ui_part());
+                    ui_part_chooser_begin(ui_part(), "INIT PATCH");
                 } else
                     ui_act_init_patch();
             } else {
@@ -562,21 +568,39 @@ static void app_step(void)
         }
         }
     }
-    if ((e = fm1_enc_take(ENC_ALGORITHM)) != 0) {
-        ui_handle(UI_SRC_ENC_ALGORITHM, e);
-        app_alg_ms = fm1_ms;                       /* the algorithm scroll popup */
-        ui_popup_alg((uint32_t)ui_params()[PANEL.alg]);
+    if (ui_popup_active()) {
+        /* a modal popup captures all control: drain the page + preset encoders so
+           a twist during the popup doesn't fire on the page once it closes. */
+        fm1_enc_take(ENC_ALGORITHM);
+        fm1_enc_take(ENC_SELECT);
+        fm1_enc_take(ENC_KNOB1);
+        fm1_enc_take(ENC_KNOB2);
+        fm1_enc_take(ENC_KNOB3);
+        fm1_enc_take(ENC_KNOB4);
+        fm1_enc_take(ENC_PRESETS);
+    } else {
+        if ((e = fm1_enc_take(ENC_ALGORITHM)) != 0) {
+            ui_handle(UI_SRC_ENC_ALGORITHM, e);
+            app_alg_ms = fm1_ms;                   /* the algorithm scroll popup */
+            ui_popup_alg((uint32_t)ui_params()[PANEL.alg]);
+        }
+        if ((e = fm1_enc_take(ENC_SELECT)) != 0) ui_handle(UI_SRC_ENC_SELECT, e);
+        if ((e = fm1_enc_take(ENC_KNOB1)) != 0) ui_handle(UI_SRC_ENC_KNOB1, e);
+        if ((e = fm1_enc_take(ENC_KNOB2)) != 0) ui_handle(UI_SRC_ENC_KNOB2, e);
+        if ((e = fm1_enc_take(ENC_KNOB3)) != 0) ui_handle(UI_SRC_ENC_KNOB3, e);
+        if ((e = fm1_enc_take(ENC_KNOB4)) != 0) ui_handle(UI_SRC_ENC_KNOB4, e);
     }
-    if ((e = fm1_enc_take(ENC_SELECT)) != 0) ui_handle(UI_SRC_ENC_SELECT, e);
-    if ((e = fm1_enc_take(ENC_KNOB1)) != 0) ui_handle(UI_SRC_ENC_KNOB1, e);
-    if ((e = fm1_enc_take(ENC_KNOB2)) != 0) ui_handle(UI_SRC_ENC_KNOB2, e);
-    if ((e = fm1_enc_take(ENC_KNOB3)) != 0) ui_handle(UI_SRC_ENC_KNOB3, e);
-    if ((e = fm1_enc_take(ENC_KNOB4)) != 0) ui_handle(UI_SRC_ENC_KNOB4, e);
 
     /* the algorithm scroll popup auto-closes ~600 ms after the knob stops */
     if (app_alg_ms && fm1_ms - app_alg_ms >= 600u) {
         ui_popup_hide();
         app_alg_ms = 0u;
+    }
+
+    /* the "SAVED SUCCESSFULLY" acknowledgement lingers ~750 ms */
+    if (app_saved_ms && fm1_ms - app_saved_ms >= 750u) {
+        ui_popup_hide();
+        app_saved_ms = 0u;
     }
 
     /* the preset browsers: the PRESETS encoder opens the multi-patch (2-part)
@@ -610,7 +634,7 @@ static void app_step(void)
             if (app_pbro_open && fm1_ms - app_pbro_ms >= 2000u) {
                 app_pending_part = 1u;                 /* load a single part */
                 app_pending_slot = app_pbro_slot;
-                ui_part_chooser_begin(ui_part());
+                ui_part_chooser_begin(ui_part(), 0);
                 ui_popup_hide();
                 app_pbro_open = 0;
             }

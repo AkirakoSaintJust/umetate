@@ -179,6 +179,7 @@ uint8_t ui_part_muted(uint8_t part);             /* 1 = the part is muted */
 void ui_op_mute_active(void);                    /* mute/unmute the active operator (SEL + key) */
 void ui_popup_show(uint32_t slot, const char *name); /* the multi-patch preset-browser popup */
 void ui_popup_show_part(uint32_t slot, const char *name); /* the single-part preset-browser popup */
+void ui_popup_saved(void);                           /* the "SAVED SUCCESSFULLY" acknowledgement */
 void ui_popup_alg(uint32_t alg);                 /* the algorithm scroll popup ("ALG n") */
 void ui_popup_hide(void);                        /* clear the popup */
 
@@ -215,11 +216,12 @@ void ui_save_mode_cancel(void);                  /* back to the save chooser, cl
 
 /* ---- the "which single part" chooser (before a part load/save/init) ---- */
 uint8_t ui_part_chooser_open(void);              /* 1 = the chooser is showing */
-void ui_part_chooser_begin(uint8_t part);         /* open, pre-selecting `part` (0/1) */
+void ui_part_chooser_begin(uint8_t part, const char *title);  /* open, pre-selecting `part`; `title` = an extra first line (0 = none) */
 uint8_t ui_part_chooser_part(void);               /* the selected part (0 = part 1, 1 = part 2) */
 void ui_part_chooser_move(int32_t delta);         /* toggle the selected part */
 void ui_part_chooser_commit(void);                /* keep the choice, close */
 void ui_part_chooser_cancel(void);                /* discard, close */
+uint8_t ui_popup_active(void);                    /* 1 = a modal popup is open (captures control) */
 
 void ui_param_fmt(uint16_t p, const char *unit, char *out, uint32_t n); /* format a value */
 void ui_redraw(uint32_t now_ms);                 /* the retained-mode, rate-bounded redraw */
