@@ -1,9 +1,13 @@
 {
   "name": "naive_osc",
-  "summary": "Naive (non-band-limited) wave reader: the classic shapes — 0 = saw, 1 = sine, 2 = triangle, 3 = square — as a single Q15 table (fm1_naive_wave), selected by a `shape` param. Aliases (no polyBLEP); pulse width is *not* a shape: apply a `phase_dist` bend before this read (PWM on square/pulse, a phase-distortion timbre on the other shapes).",
-  "ins": { "phase": { "rate": "audio", "format": "phase" } },
+  "summary": "Wave reader: the classic shapes — 0 = saw, 1 = sine, 2 = triangle, 3 = square — as one Q15 table (`fm1_naive_wave`), selected by a `shape` param. Saw (0) and square (3) are six band-limited tables each (the top-octave anti-aliasing); the `mip` input (from the phasor's `fm1_wave_mip(step)`) selects the level. Sine/triangle ignore `mip`. Pulse width is *not* a shape: apply a `phase_dist` bend before this read (PWM).",
+  "ins": { "phase": { "rate": "audio", "format": "phase" }, "mip": { "rate": "control", "format": "q32" } },
   "outs": { "audio": "audio" },
   "params": { "shape": "uint32" },
-  "state": { "base": "uint32" },
-  "block_derived": { "base": "((${param.shape} > 3u) ? 0u : ${param.shape}) << 10" }
+  "state": { "wave": "uint32", "base": "uint32", "bl": "uint32" },
+  "block_derived": {
+    "wave": "((${param.shape} > 3u) ? 0u : ${param.shape})",
+    "base": "((uint32_t)fm1_naive_base[${state.wave}] << 10)",
+    "bl": "((${state.wave} == 0u || ${state.wave} == 3u) ? 1u : 0u)"
+  }
 }

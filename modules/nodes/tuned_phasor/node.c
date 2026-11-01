@@ -9,10 +9,13 @@
    phase only. The accumulator advances by `step` alone; accumulating `fm` would be
    frequency modulation, not the Yamaha phase modulation (it detunes the carrier with
    any modulator DC and lets feedback settle on a DC fixed point). Multiplication
-   (not `<< 16`) so a negative (bipolar) modulator is well-defined. */
+   (not `<< 16`) so a negative (bipolar) modulator is well-defined. `mip` (the
+   band-limited table level) is block-constant (block_derived), so it is copied to
+   its output here. */
 uint32_t ${out.phase} = (uint32_t)(
     (int64_t)${state.phase}
     + ((int64_t)${in.fm} * 65536)
     + (int64_t)${in.mod}
 );
 ${state.phase} = (uint32_t)((int64_t)${state.phase} + (int64_t)${state.step});
+uint32_t ${out.mip} = ${state.mip};

@@ -18,6 +18,7 @@
     { "from": "fm", "to": "ph.fm" },
     { "from": "pitch", "to": "ph.pitch" },
     { "from": "ph.phase", "to": "pd.phase" },
+    { "from": "ph.mip", "to": "osc.mip" },
     { "from": "width_mod", "to": "pd.d_mod" },
     { "from": "pd.phase", "to": "osc.phase" },
     { "from": "osc.audio", "to": "audio" }

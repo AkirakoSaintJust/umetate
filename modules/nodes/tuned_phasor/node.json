@@ -1,10 +1,10 @@
 {
   "name": "tuned_phasor",
-  "summary": "Q32 phase accumulator with octave/semi/cent tuning. `inc` (note-derived) = note increment × 2^(octave + semi/12 + cent/1200); `octave` (−3..3), `semi` (−11..11), `cent` (−100..100). `pitch` (control, Q15) scales it ±1 octave; `fm` (audio, Q15) scaled by 2^16 = ±π phase (the FM index); `mod` (control) is a small additive offset.",
+  "summary": "Q32 phase accumulator with octave/semi/cent tuning. `inc` (note-derived) = note increment × 2^(octave + semi/12 + cent/1200); `octave` (−3..3), `semi` (−11..11), `cent` (−100..100). `pitch` (control, Q15) scales it ±1 octave; `fm` (audio, Q15) scaled by 2^16 = ±π phase (the FM index); `mod` (control) is a small additive offset. Also outputs `mip` — the band-limited wave-table level `fm1_wave_mip(step)` — for a downstream `osc`/`naive_osc`.",
   "ins": { "mod": "control", "fm": "audio", "pitch": "control" },
-  "outs": { "phase": { "rate": "audio", "format": "phase" } },
+  "outs": { "phase": { "rate": "audio", "format": "phase" }, "mip": { "rate": "control", "format": "q32" } },
   "params": { "octave": "int32", "semi": "int32", "cent": "int32" },
-  "state": { "inc": "q32", "phase": "phase", "step": "q32" },
+  "state": { "inc": "q32", "phase": "phase", "step": "q32", "mip": "uint32" },
   "note_tune": { "inc": ["octave", "semi", "cent"] },
-  "block_derived": { "step": "(uint32_t)(((int64_t)${state.inc} * (32768 + ${in.pitch})) >> 15)" }
+  "block_derived": { "step": "(uint32_t)(((int64_t)${state.inc} * (32768 + ${in.pitch})) >> 15)", "mip": "fm1_wave_mip(${state.step})" }
 }
