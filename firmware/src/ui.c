@@ -1598,8 +1598,36 @@ static void ui_draw_part_chooser(void)
     cv_blit(0, 4 * UI_ROW_H);
 }
 
-/* the footer legend: a fixed gesture hint at the bottom row (row 14), drawn only
- * when the page's widgets leave that row free (row budget permitting). */
+/* draw one legend line (up to `\n` or NUL): `~...~` segments in hot pink, the
+ * rest in white. Returns nothing (the pen carries via x). */
+static void legend_line(const char *s, int32_t y)
+{
+    int32_t x = 0;
+    int pink = 0;
+    while (*s && *s != '\n') {
+        if (*s == '~') {
+            pink = !pink;
+            s++;
+            continue;
+        }
+        const char *e = s;
+        char seg[24];
+        uint32_t k, n;
+        while (*e && *e != '\n' && *e != '~')
+            e++;
+        n = (uint32_t)(e - s);
+        if (n >= sizeof seg)
+            n = sizeof seg - 1u;
+        for (k = 0; k < n; k++)
+            seg[k] = s[k];
+        seg[n] = 0;
+        x = cv_text(x, y, &FONT_S, seg, pink ? C_HI : C_TEXT);
+        s = e;
+    }
+}
+
+/* the footer legend: a two-line gesture hint at the bottom (rows 13-14), drawn
+ * only when the page's widgets leave those rows free. `~...~` = hot pink. */
 static void ui_draw_legend(void)
 {
     const ui_page *p = ui_cur_page();
@@ -1611,11 +1639,18 @@ static void ui_draw_legend(void)
         if (b > bottom)
             bottom = b;
     }
-    if (bottom > 14u)
-        return;                     /* the last row is in use: skip the legend */
-    cv_begin(240u, UI_ROW_H, C_BLACK);
-    cv_text(0, 0, &FONT_S, ui_t->legend, C_DIM);
-    cv_blit(0, 14 * UI_ROW_H);
+    if (bottom > 13u)
+        return;                     /* the last two rows are in use: skip the legend */
+    cv_begin(240u, 2u * UI_ROW_H, C_BLACK);
+    legend_line(ui_t->legend, 0);
+    {
+        const char *nl = ui_t->legend;
+        while (*nl && *nl != '\n')
+            nl++;
+        if (*nl == '\n')
+            legend_line(nl + 1, UI_ROW_H);
+    }
+    cv_blit(0, 13 * UI_ROW_H);
 }
 
 void ui_redraw(uint32_t now_ms)

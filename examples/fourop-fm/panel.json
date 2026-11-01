@@ -3,7 +3,7 @@
   "home": "home",
   "alg": "algorithm",
   "parts": 2,
-  "legend": "SCLx2 part +key mute +ply Pmute",
+  "legend": "~2xSEL~ pts  SEL+ARP-REC mute pt\\n~SEL~ ops  ~ARP-REC~ mute op",
   "operators": ["op1", "op2", "op3", "op4"],
   "mute": ["op1_mute", "op2_mute", "op3_mute", "op4_mute"],
   "global": [
@@ -37,13 +37,13 @@
           "id": "env",
           "widgets": [
             { "type": "subheader", "row": 2, "text": "A-ENVS", "partop": true },
-            { "type": "envelope", "row": 3, "span": 3,
+            { "type": "envelope", "row": 3, "span": 2,
               "params": ["op1.eg.r1", "op1.eg.r2", "op1.eg.r3", "op1.eg.r4", "op1.eg.l1", "op1.eg.l2", "op1.eg.l3"] },
-            { "type": "envelope", "row": 6, "span": 3,
+            { "type": "envelope", "row": 5, "span": 2,
               "params": ["op2.eg.r1", "op2.eg.r2", "op2.eg.r3", "op2.eg.r4", "op2.eg.l1", "op2.eg.l2", "op2.eg.l3"] },
-            { "type": "envelope", "row": 9, "span": 3,
+            { "type": "envelope", "row": 7, "span": 2,
               "params": ["op3.eg.r1", "op3.eg.r2", "op3.eg.r3", "op3.eg.r4", "op3.eg.l1", "op3.eg.l2", "op3.eg.l3"] },
-            { "type": "envelope", "row": 12, "span": 3,
+            { "type": "envelope", "row": 9, "span": 2,
               "params": ["op4.eg.r1", "op4.eg.r2", "op4.eg.r3", "op4.eg.r4", "op4.eg.l1", "op4.eg.l2", "op4.eg.l3"] }
           ]
         },
@@ -51,20 +51,20 @@
           "id": "scope",
           "widgets": [
             { "type": "subheader", "row": 2, "text": "SCOPES", "partop": true },
-            { "type": "scope", "row": 3, "span": 3, "channel": 0 },
-            { "type": "scope", "row": 6, "span": 3, "channel": 1 },
-            { "type": "scope", "row": 9, "span": 3, "channel": 2 },
-            { "type": "scope", "row": 12, "span": 3, "channel": 3 }
+            { "type": "scope", "row": 3, "span": 2, "channel": 0 },
+            { "type": "scope", "row": 5, "span": 2, "channel": 1 },
+            { "type": "scope", "row": 7, "span": 2, "channel": 2 },
+            { "type": "scope", "row": 9, "span": 2, "channel": 3 }
           ]
         },
         {
           "id": "spectro",
           "widgets": [
             { "type": "subheader", "row": 2, "text": "SPECTROS", "partop": true },
-            { "type": "spectro", "row": 3, "span": 3, "channel": 0 },
-            { "type": "spectro", "row": 6, "span": 3, "channel": 1 },
-            { "type": "spectro", "row": 9, "span": 3, "channel": 2 },
-            { "type": "spectro", "row": 12, "span": 3, "channel": 3 }
+            { "type": "spectro", "row": 3, "span": 2, "channel": 0 },
+            { "type": "spectro", "row": 5, "span": 2, "channel": 1 },
+            { "type": "spectro", "row": 7, "span": 2, "channel": 2 },
+            { "type": "spectro", "row": 9, "span": 2, "channel": 3 }
           ]
         },
         {
