@@ -489,6 +489,32 @@ OSC_TABLE_BL: Patch = {
     "global": {"nodes": [], "wires": []},
 }
 
+# key scaling: a bipolar LO/HI pushes a target toward its extremes around a
+# breakpoint. A level with LO=-100 / HI=+100 and a C4 breakpoint is quiet below
+# the breakpoint and loud above it.
+KS_TEST: Patch = {
+    "name": "ks_test",
+    "voices": 1,
+    "voice": {
+        "nodes": [
+            {"id": "ph", "type": "phasor"},
+            {"id": "osc", "type": "osc"},
+            {"id": "ks", "type": "key_scale", "params": {"lo": -100, "hi": 100}},
+            {"id": "tl", "type": "tl", "params": {"level": 50}},
+        ],
+        "wires": [
+            {"from": "ph.phase", "to": "osc.phase"},
+            {"from": "ks.k", "to": "tl.k"},
+            {"from": "osc.audio", "to": "tl.audio"},
+        ],
+        "voice_out": "tl.audio",
+    },
+    "global": {
+        "nodes": [{"id": "bp", "type": "key_bp", "params": {"bp": 60}}],
+        "wires": [{"from": "bp.bp", "to": "ks.bp"}],
+    },
+}
+
 # the `saw` node uses the note-on reciprocal (inv_inc = 2^32/inc) via an inline
 # macro that sets the note-derived `inc`.
 SAW_TEST: Patch = {
@@ -2604,6 +2630,21 @@ def _table_osc_antialias() -> None:
     print(f"ok: table square drops folded harmonic 11 ({bl:.3f} vs {na:.3f})")
 
 
+def _key_scale_works() -> None:
+    """Key scaling pushes a target toward its extremes around the breakpoint: a
+    level with LO=-100 / HI=+100 and a C4 breakpoint is quiet below the breakpoint
+    and loud above it."""
+    lo = _render_samples(KS_TEST, 512, 24)  # C1: below the breakpoint
+    hi = _render_samples(KS_TEST, 512, 96)  # C7: above the breakpoint
+
+    def rms(s: list[int]) -> float:
+        return math.sqrt(sum(x * x for x in s) / len(s))
+
+    lr, hr = rms(lo), rms(hi)
+    assert hr > lr * 2, f"key scale did not shape the level (lo={lr:.0f} hi={hr:.0f})"
+    print(f"ok: key scale shapes the level (lo={lr:.0f} hi={hr:.0f})")
+
+
 def _triangle_bandlimited() -> None:
     """The polyBLEP triangle (integrated square) has the ideal odd-harmonic 1/n^2
     spectrum — a band-limited triangle (unlike saw/square's 1/n, the triangle
@@ -3348,6 +3389,12 @@ def main() -> int:
         _table_osc_antialias()
     except AssertionError as exc:
         print(f"FAIL: table-osc band-limited anti-aliasing: {exc}")
+        failures += 1
+
+    try:
+        _key_scale_works()
+    except AssertionError as exc:
+        print(f"FAIL: key scaling: {exc}")
         failures += 1
 
     # the pulse width is a settable param (default 0.5 = square), not a wireable
