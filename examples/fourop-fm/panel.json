@@ -336,6 +336,17 @@
           ]
         },
         {
+          "id": "backup",
+          "widgets": [
+            { "type": "label", "row": 2, "span": 2, "text": "BACKUP / LOAD" },
+            { "type": "label", "row": 4, "text": "host-side, USB-MIDI SysEx" },
+            { "type": "label", "row": 6, "text": "umetate preset export" },
+            { "type": "label", "row": 7, "text": "umetate preset import" },
+            { "type": "label", "row": 9, "text": "model byte 64" },
+            { "type": "label", "row": 10, "text": "no MIDI CH needed" }
+          ]
+        },
+        {
           "id": "credits",
           "widgets": [
             { "type": "subheader", "row": 2, "text": "VERSION + CREDITS", "plain": true },

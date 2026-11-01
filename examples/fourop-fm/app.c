@@ -366,7 +366,7 @@ static void app_idle(void)
 
 #define KEY0 53u   /* key 0 = F3 */
 #define GLO_CTX 5u /* the GLO context id (panel.json key order: home/edit/env/lfo/fx/glo) */
-#define GLO_CREDITS 6u /* the credits page's index within GLO (the last page) */
+#define GLO_CREDITS 7u /* the credits page's index within GLO (the last page) */
 
 /* ---- the main loop, split for the browser emulator: app_init (the setup) +
    app_step (one millisecond of the loop). app_main keeps the frozen contract for
