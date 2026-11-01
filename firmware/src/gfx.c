@@ -30,6 +30,8 @@ static int32_t cv_oy;            /* y offset for graph drawing */
 #define C_OK    THEME_SUCCESS           /* status: ok / saved / playing */
 #define C_WARN  THEME_WARNING           /* status: muted / dirty / caution */
 #define C_ERR   THEME_ERROR             /* status: error / halted */
+#define C_POPUP_BG  RGB(30, 30, 30)     /* the popup container: near-black grey (#1E1E1E) */
+#define C_POPUP_TXT RGB(255, 255, 255)  /* the popup base text: pure white */
 /* The screen is five steps, plus the accent (pink) and the header's selected
  * part/operator (light blue). Palettes are picked in the HOME-hold menu (COLOR).
  * DEFAULT: white base text (param names), bright-green page descriptions, hot-pink

@@ -1111,12 +1111,12 @@ void ui_custom_set(uint32_t slot, int32_t value)
         ui_custom_v[slot] = value;
 }
 
-/* the preset-browser popup: a dim band over the page (rows 4-6) with a title + the
- * selected slot/name. Drawn every redraw while active (its text is transient). */
+/* the preset-browser popup: a dark band over the page (rows 4-6) with a title +
+ * the selected slot/name. Drawn every redraw while active (its text is transient). */
 static void ui_draw_popup(void)
 {
-    cv_begin(240u, 3u * UI_ROW_H, C_DIM);
-    cv_text(6, UI_ROW_H, &FONT_S, ui_popup_line, C_GRAY);
+    cv_begin(240u, 3u * UI_ROW_H, C_POPUP_BG);
+    cv_text(6, UI_ROW_H, &FONT_S, ui_popup_line, C_POPUP_TXT);
     cv_blit(0, 4 * UI_ROW_H);
 }
 
@@ -1254,23 +1254,23 @@ void ui_name_editor_backspace(void)
     n[UI_NAME_LEN - 1u] = 0;                       /* shift left: delete at the cursor */
 }
 
-/* the name editor pop-up: title + the name (cursor char in accent) + the legend. */
+/* the name editor pop-up: title + the name (cursor char in purple) + the legend. */
 static void ui_draw_name_editor(void)
 {
     char s[UI_NAME_LEN + 8];
     const char *title = ui_name_which ? "multi-patch name" : "single part name";
     uint32_t i;
-    cv_begin(240u, 5u * UI_ROW_H, C_DIM);
-    cv_text(6, 2, &FONT_S, title, C_GRAY);
+    cv_begin(240u, 5u * UI_ROW_H, C_POPUP_BG);
+    cv_text(6, 2, &FONT_S, title, C_POPUP_TXT);
     /* the name: FONT_L, 15 fixed columns; the cursor char is the accent colour */
     for (i = 0; i < UI_NAME_LEN - 1u; i++) {
         char c = ui_name[ui_name_which][i];
         s[0] = c ? c : ' ';
         s[1] = 0;
         cv_text(6 + (int32_t)i * 16, UI_ROW_H, &FONT_L, s,
-                i == ui_name_cursor ? C_WHITE : C_HI);
+                i == ui_name_cursor ? C_AMB : C_HI);
     }
-    cv_text(6, 3 * UI_ROW_H, &FONT_S, "K1=char K2=cursor SCL=del SAVE=ok HOME=cancel", C_DIM);
+    cv_text(6, 3 * UI_ROW_H, &FONT_S, "K1=char K2=cursor SCL=del SAVE=ok HOME=cancel", C_POPUP_TXT);
     cv_blit(0, 4 * UI_ROW_H);
 }
 
@@ -1334,14 +1334,14 @@ void ui_save_cancel(void)
     }
 }
 
-/* the save chooser pop-up: title + two rows (the selected in the accent) + the legend. */
+/* the save chooser pop-up: title + two rows (the selected in purple) + the legend. */
 static void ui_draw_save(void)
 {
     static const char *const ui_save_kind_text[2] = {"single part", "multi-patch"};
     char t[12];
     uint32_t i;
-    cv_begin(240u, 5u * UI_ROW_H, C_DIM);
-    cv_text(6, 2, &FONT_S, "SAVE", C_GRAY);
+    cv_begin(240u, 5u * UI_ROW_H, C_POPUP_BG);
+    cv_text(6, 2, &FONT_S, "SAVE", C_POPUP_TXT);
     for (i = 0; i < 2u; i++) {
         char row[32];
         ui_strcpy(row, i == ui_save_which ? "> " : "  ");
@@ -1350,9 +1350,9 @@ static void ui_draw_save(void)
         ui_itoa((int32_t)ui_save_slots[i], t);
         ui_strcat(row, t);
         cv_text(6, (int32_t)(i + 1u) * UI_ROW_H, &FONT_S, row,
-                i == ui_save_which ? C_WHITE : C_HI);
+                i == ui_save_which ? C_AMB : C_HI);
     }
-    cv_text(6, 3 * UI_ROW_H, &FONT_S, "K1=kind K2=slot SAVE=save HOME=cancel", C_DIM);
+    cv_text(6, 3 * UI_ROW_H, &FONT_S, "K1=kind K2=slot SAVE=save HOME=cancel", C_POPUP_TXT);
     cv_blit(0, 4 * UI_ROW_H);
 }
 
@@ -1396,22 +1396,22 @@ void ui_save_mode_cancel(void)
     }
 }
 
-/* the save-mode chooser pop-up: title + three rows (the selected in the accent). */
+/* the save-mode chooser pop-up: title + three rows (the selected in purple). */
 static void ui_draw_save_mode(void)
 {
     static const char *const ui_save_mode_text[3] = {
         "discard edits", "save as new part", "mutate in place"};
     uint32_t i;
-    cv_begin(240u, 5u * UI_ROW_H, C_DIM);
-    cv_text(6, 2, &FONT_S, "SAVE multi-patch", C_GRAY);
+    cv_begin(240u, 5u * UI_ROW_H, C_POPUP_BG);
+    cv_text(6, 2, &FONT_S, "SAVE multi-patch", C_POPUP_TXT);
     for (i = 0; i < 3u; i++) {
         char row[24];
         ui_strcpy(row, i == ui_save_mode_which ? "> " : "  ");
         ui_strcat(row, ui_save_mode_text[i]);
         cv_text(6, (int32_t)(i + 1u) * UI_ROW_H, &FONT_S, row,
-                i == ui_save_mode_which ? C_WHITE : C_HI);
+                i == ui_save_mode_which ? C_AMB : C_HI);
     }
-    cv_text(6, 4 * UI_ROW_H, &FONT_S, "K1=mode SAVE=save HOME=back", C_DIM);
+    cv_text(6, 4 * UI_ROW_H, &FONT_S, "K1=mode SAVE=save HOME=back", C_POPUP_TXT);
     cv_blit(0, 4 * UI_ROW_H);
 }
 
