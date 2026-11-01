@@ -290,11 +290,6 @@ static void ui_step_param(uint16_t p, int32_t delta)
             step = 1;
         v += delta * step;
     }
-    /* --- on/off wrap: 0 <-> 1 (only for ONOFF/ONOFF_INV display kinds) --- */
-    if (d && (d->kind == UI_DISP_ONOFF || d->kind == UI_DISP_ONOFF_INV)) {
-        /* wrap any integer into {0,1}: even -> 0, odd -> 1 */
-        v = (v % 2 + 2) % 2;
-    }
     ui_param_v[p] = v;
     ui_clamp_param(p);
 }

@@ -2814,9 +2814,10 @@ the two stay in sync).
 13. **KEY SPLIT note names.** Show both the MIDI note number and its note name
     (C C# D E F G A B …).
 
-16. **Hard clamp.** A knob must never overshoot a param's min/max (no "scroll back
-    to get in range" with a blank UI). Remove the on/off wrap (revert the earlier
-    "boolean wraps infinitely" decision). Bake into the framework/UI kit.
+16. **Hard clamp.** — **done.** The value stepper (`ui_step_param`) already clamps to
+    each param's `[min, max]` (the L11 fix); removed the remaining on/off wrap so a
+    boolean scrolls to 1 and stops (no more infinite 0↔1 toggling) — an on/off now
+    hard-clamps at its ends like every other param. Locked by a `ui_test.c` check.
 
 #### H. Process (docs/skills/tutorial/agent — no firmware)
 

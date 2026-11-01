@@ -186,6 +186,14 @@ int main(void)
     ui_handle(UI_SRC_ENC_KNOB4, 9999);
     CHECK(ui_params()[P_ratio] == 131072, "landmark stepping clamps at the last entry");
 
+    /* an on/off param hard-clamps at its ends (no infinite 0<->1 wrap): scrolling
+       past 1 stays 1, past 0 stays 0. */
+    ui_params()[P_mute] = 1;
+    ui_handle(UI_SRC_ENC_PRESETS, 9999);
+    CHECK(ui_params()[P_mute] == 1, "an on/off param clamps at its max (no wrap)");
+    ui_handle(UI_SRC_ENC_PRESETS, -9999);
+    CHECK(ui_params()[P_mute] == 0, "an on/off param clamps at its min");
+
     /* the active part starts at 0; part_next is a no-op with one part */
     CHECK(ui_part() == 0, "ui_part starts at 0");
 

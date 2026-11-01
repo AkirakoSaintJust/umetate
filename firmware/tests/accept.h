@@ -62,6 +62,7 @@ static const ui_binding BIND_0[] = {
     { UI_BIND_PAGE_SLOT, UI_SRC_ENC_KNOB2, 0, 0, 1, UI_REL, 0 },
     { UI_BIND_PAGE_SLOT, UI_SRC_ENC_KNOB3, 0, 0, 2, UI_REL, 0 },
     { UI_BIND_PARAM, UI_SRC_ENC_KNOB4, P_ratio, 0, 0, UI_REL, 0 },
+    { UI_BIND_PARAM, UI_SRC_ENC_PRESETS, P_mute, 0, 0, UI_REL, 0 },
 };
 static const ui_binding BIND_1[] = {
     { UI_BIND_PARAM, UI_SRC_ENC_PRESETS, P_cutoff, 0, 0, UI_REL, 0 },
@@ -82,7 +83,7 @@ static const ui_binding GLOBAL_BIND[] = {
 };
 
 static const ui_context CTX[] = {
-    { "home", PG_0, 1, BIND_0, 4, 0, 0 },
+    { "home", PG_0, 1, BIND_0, 5, 0, 0 },
     { "edit", PG_1, 1, BIND_1, 3, 0, 0 },
     { "step", PG_2, 1, BIND_2, 1, 0, 0 },
     { "fx", PG_3, 1, BIND_3, 0, 0, 0 },
