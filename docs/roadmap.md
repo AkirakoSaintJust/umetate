@@ -3064,3 +3064,44 @@ at C7 is ~4× attenuated vs a naive square) and the existing wave-shape probe
 (updated for the pulse's Gibbs ringing). The agent skill + tutorial now warn
 against naive square/saw/pulse aliasing (use the polyBLEP `saw`/`pulse`/`triangle`
 or the mip-mapped `osc`).
+
+### 13.6 UI round (the fresh backlog, 2026-11-01)
+
+**43. Algorithm graph / HOME names / legend / button name.** — **done.** The
+algorithm graph's block centres were `int8_t`, so the `>127` x-centres wrapped
+negative and drew ops off-screen left (also the web-build warnings) — now
+`int16_t`, and carriers get a short vertical purple down-arrow; the graph popup is
+taller and lingers ~600 ms. The HOME page titles now carry their dynamic prefix
+("PART n ALGORITHM", "PART n OP A-ENVS", …) into the header via a new
+`ui_page.mode`. The footer legend is **3 lines** (`SEL+EDIT copy page` /
+`2xSEL pts SEL+ARP-REC mute pt` / `SEL ops ARP-REC mute op`), and every `SCL`
+reference became `SEL` (the button's real name).
+
+**44. Popups: capture control, legends, acknowledgements, auto-close.** — **done.**
+A modal popup (name/save/save-mode/part/copy chooser) now **captures all control**
+(`ui_popup_active()`; the app drains the page + preset encoders while one is open,
+so a stray knob twist no longer opens the name editor behind the "WHICH SINGLE
+PART" chooser). Name/save legends are two lines; the part chooser gained a legend +
+an optional "INIT PATCH" first line; saves show "SAVED SUCCESSFULLY" / copies
+"COPIED SUCCESSFULLY" for ~750 ms; and every modal popup **auto-closes after ~3 s
+of no input** (non-destructive, `ui_popup_cancel_all`). The "popups capture
+control" + auto-close behaviour is recorded in the skill + tutorial.
+
+**45. Page copy (SEL+EDIT).** — **done.** SEL+EDIT on a page with per-part params
+opens a copy chooser: part-level pages → "COPY INTO WHICH PART?" (2 targets),
+single-operator pages → "COPY INTO WHICH OP?" (8 targets, PART n × OP n); SAVE
+confirms, HOME cancels. Copies the page's `op_param`/`part_param`-resolved params
+from the active part (and op) to the target, via `ui_copy_apply`.
+
+**46. F-ENV / P-ENV graphs + POST-FX pages + version/credits.** — **done.** A new
+`UI_GENV` widget (a global-envelope curve over 7 fixed param ids) gives the filter
+F-ENV and pitch P-ENV their envelope graphs. Two HOME pages — POST-FX MULTI-PATCH
+SCOPE / SPECTRO — tap the final post-FX mix (scope ch 0 via a new `final` flag).
+A GLO "VERSION + CREDITS" page (a `UI_CUSTOM` widget) scrolls the firmware name,
+version, the Digital Desolation Plus typeface credit, and the licence.
+
+**47. naive_osc mip-map + portamento ms range.** — **done.** The naive oscillator's
+saw/square are now six band-limited tables each (like the operators' `osc`); the
+`tuned_phasor` outputs `mip` and the `naive_vco` macro wires it. Portamento is now
+a human-readable **one-octave glide time in ms** (0 = off, log-stepped; the glide
+converts `step = tgt·23777/ms >> 16`).

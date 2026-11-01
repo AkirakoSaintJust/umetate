@@ -281,6 +281,12 @@ algorithm. The keybed can also serve as a menu surface, for example as operator 
 mute shortcuts. Prefer the **page-slot model**: a small set of encoders controls
 the parameters on the current page, whose labels appear on screen.
 
+Popups are **modal**: while one is open (name editor, save, part chooser, page
+copy) it **captures all control** — the page's encoders and the preset browser stay
+inert, and any events are drained so a twist during the popup doesn't fire once it
+closes. Modal popups **auto-close after ~3 s of no input** without committing, and
+commits show a brief "SAVED/COPIED SUCCESSFULLY" acknowledgement.
+
 Draw the **menu tree** before filling in bindings. Include every context, its pages,
 and any modes within a page. From this tree, someone else should be able to sketch
 the screen for every state. Decide on **multi-timbrality** (`parts:`) and the

@@ -175,6 +175,11 @@ screen; LED/pad feedback; and the full control flow.
     knobs do). This beats deep menus for a few knobs + a 240×240 screen.
   - **Gesture primitives.** If the design needs long-press/double-tap, check the
     UI kit expresses it; otherwise use an explicit page or button.
+  - **Popups capture control.** A modal popup (name/save/part/copy chooser) owns
+    all control while open (`ui_popup_active()`); the app drains the page encoders
+    so a stray knob twist never fires on the page behind the popup. Modal popups
+    **auto-close after ~3 s of no input** (non-destructive, `ui_popup_cancel_all`),
+    and commits show a brief "SAVED/COPIED SUCCESSFULLY" acknowledgement.
 
 **Exit:** every control is mapped to a param or action, or explicitly marked
 unmapped; every binding target is a param from the manifest; the control flow is
