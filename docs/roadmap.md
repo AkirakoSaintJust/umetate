@@ -2812,10 +2812,13 @@ the two stay in sync).
 14. **F-ENV.** Turn FILTER ADSR (5 params, too many) into F-ENV = DEPTH + 7
     Yamaha-style params (R1..R4, L1..L3) so it fits 2 pages.
 
-15. **Filter TYPE descriptive.** Show `lpf`/`hpf`/`bpf` (etc.) instead of a number.
+15. **Filter TYPE descriptive.** — **done.** Added a `filter` display kind
+    (`UI_DISP_FILTER` → `lpf`/`bpf`/`hpf`) and applied it to `filter_type`.
 
-17. **WAVEFOLD.** Rename `FOLD` → `WAVEFOLD`; TYPE shows descriptive values (e.g.
-    `cheby`) instead of a number.
+17. **WAVEFOLD.** — **done.** Renamed the `FOLD` page to `WAVEFOLD`; added a `fold`
+    display kind (`UI_DISP_FOLD` → `sine`, the shipped type; reserved for others) and
+    applied it to `fold_type`. (The patch/params schema display enums also gained the
+    previously-missing `onoff_inv`/`cent`/`wave`/`filter`/`fold`.)
 
 #### G. Param display & clamping
 

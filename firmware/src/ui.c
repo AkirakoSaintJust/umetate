@@ -595,6 +595,15 @@ void ui_param_fmt(uint16_t p, const char *unit, char *out, uint32_t n)
         ui_strcat(out, names[i]);
         break;
     }
+    case UI_DISP_FILTER: {                         /* a 0..2 svf type -> its name */
+        static const char *const names[3] = {"lpf", "bpf", "hpf"};
+        uint32_t i = v >= 0 && v < 3 ? (uint32_t)v : 0u;
+        ui_strcat(out, names[i]);
+        break;
+    }
+    case UI_DISP_FOLD:                             /* a wavefolder type -> its name */
+        ui_strcat(out, "sine");
+        break;
     default:
         ui_itoa(v, out);
         break;

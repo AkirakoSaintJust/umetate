@@ -221,7 +221,7 @@
         {
           "id": "fold",
           "widgets": [
-            { "type": "subheader", "row": 2, "text": "FOLD", "plain": true },
+            { "type": "subheader", "row": 2, "text": "WAVEFOLD", "plain": true },
             { "type": "param_row", "row": 3, "param": "fold_on", "text": "ON" },
             { "type": "param_row", "row": 4, "param": "fold_threshold", "text": "THRESH" },
             { "type": "param_row", "row": 5, "param": "fold_folds", "text": "FOLDS" },

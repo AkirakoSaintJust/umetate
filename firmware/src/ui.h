@@ -47,6 +47,8 @@ enum {
     UI_DISP_SEMI,      /* a bipolar Q15 -> "+/-N.N st" (32768 = +1 octave) */
     UI_DISP_CENT,      /* int cents -> "+/-Nc" (the operator detune) */
     UI_DISP_WAVE,      /* a 0..11 waveform index -> its name ("sine"/"tri"/…) */
+    UI_DISP_FILTER,    /* a 0..2 svf type -> "lpf"/"bpf"/"hpf" */
+    UI_DISP_FOLD,      /* a wavefolder type -> "sine" (reserved for others) */
 };
 
 /* ---- binding kinds ---- */
