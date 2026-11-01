@@ -337,6 +337,7 @@ static uint32_t app_browser_open, app_browser_slot, app_browser_ms;
 static uint32_t app_pbro_open, app_pbro_slot, app_pbro_ms;
 static uint8_t app_pending_part;                    /* 0 = none, 1 = load, 2 = save, 3 = init */
 static uint16_t app_pending_slot;                   /* the slot for a pending load/save */
+static uint32_t app_alg_ms;                         /* the last ALGORITHM-knob turn (popup auto-close) */
 
 static void app_init(void)
 {
@@ -561,12 +562,22 @@ static void app_step(void)
         }
         }
     }
-    if ((e = fm1_enc_take(ENC_ALGORITHM)) != 0) ui_handle(UI_SRC_ENC_ALGORITHM, e);
+    if ((e = fm1_enc_take(ENC_ALGORITHM)) != 0) {
+        ui_handle(UI_SRC_ENC_ALGORITHM, e);
+        app_alg_ms = fm1_ms;                       /* the algorithm scroll popup */
+        ui_popup_alg((uint32_t)ui_params()[PANEL.alg]);
+    }
     if ((e = fm1_enc_take(ENC_SELECT)) != 0) ui_handle(UI_SRC_ENC_SELECT, e);
     if ((e = fm1_enc_take(ENC_KNOB1)) != 0) ui_handle(UI_SRC_ENC_KNOB1, e);
     if ((e = fm1_enc_take(ENC_KNOB2)) != 0) ui_handle(UI_SRC_ENC_KNOB2, e);
     if ((e = fm1_enc_take(ENC_KNOB3)) != 0) ui_handle(UI_SRC_ENC_KNOB3, e);
     if ((e = fm1_enc_take(ENC_KNOB4)) != 0) ui_handle(UI_SRC_ENC_KNOB4, e);
+
+    /* the algorithm scroll popup auto-closes ~250 ms after the knob stops */
+    if (app_alg_ms && fm1_ms - app_alg_ms >= 250u) {
+        ui_popup_hide();
+        app_alg_ms = 0u;
+    }
 
     /* the preset browsers: the PRESETS encoder opens the multi-patch (2-part)
        browser except in GLO, where it opens the single-part browser; 2 s with

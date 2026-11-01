@@ -27,6 +27,13 @@
     "home": {
       "pages": [
         {
+          "id": "algo",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "ALGORITHM", "plain": true },
+            { "type": "algo", "row": 3, "span": 9, "param": "algorithm" }
+          ]
+        },
+        {
           "id": "env",
           "widgets": [
             { "type": "subheader", "row": 2, "text": "ENVS", "plural": true },

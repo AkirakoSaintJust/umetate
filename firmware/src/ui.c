@@ -681,7 +681,7 @@ static void ui_draw_value(const ui_widget *w)
 static void ui_draw_name_row(const ui_widget *w)
 {
     uint32_t x, y, wd, ht;
-    const char *name = ui_name_get(w->param < 2u ? w->param : 0u);
+    const char *name = ui_name_get(w->param < 3u ? w->param : 0u);
     ui_region(w, &x, &y, &wd, &ht);
     cv_begin(wd, ht, C_BLACK);
     {
@@ -915,6 +915,40 @@ static void ui_draw_status(const ui_widget *w)
     cv_blit(x, y);
 }
 
+/* the 8 standard 4-op FM algorithms (ymfm s_algorithm_ops): ALGO_CAR[alg] is the
+ * bitmask of carriers; ALGO_TXT[alg] is a compact routing string. Mirrors
+ * umetate/_tables.py `_ROUTING` (op0..op3 = O1..O4). */
+static const uint8_t ALGO_CAR[8] = {8, 8, 8, 8, 10, 14, 14, 15};
+static const char *const ALGO_TXT[8] = {
+    "1>2>3>4", "1+2>3>4", "1>4  2>3>4", "(1>2+3)>4",
+    "1>2  3>4", "1>2 1>3 1>4", "1>2 +3 +4", "1+2+3+4",
+};
+
+/* the algorithm graph: four operator blocks (carriers pink) + a routing string.
+ * The widget's `param` is the algorithm param. */
+static void ui_draw_algo(const ui_widget *w)
+{
+    uint32_t x, y, wd, ht, i;
+    int32_t alg = w->param < ui_t->n_params ? ui_param_v[w->param] : 0;
+    char s[2];
+    if (alg < 0)
+        alg = 0;
+    else if (alg > 7)
+        alg = 7;
+
+    ui_region(w, &x, &y, &wd, &ht);
+    cv_begin(wd, ht, C_BLACK);
+    for (i = 0; i < 4u; i++) {
+        int32_t oy = 4 + (int32_t)i * 26;
+        cv_rect(48, oy, 56, 16, (ALGO_CAR[alg] >> i) & 1u ? C_HI : C_TEXT);
+        s[0] = (char)('1' + i);
+        s[1] = 0;
+        cv_text(66, oy, &FONT_S, s, C_BLACK);
+    }
+    cv_text(120, 38, &FONT_S, ALGO_TXT[alg], C_AMB);   /* the routing, right of the blocks */
+    cv_blit(x, y);
+}
+
 /* the page's subheader (param = the prefix mode): 0 = "OP N <suffix>", 1 =
  * "PART N <suffix>", 2 = "OP <suffix>", 3 = "PART <suffix>", 4 = "<suffix>" (a
  * global page, no prefix). N is the active operator/part; `text` is the
@@ -1054,6 +1088,7 @@ static void ui_draw_widget(const ui_widget *w)
     case UI_STATUS: ui_draw_status(w); break;
     case UI_SUBHEADER: ui_draw_subheader(w); break;
     case UI_NAME: ui_draw_name_row(w); break;
+    case UI_ALGO: ui_draw_algo(w); break;
     case UI_CUSTOM: ui_draw_custom(w); break;
     default: break;
     }
@@ -1074,7 +1109,7 @@ static int32_t ui_widget_value(const ui_widget *w, uint32_t slot)
             return (int32_t)ui_selected_part;
         return 0;                                    /* 2/3/4: no number, static */
     case UI_NAME: {                                 /* redraw when the name changes */
-        const char *n = ui_name_get(w->param < 2u ? w->param : 0u);
+        const char *n = ui_name_get(w->param < 3u ? w->param : 0u);
         int32_t h = 0;
         while (*n)
             h += *n++;
@@ -1101,6 +1136,8 @@ static int32_t ui_widget_value(const ui_widget *w, uint32_t slot)
         }
         return alg * 4 + (int32_t)ui_selected_op * 2 + m;
     }
+    case UI_ALGO:                                   /* redraw when the algorithm changes */
+        return w->param < ui_t->n_params ? ui_param_v[w->param] : 0;
     default:                                       /* VALUE/BAR/PARAM_ROW/COLUMN/OP_ROW */
         return ui_widget_param(w) < ui_t->n_params ? ui_param_v[ui_widget_param(w)] : 0;
     }
@@ -1140,6 +1177,18 @@ static void ui_popup_set(const char *title, uint32_t slot, const char *name)
 
 void ui_popup_show(uint32_t slot, const char *name) { ui_popup_set("multi-patch ", slot, name); }
 void ui_popup_show_part(uint32_t slot, const char *name) { ui_popup_set("single part ", slot, name); }
+
+void ui_popup_alg(uint32_t alg)               /* the algorithm scroll popup ("ALG n") */
+{
+    char t[12];
+    uint8_t was = ui_popup_on;
+    ui_popup_on = 1;
+    ui_strcpy(ui_popup_line, "ALG ");
+    ui_itoa((int32_t)alg, t);
+    ui_strcat(ui_popup_line, t);
+    if (!was)
+        ui_reset_page();
+}
 
 void ui_popup_hide(void)
 {

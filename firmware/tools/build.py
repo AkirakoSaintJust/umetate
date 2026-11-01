@@ -182,9 +182,14 @@ def build_app():
             raise SystemExit("app.ld: the XIP LENGTH line was not found")
         linker = OUT / "app.ld"
         linker.write_text(text.replace("LENGTH = 0x8DFBC", f"LENGTH = {APP_SLOT:#x}"))
+    # The DSP objects link *before* rib.o: the split-core render (`.text`, XIP) long-
+    # jumps to `.dsp_text` (SRAM at 0x01C08000), a ~4.3 MB flash->SRAM offset right
+    # at the R_PI32V2_LONG_JUMP_23M2 limit. Placing the DSP first keeps that jump
+    # close to the XIP base, so the UI/platform code (rib.o) can grow without
+    # pushing the DSP's jump out of range.
     tc("pi32v2/bin/ld", "--Map", OUT / "rib.link.map", "--gc-sections", "-e", "_start", "-T", linker,
-       OUT / "crt0.o", OUT / "fm1_vec.o", OUT / "fm1_isr.o", OUT / "fm1_cpu1.o", OUT / "rib.o",
-       *dsp_objects, "-o", elf)
+       OUT / "crt0.o", OUT / "fm1_vec.o", OUT / "fm1_isr.o", OUT / "fm1_cpu1.o",
+       *dsp_objects, OUT / "rib.o", "-o", elf)
     for section in ("text.bin", "data.bin", "ramtext.bin", "c1.bin", "dsp.bin"):
         (OUT / section).unlink(missing_ok=True)
     *_, symbols, disassembly, ram_disassembly = tc_all(

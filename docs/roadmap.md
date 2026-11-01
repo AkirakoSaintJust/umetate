@@ -2759,10 +2759,14 @@ the two stay in sync).
 
 #### B. Algorithm
 
-2. **Algorithm graph + scroll popup.** A new HOME page drawing the current algorithm
-   (operators + routing), page description `PART (current part) ALGORITHM`; while the
-   ALGORITHM knob turns, a popup shows the algorithms as they scroll, auto-closing
-   ~250 ms after the knob stops.
+2. **Algorithm graph + scroll popup.** — **done.** A new first HOME page draws the
+   current algorithm: four operator blocks (carriers pink, modulators white) plus a
+   compact routing string (`1>2>3>4`, …), driven by the `algorithm` param via a new
+   `UI_ALGO` widget. While the ALGORITHM knob turns, an `ALG n` popup shows the
+   algorithm and auto-closes ~250 ms after the knob stops. (The algorithm is global,
+   not per-part, so the page title is `ALGORITHM`.) The graph pushed the device
+   image over the pi32v2 flash→SRAM long-jump limit, so `tools/build.py` now links
+   the DSP objects *before* `rib.o` to keep that jump close to the XIP base.
 
 #### C. Web build — very important
 

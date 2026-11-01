@@ -31,6 +31,7 @@ enum {
     UI_STATUS,         /* a status readout (algorithm + selected operator + mute) */
     UI_SUBHEADER,      /* a page's param-group title: "OP N <suffix>" / "PART N <suffix>" */
     UI_NAME,           /* a name row (label + the name string), a page slot -> the editor */
+    UI_ALGO,           /* the current algorithm graph (operators + routing) */
     UI_CUSTOM,         /* the cv_* canvas escape hatch: ui_draw_custom() draws it */
 };
 
@@ -172,6 +173,7 @@ uint8_t ui_part_muted(uint8_t part);             /* 1 = the part is muted */
 void ui_op_mute_active(void);                    /* mute/unmute the active operator (SCL + key) */
 void ui_popup_show(uint32_t slot, const char *name); /* the multi-patch preset-browser popup */
 void ui_popup_show_part(uint32_t slot, const char *name); /* the single-part preset-browser popup */
+void ui_popup_alg(uint32_t alg);                 /* the algorithm scroll popup ("ALG n") */
 void ui_popup_hide(void);                        /* clear the popup */
 
 /* ---- the name strings + the name editor (the GLO part / multi-patch rows) ---- */
