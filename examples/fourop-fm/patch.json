@@ -45,7 +45,12 @@
     "op4_ratio": 65536, "op4_waveform": 0, "op4_level": 85, "op4_feedback": 0, "op4_detune": 0, "op4_mute": 0,
     "op4_trem_rate": 0, "op4_trem_depth": 0, "op4_trem_wave": 0,
     "op4.eg.r1": 80, "op4.eg.r2": 60, "op4.eg.r3": 50, "op4.eg.r4": 80,
-    "op4.eg.l1": 99, "op4.eg.l2": 93, "op4.eg.l3": 87
+    "op4.eg.l1": 99, "op4.eg.l2": 93, "op4.eg.l3": 87,
+    "breakpoint": 60,
+    "op1_level_ks_lo": 0, "op1_level_ks_hi": 0, "op1_fb_ks_lo": 0, "op1_fb_ks_hi": 0,
+    "op2_level_ks_lo": 0, "op2_level_ks_hi": 0, "op2_fb_ks_lo": 0, "op2_fb_ks_hi": 0,
+    "op3_level_ks_lo": 0, "op3_level_ks_hi": 0, "op3_fb_ks_lo": 0, "op3_fb_ks_hi": 0,
+    "op4_level_ks_lo": 0, "op4_level_ks_hi": 0, "op4_fb_ks_lo": 0, "op4_fb_ks_hi": 0
   },
   "tables": { "routing": { "kind": "routing" } },
   "parts": {
@@ -123,7 +128,24 @@
     "op3_trem_wave":  { "target": "op3.lfo.wave", "min": 0, "max": 11, "curve": "linear", "display": "wave" },
     "op4_trem_rate":  { "target": "op4.lfo.rate", "min": 0, "max": 20000000, "curve": "log", "display": "hz" },
     "op4_trem_depth": { "target": "op4.lfo.depth", "min": 0, "max": 32767, "curve": "linear", "display": "pct" },
-    "op4_trem_wave":  { "target": "op4.lfo.wave", "min": 0, "max": 11, "curve": "linear", "display": "wave" }
+    "op4_trem_wave":  { "target": "op4.lfo.wave", "min": 0, "max": 11, "curve": "linear", "display": "wave" },
+    "breakpoint":      { "target": "key_bp.bp", "min": 0, "max": 127, "curve": "linear", "display": "note" },
+    "op1_level_ks_lo": { "target": "op1.level_ks.lo", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op1_level_ks_hi": { "target": "op1.level_ks.hi", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op1_fb_ks_lo":    { "target": "op1.fb_ks.lo", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op1_fb_ks_hi":    { "target": "op1.fb_ks.hi", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op2_level_ks_lo": { "target": "op2.level_ks.lo", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op2_level_ks_hi": { "target": "op2.level_ks.hi", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op2_fb_ks_lo":    { "target": "op2.fb_ks.lo", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op2_fb_ks_hi":    { "target": "op2.fb_ks.hi", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op3_level_ks_lo": { "target": "op3.level_ks.lo", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op3_level_ks_hi": { "target": "op3.level_ks.hi", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op3_fb_ks_lo":    { "target": "op3.fb_ks.lo", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op3_fb_ks_hi":    { "target": "op3.fb_ks.hi", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op4_level_ks_lo": { "target": "op4.level_ks.lo", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op4_level_ks_hi": { "target": "op4.level_ks.hi", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op4_fb_ks_lo":    { "target": "op4.fb_ks.lo", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op4_fb_ks_hi":    { "target": "op4.fb_ks.hi", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" }
   },
   "voice": {
     "nodes": [
@@ -164,12 +186,17 @@
   "global": {
     "nodes": [
       { "id": "algo", "type": "algo", "params": { "algorithm": 4 } },
+      { "id": "key_bp", "type": "key_bp", "params": { "bp": 60 } },
       { "id": "lp", "type": "svf", "params": { "f": 8000, "q": 40000, "type": 0, "on": 1, "fenv_depth": 0 } },
       { "id": "fenv", "type": "dx_env", "params": { "r1": 80, "r2": 60, "r3": 50, "r4": 80, "l1": 99, "l2": 93, "l3": 87 }, "ins": { "gate": "patch_gate", "trigger": "0" } },
       { "id": "wf", "type": "wavefolder", "params": { "amount": 0, "threshold": 0, "folds": 1, "on": 1, "type": 0 } }
     ],
     "wires": [
       { "from": "algo.alg", "to": "route.alg" },
+      { "from": "key_bp.bp", "to": "op1.bp" },
+      { "from": "key_bp.bp", "to": "op2.bp" },
+      { "from": "key_bp.bp", "to": "op3.bp" },
+      { "from": "key_bp.bp", "to": "op4.bp" },
       { "from": "voice", "to": "lp.audio" },
       { "from": "fenv.cv", "to": "lp.fenv" },
       { "from": "lp.out", "to": "wf.audio" },

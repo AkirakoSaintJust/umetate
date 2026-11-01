@@ -2894,9 +2894,9 @@ def main() -> int:
     if (
         "fourop_fm_init_entry fourop_fm_init[]" in hdr
         and "fourop_fm_INIT_N" in hdr
-        and "{ 186u, 7 }" in hdr  # algorithm 7 (the additive algorithm)
+        and "{ 218u, 7 }" in hdr  # algorithm 7 (the additive algorithm)
         and "{ 0u, 65536 }" in hdr  # op1 ratio, part 0
-        and "{ 93u, 65536 }" in hdr  # op1 ratio, part 1 (per-part expansion)
+        and "{ 109u, 65536 }" in hdr  # op1 ratio, part 1 (per-part expansion)
     ):
         print("ok: the init: table emits (algorithm 7 + per-part op params)")
     else:

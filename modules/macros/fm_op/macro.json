@@ -1,6 +1,6 @@
 {
-  "summary": "The complete DX-style FM operator: phasor + osc(12 waveforms) + dx_env(rate/level) + tl(total-level), with per-op 1-sample self-feedback (the `feedback` param), velocity → amplitude (`vel_amp`), velocity → FM (`vel_fm`), velocity → envelope rate (`vel_rate`), a q16 `ratio` frequency multiplier (runtime), a per-op `detune` (cents −50..50), a per-op amplitude LFO (tremolo), a per-op `mute` gate, and a `pitch` input (the shared vibrato LFO).",
-  "ins": { "fm": "audio", "pitch": "control" },
+  "summary": "The complete DX-style FM operator: phasor + osc(12 waveforms) + dx_env(rate/level) + tl(total-level), with per-op 1-sample self-feedback (the `feedback` param), velocity → amplitude (`vel_amp`), velocity → FM (`vel_fm`), velocity → envelope rate (`vel_rate`), a q16 `ratio` frequency multiplier (runtime), a per-op `detune` (cents −50..50), a per-op amplitude LFO (tremolo), a per-op `mute` gate, a `pitch` input (the shared vibrato LFO), and per-op key-follow (level + feedback LO/HI) driven by a shared `bp` (breakpoint) input.",
+  "ins": { "fm": "audio", "pitch": "control", "bp": "control" },
   "outs": { "audio": "audio" },
   "params": {
     "ratio": { "target": "ph.inc", "note_derived": true },
@@ -15,6 +15,10 @@
     "trem_rate": "lfo.rate",
     "trem_depth": "lfo.depth",
     "trem_wave": "lfo.wave",
+    "level_ks_lo": "level_ks.lo",
+    "level_ks_hi": "level_ks.hi",
+    "fb_ks_lo": "fb_ks.lo",
+    "fb_ks_hi": "fb_ks.hi",
     "r1": "eg.r1", "r2": "eg.r2", "r3": "eg.r3", "r4": "eg.r4",
     "l1": "eg.l1", "l2": "eg.l2", "l3": "eg.l3"
   },
@@ -32,6 +36,8 @@
     { "id": "fmvel", "type": "gain" },
     { "id": "tl", "type": "tl", "params": { "level": 85 } },
     { "id": "fb", "type": "vca", "params": { "level": 0 } },
+    { "id": "level_ks", "type": "key_scale", "params": { "lo": 0, "hi": 0 } },
+    { "id": "fb_ks", "type": "key_scale", "params": { "lo": 0, "hi": 0 } },
     { "id": "d1", "type": "delay1" },
     { "id": "sum", "type": "mix" },
     { "id": "mute", "type": "mute" }
@@ -54,6 +60,10 @@
     { "from": "cvsum.cv", "to": "ampvel.in0" },
     { "from": "velamp.cv", "to": "ampvel.in1" },
     { "from": "ampvel.cv", "to": "tl.cv" },
+    { "from": "bp", "to": "level_ks.bp" },
+    { "from": "bp", "to": "fb_ks.bp" },
+    { "from": "level_ks.k", "to": "tl.k" },
+    { "from": "fb_ks.k", "to": "fb.k" },
     { "from": "osc.audio", "to": "fb.audio" },
     { "from": "fb.audio", "to": "d1.in" },
     { "from": "tl.audio", "to": "mute.audio" },

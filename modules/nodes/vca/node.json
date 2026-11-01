@@ -1,8 +1,13 @@
 {
   "name": "vca",
-  "summary": "Gain cell: Q15 multiply of audio × control cv × a `level` param (default unity) — the FM operator's output amplitude / FM index.",
-  "ins": { "audio": "audio", "cv": { "rate": "control", "default": "32768" } },
+  "summary": "Gain cell: Q15 multiply of audio × control cv × a `level` param (default unity). A bipolar `k` key-follow factor (Q15) pushes the level toward 0/32767 (block-derived `level_eff`).",
+  "ins": {
+    "audio": "audio",
+    "cv": { "rate": "control", "default": "32768" },
+    "k": { "rate": "control", "format": "q15", "default": "0" }
+  },
   "outs": { "audio": "audio" },
   "params": { "level": "q15" },
-  "state": {}
+  "state": { "level_eff": "q15" },
+  "block_derived": { "level_eff": "fm1_key_apply(${param.level}, ${in.k}, 0, 32767)" }
 }

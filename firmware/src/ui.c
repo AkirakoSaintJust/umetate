@@ -560,6 +560,16 @@ void ui_param_fmt(uint16_t p, const char *unit, char *out, uint32_t n)
         ui_strcat(out, "%");
         break;
     }
+    case UI_DISP_PCT_BIP: {                         /* a bipolar -100..100 -> "+N%"/"-N%"/"0%" */
+        if (v > 0) {
+            ui_strcat(out, "+");
+            ui_itoa(v, out + ui_strlen(out));
+        } else {
+            ui_itoa(v, out);
+        }
+        ui_strcat(out, "%");
+        break;
+    }
     case UI_DISP_ONOFF:
         ui_strcat(out, v > 0 ? "on" : "off");
         break;
