@@ -934,12 +934,11 @@ static int32_t ui_header_value(void)
     return v;
 }
 
-/* one header token at (x, y): `current` = the accent colour (where we are),
- * `muted` = dim with an `x` marker (not colour-alone), else the white base text.
- * Returns the next x. */
+/* one header token at (x, y): `current` = the selected part/operator (light blue),
+ * `muted` = red (colour-alone), else the white base text. Returns the next x. */
 static int32_t ui_htok(int32_t x, int32_t y, const char *s, int cur, int muted)
 {
-    uint16_t c = cur ? C_WHITE : (muted ? C_DIM : C_TEXT);
+    uint16_t c = cur ? C_SEL : (muted ? C_DIM : C_TEXT);
     return cv_text(x, y, &FONT_S, s, c);
 }
 
@@ -952,8 +951,8 @@ static void ui_draw_header(void)
     cv_begin(240u, 2u * UI_ROW_H, C_BLACK);
 
     /* row 0 (one line): P1 P2 · op 1 2 3 4 · ALG<alg> · <menu> <page>/<n>. Parts +
-     * operators are the white base text (active = accent, muted = dim `x`); ALG is
-     * yellow; the menu + page is purple. */
+     * operators are the white base text (selected = light blue, muted = red); ALG is
+     * pink; the menu + page is purple. */
     x = 0;
     for (i = 0; i < ui_t->n_part; i++) {
         tok[0] = 'P';
@@ -978,7 +977,7 @@ static void ui_draw_header(void)
         ui_itoa(alg, t);
         ui_strcat(s, t);
         ui_strcat(s, " ");
-        x = cv_text(x, 0, &FONT_S, s, C_HI);      /* the algorithm: yellow */
+        x = cv_text(x, 0, &FONT_S, s, C_HI);      /* the algorithm: pink */
     }
     s[0] = 0;
     if (ui_ctx()->name)

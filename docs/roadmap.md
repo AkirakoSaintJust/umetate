@@ -2732,8 +2732,8 @@ the two stay in sync).
     line 1 = `P1 P2 op 1 2 3 4 ALG(n) menu, pg n/m`; line 2 = the page description
     (the page's first widget — a `subheader`/two-line `label` — is promoted to the
     `ui_page.title` and drawn in the header, so the widget rows shift up one).
-    Colours: parts + operators white, the active part/operator pink (the accent),
-    `ALG(n)` + param values pink, muted ops/parts red (no `x`), `menu, pg n/m`
+    Colours: parts + operators white, the selected part/operator light blue,
+    `ALG(n)` + param values hot pink, muted ops/parts red (no `x`), `menu, pg n/m`
     purple, the description bright green. Fits 240 px at FONT_S.
 
 3. **Part switching.** Make the active part switchable from every menu (like op
@@ -2867,9 +2867,10 @@ Status: **done** — 22–41 complete (2026-11-01). Numbers continue §13.1.
 
 25. **Palette rebalance.** — **done.** The DEFAULT palette read as "all pink" / green
     vanished. Re-tuned `gfx.c`'s DEFAULT palette + the `C_*` roles: **white** param
-    names, **bright-green** page descriptions, **pink** param values + `ALG`,
-    **red** muted ops/parts, **purple** graphs, **pink** accent (cursor/active).
-    (Refined again 2026-11-01; see 40 for the web colour-scramble fix.)
+    names, **bright-green** page descriptions, **hot-pink** param values + `ALG`,
+    **red** muted ops/parts, **purple** graphs, **hot-pink** accent (cursor/active),
+    **light-blue** selected part/operator in the header. (Refined again 2026-11-01;
+    see 40 for the web colour-scramble fix.)
 
 #### Scope / spectro
 

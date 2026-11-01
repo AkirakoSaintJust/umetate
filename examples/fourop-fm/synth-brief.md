@@ -200,8 +200,8 @@ The header is two lines. Line 1 shows, at all times: every **part** (`P1 P2`) an
 active one highlighted; the **current algorithm** (`ALG n`); and the **current menu
 name + page number/total** (`EDIT 1/2`). Line 2 is the **page description** (the
 page's first widget, e.g. `OSCILLATOR`, `OP DETUNES`). Colours: parts + operators
-white, active + `ALG` + values pink, muted red, menu/page purple, the description
-bright green. No page may hide any of it.
+white, the selected part/operator light blue, `ALG` + values hot pink, muted red,
+menu/page purple, the description bright green. No page may hide any of it.
 
 ### 3.3 Contexts (menus) and their pages
 
