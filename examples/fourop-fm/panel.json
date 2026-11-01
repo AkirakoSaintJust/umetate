@@ -3,7 +3,7 @@
   "home": "home",
   "alg": "algorithm",
   "parts": 2,
-  "legend": "~2xSEL~ pts  SEL+ARP-REC mute pt\\n~SEL~ ops  ~ARP-REC~ mute op",
+  "legend": "~2xSEL~ pts  ~SEL+ARP-REC~ mute pt\\n~SEL~ ops  ~ARP-REC~ mute op",
   "operators": ["op1", "op2", "op3", "op4"],
   "mute": ["op1_mute", "op2_mute", "op3_mute", "op4_mute"],
   "global": [
@@ -311,7 +311,7 @@
             { "type": "name", "row": 5, "text": "multi-patch name", "name": 2 },
             { "type": "label", "row": 7, "text": "PRESETS = load part" },
             { "type": "label", "row": 8, "text": "SAVE = save part" },
-            { "type": "label", "row": 9, "text": "SCL+SAVE = init part" }
+            { "type": "label", "row": 9, "text": "SEL+SAVE = init part" }
           ]
         }
       ],

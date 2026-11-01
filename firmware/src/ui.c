@@ -395,7 +395,7 @@ static void ui_do_action(uint8_t action, uint8_t arg)
                                             : (uint8_t)(ui_t->n_op - 1u);
         break;
     case UI_ACT_OP_MUTE: {
-        /* mute the *selected* operator (the SCL + key chord; arg is ignored) */
+        /* mute the *selected* operator (the SEL + key chord; arg is ignored) */
         if (ui_t->mute && ui_selected_op < 4u) {
             uint16_t p = ui_mute_param(ui_selected_op);
             if (p < ui_t->n_params)
@@ -944,8 +944,10 @@ static const uint8_t ALGO_MOD[8][4] = {
     {0, 0, 0, 0},   /* 7: all four carriers */
 };
 static const uint8_t ALGO_CAR[8] = {8, 8, 8, 8, 10, 14, 14, 15};
-/* the block centre per operator per algorithm (pixels; the widget is 240 wide). */
-static const int8_t ALGO_X[8][4] = {
+/* the block centre per operator per algorithm (pixels; the widget is 240 wide).
+ * `int16_t`: several x-centres exceed 127, so `int8_t` would wrap them negative
+ * and draw the blocks off-screen to the left. */
+static const int16_t ALGO_X[8][4] = {
     {108, 108, 108, 108},  /* 0: vertical chain */
     {44, 172, 108, 108},   /* 1: 1,2 on top -> 3 -> 4 */
     {44, 172, 108, 108},   /* 2: 2 on top; 1,3 middle -> 4 */
@@ -955,7 +957,7 @@ static const int8_t ALGO_X[8][4] = {
     {44, 44, 108, 172},    /* 6: 1->2, +3, +4 */
     {210, 150, 90, 30},    /* 7: 4,3,2,1 in a row */
 };
-static const int8_t ALGO_Y[8][4] = {
+static const int16_t ALGO_Y[8][4] = {
     {10, 46, 82, 118},     /* 0 */
     {10, 10, 46, 82},      /* 1 */
     {46, 10, 46, 82},      /* 2 */
@@ -983,10 +985,10 @@ static void algo_graph(int32_t alg, int32_t ox, int32_t oy)
                         ox + ALGO_X[alg][i], oy + ALGO_Y[alg][i], C_AMB);
     for (i = 0; i < 4u; i++)                           /* carrier -> output */
         if ((ALGO_CAR[alg] >> i) & 1u) {
-            int32_t cx = ox + ALGO_X[alg][i];
-            cv_line(cx, oy + ALGO_Y[alg][i] + 7, cx, oy + 138, C_AMB);
-            cv_line(cx - 3, oy + 135, cx, oy + 138, C_AMB);      /* arrowhead */
-            cv_line(cx + 3, oy + 135, cx, oy + 138, C_AMB);
+            int32_t cx = ox + ALGO_X[alg][i], cy = oy + ALGO_Y[alg][i] + 7;
+            cv_line(cx, cy, cx, cy + 8, C_AMB);        /* a short shaft down */
+            cv_line(cx - 3, cy + 5, cx, cy + 8, C_AMB);  /* arrowhead */
+            cv_line(cx + 3, cy + 5, cx, cy + 8, C_AMB);
         }
     for (i = 0; i < 4u; i++) {                         /* the operator blocks */
         int32_t bx = ox + ALGO_X[alg][i] - 20, by = oy + ALGO_Y[alg][i] - 7;
@@ -1007,17 +1009,14 @@ static void ui_draw_algo(const ui_widget *w)
     cv_blit(x, y);
 }
 
-/* the page's subheader (param = the prefix mode): 0 = "OP N <suffix>", 1 =
- * "PART N <suffix>", 2 = "OP <suffix>", 3 = "PART <suffix>", 4 = "<suffix>" (a
- * global page, no prefix). N is the active operator/part; `text` is the
- * param-group name. */
-static void ui_draw_subheader(const ui_widget *w)
+/* build the subheader prefix for `mode` into `s` (empty = no prefix): 0 = "OP N",
+ * 1 = "PART N", 2 = "OP", 3 = "PART", 4 = plain, 5 = "PART n OP". N is the active
+ * operator/part — dynamic, so the header title re-renders on a part/op switch. */
+static void ui_prefix_str(uint8_t mode, char *s)
 {
-    uint32_t x, y, wd, ht;
-    char s[24], t[4];
-    ui_region(w, &x, &y, &wd, &ht);
+    char t[4];
     s[0] = 0;
-    switch (w->param) {
+    switch (mode) {
     case 1u:                                       /* PART N */
         ui_strcpy(s, "PART ");
         t[0] = (char)('1' + ui_selected_part);
@@ -1026,7 +1025,6 @@ static void ui_draw_subheader(const ui_widget *w)
         break;
     case 2u: ui_strcpy(s, "OP "); break;           /* OP (no number) */
     case 3u: ui_strcpy(s, "PART "); break;         /* PART (no number) */
-    case 4u: break;                                /* global: no prefix */
     case 5u:                                       /* PART n OP */
         ui_strcpy(s, "PART ");
         t[0] = (char)('1' + ui_selected_part);
@@ -1034,13 +1032,23 @@ static void ui_draw_subheader(const ui_widget *w)
         ui_strcat(s, t);
         ui_strcat(s, " OP");
         break;
-    default:                                       /* OP N */
+    case 0u:                                       /* OP N */
         ui_strcpy(s, "OP ");
         t[0] = (char)('1' + ui_selected_op);
         t[1] = 0;
         ui_strcat(s, t);
         break;
+    default: break;                                /* 4 = plain (no prefix) */
     }
+}
+
+/* the page's subheader (param = the prefix mode); `text` is the param-group name. */
+static void ui_draw_subheader(const ui_widget *w)
+{
+    uint32_t x, y, wd, ht;
+    char s[24];
+    ui_region(w, &x, &y, &wd, &ht);
+    ui_prefix_str((uint8_t)w->param, s);
     if (w->text) {
         if (s[0])
             ui_strcat(s, " ");
@@ -1129,8 +1137,18 @@ static void ui_draw_header(void)
     ui_strcat(s, t);
     cv_text(x, 0, &FONT_S, s, C_AMB);            /* the menu + page: purple */
 
-    /* row 1: the page description (green) */
-    cv_text(0, UI_ROW_H, &FONT_S, ui_cur_page()->title, C_GRAY);
+    /* row 1: the page description (green), with the subheader prefix (PART n OP /
+       OP n) when the page declared one */
+    {
+        char d[40];
+        ui_prefix_str(ui_cur_page()->mode, d);
+        if (ui_cur_page()->title && ui_cur_page()->title[0]) {
+            if (d[0])
+                ui_strcat(d, " ");
+            ui_strcat(d, ui_cur_page()->title);
+        }
+        cv_text(0, UI_ROW_H, &FONT_S, d, C_GRAY);
+    }
 
     cv_blit(0, 0);
 }
@@ -1227,11 +1245,11 @@ static void ui_draw_popup(void)
 static void ui_draw_alg_popup(void)
 {
     char s[8];
-    cv_begin(240u, 11u * UI_ROW_H, C_POPUP_BG);
+    cv_begin(240u, 13u * UI_ROW_H, C_POPUP_BG);
     ui_strcpy(s, "ALG ");
     ui_itoa((int32_t)ui_popup_alg_val, s + 4);
     cv_text(6, 4, &FONT_S, s, C_POPUP_TXT);
-    algo_graph((int32_t)ui_popup_alg_val, 0, 28);   /* the graph, below the title */
+    algo_graph((int32_t)ui_popup_alg_val, 0, 30);   /* the graph, below the title */
     cv_blit(0, 2 * UI_ROW_H);
 }
 
@@ -1399,7 +1417,7 @@ static void ui_draw_name_editor(void)
         cv_text(6 + (int32_t)i * 16, UI_ROW_H, &FONT_L, s,
                 i == ui_name_cursor ? C_AMB : C_HI);
     }
-    cv_text(6, 3 * UI_ROW_H, &FONT_S, "K1=char K2=cursor SCL=del SAVE=ok HOME=cancel", C_POPUP_TXT);
+    cv_text(6, 3 * UI_ROW_H, &FONT_S, "K1=char K2=cursor SEL=del SAVE=ok HOME=cancel", C_POPUP_TXT);
     cv_blit(0, 4 * UI_ROW_H);
 }
 

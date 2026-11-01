@@ -13,7 +13,7 @@ static const ui_widget W_0_0[] = {
     { UI_PARAM_ROW, 7, 0, 1, P_channel, "MIDI", 0, 0, 0, 0 },
 };
 static const ui_page PG_0[] = {
-    { "RIB", W_0_0, (uint8_t)(sizeof W_0_0 / sizeof W_0_0[0]) },
+    { "RIB", 255, W_0_0, (uint8_t)(sizeof W_0_0 / sizeof W_0_0[0]) },
 };
 static const ui_binding BIND_0[] = {
     { UI_BIND_PARAM, UI_SRC_BTN_OCT_DOWN, P_octave, 0, 0, UI_REL, 0 },

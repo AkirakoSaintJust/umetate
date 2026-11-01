@@ -35,7 +35,7 @@ static const ui_widget W_0_0[] = {
     { UI_PARAM_ROW, 6, 0, 1, P_fold, "FOLD", 0, 0, 0, 0 },
 };
 static const ui_page PG_0[] = {
-    { "", W_0_0, (uint8_t)(sizeof W_0_0 / sizeof W_0_0[0]) },
+    { "", 0xFF, W_0_0, (uint8_t)(sizeof W_0_0 / sizeof W_0_0[0]) },
 };
 static const ui_widget W_1_0[] = {
     { UI_STATUS, 1, 0, 2, P_alg, 0, 0, 0, 0, 0 },
@@ -45,20 +45,20 @@ static const ui_widget W_1_1[] = {
     { UI_LABEL, 1, 0, 1, UI_NO_PARAM, "EDIT P2", 0, 0, 0, 0 },
 };
 static const ui_page PG_1[] = {
-    { "", W_1_0, (uint8_t)(sizeof W_1_0 / sizeof W_1_0[0]) },
-    { "", W_1_1, (uint8_t)(sizeof W_1_1 / sizeof W_1_1[0]) },
+    { "", 0xFF, W_1_0, (uint8_t)(sizeof W_1_0 / sizeof W_1_0[0]) },
+    { "", 0xFF, W_1_1, (uint8_t)(sizeof W_1_1 / sizeof W_1_1[0]) },
 };
 static const ui_widget W_2_0[] = {
     { UI_LABEL, 1, 0, 1, UI_NO_PARAM, "STEP", 0, 0, 0, 0 },
 };
 static const ui_page PG_2[] = {
-    { "", W_2_0, (uint8_t)(sizeof W_2_0 / sizeof W_2_0[0]) },
+    { "", 0xFF, W_2_0, (uint8_t)(sizeof W_2_0 / sizeof W_2_0[0]) },
 };
 static const ui_widget W_3_0[] = {
     { UI_LABEL, 1, 0, 1, UI_NO_PARAM, "FX", 0, 0, 0, 0 },
 };
 static const ui_page PG_3[] = {
-    { "", W_3_0, (uint8_t)(sizeof W_3_0 / sizeof W_3_0[0]) },
+    { "", 0xFF, W_3_0, (uint8_t)(sizeof W_3_0 / sizeof W_3_0[0]) },
 };
 
 static const ui_binding BIND_0[] = {

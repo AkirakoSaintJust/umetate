@@ -888,9 +888,9 @@ is the worked example of the depth; the skill generalizes it to any synth.
    *replaces* (a chord that mutes must not also fire a note; a page removed from a
    menu is named as removed). fourop-fm: `ENV`/`LFO`/`EDIT`/`FX`/`GLO`/`HOME` select
    menus; `ARP`/`SEQ`/`PLAY`/`REC` are **operator mutes 1–4** (the EDIT mute
-   sub-page is removed); `SCL` tap = next active operator, double-tap = switch the
-   active part, `SCL`+`ARP`/`PLAY` = part 1 mute, `SCL`+`SEQ`/`REC` = part 2 mute,
-   `SCL`+key = operator mute chord (not a note); the `PRESETS` encoder opens the
+   sub-page is removed); `SEL` tap = next active operator, double-tap = switch the
+   active part, `SEL`+`ARP`/`PLAY` = part 1 mute, `SEL`+`SEQ`/`REC` = part 2 mute,
+   `SEL`+key = operator mute chord (not a note); the `PRESETS` encoder opens the
    patch browser; `KNOB1–4` edit the current page's params; `SELECT` = page up/down
    (wrapping).
 
@@ -2737,20 +2737,20 @@ the two stay in sync).
     `ALG(n)` + param values hot pink, muted ops/parts red (no `x`), `menu, pg n/m`
     purple, the description bright green. Fits 240 px at FONT_S.
 
-3. **Part switching.** — **done.** The settled gesture is **SCL double-tap** (a tap
+3. **Part switching.** — **done.** The settled gesture is **SEL double-tap** (a tap
    advances the operator, a second tap within ~300 ms switches the active part). It is
    handled in the app loop outside the name/save popups, so it works from every menu
    (HOME/EDIT/ENV/LFO/FX/GLO); the header shows the active part light blue.
 
 4. **Bottom legend.** — **done.** A footer gesture legend (`panel.json`'s `legend`
-   field, drawn by `ui_redraw` at row 14): `SCLx2 part +key mute +ply Pmute`
-   (double-tap = part switch, SCL+key = operator mute, SCL+play = part mute). The
+   field, drawn by `ui_redraw` at row 14): `SELx2 part +key mute +ply Pmute`
+   (double-tap = part switch, SEL+key = operator mute, SEL+play = part mute). The
    single-line-header promotion (item 1) already shifts every page's widgets up one
    row, so row 14 is free on all pages; `ui_draw_legend` still skips it if a future
    page reaches the last row (row budget permitting).
 
 8. **Name-entry legend.** — **done.** The name editor already shows its legend
-   (`K1=char K2=cursor SCL=del SAVE=ok HOME=cancel`) alongside the save/save-mode
+   (`K1=char K2=cursor SEL=del SAVE=ok HOME=cancel`) alongside the save/save-mode
    choosers' own legends.
 
 21. **Menu button → next page.** — **done.** `ui_switch` now advances to the next
@@ -2782,7 +2782,7 @@ the two stay in sync).
 6. **Save popup auto-close.** The save popup silently closes (no write) after ~3 s
    of idle.
 
-9. **Init patch / init part.** Fix SCL+SAVE (does not reset everything — the
+9. **Init patch / init part.** Fix SEL+SAVE (does not reset everything — the
    algorithm is not reset). `init patch` asks for confirmation (a popup, ~3 s idle
    auto-close without initialising). `init part` defaults: ALG 0, all FX off, P-ENV
    off, all A-LFOs and the P-LFO off (DEPTH 0), every OP RATIO 1.00, LEVEL ~70–75,

@@ -364,6 +364,17 @@ def generate_panel(
             arg = arg_expr(b.get("arg"), action_name)
         return f"    {{ {kind}, {source}, {param}, {action}, {arg}, {behavior}, 0 }},"
 
+    def subheader_mode(w: Widget) -> int:
+        """The subheader prefix mode: 0 = "OP N", 1 = "PART N", 2 = "OP",
+        3 = "PART", 4 = plain (no prefix), 5 = "PART n OP"."""
+        if w.get("plain"):
+            return 4
+        if w.get("partop"):
+            return 5
+        if w.get("plural"):
+            return 3 if w.get("part") else 2
+        return 1 if w.get("part") else 0
+
     def widget_line(w: Widget, row_shift: int = 0) -> str:
         row = w.get("row", 0) - row_shift
         col = w.get("col", 0)
@@ -386,16 +397,8 @@ def generate_panel(
                 param = str(w.get("channel", 0))
         elif w["type"] == "subheader":
             typ = "UI_SUBHEADER"
-            # param = the prefix mode: 0 = "OP N", 1 = "PART N", 2 = "OP",
-            # 3 = "PART", 4 = plain (no prefix), 5 = "PART N OP"
-            if w.get("plain"):
-                param = "4"
-            elif w.get("partop"):
-                param = "5"
-            elif w.get("plural"):
-                param = "3" if w.get("part") else "2"
-            else:
-                param = "1" if w.get("part") else "0"
+            # param = the prefix mode (see subheader_mode)
+            param = str(subheader_mode(w))
         elif w["type"] == "name":
             typ = "UI_NAME"
             # param = the name index (0 = part, 1 = patch); text = the label
@@ -510,9 +513,12 @@ def generate_panel(
         for pi, page in enumerate(pages):
             widgets = page.get("widgets", [])
             desc = ""
+            mode = 0xFF
             shift = 0
             if widgets and is_description(widgets[0]):
                 desc = widgets[0].get("text") or ""
+                if widgets[0]["type"] == "subheader":
+                    mode = subheader_mode(widgets[0])
                 widgets = widgets[1:]
                 shift = 1
             wname = f"W_{ci}_{pi}"
@@ -521,7 +527,7 @@ def generate_panel(
             lines.append("};")
             widget_count += len(widgets)
             page_decls.append(
-                f"    {{ {cstr(desc)}, {wname}, "
+                f"    {{ {cstr(desc)}, {mode}, {wname}, "
                 f"(uint8_t)(sizeof {wname} / sizeof {wname}[0]) }},"
             )
         lines.append(f"static const ui_page PG_{ci}[] = {{")

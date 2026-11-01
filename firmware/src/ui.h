@@ -107,7 +107,12 @@ typedef struct {
     uint8_t n_items;
 } ui_widget;
 
-typedef struct { const char *title; const ui_widget *w; uint8_t n; } ui_page;
+typedef struct {
+    const char *title;    /* the page description (the promoted subheader text) */
+    uint8_t mode;         /* the subheader prefix mode (0..5), or 0xFF = none */
+    const ui_widget *w;
+    uint8_t n;
+} ui_page;
 
 /* a param's display scale (per param id; the value's on-screen form + stepping) */
 typedef struct {
@@ -165,13 +170,13 @@ uint8_t ui_pageno(void);                         /* the current page index withi
 void ui_handle(uint16_t source, int32_t value);  /* resolve the source -> param/action */
 int32_t *ui_params(void);                        /* the shared param_values[] */
 uint8_t ui_part(void);                           /* the active part (0-based) */
-void ui_part_next(void);                         /* cycle the active part (the SCL double-tap) */
+void ui_part_next(void);                         /* cycle the active part (the SEL double-tap) */
 void ui_part_set(uint8_t part);                  /* set the active part (INIT) */
 void ui_op_set(uint8_t op);                      /* set the active operator (INIT) */
 void ui_part_mute_toggle(uint8_t part);          /* mute/unmute a part (the header + chords) */
 void ui_part_mute_set(uint8_t part, uint8_t muted); /* set a part's mute (INIT) */
 uint8_t ui_part_muted(uint8_t part);             /* 1 = the part is muted */
-void ui_op_mute_active(void);                    /* mute/unmute the active operator (SCL + key) */
+void ui_op_mute_active(void);                    /* mute/unmute the active operator (SEL + key) */
 void ui_popup_show(uint32_t slot, const char *name); /* the multi-patch preset-browser popup */
 void ui_popup_show_part(uint32_t slot, const char *name); /* the single-part preset-browser popup */
 void ui_popup_alg(uint32_t alg);                 /* the algorithm scroll popup ("ALG n") */

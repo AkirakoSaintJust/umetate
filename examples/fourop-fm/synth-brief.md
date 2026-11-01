@@ -193,9 +193,9 @@ pages (§3.3): the active part's four operators are its four channels, so the
 = the current page's params. `SELECT` = page up/down (wrapping). The buttons:
 `EDIT` (operator pitch), `ENV` (envelopes), `LFO` (modulation), `FX` (filter +
 fold), `GLO` (parts + patch), `HOME` (the visual pages), `ARP`/`SEQ`/`PLAY`/`REC`
-(operator mutes 1–4), `SCL` (operator select + part switch + part mute combos),
+(operator mutes 1–4), `SEL` (operator select + part switch + part mute combos),
 `PRESETS` (the patch-browser popup), `OCT−`/`OCT+` (shift the keybed a whole
-octave, ±2, firmware-level). The keybed plays notes; `SCL`+key is the mute chord.
+octave, ±2, firmware-level). The keybed plays notes; `SEL`+key is the mute chord.
 
 ### 3.2 Always visible (every page, a fixed header)
 
@@ -236,9 +236,9 @@ menu/page purple, the description bright green. No page may hide any of it.
 
 ### 3.4 The shortcuts and modifiers
 
-`SCL` **taps** the next active operator; a **double-tap** switches the active
-part. **Holding `SCL` + a key** mutes that operator (chord, not a note). **Holding
-`SCL` + `ARP` or `PLAY`** toggles part 1 mute; **`SCL` + `SEQ` or `REC`** toggles
+`SEL` **taps** the next active operator; a **double-tap** switches the active
+part. **Holding `SEL` + a key** mutes that operator (chord, not a note). **Holding
+`SEL` + `ARP` or `PLAY`** toggles part 1 mute; **`SEL` + `SEQ` or `REC`** toggles
 part 2 mute. `ARP`/`SEQ`/`PLAY`/`REC` (plain) toggle operator mutes 1–4 — the
 old mute sub-page is gone. The `PRESETS` encoder opens the **multi-patch (2-part)
 preset browser** as a popup; after 2 s with no preset-encoder input, the selected

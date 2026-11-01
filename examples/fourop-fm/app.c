@@ -403,7 +403,7 @@ static void app_step(void)
         if (ch0 < 0 || ch0 > 15)
             ch0 = 0;
         if (ui_name_editing() != 0xFFu) {
-            /* the name editor: KNOB1 = char, KNOB2 = cursor, SCL = backspace,
+            /* the name editor: KNOB1 = char, KNOB2 = cursor, SEL = backspace,
                SAVE = ok, HOME = cancel; the keys + page are inert while open. */
             int32_t k1 = fm1_enc_take(ENC_KNOB1);
             int32_t k2 = fm1_enc_take(ENC_KNOB2);
@@ -479,10 +479,10 @@ static void app_step(void)
                 app_pending_part = 0u;
             }
         } else {
-        for (k = 0; k < 27u; k++) {                /* the keys: play + echo, or SCL chords */
+        for (k = 0; k < 27u; k++) {                /* the keys: play + echo, or SEL chords */
             if (down >> k & 1u) {
                 if (scl) {
-                    ui_op_mute_active();           /* SCL + key: mute the active op, no note */
+                    ui_op_mute_active();           /* SEL + key: mute the active op, no note */
                     app_held[k] = 0u;
                 } else {
                     app_held[k] = (uint8_t)(base + k);
@@ -509,7 +509,7 @@ static void app_step(void)
         if (b & (1u << BTN_OCT_DOWN)) app_oct = app_oct > -2 ? app_oct - 1 : app_oct;
         if (b & (1u << BTN_OCT_UP))   app_oct = app_oct <  2 ? app_oct + 1 : app_oct;
 
-        /* SCL: a tap advances the operator (deferred so a second tap within the
+        /* SEL: a tap advances the operator (deferred so a second tap within the
            window is a part switch instead); a double-tap switches the part. */
         if (b & (1u << BTN_SEL)) {
             if (now - app_last_scl_ms < 300u) {
@@ -522,8 +522,8 @@ static void app_step(void)
             app_last_scl_ms = now;
         }
 
-        /* ARP/SEQ/PLAY/REC: plain = operator mutes 1-4; SCL+ARP/PLAY = part 1
-           mute, SCL+SEQ/REC = part 2 mute. */
+        /* ARP/SEQ/PLAY/REC: plain = operator mutes 1-4; SEL+ARP/PLAY = part 1
+           mute, SEL+SEQ/REC = part 2 mute. */
         if (b & (1u << BTN_ARP)) {
             if (scl) ui_part_mute_toggle(0u);
             else ui_handle(UI_SRC_BTN_ARP, -1);
@@ -542,7 +542,7 @@ static void app_step(void)
         }
 
         /* SAVE: plain = open the save chooser (single part / multi-patch);
-           SCL+SAVE = INIT PATCH (INIT PART in GLO). */
+           SEL+SAVE = INIT PATCH (INIT PART in GLO). */
         if (b & (1u << BTN_SAVE)) {
             if (scl) {
                 if (ui_top() == GLO_CTX) {
@@ -573,8 +573,8 @@ static void app_step(void)
     if ((e = fm1_enc_take(ENC_KNOB3)) != 0) ui_handle(UI_SRC_ENC_KNOB3, e);
     if ((e = fm1_enc_take(ENC_KNOB4)) != 0) ui_handle(UI_SRC_ENC_KNOB4, e);
 
-    /* the algorithm scroll popup auto-closes ~250 ms after the knob stops */
-    if (app_alg_ms && fm1_ms - app_alg_ms >= 250u) {
+    /* the algorithm scroll popup auto-closes ~600 ms after the knob stops */
+    if (app_alg_ms && fm1_ms - app_alg_ms >= 600u) {
         ui_popup_hide();
         app_alg_ms = 0u;
     }
