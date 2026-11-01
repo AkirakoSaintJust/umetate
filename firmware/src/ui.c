@@ -75,6 +75,7 @@ static uint16_t ui_save_slots[2];                /* [0] single-part slot, [1] mu
 static uint8_t ui_save_mode_on, ui_save_mode_which;  /* step 2: the multi-patch save mode */
 static uint8_t ui_part_sel_on, ui_part_sel_which;  /* the "which single part" chooser */
 static const char *ui_part_title;                  /* the chooser's extra first line (0 = none) */
+static uint8_t ui_copy_on, ui_copy_which, ui_copy_targets;  /* the page-copy chooser */
 
 static const ui_context *ui_ctx(void) { return &ui_t->ctx[ui_stack[ui_sp]]; }
 static const ui_page *ui_cur_page(void) { return &ui_ctx()->pages[ui_pagei[ui_sp]]; }
@@ -1310,7 +1311,7 @@ void ui_popup_hide(void)
  * drained so a twist during the popup doesn't fire once it closes). */
 uint8_t ui_popup_active(void)
 {
-    return ui_name_on || ui_save_on || ui_save_mode_on || ui_part_sel_on;
+    return ui_name_on || ui_save_on || ui_save_mode_on || ui_part_sel_on || ui_copy_on;
 }
 
 /* ---- the name strings + the name editor ---- */
@@ -1648,6 +1649,149 @@ static void ui_draw_part_chooser(void)
     cv_blit(0, 4 * UI_ROW_H);
 }
 
+/* ---- the page-copy chooser (SEL+EDIT: copy this page's params to another
+   part/operator) ---- */
+
+/* the copy kind for the current page: 0 = nothing copyable (HOME / no per-part
+ * params), 1 = part-level (active part -> another part), 2 = single-operator
+ * (active op -> another part+op). */
+static uint8_t ui_copy_kind(void)
+{
+    const ui_page *p = ui_cur_page();
+    uint32_t i;
+    uint8_t has_op = 0u, has_part = 0u;
+    if (ui_top() == ui_t->home)
+        return 0u;
+    for (i = 0; i < p->n; i++) {
+        if (p->w[i].type == UI_OP_ROW)
+            has_op = 1u;
+        else if (p->w[i].type == UI_PART_ROW)
+            has_part = 1u;
+    }
+    if (has_op)
+        return 2u;
+    if (has_part)
+        return 1u;
+    return 0u;
+}
+
+uint8_t ui_copy_available(void) { return ui_copy_kind() != 0u; }
+uint8_t ui_copy_open(void) { return ui_copy_on; }
+
+void ui_copy_begin(void)
+{
+    uint8_t kind = ui_copy_kind();
+    if (!kind)
+        return;
+    ui_copy_which = 0u;
+    ui_copy_targets = kind == 2u ? (uint8_t)(ui_t->n_op * ui_t->n_part) : ui_t->n_part;
+    if (!ui_copy_on)
+        ui_reset_page();
+    ui_copy_on = 1u;
+}
+
+void ui_copy_move(int32_t delta)
+{
+    if (!ui_copy_on || !ui_copy_targets)
+        return;
+    if (delta > 0)
+        ui_copy_which = (uint8_t)((ui_copy_which + 1u) % ui_copy_targets);
+    else if (delta < 0)
+        ui_copy_which = (uint8_t)((ui_copy_which + ui_copy_targets - 1u) % ui_copy_targets);
+}
+
+/* the selected target -> (part, op); `op` is 0 for a part-level copy. */
+void ui_copy_target(uint8_t *part, uint8_t *op)
+{
+    if (ui_copy_targets > 2u && ui_t->n_op) {
+        *part = (uint8_t)(ui_copy_which / ui_t->n_op);
+        *op = (uint8_t)(ui_copy_which % ui_t->n_op);
+    } else {
+        *part = ui_copy_which;
+        *op = 0u;
+    }
+}
+
+/* copy every operator-relative / part-relative param on the current page from the
+ * active part (and active op) to `dst_part` (and `dst_op`). Global params are not
+ * copied (they have no per-part value). */
+void ui_copy_apply(uint8_t dst_part, uint8_t dst_op)
+{
+    const ui_page *p = ui_cur_page();
+    uint32_t i;
+    for (i = 0; i < p->n; i++) {
+        const ui_widget *w = &p->w[i];
+        if (w->type == UI_OP_ROW && ui_t->op_param && w->param < ui_t->n_op_param) {
+            uint16_t src = ui_t->op_param[(uint32_t)ui_selected_part * ui_t->n_op
+                                          * ui_t->n_op_param
+                                          + (uint32_t)ui_selected_op * ui_t->n_op_param
+                                          + w->param];
+            uint16_t dst = ui_t->op_param[(uint32_t)dst_part * ui_t->n_op * ui_t->n_op_param
+                                          + (uint32_t)dst_op * ui_t->n_op_param + w->param];
+            if (src < ui_t->n_params && dst < ui_t->n_params)
+                ui_param_v[dst] = ui_param_v[src];
+        } else if (w->type == UI_PART_ROW && ui_t->part_param
+                   && w->param < ui_t->n_part_param) {
+            uint16_t src = ui_t->part_param[(uint32_t)ui_selected_part * ui_t->n_part_param
+                                            + w->param];
+            uint16_t dst = ui_t->part_param[(uint32_t)dst_part * ui_t->n_part_param + w->param];
+            if (src < ui_t->n_params && dst < ui_t->n_params)
+                ui_param_v[dst] = ui_param_v[src];
+        }
+    }
+}
+
+void ui_copy_commit(void)
+{
+    if (ui_copy_on) {
+        ui_copy_on = 0u;
+        ui_reset_page();
+    }
+}
+
+void ui_copy_cancel(void)
+{
+    if (ui_copy_on) {
+        ui_copy_on = 0u;
+        ui_reset_page();
+    }
+}
+
+/* the copy chooser pop-up: a title, the target rows (2 parts or 8 part+op), and
+ * the legend. */
+static void ui_draw_copy(void)
+{
+    uint32_t i;
+    int32_t y = 2;
+    uint32_t rows = (uint32_t)ui_copy_targets + 2u;
+    cv_begin(240u, rows * UI_ROW_H, C_POPUP_BG);
+    cv_text(6, y, &FONT_S,
+            ui_copy_targets > 2u ? "COPY INTO WHICH OP?" : "COPY INTO WHICH PART?",
+            C_POPUP_TXT);
+    y += UI_ROW_H;
+    for (i = 0; i < (uint32_t)ui_copy_targets; i++) {
+        char row[24], t[4];
+        ui_strcpy(row, i == ui_copy_which ? "> " : "  ");
+        if (ui_copy_targets > 2u && ui_t->n_op) {
+            ui_strcat(row, "PART ");
+            ui_itoa((int32_t)(i / ui_t->n_op) + 1, t);
+            ui_strcat(row, t);
+            ui_strcat(row, " OP ");
+            ui_itoa((int32_t)(i % ui_t->n_op) + 1, t);
+            ui_strcat(row, t);
+        } else {
+            ui_strcat(row, "PART ");
+            ui_itoa((int32_t)i + 1, t);
+            ui_strcat(row, t);
+        }
+        cv_text(6, y + (int32_t)i * UI_ROW_H, &FONT_S, row,
+                i == ui_copy_which ? C_AMB : C_HI);
+    }
+    y += (int32_t)ui_copy_targets * UI_ROW_H;
+    cv_text(6, y, &FONT_S, "K1=select SAVE=copy HOME=cancel", C_POPUP_TXT);
+    cv_blit(0, 2 * UI_ROW_H);
+}
+
 /* draw one legend line (up to `\n` or NUL): `~...~` segments in hot pink, the
  * rest in white. Returns nothing (the pen carries via x). */
 static void legend_line(const char *s, int32_t y)
@@ -1739,6 +1883,8 @@ void ui_redraw(uint32_t now_ms)
         ui_draw_save_mode();
     if (ui_part_sel_on)
         ui_draw_part_chooser();
+    if (ui_copy_on)
+        ui_draw_copy();
 }
 
 /* the safe-failure screen: drawn independently, never through the widget engine */

@@ -222,6 +222,14 @@ void ui_part_chooser_move(int32_t delta);         /* toggle the selected part */
 void ui_part_chooser_commit(void);                /* keep the choice, close */
 void ui_part_chooser_cancel(void);                /* discard, close */
 uint8_t ui_popup_active(void);                    /* 1 = a modal popup is open (captures control) */
+uint8_t ui_copy_available(void);                  /* 1 = the page has copyable params */
+void ui_copy_begin(void);                         /* open the page-copy chooser (SEL+EDIT) */
+uint8_t ui_copy_open(void);                       /* 1 = the copy chooser is showing */
+void ui_copy_move(int32_t delta);                 /* move the target selection */
+void ui_copy_target(uint8_t *part, uint8_t *op);  /* the selected target (part, op) */
+void ui_copy_apply(uint8_t part, uint8_t op);     /* copy the page's params to (part, op) */
+void ui_copy_commit(void);                        /* close the chooser */
+void ui_copy_cancel(void);                        /* discard, close */
 
 void ui_param_fmt(uint16_t p, const char *unit, char *out, uint32_t n); /* format a value */
 void ui_redraw(uint32_t now_ms);                 /* the retained-mode, rate-bounded redraw */

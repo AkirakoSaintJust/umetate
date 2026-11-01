@@ -484,6 +484,22 @@ static void app_step(void)
                 ui_part_chooser_cancel();
                 app_pending_part = 0u;
             }
+        } else if (ui_copy_open()) {
+            /* the page-copy chooser: KNOB1 = target, SAVE = copy, HOME = cancel */
+            int32_t k1 = fm1_enc_take(ENC_KNOB1);
+            if (k1)
+                ui_copy_move(k1);
+            b = fm1_input_edges(&rel);
+            if (b & (1u << BTN_SAVE)) {
+                uint8_t part, op;
+                ui_copy_target(&part, &op);
+                ui_copy_commit();
+                ui_copy_apply(part, op);
+                ui_popup_saved();
+                app_saved_ms = fm1_ms;
+            }
+            if (b & (1u << BTN_HOME))
+                ui_copy_cancel();
         } else {
         for (k = 0; k < 27u; k++) {                /* the keys: play + echo, or SEL chords */
             if (down >> k & 1u) {
@@ -504,7 +520,12 @@ static void app_step(void)
         }
 
         b = fm1_input_edges(&rel);
-        if (b & (1u << BTN_EDIT)) ui_handle(UI_SRC_BTN_EDIT, -1);
+        if (b & (1u << BTN_EDIT)) {
+            if (scl && ui_copy_available())
+                ui_copy_begin();                    /* SEL+EDIT: copy the page's params */
+            else
+                ui_handle(UI_SRC_BTN_EDIT, -1);
+        }
         if (b & (1u << BTN_HOME)) ui_handle(UI_SRC_BTN_HOME, -1);
         if (b & (1u << BTN_ENV)) ui_handle(UI_SRC_BTN_ENV, -1);
         if (b & (1u << BTN_LFO)) ui_handle(UI_SRC_BTN_LFO, -1);
