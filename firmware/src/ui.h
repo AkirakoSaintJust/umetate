@@ -98,7 +98,7 @@ enum {
 };
 
 #define UI_NO_PARAM 0xFFFFu
-#define UI_PARAM_MAX 256u   /* the ui_params[] cap; the generator errors beyond it */
+#define UI_PARAM_MAX 512u   /* the ui_params[] cap; the generator errors beyond it */
 
 /* ---- the generated (const, XIP) tables ---- */
 typedef struct {

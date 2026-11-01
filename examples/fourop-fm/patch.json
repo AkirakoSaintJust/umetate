@@ -50,7 +50,12 @@
     "op1_level_ks_lo": 0, "op1_level_ks_hi": 0, "op1_fb_ks_lo": 0, "op1_fb_ks_hi": 0,
     "op2_level_ks_lo": 0, "op2_level_ks_hi": 0, "op2_fb_ks_lo": 0, "op2_fb_ks_hi": 0,
     "op3_level_ks_lo": 0, "op3_level_ks_hi": 0, "op3_fb_ks_lo": 0, "op3_fb_ks_hi": 0,
-    "op4_level_ks_lo": 0, "op4_level_ks_hi": 0, "op4_fb_ks_lo": 0, "op4_fb_ks_hi": 0
+    "op4_level_ks_lo": 0, "op4_level_ks_hi": 0, "op4_fb_ks_lo": 0, "op4_fb_ks_hi": 0,
+    "op1_aenv_ks_lo": 0, "op1_aenv_ks_hi": 0,
+    "op2_aenv_ks_lo": 0, "op2_aenv_ks_hi": 0,
+    "op3_aenv_ks_lo": 0, "op3_aenv_ks_hi": 0,
+    "op4_aenv_ks_lo": 0, "op4_aenv_ks_hi": 0,
+    "penv_ks_lo": 0, "penv_ks_hi": 0
   },
   "tables": { "routing": { "kind": "routing" } },
   "parts": {
@@ -145,7 +150,17 @@
     "op4_level_ks_lo": { "target": "op4.level_ks.lo", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
     "op4_level_ks_hi": { "target": "op4.level_ks.hi", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
     "op4_fb_ks_lo":    { "target": "op4.fb_ks.lo", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
-    "op4_fb_ks_hi":    { "target": "op4.fb_ks.hi", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" }
+    "op4_fb_ks_hi":    { "target": "op4.fb_ks.hi", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op1_aenv_ks_lo":  { "target": "op1.eg_ks.lo", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op1_aenv_ks_hi":  { "target": "op1.eg_ks.hi", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op2_aenv_ks_lo":  { "target": "op2.eg_ks.lo", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op2_aenv_ks_hi":  { "target": "op2.eg_ks.hi", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op3_aenv_ks_lo":  { "target": "op3.eg_ks.lo", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op3_aenv_ks_hi":  { "target": "op3.eg_ks.hi", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op4_aenv_ks_lo":  { "target": "op4.eg_ks.lo", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op4_aenv_ks_hi":  { "target": "op4.eg_ks.hi", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "penv_ks_lo":      { "target": "penv_ks.lo", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "penv_ks_hi":      { "target": "penv_ks.hi", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" }
   },
   "voice": {
     "nodes": [
@@ -159,6 +174,7 @@
       { "id": "d4", "type": "delay1" },
       { "id": "route", "type": "route", "params": { "which": "routing" } },
       { "id": "penv", "type": "pitch_env", "params": { "on": 0, "r1": 80, "r2": 60, "r3": 50, "r4": 80, "l1": 5461, "l2": 2731, "l3": 0 } },
+      { "id": "penv_ks", "type": "key_scale", "params": { "lo": 0, "hi": 0 } },
       { "id": "psum", "type": "csum" },
       { "id": "plfo", "type": "lfo", "params": { "rate": 486958, "depth": 273, "wave": 0 } }
     ],
@@ -176,6 +192,7 @@
       { "from": "route.mod4", "to": "op4.fm" },
       { "from": "plfo.cv", "to": "psum.in0" },
       { "from": "penv.cv", "to": "psum.in1" },
+      { "from": "penv_ks.k", "to": "penv.k" },
       { "from": "psum.cv", "to": "op1.pitch" },
       { "from": "psum.cv", "to": "op2.pitch" },
       { "from": "psum.cv", "to": "op3.pitch" },
@@ -197,6 +214,7 @@
       { "from": "key_bp.bp", "to": "op2.bp" },
       { "from": "key_bp.bp", "to": "op3.bp" },
       { "from": "key_bp.bp", "to": "op4.bp" },
+      { "from": "key_bp.bp", "to": "penv_ks.bp" },
       { "from": "voice", "to": "lp.audio" },
       { "from": "fenv.cv", "to": "lp.fenv" },
       { "from": "lp.out", "to": "wf.audio" },

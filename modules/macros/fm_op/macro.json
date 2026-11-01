@@ -19,6 +19,8 @@
     "level_ks_hi": "level_ks.hi",
     "fb_ks_lo": "fb_ks.lo",
     "fb_ks_hi": "fb_ks.hi",
+    "aenv_ks_lo": "eg_ks.lo",
+    "aenv_ks_hi": "eg_ks.hi",
     "r1": "eg.r1", "r2": "eg.r2", "r3": "eg.r3", "r4": "eg.r4",
     "l1": "eg.l1", "l2": "eg.l2", "l3": "eg.l3"
   },
@@ -38,6 +40,7 @@
     { "id": "fb", "type": "vca", "params": { "level": 0 } },
     { "id": "level_ks", "type": "key_scale", "params": { "lo": 0, "hi": 0 } },
     { "id": "fb_ks", "type": "key_scale", "params": { "lo": 0, "hi": 0 } },
+    { "id": "eg_ks", "type": "key_scale", "params": { "lo": 0, "hi": 0 } },
     { "id": "d1", "type": "delay1" },
     { "id": "sum", "type": "mix" },
     { "id": "mute", "type": "mute" }
@@ -64,6 +67,8 @@
     { "from": "bp", "to": "fb_ks.bp" },
     { "from": "level_ks.k", "to": "tl.k" },
     { "from": "fb_ks.k", "to": "fb.k" },
+    { "from": "bp", "to": "eg_ks.bp" },
+    { "from": "eg_ks.k", "to": "eg.k" },
     { "from": "osc.audio", "to": "fb.audio" },
     { "from": "fb.audio", "to": "d1.in" },
     { "from": "tl.audio", "to": "mute.audio" },

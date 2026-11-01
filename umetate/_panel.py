@@ -582,9 +582,9 @@ def generate_panel(
     n_params = (
         (max(ids.values()) + 1 if ids else 0) if param_ids is not None else len(params)
     )
-    if n_params > 256:
+    if n_params > 512:
         raise GenError(
-            f"panel: {n_params} params exceed the UI kit's UI_PARAM_MAX (256)"
+            f"panel: {n_params} params exceed the UI kit's UI_PARAM_MAX (512)"
         )
     mute = panel.get("mute") or []
     # the mute/operator/envelope/part-relative tables are per-part (part-major): the
