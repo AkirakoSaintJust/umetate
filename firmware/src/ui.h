@@ -256,5 +256,10 @@ void ui_act_name(uint8_t which);               /* open the name editor for `whic
  * passed so the app can key off w->param or w->text) ---- */
 void ui_draw_custom(const ui_widget *w);
 
+/* ---- the save-chooser slot name: the app fills `out` (cap bytes) with the stored
+ * preset name for a slot (kind 0 = single part, 1 = multi-patch), or "" if empty.
+ * The framework calls it to show what a save would overwrite. ---- */
+void ui_save_slot_name(uint8_t kind, uint16_t slot, char *out, uint32_t cap);
+
 /* ---- the safe-failure screen: drawn independently of the widget engine ---- */
 void ui_safe_fail(const char *msg);

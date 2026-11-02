@@ -2791,11 +2791,12 @@ the two stay in sync).
    stack count 1, name `INIT PART`, organ A-ENV) — `ui_act_init_patch` /
    `ui_act_init_part` in `app.c`.
 
-12. **Save slot list.** — **partial.** The save chooser is a two-row kind + slot
-    picker (single part / multi-patch), overwriting asks for confirmation, and
-    every load/save/init popup auto-closes (~3 s idle). *Open:* the chooser shows
-    the slot *number*, not the preset *name* — showing the name needs the app to
-    feed the framework the slot's stored name (an app↔framework callback), deferred.
+12. **Save slot list.** — **done.** The save chooser now shows the **stored preset
+    name** next to each slot (`ui_save_slot_name` — an app hook the framework calls,
+    with a no-op in the RIB demo), so the user sees what a save will overwrite. It
+    is a two-row kind + slot picker (single part / multi-patch), overwriting asks
+    for confirmation (SAVE commits, HOME cancels), and every load/save/init popup
+    auto-closes (~3 s idle, non-destructive).
 
 #### E. GLO menu
 
@@ -3194,4 +3195,4 @@ one block, ~0.7 ms — inaudible for timbre shaping, accepted.)
     the menu-button behaviour of item 21. Locked by a `ui_test.c` check (a two-page
     home fixture).
 
-57. **Wavefolder — keep.** Decision recorded: the wavefolder stays; no removal.
+57. **Wavefolder — keep.** — **done (decision).** The wavefolder stays; no removal.

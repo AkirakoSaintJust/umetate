@@ -49,6 +49,11 @@ void ui_act_init_patch(void) { n_init_patch++; }
 void ui_act_init_part(void) { n_init_part++; }
 void ui_act_name(uint8_t which) { (void)which; }
 void ui_draw_custom(const ui_widget *w) { (void)w; }
+void ui_save_slot_name(uint8_t kind, uint16_t slot, char *out, uint32_t cap)
+{
+    (void)kind; (void)slot; (void)cap;
+    if (cap) out[0] = 0;
+}
 
 static int failures;
 #define CHECK(cond, msg) do { if (!(cond)) { printf("FAIL: %s\n", msg); failures++; } } while (0)

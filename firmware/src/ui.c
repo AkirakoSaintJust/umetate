@@ -1549,17 +1549,22 @@ void ui_save_cancel(void)
 static void ui_draw_save(void)
 {
     static const char *const ui_save_kind_text[2] = {"single part", "multi-patch"};
-    char t[12];
+    char t[12], name[PRESET_NAME_LEN];
     uint32_t i;
     cv_begin(240u, 6u * UI_ROW_H, C_POPUP_BG);
     cv_text(6, 2, &FONT_S, "SAVE", C_POPUP_TXT);
     for (i = 0; i < 2u; i++) {
-        char row[32];
+        char row[40];
+        ui_save_slot_name((uint8_t)i, ui_save_slots[i], name, sizeof name);
         ui_strcpy(row, i == ui_save_which ? "> " : "  ");
         ui_strcat(row, ui_save_kind_text[i]);
-        ui_strcat(row, "  slot ");
+        ui_strcat(row, " ");
         ui_itoa((int32_t)ui_save_slots[i], t);
         ui_strcat(row, t);
+        if (name[0]) {
+            ui_strcat(row, "  ");
+            ui_strcat(row, name);
+        }
         cv_text(6, (int32_t)(i + 1u) * UI_ROW_H, &FONT_S, row,
                 i == ui_save_which ? C_AMB : C_HI);
     }

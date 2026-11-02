@@ -313,6 +313,40 @@ void ui_act_name(uint8_t which)
 {
     ui_name_editor_begin(which);
 }
+void ui_save_slot_name(uint8_t kind, uint16_t slot, char *out, uint32_t cap)
+{
+    uint32_t i;
+    if (!out || !cap)
+        return;
+    out[0] = 0;
+    if (kind == 0u) {
+        if (slot < PRESET_PART_SLOTS) {
+            char name[PRESET_NAME_LEN];
+            int32_t params[SYNTH_PARAM_MAX];
+            const uint8_t *rec = part_bank + (uint32_t)slot * PP_RECORD(SYNTH_N_PARAMS);
+            if (rec[0] != PRESET_EMPTY &&
+                preset_part_unpack(rec, SYNTH_N_PARAMS, name, params)) {
+                for (i = 0; i + 1u < cap && name[i]; i++)
+                    out[i] = name[i];
+                out[i] = 0;
+            }
+        }
+    } else {
+        if (slot < PRESET_MULTI_SLOTS) {
+            char name[PRESET_NAME_LEN];
+            uint8_t ps[SYNTH_N_PARTS];
+            int32_t lv[SYNTH_N_PARTS], dl[SYNTH_N_PARTS], ch[SYNTH_N_PARTS];
+            int32_t lo[SYNTH_N_PARTS], hi[SYNTH_N_PARTS];
+            const uint8_t *rec = multi_bank + (uint32_t)slot * MP_RECORD(SYNTH_N_PARTS);
+            if (rec[0] != PRESET_EMPTY &&
+                preset_multi_unpack(rec, SYNTH_N_PARTS, name, ps, lv, dl, ch, lo, hi)) {
+                for (i = 0; i + 1u < cap && name[i]; i++)
+                    out[i] = name[i];
+                out[i] = 0;
+            }
+        }
+    }
+}
 
 /* the credits page (a UI_CUSTOM widget): the firmware version + credits, drawn
  * static (it fits the widget rows; no SELECT-scroll). The typeface credit is

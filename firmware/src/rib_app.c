@@ -89,6 +89,12 @@ void ui_act_init_patch(void) { }
 void ui_act_init_part(void) { }
 void ui_act_name(uint8_t which) { (void)which; }
 void ui_draw_custom(const ui_widget *w) { (void)w; }   /* no custom widgets in the demo panel */
+void ui_save_slot_name(uint8_t kind, uint16_t slot, char *out, uint32_t cap)
+{
+    (void)kind; (void)slot; (void)cap;
+    if (cap)
+        out[0] = 0;                                    /* no preset store in the demo */
+}
 
 /* ---- MIDI in: from the main loop, and from app_idle while the screen draws (idle_ok) */
 static struct { uint8_t oct, ch; } set = {0, 0};   /* what survives a power-off */
