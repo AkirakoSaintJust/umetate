@@ -3390,3 +3390,17 @@ with a bit-identical C fallback (host/wasm/tutorial untouched) and checkpointed 
    `render_voices_block` one operator at a time with `rep` + VLIW `#` dual-issue +
    `[rN++=4]` auto-increment (the `fm1_dsp_kernels.h` note holds the parser-accepted
    forms), re-gating on the WAV after each step; register win-or-revert here.
+   **Progress (2026-11-02):** 3a done — `fm1_kernel_zero_i32` (rep + auto-increment
+   store) in the ISR + the `--no-asm` toggle + `--test-dump` gate, byte-identical.
+   3b (a scalar per-operator kernel) **dropped**: the multiply is already optimal,
+   and a scalar kernel doesn't touch the loop-structure overhead. 3c is the real
+   lever, with a structural caveat: the FM algorithm is a per-sample feedback (op2/3/4
+   phase depends on the previous sample's op outputs via `d1..d4`), so the loop must
+   stay **sample-outer** — a voice-outer swap (to hoist the ~32 block-constant values
+   out of the sample loop) is *not* viable. The recoverable win is therefore confined
+   to `rep` (loop control) + auto-increment (SoA address arithmetic) + VLIW (MAC ∥
+   load) + software-pipelining against the 16-register file. Plan: (0) disassemble +
+   classify the voice-loop body to get the exact recoverable overhead; (1) generator-
+   emitted inline asm (the generator owns the SoA layout) with the C as fallback,
+   gated byte-identical; (2) fold in the bus mix + taps + delay writes; register
+   win-or-revert.
