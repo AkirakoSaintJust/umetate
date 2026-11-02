@@ -704,7 +704,7 @@ any drift, so it cannot lag the library.
 `umetate lib list` shows the library, `umetate scaffold --template` starts from a shipped template, user
 nodes conform to `node.schema.json`, patches to `patch.schema.json`.
 
-The **fourop-fm dogfood** (`examples/fourop-fm/`) surfaced two known gaps (recorded,
+The **type-p-fm1 dogfood** (`examples/type-p-fm1/`) surfaced two known gaps (recorded,
 not fixed there):
 
 - **Patch `params:` `default` is ignored.** `patch.schema.json` accepts a `default`
@@ -762,7 +762,7 @@ rate (verified by a host test that an LFO wired to `width_mod` changes the outpu
 only when `width_depth` is non-zero). Shipped macros live in `modules/macros/`, a
 patch's own `macros:` section shadows them.
 
-The **fourop-fm dogfood** (`examples/fourop-fm/`) closed the runtime-algorithm
+The **type-p-fm1 dogfood** (`examples/type-p-fm1/`) closed the runtime-algorithm
 gap: `dx_env`, `osc.waveform` (12 waveforms, the OPZ+OPL union), `vca.level`,
 `mix4` (the 2-input `mix` → 4-input `mix4`), `route4`, `route`, `lfo` (the
 control-rate vibrato/tremolo source), and the `fm_op` rewrite (per-op tremolo +
@@ -815,7 +815,7 @@ The shipped, tested UI base every project builds on:
 The panel schema is `templates/scaffold/panel.schema.json`, the interview fills
 `templates/control-map.md`.
 
-**Interaction design rules** (learned on the fourop-fm FM-1 exercise, and now in the
+**Interaction design rules** (learned on the type-p-fm1 FM-1 exercise, and now in the
 skill + tutorial):
 
 - **Know each control's kind.** A smooth analog *pot* (the FM-1's `MASTER`) is
@@ -830,7 +830,7 @@ skill + tutorial):
 - **Prefer the page-slot model.** A small fixed set of encoders whose meaning
   changes per page, with the labels shown on screen.
 
-**fourop-fm panel.** The panel maps to the **real FM-1** control surface:
+**type-p-fm1 panel.** The panel maps to the **real FM-1** control surface:
 `ALGORITHM` is the always-on algorithm encoder, the **4-param page** model puts the
 current page's params on `KNOB1–4`, `SELECT` cycles sub-pages (pitch → env-rates →
 env-levels → tremolo → mute), `SEL` selects the operator (wrapping 1→4), and
@@ -860,9 +860,9 @@ multiplier**, a q16 runtime param (`inc = note_to_inc(note) · ratio >> 16`, so
 
 ---
 
-### 6.11 fourop-fm firmware: the full-synth program
+### 6.11 type-p-fm1 firmware: the full-synth program
 
-**Status:** done (F1–F8). This section records the plan that turned fourop-fm from
+**Status:** done (F1–F8). This section records the plan that turned type-p-fm1 from
 a patch-level generator dogfood into a complete example **firmware**, and folded
 every lesson from that work back into the toolkit (interview loop, node library,
 generator rails for voice management, presets/sysex/settings, CLI, and the
@@ -870,7 +870,7 @@ polyphony budget tool).
 
 #### 6.11.1 Goal
 
-A complete, worked firmware (`examples/fourop-fm/` builds a real FM-1 firmware)
+A complete, worked firmware (`examples/type-p-fm1/` builds a real FM-1 firmware)
 that demonstrates the toolkit's full capability: polyphony + voice management,
 velocity, MIDI (notes / CC / sustain / panic / bend), presets (save / load /
 export / import via SysEx), system settings, and **2-part multitimbrality** with
@@ -890,18 +890,18 @@ strengthening below.
 | L7 | Nodes added reactively (`gain`, `cmul`, `csum`, `algo`, `mute`, `pitch_env`). | Review the node/macro library against the full-synth target for completeness. |
 | L8 | The UI was **underspecified**, button meanings, page contents, and per-param semantics were decided during implementation, so the first emulator pass was "buggy, incomplete, cryptic" and a whole navigation/control map had to be re-derived *after* code existed. | **The UI interview must be written before the panel is coded** (control-map.md + synth-brief §3 as a *checked gate*, not a note): every button's meaning, every page's contents, the always-visible header, the shortcuts/chords, and each param's display form, all in one place. §3.1–3.5 + §2.1a/2.1b below are that spec now, a change to the panel must change them in the same commit. |
 | L9 | A per-param *display scale* was missing, the panel showed raw integers (cutoff `8000`, ratio `65536`, mute `0/1`), and a relative encoder moved ±1 raw (thousands of detents across a 0..65535 range). | The `params:` `display` form + the curve-driven stepping (linear = a fraction of the range, log = multiplicative, clamped), `ui_param_disp[]` (§12.6). |
-| L10 | The *development skill* did not force a UI spec deep enough, it asked for a "context stack + pages + bindings", but not the **button-by-button meaning, page-by-page contents, the always-visible header, the modifier chords, the per-param display form, or the exact INIT-patch defaults**, so those were invented during code. | **Revamp the dev skill's GUI interview** so its *minimum bar* is the exact 10-item checklist below (button map · page map · header · param placement · per-param display + stepping · widget layout · preset browser · exact INIT PATCH/PART defaults · screen rules), the fourop-fm restructure is the worked example. **Open**, not yet written back into `skills/umetate-development/SKILL.md`/templates. |
+| L10 | The *development skill* did not force a UI spec deep enough, it asked for a "context stack + pages + bindings", but not the **button-by-button meaning, page-by-page contents, the always-visible header, the modifier chords, the per-param display form, or the exact INIT-patch defaults**, so those were invented during code. | **Revamp the dev skill's GUI interview** so its *minimum bar* is the exact 10-item checklist below (button map · page map · header · param placement · per-param display + stepping · widget layout · preset browser · exact INIT PATCH/PART defaults · screen rules), the type-p-fm1 restructure is the worked example. **Open**, not yet written back into `skills/umetate-development/SKILL.md`/templates. |
 | L11 | A knob could slide *below* its display's minimum, RATIO read "0.50" while the internal value had gone below it, so scrolling back up showed nothing until the value re-entered the range (and an on/off could read "on" from a *negative* value), the range/unit/step resolution hadn't been settled up front. | The **user-facing range + clamp + unit + resolution is part of the param spec**, `params:` `min`/`max` + `display` are the clamp the stepper *and* the display both honour (a value never sits outside its range, and the display never disagrees with it), a *mute* reads inverted (`onoff_inv`: 0 = not muted = "on"), the GUI interview must settle each param's range, unit, and detent resolution before authoring the panel. |
 
 **The GUI interview's minimum bar (L10, exact).** The development skill's GUI
 interview must treat the UI as *unspecified* until it has pinned, in writing, every
-one of the following, a checkable list, not a sketch. fourop-fm (synth-brief §3)
+one of the following, a checkable list, not a sketch. type-p-fm1 (synth-brief §3)
 is the worked example of the depth, the skill generalizes it to any synth.
 
 1. **Button map, button-by-button.** Every physical button and encoder, its exact
    single-press meaning, *and* every multi-tap and hold-chord, *and* what each chord
    *replaces* (a chord that mutes must not also fire a note, a page removed from a
-   menu is named as removed). fourop-fm: `ENV`/`LFO`/`EDIT`/`FX`/`GLO`/`HOME` select
+   menu is named as removed). type-p-fm1: `ENV`/`LFO`/`EDIT`/`FX`/`GLO`/`HOME` select
    menus, `ARP`/`SEQ`/`PLAY`/`REC` are **operator mutes 1–4** (the EDIT mute
    sub-page is removed), `SEL` tap = next active operator, double-tap = switch the
    active part, `SEL`+`ARP`/`PLAY` = part 1 mute, `SEL`+`SEQ`/`REC` = part 2 mute,
@@ -910,7 +910,7 @@ is the worked example of the depth, the skill generalizes it to any synth.
    (wrapping).
 
 2. **Menu/page map, page-by-page.** Every menu, its pages *in order*, the exact
-   page count, and each page's exact contents. fourop-fm: `HOME` = 5 pages, (1)
+   page count, and each page's exact contents. type-p-fm1: `HOME` = 5 pages, (1)
    4-op envelope graphs, (2) 4-op oscilloscope, (3) 4-op spectrogram, (4) 2-part
    oscilloscope, (5) 2-part spectrogram, `ENV` = the op amplitude envelope in two
    pages (rates r1–r4, then levels l1–l3) followed by the per-part pitch envelope.
@@ -923,12 +923,12 @@ is the worked example of the depth, the skill generalizes it to any synth.
    multi-patch settings, multi-patch name, `INIT PATCH`.
 
 3. **The always-visible header.** The exact fields shown on *every* page, at all
-   times, fourop-fm: active part, active operator, each part's and operator's
+   times, type-p-fm1: active part, active operator, each part's and operator's
    ON/OFF (mute) state, the current algorithm, the current menu, and the page N/M
    (`HOME 1/5`). No page may hide any of it.
 
 4. **Param placement.** Which menu *owns* each param, no param is reachable only
-   by accident. fourop-fm: filter + fold live in `FX` (the per-part pitch envelope
+   by accident. type-p-fm1: filter + fold live in `FX` (the per-part pitch envelope
    lives in `ENV` after the per-op amplitude envelope, and the per-part vibrato in
    `LFO`, *not* in `FX`).
 
@@ -939,10 +939,10 @@ is the worked example of the depth, the skill generalizes it to any synth.
    the range so the display and the value never disagree**), §12.6, L11.
 
 6. **Widget layout.** Which widget each visual page draws and the ordering,
-   fourop-fm: one widget per row in a column layout, part 1 / operator 1 on top.
+   type-p-fm1: one widget per row in a column layout, part 1 / operator 1 on top.
 
 7. **The preset browser + the save chooser.** The popup trigger, timeout, and
-   load/erase rule, fourop-fm: the `PRESETS` encoder opens the **multi-patch
+   load/erase rule, type-p-fm1: the `PRESETS` encoder opens the **multi-patch
    (2-part)** browser as a popup, after 2 s with no preset-encoder input the
    selected patch loads and the popup clears, unless it is already loaded (then it
    just clears). Single-part presets load from `GLO`. **Saving** is a modal
@@ -953,14 +953,14 @@ is the worked example of the depth, the skill generalizes it to any synth.
    active part's live edits, **discard**, **save-as-new**, or **mutate in place**
    (`KNOB1` picks, `SAVE` commits, `HOME` goes back).
 
-8. **`INIT PATCH` defaults, exact.** fourop-fm: the **additive** algorithm, every
+8. **`INIT PATCH` defaults, exact.** type-p-fm1: the **additive** algorithm, every
    operator gate-type envelope (instant rise to max on note-on, instant fall to 0
    on note-off), waveform 0, no feedback, ratio 1, all operators ON, part 2 OFF,
    part 1 active, operator 1 active, no pitch envelope / vibrato / tremolo, level 75.
 
 9. **`INIT PART` defaults, exact.** The single-part equivalent of item 8, pinned as
    a list, the skill must not accept "same as INIT PATCH" without the values.
-   (fourop-fm's exact `INIT PART` values are written when the `GLO` menu lands.)
+   (type-p-fm1's exact `INIT PART` values are written when the `GLO` menu lands.)
 
 10. **Screen rules.** Redraw model + rate, no display in the audio callback, full
     clear on page/menu change, held notes stay playable.
@@ -1115,21 +1115,21 @@ F0 00 21 1D <model> <cmd> <ver> <payload…> <crc16-lo> <crc16-hi> F7
   `params.json`). Multi-byte payload values are **7-bit packed** (7 data bytes →
   8 MIDI bytes with the collected top bits, unpacked before CRC/parse).
 - A 4-op patch is **not** DX7-compatible (DX7 is 6-op). DX7 `.SYX` import is
-  explicitly out of scope for fourop-fm.
+  explicitly out of scope for type-p-fm1.
 
 **Preset formats (concrete byte layouts, all little-endian).** Every record is a
 self-validating unit, a `u8 version` (`0xFF` = empty slot), a body, and a
 **CRC-32** (poly `0xEDB88320`, init `0xFFFFFFFF`, reflected, the platform's
 `crc32`) over version+body, so a corrupt record is skipped, never the whole bank.
 
-- **Part patch** (one timbre, `N` = the per-part voice-param count, fourop-fm 74,
+- **Part patch** (one timbre, `N` = the per-part voice-param count, type-p-fm1 74,
   the node voice params + the six per-part voice-mode params):
 
   ```
   u8 version | char name[16] | i32 params[N] | u32 crc32
   ```
 
-- **Multi patch** (a composition, `N_PART` parts, fourop-fm 2):
+- **Multi patch** (a composition, `N_PART` parts, type-p-fm1 2):
 
   ```
   u8 version | char name[16] | u8 part_slot[N_PART] | i32 level[N_PART] |
@@ -1152,7 +1152,7 @@ reusing `slot_load`/`slot_save`/`settings_load`/`settings_save` (magic + length 
 crc32 + header-last commit stays the transport integrity). The 40 576 B part bank
 does not fit CPU0's 96 KiB `.bss`, so both banks live in `.pool` (app.ld's big-
 buffer region): flash is the persistence, RAM is a per-boot working copy. The slot
-count is the measured hardware answer: `SLOT_MAX` = 16 372 B, the fourop-fm 317 B
+count is the measured hardware answer: `SLOT_MAX` = 16 372 B, the type-p-fm1 317 B
 part record fits 51 per slot, 128 spans 3 slots, 64 multi patches fit 1. Per-record
 CRC + version on top: a fresh (erased) bank reads all-empty (`0xFF`), a cut save is
 caught by the area CRC, a single flipped bit by the record CRC. Writes happen only
@@ -1167,7 +1167,7 @@ overflow the 7-bit CC space, so the patch declares its surface: the patch-level
 `control-map.md`.
 
 **Scope taps (`taps:`).** The patch declares per-op scope/spectro taps, a list
-of `<instance>.<port>` audio-rate voice-zone outputs (fourop-fm: `op1..op4.audio`
+of `<instance>.<port>` audio-rate voice-zone outputs (type-p-fm1: `op1..op4.audio`
 + `route.car`, resolved through the macro bindings to each operator's post-mute
 output and the per-part voice mix). The generator emits `N_TAP × N_PART` tap
 channels (`N_TAP_CH`), one per operator per part plus the per-part mix, accumulated
@@ -1287,7 +1287,7 @@ Still open: none, per-part mono (stacked) landed (F3, this increment).
 | F4 | **Presets + settings + SysEx.**, **done** | 128-slot single-part store + 64-slot multi-patch store (chunked across the slot area's measured 16 372 B ceiling. F7d) + settings record (`_records.py`/`presets.c`, byte-parity-tested), the shared SysEx envelope + 7-bit packing (`_sysex.py`), the generated `sysex-layout`, the bank ↔ `.syx` export/import (`_presets.py`), the `umetate preset export/import` CLI, and the C bank save/load over `store.h` (silent-only writes). Host tests prove the export→import round-trip and the C/Python byte parity. The device-side SysEx command handler landed with F7a. |
 | F5 | **MIDI CC map.**, **done** | `generate_cc_map` + `generate_cc_header`: one CC per param, ascending from base 16, skipping the reserved CCs (sustain 64, channel-mode 120..127), plus the reversed `param → cc`, a GenError when the params don't fit. Host tests prove the map is complete/unique/ascending and that a CC write through the generated `cc_map.h` table reaches a real, writable param. |
 | F6 | **Polyphony budget tool.**, **done** | `umetate budget` generates the patch at each `--voices`/`--parts`, compiles for host, and times a worst-case `render(256)` (all voices sounding, envelopes open), per-voice cost + linearity, the skill interview consumes it (a measured claim, not an estimate). The device fit is the emulator's job (F7e: `umetate emu --check --mhz 240` boots the built firmware and holds a chord, no halt, full-scale audio). |
-| F7 | **fourop-fm firmware assembly**, **done** | `examples/fourop-fm/` builds a firmware: 2 independent-timbre parts, velocity, CC, presets, settings, sustain/panic, `app_main`/`app_audio` glue on the shipped framework. Landed: F7a `synth_sysex` (envelope + five commands + 7-bit packing, byte-parity with `_sysex.py`). F7b `synth_midi` (note routing, CC→param with 7-bit→[min,max] scaling, sustain, panic, bend). F7c `synth_runtime` (a multi patch applies its part-patch refs + routing through set_param) + the generated `synth_layout.h` (model byte, param counts, the routing base) + the patch-level `model` field. F7d `umetate build --synth <dir>`, the composition (rib.c is now the frozen framework: platform + UI kit + the synth services, the demo moved to `rib_app.c`), the generated `dsp.h` seam header + `.dsp_text` SRAM placement, the patch-level `cc:` list (the multitimbral CC surface), 128 single-part + 64 multi-patch preset slots (chunked across the slot area), and the dogfood app glue (`examples/fourop-fm/app.c`): the host leg renders sound on cue and the target leg builds `umetate-fm1-pro-fourop_fm.fwsc` through the JieLi toolchain (82 060 B image, `.dsp_text` 8 796 B in SRAM, checks green). F7e the emulator run, `umetate emu --check --mhz 240` boots the package and holds a chord: **no halt, full-scale audio peak (16 383)**, the device fit is measured, not estimated. |
+| F7 | **type-p-fm1 firmware assembly**, **done** | `examples/type-p-fm1/` builds a firmware: 2 independent-timbre parts, velocity, CC, presets, settings, sustain/panic, `app_main`/`app_audio` glue on the shipped framework. Landed: F7a `synth_sysex` (envelope + five commands + 7-bit packing, byte-parity with `_sysex.py`). F7b `synth_midi` (note routing, CC→param with 7-bit→[min,max] scaling, sustain, panic, bend). F7c `synth_runtime` (a multi patch applies its part-patch refs + routing through set_param) + the generated `synth_layout.h` (model byte, param counts, the routing base) + the patch-level `model` field. F7d `umetate build --synth <dir>`, the composition (rib.c is now the frozen framework: platform + UI kit + the synth services, the demo moved to `rib_app.c`), the generated `dsp.h` seam header + `.dsp_text` SRAM placement, the patch-level `cc:` list (the multitimbral CC surface), 128 single-part + 64 multi-patch preset slots (chunked across the slot area), and the dogfood app glue (`examples/type-p-fm1/app.c`): the host leg renders sound on cue and the target leg builds `umetate-fm1-pro-type_p_fm1.fwsc` through the JieLi toolchain (82 060 B image, `.dsp_text` 8 796 B in SRAM, checks green). F7e the emulator run, `umetate emu --check --mhz 240` boots the package and holds a chord: **no halt, full-scale audio peak (16 383)**, the device fit is measured, not estimated. |
 | F8 | **Docs / tutorial / skill finalization**, **done** | tutorial + README + skill describe the full path, roadmap §6.11/§7/§12 updated, every milestone green. |
 
 Each milestone: mypy + ruff + pyright clean, all test modules green, `_skill` +
@@ -1377,15 +1377,15 @@ omni) *and* whose keyzone contains it, one note may fire many parts (layering).
 timing, 64 slots), and **system settings** (base channel, tune, one global
 record). This mirrors the classic patch / performance / system split. The slot
 count is the *measured* hardware answer: the slot area holds 16 372 B (store.h
-`SLOT_MAX`), the fourop-fm 317 B part record fits 51 per slot, 128 single parts
+`SLOT_MAX`), the type-p-fm1 317 B part record fits 51 per slot, 128 single parts
 span 3 slots, 64 multi patches fit 1.
 
 **The gaps** (what's still hand-written or missing): the docs/tutorial/skill
 finalization (F8), the **dev-skill GUI interview revamp** (L10, raise its minimum
-spec depth to the fourop-fm restructure spec), device acceptance, flash, debrick,
+spec depth to the type-p-fm1 restructure spec), device acceptance, flash, debrick,
 the FPU probe, and the clock soak stay blocked until hardware arrives.
 
-**Universal vs fourop-fm-specific.** Of the four-op-FM work, the *universal*
+**Universal vs type-p-fm1-specific.** Of the four-op-FM work, the *universal*
 tooling is: `gain`/`cmul`/`csum` (the control/audio-separated gain family),
 `mute`, `pitch_env`, the separation invariant + its generic test, the `velocity`
 reserved input, the `trigger` reserved input, the `parts:` multitimbral model, the
@@ -1395,9 +1395,9 @@ surface (patch-declared audio tap points → per-part channels, §6.11.4), the
 polyphony budget tool,
 the source-vocabulary check, the firmware framework (`rib.c` + `synth_midi` /
 `synth_sysex` / `synth_runtime` + `presets.c`), and the `build --synth`
-composition. The *fourop-fm-specific* bits are `algo`/`route`/`route4`, the
+composition. The *type-p-fm1-specific* bits are `algo`/`route`/`route4`, the
 `fm_op` macro, the 12-waveform `osc` union, the 8-algorithm `routing` table, the
-DX `dx_env`, and `examples/fourop-fm/app.c`, each an instance of a universal
+DX `dx_env`, and `examples/type-p-fm1/app.c`, each an instance of a universal
 mechanism (the selector, the router, the operator, the wave reader, the matrix,
 the rate/level envelope, the app glue).
 
@@ -1458,7 +1458,7 @@ Each task lists its goal, actions, and acceptance/evidence (per §5.5). A task i
 "done" only when its acceptance is met and the claim ledger in `docs/roadmap.md`
 is updated in the same commit.
 
-> The **fourop-fm firmware program** (finishing the example into a full firmware +
+> The **type-p-fm1 firmware program** (finishing the example into a full firmware +
 > the toolkit strengthening it forces) ran on top of the P-phases below and is
 > **done**, milestones F1–F8 in §6.11.
 
@@ -1592,7 +1592,7 @@ a leftover placeholder is a `GenError`. It type-checks wires (rejects `audio→e
 + Q-format mismatches), cycle-checks with `delay1`/`delayN` removed as breakers, and
 emits the **rate split** (control prologue every `CONTROL_BLOCK`=32, audio loop per
 sample) + the §12.1 seam + the note→inc allocator (`ratio` via a note-derived state
-binding). *Verified:* the pocket-drone two-op FM example (op macro + delay1 feedback
+binding). *Verified:* a two-op FM example (op macro + delay1 feedback
 + global chain) compiles, a delay-free env/vca patch renders non-silent then silent.
 an `audio→event` edge is rejected, `mypy --strict` + `ruff check` + `ruff format
 --check` are clean over the owned Python. *Followed up:* the flattened `params.json`
@@ -1652,13 +1652,13 @@ installs both into the `umetate-target` volume with all three SDK assets hash-ve
 
 **P3-3 — `scaffold`/`lib`, `lint`, `fmt` + the param table.** — **done (host)**,
 `scaffold.py` (generate a node/macro/patch skeleton, `--template` copies a shipped
-example, e.g. `pocket-drone`, a generated patch is verified to build), `lib.py`
+example, e.g. `type-p-fm1`, a generated patch is verified to build), `lib.py`
 (`lib list`, the shipped nodes + macros + templates, local only), `lint.py` (`lint --c`, the
 grep-based standing checks: SEC-1 MAXP bounds, HAL-only MMIO, hardcoded flash
 addresses, no double/alloc in the DSP TU), `fmt.py` (clang-format), and the
 **flattened param namespace**: the generator now emits the §12.1
 `set_param`/`get_param`/`param_count` seam + `params.json` (a named node param → its
-`set_param` id). *Verified:* `scaffold patch` (minimal and `--template pocket-drone`)
+`set_param` id). *Verified:* `scaffold patch` (minimal and `--template type-p-fm1`)
 builds, `lib list` lists the nodes + templates, `lint --c` passes on the firmware and
 flags a crafted MAXP/MMIO violation, `params.json` maps `lp.cutoff` → id 4, `mypy
 --strict` + `ruff` + `test_cli`/`test_generate`/`test_panel` green. The **name →
@@ -2320,7 +2320,7 @@ once, the generator emits `x[v]` in the voice zone and `x` in the global zone
 register read (ordered first) from its write (ordered last), which is what makes
 FM feedback exactly 1-sample.
 
-**Schema note** (see `examples/pocket-drone/README.md` §5): the `voice` zone's
+**Schema note:** the `voice` zone's
 reserved allocator inputs `gate`/`note`/`velocity`/`trigger` are **bindings, not
 wires**, a
 named `voice_out` marks the voice-zone signal summed into the global bus, macro
@@ -2478,7 +2478,7 @@ dead end), a page/context change clears the whole screen first (a retained-mode
 redraw otherwise leaves the previous page's stale pixels), a param row draws the
 label dim and the value bright, right-aligned.
 
-**Two binding extensions** (added for the fourop-fm operator editor): `BIND_PAGE_SLOT`
+**Two binding extensions** (added for the type-p-fm1 operator editor): `BIND_PAGE_SLOT`
 maps a source to *the Nth param-bearing widget on the current page* (so the rightmost
 four encoders follow the sub-page), and an operator group, `op_next`/`op_prev`
 cycle `ui_selected_op` (0..3), `op_mute` toggles the selected operator's mute param
@@ -2491,7 +2491,7 @@ resolved to an `ENV_PARAM[n_op × 7]` table read at `ui_selected_op * 7 + i`, a
 `status` widget reads the algorithm param + `ui_selected_op` + the mute table and
 renders `ALG <n> · OP <n>/4 · MUTE`.
 
-**Recommended interaction pattern** (the fourop-fm FM-1 exercise): the **page-slot
+**Recommended interaction pattern** (the type-p-fm1 FM-1 exercise): the **page-slot
 model**, `BIND_PAGE_SLOT` maps a fixed row of encoders (`KNOB1–4`) to the current
 page's params, so a few knobs reach every parameter with the labels shown on screen
 (the screen says what the knobs do). Dedicated knobs stay dedicated (`ALGORITHM`,
@@ -2577,7 +2577,7 @@ The three branches are **separate commands**: `build` (and `build --synth`) owns
 target branch (blocked without the toolchain), `deep-check --host` is the
 no-toolchain iteration loop, `web-build` the WASM lab. The synth composition adds
 the framework half: `rib.c` includes the platform + the synth services + the
-project's `app.c` (the dogfood packages as `umetate-fm1-pro-fourop_fm.fwsc`).
+project's `app.c` (the dogfood packages as `umetate-fm1-pro-type_p_fm1.fwsc`).
 
 The **same** `dsp.c` is the input to all three, the §12.2.2 portability macro makes
 it compile everywhere. `generate.py` is deterministic (same inputs → byte-identical).
@@ -2592,7 +2592,7 @@ it compile everywhere. `generate.py` is deterministic (same inputs → byte-iden
   on the next redraw, a mode override beats the global, no display in the audio
   callback.
 - **ring tests:** SPSC wrap-around, overrun counter, no lost note-off.
-- **safety regressions (UB/OOB/voice-alloc):** the generated fourop-fm DSP is built
+- **safety regressions (UB/OOB/voice-alloc):** the generated type-p-fm1 DSP is built
   with `-fsanitize=address,undefined -fno-sanitize-recover=all` and run under
   worst-case load (128 held notes → repeated voice steals across the 20-voice pool),
   so an OOB read/write, signed overflow, shift, or divide-by-zero fails the gate.
@@ -2602,7 +2602,7 @@ it compile everywhere. `generate.py` is deterministic (same inputs → byte-iden
 - **performance regression guard:** compile the generated `dsp.c` and time a fixed
   render on host, fail over a per-patch threshold. The emulator ISR% (`emu --check
   --mhz 320`) is the higher-fidelity gate when the toolchain is present. Implemented
-  as `umetate/test_perf.py` (the fourop-fm dogfood, 20 voices, min-of-3, ~2.8x the
+  as `umetate/test_perf.py` (the type-p-fm1 dogfood, 20 voices, min-of-3, ~2.8x the
   ~140 us baseline), wired into `deep-check --python`/`--all`.
 - **evidence matrix:** per §5.5, each layer recorded, `blocked`/`not-run` not passes.
 
@@ -2619,7 +2619,7 @@ Add to `patch.schema.json`: (a) the `voice` zone's reserved allocator inputs
 `gate`/`note`/`velocity`/`trigger` (bindings, not wires), (b) a named `voice_out` (the
 voice-zone signal summed into the global bus), (c) macro params may target node
 **state** (applied at note-on) as well as ports. Add `q12` to `node.schema.json`
-state kinds. All at P0-1. See `examples/pocket-drone/README.md` §5.
+state kinds. All at P0-1.
 
 ### 12.8 The CLI codebase
 
@@ -2973,7 +2973,7 @@ Status: **done**, 22–41 complete (2026-11-01). Numbers continue §13.1.
 
 30. **Part + EDIT op scopes/spectros show nothing.**, **done** (by 37). The
     part-mix taps and the active-op taps read silence because `SCOPE_CH = 8` dropped
-    fourop-fm's channels 8–10 (op4·part1 + the two `route.car` part mixes). `SCOPE_CH`
+    type-p-fm1's channels 8–10 (op4·part1 + the two `route.car` part mixes). `SCOPE_CH`
     is now 12, so those channels are stored and the part/op scopes + spectros show.
 
 #### Envelope (dx_env / pitch_env)
@@ -3041,7 +3041,7 @@ Status: **done**, 22–41 complete (2026-11-01). Numbers continue §13.1.
     `pitch_depth` max to 3277 (~±1.2 semitones at 100 %, 10× subtler).
 
 37. **Part 2 op4 missing from scope/spectro.**, **done.** `SCOPE_CH` was 8 but
-    fourop-fm has 10 tap channels, so ch 8 (op4·part1) and the two part mixes were
+    type-p-fm1 has 10 tap channels, so ch 8 (op4·part1) and the two part mixes were
     dropped by `scope_store`. `SCOPE_CH` is now 12 (covers 1 + `N_TAP_CH`).
 
 38. **P-LFO is global, not per-part.**, **done.** `plfo` sat in the `global` zone,
@@ -3245,7 +3245,7 @@ one block, ~0.7 ms, inaudible for timbre shaping, accepted.)
 
 57. **Wavefolder, keep.**, **done (decision).** The wavefolder stays, no removal.
 
-### 13.8 fourop-fm: per-part algorithm + FM depth (2026-11-02)
+### 13.8 type-p-fm1: per-part algorithm + FM depth (2026-11-02)
 
 58. **The algorithm is per-part (was global).**, **done.** The `algo` node moved
     from the `global` zone to the `voice` zone, so `algorithm` is now a per-part
@@ -3274,7 +3274,7 @@ one block, ~0.7 ms, inaudible for timbre shaping, accepted.)
     dump would overflow its buffer. `SYNTH_PARAM_MAX` is now 256 (moved to the
     shared `presets.h`, used by `synth_runtime.c` *and* `synth_sysex.c`), and
     `SYNTH_SX_MAX` is 1536 (a 256-param part patch is ~1206 bytes 7-bit packed).
-    Locked by a test that reads the C caps and asserts the fourop patch fits.
+    Locked by a test that reads the C caps and asserts the type-p-fm1 patch fits.
 
 61. **Post moved to CPU1 (CPU0 cools down).**, **done.** The split-core dispatch
     (`_render_split`) now runs the global audio post on **CPU1** instead of CPU0:
@@ -3373,7 +3373,7 @@ the host ↔ wasm parity check.
    exact in log space, *addition* (route `car` sum, `mix`, FM feedback, phase
    accumulate) needs linear, so it can't be pushed to the final render (the four
    carriers are summed linearly before the filters). The antilog LUT+LERP has its
-   own rounding → **not bit-exact**, and ~neutral vs 1 multiply for fourop's short
+   own rounding → **not bit-exact**, and ~neutral vs 1 multiply for type-p-fm1's short
    2-multiply chains (`cv` already collapses the gain stage to one control value).
    **Rejected.**
 2. **Bit-shift replacement.** Only the constant factors qualify, and they're done:
@@ -3402,7 +3402,7 @@ with a bit-identical C fallback (host/wasm/tutorial untouched) and checkpointed 
 1. **Target-vs-host WAV harness** (the gate). `fm1-emu --fwsc … --keys … --wav OUT.wav`
    already writes the I2S output (44.1 kHz stereo 16-bit, captured as `(w>>8)` of
    the DMA word → `q15<<7` becomes `q15/2`), the host already writes
-   `build/host/fourop_fm.wav` (raw Q15). **Built instead a deterministic test-hook
+   `build/host/type_p_fm1.wav` (raw Q15). **Built instead a deterministic test-hook
    gate (2026-11-02):** `platform.c` gains `#ifdef UMETATE_TEST_DUMP` (a `volatile`
    `test_dump[512]` + a block counter) that records the raw *pre-master* output of
    audio block `UMETATE_TEST_DUMP`, `umetate build --synth --test-dump N` sets

@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 /* Copyright (C) 2026 P1Onken (umetate) */
-/* fourop-fm's app half of the frozen contract (docs/roadmap.md §6.11.4, F7): the
+/* type-p-fm1's app half of the frozen contract (docs/roadmap.md §6.11.4, F7): the
  * glue between the generated engine, the generated panel, the platform, and the
  * framework's synth services. Included by src/rib.c (the framework) in the
- * `umetate build --synth examples/fourop-fm` composition.
+ * `umetate build --synth examples/type-p-fm1` composition.
  *
  * Two independent-timbre parts: part 0 = MIDI channel 0 (the panel + the CC
  * surface edit part 0's timbre), part 1 = channel 1 (its timbre comes from the
@@ -37,16 +37,16 @@ static uint32_t cur_slot;                      /* the loaded multi-patch slot (0
  * dual-core-aware adapters (`<name>_glue_*`) + `app_audio`. The app keeps only the
  * contexts, which bind the adapters to the framework services + the app's banks. */
 static synth_midi_ctx midi_ctx = {
-    fourop_fm_glue_note_on_ch, fourop_fm_glue_note_off, fourop_fm_glue_all_off,
-    fourop_fm_glue_set_param, fourop_fm_glue_bend,
+    type_p_fm1_glue_note_on_ch, type_p_fm1_glue_note_off, type_p_fm1_glue_all_off,
+    type_p_fm1_glue_set_param, type_p_fm1_glue_bend,
     cc_to_param, param_min, param_max,
 };
 static synth_sysex_ctx sysex_ctx = {
-    SYNTH_MODEL, SYNTH_N_PARAMS, SYNTH_N_PARTS, fourop_fm_dsp_get_param,
+    SYNTH_MODEL, SYNTH_N_PARAMS, SYNTH_N_PARTS, type_p_fm1_dsp_get_param,
     part_bank, multi_bank, settings,
 };
 static synth_runtime_ctx runtime_ctx = {
-    SYNTH_N_PARAMS, SYNTH_N_PARTS, SYNTH_ROUTING_BASE, fourop_fm_glue_set_param,
+    SYNTH_N_PARAMS, SYNTH_N_PARTS, SYNTH_ROUTING_BASE, type_p_fm1_glue_set_param,
     part_bank, multi_bank,
 };
 
@@ -57,11 +57,11 @@ static void ui_sync(void)
     int32_t *v = ui_params();
     uint32_t i;
     for (i = 0; i < PANEL.n_params; i++) {
-        int32_t e = fourop_fm_dsp_get_param(i);
+        int32_t e = type_p_fm1_dsp_get_param(i);
         if (v[i] != e) {
             if (last_ui[i] != v[i]) {                 /* the panel wrote it */
-                fourop_fm_dsp_set_param(i, v[i]);
-                e = fourop_fm_dsp_get_param(i);      /* the clamped value */
+                type_p_fm1_dsp_set_param(i, v[i]);
+                e = type_p_fm1_dsp_get_param(i);      /* the clamped value */
             }
             v[i] = e;
         }
@@ -73,23 +73,23 @@ static void ui_sync(void)
      * level is SYNTH_ROUTING_BASE + 3*SYNTH_N_PARTS + p. */
     for (i = 0; i < SYNTH_N_PARTS; i++) {
         if (ui_part_muted((uint8_t)i))
-            fourop_fm_dsp_set_param(SYNTH_ROUTING_BASE + 3u * SYNTH_N_PARTS + i, 0);
+            type_p_fm1_dsp_set_param(SYNTH_ROUTING_BASE + 3u * SYNTH_N_PARTS + i, 0);
     }
 }
 
 /* ---- the app's action hooks (called by ui.c) */
 void ui_act_note_on(uint8_t note, uint8_t vel)
 {
-    fourop_fm_glue_note_on(note, vel);               /* omni: every matching part */
+    type_p_fm1_glue_note_on(note, vel);               /* omni: every matching part */
 }
 void ui_act_note_off(uint8_t note)
 {
-    fourop_fm_glue_note_off(note);
+    type_p_fm1_glue_note_off(note);
 }
 void ui_act_set_step(uint8_t step) { (void)step; }
 void ui_act_panic(void)
 {
-    fourop_fm_glue_all_off();
+    type_p_fm1_glue_all_off();
 }
 void ui_act_play(void) { }
 void ui_act_stop(void) { }
@@ -104,7 +104,7 @@ static void save_part_to(uint8_t part, uint16_t slot)
     if (slot >= PRESET_PART_SLOTS)
         return;
     for (i = 0; i < SYNTH_N_PARAMS; i++)
-        params[i] = fourop_fm_dsp_get_param(base + i);
+        params[i] = type_p_fm1_dsp_get_param(base + i);
     preset_part_pack(part_bank + (uint32_t)slot * PP_RECORD(SYNTH_N_PARAMS),
                      ui_name_get(part), params, SYNTH_N_PARAMS);
     part_slot_cur[part] = (uint8_t)slot;
@@ -144,11 +144,11 @@ static void save_multi(uint16_t slot, uint8_t mode)
         save_part_to(part, dst);                   /* mode 2 overwrites the source slot */
     }
     for (i = 0; i < SYNTH_N_PARTS; i++) {
-        ch[i] = fourop_fm_dsp_get_param(SYNTH_ROUTING_BASE + 0u * SYNTH_N_PARTS + i);
-        lo[i] = fourop_fm_dsp_get_param(SYNTH_ROUTING_BASE + 1u * SYNTH_N_PARTS + i);
-        hi[i] = fourop_fm_dsp_get_param(SYNTH_ROUTING_BASE + 2u * SYNTH_N_PARTS + i);
-        lv[i] = fourop_fm_dsp_get_param(SYNTH_ROUTING_BASE + 3u * SYNTH_N_PARTS + i);
-        dl[i] = fourop_fm_dsp_get_param(SYNTH_ROUTING_BASE + 4u * SYNTH_N_PARTS + i);
+        ch[i] = type_p_fm1_dsp_get_param(SYNTH_ROUTING_BASE + 0u * SYNTH_N_PARTS + i);
+        lo[i] = type_p_fm1_dsp_get_param(SYNTH_ROUTING_BASE + 1u * SYNTH_N_PARTS + i);
+        hi[i] = type_p_fm1_dsp_get_param(SYNTH_ROUTING_BASE + 2u * SYNTH_N_PARTS + i);
+        lv[i] = type_p_fm1_dsp_get_param(SYNTH_ROUTING_BASE + 3u * SYNTH_N_PARTS + i);
+        dl[i] = type_p_fm1_dsp_get_param(SYNTH_ROUTING_BASE + 4u * SYNTH_N_PARTS + i);
     }
     preset_multi_pack(multi_bank + (uint32_t)slot * MP_RECORD(SYNTH_N_PARTS),
                       ui_name_get(2u), part_slot_cur, lv, dl, ch, lo, hi, SYNTH_N_PARTS);
@@ -167,7 +167,7 @@ static void load_part(uint8_t part, uint32_t slot)
         !preset_part_unpack(rec, SYNTH_N_PARAMS, name, params))
         return;
     for (i = 0; i < SYNTH_N_PARAMS; i++)
-        fourop_fm_dsp_set_param(base + i, params[i]);
+        type_p_fm1_dsp_set_param(base + i, params[i]);
     ui_name_set(part, name);                        /* reflect the loaded part's name */
     part_slot_cur[part] = (uint8_t)slot;
 }
@@ -203,8 +203,8 @@ void ui_act_save(void)
 void ui_act_init_patch(void)
 {
     uint32_t i;
-    for (i = 0; i < fourop_fm_INIT_N; i++)
-        fourop_fm_dsp_set_param(fourop_fm_init[i].id, fourop_fm_init[i].value);
+    for (i = 0; i < type_p_fm1_INIT_N; i++)
+        type_p_fm1_dsp_set_param(type_p_fm1_init[i].id, type_p_fm1_init[i].value);
     /* the spec's init state: part 1 active, op 1 active, part 1 unmuted, part 2 muted */
     ui_part_set(0u);
     ui_op_set(0u);
@@ -219,11 +219,11 @@ void ui_act_init_patch(void)
 static void init_part(uint8_t part)
 {
     uint32_t i;
-    for (i = 0; i < fourop_fm_INIT_N; i++) {
-        uint16_t id = fourop_fm_init[i].id;
+    for (i = 0; i < type_p_fm1_INIT_N; i++) {
+        uint16_t id = type_p_fm1_init[i].id;
         if (id >= (uint32_t)part * SYNTH_N_PARAMS &&
             id < (uint32_t)(part + 1u) * SYNTH_N_PARAMS)
-            fourop_fm_dsp_set_param(id, fourop_fm_init[i].value);
+            type_p_fm1_dsp_set_param(id, type_p_fm1_init[i].value);
     }
     part_slot_cur[part] = 0xFFu;
     ui_name_set(part, "INIT PART");
@@ -276,7 +276,7 @@ void ui_save_slot_name(uint8_t kind, uint16_t slot, char *out, uint32_t cap)
  * required by the font licence. */
 static const char *const CREDITS[] = {
     "umetate",
-    "fourop-fm  (4-op FM)",
+    "Type P.fm1  (4-op FM)",
     "firmware  FM-1_990",
     "",
     "Logo typeface:",
@@ -357,7 +357,7 @@ static void app_init(void)
     app_last_scl_ms = app_scl_pending = app_scl_pending_ms = 0;
     browser.open = 0;
 
-    fourop_fm_dsp_reset();
+    type_p_fm1_dsp_reset();
 #if FM1_CPU1_USED
     {
         fm1_guard_unlock_top();
@@ -375,7 +375,7 @@ static void app_init(void)
     if (preset_settings_load(settings) || !preset_settings_unpack(settings, &bc, &mt))
         bc = 0, mt = 0;
     if (bc >= 0 && bc <= 15)
-        fourop_fm_glue_set_param(SYNTH_ROUTING_BASE + 0u * SYNTH_N_PARTS + 0u, bc);  /* part 0's channel */
+        type_p_fm1_glue_set_param(SYNTH_ROUTING_BASE + 0u * SYNTH_N_PARTS + 0u, bc);  /* part 0's channel */
     /* master_tune has no pitch-tune param in this patch; it rides along for later */
     (void)mt;
     memcpy(saved_settings, settings, ST_RECORD);
@@ -406,7 +406,7 @@ static void app_step(void)
     {
         uint32_t now = fm1_ms;
         uint32_t scl = fm1_in.buttons & (1u << BTN_SEL);
-        ch0 = fourop_fm_dsp_get_param(SYNTH_ROUTING_BASE + 0u * SYNTH_N_PARTS + 0u);
+        ch0 = type_p_fm1_dsp_get_param(SYNTH_ROUTING_BASE + 0u * SYNTH_N_PARTS + 0u);
         if (ch0 < 0 || ch0 > 15)
             ch0 = 0;
         if (ui_name_editing() != 0xFFu) {
@@ -681,7 +681,7 @@ static void app_step(void)
     lit_base = base;
     app_lit = dsp_status.lit;                    /* published by the render job */
 #else
-    app_lit = fourop_fm_dsp_lit(base);
+    app_lit = type_p_fm1_dsp_lit(base);
 #endif
     for (k = 0; k < 27u; k++)
         fm1_led_key(KEY_LED(k), app_lit >> k & 1u);
@@ -692,7 +692,7 @@ static void app_step(void)
     ui_redraw(fm1_ms);
     idle_ok = 0;
 
-    if (fourop_fm_glue_quiet() && fm1_ms - t_change > 2000u) {
+    if (type_p_fm1_glue_quiet() && fm1_ms - t_change > 2000u) {
         if (bank_dirty) {                          /* silent-only saves (the store erases) */
             preset_part_bank_save(part_bank, SYNTH_N_PARAMS);
             bank_dirty = 0;

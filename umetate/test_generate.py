@@ -2,7 +2,7 @@
 # Copyright (C) 2026 P1Onken (umetate)
 """Host tests for the generator (docs/roadmap.md §12.4 verification).
 
-- the pocket-drone two-op FM example (op macro + delay1 feedback + global chain)
+- a minimal two-op FM patch (op macro + delay1 feedback + global chain)
   must *compile* for host;
 - a delay-free env/vca patch must render non-silent then silent (the seam contract);
 - an `audio->event` edge must be rejected with a type error.
@@ -34,8 +34,8 @@ from .generate import (
 
 LIBRARY_ROOT = Path(__file__).resolve().parents[1] / "modules" / "nodes"
 
-POCKET_DRONE: Patch = {
-    "name": "pocket-drone",
+MINIMAL_FM: Patch = {
+    "name": "two-op-fm",
     "voices": 8,
     "macros": {
         "op": {
@@ -1536,18 +1536,20 @@ def _voice_ceiling() -> tuple[bool, str]:
 
 
 def _asan_clean() -> tuple[bool, str]:
-    """The generated fourop-fm DSP is ASan/UBSan-clean under worst-case load (128
+    """The generated type-p-fm1 DSP is ASan/UBSan-clean under worst-case load (128
     held notes -> repeated voice steals across the 20-voice pool). A sanitizer abort
     fails the test. `-fno-sanitize-recover=all` fails on the first error."""
     root = Path(__file__).resolve().parents[1]
     patch = as_patch(
         json.loads(
-            (root / "examples" / "fourop-fm" / "patch.json").read_text(encoding="utf-8")
+            (root / "examples" / "type-p-fm1" / "patch.json").read_text(
+                encoding="utf-8"
+            )
         )
     )
     src = generate(patch)
     tables_h, tables_c = generate_tables(patch)
-    cname = "fourop_fm"
+    cname = "type_p_fm1"
     harness = (
         "#include <stdint.h>\n"
         f"void {cname}_dsp_reset(void);\n"
@@ -1908,7 +1910,9 @@ def _taps_expose() -> tuple[bool, str]:
     root = Path(__file__).resolve().parents[1]
     patch = as_patch(
         json.loads(
-            (root / "examples" / "fourop-fm" / "patch.json").read_text(encoding="utf-8")
+            (root / "examples" / "type-p-fm1" / "patch.json").read_text(
+                encoding="utf-8"
+            )
         )
     )
     src = generate(patch)
@@ -2973,11 +2977,8 @@ def _phasor_detune() -> None:
 def main() -> int:
     failures: int = 0
 
-    ok, msg = _compile(POCKET_DRONE)
-    print(
-        ("ok: " if ok else "FAIL: ")
-        + ("pocket-drone (two-op FM) compiles" if ok else msg)
-    )
+    ok, msg = _compile(MINIMAL_FM)
+    print(("ok: " if ok else "FAIL: ") + ("two-op FM patch compiles" if ok else msg))
     failures += 0 if ok else 1
 
     ok, msg = _sound(SINE_ENV)
@@ -3001,13 +3002,13 @@ def main() -> int:
     )
     failures += 0 if ok else 1
 
-    # the dogfood patch itself (examples/fourop-fm/patch.json) renders.
+    # the dogfood patch itself (examples/type-p-fm1/patch.json) renders.
     ffm = as_patch(
         json.loads(
             (
                 Path(__file__).resolve().parents[1]
                 / "examples"
-                / "fourop-fm"
+                / "type-p-fm1"
                 / "patch.json"
             ).read_text(encoding="utf-8")
         )
@@ -3015,15 +3016,15 @@ def main() -> int:
     ok, msg = _sound_decay_tables(ffm)
     print(
         ("ok: " if ok else "FAIL: ")
-        + (msg or "fourop-fm (4-op FM) renders non-silent then decays to near-silence")
+        + (msg or "type-p-fm1 (4-op FM) renders non-silent then decays to near-silence")
     )
     failures += 0 if ok else 1
 
     # the INIT PATCH/PART defaults emit as a per-part-expanded init table
     hdr = generate_dsp_header(ffm)
     if (
-        "fourop_fm_init_entry fourop_fm_init[]" in hdr
-        and "fourop_fm_INIT_N" in hdr
+        "type_p_fm1_init_entry type_p_fm1_init[]" in hdr
+        and "type_p_fm1_INIT_N" in hdr
         and "{ 112u, 7 }" in hdr  # algorithm 7 (the additive algorithm)
         and "{ 0u, 65536 }" in hdr  # op1 ratio, part 0
         and "{ 133u, 65536 }" in hdr  # op1 ratio, part 1 (per-part expansion)
@@ -3036,14 +3037,14 @@ def main() -> int:
     ok, msg = _algorithms_render(ffm)
     print(
         ("ok: " if ok else "FAIL: ")
-        + (msg or "fourop-fm renders non-silent across all 8 algorithms")
+        + (msg or "type-p-fm1 renders non-silent across all 8 algorithms")
     )
     failures += 0 if ok else 1
 
     ok, msg = _algorithms_fx_combos(ffm)
     print(
         ("ok: " if ok else "FAIL: ")
-        + (msg or "fourop-fm renders non-silent across 8 algorithms x 4 FX combos")
+        + (msg or "type-p-fm1 renders non-silent across 8 algorithms x 4 FX combos")
     )
     failures += 0 if ok else 1
 
@@ -3168,7 +3169,7 @@ def main() -> int:
     else:
         print("ok: sysex-layout pins the record geometry (9 params, 2 parts)")
 
-    # the fourop patch's per-part count + part-patch frame must fit the C caps
+    # the type-p-fm1 patch's per-part count + part-patch frame must fit the C caps
     # (presets.h SYNTH_PARAM_MAX + synth_sysex.h SYNTH_SX_MAX); the key/velocity
     # follow + per-part algorithm pushed it past the old 128/384.
     import re as _re
@@ -3188,9 +3189,9 @@ def main() -> int:
     _raw = 1 + _pps(_fn)  # slot byte + the part-patch record
     _frame = 10 + _raw + (_raw + 6) // 7  # 7-bit packed + the envelope
     if _fn <= _pm and _frame <= _sm:
-        print(f"ok: fourop ({_fn} params) fits the preset/SysEx caps ({_pm}/{_sm})")
+        print(f"ok: type-p-fm1 ({_fn} params) fits the preset/SysEx caps ({_pm}/{_sm})")
     else:
-        print(f"FAIL: fourop ({_fn} params) exceeds the preset/SysEx caps")
+        print(f"FAIL: type-p-fm1 ({_fn} params) exceeds the preset/SysEx caps")
         failures += 1
 
     # the generated synth_layout.h carries the runtime constants the framework uses.
@@ -3279,7 +3280,7 @@ def main() -> int:
     else:
         print("ok: the cc header carries the per-param [min, max] ranges")
 
-    # the patch-level `cc:` list limits the CC map (the fourop patch's params
+    # the patch-level `cc:` list limits the CC map (the type-p-fm1 patch's params
     # overflow the CC space; it declares its surface — the global FX + part 0).
     cm_sub = generate_cc_map(ffm)
     if len(cm_sub["entries"]) == 58 and all(
@@ -3296,23 +3297,23 @@ def main() -> int:
     except GenError:
         print("ok: an unknown cc: name is rejected")
 
-    # the dogfood panel (examples/fourop-fm/panel.json) resolves against the patch's
+    # the dogfood panel (examples/type-p-fm1/panel.json) resolves against the patch's
     # params (every widget/binding names a real set_param id).
     ffm_panel = as_panel(
         json.loads(
             (
                 Path(__file__).resolve().parents[1]
                 / "examples"
-                / "fourop-fm"
+                / "type-p-fm1"
                 / "panel.json"
             ).read_text(encoding="utf-8")
         )
     )
     try:
         generate_panel(ffm_panel, param_ids(ffm))
-        print("ok: fourop-fm panel.json resolves against the patch params")
+        print("ok: type-p-fm1 panel.json resolves against the patch params")
     except GenError as exc:
-        print(f"FAIL: fourop-fm panel.json does not resolve ({exc})")
+        print(f"FAIL: type-p-fm1 panel.json does not resolve ({exc})")
         failures += 1
 
     # feedback is per-operator only (opN.fb.level). The earlier carrier-feedback
@@ -3709,10 +3710,10 @@ def main() -> int:
         print(f"ok: tap naming an input rejected ({exc})")
 
     # the flattened param table maps a named param to its set_param id
-    params = generate_params(POCKET_DRONE)["params"]
+    params = generate_params(MINIMAL_FM)["params"]
     by_name = {p["name"]: p for p in params}
     lp = by_name.get("lp.cutoff")
-    # `lp` is the last node in pocket-drone's graph, so its cutoff is the last
+    # `lp` is the last node in the two-op patch's graph, so its cutoff is the last
     # *node* id; the six universal voice-mode params (`vm_*`) are appended after it
     # (robust against param additions to earlier nodes — e.g. osc.waveform, vca.level).
     n_mode = 6

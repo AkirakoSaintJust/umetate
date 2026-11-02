@@ -70,7 +70,7 @@ requires a new design decision, stop and ask. Do not improvise in code.
   explicitly requests that exact action and the §8 gates pass. A build, test, or
   edit is not permission to write hardware.
 - When you remove a feature, remove its wiring *and* state in the same increment,
-  a scrapped feature leaves a stray path that breaks later (fourop-fm's early
+  a scrapped feature leaves a stray path that breaks later (type-p-fm1's early
   carrier-feedback knob left a spurious feedback floor on every carrier).
 - Keep hardware register access in the HAL. Do not invent pinouts, voltages,
   clock values, FPU capabilities, or core ownership.
@@ -116,7 +116,7 @@ of asking the user to repeat them.
   the sample rate, and any feedback (only `delay1`/`delayN` break cycles, the
   graph is a DAG). In FM, tap operator **self-feedback from the oscillator output**
   (pre-envelope/pre-tremolo), tapping the enveloped VCA output leaks the
-  amplitude LFO and envelope into `ph.fm` as spurious pitch modulation (fourop-fm
+  amplitude LFO and envelope into `ph.fm` as spurious pitch modulation (type-p-fm1
   carriers warbled with the A-LFO until the tap moved to `osc.audio`).
 - **Parameter manifest** must list every parameter: its flattened
   `<instance>.<param>` target, min/max/default, curve, unit, rate
@@ -165,7 +165,7 @@ screen. LED/pad feedback, and the full control flow.
   transport, panic.
 - **Widgets** are abstract (`label`, `value`, `bar`, `param_row`, `param_column`,
   `list`, `grid`), no skeuomorphic knobs on a 240×240 screen.
-- **GUI design rules** (learned on the fourop-fm FM-1 exercise):
+- **GUI design rules** (learned on the type-p-fm1 FM-1 exercise):
   - **Know each control's kind.** A smooth pot (`MASTER`) is volume and
     platform-owned, never bind it to a page slot, a detented encoder is a
     parameter. Distinguish dedicated knobs from page-slot knobs.
@@ -341,7 +341,7 @@ umetate scaffold patch --name "My Synth" --out examples/my-synth
   five SysEx commands.
 - Write only the **app glue**: `app.c` with `app_audio` / `app_main` / `app_idle`,
   the `ui_act_*` hooks, and the three service contexts (see
-  `examples/fourop-fm/app.c`). `umetate build --synth examples/<project>` composes
+  `examples/type-p-fm1/app.c`). `umetate build --synth examples/<project>` composes
   framework + generated code + glue, host-build, run the project's
   `host-script.txt` (a silent run fails), then package through the toolchain.
 - **Firmware-level controls are app glue, not panel params.** Any button the synth

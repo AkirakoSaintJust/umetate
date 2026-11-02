@@ -1,7 +1,7 @@
 # CPU optimisation loop (safe)
 
 How to reduce the audio ISR cost without changing the sound, and without guessing.
-Every rule below is a lesson from the fourop-fm render optimisation, where the ISR
+Every rule below is a lesson from the type-p-fm1 render optimisation, where the ISR
 dropped from 60% to 45% at 320 MHz with the output provably byte-identical.
 
 ## The metric
@@ -47,7 +47,7 @@ Run this for every optimisation increment. One change per pass.
    the test-dump block).
 2. **Profile before you touch anything.** Disassemble the hot loop and classify the
    instruction mix: how many MACs, how many register moves, how many address
-   computations, how many loads. The biggest category is the lever. In the fourop
+   computations, how many loads. The biggest category is the lever. In the type-p-fm1
    render the hot loop was 52% register-move and address arithmetic against roughly
    90 MACs, which told us the multiply was not the problem, the loop structure was.
 3. **Check the compiler first.** Before writing hand-asm, confirm the compiler is
@@ -69,7 +69,7 @@ Run this for every optimisation increment. One change per pass.
 
 Do not re-learn these.
 
-- The core has 16 general-purpose registers. The fourop render loop touches roughly
+- The core has 16 general-purpose registers. The type-p-fm1 render loop touches roughly
   40 structure-of-arrays regions (voice state, block constants, delay and phase).
   They cannot all be live at once. Hand-asm hits this 16-register wall immediately,
   so the compiler is often the better register allocator here.

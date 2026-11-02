@@ -82,7 +82,7 @@ def _lib_lists() -> None:
         rc = lib.main(["list"])
     assert rc == 0
     out = buf.getvalue()
-    assert "phasor" in out and "pocket-drone" in out
+    assert "phasor" in out and "type-p-fm1" in out
 
 
 def _scaffold_builds() -> None:
@@ -714,7 +714,7 @@ def _budget_measures_tabled() -> None:
     """`umetate budget` generates + compiles the patch's `tables:` (a regression:
     the dogfood's `routing` table once left `table_routing` undefined)."""
     root = Path(__file__).resolve().parents[1]
-    patch = root / "examples" / "fourop-fm" / "patch.json"
+    patch = root / "examples" / "type-p-fm1" / "patch.json"
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
         rc = cli.main(["budget", str(patch), "--voices", "8"])
@@ -729,14 +729,14 @@ def _budget_measures_tabled() -> None:
 
 
 def _synth_build_composes() -> None:
-    """`umetate build --synth examples/fourop-fm` composes the dogfood firmware:
+    """`umetate build --synth examples/type-p-fm1` composes the dogfood firmware:
     the generated engine/panel/CC/layout files, a sounding host run, and — with
     the toolchain — the target package."""
     import struct
     import wave
 
     root = Path(__file__).resolve().parents[1]
-    ffm = root / "examples" / "fourop-fm"
+    ffm = root / "examples" / "type-p-fm1"
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
         rc = cli.main(["build", "--synth", str(ffm)])
@@ -744,7 +744,7 @@ def _synth_build_composes() -> None:
     out = buf.getvalue()
     gen = root / "firmware" / "gen"
     for filename in (
-        "fourop_fm_dsp.c",
+        "type_p_fm1_dsp.c",
         "dsp.h",
         "cc_map.h",
         "synth_layout.h",
@@ -752,13 +752,13 @@ def _synth_build_composes() -> None:
         "app.c",
     ):
         assert (gen / filename).is_file(), f"build --synth did not write gen/{filename}"
-    wav_path = root / "firmware" / "build" / "host" / "fourop_fm.wav"
+    wav_path = root / "firmware" / "build" / "host" / "type_p_fm1.wav"
     assert wav_path.is_file(), "build --synth produced no host WAV"
     with wave.open(str(wav_path), "rb") as w:
         frames = w.readframes(w.getnframes())
     peak = max(abs(v) for (v,) in struct.iter_unpack("<h", frames))
     assert peak > 1000, f"the dogfood host run is silent (peak {peak})"
-    pkg = root / "firmware" / "build" / "umetate-fm1-pro-fourop_fm.fwsc"
+    pkg = root / "firmware" / "build" / "umetate-fm1-pro-type_p_fm1.fwsc"
     if "target package blocked" not in out:
         assert pkg.is_file(), "with the toolchain, the synth package must exist"
 

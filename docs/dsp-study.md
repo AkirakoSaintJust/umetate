@@ -195,7 +195,7 @@ double-sine, double-triangle, double-half-sine, and double-half-triangle. The OP
 and OPL sets share four shapes (sine, half-sine, double-sine, double-half-sine).
 That leaves four OPL-only shapes, so umetate's `fm1_sin_wave` in `hal/fm1_math.h`
 provides a 12-wave union: OPZ at indices 0–7 and rectified `|sin|`, pulse, square,
-and saw at 8–11. The fourop-fm `dsp-algorithm.md` §`osc.waveform` documents the
+and saw at 8–11. The type-p-fm1 `dsp-algorithm.md` §`osc.waveform` documents the
 mapping. Both chips offer eight choices, but the actual shapes and selection logic
 differ.
 

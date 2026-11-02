@@ -1,11 +1,11 @@
-# Synth brief — fourop-fm
+# Synth brief: Type P.fm1
 
 > One brief as the source of truth. `patch.json` + `panel.json` are the
 > translation of this brief; `dsp-algorithm.md` holds the math.
 
 ## 1. Instrument and player
 
-- **Working name:** fourop-fm (a 4-operator Yamaha FM synth).
+- **Working name:** type-p-fm1 (a 4-operator Yamaha FM synth).
 - **Who plays it and in what setting:** a desktop/tabletop FM voice in the
   OPZ/DX21 lineage — pads, bells, EPs, basses. Played from the keys or MIDI.
 - **What should it feel like to play:** immediate, bright-but-tameable; the
@@ -180,7 +180,7 @@ note-off, and is off by default; its levels `l1..l3` are q15 pitch offsets
 
 `taps: ["op1.audio", "op2.audio", "op3.audio", "op4.audio"]` — four per-operator
 audio tap points (resolved to each operator's post-mute output), exposed per part
-as `N_TAP × N_PART` = 8 channels via `fourop_fm_dsp_tap(ch)` (`ch = tap × 2 +
+as `N_TAP × N_PART` = 8 channels via `type_p_fm1_dsp_tap(ch)` (`ch = tap × 2 +
 part`, the last block's Q15 samples). These feed the HOME 4-op scope/spectro
 pages (§3.3): the active part's four operators are its four channels, so the
 "active part" label stays true when both parts layer.
@@ -307,8 +307,8 @@ page/context change, held notes stay playable. Per-param display scale (ratio
   test modules (`test_generate` renders the patch + proves the 8 algorithms +
   resolves the panel; `test_cli` runs the `build --synth` composition), plus
   `umetate budget` (the measured polyphony claim).
-- **Target package checks:** `umetate build --synth examples/fourop-fm` →
-  `umetate-fm1-pro-fourop_fm.fwsc` (82 060 B image, `.dsp_text` in SRAM); the
+- **Target package checks:** `umetate build --synth examples/type-p-fm1` →
+  `umetate-fm1-pro-type_p_fm1.fwsc` (82 060 B image, `.dsp_text` in SRAM); the
   JieLi build's own checks green.
 - **Emulator:** `umetate emu --check --mhz 240` boots the package and holds a
   chord — no halt, full-scale audio peak.

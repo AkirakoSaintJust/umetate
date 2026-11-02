@@ -1,7 +1,7 @@
-# Worked example: fourop-fm (4-op Yamaha FM)
+# Worked example: Type P.fm1 (4-op Yamaha FM)
 
 This worked example puts the framework through a complete four-operator FM
-synth — the **fourop-fm program** in `docs/roadmap.md` §6.11 (the modules it
+synth — the **type-p-fm1 program** in `docs/roadmap.md` §6.11 (the modules it
 shipped are documented in §6.9). The instrument follows the OPZ/DX21 lineage and
 includes per-operator feedback, eight runtime-selectable algorithms,
 rate/level envelopes, and 12 waveforms. It also has a per-part pitch LFO and a
@@ -47,10 +47,10 @@ The example's implementation lives in `modules/nodes/` (`dx_env`, `mix4`,
 
 ```sh
 umetate deep-check --all                       # the gate (renders the patch, resolves the panel, runs the composition)
-umetate build --synth examples/fourop-fm       # compose + host run + target package (needs the toolchain)
+umetate build --synth examples/type-p-fm1       # compose + host run + target package (needs the toolchain)
 umetate emu --check --mhz 240                  # boot the package, hold a chord (no halt, full-scale peak)
-umetate preset export examples/fourop-fm       # the 128+64 bank as .syx (import reverses it)
-umetate budget examples/fourop-fm/patch.json --voices 20   # the measured polyphony claim
+umetate preset export examples/type-p-fm1       # the 128+64 bank as .syx (import reverses it)
+umetate budget examples/type-p-fm1/patch.json --voices 20   # the measured polyphony claim
 ```
 
 ## 4. Lessons (what the example exposed)

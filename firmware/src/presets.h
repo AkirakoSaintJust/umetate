@@ -20,7 +20,7 @@
  * is a contiguous byte array chunked across one or more flash slots (a record never
  * straddles a slot boundary). The flash slot byte ceiling is store.h `SLOT_MAX`,
  * mirrored here as `PRESET_SLOT_MAX` so the host tests can build presets.c with
- * `-Isrc` only; the device build asserts the two agree. The fourop-fm 317 B part
+ * `-Isrc` only; the device build asserts the two agree. The type-p-fm1 317 B part
  * record spans the 128 parts over 3 flash slots (51 per slot); the 63 B multi
  * record fits all 64 in one (roadmap §6.11.4). */
 #define PRESET_PART_SLOTS 128u
@@ -29,7 +29,7 @@
 
 /* The per-part timbre param cap: the preset apply + SysEx dump buffers are sized to
  * this, so a synth's `SYNTH_N_PARAMS` must stay under it. (Raised from 128 when the
- * fourop-fm key/velocity follow + per-part algorithm pushed it past 128.) */
+ * type-p-fm1 key/velocity follow + per-part algorithm pushed it past 128.) */
 #define SYNTH_PARAM_MAX 256u
 
 #define PP_RECORD(N) (1u + PRESET_NAME_LEN + (N) * 4u + 4u)

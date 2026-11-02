@@ -1,4 +1,4 @@
-# fourop-fm on a computer (the `build --synth` host leg): two notes on the two
+# type-p-fm1 on a computer (the `build --synth` host leg): two notes on the two
 # parts, a CC into the algorithm, panic; shots for the screen evidence.
 200 midi 0x90 60 100
 800 midi 0x91 64 90

@@ -1,4 +1,4 @@
-# DSP algorithm spec — fourop-fm
+# DSP algorithm spec — type-p-fm1
 
 > One section per DSP component (oscillator, filter, envelope, …). This is the
 > *math* the `patch.json`/`node.c` translation follows: when it is complete, a fresh

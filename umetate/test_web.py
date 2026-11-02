@@ -22,9 +22,9 @@ ROOT = Path(__file__).resolve().parents[1]
 def main() -> int:
     failures = 0
     patch = json.loads(
-        (ROOT / "examples" / "pocket-drone" / "patch.json").read_text(encoding="utf-8")
+        (ROOT / "examples" / "type-p-fm1" / "patch.json").read_text(encoding="utf-8")
     )
-    name = "pocket_drone"
+    name = "type_p_fm1"
 
     with tempfile.TemporaryDirectory() as tmp:
         out = Path(tmp)
@@ -43,7 +43,7 @@ def main() -> int:
             if not (out / harness).is_file():
                 print(f"FAIL: {harness} not written")
                 failures += 1
-        if "pocket_drone" not in (out / "worklet.js").read_text(encoding="utf-8"):
+        if "type_p_fm1" not in (out / "worklet.js").read_text(encoding="utf-8"):
             print("FAIL: worklet.js does not carry the synth name")
             failures += 1
 

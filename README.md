@@ -40,7 +40,7 @@ python -m pip install -e .
 umetate quick-check      # verify the environment per evidence layer (read-only)
 umetate setup --dry-run  # see exactly what would be installed (opt-in)
 umetate deep-check       # run the host-side checks
-umetate build --synth examples/fourop-fm   # compose the dogfood firmware (host evidence + package)
+umetate build --synth examples/type-p-fm1   # compose the dogfood firmware (host evidence + package)
 umetate emu --check --mhz 240              # boot it in the emulator, hold a chord
 ```
 

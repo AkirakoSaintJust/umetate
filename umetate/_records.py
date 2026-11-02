@@ -21,7 +21,7 @@ EMPTY = 0xFF
 # The preset store's logical slot counts: 128 single-part slots + 64 multi-patch
 # slots. Each bank is a contiguous byte array chunked across the flash slots at
 # record boundaries (a record never straddles a slot). The flash slot byte ceiling
-# is store.h `SLOT_MAX` = 16 372 B; the fourop-fm 317 B part record spans the 128
+# is store.h `SLOT_MAX` = 16 372 B; the type-p-fm1 317 B part record spans the 128
 # parts over 3 flash slots (51 per slot), the 63 B multi record fits 64 in one
 # (roadmap §6.11.4).
 PART_SLOTS = 128

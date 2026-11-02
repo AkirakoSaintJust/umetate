@@ -1,4 +1,4 @@
-# Control map (UI plan) — fourop-fm
+# Control map (UI plan) — type-p-fm1
 
 > The UI interview, translated into `panel.json`. The control surface is the
 > **real M-VAVE FM-1** (not an idealized one): a smooth `MASTER` volume pot, three

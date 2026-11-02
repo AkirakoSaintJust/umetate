@@ -247,7 +247,7 @@ write `dsp.c` by hand against the same interface. In the patch, `params:` maps
 readable names to flattened `<instance>.<param>` IDs, while `tables:` adds
 `const` tables stored in XIP. See the
 [`patch.schema.json`](../templates/scaffold/patch.schema.json) and the worked
-[`pocket-drone` patch](../examples/pocket-drone/patch.json).
+[`type-p-fm1` patch](../examples/type-p-fm1/patch.json).
 
 Work in **small, measured increments**, with one decision-set in each. Keep every
 change coherent and verifiable. After each increment, run the full gate and
@@ -311,7 +311,7 @@ generated `<synth>_dsp_render`), `app_main` (keys + panel + the service polls +
 silent-only saves), `app_idle`, the `ui_act_*` hooks, and the three service
 contexts (`synth_midi_ctx`, `synth_sysex_ctx`, `synth_runtime_ctx`), the frozen
 framework (`src/rib.c`) provides everything else, and `umetate build --synth
-examples/<your-synth>` composes it. See `examples/fourop-fm/app.c` for the worked
+examples/<your-synth>` composes it. See `examples/type-p-fm1/app.c` for the worked
 glue.
 
 Keep display work, flash access, logging, blocking calls, and allocation out of the

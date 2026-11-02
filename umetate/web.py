@@ -28,7 +28,7 @@ from ._schema import Patch, as_patch
 from .generate import generate, generate_tables
 
 _ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_PATCH = _ROOT / "examples" / "pocket-drone" / "patch.json"
+DEFAULT_PATCH = _ROOT / "examples" / "type-p-fm1" / "patch.json"
 OUT = _ROOT / "build" / "web"
 
 # the firmware wasm the emulator exports (tests/web_host.c)
@@ -493,7 +493,7 @@ def build_main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--synth",
         type=Path,
-        default=_ROOT / "examples" / "fourop-fm",
+        default=_ROOT / "examples" / "type-p-fm1",
         help="a synth project (patch.json + panel.json + app.c)",
     )
     parser.add_argument("--out", type=Path, default=OUT, help="output directory")

@@ -2,7 +2,7 @@
 # Copyright (C) 2026 P1Onken (umetate)
 """`umetate scaffold` — generate a node/macro/patch/synth skeleton (§12.7.4).
 
-`--template T` copies a shipped example (e.g. `pocket-drone`) instead of the empty
+`--template T` copies a shipped example (e.g. `type-p-fm1`) instead of the empty
 skeleton. A generated `patch` is verified to build (generate + host compile); a
 generated `synth` is a complete minimal firmware (patch + panel + app glue) that
 `umetate build --synth` composes into sound out of the box.

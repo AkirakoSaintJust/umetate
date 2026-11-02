@@ -1,6 +1,6 @@
-# Custom code structure + interface — fourop-fm
+# Custom code structure + interface — type-p-fm1
 
-> Everything beyond the declarative `patch.json`/`panel.json`. The fourop-fm
+> Everything beyond the declarative `patch.json`/`panel.json`. The type-p-fm1
 > dogfood is mostly *library*: it added a handful of nodes/macros + two HAL
 > helpers, then declared the synth. No hand-written `dsp.c` — the generator emits
 > it. The one hand-written piece is `app.c` (the app glue on the frozen `rib.c`
@@ -23,7 +23,7 @@
   - `modules/nodes/csum/` — control summer (control-rate modulation).
   - `modules/nodes/pitch_env/` — the global pitch envelope (the "pitch blip").
   - `modules/macros/fm_op/` — the operator (`macro.json`).
-  - `examples/fourop-fm/{patch.json,panel.json,app.c,host-script.txt,synth-brief.md,dsp-algorithm.md,code-structure.md,control-map.md,README.md}`.
+  - `examples/type-p-fm1/{patch.json,panel.json,app.c,host-script.txt,synth-brief.md,dsp-algorithm.md,code-structure.md,control-map.md,README.md}`.
 - **Modified**:
   - `modules/nodes/osc/` — added the `waveform` param (12 waveforms, the OPZ+OPL union).
   - `modules/nodes/vca/` — added the `level` param (Q15 gain).
@@ -54,7 +54,7 @@ No hand-written `dsp.c`: `generate(patch)` emits `<synth>_dsp_*` from the patch
 - **`tl`** — `node.json`: `ins { audio, cv(control, default 32768) }`,
   `outs { audio }`, `params { level(level 0..99) }`. `node.c`: the Yamaha
   total-level cell `audio × cv × (fm1_level_gain[level] >> 2)` — the `>> 2` is the
-  −12 dB single-operator headroom. Host test: the fourop-fm render + clipping
+  −12 dB single-operator headroom. Host test: the type-p-fm1 render + clipping
   headroom assertions.
 - **`pitch_env`** — `node.json`: `ins { gate(event, default voice_gate[v]),
   trigger(event, default voice_trig[v]) }`, `outs { cv(control) }`,
@@ -67,7 +67,7 @@ No hand-written `dsp.c`: `generate(patch)` emits `<synth>_dsp_*` from the patch
   `switch` over the routing matrix (weights 0/1, Q15 `0`/`32767`) — a 1-weight is
   `fm1_q15_mul(x, 32767)` (folded by the compiler to a 32-bit shift/sub/add), a
   0-weight is dropped — instead of four `fm1_route4` calls (16 multiplies + 16
-  table loads). Host test: the fourop-fm render + routing-table assertions in
+  table loads). Host test: the type-p-fm1 render + routing-table assertions in
   `test_generate.py`.
 - **`algo`** — `node.json`: `ins {}`, `outs { alg(control) }`,
   `params { algorithm(uint32) }`. `node.c`: echoes `algorithm` (clamped to the 8
@@ -111,7 +111,7 @@ No hand-written `dsp.c`: `generate(patch)` emits `<synth>_dsp_*` from the patch
 ## 5. Host-test hook
 
 - **`umetate/test_generate.py`** — `DX_ENV` (envelope), `ROUTE4_TEST`
-  (route4+mix4), the routing-table assertions, and the fourop-fm patch render
+  (route4+mix4), the routing-table assertions, and the type-p-fm1 patch render
   (non-silent → decays) + panel resolve. Run:
   `python3 -m umetate.test_generate` (or the whole gate: `umetate deep-check
   --all`).
