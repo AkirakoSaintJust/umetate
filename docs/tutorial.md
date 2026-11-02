@@ -249,6 +249,51 @@ readable names to flattened `<instance>.<param>` IDs, while `tables:` adds
 [`patch.schema.json`](../templates/scaffold/patch.schema.json) and the worked
 [`type-p-fm1` patch](../examples/type-p-fm1/patch.json).
 
+### Reading the patch and panel JSON
+
+The patch and the panel are plain JSON. You can read them, and you can edit them
+by hand. Here is what each part means. The schemas are the authority:
+[`patch.schema.json`](../templates/scaffold/patch.schema.json) and
+[`panel.schema.json`](../templates/scaffold/panel.schema.json).
+
+**`patch.json` is the instrument.** Top level:
+
+- `name` is the machine name. Lowercase, no spaces. Hyphens and dots become
+  underscores in the generated C names, so `type-p-fm1` becomes `type_p_fm1_*`.
+- `voices` is the voice count.
+- `macros` are named subgraphs you can reuse. A macro lists `ins`, `outs`,
+  `params`, `nodes`, and `wires`, exactly like a zone below.
+- `voice` is the per-voice graph, run once per voice per sample. `nodes` are
+  instances, each an `id` plus a `type` (a node or a macro name). `wires` connect
+  `<instance>.<port>` to `<instance>.<port>`. `voice_out` names the one voice
+  signal summed into the global bus.
+- `global` is the shared graph, run once per block. The word `voice` is a reserved
+  wire source for that summed voice signal.
+- `params` bind a friendly name to a flattened `<instance>.<param>` target, plus
+  min, max, default, curve, unit, and the on-screen `display` form.
+- `tables` are const wavetable, segment, and routing data stored in flash.
+
+A wire has a `from` and a `to`. A `from` is a port, an `<instance>.<port>`, or a
+reserved voice source (`gate`, `velocity`, `trigger`). A `to` is always an
+`<instance>.<port>`. The graph is a DAG. Only the two delay nodes can break a
+cycle.
+
+**`panel.json` is the screen.** Top level:
+
+- `name` and `home`, the context you land in on boot.
+- `global`, the always-on bindings, resolved last.
+- `contexts`, a map of mode name to `pages` and `bindings`.
+
+A binding has a `source` (a control like `ENC_KNOB1`, or MIDI `cc:N`) and one of
+three things: a `target` (the param to write), an `action` (push a context, save,
+panic), or a `slot` (the Nth param on the current page). A widget is a `label`,
+`value`, `bar`, `param_row`, `scope`, `spectro`, or `envelope`, placed by
+`row` and `col`.
+
+The panel is a description of the screen. The generator emits the wiring, and a
+retained-mode redraw engine draws it. You edit the JSON. You never write drawing
+code.
+
 Work in **small, measured increments**, with one decision-set in each. Keep every
 change coherent and verifiable. After each increment, run the full gate and
 **commit the code with the brief, plan, and roadmap updated alongside it**. Do not

@@ -120,8 +120,9 @@ of asking the user to repeat them.
   carriers warbled with the A-LFO until the tap moved to `osc.audio`).
 - **Parameter manifest** must list every parameter: its flattened
   `<instance>.<param>` target, min/max/default, curve, unit, rate
-  (`sample`/`block`), and whether it is `modulatable`. This is the source of the
-  generated `params.json`.
+  (`sample`/`block`), and whether it is `modulatable`. Give every parameter a
+  unit and a meaning, not just bounds (a 0..99 level, a Q15 fraction, a ratio, a
+  rate in hertz). This is the source of the generated `params.json`.
 - **Tables** must name any wavetable/segments/spectrum/phase-map data (the
   `tables:` section → `const` XIP).
 - **Multi-timbrality** (if the synth has `parts:`): name each part, whether it is
@@ -133,6 +134,12 @@ of asking the user to repeat them.
   map (fixed generator-assigned, or user-assignable), sustain (CC64), panic
   (CC123), pitch bend, program change, and note-on/off + velocity. This is the
   source of the generated `cc-map` and the `note_on_ch` allocator.
+- **Persistence + SysEx** (see `references/persistence-and-sysex.md`): the stored
+  part-patch / multi-patch / settings record layouts, the preset slot counts
+  (128 single + 64 multi, fitting the measured `SLOT_MAX`), and the SysEx envelope
+  (`F0 00 21 1D <model> <cmd> ...` + CRC-16) with the five commands. The framework
+  ships this, but the design must confirm the per-part param count and the
+  parameter semantics it implies.
 
 Each node/macro's **DSP algorithm** (the exact math, formats, coefficients,
 state, and edge cases) is specified in `templates/dsp-algorithm.md` during
