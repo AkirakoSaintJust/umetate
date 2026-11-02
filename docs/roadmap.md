@@ -902,10 +902,10 @@ is the worked example of the depth; the skill generalizes it to any synth.
    `LFO` = the op amplitude LFO, then the per-part vibrato; `EDIT` = ratio · level ·
    feedback · waveform (one page); `FX` = filter (on/off, cutoff, rez, type, then
    its ADSR → cutoff) then fold (on/off, threshold, folds, type); `GLO` = per-part
-   level + delay, single-part name, per-part voice mode (poly / unison / legato +
-   unison voice count + detune + portamento time), single-part save/load from the
-   preset store, MIDI channel, keyboard split, `INIT PART`; then multi-patch
-   settings — multi-patch name, `INIT PATCH`.
+   level + delay, single-part name, per-part voice mode (poly / mono + legato +
+   the mono stack's voice count + detune + portamento time), single-part save/load
+   from the preset store, MIDI channel, keyboard split, `INIT PART`; then
+   multi-patch settings — multi-patch name, `INIT PATCH`.
 
 3. **The always-visible header.** The exact fields shown on *every* page, at all
    times — fourop-fm: active part, active operator, each part's and operator's
@@ -1176,7 +1176,7 @@ dogfood run halts never and peaks at full scale, so the fit is measured, not
 estimated. The development skill's interview gains a **polyphony budget** step:
 the voice count is a measured claim, not an estimate.
 
-**Voice modes (retrigger / mono / unison / legato / portamento).** The voice
+**Voice modes (retrigger / mono / legato / portamento).** The voice
 manager is a **generator emission** — a reusable `umetate/_voice.py` module, F3's
 "rails", which the seam inlines — owning the per-voice state and the
 allocation/mode/glide logic; it is parameterized by `NVOICE` at AOT time, so
@@ -1190,9 +1190,11 @@ settled):
   *regardless of stage* — this also fixes the current steal bug (a stolen voice
   kept the old note's envelope).
 - **Mono**: one sounding note, `note_priority` (last/highest/lowest, default
-  last). On note-off, the next-held note (by priority) takes over.
-- **Unison**: `unison_count` stacked voices per note, **linear detune spread**
-  (±cents around the note).
+  last). On note-off, the next-held note (by priority) takes over. A mono voice
+  is a **stack of `unison_count` voices** with a **linear detune spread** (±cents
+  around the note): `count 1` = plain mono, `count > 1` = a detuned stack. The
+  three-way `poly/mono/unison` split was **merged** (2026-11-02, §13.7 item 54):
+  `mode` is now `poly | mono`; the polyphonic-stacked "unison" semantics are gone.
 - **Legato** (mono): overlapping notes don't retrigger the envelope — the pitch
   jumps instantly to the new note. Legato never glides; only `portamento` glides.
 - **Portamento**: **constant-rate** (interval-proportional glide time), a
@@ -1202,8 +1204,8 @@ settled):
   is off; `portamento` (glide) is orthogonal and applies whenever it is set.
 - All mode params — `mode`, `unison_count`, `unison_detune`, `legato`,
   `portamento`, `note_priority` — are **per-part** in a multitimbral patch (each
-  part has its own poly/mono/unison + counts + times) and **per-preset** (global)
-  in a single-timbre patch.
+  part has its own poly/mono + stack count/detune + times) and **per-preset**
+  (global) in a single-timbre patch.
 
 Per-voice state (SoA, `.cpu1_bss`): `voice_gate`/`voice_note`/`voice_age`/
 `voice_velocity` (existing) + `voice_trig` (uint8 one-shot), `voice_target_inc`
@@ -1221,13 +1223,14 @@ patch carries them) and global (appended last) in a single-timbre patch. Landed:
 - **`trigger` reserved input** — `voice_trig[v]` (one-shot, set in `note_on`,
   cleared after the control prologue); `dx_env` retriggers on it regardless of
   stage, so a stolen voice re-attacks (F3a).
-- **The six mode params** — `mode` (poly/mono/unison), `unison_count`,
+- **The six mode params** — `mode` (poly/mono), `unison_count`,
   `unison_detune` (cents, linear spread), `legato`, `note_priority`
   (last/highest/lowest), and `portamento` (Q16 glide rate, 0 = off).
-- **Mono** — one voice (voice 0), a 128-note held tracker + `note_priority`;
-  `note_off` does priority takeover; legato gates the retrigger on overlap.
-- **Unison** — `unison_count` stacked voices with a linear ±cents detune folded
-  into each voice's base increment.
+- **Mono** — a `unison_count`-voice stack (voice 0..count-1 in single-timbre, a
+  per-part tracked stack `part_mono_voice[p][8]` + `part_mono_count[p]` in
+  multitimbral), a 128-note held tracker + `note_priority`; `note_off` does
+  priority takeover (retargeting the whole stack); legato gates the retrigger on
+  overlap; `unison_detune` spreads the stack (±cents). `count 1` = plain mono.
 - **Portamento** — `voice_inc[v]` ramps toward `voice_target_inc[v]` at a constant
   rate (linear in the increment, `step = target × portamento >> 16`, clamped; no
   LUT, one add per voice per block), re-deriving `<name>_note_derived(v)` each
@@ -1250,13 +1253,13 @@ patch carries them) and global (appended last) in a single-timbre patch. Landed:
   taken; `note_off`/panic/reset clear the countdown.
 - **Per-part voice modes** — the six mode params are per-part arrays when
   `n_parts > 1`: each part allocates by its own `mode` (poly one-voice / mono with
-  a per-part held-note tracker + `part_mono_voice[p]` + legato/priority / unison
-  `unison_count` stacked voices), read through `vm_mode[voice_part[v]]` etc. A
-  mono part's takeover and a unison part's stack-steal are per-part; the
+  a per-part held-note tracker + `part_mono_voice[p][8]`/`part_mono_count[p]` +
+  legato/priority + `unison_count` stacked voices), read through
+  `vm_mode[voice_part[v]]` etc. A mono part's takeover and stack are per-part; the
   `voice_mono_active` helper takes the part index. The single-timbre path is
-  unchanged (global scalars, voice 0 mono).
+  unchanged (global scalars, voices 0..count-1).
 
-Still open: none — per-part mono/unison landed (F3, this increment).
+Still open: none — per-part mono (stacked) landed (F3, this increment).
 
 #### 6.11.5 Milestones (ordered)
 
@@ -1264,7 +1267,7 @@ Still open: none — per-part mono/unison landed (F3, this increment).
 | --- | --- | --- |
 | F1 | **Interview loop hardening** (L1–L7). | synth-brief semantics column + multi-timbrality + MIDI-spec prompts; control-map menu→page→mode-tree prompt; skill non-goal rule + two-tier example definition; source-vocabulary check runs. |
 | F2 | **Velocity routing.** — **done** | `voice_velocity[]` + `velocity` reserved input + `vel_amp`/`vel_fm`/`vel_rate` in `fm_op` (velocity → amplitude, → FM, → envelope rate via a `dx_env` rate-scale input); host tests prove a higher velocity is louder and attacks faster. |
-| F3 | **Voice-management rails.** — **done** | `_voice.py` rails + `trigger`/retrigger + mono (note_priority/legato) + unison (detune) + portamento (glide) + the six mode params (per-part in multitimbral patches) + `parts:` (per-part param arrays, `voice_part[v]`, `note_on_ch` channel/keyzone routing, layering, per-part `level`/`delay`, and per-part poly/mono/unison); host tests prove mono/unison/legato/glide/routing+layering+level+delay + per-part mono priority/takeover + poly isolation + unison stacking. |
+| F3 | **Voice-management rails.** — **done** | `_voice.py` rails + `trigger`/retrigger + mono (note_priority/legato, stacked `unison_count` voices) + portamento (glide) + the six mode params (per-part in multitimbral patches) + `parts:` (per-part param arrays, `voice_part[v]`, `note_on_ch` channel/keyzone routing, layering, per-part `level`/`delay`, and per-part poly/mono); host tests prove mono/legato/glide/routing+layering+level+delay + per-part mono priority/takeover + poly isolation + mono stacking. |
 | F4 | **Presets + settings + SysEx.** — **done** | 128-slot single-part store + 64-slot multi-patch store (chunked across the slot area's measured 16 372 B ceiling; F7d) + settings record (`_records.py`/`presets.c`, byte-parity-tested), the shared SysEx envelope + 7-bit packing (`_sysex.py`), the generated `sysex-layout`, the bank ↔ `.syx` export/import (`_presets.py`), the `umetate preset export/import` CLI, and the C bank save/load over `store.h` (silent-only writes). Host tests prove the export→import round-trip and the C/Python byte parity. The device-side SysEx command handler landed with F7a. |
 | F5 | **MIDI CC map.** — **done** | `generate_cc_map` + `generate_cc_header`: one CC per param, ascending from base 16, skipping the reserved CCs (sustain 64, channel-mode 120..127), plus the reversed `param → cc`; a GenError when the params don't fit. Host tests prove the map is complete/unique/ascending and that a CC write through the generated `cc_map.h` table reaches a real, writable param. |
 | F6 | **Polyphony budget tool.** — **done** | `umetate budget` generates the patch at each `--voices`/`--parts`, compiles for host, and times a worst-case `render(256)` (all voices sounding, envelopes open) — per-voice cost + linearity; the skill interview consumes it (a measured claim, not an estimate). The device fit is the emulator's job (F7e: `umetate emu --check --mhz 240` boots the built firmware and holds a chord — no halt, full-scale audio). |
@@ -3157,11 +3160,13 @@ one block, ~0.7 ms — inaudible for timbre shaping, accepted.)
     correctly green). (c) Say "Logo typeface:" instead of "Typeface:", and under
     "Digital Desolation Plus" write "by ukiyomoji.booth.pm".
 
-54. **Mono/unison split.** Reconsider: portamento should be available in unison (a
-    monophonic stacked-voice mode); if it is, unison+portamento is
-    indistinguishable from mono+portamento (just stacked/detuned), so the two modes
-    must be reconciled — one mode with a voice-stack/detune parameter, or a written
-    reason they stay separate.
+54. **Mono/unison split.** — **done (merged).** `mode` is now **poly | mono**
+    (2 values); the old 3rd value (unison) is gone. `unison_count` (1..8) and
+    `unison_detune` now stack/detune the mono voice (`count 1` = plain mono), and
+    portamento/legato/note-priority apply in mono regardless of the stack. The GLO
+    `UNISON` page is renamed `MONO STACK`; `UI_DISP_MODE` reads `poly`/`mono`. The
+    polyphonic-stacked "unison" semantics (one stack per note) are dropped — mono
+    is now monophonic with an optional detuned stack. See §6.11.4.
 
 55. **Algorithm 1 graph too tall.** The algorithm-1 graph overflows the algorithm
     selection popup. Add a **horizontal variant** of this algorithm —

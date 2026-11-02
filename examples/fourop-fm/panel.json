@@ -388,7 +388,7 @@
         {
           "id": "unison",
           "widgets": [
-            { "type": "subheader", "row": 2, "text": "UNISON", "part": true },
+            { "type": "subheader", "row": 2, "text": "MONO STACK", "part": true },
             { "type": "param_row", "row": 3, "param": "unison_count", "part": true, "text": "VOICES" },
             { "type": "param_row", "row": 4, "param": "unison_detune", "part": true, "text": "DETUNE" }
           ]

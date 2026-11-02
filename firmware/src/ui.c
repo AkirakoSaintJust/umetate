@@ -619,9 +619,9 @@ void ui_param_fmt(uint16_t p, const char *unit, char *out, uint32_t n)
     case UI_DISP_FOLD:                             /* a wavefolder type -> its name */
         ui_strcat(out, "sine");
         break;
-    case UI_DISP_MODE: {                           /* a 0..2 voice mode -> its name */
-        static const char *const names[3] = {"poly", "mono", "unison"};
-        uint32_t i = v >= 0 && v < 3 ? (uint32_t)v : 0u;
+    case UI_DISP_MODE: {                           /* a 0..1 voice mode -> its name */
+        static const char *const names[2] = {"poly", "mono"};
+        uint32_t i = v >= 0 && v < 2 ? (uint32_t)v : 0u;
         ui_strcat(out, names[i]);
         break;
     }

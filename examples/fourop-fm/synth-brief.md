@@ -60,11 +60,11 @@
 
 ### 2.1b Per-part voice modes (moved from global)
 
-`mode` (0 = poly, 1 = unison, 2 = legato), `unison_count`, `unison_detune`,
-`legato` (voice count), `portamento` (time), `note_priority` become **per-part**
-params (each part its own poly/unison/legato + counts + times), exposed in `GLO`.
-This is a breaking change to the voice-mode param layout: they move from the
-global six to a per-part array.
+`mode` (0 = poly, 1 = mono), `unison_count` (the mono stack size, 1 = plain mono),
+`unison_detune`, `legato`, `portamento` (time), `note_priority` become **per-part**
+params (each part its own poly/mono + stack count/detune + times), exposed in
+`GLO`. This is a breaking change to the voice-mode param layout: they move from
+the global six to a per-part array.
 
 ### 2.1 Voice architecture (the node/macro graph)
 
@@ -111,7 +111,7 @@ global six to a per-part array.
 > mode params) as the fixed CC surface; part 1's timbre comes from the
 > multi-patch / SysEx. The six voice-mode params (`mode`, `unison_count`,
 > `unison_detune`, `legato`, `portamento`, `note_priority`) are **per-part**
-> (each part its own poly/unison/legato + counts + times).
+> (each part its own poly/mono + stack count/detune + times).
 
 | Param (name) | Target | Min | Max | Curve | Unit | Display |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -226,8 +226,8 @@ menu/page purple, the description bright green. No page may hide any of it.
 - **FX** (the output chain): **filter** — on/off, cutoff, rez, type, and an ADSR
   envelope routed to cutoff; **fold** — on/off, threshold, folds (count), type.
 - **GLO** (parts + patch): per-part **level** (scales the part's maximum
-  amplitude) and **delay**; per-part **voice mode** (poly / unison / legato,
-  with unison voice count + detune, legato voice count, portamento time); part
+  amplitude) and **delay**; per-part **voice mode** (poly / mono, with the mono
+  stack's voice count + detune, legato, portamento time); part
   **name**, MIDI **channel**, **keyboard split**, **INIT PART**; **save/load a
   single part into either part** from the preset store; multi-patch settings —
   **multi-patch name**, **INIT PATCH** (additive algorithm, gate-type envelopes,

@@ -890,9 +890,8 @@ RETRIG_PATCH: Patch = {
 }
 
 
-# The voice-mode contracts: mono (one voice, last-note priority + note_off
-# takeover) and unison (a note consumes `unison_count` voices, so a second note
-# steals the whole stack). Observed through `dsp_lit` (the gated-note bitmask).
+# The voice-mode contracts: mono (last-note priority + note_off takeover, with
+# `unison_count` stacked voices). Observed through `dsp_lit` (the gated-note bitmask).
 MODE_PATCH: Patch = {
     "name": "mode_test",
     "voices": 2,
@@ -940,19 +939,19 @@ int main(void) {
         return 1;
     }
 
-    /* unison count=2 on a 2-voice patch: a second note steals the whole stack */
+    /* mono count=2 on a 2-voice patch: a second note retargets the whole stack */
     __NAME___dsp_reset();
-    __NAME___dsp_set_param(__MODE_ID__, 2);
+    __NAME___dsp_set_param(__MODE_ID__, 1);
     __NAME___dsp_set_param(__UNISON_COUNT_ID__, 2);
     __NAME___dsp_note_on(60, 100);
     __NAME___dsp_note_on(72, 100);
     lit = __NAME___dsp_lit(60);
     if (lit != (1u << 12)) {
-        printf("FAIL: unison did not stack (lit=%u)\\n", lit);
+        printf("FAIL: mono stack did not retarget (lit=%u)\\n", lit);
         return 1;
     }
 
-    printf("ok: __NAME__ mono priority/takeover + unison stacking\\n");
+    printf("ok: __NAME__ mono priority/takeover + stacked mono\\n");
     return 0;
 }
 """
@@ -1172,20 +1171,20 @@ int main(void) {
         return 1;
     }
 
-    /* part 1 unison (count 2): the third stack steals the oldest stack */
+    /* part 1 mono (count 2): three held notes -> last priority (84) sounds, stacked */
     __NAME___dsp_reset();
-    __NAME___dsp_set_param(__MODE_P1_ID__, 2);
+    __NAME___dsp_set_param(__MODE_P1_ID__, 1);
     __NAME___dsp_set_param(__UNISON_COUNT_P1_ID__, 2);
     __NAME___dsp_note_on_ch(60, 100, 1u);
     __NAME___dsp_note_on_ch(72, 100, 1u);
     __NAME___dsp_note_on_ch(84, 100, 1u);
     lit = __NAME___dsp_lit(60);
-    /* 6 unison voices wanted, 4 available -> the oldest stack (60) is stolen */
-    if (lit != ((1u << 12) | (1u << 24))) {
-        printf("FAIL: per-part unison stacking (lit=%u)\\n", lit);
+    /* mono is monophonic: only the last note (84) sounds, on the 2-voice stack */
+    if (lit != (1u << 24)) {
+        printf("FAIL: per-part mono stacking (lit=%u)\\n", lit);
         return 1;
     }
-    printf("ok: __NAME__ per-part mono priority/takeover + poly isolation + unison\\n");
+    printf("ok: __NAME__ per-part mono priority/takeover + poly + stack\\n");
     return 0;
 }
 """
@@ -1208,12 +1207,12 @@ int main(void) {
         printf("FAIL: bad id n+100\\n");
         return 1;
     }
-    /* the universal `mode` param is min 0, max 2 */
+    /* the universal `mode` param is min 0, max 1 */
     if (__NAME___dsp_set_param(__MODE_ID__, 999) != 0) {
         printf("FAIL: clamp hi\\n");
         return 1;
     }
-    if (__NAME___dsp_get_param(__MODE_ID__) != 2) {
+    if (__NAME___dsp_get_param(__MODE_ID__) != 1) {
         printf("FAIL: hi not clamped\\n");
         return 1;
     }
@@ -1558,7 +1557,7 @@ def _asan_clean() -> tuple[bool, str]:
 
 
 def _modes_behave(patch: Patch) -> tuple[bool, str]:
-    """Generate + compile + run the mono/unison contracts (mode params via
+    """Generate + compile + run the mono contracts (mode params via
     set_param)."""
     src = generate(patch)
     mode_id = str(param_ids(patch)["mode"])
@@ -1761,7 +1760,7 @@ def _parts_level_delay(patch: Patch) -> tuple[bool, str]:
 
 def _parts_modes(patch: Patch) -> tuple[bool, str]:
     """Generate + compile + run the per-part voice-mode contract: the six mode
-    params are per-part (mono for part 0, poly/unison for part 1)."""
+    params are per-part (mono for part 0, poly/mono-stack for part 1)."""
     src = generate(patch)
     ids = param_ids(patch)
     subs = {
@@ -2982,11 +2981,10 @@ def main() -> int:
     )
     failures += 0 if ok else 1
 
-    # voice modes: mono (one voice, last-note priority, takeover) + unison (stack).
+    # voice modes: mono (last-note priority, takeover) + mono stack (unison_count).
     ok, msg = _modes_behave(MODE_PATCH)
     print(
-        ("ok: " if ok else "FAIL: ")
-        + (msg or "mono priority/takeover + unison stacking")
+        ("ok: " if ok else "FAIL: ") + (msg or "mono priority/takeover + stacked mono")
     )
     failures += 0 if ok else 1
 
@@ -3019,7 +3017,7 @@ def main() -> int:
     print(("ok: " if ok else "FAIL: ") + (msg or "per-part level + delay"))
     failures += 0 if ok else 1
 
-    # the six voice-mode params are per-part (mono/poly/unison independence).
+    # the six voice-mode params are per-part (mono/poly/mono-stack independence).
     ok, msg = _parts_modes(PARTS_PATCH)
     print(("ok: " if ok else "FAIL: ") + (msg or "per-part voice modes"))
     failures += 0 if ok else 1
