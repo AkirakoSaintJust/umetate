@@ -137,6 +137,14 @@
             { "type": "param_row", "row": 5, "param": "op1.fb_ks.lo", "text": "OP FB KS LO" },
             { "type": "param_row", "row": 6, "param": "op1.fb_ks.hi", "text": "OP FB KS HI" }
           ]
+        },
+        {
+          "id": "op-vel-sens",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "OP VEL SENS" },
+            { "type": "param_row", "row": 3, "param": "op1.level_vs.amount", "text": "OP LEVEL VS" },
+            { "type": "param_row", "row": 4, "param": "op1.fb_vs.amount", "text": "OP FB VS" }
+          ]
         }
       ],
       "bindings": [
@@ -203,6 +211,14 @@
             { "type": "param_row", "row": 4, "param": "op1.eg_ks.hi", "text": "A-ENV RATE KS HI" },
             { "type": "param_row", "row": 5, "param": "penv_ks_lo", "part": true, "text": "P-ENV RATE KS LO" },
             { "type": "param_row", "row": 6, "param": "penv_ks_hi", "part": true, "text": "P-ENV RATE KS HI" }
+          ]
+        },
+        {
+          "id": "env-vel-sens",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "VEL SENS" },
+            { "type": "param_row", "row": 3, "param": "op1.eg_vs.amount", "text": "A-ENV RATE VS" },
+            { "type": "param_row", "row": 4, "param": "penv_vs", "part": true, "text": "P-ENV RATE VS" }
           ]
         }
       ],
@@ -296,6 +312,14 @@
             { "type": "param_row", "row": 5, "param": "fenv_ks_lo", "text": "F-ENV RATE KS LO" },
             { "type": "param_row", "row": 6, "param": "fenv_ks_hi", "text": "F-ENV RATE KS HI" }
           ]
+        },
+        {
+          "id": "f1-vel-sens",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "F1 VEL SENS", "plain": true },
+            { "type": "param_row", "row": 3, "param": "f1_cutoff_vs", "text": "F1 CUTOFF VS" },
+            { "type": "param_row", "row": 4, "param": "fenv_vs", "text": "F-ENV RATE VS" }
+          ]
         }
       ],
       "bindings": [
@@ -340,6 +364,14 @@
           "widgets": [
             { "type": "label", "row": 2, "span": 2, "text": "KEY SCALING" },
             { "type": "param_row", "row": 4, "param": "breakpoint", "text": "BREAKPOINT" },
+            { "type": "label", "row": 7, "text": "targets live in EDIT/FX/ENV" }
+          ]
+        },
+        {
+          "id": "vel-sens",
+          "widgets": [
+            { "type": "label", "row": 2, "span": 2, "text": "VEL SENS" },
+            { "type": "param_row", "row": 4, "param": "vel_sens_on", "text": "VEL SENS ON" },
             { "type": "label", "row": 7, "text": "targets live in EDIT/FX/ENV" }
           ]
         },
