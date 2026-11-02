@@ -1450,6 +1450,24 @@ pattern catalogue aimed at technical writing, with user-manual specifics (addres
 the reader as you, one point per sentence, concrete over abstract, kill filler and
 hedging and promotion). `SKILL.md` is the whole skill, no generated references.
 
+### 6.15 Publishing loop (`umetate publish`)
+
+`umetate publish <synth_dir>` assembles a distributable firmware repo in
+`publish/<name>/` from a built project: the user docs (`examples/<name>/docs/`,
+written with the documentation skill), the `.fwsc` firmware artifact, and the
+browser web app (`web/`, the GitHub Pages payload), plus a generated README and a
+CHANGELOG copied from the release notes. It is the repeatable loop: edit, build,
+`umetate web-build`, `umetate publish`, bump the release notes, push. The
+`publish/` tree is git-ignored here, it is its own repo pushed to a remote GitHub
+repo with Pages serving `web/`. The README links to the Pages URL and to the
+manual, panel, MIDI and SysEx, and patch-sheet docs.
+
+The worked example ships these user docs in `examples/type-p-fm1/docs/`: the manual
+(sound and parameters), the panel reference (controls, pages, save), the MIDI and
+SysEx reference, the printable patch sheet, and the release notes. They are
+synchronic, written from the instrument's point of view, and follow the no
+em-dash and no semi-colon rule.
+
 ---
 
 ## 7. Implementation roadmap (ordered)

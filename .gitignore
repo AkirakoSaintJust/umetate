@@ -25,6 +25,9 @@ dist/
 *.elf
 *.map
 
+# the `umetate publish` output (a separate distributable repo, not this repo's)
+publish/
+
 # the `build --synth` composition outputs (regenerated from the project dir)
 firmware/gen/*_dsp.c
 firmware/gen/app.c

@@ -28,6 +28,7 @@ COMMANDS: dict[str, tuple[str, str]] = {
     "scaffold": ("generate a node/macro/patch/synth skeleton", "scaffold"),
     "lib": ("list the shipped nodes + templates", "lib"),
     "preset": ("export/import the preset bank as SysEx", "preset"),
+    "publish": ("assemble a distributable firmware repo", "publish"),
     "budget": ("measure the polyphony budget", "budget"),
     "theme": ("check/generate a WCAG-verified palette", "theme"),
     "lint": ("the C standing checks", "lint"),
