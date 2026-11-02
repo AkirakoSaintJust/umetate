@@ -181,6 +181,13 @@ def helpers(per_part: bool) -> list[str]:
             "    return active;",
             "}",
             "",
+            "static inline __attribute__((always_inline)) uint32_t voice_highest_note(void) {",
+            "    uint32_t v, max = 0u;",
+            "    for (v = 0; v < NVOICE; v++)",
+            "        if (voice_gate[v] && voice_note[v] > max) max = voice_note[v];",
+            "    return max;",
+            "}",
+            "",
         ]
     return [
         "static inline __attribute__((always_inline)) uint32_t voice_mono_active(",
@@ -194,6 +201,13 @@ def helpers(per_part: bool) -> list[str]:
         "        else { if (mono_order[n] > mono_order[active]) active = n; }",
         "    }",
         "    return active;",
+        "}",
+        "",
+        "static inline __attribute__((always_inline)) uint32_t voice_highest_note(void) {",
+        "    uint32_t v, max = 0u;",
+        "    for (v = 0; v < NVOICE; v++)",
+        "        if (voice_gate[v] && voice_note[v] > max) max = voice_note[v];",
+        "    return max;",
         "}",
         "",
     ]

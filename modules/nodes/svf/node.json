@@ -1,8 +1,13 @@
 {
   "name": "svf",
-  "summary": "Chamberlin state-variable filter with a selectable output (LP/BP/HP), a bypass, and a cutoff envelope. `f` = 2*sin(pi*fc/fs) (Q16), `q` = damping (Q16); `type` 0=LP 1=BP 2=HP picks `out`; `on` 0 = bypass (out = input); `fenv` (control, Q15) scales `fenv_depth` (Q16) and is added to `f`, so a note-gated envelope opens/closes the cutoff.",
-  "ins": { "audio": "audio", "fenv": { "rate": "control", "default": "0" } },
+  "summary": "Chamberlin state-variable filter with a selectable output (LP/BP/HP), a bypass, and a cutoff envelope. `f` = 2*sin(pi*fc/fs) (Q16), `q` = damping (Q16); `type` 0=LP 1=BP 2=HP picks `out`; `on` 0 = bypass (out = input); `fenv` (control, Q15) scales `fenv_depth` (Q16) and is added to `f`, so a note-gated envelope opens/closes the cutoff. A `k` key-follow factor (Q15) pushes `f` toward 0/65535 (block-derived `f_eff`).",
+  "ins": {
+    "audio": "audio",
+    "fenv": { "rate": "control", "default": "0" },
+    "k": { "rate": "control", "format": "q15", "default": "0" }
+  },
   "outs": { "low": "audio", "band": "audio", "high": "audio", "out": "audio" },
   "params": { "f": "q16", "q": "q16", "type": "uint32", "on": "uint32", "fenv_depth": "q16" },
-  "state": { "low": "q15", "band": "q15" }
+  "state": { "low": "q15", "band": "q15", "f_eff": "q16" },
+  "block_derived": { "f_eff": "fm1_key_apply(${param.f}, ${in.k}, 0, 65535)" }
 }
