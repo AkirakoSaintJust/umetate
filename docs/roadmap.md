@@ -3359,6 +3359,15 @@ bend_q16` is block-constant, its inner loop is `phase += step, q15_mul(sine, amp
 and no FM routing, so it needs no change. Docs refreshed (route-as-switch, 61% →
 51% ISR), the tutorial/skill files carry no stale route/ISR internals.
 
+**Second propagation pass (2026-11-02).** The first pass missed three per-sample
+`(int64_t)x * 2^k` patterns that are the same shift as the phasor fix. `phase_dist`
+and `phase_shape` ended their per-sample body with `(int64_t)q * 131072` (Q15 →
+Q32), now `(uint32_t)q << 17`, and `wavefolder`'s sine fold used `(int64_t)x * 65536`
+(now `(uint32_t)x << 16`, `x` is non-negative there so no wrap question). All three
+are provably bit-exact (a pure two's-complement left shift truncates to the same low
+32 bits) and are gated by the `phase_dist`/`phase_shape`/`naive_vco` render tests and
+the host ↔ wasm parity check.
+
 **The six acceleration ideas, considered, verdicts.**
 1. **Log-space math** (multiplies → adds, like DX7 emulators). Only gains are
    exact in log space, *addition* (route `car` sum, `mix`, FM feedback, phase

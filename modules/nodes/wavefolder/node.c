@@ -17,7 +17,7 @@ if (!${param.on}) {
         int32_t x = over;
         uint32_t k, n = ${param.folds};
         for (k = 0; k < n && k < 8u; k++)
-            x = fm1_sin((uint32_t)((int64_t)x * 65536));   /* sin(pi * x), one fold */
+            x = fm1_sin((uint32_t)x << 16);   /* sin(pi * x), one fold, x in [0,32767] */
         int32_t excess = over + fm1_q15_mul(${param.amount}, x - over);
         ${out.audio} = (in < 0 ? -1 : 1) * (th + excess);
     }
