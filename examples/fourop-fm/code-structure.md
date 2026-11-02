@@ -63,9 +63,12 @@ No hand-written `dsp.c`: `generate(patch)` emits `<synth>_dsp_*` from the patch
   level targets (a pitch offset), retriggered on every note-on and gated by `on`.
   Host test: `test_generate.py` `_release_tail`.
 - **`route`** — `node.json`: `ins { alg(control), a b c d(audio) }`,
-  `outs { mod2 mod3 mod4 car(audio) }`, `params { which(table) }`. `node.c`: four
-  `fm1_route4` calls reading rows 1–4 of the routing table, indexed by `alg`.
-  Host test: the fourop-fm render + routing-table assertions in `test_generate.py`.
+  `outs { mod2 mod3 mod4 car(audio) }`, `params {}`. `node.c`: an 8-algorithm
+  `switch` over the routing matrix (weights 0/1, Q15 `0`/`32767`) — a 1-weight is
+  `fm1_q15_mul(x, 32767)` (folded by the compiler to a 32-bit shift/sub/add), a
+  0-weight is dropped — instead of four `fm1_route4` calls (16 multiplies + 16
+  table loads). Host test: the fourop-fm render + routing-table assertions in
+  `test_generate.py`.
 - **`algo`** — `node.json`: `ins {}`, `outs { alg(control) }`,
   `params { algorithm(uint32) }`. `node.c`: echoes `algorithm` (clamped to the 8
   routings) as `alg` (control rate). Host test: `test_generate.py` algorithm +

@@ -8,14 +8,15 @@
    index) and `mod` (control) is a small additive offset — both apply to the readout
    phase only. The accumulator advances by `step` alone; accumulating `fm` would be
    frequency modulation, not the Yamaha phase modulation (it detunes the carrier with
-   any modulator DC and lets feedback settle on a DC fixed point). Multiplication
-   (not `<< 16`) so a negative (bipolar) modulator is well-defined. `mip` (the
-   band-limited table level) is block-constant (block_derived), so it is copied to
-   its output here. */
-uint32_t ${out.phase} = (uint32_t)(
-    (int64_t)${state.phase}
-    + ((int64_t)${in.fm} * 65536)
-    + (int64_t)${in.mod}
-);
-${state.phase} = (uint32_t)((int64_t)${state.phase} + (int64_t)${state.step});
+   any modulator DC and lets feedback settle on a DC fixed point).
+
+   32-bit arithmetic throughout: `(uint32_t)fm << 16` is the exact two's-complement
+   `fm * 65536` (Q15 → Q31, fits int32), and the phase sums are plain mod-2³² uint32
+   additions — the old int64 form truncates to the same low 32 bits, so this is
+   bit-exact without the 64-bit ops.
+
+   `mip` (the band-limited table level) is block-constant (block_derived), so it is
+   copied to its output here. */
+uint32_t ${out.phase} = ${state.phase} + ((uint32_t)${in.fm} << 16) + (uint32_t)${in.mod};
+${state.phase} += ${state.step};
 uint32_t ${out.mip} = ${state.mip};

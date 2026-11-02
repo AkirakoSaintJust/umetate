@@ -175,8 +175,9 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
 
 - **Parameters:** `route4`: `which` (table — the routing table), `algorithm`
   (uint32, 0…7), `dest` (uint32, 0…4: 0–3 = modulation rows, 4 = carrier mask).
-  `route`: `which` (table). `algo`: `algorithm` (uint32, 0…7). `algo.algorithm` is
-  the one shared selection (broadcast as `alg` to `route`).
+  `route`: (none — the 8 routings are hardcoded in the node's `switch`). `algo`:
+  `algorithm` (uint32, 0…7). `algo.algorithm` is the one shared selection
+  (broadcast as `alg` to `route`).
 
 - **Coefficients / precompute:** the routing table is the `tables:` entry
   `{ "kind": "routing" }` → 8 algorithms × 5 rows × 4 weights (160 Q15 0/1). The
@@ -196,12 +197,13 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   matrix-as-data idea is umetate's own; the acyclicity trick mirrors feedback.
 
 - **Performance note:** `route4` = four `fm1_q15_mul` + one table row read per
-  sample (per destination); `route` = five such rows (4 modulation + carrier) per
-  sample, reading the held `alg` control scalar — the one `route` node the patch
-  uses replaces five `route4` instances (and their five would-be-duplicated
-  `algorithm` params). `algo` runs at control rate (once per block): one clamp
-  read, no audio-loop work. `mix4` is the general 4-sum (used by the standalone
-  routing test, not the patch, which takes its carrier sum from `route.car`).
+  sample (per destination). `route` is **specialized**: an 8-algorithm `switch`
+  whose 1-weights are `fm1_q15_mul(x, 32767)` (the compiler folds the constant to a
+  32-bit shift/sub/add) and whose 0-weights are dropped — ~4–6 multiplies per
+  sample, not the five generic `fm1_route4` rows (20 multiplies + 20 table loads).
+  `algo` runs at control rate (once per block): one clamp read, no audio-loop
+  work. `mix4` is the general 4-sum (used by the standalone routing test, not the
+  patch, which takes its carrier sum from `route.car`).
   Memoryless, no branching.
 
 ---

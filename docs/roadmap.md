@@ -275,7 +275,8 @@ param tables) are produced by a generator, never hand-edited.
   Measured (emulator, 320 MHz, 8 voices): output bit-identical; CPU0's ISR rises to
   ~26% (its 4-voice half) from ~7% (the spin-wait), i.e. the render now spans both
   cores. **Ceiling test (measured):** at `NVOICE` 16 the emulator shows 50% ISR, at
-  20 it shows 61% — no halt at either, i.e. the split reaches the stock's 20-voice
+  20 it shows 61% (now ~53% after the route/phasor optimizations, §13.9) — no halt
+  at either, i.e. the split reaches the stock's 20-voice
   target with headroom. Voice stealing is unaffected and verified: a host test
   fills the pool then adds an 11th note and the *oldest* note (21) is stolen, the
   rest sounding (the score picks `min(voice_age)`; the retrigger/stacking contracts
@@ -992,7 +993,8 @@ panel until each is filled in — this list is that rewrite's spec.
 - **Polyphony**: `voices` is the **total shared pool** across both parts (not
   per-part — §6.11.4); the dogfood ships **20 voices**. Per-voice render cost is
   ~6.5% of a 320 MHz core block, linear. The **split-core render** (D3, §4.2)
-  distributes the pool across both cores — 20 voices runs at ~61% ISR per core, no
+  distributes the pool across both cores — 20 voices runs at **~53% ISR @ 320 MHz**
+  after the route/phasor optimizations (was ~61% before; §13.9), no
   halt, with headroom to ~28–30 voices (single-core, before the split, the ceiling
   was ~15 voices at 320 MHz). Two render passes landed — the phasor's block-constant pitch multiply
   moved out of the sample loop, and the 12-wave `osc` switch became a precomputed
@@ -3305,3 +3307,36 @@ phasor's output local). The levers left are:
 
 **Rejected (not bit-exact).** `tl`/`vca` control-hoist (`mul(mul(a,cv),gain)` →
 `mul(a, mul(cv,gain))`) — double rounding changes the output by ~1 LSB.
+
+**Next steps (2026-11-02 plan).** (a) Propagate the two optimizations to the other
+pre-made nodes + docs + skills; (b) try **skip-silent operators** then **P2-8
+hardware acceleration** (each checkpointed + profiled + cleanly revertible); (c)
+record the conclusions here.
+
+**The six acceleration ideas — considered, verdicts.**
+1. **Log-space math** (multiplies → adds, like DX7 emulators). Only gains are
+   exact in log space — *addition* (route `car` sum, `mix`, FM feedback, phase
+   accumulate) needs linear, so it can't be pushed to the final render (the four
+   carriers are summed linearly before the filters). The antilog LUT+LERP has its
+   own rounding → **not bit-exact**, and ~neutral vs 1 multiply for fourop's short
+   2-multiply chains (`cv` already collapses the gain stage to one control value).
+   **Rejected.**
+2. **Bit-shift replacement.** Only the constant factors qualify, and they're done:
+   `×2` (route), `×65536` → `<<16` (phasor), `>>2` (tl headroom). The remaining
+   multiplies are by *runtime* values (envelope/level/velocity/key-scale) — not
+   shifts.
+3. **Hardware SIMD.** The SDK has vector DSP (`nn_function_vec.c`:
+   `vector_real_mac32`/`vector_complex_mac32`, `q`-shift). Good for block/vector
+   work (bus sums, delay lines, the post filters, scope/FFT), **not** the scalar
+   data-dependent per-sample FM (phase-indexed wavetable). The post/sums are ~2% of
+   the work; the 98% (operators) is scalar. **Deferred to P2-8 for the post.**
+4. **Fused multiply-add.** The pi32v2 MAC (`r1_r0 += a*b`) is an FMA, but
+   `fm1_q15_mul`+`fm1_sat_add32` do *round-then-saturate-add*; a raw MAC
+   (accumulate-then-truncate) changes the result → **not bit-exact**. Only the
+   route's non-saturating dot-product could use it — already specialized away.
+5. **Scope/spectro.** The spectro FFT already has a hw path
+   (`libFFT_pi32v2_OnChip.a`, P2-8); the scope is a memcpy. Both run on CPU0 outside
+   the DSP hot loop, so they don't affect the ISR%.
+6. **Filter/wavefolder (bit-exact).** The svf's `fm1_q16_mul`/sample have no
+   hoistable part (fc block-constant, band per-sample state); the wavefolder is
+   bypassed by default. ~2% total → not the lever; natural SIMD targets (idea 3).
