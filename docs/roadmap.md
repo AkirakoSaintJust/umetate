@@ -3263,3 +3263,45 @@ one block, ~0.7 ms — inaudible for timbre shaping, accepted.)
     `#if FM1_CPU1_USED`). Measured (emulator): 80% ISR @ 240 MHz, 60% @ 320 MHz —
     no halt, full-scale audio at both; the aggregate barely moved (the post is a
     small share of the ~8 µs/voice render), but CPU0 shed the post + combine.
+
+### 13.9 CPU-budget reduction — 60% → 49% ISR @ 320 MHz (2026-11-02)
+
+**Goal.** Cut the audio render from **60% to ≤ 49% ISR @ 320 MHz** (~18% less work)
+so 49 × 1.92 ≈ 94% clears the emulator's documented 1.92× optimism. **20 voices stay;
+output stays bit-exact.** (Async ping-pong was measured and rejected first — §12.1 —
+because the split already runs both voice halves in parallel, so there was no wait
+to remove.)
+
+**Cost model.** Voices ≈ 98% of the work (host: ~8 µs/voice, ~2.4 µs fixed); the
+post (2 SVF + wavefolder) is ~2% and bypassed by default. The per-sample hot path is
+the Q15/Q16 multiplies (`fm1_q15_mul`/`fm1_q16_mul` are `(int64)a*b>>k`); the
+assembly shows they compile to a native 64-bit **MAC + shift** (~4 instr), not an
+emulated software multiply — so the win is from *fewer* multiplies (the `route`'s
+16 runtime-table multiplies; the operators' tl/vca/fmvel multiplies), not cheaper
+ones. Envelopes/tremolo/key-vel follow are control-rate — not the target.
+
+**Done (bit-exact, measured).**
+1. **Route 0/1 specialization.** The route node is now an 8-algorithm `switch` with
+   literal `32767` weights — the 1-weights are `fm1_q15_mul(x, 32767)` (the compiler
+   folds the constant to a 32-bit shift/sub/add), the 0-weights are dropped — instead
+   of 4 × `fm1_route4` (16 multiplies + 16 table loads). Verified against the
+   routing table programmatically (all 8 algorithms match `_ROUTING`).
+2. **Phasor 32-bit.** `(int64)fm * 65536` → `(uint32_t)fm << 16`; the `phase + step`
+   accumulation in `uint32` (mod-2³² wrap). Provably bit-exact.
+
+**Measured result: 60% → 53% ISR @ 320 MHz** (190.5 → 169.3 M instr/s), no halt,
+full-scale audio, `deep-check --all` green (host ↔ wasm parity exact). The
+optimizations cleared ~11.7% — most of the ~18% goal, but **not yet 49%**.
+
+**Remaining gap (53% → 49%).** The next 4 points are the `tl`/`vca`/`fmvel` nested
+multiplies (~5 per operator) plus the oscillator's mip-index conditional — none are
+bit-exact-reducible further at this level (the `tl`/`vca` `mul(mul(audio,cv),gain)`
+double-rounding is inherent, and `mip` is carried through the audio loop via the
+phasor's output local). The levers left are:
+- **P2-8 hardware acceleration** — hand-asm `fm1_dsp_kernels.h` VLIW/`rep` loops (the
+  compiler's clang 4.0.1 emits neither); the documented next step, a larger change.
+- **Skip silent operators** (bit-exact; 0% in the default all-active patch).
+- **A voice reduction** (20 → 18 ≈ 48%) — rejected while "keep 20" holds.
+
+**Rejected (not bit-exact).** `tl`/`vca` control-hoist (`mul(mul(a,cv),gain)` →
+`mul(a, mul(cv,gain))`) — double rounding changes the output by ~1 LSB.

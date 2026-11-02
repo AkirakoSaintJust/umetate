@@ -1,8 +1,8 @@
 {
   "name": "route",
-  "summary": "The 4-op FM algorithm router (audio rate): reads the 4 modulation rows + carrier row of a `routing` table by the `alg` control input (the selected algorithm), and outputs the modulation into op2/op3/op4 + the carrier sum. The modulator outputs are ×2 (the operators' −12 dB headroom quarter-scales the FM depth; ×2 restores it to half scale without touching the per-operator feedback). (op1 = O1 is never externally modulated.)",
+  "summary": "The 4-op FM algorithm router (audio rate): a switch over the 8 shipped algorithm routings (weights 0/1, Q15 0/32767), outputting the modulation into op2/op3/op4 + the carrier sum — specialized instead of a runtime `fm1_route4` (16 multiplies + 16 table loads → a selective sum, bit-exact). The modulator outputs are ×2 (the operators' −12 dB headroom quarter-scales the FM depth; ×2 restores it to half scale without touching the per-operator feedback). (op1 = O1 is never externally modulated.)",
   "ins": { "alg": "control", "a": "audio", "b": "audio", "c": "audio", "d": "audio" },
   "outs": { "mod2": "audio", "mod3": "audio", "mod4": "audio", "car": "audio" },
-  "params": { "which": "table" },
+  "params": {},
   "state": {}
 }
