@@ -242,8 +242,8 @@ param tables) are produced by a generator, never hand-edited.
 
 | Core | Owns | Must not |
 | --- | --- | --- |
-| CPU0 | boot, OS/runtime, USB (MIDI + UAC), MIDI UART, panel/UI, display, storage/flash, watchdog, update installer, recovery; **the global control prologue + global audio post + its split voice range** | long DSP work; FP when CPU1 owns the FPU |
-| CPU1 | DSP render: **its split voice range** | OS calls (incl. `printf`), allocation, flash, USB, blocking |
+| CPU0 | boot, OS/runtime, USB (MIDI + UAC), MIDI UART, panel/UI, display, storage/flash, watchdog, update installer, recovery; **the global control prologue + its split voice range** | long DSP work; FP when CPU1 owns the FPU |
+| CPU1 | DSP render: **its split voice range + the global audio post** (filters + wavefolder + the bus combine) | OS calls (incl. `printf`), allocation, flash, USB, blocking |
 
 - **Split-core render (D3 refinement).** The render is three phases: (a) the global
   control prologue (pitch env, LFO, algorithm, glide, delay countdown) — single
@@ -252,8 +252,12 @@ param tables) are produced by a generator, never hand-edited.
   audio post (filter/wavefolder) + output — single core. The generator emits
   `render_voices_block` as a `noinline` phase so the voice range can be split
   across cores: CPU0 renders `[0, N0)`, CPU1 renders `[N0, NVOICE)`, the buses are
-  summed, then the post runs on one core. Single-core is the same three phases
-  with one range `[0, NVOICE)`. The per-voice control temps are file-scope arrays
+  summed, then the post runs on one core. The post is handed to **CPU1** (the
+  cooler core): it renders its voice half, spin-waits on a `render_bus0_ready` flag
+  (set by CPU0 after its half, `csync`-ordered), combines the buses, then runs the
+  post — so CPU0's ISR keeps only the prologue + its voice half. Single-core is the
+  same three phases with one range `[0, NVOICE)`. The per-voice control temps are
+  file-scope arrays
   (the two cores write *disjoint* `v` ranges, so no race). The `noinline` phase
   costs ~5% single-core render time (measured ISR% 18.2→19.1 M/s @ 6 voices,
   21.7→23.0 @ 8 voices, bit-identical output) — the price of the split-ready seam;
@@ -262,8 +266,10 @@ param tables) are produced by a generator, never hand-edited.
 - **Split dispatch (implemented).** The seam's `render_block` now runs on CPU0 and
   calls the generated `render_split`: per block it runs `render_pre_block`, hands
   CPU1 the `[N0, NVOICE)` range through the mailbox, runs `[0, N0)` on CPU0 in
-  parallel, joins, sums the two `render_bus` buffers, then `render_post_block`.
-  `N0 = cpu0_voices` (a patch field, default `NVOICE/2`). The mailbox is reached through thin non-inline wrappers
+  parallel, then **CPU1** spin-waits on CPU0's `render_bus0_ready` flag, combines
+  the two `render_bus` buffers, and runs `render_post_block` (filters + wavefolder)
+  — the post moved off CPU0 to balance the cores. `N0 = cpu0_voices` (a patch
+  field, default `NVOICE/2`). The mailbox is reached through thin non-inline wrappers
   `fm1_cpu1_dispatch`/`fm1_cpu1_join` (declared in `fm1_ipc.h`, defined in
   `platform.c`), because `fm1_cpu1.h` owns `fm1_c1_main` and must stay a single TU.
   Measured (emulator, 320 MHz, 8 voices): output bit-identical; CPU0's ISR rises to
@@ -3236,3 +3242,14 @@ one block, ~0.7 ms — inaudible for timbre shaping, accepted.)
     shared `presets.h`, used by `synth_runtime.c` *and* `synth_sysex.c`), and
     `SYNTH_SX_MAX` is 1536 (a 256-param part patch is ~1206 bytes 7-bit packed).
     Locked by a test that reads the C caps and asserts the fourop patch fits.
+
+61. **Post moved to CPU1 (CPU0 cools down).** — **done.** The split-core dispatch
+    (`_render_split`) now runs the global audio post on **CPU1** instead of CPU0:
+    CPU1 renders its voice half, spin-waits on a new `render_bus0_ready` flag
+    (set by CPU0 after its half, `csync`-ordered — release before the flag, acquire
+    after the spin), combines the two buses, then runs `render_post_block`. CPU0's
+    ISR keeps only the control prologue + its voice half; the job struct gained
+    `bus0`/`out`. The single-core host/wasm parity is unaffected (the split is
+    `#if FM1_CPU1_USED`). Measured (emulator): 80% ISR @ 240 MHz, 60% @ 320 MHz —
+    no halt, full-scale audio at both; the aggregate barely moved (the post is a
+    small share of the ~8 µs/voice render), but CPU0 shed the post + combine.

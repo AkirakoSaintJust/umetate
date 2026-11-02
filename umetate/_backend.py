@@ -458,9 +458,10 @@ def _render_dsp_render(graph: CompiledGraph) -> list[str]:
 
 def _render_split(graph: CompiledGraph) -> list[str]:
     """The split-core dispatch (target only): per block, the pre on CPU0, then CPU0
-    renders [0, N0) while CPU1 renders [N0, NVOICE) via the mailbox, then the
-    combine and the post on CPU0. `N0` is the patch's `cpu0_voices` (default
-    `voices//2`). Falls back to CPU0-only when core 1 is off or gave up
+    renders [0, N0) while CPU1 renders [N0, NVOICE) via the mailbox; CPU1 then
+    waits for CPU0's bus, combines, and runs the post — so the heavier post (filters
+    + wavefolder) lands on the cooler core. `N0` is the patch's `cpu0_voices`
+    (default `voices//2`). Falls back to CPU0-only when core 1 is off or gave up
     (`fm1_cpu1_wait` returns non-zero and holds core 1)."""
     name, cb = graph.name, graph.control_block
     n0 = graph.cpu0_voices if graph.cpu0_voices >= 0 else graph.voices // 2
@@ -471,12 +472,22 @@ def _render_split(graph: CompiledGraph) -> list[str]:
     job_tap_arg = f", {name}_render_job.taps" if has_taps else ""
     lines = [
         "#if FM1_CPU1_USED",
-        f"typedef struct {{ int32_t *bus; {taps_field}uint32_t v0, v1, b, frames; }} {name}_render_job_t;",
+        f"typedef struct {{ int32_t *bus; int32_t *bus0; int32_t *out; {taps_field}uint32_t v0, v1, b, frames; }} {name}_render_job_t;",
         f"static {name}_render_job_t {name}_render_job;",
-        f"static void {name}_render_voices_job(uint32_t arg) {{",
+        f"static volatile uint32_t {name}_render_bus0_ready;",
+        # CPU1's job: render its voice half, wait for CPU0's bus, combine, then post.
+        f"static void {name}_render_post_job(uint32_t arg) {{",
         "    (void)arg;",
         f"    {name}_render_voices_block({name}_render_job.bus{job_tap_arg}, {name}_render_job.v0,",
         f"        {name}_render_job.v1, {name}_render_job.b, {name}_render_job.frames);",
+        # acquire CPU0's bus: spin on the flag, then csync once *after* observing
+        # it set (the codebase's read-flag -> csync -> use-data ordering, as in
+        # dsp_cmd_pop and fm1_c1_main), so CPU0's bus0 writes are visible below.
+        f"    while (!{name}_render_bus0_ready) {{ }}",
+        "    FM1_CSYNC();",
+        f"    for (uint32_t f = {name}_render_job.b; f < {name}_render_job.b + {cb}u && f < {name}_render_job.frames; f++)",
+        f"        {name}_render_job.bus0[f - {name}_render_job.b] = fm1_sat_add32({name}_render_job.bus0[f - {name}_render_job.b], {name}_render_job.bus[f - {name}_render_job.b]);",
+        f"    {name}_render_post_block({name}_render_job.out, {name}_render_job.bus0, {name}_render_job.b, {name}_render_job.frames);",
         "}",
         f"void {name}_render_split(int32_t *out, uint32_t frames) {{",
     ]
@@ -486,27 +497,33 @@ def _render_split(graph: CompiledGraph) -> list[str]:
     lines.append(f"    for ({_CONTROL_BLOCK_TYPE} b = 0; b < frames; b += {cb}u) {{")
     lines.append("        int dispatched;")
     lines.append(f"        {name}_render_pre_block();")
+    lines.append(f"        {name}_render_bus0_ready = 0;")
     lines.append(f"        {name}_render_job.bus = {name}_render_bus1;")
+    lines.append(f"        {name}_render_job.bus0 = {name}_render_bus0;")
+    lines.append(f"        {name}_render_job.out = out;")
     if has_taps:
         lines.append(f"        {name}_render_job.taps = {name}_tap1;")
     lines.append(
         f"        {name}_render_job.v0 = {n0}u; {name}_render_job.v1 = NVOICE;"
     )
     lines.append(f"        {name}_render_job.b = b; {name}_render_job.frames = frames;")
-    lines.append(
-        f"        dispatched = fm1_cpu1_dispatch({name}_render_voices_job, 0u);"
-    )
+    lines.append(f"        dispatched = fm1_cpu1_dispatch({name}_render_post_job, 0u);")
     lines.append(
         f"        {name}_render_voices_block({name}_render_bus0{tap_arg}, 0u, {n0}u, b, frames);"
     )
-    lines.append("        if (!dispatched || fm1_cpu1_join() != 0)")
+    lines.append(f"        FM1_CSYNC(); {name}_render_bus0_ready = 1;")
+    lines.append("        if (!dispatched || fm1_cpu1_join() != 0) {")
     lines.append(
         f"            {name}_render_voices_block({name}_render_bus1{tap_arg1}, {n0}u, NVOICE, b, frames);"
     )
-    lines.append(f"        for (uint32_t f = b; f < b + {cb}u && f < frames; f++)")
+    lines.append(f"            for (uint32_t f = b; f < b + {cb}u && f < frames; f++)")
     lines.append(
-        f"            {name}_render_bus0[f - b] = fm1_sat_add32({name}_render_bus0[f - b], {name}_render_bus1[f - b]);"
+        f"                {name}_render_bus0[f - b] = fm1_sat_add32({name}_render_bus0[f - b], {name}_render_bus1[f - b]);"
     )
+    lines.append(
+        f"            {name}_render_post_block(out, {name}_render_bus0, b, frames);"
+    )
+    lines.append("        }")
     if has_taps:
         lines.append(
             f"        for (uint32_t f = b; f < b + {cb}u && f < frames && f < UMETATE_DSP_BLOCK_FRAMES; f++)"
@@ -515,9 +532,6 @@ def _render_split(graph: CompiledGraph) -> list[str]:
         lines.append(
             f"                {name}_tap0[k][f] = fm1_sat_add32({name}_tap0[k][f], {name}_tap1[k][f]);"
         )
-    lines.append(
-        f"        {name}_render_post_block(out, {name}_render_bus0, b, frames);"
-    )
     lines.append("    }")
     lines.append("}")
     lines.append("#endif")
