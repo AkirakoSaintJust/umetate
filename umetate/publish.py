@@ -12,9 +12,12 @@ bump the release notes, push.
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import shutil
+import subprocess
 import sys
+import tarfile
 from pathlib import Path
 
 from ._ir import to_c_identifier
@@ -51,6 +54,22 @@ _SRC_FILES = (
 
 # the licence + attribution manifest, copied from the umetate root verbatim.
 _LICENCE_FILES = ("LICENSE", "LICENSING.md")
+
+# the framework source, snapshotted into the published repo as `framework/` so the
+# corresponding source is self-contained (a user does not need the umetate repo to
+# rebuild the firmware). `git archive` lists only tracked files, so the gitignored
+# build artifacts and the generated-from-patch `firmware/gen/*.c` stay out; the
+# generator (`umetate/`) regenerates them from `src/patch.json`.
+_FRAMEWORK_PATHS = (
+    "LICENSE",
+    "LICENSING.md",
+    "pyproject.toml",
+    "env.lock",
+    "firmware",
+    "umetate",
+    "modules",
+    "templates/scaffold",
+)
 
 _README = """# {title}
 
@@ -97,10 +116,10 @@ attribution.
 ## Source
 
 The `.fwsc` is the compiled firmware. Its corresponding source is the project
-files in [`src/`](src/) (the patch, the panel, and the app glue) plus the umetate
-framework, also GPL-3.0, at <https://github.com/CeliaCasanovas/umetate>. The
-preferred form for modification is the `src/` files and the umetate generator,
-not the compiled binary.
+files in [`src/`](src/) (the patch, the panel, and the app glue) and the complete
+umetate framework source in [`framework/`](framework/), also GPL-3.0, at
+<https://github.com/CeliaCasanovas/umetate>. The preferred form for modification
+is the `src/` files and the umetate generator, not the compiled binary.
 """
 
 
@@ -162,6 +181,29 @@ def _gather(synth_dir: Path, name: str, cname: str, out: Path) -> list[str]:
     return missing
 
 
+def _snapshot_framework(out: Path) -> bool:
+    """Snapshot the umetate source (tracked files at HEAD) into `out/framework/`.
+
+    Returns True on success. Falls back to False (the README still links the umetate
+    repo) when `git archive` is unavailable or there is no commit to snapshot.
+    """
+    proc = subprocess.run(
+        ["git", "archive", "HEAD", *_FRAMEWORK_PATHS],
+        cwd=_ROOT,
+        capture_output=True,
+    )
+    if proc.returncode != 0:
+        return False
+    dest = out / "framework"
+    dest.mkdir(parents=True, exist_ok=True)
+    with tarfile.open(fileobj=io.BytesIO(proc.stdout), mode="r:") as tf:
+        try:
+            tf.extractall(dest, filter="data")
+        except TypeError:  # Python < 3.12 has no `filter=` argument
+            tf.extractall(dest)
+    return True
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="umetate publish", description="assemble a distributable firmware repo"
@@ -195,6 +237,7 @@ def main(argv: list[str] | None = None) -> int:
 
     out.mkdir(parents=True, exist_ok=True)
     missing = _gather(synth_dir, name, cname, out)
+    bundled = _snapshot_framework(out)
 
     # the project's own README wins over the generated template, so a human-written
     # front door is preserved verbatim (not overwritten by the loop).
@@ -210,7 +253,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"publish: {out}")
     print(
         "  README.md, CHANGELOG.md, LICENSE, LICENSING.md, src/, docs/, "
-        "the web app (root), and " + f"{name}.fwsc"
+        "framework/, the web app (root), and " + f"{name}.fwsc"
     )
     if missing:
         print("  missing (build first):")
@@ -218,6 +261,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"    - {m}")
     else:
         print("  all artifacts present.")
+    if not bundled:
+        print("  note: could not snapshot the framework source (no git/HEAD);")
+        print("        the README still links the umetate repo for it.")
     print("  next: `git init` here, commit, then push to a GitHub repo with Pages")
     print("  (set the Pages source to the repo root).")
     return 0
