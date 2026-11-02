@@ -196,8 +196,16 @@ def main(argv: list[str] | None = None) -> int:
     out.mkdir(parents=True, exist_ok=True)
     missing = _gather(synth_dir, name, cname, out)
 
-    readme = _README.format(title=title, repo_url=args.repo_url, fwsc=f"{name}.fwsc")
-    (out / "README.md").write_text(readme, encoding="utf-8")
+    # the project's own README wins over the generated template, so a human-written
+    # front door is preserved verbatim (not overwritten by the loop).
+    user_readme = synth_dir / "publish-readme.md"
+    if user_readme.is_file():
+        shutil.copy2(user_readme, out / "README.md")
+    else:
+        readme = _README.format(
+            title=title, repo_url=args.repo_url, fwsc=f"{name}.fwsc"
+        )
+        (out / "README.md").write_text(readme, encoding="utf-8")
 
     print(f"publish: {out}")
     print(
