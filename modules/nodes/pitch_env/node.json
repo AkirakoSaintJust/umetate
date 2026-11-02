@@ -1,10 +1,11 @@
 {
   "name": "pitch_env",
-  "summary": "Per-note pitch envelope (control rate): on/off + 4 rates (0..99) + 3 levels (Q15 pitch offset, bipolar). Retriggers to attack on every note-on (`trigger` = voice_trig[v]); a gate edge starts release. The one-pole uses `fm1_rate_coeff[rate]`; a `k` key-follow factor (Q15) pushes the rates toward 0 (slower) / 99 (faster); the level targets are the signed Q15 levels l1..l3; `cv` is the pitch offset (0 when off).",
+  "summary": "Per-note pitch envelope (control rate): on/off + 4 rates (0..99) + 3 levels (Q15 pitch offset, bipolar). Retriggers to attack on every note-on (`trigger` = voice_trig[v]); a gate edge starts release. The one-pole uses `fm1_rate_coeff[rate]`; `k` (key-follow) and `vk` (velocity-follow) factors (Q15) push the rates toward 0 (slower) / 99 (faster); the level targets are the signed Q15 levels l1..l3; `cv` is the pitch offset (0 when off).",
   "ins": {
     "gate": { "rate": "event", "default": "voice_gate[v]" },
     "trigger": { "rate": "event", "default": "voice_trig[v]" },
-    "k": { "rate": "control", "format": "q15", "default": "0" }
+    "k": { "rate": "control", "format": "q15", "default": "0" },
+    "vk": { "rate": "control", "format": "q15", "default": "0" }
   },
   "outs": { "cv": "control" },
   "params": {
@@ -14,9 +15,9 @@
   },
   "state": { "stage": "uint32", "level": "q15", "r1_eff": "uint32", "r2_eff": "uint32", "r3_eff": "uint32", "r4_eff": "uint32" },
   "block_derived": {
-    "r1_eff": "(uint32_t)fm1_key_apply(${param.r1}, ${in.k}, 0, 99)",
-    "r2_eff": "(uint32_t)fm1_key_apply(${param.r2}, ${in.k}, 0, 99)",
-    "r3_eff": "(uint32_t)fm1_key_apply(${param.r3}, ${in.k}, 0, 99)",
-    "r4_eff": "(uint32_t)fm1_key_apply(${param.r4}, ${in.k}, 0, 99)"
+    "r1_eff": "(uint32_t)fm1_key_apply(${param.r1}, fm1_key_add(${in.k}, ${in.vk}), 0, 99)",
+    "r2_eff": "(uint32_t)fm1_key_apply(${param.r2}, fm1_key_add(${in.k}, ${in.vk}), 0, 99)",
+    "r3_eff": "(uint32_t)fm1_key_apply(${param.r3}, fm1_key_add(${in.k}, ${in.vk}), 0, 99)",
+    "r4_eff": "(uint32_t)fm1_key_apply(${param.r4}, fm1_key_add(${in.k}, ${in.vk}), 0, 99)"
   }
 }

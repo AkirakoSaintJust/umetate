@@ -1,0 +1,9 @@
+{
+  "name": "vel_scale",
+  "summary": "Velocity-follow factor: the bipolar Q15 push factor (0 at velocity 0, ramping to `amount` at maximum velocity) from the voice's velocity + a bipolar percent amount, gated by an `on` input (the global velocity-sensitivity switch). Feeds a target node's `fm1_key_apply`.",
+  "ins": { "on": { "rate": "control", "default": "1" } },
+  "outs": { "k": "control" },
+  "params": { "amount": "int32" },
+  "state": { "k": "q15" },
+  "block_derived": { "k": "${in.on} ? fm1_vel_scale((int32_t)voice_velocity[v], ${param.amount}) : 0" }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "vel_on",
+  "summary": "The global velocity-sensitivity switch: 1 = velocity follow active, 0 = off. Passed straight through as a control signal to the vel_scale nodes.",
+  "ins": {},
+  "outs": { "on": "control" },
+  "params": { "on": "uint32" },
+  "state": {}
+}

@@ -1,0 +1,9 @@
+{
+  "name": "vel_scale_g",
+  "summary": "Velocity-follow factor for a global target (the filter/F-ENV): the bipolar Q15 push factor from the *highest held velocity* + a bipolar percent amount, gated by an `on` input.",
+  "ins": { "on": { "rate": "control", "default": "1" } },
+  "outs": { "k": "control" },
+  "params": { "amount": "int32" },
+  "state": { "k": "q15" },
+  "block_derived": { "k": "${in.on} ? fm1_vel_scale((int32_t)voice_highest_velocity(), ${param.amount}) : 0" }
+}

@@ -173,6 +173,24 @@ FM1_MATH_INLINE int32_t fm1_key_apply(int32_t v, int32_t k, int32_t min, int32_t
     return v + push;
 }
 
+/* The velocity follow factor (Q15): 0 at velocity 0, ramping linearly to `amount`
+ * at maximum velocity. `vel` is `voice_velocity[v]` (velocity × 258, so 127 →
+ * ~32766, ≈ Q15 normalized); `amount` is a signed percent (-100..+100). */
+FM1_MATH_INLINE int32_t fm1_vel_scale(int32_t vel, int32_t amount)
+{
+    return (int32_t)(((int64_t)amount * vel) / 3276700);
+}
+
+/* Sum two bipolar Q15 push factors (key-follow + velocity-follow), clamped to the
+ * Q15 range so `fm1_key_apply` never overshoots its target extreme. */
+FM1_MATH_INLINE int32_t fm1_key_add(int32_t a, int32_t b)
+{
+    int32_t s = a + b;
+    if (s > 32767) s = 32767;
+    else if (s < -32767) s = -32767;
+    return s;
+}
+
 /* 4-input weighted sum against a routing-matrix row (a `const int16_t *` of four
    0/1 Q15 weights): out = a*w0 + b*w1 + c*w2 + d*w3. The multiply stays (not a
    boolean select): the weights are runtime table data, so a select is a

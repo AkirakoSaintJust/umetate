@@ -1,11 +1,12 @@
 {
   "name": "dx_env",
-  "summary": "DX-style rate/level envelope: 4 rates + 3 levels, all 0..99 (the Yamaha scale), exponential one-pole per stage (attack → decay1 → decay2 → sustain → release). Q15 gain out. The rate is a one-pole coefficient from `fm1_rate_coeff[rate]` (a non-uniform Yamaha-style curve: 99 = instant ≈ 0.73 ms, 0 ≈ 7 s, ~5% finer per step at the slow end); a `rate_scale` control input (default unity) scales it — velocity → envelope rate; a `k` key-follow factor (Q15) pushes the rates toward 0 (slower) / 99 (faster). Levels are total-level 0..99 → Q15 gain via `fm1_level_gain` (0.25 dB/step: 99 = max, 50 ≈ −12 dB, 0 = silence). A `trigger` event (default `voice_trig[v]`) resets to attack on every note-on edge, even mid-note (voice steal).",
+  "summary": "DX-style rate/level envelope: 4 rates + 3 levels, all 0..99 (the Yamaha scale), exponential one-pole per stage (attack → decay1 → decay2 → sustain → release). Q15 gain out. The rate is a one-pole coefficient from `fm1_rate_coeff[rate]` (a non-uniform Yamaha-style curve: 99 = instant ≈ 0.73 ms, 0 ≈ 7 s, ~5% finer per step at the slow end); a `rate_scale` control input (default unity) scales it — velocity → envelope rate; `k` (key-follow) and `vk` (velocity-follow) factors (Q15) push the rates toward 0 (slower) / 99 (faster). Levels are total-level 0..99 → Q15 gain via `fm1_level_gain` (0.25 dB/step: 99 = max, 50 ≈ −12 dB, 0 = silence). A `trigger` event (default `voice_trig[v]`) resets to attack on every note-on edge, even mid-note (voice steal).",
   "ins": {
     "gate": { "rate": "event", "default": "voice_gate[v]" },
     "trigger": { "rate": "event", "default": "voice_trig[v]" },
     "rate_scale": { "rate": "control", "default": "32768" },
-    "k": { "rate": "control", "format": "q15", "default": "0" }
+    "k": { "rate": "control", "format": "q15", "default": "0" },
+    "vk": { "rate": "control", "format": "q15", "default": "0" }
   },
   "outs": { "cv": "control" },
   "params": {
@@ -14,9 +15,9 @@
   },
   "state": { "stage": "uint32", "level": "q15", "r1_eff": "uint32", "r2_eff": "uint32", "r3_eff": "uint32", "r4_eff": "uint32" },
   "block_derived": {
-    "r1_eff": "(uint32_t)fm1_key_apply(${param.r1}, ${in.k}, 0, 99)",
-    "r2_eff": "(uint32_t)fm1_key_apply(${param.r2}, ${in.k}, 0, 99)",
-    "r3_eff": "(uint32_t)fm1_key_apply(${param.r3}, ${in.k}, 0, 99)",
-    "r4_eff": "(uint32_t)fm1_key_apply(${param.r4}, ${in.k}, 0, 99)"
+    "r1_eff": "(uint32_t)fm1_key_apply(${param.r1}, fm1_key_add(${in.k}, ${in.vk}), 0, 99)",
+    "r2_eff": "(uint32_t)fm1_key_apply(${param.r2}, fm1_key_add(${in.k}, ${in.vk}), 0, 99)",
+    "r3_eff": "(uint32_t)fm1_key_apply(${param.r3}, fm1_key_add(${in.k}, ${in.vk}), 0, 99)",
+    "r4_eff": "(uint32_t)fm1_key_apply(${param.r4}, fm1_key_add(${in.k}, ${in.vk}), 0, 99)"
   }
 }

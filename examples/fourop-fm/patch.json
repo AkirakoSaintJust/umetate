@@ -56,7 +56,13 @@
     "op3_aenv_ks_lo": 0, "op3_aenv_ks_hi": 0,
     "op4_aenv_ks_lo": 0, "op4_aenv_ks_hi": 0,
     "penv_ks_lo": 0, "penv_ks_hi": 0,
-    "f1_cutoff_ks_lo": 0, "f1_cutoff_ks_hi": 0, "fenv_ks_lo": 0, "fenv_ks_hi": 0
+    "f1_cutoff_ks_lo": 0, "f1_cutoff_ks_hi": 0, "fenv_ks_lo": 0, "fenv_ks_hi": 0,
+    "vel_sens_on": 1,
+    "op1_level_vs": 0, "op1_fb_vs": 0, "op1_aenv_vs": 0,
+    "op2_level_vs": 0, "op2_fb_vs": 0, "op2_aenv_vs": 0,
+    "op3_level_vs": 0, "op3_fb_vs": 0, "op3_aenv_vs": 0,
+    "op4_level_vs": 0, "op4_fb_vs": 0, "op4_aenv_vs": 0,
+    "penv_vs": 0, "f1_cutoff_vs": 0, "fenv_vs": 0
   },
   "tables": { "routing": { "kind": "routing" } },
   "parts": {
@@ -165,7 +171,23 @@
     "f1_cutoff_ks_lo": { "target": "f1_ks.lo", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
     "f1_cutoff_ks_hi": { "target": "f1_ks.hi", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
     "fenv_ks_lo":      { "target": "fenv_ks.lo", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
-    "fenv_ks_hi":      { "target": "fenv_ks.hi", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" }
+    "fenv_ks_hi":      { "target": "fenv_ks.hi", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "vel_sens_on":     { "target": "vel_on.on", "min": 0, "max": 1, "curve": "linear", "display": "onoff" },
+    "op1_level_vs":    { "target": "op1.level_vs.amount", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op1_fb_vs":       { "target": "op1.fb_vs.amount", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op1_aenv_vs":     { "target": "op1.eg_vs.amount", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op2_level_vs":    { "target": "op2.level_vs.amount", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op2_fb_vs":       { "target": "op2.fb_vs.amount", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op2_aenv_vs":     { "target": "op2.eg_vs.amount", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op3_level_vs":    { "target": "op3.level_vs.amount", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op3_fb_vs":       { "target": "op3.fb_vs.amount", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op3_aenv_vs":     { "target": "op3.eg_vs.amount", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op4_level_vs":    { "target": "op4.level_vs.amount", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op4_fb_vs":       { "target": "op4.fb_vs.amount", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "op4_aenv_vs":     { "target": "op4.eg_vs.amount", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "penv_vs":         { "target": "penv_vs.amount", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "f1_cutoff_vs":    { "target": "f1_vs.amount", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" },
+    "fenv_vs":         { "target": "fenv_vs.amount", "min": -100, "max": 100, "curve": "linear", "display": "pct_bip" }
   },
   "voice": {
     "nodes": [
@@ -180,6 +202,7 @@
       { "id": "route", "type": "route", "params": { "which": "routing" } },
       { "id": "penv", "type": "pitch_env", "params": { "on": 0, "r1": 80, "r2": 60, "r3": 50, "r4": 80, "l1": 5461, "l2": 2731, "l3": 0 } },
       { "id": "penv_ks", "type": "key_scale", "params": { "lo": 0, "hi": 0 } },
+      { "id": "penv_vs", "type": "vel_scale", "params": { "amount": 0 } },
       { "id": "psum", "type": "csum" },
       { "id": "plfo", "type": "lfo", "params": { "rate": 486958, "depth": 273, "wave": 0 } }
     ],
@@ -198,6 +221,7 @@
       { "from": "plfo.cv", "to": "psum.in0" },
       { "from": "penv.cv", "to": "psum.in1" },
       { "from": "penv_ks.k", "to": "penv.k" },
+      { "from": "penv_vs.k", "to": "penv.vk" },
       { "from": "psum.cv", "to": "op1.pitch" },
       { "from": "psum.cv", "to": "op2.pitch" },
       { "from": "psum.cv", "to": "op3.pitch" },
@@ -209,8 +233,11 @@
     "nodes": [
       { "id": "algo", "type": "algo", "params": { "algorithm": 4 } },
       { "id": "key_bp", "type": "key_bp", "params": { "bp": 60 } },
+      { "id": "vel_on", "type": "vel_on", "params": { "on": 1 } },
       { "id": "f1_ks", "type": "key_scale_g", "params": { "lo": 0, "hi": 0 } },
       { "id": "fenv_ks", "type": "key_scale_g", "params": { "lo": 0, "hi": 0 } },
+      { "id": "f1_vs", "type": "vel_scale_g", "params": { "amount": 0 } },
+      { "id": "fenv_vs", "type": "vel_scale_g", "params": { "amount": 0 } },
       { "id": "lp", "type": "svf", "params": { "f": 8000, "q": 40000, "type": 0, "on": 1, "fenv_depth": 0 } },
       { "id": "fenv", "type": "dx_env", "params": { "r1": 80, "r2": 60, "r3": 50, "r4": 80, "l1": 99, "l2": 93, "l3": 87 }, "ins": { "gate": "patch_gate", "trigger": "0" } },
       { "id": "wf", "type": "wavefolder", "params": { "amount": 0, "threshold": 0, "folds": 1, "on": 1, "type": 0 } }
@@ -226,6 +253,15 @@
       { "from": "key_bp.bp", "to": "fenv_ks.bp" },
       { "from": "f1_ks.k", "to": "lp.k" },
       { "from": "fenv_ks.k", "to": "fenv.k" },
+      { "from": "vel_on.on", "to": "op1.von" },
+      { "from": "vel_on.on", "to": "op2.von" },
+      { "from": "vel_on.on", "to": "op3.von" },
+      { "from": "vel_on.on", "to": "op4.von" },
+      { "from": "vel_on.on", "to": "penv_vs.on" },
+      { "from": "vel_on.on", "to": "f1_vs.on" },
+      { "from": "vel_on.on", "to": "fenv_vs.on" },
+      { "from": "f1_vs.k", "to": "lp.vk" },
+      { "from": "fenv_vs.k", "to": "fenv.vk" },
       { "from": "voice", "to": "lp.audio" },
       { "from": "fenv.cv", "to": "lp.fenv" },
       { "from": "lp.out", "to": "wf.audio" },
