@@ -466,7 +466,7 @@ umetate deep-check  [--host|--web|--safety|--python|--skill|--links|--pyright|--
 umetate inspect    PACKAGE                   inspect a .fwsc without a device
 umetate flash      PACKAGE [--port NAME] [--device] [--yes]   flash; identity + CRC + model checked; resumes a device in update mode
 umetate debrick    [--route app-rescue|update-loader|mask-rom]   name a recovery route + its procedure (mask-rom: blocked, needs the USB_KEY dongle)
-umetate scaffold   <node|macro|patch> --name NAME [--template T] [--out DIR]   generate a skeleton (optionally from a shipped template)
+umetate scaffold   <node|macro|patch|synth> --name NAME [--template T] [--out DIR]   generate a skeleton (optionally from a shipped template)
 umetate lib        [list]                     list the shipped nodes + templates (local only)
 umetate lint       [--c]                     C lint + static checks (bounds, ROM, MMIO, flash-busy)
 umetate fmt        [--check]                 clang-format over the repo
@@ -481,9 +481,12 @@ umetate help [CMD]                           documents every option (component 1
   installs Rust + fm1-emu on the host (`--no-emulator` skips that).
 - `scaffold` generates a **default** node/macro/patch (from the schemas, or
   `--template` copies a shipped template), which the user customizes — DSP core,
-  params, graph — **by hand or agentically**. `lib list` shows the shipped nodes +
-  templates. All of it can also be written by hand against the schemas. The module
-  library is local-only — no remote registry.
+  params, graph — **by hand or agentically**. `scaffold synth` goes one step further:
+  it emits a **complete minimal firmware** (patch.json + panel.json + app.c with the
+  framework service contexts + the generated transport glue), so `umetate build
+  --synth <dir>` produces sound out of the box — this is the two-tier bridge (L4).
+  `lib list` shows the shipped nodes + templates. All of it can also be written by
+  hand against the schemas. The module library is local-only — no remote registry.
 - `flash`/`debrick` are the only device-writing commands, gated by §8,
   run on the **host** (USB CDC), never in the container.
 - `lint` encodes the standing checks: MAXP bounds (`SEC-1`), UAC access (`SEC-2`),

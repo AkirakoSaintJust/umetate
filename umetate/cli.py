@@ -25,7 +25,7 @@ COMMANDS: dict[str, tuple[str, str]] = {
     "inspect": ("read a .fwsc (identity/CRC/model)", "inspect"),
     "flash": ("write a .fwsc to a device (gated)", "flash"),
     "debrick": ("recovery write (mask-rom blocked)", "debrick"),
-    "scaffold": ("generate a node/macro/patch skeleton", "scaffold"),
+    "scaffold": ("generate a node/macro/patch/synth skeleton", "scaffold"),
     "lib": ("list the shipped nodes + templates", "lib"),
     "preset": ("export/import the preset bank as SysEx", "preset"),
     "budget": ("measure the polyphony budget", "budget"),

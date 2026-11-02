@@ -95,6 +95,20 @@ def _scaffold_builds() -> None:
         assert (Path(tmp) / "panel.json").exists()
 
 
+def _scaffold_synth() -> None:
+    from . import scaffold
+
+    with tempfile.TemporaryDirectory() as tmp:
+        rc = scaffold.main(["synth", "--name", "my-synth", "--out", tmp])
+        assert rc == 0
+        assert (Path(tmp) / "patch.json").exists()
+        assert (Path(tmp) / "panel.json").exists()
+        app = (Path(tmp) / "app.c").read_text(encoding="utf-8")
+        assert "my_synth_glue_note_on" in app  # the name -> its C identifier
+        assert "app_audio" not in app  # the transport is generated glue.h
+        assert "synth_midi_ctx" in app  # the framework service contexts are wired
+
+
 def _lint_catches_violation() -> None:
     from . import lint
 
@@ -780,6 +794,7 @@ def main() -> int:
         ("quick-check --json emits the layer/status shape", _quick_check_json),
         ("lib list shows nodes + templates", _lib_lists),
         ("scaffold patch builds", _scaffold_builds),
+        ("scaffold synth emits a full firmware", _scaffold_synth),
         ("lint --c catches a MAXP violation", _lint_catches_violation),
         ("setup --dry-run plans the install", _setup_dry_run_plans),
         ("the fm1-emu binary paths resolve", _emu_paths),
