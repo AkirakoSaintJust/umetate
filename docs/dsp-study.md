@@ -3,7 +3,7 @@
 This study looks at how Mutable Instruments, SuperCollider, Pure Data, Dexed
 (msfa), Nuked, ymfm, and SAPF implement DSP. The goal is practical: identify
 synthesis techniques and component interfaces that fit umetate's node library.
-This is reference material, not a status tracker; `docs/roadmap.md` owns project
+This is reference material, not a status tracker, `docs/roadmap.md` owns project
 status. It supports §12.5 of that roadmap.
 
 ---
@@ -15,13 +15,13 @@ function. Its interface usually takes one of three forms:
 
 | Project             | Unit                        | Interface                                                 | Rate                           | Notes                                                                                         |
 | ------------------- | --------------------------- | --------------------------------------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------- |
-| Mutable Instruments | `Engine` / `Voice` subclass | `Process(const Block& in, const Block& out, size_t size)` | block                          | `Parameter` knobs (curve lookup); fixed-point `stmlib::`; per-voice classes; no heap in audio |
-| SAPF                | `Sapf` subclass             | `virtual process(...)`                                    | block                          | inheritance — the only polymorphic-per-call one                                               |
-| SuperCollider       | `UGen`                      | `next_a(n)` / `next_k(n)` / `next_i()`                    | per-sample (a) / per-block (k) | `.ar`/`.kr` rate polymorphism; graph + topological sort; `LocalIn`/`Out` feedback             |
-| Pure Data           | tilde object                | `t_int *perform(t_int *w)`                                | block (64)                     | buffers in `w[2..]`, `dsp_add` registers the routine; message↔signal split                    |
-| Dexed (msfa)        | `Dx7Note` + 6 operators     | `compute(int32_t *buf, …)`                                | per-sample → block             | 32 algorithms; rate/level envelopes; 1-sample operator feedback                               |
-| Nuked               | `OPN2` core                 | `OPN2_Generate(OPN2*, int16_t *l, int16_t *r)`            | per-sample                     | bit-accurate integer; log/exp/sin tables; register writes                                     |
-| ymfm                | `fm_operator` / `engine`    | `generate(int32_t *out, uint32_t n)`                      | per-sample → block             | templated operator/engine; shared core + per-chip tables                                      |
+| Mutable Instruments | `Engine` / `Voice` subclass | `Process(const Block& in, const Block& out, size_t size)` | block                          | `Parameter` knobs (curve lookup), fixed-point `stmlib::`, per-voice classes, no heap in audio |
+| SAPF                | `Sapf` subclass             | `virtual process(...)`                                    | block                          | inheritance, the only polymorphic-per-call one                                               |
+| SuperCollider       | `UGen`                      | `next_a(n)` / `next_k(n)` / `next_i()`                    | per-sample (a) / per-block (k) | `.ar`/`.kr` rate polymorphism, graph + topological sort, `LocalIn`/`Out` feedback             |
+| Pure Data           | tilde object                | `t_int *perform(t_int *w)`                                | block (64)                     | buffers in `w[2..]`, `dsp_add` registers the routine, message↔signal split                    |
+| Dexed (msfa)        | `Dx7Note` + 6 operators     | `compute(int32_t *buf, …)`                                | per-sample → block             | 32 algorithms, rate/level envelopes, 1-sample operator feedback                               |
+| Nuked               | `OPN2` core                 | `OPN2_Generate(OPN2*, int16_t *l, int16_t *r)`            | per-sample                     | bit-accurate integer, log/exp/sin tables, register writes                                     |
+| ymfm                | `fm_operator` / `engine`    | `generate(int32_t *out, uint32_t n)`                      | per-sample → block             | templated operator/engine, shared core + per-chip tables                                      |
 
 The trade-off is straightforward. Block processing (`process(in, out, size)`) is
 easy to test and can support vectorization. Per-sample generation (`next` or
@@ -44,7 +44,7 @@ uint32_t frac = (phase << LOG2_N) >> 16;/* fractional part, Q16 */
 out = a + (((b - a) * (int32_t)frac) >> 16);   /* linear interpolation */
 ```
 
-Compute **`inc` once per note**, or once per control tick when pitch is modulated;
+Compute **`inc` once per note**, or once per control tick when pitch is modulated.
 do not recalculate it per sample. A 512–2048-sample table with linear interpolation
 produces about 0.1% THD at 512, which is inaudible. A sine table needs no
 anti-aliasing because it contains no harmonics to fold.
@@ -66,7 +66,7 @@ float poly_blep(float t, float dt) {          /* t = phase in [0,1), dt = inc */
    triangle: the polyBLEP'd square through a leaky integrator, one extra state. */
 ```
 
-The correction has the same shape at each discontinuity; only its phase changes.
+The correction has the same shape at each discontinuity, only its phase changes.
 For a **pulse (PWM)**, move the second correction to the pulse width `pw`:
 
 ```c
@@ -77,7 +77,7 @@ For a **pulse (PWM)**, move the second correction to the pulse width `pw`:
 Keep `pw` away from 0 and 1 so the two BLEPs do not overlap and create a narrow-
 pulse artifact. The 2nd-order form above suppresses aliasing up to roughly a 2 kHz
 fundamental. Third- and fourth-order Lagrange or B-spline corrections extend that
-range; a 2-tap EQ FIR (`b0 + b1·z⁻¹ + b0·z⁻²`) can flatten the passband (Välimäki
+range, a 2-tap EQ FIR (`b0 + b1·z⁻¹ + b0·z⁻²`) can flatten the passband (Välimäki
 et al.). "Band-limited" therefore describes a family of approaches, not one fixed
 algorithm.
 
@@ -86,27 +86,27 @@ inc/2^16` (note-derived). It is not the single-coefficient `y += k·(x−y)` for
 because a single `k` must be both the integration gain and the leak: it either
 droops low notes (k small) or goes unstable above ~7 kHz (k = 2π·dt, Finke's
 original, which sndkit notes is unclear). Splitting the gain from a fixed 1/1024
-leak keeps the output full-scale at any pitch; the price is a brief note-on
+leak keeps the output full-scale at any pitch, the price is a brief note-on
 transient (the integrator starts from 0, decaying over ~2^10 samples) and a ~1 LSB
 DC offset.
 
 The same polynomial works in Q15/Q16. In fixed-point code, avoid the divide in
 `poly_blep` (`t /= dt`): compute `1/dt` at **note-on**, while `dt` is constant.
 The sample loop then multiplies instead of dividing. This is the default
-"analog-ish" oscillator; the polynomial does the anti-aliasing.
+"analog-ish" oscillator, the polynomial does the anti-aliasing.
 
 ### 2.3 Wavetable morphing (MI `VariableSawOscillator`)
 
 Store one cycle in a wavetable and scan it with the phase accumulator. To change
 the shape, cross-fade between precomputed tables. MI's variable saw, for example,
-morphs between several saw shapes; it does not recompute the waveform.
+morphs between several saw shapes, it does not recompute the waveform.
 
 ### 2.4 Phase distortion (Casio CZ)
 
 Phase distortion (PD) applies a **static** warp: the phase ramp passes through a
 monotonic transfer function before the sine lookup. The CZ used a
 cycle-synchronized modulator/carrier pair. Unlike FM's dynamic phase modulation,
-this needs no delay; FM feedback does need a one-sample delay:
+this needs no delay. FM feedback does need a one-sample delay:
 
 ```c
 uint32_t pd = transfer[phase >> (32 - LOG2_TF)];   /* warp the phase */
@@ -114,14 +114,14 @@ out = sin_table[pd >> (32 - LOG2_SIN)];
 ```
 
 The CZ "resonance" waveforms are specific transfer functions (a cosine-shaped
-bend). In umetate this is `osc` + a `phase_map` table — **data, not a new node**.
+bend). In umetate this is `osc` + a `phase_map` table, **data, not a new node**.
 
 ### 2.5 Vector phaseshaping (dynamic phase distortion)
 
 Vector phaseshaping (VPS), described by Kleimola, Lazzarini, Timoney, and
 Välimäki at DAFx-11, is the technique behind FAW's Circle². It extends classic PD
 in three ways. First, the inflection point becomes a **2-D vector `p = (d, v)`**:
-`d` sets the bend's x-position and `v` its y-position; classic PD fixes `v = 0.5`.
+`d` sets the bend's x-position and `v` its y-position, classic PD fixes `v = 0.5`.
 Second, the transfer can have **multiple, piecewise inflection points**. Third,
 those points can be **modulated at audio rate**. VPS turns a static phase curve
 into a dynamic shaper with multiple breakpoints:
@@ -149,7 +149,7 @@ table. Its transfer depends on `(d, v)`, which can be modulated through
 tables. A dynamic shape needs a parameterized transfer, such as a macro or an `osc`
 with `d` and `v` parameters. The DAFx-11 paper by Kleimola, Lazzarini, Timoney,
 and Välimäki gives the equations. FAW's write-up also notes that dynamic phase
-shaping needs band-limiting, as in §2.2; the VPS oscillators therefore build on
+shaping needs band-limiting, as in §2.2, the VPS oscillators therefore build on
 §2.1 and §2.2.
 
 ### 2.6 The FM operator's sine (ymfm / Dexed)
@@ -249,7 +249,7 @@ transfer function.
 
 The proposed umetate `wavefolder` node has `ins {audio}`, `outs {audio}`, and no
 state. Its params are modulatable `amount` and `shape` (`sine | triangle | cheby`).
-Sine folding uses `fm1_sin`; polynomial folding uses `fm1_madd_sat` or
+Sine folding uses `fm1_sin`, polynomial folding uses `fm1_madd_sat` or
 `fm1_sat_add32` because the result can exceed the input range.
 
 ---
@@ -270,14 +270,14 @@ typedef struct {
 At each control tick, update the value linearly (`value += increment`) or
 exponentially (`value = start + (end-start) * exp_curve[tick]`). Advance when
 `tick == duration`. Compute the increment when the segment starts, keeping division
-out of the hot path. This flexible form supports arbitrary breakpoints and curves;
+out of the hot path. This flexible form supports arbitrary breakpoints and curves.
 umetate's `env` node reads the segment definitions from a `segments` table.
 
 ### 3.2 Rate / level (DX7 / ymfm / Dexed)
 
 Each stage has a **rate**, looked up as an increment in an exponential table, and
 a **level**, the target value:
-`env += rate_table[rate]; if (env >= level) next_stage;`. The rate is exponential;
+`env += rate_table[rate]; if (env >= level) next_stage;`. The rate is exponential.
 the level is linear in the log domain. Convert it to amplitude with a table lookup
 for `10^(-env/…)`. This uses fewer controls than a segment envelope and matches
 what FM chips do, at about two table lookups per tick.
@@ -286,13 +286,13 @@ what FM chips do, at about two table lookups per tick.
 
 `env += (target - env) * coeff` moves the envelope toward its target with a
 one-pole filter. The result is a true exponential curve and costs one multiply-add.
-It works well for a simple ADSR decay or release; segment envelopes can express
+It works well for a simple ADSR decay or release, segment envelopes can express
 more shapes.
 
 ### 3.4 Efficiency lesson
 
 Run envelopes at **control rate**, once per block or sub-block rather than per
-sample. Precompute the increment or rate; each tick then takes only one or two
+sample. Precompute the increment or rate, each tick then takes only one or two
 operations.
 
 ---
@@ -331,7 +331,7 @@ out   = m0 * in + m1 * v1 + m2 * v2;    /* low = v2, band = v1, high = in - k*v1
 ```
 
 For fixed-point code, use `g = 2·sin(π·fc/fs)` instead of `tan`. Simper notes
-that sine is more accurate at low bit depth, and `fm1_sin` is already available;
+that sine is more accurate at low bit depth, and `fm1_sin` is already available.
 `tan` is not free on the pi32v2. The TDF2 topology with an `fm1_sin`-derived `g`
 is therefore the better fit. Both forms use two state variables and recompute one
 coefficient per control tick, matching umetate's `svf` node (`z1`/`z2` state).
@@ -339,7 +339,7 @@ coefficient per control tick, matching umetate's `svf` node (`z1`/`z2` state).
 ### 4.2 One-pole
 
 `out += (in - out) * coeff` takes one multiply-add and has no resonance. Use it
-for smoothing or inexpensive low-pass filtering; umetate's `one_pole` node uses
+for smoothing or inexpensive low-pass filtering, umetate's `one_pole` node uses
 this form.
 
 ### 4.3 Biquad (RBJ cookbook)
@@ -353,7 +353,7 @@ fixed topologies are not enough.
 
 A ladder filter puts four one-pole stages in series and feeds the last stage back
 to the first: `stage1 += (in - stage4 * res) * g; stage2 += (stage1 - stage2) * g; …`.
-This is the classic character-filter topology. `res` sets feedback; `g` sets the
+This is the classic character-filter topology. `res` sets feedback, `g` sets the
 tan-based cutoff.
 
 ### 4.5 Low-pass gate (vactrol)
@@ -374,7 +374,7 @@ decay gives the circuit its character:
 Model the vactrol response as a **sum of two exponentials** (fast LED, slow LDR)
 or as a one-pole with a power-law tail. MI's _Streams_ models it digitally: SHAPE
 sets the vactrol's on/off response times, and MOD controls damping. Consult its
-MIT-licensed source for the curve; credit the work, but do not copy its code.
+MIT-licensed source for the curve, credit the work, but do not copy its code.
 
 The proposed umetate `lpg` node has `ins {audio, gate}`, `params {response (on/off
 time), damping}`, and `outs {audio}`. Its state combines a one-pole filter with the
@@ -412,7 +412,7 @@ with feedback also covers flanging, chorus, resonators, and Karplus–Strong.
 
 In additive synthesis, the spectrum (magnitude and phase per bin) is the data.
 Run an inverse FFT at build time to create a single-cycle wavetable, then read it
-like any other table oscillator (§2.1). The IFFT is **offline and precomputed**;
+like any other table oscillator (§2.1). The IFFT is **offline and precomputed**.
 it never belongs in the per-block audio loop. A fixed-spectrum "spectral
 oscillator" is therefore a wavetable, not a separate algorithm. umetate keeps an
 `ifft` node for live spectral work. This is how SC's `IFFT` and Csound's `adsyn`
@@ -420,7 +420,7 @@ can reduce to table reads when the spectrum is fixed.
 
 **Fixed-point caution:** kiss_fft's fixed-point build scales by `1/N` in both
 directions to prevent overflow. A forward and inverse transform therefore scale
-the result by `1/N²`; multiply back by `N²` when reconstructing a Q15 table. The
+the result by `1/N²`, multiply back by `N²` when reconstructing a Q15 table. The
 pi32v2 hardware FFT is **float** (`libFFT_pi32v2_OnChip.a`,
 `flfft_core_pi32v2.c`). A 64-harmonic `ifft` wavetable can use that hardware at
 control rate, with float isolated there, or use kiss_fft with its scaling handled.
@@ -438,14 +438,14 @@ control rate, with float isolated there, or use kiss_fft with its scaling handle
 3. **Use tables for expensive functions.** ymfm, Dexed, and Nuked implement the
    operator with integer table lookups for sine, exponential, and logarithm. This
    fits umetate's `hal/fm1_math.h` and JieLi hardware math.
-4. **Make fixed-point formats explicit.** MI uses `int16`/`int32`; ymfm, Nuked,
+4. **Make fixed-point formats explicit.** MI uses `int16`/`int32`, ymfm, Nuked,
    and Dexed combine integers with lookup tables. The same integer-first approach
    underlies umetate's Q-format notation.
 5. **Match the delay to the feedback.** ymfm and Dexed use one-sample operator
-   feedback; SC and Pd's `LocalIn`/`send~` are block-delayed. umetate uses
+   feedback. SC and Pd's `LocalIn`/`send~` are block-delayed. umetate uses
    `delay1` for FM feedback and `delayN` for longer delays.
 6. **Run control faster than the block rate, but slower than the audio sample rate.** MI uses
-   24-sample control blocks (~1.8 kHz); Pd uses 64. Audio-rate work dominates, so
+   24-sample control blocks (~1.8 kHz). Pd uses 64. Audio-rate work dominates, so
    sub-block control adds roughly 1–8%.
 7. **Keep allocation and virtual dispatch out of the audio path.** MI allocates
    statically. SAPF is the outlier here: it uses inheritance and virtual calls.
@@ -459,13 +459,13 @@ Several backlog items can use existing nodes or macros:
 - **Comb filtering:** use `delayN` with feedback (§4.7).
 - **Pitched noise:** build a macro from `noise` and a note-tracking `svf`
   band-pass. Derive its cutoff from `note_to_inc` at block rate.
-- **`apc` and `dual_apc`:** combine a square `osc` with `env` for `apc`; for
+- **`apc` and `dual_apc`:** combine a square `osc` with `env` for `apc`, for
   `dual_apc`, use two square oscillators that cross-modulate each other's `inc`.
   Both are straightforward once `fm_op` exists.
 
 ---
 
-## 7. Sub-block control rate — the CPU question
+## 7. Sub-block control rate: the CPU question
 
 Does updating control values (envelopes, LFOs, filter coefficients) every 16–32
 frames instead of once per 256-frame block cost too much CPU?
@@ -482,14 +482,14 @@ No. **Control work is small beside audio processing:**
 At 2.8 kHz control (16-frame sub-blocks), this estimate puts control at about
 **10% of one voice's audio work**. Each tick takes only one or two multiply-adds.
 MI runs control at 1.8 kHz on a **168 MHz single-core Cortex-M4** and has CPU to
-spare; umetate's DSP runs on a **320 MHz dual-core pi32v2**. The per-sample,
+spare, umetate's DSP runs on a **320 MHz dual-core pi32v2**. The per-sample,
 per-voice, per-node audio loop dominates the 2.9 ms budget, so this estimate does
 not suggest that sub-block control is a threat.
 
 The audible trade-off runs the other way. At 172 Hz (once per 256 frames), fast
 filter sweeps and LFOs can zipper. Updating every 16–32 frames removes that
 stepping at an estimated cost of about 5%. The generator chooses the sub-block
-size at compile time based on the patch's modulation; static patches can use a
+size at compile time based on the patch's modulation, static patches can use a
 coarser rate. MI, Pd, and SC all update controls more often than once per audio
 block for this reason.
 
@@ -546,7 +546,7 @@ osc.audio           ->  gran_window.audio
 - **`gran_phase` node:** generates the stochastic slice and outputs `phase` (Q32)
   and `progress` (Q16, from 0 to 1 within each grain). Its modulatable parameters
   are `p0`, `length`, `pitch`, and `density`. Calculate progress from phase as
-  `(phase − p0) / length`; it remains correct under per-sample pitch modulation.
+  `(phase − p0) / length`, it remains correct under per-sample pitch modulation.
   Each grain ends at `p0 + length`, regardless of rate changes. Wrap `p0` and
   `p0 + length` modulo the map length to avoid overflow.
 - **Existing `osc` node:** it already accepts a `phase` input, so it can read the
@@ -554,7 +554,7 @@ osc.audio           ->  gran_window.audio
   set the grain's timbre.
 - **`gran_window` node:** multiplies `audio` by a window of `progress`. Supported
   shapes are trapezoid, Hann, and rectangular. The trapezoid is cheapest because
-  its ramps are linear and need no cosine. The rectangular window has no taper; it
+  its ramps are linear and need no cosine. The rectangular window has no taper, it
   matches Xenakis's abrupt grains.
 
 ### 8.4 The stochastic component (its own nodes)
@@ -563,17 +563,17 @@ The Xenakis-inspired core is GENDYN, described in _Formalized Music_. Its
 waveform is a polygon: both breakpoint amplitudes and distances between
 breakpoints take bounded random walks, with samples linearly interpolated between
 points. At the ±32768 limits, the walk **reflects** rather than clamps. This
-"elastic barrier" is part of Xenakis's method; clamping would change the sound.
+"elastic barrier" is part of Xenakis's method, clamping would change the sound.
 The values are already integer (Q15 ±32767), so the method fits umetate's
 fixed-point baseline. Implement the random process as control-rate nodes connected
 to `gran_phase`'s modulation inputs:
 
-- **`rand_walk`** — `x += step·(u − ½)`, then **reflect** off `[lo, hi]` (mirror,
-  not clamp); Xenakis's barrier model.
-- **`distribution`** — a random draw per control tick (uniform / Gaussian /
-  Cauchy — Xenakis's ST/Free-Stochastic vocabulary; Gaussian via sum-of-uniforms
+- **`rand_walk`**, `x += step·(u − ½)`, then **reflect** off `[lo, hi]` (mirror,
+  not clamp). Xenakis's barrier model.
+- **`distribution`**, a random draw per control tick (uniform / Gaussian /
+  Cauchy, Xenakis's ST/Free-Stochastic vocabulary. Gaussian via sum-of-uniforms
   or a Box–Muller-lite table, Cauchy via `tan(π·(u − ½))`).
-- **`drift`** — a one-pole-lowpassed `rand_walk` (slow wander).
+- **`drift`**, a one-pole-lowpassed `rand_walk` (slow wander).
 
 `rand_walk` and `drift` use inexpensive integer operations. Cauchy sampling needs a
 `tan` table or an identity derived from `fm1_atan2`, so keep that calculation at
@@ -581,7 +581,7 @@ control rate.
 
 ### 8.5 Fixed-point and cost
 
-Use Q32 for `p0`, `length`, and `pitch`; store the map as a Q15 `const` XIP table,
+Use Q32 for `p0`, `length`, and `pitch`, store the map as a Q15 `const` XIP table,
 `progress` as Q16, and the window as Q15. Per sample, each active grain needs one
 addition, one map lookup, one window multiply, and one saturating accumulate. The
 stochastic nodes run at block rate. In total, a grain costs about four integer

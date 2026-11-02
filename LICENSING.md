@@ -1,7 +1,7 @@
 # Licensing
 
 umetate is **GPL-3.0-only** for project code, documentation, and skills. Third-party
-terms are preserved. RIB is a source-owned fork of Dinghy/Felucca; Dinghy is
+terms are preserved. RIB is a source-owned fork of Dinghy/Felucca. Dinghy is
 lineage, not the product boundary.
 
 ## Dependencies and derivations by licence
@@ -14,7 +14,7 @@ lineage, not the product boundary.
 | Emscripten | 6.0.13 | MIT / vendor |
 | CMake | ≥ 3.20 | BSD-3-Clause |
 | Ninja | any | Apache-2.0 |
-| cc / gcc / clang | — | GPL / Apache-2.0 / other |
+| cc / gcc / clang | - | GPL / Apache-2.0 / other |
 | JieLi pi32v2 toolchain | jieli-linux-toolchains-20260730.1 | vendor terms |
 | Pillow | 13.0.0 | HPND |
 | jsonschema | 4.26.0 | MIT |
@@ -29,18 +29,18 @@ lineage, not the product boundary.
 | TRS MIDI IN ring read | Felucca / sloopDX / ChanceTheMaker | GPL-3.0-only |
 | Update loader screen | zvenson / illuminus5 (Skiff) | GPL-3.0-only |
 | Terminus font 8×16 | Terminus project | SIL OFL 1.1 |
-| Digital Desolation Plus (the umetate logo's typeface) | UkiyoMoji Fonts | free — edit/derive/commercial/embed OK; credit requested |
+| Digital Desolation Plus (the umetate logo's typeface) | UkiyoMoji Fonts | free, edit/derive/commercial/embed OK, credit requested |
 | KISS FFT (`vendor/kiss_fft/`) | Mark Borgerding | BSD-3-Clause |
 | JieLi AC79 SDK math (`vendor/jieli/math.h`, `fftvec_math_drv.h`, `flfft_core_pi32v2.c`) | JieLi | Apache-2.0 |
 | JieLi AC79 SDK assets (uboot.boot, cfg_tool.bin, eq_cfg_hw.bin) | JieLi | Apache-2.0 |
 
 ## Non-redistribution
 
-The JieLi pi32v2 toolchain is **not redistributed** — the user obtains it and
+The JieLi pi32v2 toolchain is **not redistributed**, the user obtains it and
 `umetate setup` installs it into the Docker volume (vendor-terms compliance). The
 AC79 SDK is Apache-2.0: its **binary assets** (uboot.boot, cfg_tool.bin,
 eq_cfg_hw.bin) and the precompiled FFT library (`libFFT_pi32v2_OnChip.a`) are read
-from the user's SDK checkout at build time, not stored here; the small **C math
+from the user's SDK checkout at build time, not stored here, the small **C math
 source** we compile (kiss_fft under BSD-3, and `fftvec_math_drv.h` +
 `flfft_core_pi32v2.c` under Apache-2.0) is vendored under `firmware/vendor/` with
 its licences. M-VAVE stock firmware and assets are **not redistributed**. Record
