@@ -27,6 +27,11 @@
 #define PRESET_MULTI_SLOTS 64u
 #define PRESET_SLOT_MAX 16372u
 
+/* The per-part timbre param cap: the preset apply + SysEx dump buffers are sized to
+ * this, so a synth's `SYNTH_N_PARAMS` must stay under it. (Raised from 128 when the
+ * fourop-fm key/velocity follow + per-part algorithm pushed it past 128.) */
+#define SYNTH_PARAM_MAX 256u
+
 #define PP_RECORD(N) (1u + PRESET_NAME_LEN + (N) * 4u + 4u)
 #define MP_RECORD(P) (1u + PRESET_NAME_LEN + (P) + (P) * 5u * 4u + 4u)
 #define ST_RECORD (1u + 4u + 4u + 4u)

@@ -4,8 +4,6 @@
 #include "synth_runtime.h"
 #include "presets.h"
 
-#define SYNTH_PARAM_MAX 128u /* the per-part timbre cap (as the SysEx handler's dump) */
-
 void synth_preset_apply(const synth_runtime_ctx *ctx, uint32_t multi_slot)
 {
     char name[PRESET_NAME_LEN];

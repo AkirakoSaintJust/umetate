@@ -3227,3 +3227,12 @@ one block, ~0.7 ms — inaudible for timbre shaping, accepted.)
     scale (a modulator at level 99 + feedback 0 now matches what level 99 + 50%
     feedback used to sound like) **without touching the feedback** (which is summed
     *inside* the operator, not in the route).
+
+60. **Preset/SysEx cap raised (128 → 256).** — **done.** The key/velocity follow +
+    the per-part algorithm pushed `SYNTH_N_PARAMS` to 133, past the old
+    `SYNTH_PARAM_MAX` (128) and `SYNTH_SX_MAX` (384) — so `synth_preset_apply`
+    silently rejected every multi-patch (params unapplied) and the SysEx param
+    dump would overflow its buffer. `SYNTH_PARAM_MAX` is now 256 (moved to the
+    shared `presets.h`, used by `synth_runtime.c` *and* `synth_sysex.c`), and
+    `SYNTH_SX_MAX` is 1536 (a 256-param part patch is ~1206 bytes 7-bit packed).
+    Locked by a test that reads the C caps and asserts the fourop patch fits.

@@ -127,7 +127,7 @@ void synth_sysex_poll(const synth_sysex_ctx *ctx)
                          (uint8_t)(ctx->n_params >> 8), (uint8_t)ctx->n_parts};
         midi_send_sysex(out, sx_build(out, ctx->model, 0x81u, ver, id, 5u));
     } else if (cmd == 0x02u) { /* param dump: the current timbre params */
-        if (ctx->n_params <= 128u && ctx->get_param) {
+        if (ctx->n_params <= SYNTH_PARAM_MAX && ctx->get_param) {
             for (i = 0; i < ctx->n_params; i++) {
                 uint32_t v = (uint32_t)ctx->get_param(i);
                 raw[4u * i] = (uint8_t)v;

@@ -12,11 +12,12 @@
 #pragma once
 #include <stdint.h>
 
-#define SYNTH_SX_MAX 384u   /* a frame + a response fit; longer frames are dropped */
+#define SYNTH_SX_MAX 1536u  /* a frame + a response fit (a 256-param part patch
+                             * is ~1206 bytes 7-bit packed); longer frames are dropped */
 
 typedef struct {
     uint32_t model;          /* the firmware's SysEx model byte */
-    uint32_t n_params;       /* the timbre param count (the single-part N, <= 128) */
+    uint32_t n_params;       /* the timbre param count (the single-part N, <= SYNTH_PARAM_MAX) */
     uint32_t n_parts;
     int32_t (*get_param)(uint32_t id);
     uint8_t *part_bank;      /* 128 single-part records (the writable bank) */

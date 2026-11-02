@@ -3072,6 +3072,31 @@ def main() -> int:
     else:
         print("ok: sysex-layout pins the record geometry (9 params, 2 parts)")
 
+    # the fourop patch's per-part count + part-patch frame must fit the C caps
+    # (presets.h SYNTH_PARAM_MAX + synth_sysex.h SYNTH_SX_MAX); the key/velocity
+    # follow + per-part algorithm pushed it past the old 128/384.
+    import re as _re
+
+    from ._records import part_patch_size as _pps
+
+    _root = Path(__file__).resolve().parents[1]
+
+    def _c_const(path: str, name: str) -> int:
+        m = _re.search(rf"{name}\s+(\d+)u", (_root / path).read_text(encoding="utf-8"))
+        assert m is not None, f"{name} not found in {path}"
+        return int(m.group(1))
+
+    _pm = _c_const("firmware/src/presets.h", "SYNTH_PARAM_MAX")
+    _sm = _c_const("firmware/src/synth_sysex.h", "SYNTH_SX_MAX")
+    _fn = generate_sysex_layout(ffm)["n_params"]
+    _raw = 1 + _pps(_fn)  # slot byte + the part-patch record
+    _frame = 10 + _raw + (_raw + 6) // 7  # 7-bit packed + the envelope
+    if _fn <= _pm and _frame <= _sm:
+        print(f"ok: fourop ({_fn} params) fits the preset/SysEx caps ({_pm}/{_sm})")
+    else:
+        print(f"FAIL: fourop ({_fn} params) exceeds the preset/SysEx caps")
+        failures += 1
+
     # the generated synth_layout.h carries the runtime constants the framework uses.
     from .generate import generate_synth_header
 
