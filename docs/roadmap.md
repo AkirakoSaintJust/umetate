@@ -1937,7 +1937,15 @@ for the flash/XIP cache (`hal/fm1_flash.h`), never for the inter-core transport.
 ahead into `int32_t dsp_blocks[2][512]` with a per-buffer `ready[2]`/`done[2]`
 handshake (CPU1 sets `ready[p]`, toggles `p`; CPU0's `app_audio` copies `buf[p]`,
 sets `done[p]`, clears `ready[p]`); the render job becomes a continuous core-1
-worker instead of a one-shot job. Not built — the synchronous mailbox above ships.
+worker instead of a one-shot job. **Measured 2026-11-02 and rejected:** a
+split+async prototype (CPU0 renders `[0,N0)` for block k+1 in the ISR, CPU1
+renders `[N0,N)` + combine + post for block k+1, the ISR copies block k) was
+built behind an `async_render` patch flag and measured on the emulator — **61% vs
+60% ISR @ 320 MHz (within noise), no benefit.** The split already runs the two
+voice halves in parallel, so the only serialized work is the combine + post
+(~2.4 µs); the "ISR wait" to remove was already negligible. It also costs one
+block (~5.8 ms) of note latency and ~6 KB of `.pool`. The synchronous split
+remains the shipped path.
 
 **Verification (must pass).** host parity (silence → note → silence; param clamp;
 bad-id rejection; `quiet()` toggles); ring host tests (wrap-around, overrun, no
@@ -2112,7 +2120,9 @@ section macro `FM1TK_DSP_API` → `UMETATE_DSP`.
   and waits; on fallback it runs the same block locally. The engine is unaware of
   the mode.
 - **Deferred (future):** the §12.1 ping-pong `dsp_blocks[2][512]` + `ready`/`done`
-  handshake (asynchronous, no ISR wait).
+  handshake (asynchronous, no ISR wait). **Measured and rejected (2026-11-02):** no
+  ISR benefit — the split already runs both voice halves in parallel, so the wait
+  was only the ~2.4 µs combine + post (see §12.1).
 
 **Key structs (grounded in the imported code).** `fm1_in` (input matrix,
 `hal/fm1_input.h`: notes/buttons/edges/encoders/LED layers, debounced, 10 kHz
