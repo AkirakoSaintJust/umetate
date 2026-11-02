@@ -3307,6 +3307,14 @@ double-rounding is inherent (not bit-exact-reducible), and the `fmvel` × unity
 left are:
 - **P2-8 hardware acceleration** — hand-asm `fm1_dsp_kernels.h` VLIW/`rep` loops (the
   compiler's clang 4.0.1 emits neither); the documented next step, a larger change.
+  **Profiled (2026-11-02):** the `render_voices_block` disassembly is 52%
+  register-move/address-arithmetic (`rN = rM`, `rN = rM + imm`, constant loads)
+  against only ~90 MACs + 183 shifts + 157 adds — i.e. the win is a *loop-structure*
+  rewrite (`rep` zero-overhead loops + VLIW `#` dual-issue + auto-increment
+  `[rN++=4]` loads, as the stock's compiler emits), not a cheaper multiply. A faster
+  scalar `fm1_q15_mul` would only trim ~1 of its 4 instructions (preload + MAC +
+  shift) and can't be verified bit-exact on target without a sample-exact target-vs-
+  host compare (the `--check` audio peak can't). Deferred as a scoped follow-up.
 - **Skip silent operators** (bit-exact; 0% in the default all-active patch).
 - **A voice reduction** (20 → 18 ≈ 48%) — rejected while "keep 20" holds.
 
