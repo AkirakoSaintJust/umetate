@@ -742,6 +742,46 @@ int main(void) {
 }
 """
 
+ALGO_FX_HARNESS = """\
+#include <stdio.h>
+#include <stdint.h>
+void __NAME___dsp_reset(void);
+void __NAME___dsp_note_on(uint32_t note, uint32_t velocity);
+int __NAME___dsp_set_param(uint32_t id, int32_t value);
+void __NAME___dsp_render(int32_t *out, uint32_t frames);
+void __NAME___dsp_all_notes_off(void);
+static int32_t out[512];
+static int64_t energy(void) {
+    int64_t e = 0;
+    for (int i = 0; i < 512; i++) e += (int64_t)out[i] * out[i];
+    return e;
+}
+int main(void) {
+    /* every algorithm x every FX combo (0 = dry, 1 = filter, 2 = wavefolder, 3 = both)
+       must render non-silent — the algorithm switch and the post FX compose. */
+    for (uint32_t alg = 0; alg < 8; alg++) {
+        for (uint32_t fx = 0; fx < 4; fx++) {
+            __NAME___dsp_reset();
+            __NAME___dsp_set_param(__ALGO_ID__, (int32_t)alg);
+            __NAME___dsp_set_param(__FILTER_ON_ID__, (fx & 1) ? 1 : 0);
+            __NAME___dsp_set_param(__FOLD_ON_ID__, (fx & 2) ? 1 : 0);
+            __NAME___dsp_set_param(__CUTOFF_ID__, 20000);
+            __NAME___dsp_set_param(__RES_ID__, 40000);
+            __NAME___dsp_set_param(__FOLD_ID__, 8000);
+            __NAME___dsp_note_on(69, 100);
+            __NAME___dsp_render(out, 256);
+            if (energy() < 1000000) {
+                printf("FAIL: alg %u fx %u silent\\n", alg, fx);
+                return 1;
+            }
+            __NAME___dsp_all_notes_off();
+        }
+    }
+    printf("ok: __NAME__ renders non-silent across 8 algorithms x 4 FX combos\\n");
+    return 0;
+}
+"""
+
 DUMP_HARNESS = """\
 #include <stdio.h>
 #include <stdint.h>
@@ -2079,6 +2119,55 @@ def _algorithms_render(patch: Patch) -> tuple[bool, str]:
         return run.returncode == 0, run.stdout.strip()
 
 
+def _algorithms_fx_combos(patch: Patch) -> tuple[bool, str]:
+    """Generate + compile + run the algorithm x FX contract: every algorithm x every
+    filter/wavefolder combo renders non-silent (the algorithm switch and the global
+    post compose correctly)."""
+    src = generate(patch)
+    hdr, impl = generate_tables(patch)
+    ids = param_ids(patch)
+    cname = patch["name"].replace("-", "_").replace(".", "_")
+    for key in ("algorithm", "filter_on", "fold_on", "cutoff", "res", "fold"):
+        if key not in ids:
+            return False, f"patch has no {key!r} param (the FX-combo contract needs it)"
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        (d / "tables.h").write_text(hdr)
+        (d / "tables.c").write_text(impl)
+        harness = (
+            ALGO_FX_HARNESS.replace("__NAME__", cname)
+            .replace("__ALGO_ID__", str(ids["algorithm"]))
+            .replace("__FILTER_ON_ID__", str(ids["filter_on"]))
+            .replace("__FOLD_ON_ID__", str(ids["fold_on"]))
+            .replace("__CUTOFF_ID__", str(ids["cutoff"]))
+            .replace("__RES_ID__", str(ids["res"]))
+            .replace("__FOLD_ID__", str(ids["fold"]))
+        )
+        (d / "harness.c").write_text(harness)
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-I",
+                str(d),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                str(d / "tables.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            return False, "compile failed:\n" + proc.stderr
+        run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+        return run.returncode == 0, run.stdout.strip()
+
+
 def _lfo_varies(patch: Patch) -> tuple[bool, str]:
     """Generate + compile + run a dump, checking the `lfo` output is non-constant
     (it oscillates) rather than a stuck DC value."""
@@ -2948,6 +3037,13 @@ def main() -> int:
     print(
         ("ok: " if ok else "FAIL: ")
         + (msg or "fourop-fm renders non-silent across all 8 algorithms")
+    )
+    failures += 0 if ok else 1
+
+    ok, msg = _algorithms_fx_combos(ffm)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "fourop-fm renders non-silent across 8 algorithms x 4 FX combos")
     )
     failures += 0 if ok else 1
 

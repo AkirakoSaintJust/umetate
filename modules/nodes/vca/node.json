@@ -1,6 +1,6 @@
 {
   "name": "vca",
-  "summary": "Gain cell: Q15 multiply of audio × control cv × a `level` param (default unity). Bipolar `k` (key-follow) and `vk` (velocity-follow) factors (Q15) push the level toward 0/32767 (block-derived `level_eff`).",
+  "summary": "Gain cell: Q15 multiply of audio × control cv × a `level` param (default unity). Bipolar `k` (key-follow) and `vk` (velocity-follow) factors (Q15) push the level toward 0/32767 (block-derived `level_eff`). When `level_eff` is 0 the two multiplies are skipped (`level_eff ? … : 0`, bit-exact) — e.g. the fm_op self-feedback with `feedback` 0.",
   "ins": {
     "audio": "audio",
     "cv": { "rate": "control", "default": "32768" },

@@ -1,6 +1,6 @@
 {
   "name": "tl",
-  "summary": "Yamaha total-level gain: audio × cv × a 0..99 `level` mapped to a Q15 gain via `fm1_level_gain` (0.25 dB/step: 99 = max, 50 ≈ −12 dB, 0 = silence), shifted `>> 2` for the −12 dB single-operator headroom (four additive carriers then sum to 0 dBFS). Bipolar `k` (key-follow) and `vk` (velocity-follow) factors (Q15) push the level toward 0/99 (block-derived `level_eff`).",
+  "summary": "Yamaha total-level gain: audio × cv × a 0..99 `level` mapped to a Q15 gain via `fm1_level_gain` (0.25 dB/step: 99 = max, 50 ≈ −12 dB, 0 = silence), shifted `>> 2` for the −12 dB single-operator headroom (four additive carriers then sum to 0 dBFS). Bipolar `k` (key-follow) and `vk` (velocity-follow) factors (Q15) push the level toward 0/99 (block-derived `level_eff`). When `level_eff` is 0 the operator is silent, so the two multiplies are skipped (`level_eff ? … : 0`, bit-exact).",
   "ins": {
     "audio": "audio",
     "cv": { "rate": "control", "default": "32768" },
