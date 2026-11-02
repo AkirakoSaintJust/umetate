@@ -324,13 +324,26 @@ static uint32_t app_prev, app_lit;
 static uint8_t app_held[27];
 static int32_t app_oct;
 static uint32_t app_last_scl_ms, app_scl_pending, app_scl_pending_ms;
-static uint32_t app_browser_open, app_browser_slot, app_browser_ms;
-static uint32_t app_pbro_open, app_pbro_slot, app_pbro_ms;
+static ui_browser browser;                          /* the preset-browse popup (framework state) */
 static uint8_t app_pending_part;                    /* 0 = none, 1 = load, 2 = save, 3 = init */
 static uint16_t app_pending_slot;                   /* the slot for a pending load/save */
 static uint32_t app_alg_ms;                         /* the last ALGORITHM-knob turn (popup auto-close) */
 static uint32_t app_saved_ms;                       /* the last save (the "SAVED SUCCESSFULLY" linger) */
 static uint32_t app_last_input_ms;                  /* the last control input (the popup idle auto-close) */
+
+/* the browser's apply hook: a multi-patch applies straight in; a single part opens
+ * the part chooser (load into the active part). */
+void ui_preset_apply(uint8_t kind, uint16_t slot)
+{
+    if (kind == 0u) {
+        app_pending_part = 1u;                       /* load a single part */
+        app_pending_slot = slot;
+        ui_part_chooser_begin(ui_part(), 0);
+    } else if (slot != cur_slot) {
+        apply_multi(slot);
+        cur_slot = slot;
+    }
+}
 
 static void app_init(void)
 {
@@ -342,8 +355,7 @@ static void app_init(void)
     app_oct = 0;
     app_last_input_ms = 0;
     app_last_scl_ms = app_scl_pending = app_scl_pending_ms = 0;
-    app_browser_open = app_browser_slot = app_browser_ms = 0;
-    app_pbro_open = app_pbro_slot = app_pbro_ms = 0;
+    browser.open = 0;
 
     fourop_fm_dsp_reset();
 #if FM1_CPU1_USED
@@ -640,77 +652,18 @@ static void app_step(void)
         app_saved_ms = 0u;
     }
 
-    /* the preset browsers: the PRESETS encoder opens the multi-patch (2-part)
-       browser except in GLO, where it opens the single-part browser; 2 s with
-       no encoder input loads the selection (or, if already loaded, just clears). */
+    /* the preset browser (framework): the PRESETS encoder opens the multi-patch
+       (2-part) browser except in GLO, where it opens the single-part browser; 2 s
+       idle loads the selection (or, if already loaded, just clears). */
     {
         int32_t pe = fm1_enc_take(ENC_PRESETS);
         if (pe != 0)
             input_seen = 1;
-        if (ui_top() == GLO_CTX) {
-            if (pe != 0) {
-                if (!app_pbro_open) {
-                    app_pbro_open = 1;
-                    app_pbro_slot = 0u;
-                }
-                if (pe > 0)
-                    app_pbro_slot = (app_pbro_slot + 1u) % PRESET_PART_SLOTS;
-                else
-                    app_pbro_slot = (app_pbro_slot + PRESET_PART_SLOTS - 1u) % PRESET_PART_SLOTS;
-                app_pbro_ms = fm1_ms;
-                {
-                    char name[PRESET_NAME_LEN];
-                    int32_t params[SYNTH_PARAM_MAX];
-                    const uint8_t *rec =
-                        part_bank + app_pbro_slot * PP_RECORD(SYNTH_N_PARAMS);
-                    if (rec[0] != PRESET_EMPTY &&
-                        preset_part_unpack(rec, SYNTH_N_PARAMS, name, params))
-                        ui_popup_show_part(app_pbro_slot, name);
-                    else
-                        ui_popup_show_part(app_pbro_slot, 0);
-                }
-            }
-            if (app_pbro_open && fm1_ms - app_pbro_ms >= 2000u) {
-                app_pending_part = 1u;                 /* load a single part */
-                app_pending_slot = app_pbro_slot;
-                ui_part_chooser_begin(ui_part(), 0);
-                ui_popup_hide();
-                app_pbro_open = 0;
-            }
-        } else {
-            if (pe != 0) {
-                if (!app_browser_open) {
-                    app_browser_open = 1;
-                    app_browser_slot = cur_slot;
-                }
-                if (pe > 0)
-                    app_browser_slot = (app_browser_slot + 1u) % PRESET_MULTI_SLOTS;
-                else
-                    app_browser_slot = (app_browser_slot + PRESET_MULTI_SLOTS - 1u) % PRESET_MULTI_SLOTS;
-                app_browser_ms = fm1_ms;
-                {
-                    char name[PRESET_NAME_LEN];
-                    uint8_t ps[SYNTH_N_PARTS];
-                    int32_t lv[SYNTH_N_PARTS], dl[SYNTH_N_PARTS], ch[SYNTH_N_PARTS];
-                    int32_t lo[SYNTH_N_PARTS], hi[SYNTH_N_PARTS];
-                    const uint8_t *rec =
-                        multi_bank + app_browser_slot * MP_RECORD(SYNTH_N_PARTS);
-                    if (rec[0] != PRESET_EMPTY &&
-                        preset_multi_unpack(rec, SYNTH_N_PARTS, name, ps, lv, dl, ch, lo, hi))
-                        ui_popup_show(app_browser_slot, name);
-                    else
-                        ui_popup_show(app_browser_slot, 0);
-                }
-            }
-            if (app_browser_open && fm1_ms - app_browser_ms >= 2000u) {
-                if (app_browser_slot != cur_slot) {
-                    apply_multi(app_browser_slot);
-                    cur_slot = app_browser_slot;
-                }
-                ui_popup_hide();
-                app_browser_open = 0;
-            }
-        }
+        if (ui_top() == GLO_CTX)
+            ui_browser_step(&browser, pe, fm1_ms, 0u, PRESET_PART_SLOTS, 0u, 2000u);
+        else
+            ui_browser_step(&browser, pe, fm1_ms, 1u, PRESET_MULTI_SLOTS,
+                            (uint16_t)cur_slot, 2000u);
     }
 
     synth_midi_poll(&midi_ctx);

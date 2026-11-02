@@ -237,6 +237,7 @@ void ui_save_slot_name(uint8_t kind, uint16_t slot, char *out, uint32_t cap)
     (void)kind; (void)slot; (void)cap;
     if (cap) out[0] = 0;
 }
+void ui_preset_apply(uint8_t kind, uint16_t slot) { (void)kind; (void)slot; }
 
 /* MIDI in: from the main loop, and from app_idle while the screen draws. */
 static uint32_t idle_ok;

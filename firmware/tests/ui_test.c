@@ -37,7 +37,7 @@ uint32_t scope_seq(void) { return 0; }
 #include "ui.c"
 
 /* action hooks: record calls for the assertions */
-static int n_note_on, n_set_step, n_panic, n_save, n_init_patch, n_init_part;
+static int n_note_on, n_set_step, n_panic, n_save, n_init_patch, n_init_part, n_preset_apply;
 void ui_act_note_on(uint8_t note, uint8_t vel) { (void)note; (void)vel; n_note_on++; }
 void ui_act_note_off(uint8_t note) { (void)note; }
 void ui_act_set_step(uint8_t step) { (void)step; n_set_step++; }
@@ -54,6 +54,7 @@ void ui_save_slot_name(uint8_t kind, uint16_t slot, char *out, uint32_t cap)
     (void)kind; (void)slot; (void)cap;
     if (cap) out[0] = 0;
 }
+void ui_preset_apply(uint8_t kind, uint16_t slot) { (void)kind; (void)slot; n_preset_apply++; }
 
 static int failures;
 #define CHECK(cond, msg) do { if (!(cond)) { printf("FAIL: %s\n", msg); failures++; } } while (0)
@@ -302,6 +303,22 @@ int main(void)
         ui_part_chooser_begin(1u, 0);
         ui_part_chooser_cancel();
         CHECK(ui_part_chooser_open() == 0, "part chooser cancel closes");
+    }
+
+    /* the slot browser: scroll wraps, the timeout applies the selection once */
+    {
+        ui_browser b = {0};
+        int before = n_preset_apply;
+        ui_browser_step(&b, 1, 100u, 1u, 8u, 3u, 100u);   /* open at 3, +1 -> 4 */
+        CHECK(b.open == 1 && b.slot == 4u, "browser opens at the initial slot + scrolls");
+        ui_browser_step(&b, 1, 100u, 1u, 8u, 3u, 100u);   /* +1 -> 5 */
+        ui_browser_step(&b, -1, 100u, 1u, 8u, 3u, 100u);  /* -1 -> 4 */
+        ui_browser_step(&b, -5, 100u, 1u, 8u, 3u, 100u);  /* wrap back past 0 */
+        CHECK(b.slot == 7u, "browser wraps past slot 0");
+        CHECK(n_preset_apply == before, "browser does not apply before the timeout");
+        ui_browser_step(&b, 0, 250u, 1u, 8u, 3u, 100u);   /* idle >= 100 ms */
+        CHECK(b.open == 0 && n_preset_apply == before + 1,
+              "browser applies the selection once on the timeout");
     }
 
     if (failures) {

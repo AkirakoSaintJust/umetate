@@ -1318,6 +1318,40 @@ static void ui_popup_set(const char *title, uint32_t slot, const char *name)
 void ui_popup_show(uint32_t slot, const char *name) { ui_popup_set("multi-patch ", slot, name); }
 void ui_popup_show_part(uint32_t slot, const char *name) { ui_popup_set("single part ", slot, name); }
 
+/* the slot browser: scroll on the encoder (wrapping), show the slot's name, and
+ * after `timeout_ms` idle call `ui_preset_apply` + close. `kind` (0 = single part,
+ * 1 = multi-patch) is constant for a browser, so it is passed per step. */
+void ui_browser_step(ui_browser *b, int32_t enc, uint32_t now, uint8_t kind,
+                     uint16_t n_slots, uint16_t initial_slot, uint16_t timeout_ms)
+{
+    if (enc) {
+        int32_t s;
+        if (!b->open) {
+            b->open = 1;
+            b->slot = initial_slot;
+        }
+        s = (int32_t)b->slot + enc;
+        s %= (int32_t)n_slots;
+        if (s < 0)
+            s += (int32_t)n_slots;
+        b->slot = (uint16_t)s;
+        b->last_ms = now;
+        {
+            char name[PRESET_NAME_LEN];
+            ui_save_slot_name(kind, b->slot, name, sizeof name);
+            if (kind == 0u)
+                ui_popup_show_part(b->slot, name[0] ? name : 0);
+            else
+                ui_popup_show(b->slot, name[0] ? name : 0);
+        }
+    }
+    if (b->open && now - b->last_ms >= timeout_ms) {
+        b->open = 0;
+        ui_popup_hide();
+        ui_preset_apply(kind, b->slot);
+    }
+}
+
 void ui_popup_msg(const char *msg)                /* a transient acknowledgement ("SAVED/COPIED …") */
 {
     uint8_t was = ui_popup_on;

@@ -1343,11 +1343,14 @@ The *per-voice* allocator (assignment, mono/unison/legato/portamento/retrigger/
 glide, `parts:`) is **generator rails** (`umetate/_voice.py`, F3) — not
 hand-written C. The **transport glue** (the dual-core-aware seam adapters
 `<name>_glue_*` + the frozen `app_audio`, including the scope-tap push) is now
-**generated** too (`glue.h`, `generate_glue`) — so a synth project supplies only
-the *instrument-specific* glue (`app.c`: `app_main` + `app_idle` + the `ui_act_*`
-hooks + the three service contexts, which bind the generated adapters to the
-framework services + the app's banks). `umetate build --synth <dir>` composes
-framework + generated code + glue into the firmware (F7, done).
+**generated** too (`glue.h`, `generate_glue`), and the **slot browser** (the
+preset-browse popup: scroll + show name + idle auto-apply) is a framework helper
+(`ui_browser_step` + the `ui_preset_apply` / `ui_save_slot_name` hooks) — so a
+synth project supplies only the *instrument-specific* glue (`app.c`: `app_main` +
+`app_idle` + the `ui_act_*` hooks + the three service contexts, which bind the
+generated adapters to the framework services + the app's banks). `umetate build
+--synth <dir>` composes framework + generated code + glue into the firmware (F7,
+done).
 
 **The multitimbral patch** (F3). `parts: N` declares N independent timbres. Each
 part is its own parameter set (the id space is `part × param`) plus routing
@@ -1366,10 +1369,8 @@ span 3 slots, 64 multi patches fit 1.
 
 **The gaps** (what's still hand-written or missing): the docs/tutorial/skill
 finalization (F8); the **dev-skill GUI interview revamp** (L10 — raise its minimum
-spec depth to the fourop-fm restructure spec); the **preset-browser orchestration**
-(the browser open/scroll/auto-load state machine is still app-side; the transport
-seam is now generated `glue.h`); device acceptance, flash, debrick, the FPU probe,
-and the clock soak stay blocked until hardware arrives.
+spec depth to the fourop-fm restructure spec); device acceptance, flash, debrick,
+the FPU probe, and the clock soak stay blocked until hardware arrives.
 
 **Universal vs fourop-fm-specific.** Of the four-op-FM work, the *universal*
 tooling is: `gain`/`cmul`/`csum` (the control/audio-separated gain family),

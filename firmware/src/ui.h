@@ -261,5 +261,20 @@ void ui_draw_custom(const ui_widget *w);
  * The framework calls it to show what a save would overwrite. ---- */
 void ui_save_slot_name(uint8_t kind, uint16_t slot, char *out, uint32_t cap);
 
+/* ---- the slot browser (the preset-browse popup): the app calls ui_browser_step
+ * each loop with the encoder delta + now; the framework scrolls the slot, shows its
+ * name, and after `timeout_ms` idle calls ui_preset_apply(kind, slot) + closes. ---- */
+typedef struct {
+    uint8_t open;
+    uint16_t slot;
+    uint32_t last_ms;
+} ui_browser;
+
+void ui_browser_step(ui_browser *b, int32_t enc, uint32_t now, uint8_t kind,
+                     uint16_t n_slots, uint16_t initial_slot, uint16_t timeout_ms);
+
+/* the app's hook: apply the selected slot (kind 0 = single part, 1 = multi-patch). */
+void ui_preset_apply(uint8_t kind, uint16_t slot);
+
 /* ---- the safe-failure screen: drawn independently of the widget engine ---- */
 void ui_safe_fail(const char *msg);
