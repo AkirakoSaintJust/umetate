@@ -34,8 +34,12 @@ static const ui_widget W_0_0[] = {
     { UI_PARAM_ROW, 5, 0, 1, P_res, "RES", 0, 0, 0, 0 },
     { UI_PARAM_ROW, 6, 0, 1, P_fold, "FOLD", 0, 0, 0, 0 },
 };
+static const ui_widget W_0_1[] = {
+    { UI_LABEL, 1, 0, 1, UI_NO_PARAM, "HOME 2", 0, 0, 0, 0 },
+};
 static const ui_page PG_0[] = {
     { "", 0xFF, W_0_0, (uint8_t)(sizeof W_0_0 / sizeof W_0_0[0]) },
+    { "", 0xFF, W_0_1, (uint8_t)(sizeof W_0_1 / sizeof W_0_1[0]) },
 };
 static const ui_widget W_1_0[] = {
     { UI_STATUS, 1, 0, 2, P_alg, 0, 0, 0, 0, 0 },
@@ -87,7 +91,7 @@ static const ui_binding GLOBAL_BIND[] = {
 };
 
 static const ui_context CTX[] = {
-    { "home", PG_0, 1, BIND_0, 5, 0, 0 },
+    { "home", PG_0, 2, BIND_0, 5, 0, 0 },
     { "edit", PG_1, 2, BIND_1, 3, 0, 0 },
     { "step", PG_2, 1, BIND_2, 1, 0, 0 },
     { "fx", PG_3, 1, BIND_3, 0, 0, 0 },

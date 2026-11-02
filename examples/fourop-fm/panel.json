@@ -420,7 +420,7 @@
           "id": "credits",
           "widgets": [
             { "type": "subheader", "row": 2, "text": "VERSION + CREDITS", "plain": true },
-            { "type": "custom", "row": 3, "span": 7 }
+            { "type": "custom", "row": 3, "span": 12 }
           ]
         }
       ],

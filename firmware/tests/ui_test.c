@@ -93,6 +93,12 @@ int main(void)
     ui_handle(UI_SRC_BTN_HOME, 1);
     CHECK(ui_top() == 0, "BTN_HOME pops home");
 
+    /* item 56: HOME on HOME advances to the next home page (wrapping) */
+    ui_handle(UI_SRC_BTN_HOME, 1);
+    CHECK(ui_top() == 0 && ui_pageno() == 1, "HOME on HOME advances the home page");
+    ui_handle(UI_SRC_BTN_HOME, 1);
+    CHECK(ui_top() == 0 && ui_pageno() == 0, "HOME on HOME wraps at the last home page");
+
     /* home again: KEY -> note_on */
     ui_handle(UI_SRC_KEY, 64);
     CHECK(n_note_on == 2, "home KEY -> note_on again");

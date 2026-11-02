@@ -146,6 +146,14 @@ void ui_pop(void)
 
 void ui_pop_home(void)
 {
+    if (!ui_sp) {
+        /* already home: advance to the next home page (wrapping) — item 56 */
+        if (ui_ctx()->n_pages > 1u) {
+            ui_pagei[0] = (uint8_t)((ui_pagei[0] + 1u) % ui_ctx()->n_pages);
+            ui_reset_page();
+        }
+        return;
+    }
     while (ui_sp) {
         if (ui_ctx()->on_exit)
             ui_ctx()->on_exit();

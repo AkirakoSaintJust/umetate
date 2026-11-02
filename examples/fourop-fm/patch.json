@@ -86,7 +86,7 @@
     "fenv_l1":       { "target": "fenv.l1", "min": 0, "max": 99, "curve": "linear" },
     "fenv_l2":       { "target": "fenv.l2", "min": 0, "max": 99, "curve": "linear" },
     "fenv_l3":       { "target": "fenv.l3", "min": 0, "max": 99, "curve": "linear" },
-    "fenv_depth":   { "target": "lp.fenv_depth", "min": 0, "max": 65535, "curve": "linear" },
+    "fenv_depth":   { "target": "lp.fenv_depth", "min": 0, "max": 65535, "curve": "linear", "display": "pct" },
     "fold":         { "target": "wf.amount", "min": 0, "max": 32767, "curve": "linear", "display": "pct" },
     "fold_on":      { "target": "wf.on", "min": 0, "max": 1, "curve": "linear", "display": "onoff" },
     "fold_threshold": { "target": "wf.threshold", "min": 0, "max": 32767, "curve": "linear", "display": "pct" },
