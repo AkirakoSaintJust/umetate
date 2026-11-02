@@ -127,6 +127,16 @@
             { "type": "param_row", "row": 5, "param": "op3_detune", "part": true, "text": "OP3" },
             { "type": "param_row", "row": 6, "param": "op4_detune", "part": true, "text": "OP4" }
           ]
+        },
+        {
+          "id": "op-key-follow",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "OP KEY FOLLOW" },
+            { "type": "param_row", "row": 3, "param": "op1.level_ks.lo", "text": "OP LEVEL KS LO" },
+            { "type": "param_row", "row": 4, "param": "op1.level_ks.hi", "text": "OP LEVEL KS HI" },
+            { "type": "param_row", "row": 5, "param": "op1.fb_ks.lo", "text": "OP FB KS LO" },
+            { "type": "param_row", "row": 6, "param": "op1.fb_ks.hi", "text": "OP FB KS HI" }
+          ]
         }
       ],
       "bindings": [
@@ -183,6 +193,16 @@
             { "type": "param_row", "row": 6, "param": "penv_l3", "text": "SUSTAIN" },
             { "type": "genv", "row": 7, "span": 5,
               "params": ["penv_r1", "penv_r2", "penv_r3", "penv_r4", "penv_l1", "penv_l2", "penv_l3"] }
+          ]
+        },
+        {
+          "id": "op-env-ks",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "ENV KEY SCALE" },
+            { "type": "param_row", "row": 3, "param": "op1.eg_ks.lo", "text": "A-ENV RATE KS LO" },
+            { "type": "param_row", "row": 4, "param": "op1.eg_ks.hi", "text": "A-ENV RATE KS HI" },
+            { "type": "param_row", "row": 5, "param": "penv_ks_lo", "part": true, "text": "P-ENV RATE KS LO" },
+            { "type": "param_row", "row": 6, "param": "penv_ks_hi", "part": true, "text": "P-ENV RATE KS HI" }
           ]
         }
       ],
@@ -266,6 +286,16 @@
             { "type": "param_row", "row": 5, "param": "fold_threshold", "text": "THRESH" },
             { "type": "param_row", "row": 6, "param": "fold_folds", "text": "FOLDS" }
           ]
+        },
+        {
+          "id": "f1-key-follow",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "F1 KEY FOLLOW", "plain": true },
+            { "type": "param_row", "row": 3, "param": "f1_cutoff_ks_lo", "text": "F1 CUTOFF KS LO" },
+            { "type": "param_row", "row": 4, "param": "f1_cutoff_ks_hi", "text": "F1 CUTOFF KS HI" },
+            { "type": "param_row", "row": 5, "param": "fenv_ks_lo", "text": "F-ENV RATE KS LO" },
+            { "type": "param_row", "row": 6, "param": "fenv_ks_hi", "text": "F-ENV RATE KS HI" }
+          ]
         }
       ],
       "bindings": [
@@ -303,6 +333,14 @@
             { "type": "label", "row": 2, "span": 2, "text": "MIDI CH" },
             { "type": "param_row", "row": 4, "param": "channel.p0", "text": "P1 CH" },
             { "type": "param_row", "row": 5, "param": "channel.p1", "text": "P2 CH" }
+          ]
+        },
+        {
+          "id": "key-scaling",
+          "widgets": [
+            { "type": "label", "row": 2, "span": 2, "text": "KEY SCALING" },
+            { "type": "param_row", "row": 4, "param": "breakpoint", "text": "BREAKPOINT" },
+            { "type": "label", "row": 7, "text": "targets live in EDIT/FX/ENV" }
           ]
         },
         {
