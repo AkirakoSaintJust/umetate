@@ -3105,3 +3105,72 @@ saw/square are now six band-limited tables each (like the operators' `osc`); the
 `tuned_phasor` outputs `mip` and the `naive_vco` macro wires it. Portamento is now
 a human-readable **one-octave glide time in ms** (0 = off, log-stepped; the glide
 converts `step = tgt·23777/ms >> 16`).
+
+### 13.7 Key follow + velocity follow, and the fresh backlog (2026-11-02)
+
+**48. Key follow (done).** One global **breakpoint** (MIDI note, `breakpoint`) and,
+per target, a bipolar **LO/HI** pair (−100..+100%, `pct_bip` display) that
+crossfades the target "toward its extreme" around the breakpoint (`fm1_key_scale`
+→ `fm1_key_apply`, both Q15). Targets: operator level (`tl`), operator feedback
+(`fb`), the A-ENV rate (`dx_env`), the P-ENV rate (`pitch_env`), the F1 cutoff
+(`svf`), and the F-ENV rate (`key_scale_g`); the per-voice targets read the voice's
+own note, the global F1/F-ENV targets read the **highest held note**
+(`voice_highest_note`). UI: GLO "KEY SCALING" (the breakpoint), EDIT "OP KEY
+FOLLOW", ENV "ENV KEY SCALE", FX "F1 KEY FOLLOW". `UI_PARAM_MAX` 256→512 (the 53
+key-scale params pushed 268 params past the cap; the per-part timbre stays under
+128).
+
+**49. Velocity follow (done).** The same targets and "toward extreme" semantics as
+key follow, but **no breakpoint and no LO/HI** — a single bipolar `amount`
+("deviation at maximum velocity") per target, plus a global on/off (`vel_sens_on`)
+that gates every factor. Per-voice targets read `voice_velocity[v]`; the global
+F1/F-ENV targets read the **highest held velocity** (`voice_highest_velocity`). UI
+mirrors the key-follow pages: EDIT "OP VEL SENS", ENV "VEL SENS", FX "F1 VEL SENS",
+GLO "VEL SENS" (the on/off). New helpers `fm1_vel_scale` (0 at velocity 0 →
+`amount` at max) and `fm1_key_add`.
+
+**Additive (settled).** On every shared target the key-follow and velocity-follow
+push factors **sum** (via `fm1_key_add`), and the sum is clamped to the Q15 range so
+a target never overshoots its extreme — additive is correct *and* in-bounds by
+construction. (The `key_scale`/`vel_scale` output lags its `block_derived` value by
+one block, ~0.7 ms — inaudible for timbre shaping, accepted.)
+
+**Fresh backlog (50–57).**
+
+50. **F-ENV depth range.** `fenv_depth` is raw Q16 (0..65535); it should read and
+    step as **0–100%**, like the other FX depths.
+
+51. **Second filter (after the wavefolder).** Add a second multimode filter *after*
+    the current filter + wavefolder, with **no F-ENV of its own**. Its job is to
+    remove certain frequencies at certain octaves — to be wired to KEY FOLLOW later
+    — independent of the sound's character set by the operators and the first
+    filter. (This also unblocks the deferred "F2 KEY FOLLOW" page.)
+
+52. **Post-FX scope/spectro show nothing.** The two HOME "POST-FX MULTI-PATCH
+    SCOPE/SPECTRO" pages render blank. Investigate the final-mix tap (the `final`
+    scope flag → scope ch 0) — likely the same tap-channel-count class as items
+    30/37.
+
+53. **VERSION + CREDITS page.** (a) It scrolls away on SELECT, so once you scroll
+    past you are stuck until you leave the menu — remove the SELECT-scroll from
+    this page. (b) The page body text should be **white** (the page description is
+    correctly green). (c) Say "Logo typeface:" instead of "Typeface:", and under
+    "Digital Desolation Plus" write "by ukiyomoji.booth.pm".
+
+54. **Mono/unison split.** Reconsider: portamento should be available in unison (a
+    monophonic stacked-voice mode); if it is, unison+portamento is
+    indistinguishable from mono+portamento (just stacked/detuned), so the two modes
+    must be reconciled — one mode with a voice-stack/detune parameter, or a written
+    reason they stay separate.
+
+55. **Algorithm 1 graph too tall.** The algorithm-1 graph overflows the algorithm
+    selection popup. Add a **horizontal variant** of this algorithm —
+    `[1]-[2]-[3]-[4]` with the carrier's pink block and a down-arrow below `[4]`
+    (the carrier arrow still points down), modulators white, arrows purple — in the
+    exact existing style.
+
+56. **HOME on HOME does not advance pages.** Pressing HOME while already on the HOME
+    menu does nothing; it should advance to the next HOME page, like the other menu
+    buttons (item 21).
+
+57. **Wavefolder — keep.** Decision recorded: the wavefolder stays; no removal.

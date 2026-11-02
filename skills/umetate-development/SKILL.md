@@ -180,6 +180,13 @@ screen; LED/pad feedback; and the full control flow.
     so a stray knob twist never fires on the page behind the popup. Modal popups
     **auto-close after ~3 s of no input** (non-destructive, `ui_popup_cancel_all`),
     and commits show a brief "SAVED/COPIED SUCCESSFULLY" acknowledgement.
+  - **Mirror parallel modulations.** When two modulation sources reach the same
+    targets (key-follow and velocity-follow), give them the same page *shape* in
+    the same menus — one page set per source, differing only where the source
+    differs (velocity drops the breakpoint/LO-HI and adds a single per-target
+    amount + a global on/off). Put a "targets live in EDIT/FX/ENV" hint on the
+    global page that owns the shared control, so the user learns one set of pages
+    and understands the other.
 
 **Exit:** every control is mapped to a param or action, or explicitly marked
 unmapped; every binding target is a param from the manifest; the control flow is
@@ -248,6 +255,13 @@ mip-mapped `osc` (waves 9/10/11 are six band-limited levels selected from the
 note's increment via the phasor's `fm1_wave_mip(step)`). Sine-derived shapes (the
 OPZ set, `osc` waves 0-8) are already band-limited. Warn the user explicitly
 against excessive aliasing when a raw square/saw is pitched into the top octaves.
+
+**Summed modulations must stay in bounds.** When two bipolar factors push the same
+target toward its extreme (key-follow + velocity-follow on a level/cutoff/rate),
+sum them and **clamp the sum** to the target's Q range before applying, so a target
+never overshoots its extreme (`fm1_key_add`). Additive is correct — the clamp makes
+it safe. Per-voice targets read the voice's own note/velocity; global targets read
+the **highest held** note/velocity.
 
 **Exit:** the user confirms interfaces, milestone order, measurable limits, and
 the verification plan.
