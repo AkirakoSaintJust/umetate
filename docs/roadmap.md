@@ -3170,11 +3170,11 @@ one block, ~0.7 ms — inaudible for timbre shaping, accepted.)
     polyphonic-stacked "unison" semantics (one stack per note) are dropped — mono
     is now monophonic with an optional detuned stack. See §6.11.4.
 
-55. **Algorithm 1 graph too tall.** The algorithm-1 graph overflows the algorithm
-    selection popup. Add a **horizontal variant** of this algorithm —
-    `[1]-[2]-[3]-[4]` with the carrier's pink block and a down-arrow below `[4]`
-    (the carrier arrow still points down), modulators white, arrows purple — in the
-    exact existing style.
+55. **Algorithm 1 graph too tall.** — **done.** The serial chain (the first
+    algorithm, drawn as a vertical stack of four blocks) is now drawn
+    **horizontally** — `[1]-[2]-[3]-[4]` in a row, the carrier's pink block with its
+    down-arrow below `[4]`, modulators white, arrows purple (the exact existing
+    style). The four `ALGO_X`/`ALGO_Y` centres for that algorithm moved to one row.
 
 56. **HOME on HOME does not advance pages.** — **done.** `ui_pop_home()` now
     advances to the next home page (wrapping) when it is already at home, matching
