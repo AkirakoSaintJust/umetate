@@ -23,10 +23,17 @@ _ROOT = Path(__file__).resolve().parents[1]
 _EXAMPLES = _ROOT / "examples"
 _FW_BUILD = _ROOT / "firmware" / "build"
 _WEB_BUILD = _ROOT / "build" / "web"
+_EMU_DIR = _ROOT / "firmware" / "web_emu"
 _PUBLISH = _ROOT / "publish"
 
-# the served web app: the firmware emulator page + its wasm + the audio worklet.
-_WEB_FILES = ("index.html", "firmware.wasm", "worklet.js", "main.js")
+# the served web app: the emulator page + worklet are source files in
+# `firmware/web_emu/`; `firmware.wasm` is the compiled artifact in `build/web/`.
+# (Do not take `build/web/index.html` — the parity lab clobbers it.)
+_WEB_SOURCES = (
+    (_EMU_DIR, "index.html"),
+    (_EMU_DIR, "worklet.js"),
+    (_WEB_BUILD, "firmware.wasm"),
+)
 
 _README = """# {title}
 
@@ -95,15 +102,14 @@ def _gather(synth_dir: Path, name: str, cname: str, out: Path) -> list[str]:
     else:
         missing.append(f".fwsc (no {fwsc}; run `umetate build --synth {synth_dir}`)")
 
-    web_out = out / "web"
-    web_out.mkdir(parents=True, exist_ok=True)
+    web_out = out  # the web app is the repo root, so GitHub Pages serves it directly
     got = 0
-    for f in _WEB_FILES:
-        src = _WEB_BUILD / f
+    for src_dir, f in _WEB_SOURCES:
+        src = src_dir / f
         if src.is_file():
             shutil.copy2(src, web_out / f)
             got += 1
-    if got < len(_WEB_FILES):
+    if got < len(_WEB_SOURCES):
         missing.append("web app (run `umetate web-build` first)")
 
     return missing
@@ -147,7 +153,7 @@ def main(argv: list[str] | None = None) -> int:
     (out / "README.md").write_text(readme, encoding="utf-8")
 
     print(f"publish: {out}")
-    print("  README.md, CHANGELOG.md, docs/, web/, and " + f"{name}.fwsc")
+    print("  README.md, CHANGELOG.md, docs/, the web app (root), and " + f"{name}.fwsc")
     if missing:
         print("  missing (build first):")
         for m in missing:
@@ -155,7 +161,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         print("  all artifacts present.")
     print("  next: `git init` here, commit, then push to a GitHub repo with Pages")
-    print("  (set the Pages source to the `web/` folder, or copy it to the root).")
+    print("  (set the Pages source to the repo root).")
     return 0
 
 

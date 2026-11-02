@@ -1466,7 +1466,10 @@ The worked example ships these user docs in `examples/type-p-fm1/docs/`: the man
 (sound and parameters), the panel reference (controls, pages, save), the MIDI and
 SysEx reference, the printable patch sheet, and the release notes. They are
 synchronic, written from the instrument's point of view, and follow the no
-em-dash and no semi-colon rule.
+em-dash and no semi-colon rule. The web app is served from the repo root (the
+emulator page + worklet are source files in `firmware/web_emu/`, `firmware.wasm`
+is the built artifact), and the first publish is live at
+https://celiacasanovas.github.io/type-p-fm1/ (repo `CeliaCasanovas/type-p-fm1`).
 
 ---
 
