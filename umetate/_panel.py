@@ -360,7 +360,8 @@ def generate_panel(
         if slot is not None:
             kind, param, action, arg = "UI_BIND_PAGE_SLOT", "0", "0", str(slot)
         elif target:
-            kind, param = "UI_BIND_PARAM", param_sym(target)
+            kind = "UI_BIND_PART_PARAM" if b.get("part") else "UI_BIND_PARAM"
+            param = param_sym(target)
             action, arg = "0", "0"
         else:
             action_name = b.get("action", "")
@@ -698,12 +699,19 @@ def generate_panel(
     alg_name = panel.get("alg")
     alg_id = str(param_id(alg_name)) if alg_name else "0xFFFF"
     n_part = str(panel.get("parts", 1))
+    # the per-part param stride (the id gap `.p0` -> `.p1`): the header/ENC_ALGORITHM
+    # resolve the algorithm through the active part when it is a per-part param.
+    part_stride = 0
+    if alg_name:
+        p1 = ids.get(f"{alg_name}.p1")
+        if p1 is not None:
+            part_stride = p1 - ids[alg_name]
     lines.append(
         f'    "{name}", {home}, CTX, {len(ctx_names)}, GLOBAL_BIND, '
         f"{len(panel.get('global', []))}, MUTE_TBL, {op_ptr}, "
         f"{len(operators)}, {len(op_names)}, {env_ptr}, {part_ptr}, "
         f"{len(part_names)}, {disp_ptr}, "
-        f"{alg_id}, {n_part}, {n_params}, {widget_count}, "
+        f"{alg_id}, {part_stride}, {n_part}, {n_params}, {widget_count}, "
         f"{genv_ptr}, {len(genv_groups)},"
     )
     lines.append(f"    {cstr(panel.get('legend'))},")

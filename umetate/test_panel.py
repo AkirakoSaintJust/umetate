@@ -386,6 +386,30 @@ def main() -> int:
         print("FAIL: per-part tables did not resolve part 0 then part 1")
         failures += 1
 
+    # a `part: true` binding emits UI_BIND_PART_PARAM, and the algorithm's per-part
+    # stride (`.p1` - `.p0`) is emitted into the ui_tables, so the header + the
+    # ENC_ALGORITHM knob resolve the algorithm through the active part.
+    alg_panel: PanelManifest = {
+        "name": "alg",
+        "alg": "algorithm",
+        "parts": 2,
+        "global": [
+            {
+                "source": "ENC_ALGORITHM",
+                "target": "algorithm",
+                "behavior": "relative",
+                "part": True,
+            }
+        ],
+        "contexts": {"home": {"pages": [{"id": "home", "widgets": []}]}},
+    }
+    alg_src = generate_panel(alg_panel, {"algorithm": 5, "algorithm.p1": 15})
+    if "UI_BIND_PART_PARAM" in alg_src and ", 10, 2, " in alg_src:
+        print("ok: part-relative bindings + the algorithm stride emit")
+    else:
+        print("FAIL: part-relative binding or algorithm stride missing")
+        failures += 1
+
     print("panel tests " + ("FAILED" if failures else "passed"))
     return 1 if failures else 0
 

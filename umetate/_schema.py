@@ -219,6 +219,9 @@ class PanelBinding(TypedDict):
     behavior: NotRequired[str]
     curve: NotRequired[str]
     slot: NotRequired[int]
+    part: NotRequired[
+        bool
+    ]  # resolve `target` through the active part (UI_BIND_PART_PARAM)
 
 
 # `global` is a Python keyword, so this one uses the functional form.

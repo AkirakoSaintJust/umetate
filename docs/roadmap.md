@@ -3205,3 +3205,25 @@ one block, ~0.7 ms — inaudible for timbre shaping, accepted.)
     home fixture).
 
 57. **Wavefolder — keep.** — **done (decision).** The wavefolder stays; no removal.
+
+### 13.8 fourop-fm: per-part algorithm + FM depth (2026-11-02)
+
+58. **The algorithm is per-part (was global).** — **done.** The `algo` node moved
+    from the `global` zone to the `voice` zone, so `algorithm` is now a per-part
+    param (`algorithm.p0`/`.p1`, stride = `SYNTH_N_PARAMS`); each part routes its
+    four operators independently, and switching parts (SEL double-tap) re-renders
+    the header `ALG` readout + the algorithm graph from the new part. The UI is
+    part-aware via a new `ui_tables.part_stride` + a `UI_BIND_PART_PARAM` binding
+    kind (the `ENC_ALGORITHM` knob is now `"part": true`); `ui_alg_param()` resolves
+    the active part's algorithm for the header, the graph widget, and the knob.
+    The `cc:` surface names `algorithm.p0` (part 0), the `init` table expands to
+    both parts.
+
+59. **Cross-operator FM depth ×2.** — **done.** The operators carry a −12 dB
+    headroom (`tl`'s `>>2`, for the 4-carrier sum) that also quarter-scaled the
+    phase-modulation depth, while the per-operator *feedback* taps the raw
+    oscillator (full scale) — so FM read as half the feedback's strength. The
+    `route` node now emits its modulator outputs `* 2`, restoring the FM to half
+    scale (a modulator at level 99 + feedback 0 now matches what level 99 + 50%
+    feedback used to sound like) **without touching the feedback** (which is summed
+    *inside* the operator, not in the route).

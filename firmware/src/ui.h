@@ -59,7 +59,7 @@ enum {
 };
 
 /* ---- binding kinds ---- */
-enum { UI_BIND_PARAM = 0, UI_BIND_ACTION, UI_BIND_PAGE_SLOT };
+enum { UI_BIND_PARAM = 0, UI_BIND_ACTION, UI_BIND_PAGE_SLOT, UI_BIND_PART_PARAM };
 
 /* ---- binding behaviors ---- */
 enum { UI_ABS = 0, UI_REL, UI_MOMENTARY, UI_LATCH, UI_TOGGLE };
@@ -155,6 +155,7 @@ typedef struct {
     uint8_t n_part_param;                        /* part-relative params per part */
     const ui_param_disp *disp;                   /* per-param display scale (n_params) */
     uint16_t alg;                                /* the algorithm param id (the header readout) */
+    uint16_t part_stride;                        /* the per-part param stride (0 = the alg is global) */
     uint8_t n_part;                              /* the number of parts (the header) */
     uint16_t n_params;                           /* ui_params[] size */
     uint16_t n_widgets;                          /* ui_dirty[] size (across all pages) */

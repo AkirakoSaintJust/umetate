@@ -8,7 +8,7 @@
   "mute": ["op1_mute", "op2_mute", "op3_mute", "op4_mute"],
   "global": [
     { "source": "KEY", "action": "note_on" },
-    { "source": "ENC_ALGORITHM", "target": "algorithm", "behavior": "relative" },
+    { "source": "ENC_ALGORITHM", "target": "algorithm", "behavior": "relative", "part": true },
     { "source": "BTN_EDIT", "action": "switch", "arg": "edit" },
     { "source": "BTN_ENV", "action": "switch", "arg": "env" },
     { "source": "BTN_LFO", "action": "switch", "arg": "lfo" },

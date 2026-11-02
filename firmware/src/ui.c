@@ -442,13 +442,16 @@ void ui_handle(uint16_t source, int32_t value)
     const ui_binding *b = ui_resolve(source);
     if (!b)
         return;
-    if (b->kind == UI_BIND_PARAM) {
-        if (b->target < ui_t->n_params) {
+    if (b->kind == UI_BIND_PARAM || b->kind == UI_BIND_PART_PARAM) {
+        uint16_t target = b->target;
+        if (b->kind == UI_BIND_PART_PARAM)
+            target = (uint16_t)(b->target + (uint32_t)ui_selected_part * ui_t->part_stride);
+        if (target < ui_t->n_params) {
             if (b->behavior == UI_REL)
-                ui_step_param(b->target, value);
+                ui_step_param(target, value);
             else {
-                ui_param_v[b->target] = value;
-                ui_clamp_param(b->target);
+                ui_param_v[target] = value;
+                ui_clamp_param(target);
             }
         }
     } else if (b->kind == UI_BIND_PAGE_SLOT) {
@@ -1032,13 +1035,21 @@ static void algo_graph(int32_t alg, int32_t ox, int32_t oy)
     }
 }
 
+/* the algorithm param id for the active part (part-relative when the algorithm is
+ * a per-part param; `part_stride` is 0 for a single-part/global algorithm). */
+static uint16_t ui_alg_param(void)
+{
+    return (uint16_t)(ui_t->alg + (uint32_t)ui_selected_part * ui_t->part_stride);
+}
+
 /* the algorithm graph widget (the widget's `param` is the algorithm param). */
 static void ui_draw_algo(const ui_widget *w)
 {
     uint32_t x, y, wd, ht;
+    uint16_t alg = ui_alg_param();
     ui_region(w, &x, &y, &wd, &ht);
     cv_begin(wd, ht, C_BLACK);
-    algo_graph(w->param < ui_t->n_params ? ui_param_v[w->param] : 0, 0, 0);
+    algo_graph(alg < ui_t->n_params ? ui_param_v[alg] : 0, 0, 0);
     cv_blit(x, y);
 }
 
@@ -1101,8 +1112,11 @@ static int32_t ui_header_value(void)
     int32_t v = (int32_t)ui_selected_part | ((int32_t)ui_selected_op << 2)
               | ((int32_t)ui_stack[ui_sp] << 5) | ((int32_t)ui_pagei[ui_sp] << 8);
     uint32_t i;
-    if (ui_t->alg < ui_t->n_params)
-        v |= (ui_param_v[ui_t->alg] & 0x3F) << 11;
+    {
+        uint16_t alg = ui_alg_param();
+        if (alg < ui_t->n_params)
+            v |= (ui_param_v[alg] & 0x3F) << 11;
+    }
     for (i = 0; i < 4u && i < ui_t->n_op; i++) {
         uint16_t p = ui_t->mute ? ui_mute_param(i) : UI_NO_PARAM;
         if (p < ui_t->n_params && ui_param_v[p])
@@ -1126,7 +1140,9 @@ static void ui_draw_header(void)
 {
     char s[40], t[12], tok[8];
     uint32_t i;
-    int32_t x, alg = ui_t->alg < ui_t->n_params ? ui_param_v[ui_t->alg] : 0;
+    int32_t x;
+    uint16_t alg_id = ui_alg_param();
+    int32_t alg = alg_id < ui_t->n_params ? ui_param_v[alg_id] : 0;
 
     cv_begin(240u, 2u * UI_ROW_H, C_BLACK);
 
@@ -1152,7 +1168,7 @@ static void ui_draw_header(void)
             x = ui_htok(x, 0, " ", 0, 0);
         }
     }
-    if (ui_t->alg < ui_t->n_params) {
+    if (alg_id < ui_t->n_params) {
         ui_strcpy(s, "ALG");
         ui_itoa(alg, t);
         ui_strcat(s, t);
@@ -1263,8 +1279,10 @@ static int32_t ui_widget_value(const ui_widget *w, uint32_t slot)
         }
         return alg * 4 + (int32_t)ui_selected_op * 2 + m;
     }
-    case UI_ALGO:                                   /* redraw when the algorithm changes */
-        return w->param < ui_t->n_params ? ui_param_v[w->param] : 0;
+    case UI_ALGO: {                                 /* redraw when the algorithm changes */
+        uint16_t alg = ui_alg_param();
+        return alg < ui_t->n_params ? ui_param_v[alg] : 0;
+    }
     default:                                       /* VALUE/BAR/PARAM_ROW/COLUMN/OP_ROW */
         return ui_widget_param(w) < ui_t->n_params ? ui_param_v[ui_widget_param(w)] : 0;
     }

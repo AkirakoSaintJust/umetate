@@ -617,7 +617,8 @@ static void app_step(void)
             ui_handle(UI_SRC_ENC_ALGORITHM, e);
             input_seen = 1;
             app_alg_ms = fm1_ms;                   /* the algorithm scroll popup */
-            ui_popup_alg((uint32_t)ui_params()[PANEL.alg]);
+            ui_popup_alg((uint32_t)ui_params()[PANEL.alg
+                           + (uint32_t)ui_part() * PANEL.part_stride]);
         }
         if ((e = fm1_enc_take(ENC_SELECT)) != 0) {
             input_seen = 1;
