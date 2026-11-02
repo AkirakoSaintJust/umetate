@@ -3143,11 +3143,21 @@ one block, ~0.7 ms — inaudible for timbre shaping, accepted.)
     so it reads and steps as **0–100%** (the stored Q16 0..65535 range is
     unchanged; only the display form changed).
 
-51. **Second filter (after the wavefolder).** Add a second multimode filter *after*
-    the current filter + wavefolder, with **no F-ENV of its own**. Its job is to
-    remove certain frequencies at certain octaves — to be wired to KEY FOLLOW later
-    — independent of the sound's character set by the operators and the first
-    filter. (This also unblocks the deferred "F2 KEY FOLLOW" page.)
+51. **Second filter (after the wavefolder).** — **done.** A second multimode
+    filter (`lp2`, an `svf`) now sits *after* the wavefolder — `voice → lp → wf →
+    lp2 → out` — with **no F-ENV of its own** (a static cutoff, key-followed). Its
+    job is to remove certain frequencies at certain octaves independent of the
+    operators' and first filter's character. Params `cutoff2`/`res2`/`filter2_type`/
+    `filter2_on` (+ `cutoff2`/`res2` in the CC surface) and an FX "FILTER 2" page;
+    the deferred "F2 KEY FOLLOW" page (`f2_cutoff_ks_lo/hi`) landed alongside.
+
+    This exposed and fixed a node-authoring bug: `svf` declared a hardcoded local
+    `int32_t fc`, which collides when two instances are inlined into one scope. The
+    combined cutoff is block-constant, so it is now a **block-derived state field**
+    (`fc = fm1_clamp16(f_eff + fenv_depth·fenv)`; `fm1_clamp16` added to
+    `fm1_math.h`) — computed once per block, and no hardcoded local. **Lesson: a
+    `node.c` body must not declare a bare local identifier; use `${state.*}` (or
+    `${out.*}`) so each inlined instance is namespaced.**
 
 52. **Post-FX scope/spectro show nothing.** — **done.** The final-mix channel (ch 0)
     is pushed by the *device* platform (`platform.c` `scope_push`), but the host and

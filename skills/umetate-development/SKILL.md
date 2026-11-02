@@ -263,6 +263,14 @@ never overshoots its extreme (`fm1_key_add`). Additive is correct — the clamp 
 it safe. Per-voice targets read the voice's own note/velocity; global targets read
 the **highest held** note/velocity.
 
+**No bare locals in a `node.c` body.** A node body is inlined once per instance
+into the fused render, so a hardcoded local identifier (e.g. `int32_t fc;`)
+**collides** when two instances of the same node share a scope. Namespace every
+local through a placeholder — `${state.<name>}` (and compute it in `block_derived`
+when it only depends on block-rate inputs) or `${out.<name>}` — never a bare C
+identifier. This bit `svf` the moment a second filter was added (the `fc` cutoff is
+block-constant, so it became a block-derived state field).
+
 **Exit:** the user confirms interfaces, milestone order, measurable limits, and
 the verification plan.
 
