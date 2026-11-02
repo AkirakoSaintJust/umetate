@@ -1,0 +1,26 @@
+{
+  "summary": "Virtual analogue oscillator: tuned_phasor → phase_dist (d-only, PWM) → naive_osc. `shape` (0 = band-limited saw, 1 = sine, 2 = triangle, 3 = band-limited pulse, 4 = white noise); `octave` (−3..3), `semi` (−11..11), `cent` (−100..100) tune the pitch (note-derived); `width` is the phase_dist bend `d` — 16384 (default) = no bend, anything else phase-distorts the tonal shapes (classic PWM on the pulse, a bent timbre on saw/sine/triangle); `width_mod` wires a control source into the bend. Saw and pulse are band-limited (six levels via `mip`), noise ignores pitch.",
+  "ins": { "pitch": "control", "fm": "audio", "width_mod": "control" },
+  "outs": { "audio": "audio" },
+  "params": {
+    "shape": "osc.shape",
+    "octave": "ph.octave",
+    "semi": "ph.semi",
+    "cent": "ph.cent",
+    "width": "pd.d"
+  },
+  "nodes": [
+    { "id": "ph", "type": "tuned_phasor" },
+    { "id": "pd", "type": "phase_dist" },
+    { "id": "osc", "type": "naive_osc" }
+  ],
+  "wires": [
+    { "from": "fm", "to": "ph.fm" },
+    { "from": "pitch", "to": "ph.pitch" },
+    { "from": "ph.phase", "to": "pd.phase" },
+    { "from": "ph.mip", "to": "osc.mip" },
+    { "from": "width_mod", "to": "pd.d_mod" },
+    { "from": "pd.phase", "to": "osc.phase" },
+    { "from": "osc.audio", "to": "audio" }
+  ]
+}

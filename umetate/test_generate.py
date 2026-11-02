@@ -165,6 +165,23 @@ NAIVE_VCO: Patch = {
 }
 
 
+# the virtual analogue oscillator macro (tuned_phasor -> phase_dist PWM ->
+# naive_osc, with a noise shape). shape 4 = noise, voiced directly (no envelope)
+# so the noise-variance contract sees the raw LFSR, not an envelope ramp.
+VA_OSC: Patch = {
+    "name": "va_osc_test",
+    "voices": 1,
+    "voice": {
+        "nodes": [
+            {"id": "vco", "type": "va_osc", "params": {"shape": 4}},
+        ],
+        "wires": [],
+        "voice_out": "vco.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
+
 # `osc` with a non-sine waveform (6 = double half sine) — exercises fm1_sin_wave.
 WAVEFORM: Patch = {
     "name": "waveform_test",
@@ -682,6 +699,29 @@ int main(void) {
         return 1;
     }
     printf("ok: __NAME__ renders non-silent then silent\\n");
+    return 0;
+}
+"""
+
+# White noise must actually vary (not hold a constant, e.g. a zero-seeded LFSR's
+# fixed point). Renders a held note and checks the output takes more than one value.
+NOISE_HARNESS = """\
+#include <stdio.h>
+#include <stdint.h>
+void __NAME___dsp_reset(void);
+void __NAME___dsp_note_on(uint32_t note, uint32_t velocity);
+void __NAME___dsp_render(int32_t *out, uint32_t frames);
+void __NAME___dsp_all_notes_off(void);
+static int32_t out[512];
+int main(void) {
+    __NAME___dsp_reset();
+    __NAME___dsp_note_on(69, 100);
+    __NAME___dsp_render(out, 256);
+    int32_t first = out[0];
+    int varied = 0;
+    for (int i = 1; i < 512; i++) if (out[i] != first) { varied = 1; break; }
+    if (!varied) { printf("FAIL: noise is constant (%d)\\n", first); return 1; }
+    printf("ok: __NAME__ noise varies across samples\\n");
     return 0;
 }
 """
@@ -1338,6 +1378,34 @@ def _sound(patch: Patch) -> tuple[bool, str]:
         (d / "dsp.c").write_text(src)
         cname = patch["name"].replace("-", "_").replace(".", "_")
         (d / "harness.c").write_text(SOUND_HARNESS.replace("__NAME__", cname))
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            return False, "compile failed:\n" + proc.stderr
+        run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+        return run.returncode == 0, run.stdout.strip()
+
+
+def _noise_varies(patch: Patch) -> tuple[bool, str]:
+    """Generate + compile + run the noise contract (output varies, not constant)."""
+    src = generate(patch)
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        cname = patch["name"].replace("-", "_").replace(".", "_")
+        (d / "harness.c").write_text(NOISE_HARNESS.replace("__NAME__", cname))
         proc = subprocess.run(
             [
                 "cc",
@@ -3460,6 +3528,13 @@ def main() -> int:
     print(
         ("ok: " if ok else "FAIL: ")
         + (msg or "naive_vco (naive oscillator) renders non-silent then silent")
+    )
+    failures += 0 if ok else 1
+
+    ok, msg = _noise_varies(VA_OSC)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "va_osc noise shape varies across samples")
     )
     failures += 0 if ok else 1
 
