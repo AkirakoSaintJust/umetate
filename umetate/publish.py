@@ -35,6 +35,23 @@ _WEB_SOURCES = (
     (_WEB_BUILD, "firmware.wasm"),
 )
 
+# the corresponding source: the project's declarative synth + app glue + the design
+# specs. (The framework, umetate, is GPL-3.0 source in its own repo, linked in the
+# README.) The GPL requires the source to travel with the binary.
+_SRC_FILES = (
+    "patch.json",
+    "panel.json",
+    "app.c",
+    "host-script.txt",
+    "synth-brief.md",
+    "dsp-algorithm.md",
+    "control-map.md",
+    "code-structure.md",
+)
+
+# the licence + attribution manifest, copied from the umetate root verbatim.
+_LICENCE_FILES = ("LICENSE", "LICENSING.md")
+
 _README = """# {title}
 
 {title} is a four-operator FM synthesizer for the M-VAVE FM-1, built on umetate.
@@ -70,6 +87,20 @@ buttons to move around the panel. The screen shows what the real device shows.
 ## Releases
 
 [CHANGELOG.md](CHANGELOG.md) lists what changed in each version.
+
+## Licence
+
+{title} is free software under the GPL-3.0-only licence. See [LICENSE](LICENSE) for
+the full text and [LICENSING.md](LICENSING.md) for the third-party credits and
+attribution.
+
+## Source
+
+The `.fwsc` is the compiled firmware. Its corresponding source is the project
+files in [`src/`](src/) (the patch, the panel, and the app glue) plus the umetate
+framework, also GPL-3.0, at <https://github.com/CeliaCasanovas/umetate>. The
+preferred form for modification is the `src/` files and the umetate generator,
+not the compiled binary.
 """
 
 
@@ -82,8 +113,24 @@ def _name_of(synth_dir: Path) -> str:
 
 
 def _gather(synth_dir: Path, name: str, cname: str, out: Path) -> list[str]:
-    """Copy the docs, web app, and .fwsc into `out`. Return the missing artifacts."""
+    """Copy the docs, web app, .fwsc, licence, and source into `out`."""
     missing: list[str] = []
+
+    # the licence + attribution manifest (GPL compliance: the source travels with
+    # the binary).
+    for f in _LICENCE_FILES:
+        src = _ROOT / f
+        if src.is_file():
+            shutil.copy2(src, out / f)
+        else:
+            missing.append(f"{f} (missing at the repo root)")
+
+    # the project source (the preferred form for modification).
+    (out / "src").mkdir(parents=True, exist_ok=True)
+    for f in _SRC_FILES:
+        src = synth_dir / f
+        if src.is_file():
+            shutil.copy2(src, out / "src" / f)
 
     docs = synth_dir / "docs"
     if docs.is_dir():
@@ -153,7 +200,10 @@ def main(argv: list[str] | None = None) -> int:
     (out / "README.md").write_text(readme, encoding="utf-8")
 
     print(f"publish: {out}")
-    print("  README.md, CHANGELOG.md, docs/, the web app (root), and " + f"{name}.fwsc")
+    print(
+        "  README.md, CHANGELOG.md, LICENSE, LICENSING.md, src/, docs/, "
+        "the web app (root), and " + f"{name}.fwsc"
+    )
     if missing:
         print("  missing (build first):")
         for m in missing:
