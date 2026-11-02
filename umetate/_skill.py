@@ -112,7 +112,7 @@ def check() -> list[str]:
             continue
         if dest.read_text(encoding="utf-8") != render(skill, rel):
             errors.append(Drift(skill, rel, source).message())
-    for skill in ("umetate-development", "umetate-safety"):
+    for skill in ("umetate-development", "umetate-safety", "umetate-documentation"):
         errors.extend(_check_skill_manifest(skill))
     return errors
 

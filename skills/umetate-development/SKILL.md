@@ -352,6 +352,15 @@ umetate scaffold patch --name "My Synth" --out examples/my-synth
 - Bound queues and define overflow, velocity-zero is note-off, persist versioned
   records with CRC/commit, saving when silent.
 
+### 6b. CPU optimisation (the safe loop)
+
+When an increment needs to cut the audio ISR cost, follow
+`references/optimisation-loop.md`. In one line: baseline the ISR% and an output
+hash, profile the hot loop, check the compiler is not already optimal, then change
+one lever at a time, gated byte-identical, and record both wins and rejections.
+Never guess, never hand-roll what the compiler does, never accept a non-bit-exact
+change.
+
 ### 7. Verify and report
 
 The gate is one command, `umetate deep-check --all` (mypy + ruff + pyright, the

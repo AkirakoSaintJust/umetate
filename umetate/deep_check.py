@@ -58,7 +58,7 @@ def _skill() -> int:
         for error in errors:
             print(f"deep-check --skill: {error}", file=sys.stderr)
         return 1
-    print("deep-check --skill: ok (two skills, references in sync)")
+    print("deep-check --skill: ok (three skills, references in sync)")
     return 0
 
 

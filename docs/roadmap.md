@@ -218,7 +218,8 @@ umetate/
 ├─ build/web/               # the WASM parity lab output (`web-build` → standalone dsp.wasm + page)
 ├─ skills/
 │  ├─ umetate-development/  # component 2 (SKILL.md + generated references/)
-│  └─ umetate-safety/       # component 3 (SKILL.md + generated references/)
+│  ├─ umetate-safety/       # component 3 (SKILL.md + generated references/)
+│  └─ umetate-documentation/# component 8 (SKILL.md, self-contained)
 ├─ templates/
 │  ├─ synth-brief.md  project-plan.md  feature-contract.md
 │  ├─ supported-load-profile.md  evidence-matrix.md  control-map.md
@@ -1432,6 +1433,22 @@ evidence layer never proves a higher one. This is how F2/F3 and F7 were built,
 F3a `trigger` → F3b rails/modes → glide → F3c `parts:` → level/delay, and F7a
 SysEx handler → F7b MIDI → F7c runtime → F7d composition → F7e emulator run,
 each a separately tested and committed slice.
+
+### 6.14 Skill: umetate-documentation
+
+Offline-bundled, self-contained. Writes the user-facing papers for a synth project:
+the README, the user manual, the panel reference, the MIDI and SysEx reference, the
+printable patch sheet, the installation guide, and the release notes. Six rules
+govern every page: synchronic (current state, not history, release notes excepted),
+written from the instrument's point of view not the code's, most human rather than
+most likely, no information loss (each edited paragraph is compared to the original),
+no em dashes and no semi-colons, and radical rewrites allowed in the service of
+prose quality. It pulls real hardware manuals (Yamaha, Korg, Roland, Sonicware,
+Mutable Instruments) and real patch sheets as style references, consulted not
+copied, with credit and licence honoured. The prose craft is the humanizer skill's
+pattern catalogue aimed at technical writing, with user-manual specifics (address
+the reader as you, one point per sentence, concrete over abstract, kill filler and
+hedging and promotion). `SKILL.md` is the whole skill, no generated references.
 
 ---
 
@@ -3270,13 +3287,15 @@ one block, ~0.7 ms, inaudible for timbre shaping, accepted.)
     no halt, full-scale audio at both, the aggregate barely moved (the post is a
     small share of the ~8 µs/voice render), but CPU0 shed the post + combine.
 
-### 13.9 CPU-budget reduction: 60% → 49% ISR @ 320 MHz (2026-11-02)
+### 13.9 CPU-budget reduction: 60% → 45% ISR @ 320 MHz (2026-11-02)
 
 **Goal.** Cut the audio render from **60% to ≤ 49% ISR @ 320 MHz** (~18% less work)
 so 49 × 1.92 ≈ 94% clears the emulator's documented 1.92× optimism. **20 voices stay.
 output stays bit-exact.** (Async ping-pong was measured and rejected first, §12.1,
 because the split already runs both voice halves in parallel, so there was no wait
-to remove.)
+to remove.) **Result: 45% ISR @ 320 MHz was reached (better than the 49% goal), so
+the provisional device budget (until a hardware unit is available) is 45% ISR,
+dual-core.**
 
 **Cost model.** Voices ≈ 98% of the work (host: ~8 µs/voice, ~2.4 µs fixed), the
 post (2 SVF + wavefolder) is ~2% and bypassed by default. The per-sample hot path is
