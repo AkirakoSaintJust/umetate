@@ -3140,8 +3140,9 @@ one block, ~0.7 ms — inaudible for timbre shaping, accepted.)
 
 **Fresh backlog (50–57).**
 
-50. **F-ENV depth range.** `fenv_depth` is raw Q16 (0..65535); it should read and
-    step as **0–100%**, like the other FX depths.
+50. **F-ENV depth range.** — **done.** `fenv_depth` now carries `display: "pct"`,
+    so it reads and steps as **0–100%** (the stored Q16 0..65535 range is
+    unchanged; only the display form changed).
 
 51. **Second filter (after the wavefolder).** Add a second multimode filter *after*
     the current filter + wavefolder, with **no F-ENV of its own**. Its job is to
@@ -3154,11 +3155,11 @@ one block, ~0.7 ms — inaudible for timbre shaping, accepted.)
     scope flag → scope ch 0) — likely the same tap-channel-count class as items
     30/37.
 
-53. **VERSION + CREDITS page.** (a) It scrolls away on SELECT, so once you scroll
-    past you are stuck until you leave the menu — remove the SELECT-scroll from
-    this page. (b) The page body text should be **white** (the page description is
-    correctly green). (c) Say "Logo typeface:" instead of "Typeface:", and under
-    "Digital Desolation Plus" write "by ukiyomoji.booth.pm".
+53. **VERSION + CREDITS page.** — **done.** (a) The SELECT-scroll is gone — the
+    page is static and fits its rows (the custom widget spans 12 rows, 12 lines,
+    the legend skips). (b) The body text is **white** (`C_TEXT`); the page
+    description stays green. (c) "Logo typeface:" replaces "Typeface:", and
+    "by ukiyomoji.booth.pm" sits under "Digital Desolation Plus".
 
 54. **Mono/unison split.** — **done (merged).** `mode` is now **poly | mono**
     (2 values); the old 3rd value (unison) is gone. `unison_count` (1..8) and
@@ -3174,8 +3175,9 @@ one block, ~0.7 ms — inaudible for timbre shaping, accepted.)
     (the carrier arrow still points down), modulators white, arrows purple — in the
     exact existing style.
 
-56. **HOME on HOME does not advance pages.** Pressing HOME while already on the HOME
-    menu does nothing; it should advance to the next HOME page, like the other menu
-    buttons (item 21).
+56. **HOME on HOME does not advance pages.** — **done.** `ui_pop_home()` now
+    advances to the next home page (wrapping) when it is already at home, matching
+    the menu-button behaviour of item 21. Locked by a `ui_test.c` check (a two-page
+    home fixture).
 
 57. **Wavefolder — keep.** Decision recorded: the wavefolder stays; no removal.
