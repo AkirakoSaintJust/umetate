@@ -3370,12 +3370,21 @@ with a bit-identical C fallback (host/wasm/tutorial untouched) and checkpointed 
 1. **Target-vs-host WAV harness** (the gate). `fm1-emu --fwsc … --keys … --wav OUT.wav`
    already writes the I2S output (44.1 kHz stereo 16-bit, captured as `(w>>8)` of
    the DMA word → `q15<<7` becomes `q15/2`); the host already writes
-   `build/host/fourop_fm.wav` (raw Q15). Wire `fm1-emu` into `umetate emu --wav`,
-   drive both from one note/time list, pin MASTER full and account for the `/2`, and
-   assert **byte-exact** host == target (after scaling).
-2. **Manual MAC — `fm1_q15_mul` first.** Add `fm1_kernel_q15_mul` to
-   `hal/fm1_dsp_kernels.h` (native pi32v2 MAC + shift vs the compiler's ~4 instr),
-   swap the hot callers, gate on the WAV + `deep-check` + `emu --check --mhz 320`.
+   `build/host/fourop_fm.wav` (raw Q15). Wire `fm1-emu` into `umetate emu --wav`
+   (done, `7fe09be`), drive both from one note/time list, pin MASTER full and account
+   for the `/2`, and assert **byte-exact** host == target (after scaling). **Note:**
+   the first run showed the MASTER gain is a *moving average* (`knob_avg` smoothed,
+   `master_q12` ramps 2048→4088), MIDI timing differs (host instant vs UART 320 µs/
+   byte), and the start offsets differ — so a byte-exact WAV diff needs a firmware
+   test hook (dump the raw pre-master output to a fixed RAM word and `--dump` it) or
+   a target-side asm-vs-C self-test reported on the console.
+2. **Manual MAC — `fm1_q15_mul` first.** **Investigated and dropped (2026-11-02):**
+   the compiler already emits the native 64-bit MAC (`r9_r8 += R * R (s)`) — the
+   4-instruction `fm1_q15_mul` is `r8=0x4000; r9=0; MAC; >>15`, and `r1_r0 = #i`
+   is a 7-bit immediate so the rounding preload can't be folded into one 64-bit
+   load. There is no 32-bit "multiply-with-round-shift" (the `*|* -#i (ssat)` family
+   is 16×16). So a manual MAC is a no-op vs the compiler; the win must come from the
+   loop structure, not the multiply.
 3. **Scoped loop rewrite.** Rewrite the innermost per-voice sample body of
    `render_voices_block` one operator at a time with `rep` + VLIW `#` dual-issue +
    `[rN++=4]` auto-increment (the `fm1_dsp_kernels.h` note holds the parser-accepted
