@@ -1,10 +1,10 @@
 # Build a synthesizer for the M-VAVE FM-1 / SMK-37
 
 This tutorial is for programmers who know what they want an instrument to sound
-like but are new to the FM-1, embedded audio, or umetate. Starting with the
-source-built **RIB** firmware, you will design an instrument, prototype its sound,
-then build and verify the firmware in small steps. You can work through stages 1–9
-without hardware; installation begins at stage 10.
+like but are new to the FM-1, embedded audio, or umetate. You start from the
+source-built **RIB** firmware, design an instrument, prototype its sound, then
+build and verify the firmware in small steps. Stages 1–9 need no hardware;
+installation begins at stage 10.
 
 > **Safety and evidence.** Never flash as a side effect of editing code. Identify a
 > real recovery route before installing. Source, host, browser, target package,

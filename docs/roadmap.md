@@ -115,33 +115,33 @@ agent-time, never runtime.
 - **Patch** (the instrument): instantiates nodes/macros, wires them, declares
   `voice`/`global` zones (multiplicity) and a `tables:` section.
 - **Feedback:** the graph is a **DAG**; `delay1`/`delayN` are the only
-  cycle-breakers. FM/PM feedback is an explicit `delay1` edge — a per-sample *data
+  cycle-breakers. FM/PM feedback is an explicit `delay1` edge: a per-sample *data
   dependency*, not a per-sample *dispatch*.
 - **Modulation:** a `modulatable` param gets a paired control input `<param>_mod`
-  and a depth param; effective value = base + mod·depth at block rate. The node
-  declares *capability* (`modulatable: true`); the **patch is the final spec** — it
-  decides exposure (the `params:` surface) and wiring, so the end user of the
-  finished synth never sees the node flag. The additive form only makes sense for a
-  **Q-format (continuous)** param — e.g. `pulse.width` (q15). A **discrete index**
-  (`naive_osc.shape`, `osc.waveform`) is *not* additively modulatable: a q15 mod
-  signal would swamp a 0..N index, so it is set via `set_param`, and morphing
-  between shapes would be a separate node. A param with a natural control input
-  (pitch, level, cutoff) stays a wired input. An unwired `<param>_mod` folds to
-  `base` at `-O2`, so marking a param modulatable costs nothing until it is used.
+  and a depth param; the effective value is base + mod·depth at block rate. The
+  node declares *capability* (`modulatable: true`), but the **patch is the final
+  spec**: it decides exposure (the `params:` surface) and wiring, so the end user of
+  the finished synth never sees the node flag. The additive form only makes sense
+  for a **Q-format (continuous)** param, such as `pulse.width` (q15). A **discrete
+  index** (`naive_osc.shape`, `osc.waveform`) is *not* additively modulatable: a
+  q15 mod signal would swamp a 0..N index, so it is set via `set_param`, and
+  morphing between shapes would be a separate node. A param with a natural control
+  input (pitch, level, cutoff) stays a wired input. An unwired `<param>_mod` folds
+  to `base` at `-O2`, so marking a param modulatable costs nothing until it is used.
 - **Shape data:** wavetables, segments, spectra, phase-maps live in `tables:` →
   `const` XIP arrays.
 - **Events:** `{kind: note_on|note_off, note, velocity}`; nodes derive gate/trigger.
-- **Multiplicity:** patch zones — `voice` = SoA × NVOICE, `global` = single.
+- **Multiplicity:** patch zones: `voice` = SoA × NVOICE, `global` = single.
 
-**Evaluation is multi-rate, not reactive.** The render is split by rate — sample /
-block (`block_derived`) / note (`note_derived`, `note_tune`, `note_cutoff`,
-`note_reciprocal`) — never by change-detection. Compute-on-change reactivity and
+**Evaluation is multi-rate, not reactive.** The render is split by rate: sample,
+block (`block_derived`), and note (`note_derived`, `note_tune`, `note_cutoff`,
+`note_reciprocal`), never by change-detection. Compute-on-change reactivity and
 memoisation are **rejected**: modulation changes every block, so a per-change
 dirty-check would only tax the hot path. There is no `param_derived` rung and no
 reactive graph.
 
 **Authoring, by hand or agentically (like Angular):** the CLI scaffolds a default
-node/macro/patch, which the user customizes — its DSP core, params, and graph —
+node/macro/patch, which the user customizes (its DSP core, params, and graph)
 either by hand or through the development skill. The `<synth>_dsp_*` API (§6.8) is
 the **invariant seam**: the generator emits it from a patch, and a power user may
 hand-write it directly as an escape hatch. Both produce the same shape that plugs
@@ -245,51 +245,52 @@ param tables) are produced by a generator, never hand-edited.
 | CPU0 | boot, OS/runtime, USB (MIDI + UAC), MIDI UART, panel/UI, display, storage/flash, watchdog, update installer, recovery; **the global control prologue + its split voice range** | long DSP work; FP when CPU1 owns the FPU |
 | CPU1 | DSP render: **its split voice range + the global audio post** (filters + wavefolder + the bus combine) | OS calls (incl. `printf`), allocation, flash, USB, blocking |
 
-- **Split-core render (D3 refinement).** The render is three phases: (a) the global
-  control prologue (pitch env, LFO, algorithm, glide, delay countdown) — single
-  core; (b) the per-voice synthesis (`render_voices_block`, one CONTROL_BLOCK, a
-  voice range `[v0, v1)` into a caller bus) — the parallel phase; (c) the global
-  audio post (filter/wavefolder) + output — single core. The generator emits
-  `render_voices_block` as a `noinline` phase so the voice range can be split
-  across cores: CPU0 renders `[0, N0)`, CPU1 renders `[N0, NVOICE)`, the buses are
-  summed, then the post runs on one core. The post is handed to **CPU1** (the
-  cooler core): it renders its voice half, spin-waits on a `render_bus0_ready` flag
-  (set by CPU0 after its half, `csync`-ordered), combines the buses, then runs the
-  post — so CPU0's ISR keeps only the prologue + its voice half. Single-core is the
-  same three phases with one range `[0, NVOICE)`. The per-voice control temps are
-  file-scope arrays
-  (the two cores write *disjoint* `v` ranges, so no race). The `noinline` phase
-  costs ~5% single-core render time (measured ISR% 18.2→19.1 M/s @ 6 voices,
-  21.7→23.0 @ 8 voices, bit-identical output) — the price of the split-ready seam;
-  the parallel speedup dwarfs it.
+- **Split-core render (D3 refinement).** The render has three phases: (a) the
+  global control prologue (pitch env, LFO, algorithm, glide, delay countdown),
+  single core; (b) the per-voice synthesis (`render_voices_block`, one
+  CONTROL_BLOCK, a voice range `[v0, v1)` into a caller bus), the parallel phase;
+  (c) the global audio post (filter/wavefolder) plus output, single core. The
+  generator emits `render_voices_block` as a `noinline` phase so the voice range
+  can be split across cores: CPU0 renders `[0, N0)`, CPU1 renders `[N0, NVOICE)`,
+  the buses are summed, then the post runs on one core. The post is handed to
+  **CPU1** (the cooler core). It renders its voice half, spin-waits on a
+  `render_bus0_ready` flag (set by CPU0 after its half, `csync`-ordered), combines
+  the buses, then runs the post, so CPU0's ISR keeps only the prologue plus its
+  voice half. Single-core is the same three phases with one range `[0, NVOICE)`.
+  The per-voice control temps are file-scope arrays (the two cores write *disjoint*
+  `v` ranges, so no race). The `noinline` phase costs ~5% single-core render time
+  (measured ISR% 18.2→19.1 M/s @ 6 voices, 21.7→23.0 @ 8 voices, bit-identical
+  output). That is the price of the split-ready seam; the parallel speedup dwarfs
+  it.
 
-- **Split dispatch (implemented).** The seam's `render_block` now runs on CPU0 and
-  calls the generated `render_split`: per block it runs `render_pre_block`, hands
-  CPU1 the `[N0, NVOICE)` range through the mailbox, runs `[0, N0)` on CPU0 in
-  parallel, then **CPU1** spin-waits on CPU0's `render_bus0_ready` flag, combines
-  the two `render_bus` buffers, and runs `render_post_block` (filters + wavefolder)
-  — the post moved off CPU0 to balance the cores. `N0 = cpu0_voices` (a patch
-  field, default `NVOICE/2`). The mailbox is reached through thin non-inline wrappers
-  `fm1_cpu1_dispatch`/`fm1_cpu1_join` (declared in `fm1_ipc.h`, defined in
-  `platform.c`), because `fm1_cpu1.h` owns `fm1_c1_main` and must stay a single TU.
-  Measured (emulator, 320 MHz, 8 voices): output bit-identical; CPU0's ISR rises to
-  ~26% (its 4-voice half) from ~7% (the spin-wait), i.e. the render now spans both
-  cores. **Ceiling test (measured):** at `NVOICE` 16 the emulator shows 50% ISR, at
-  20 it shows 61% (now ~53% after the route/phasor optimizations, §13.9) — no halt
-  at either, i.e. the split reaches the stock's 20-voice
-  target with headroom. Voice stealing is unaffected and verified: a host test
-  fills the pool then adds an 11th note and the *oldest* note (21) is stolen, the
-  rest sounding (the score picks `min(voice_age)`; the retrigger/stacking contracts
-  in `test_generate` still pass).
+- **Split dispatch (implemented).** The seam's `render_block` now runs on CPU0
+  and calls the generated `render_split`. Per block it runs `render_pre_block`,
+  hands CPU1 the `[N0, NVOICE)` range through the mailbox, runs `[0, N0)` on CPU0
+  in parallel, then **CPU1** spin-waits on CPU0's `render_bus0_ready` flag,
+  combines the two `render_bus` buffers, and runs `render_post_block` (filters +
+  wavefolder). The post moved off CPU0 to balance the cores. `N0 = cpu0_voices` (a
+  patch field, default `NVOICE/2`). The mailbox is reached through thin non-inline
+  wrappers `fm1_cpu1_dispatch`/`fm1_cpu1_join` (declared in `fm1_ipc.h`, defined
+  in `platform.c`), because `fm1_cpu1.h` owns `fm1_c1_main` and must stay a single
+  TU. Measured (emulator, 320 MHz, 8 voices): output bit-identical; CPU0's ISR
+  rises to ~26% (its 4-voice half) from ~7% (the spin-wait), so the render now
+  spans both cores. **Ceiling test (measured):** at `NVOICE` 16 the emulator shows
+  50% ISR; at 20 it shows 61% (now ~53% after the route/phasor optimizations,
+  §13.9). No halt at either, so the split reaches the stock's 20-voice target with
+  headroom. Voice stealing is unaffected and verified: a host test fills the pool
+  then adds an 11th note, and the *oldest* note (21) is stolen while the rest keep
+  sounding (the score picks `min(voice_age)`; the retrigger/stacking contracts in
+  `test_generate` still pass).
 
-- **Steal stress + UB fix.** A 40-note storm on a 20-voice pool (80 voice-requests,
-  60 oldest-steals ×3 rounds) under ASan+UBSan passes: no OOB, no stuck notes, the
-  oldest notes stolen, silence after all-off. UBSan surfaced a real latent bug in
-  two nodes — `(int64_t)x << 16` (a left-shift of a negative signed int64, UB in C)
-  in `phasor` (the FM index) and `wavefolder` — fixed to `(int64_t)x * 65536`
-  (well-defined, identical on two's-complement). The emulator's `--keys` note
-  display uses key indices, so its apparent non-oldest steal is a numbering
-  artifact, not a firmware bug (settled by the host test).
+- **Steal stress + UB fix.** A 40-note storm on a 20-voice pool (80
+  voice-requests, 60 oldest-steals ×3 rounds) under ASan+UBSan passes: no OOB, no
+  stuck notes, the oldest notes stolen, silence after all-off. UBSan surfaced a
+  real latent bug in two nodes: `(int64_t)x << 16` (a left-shift of a negative
+  signed int64, which is undefined behaviour in C) in `phasor` (the FM index) and
+  `wavefolder`. It is fixed to `(int64_t)x * 65536` (well-defined, identical on
+  two's-complement). The emulator's `--keys` note display uses key indices, so its
+  apparent non-oldest steal is a numbering artifact, not a firmware bug (settled by
+  the host test).
 
 - **CPU1 code lives in RAM** (`.c1_text`, its waiting loop) so it never fetches
   from flash while flash is busy (AC79 §7.40).
@@ -298,12 +299,13 @@ param tables) are produced by a generator, never hand-edited.
   single-writer values for params/bend. `volatile` is never a multi-field atomic
   protocol.
 - **Inter-core exclusion:** single-writer/single-reader mailbox + queue; no OS
-  `spin_lock` (the SDK-OS model, AC79 §7.40, does not apply — RIB is bare-metal).
+  `spin_lock` (the SDK-OS model, AC79 §7.40, does not apply, because RIB is
+  bare-metal).
 - **Flash park:** `fm1_cpu1_halt()` holds CPU1 before a flash write and in every
   reset path; it is not auto-resumed.
-- **Boot probe + fallback:** a boot-time core-1 memory-integrity probe (the mailbox
-  check word, which detects the `0x00200000` misread); on failure the same firmware
-  renders DSP on CPU0 — a stability fallback, not a second build.
+- **Boot probe + fallback:** a boot-time core-1 memory-integrity probe (the
+  mailbox check word, which detects the `0x00200000` misread); on failure the same
+  firmware renders DSP on CPU0 (a stability fallback, not a second build).
 
 ### 4.3 Build profiles (collapsed)
 
@@ -357,7 +359,7 @@ must read `trimdat` after the work.
 | `LICENSING.md` | origin, attribution, licence + dependency manifest | No |
 
 Plus one firmware-internal `firmware/README.md` (the code-level contract), the
-JSON schemas (`templates/scaffold/*.schema.json`) — config/artifacts — and
+JSON schemas (`templates/scaffold/*.schema.json`) (config/artifacts), and
 `docs/dsp-study.md` (reference material: a DSP implementation study). None of these
 is a canonical governance/status doc. Templates are fillable forms; skill
 `references/` are offline copies; neither is a second source of truth.
@@ -487,13 +489,14 @@ umetate help [CMD]                           documents every option (component 1
 - `setup` is opt-in, interactive, hash-pinned, never silent; records the clock choice;
   installs Rust + fm1-emu on the host (`--no-emulator` skips that).
 - `scaffold` generates a **default** node/macro/patch (from the schemas, or
-  `--template` copies a shipped template), which the user customizes — DSP core,
-  params, graph — **by hand or agentically**. `scaffold synth` goes one step further:
+  `--template` copies a shipped template), which the user customizes (DSP core,
+  params, graph) **by hand or agentically**. `scaffold synth` goes one step further:
   it emits a **complete minimal firmware** (patch.json + panel.json + app.c with the
-  framework service contexts + the generated transport glue), so `umetate build
-  --synth <dir>` produces sound out of the box — this is the two-tier bridge (L4).
-  `lib list` shows the shipped nodes + templates. All of it can also be written by
-  hand against the schemas. The module library is local-only — no remote registry.
+  framework service contexts and the generated transport glue), so `umetate build
+  --synth <dir>` produces sound out of the box. This is the two-tier bridge (L4).
+  `lib list` shows the shipped nodes and templates. All of it can also be written
+  by hand against the schemas. The module library is local-only, with no remote
+  registry.
 - `flash`/`debrick` are the only device-writing commands, gated by §8,
   run on the **host** (USB CDC), never in the container.
 - `lint` encodes the standing checks: MAXP bounds (`SEC-1`), UAC access (`SEC-2`),
@@ -503,23 +506,24 @@ umetate help [CMD]                           documents every option (component 1
 ### 6.2 Skill: umetate-development
 
 Offline-bundled interactive loop with a **design-first gate**: no code is written
-until three artifacts are complete, mutually consistent, and user-confirmed — the
-**synth design + voice architecture** (node/macro graph, parameter manifest,
-tables), the **GUI design + control flow** (context stack, pages, bindings,
-navigation, per-context control meaning), and the **implementation plan**
+until three artifacts are complete, mutually consistent, and user-confirmed. They
+are the **synth design + voice architecture** (node/macro graph, parameter
+manifest, tables), the **GUI design + control flow** (context stack, pages,
+bindings, navigation, per-context control meaning), and the **implementation plan**
 (milestones, feature contracts, supported-load profile, evidence matrix, the DSP
 algorithms, and the exact structure + interface of any custom code). The plan's
 DSP-algorithm step requires **online research** (default reference points: ymfm,
 SuperCollider UGens, Mutable Instruments, STK, maximilian, musicdsp; credit given
 and licences honoured), with performance and memory safety as standing constraints.
-A consistency gate cross-checks the artifacts (every binding → a defined param,
-every control mapped or explicitly unmapped, the voice count × architecture within
-budget) before authoring begins; authoring is then mechanical translation into
-`patch.json` + `panel.json`. Workflow: orient → design interview → GUI interview →
-plan → consistency gate → author (nodes/macros/patches via `scaffold`) → first
-slice → shared DSP → panel/display → MIDI/persistence → verify (evidence matrix) →
-handoff. Refuses device writes unless the user explicitly requests that action and
-§8 gates pass.
+
+A consistency gate cross-checks the artifacts before authoring begins (every
+binding maps to a defined param, every control is mapped or explicitly unmapped,
+the voice count × architecture within budget). Authoring is then mechanical
+translation into `patch.json` + `panel.json`. Workflow: orient → design interview →
+GUI interview → plan → consistency gate → author (nodes/macros/patches via
+`scaffold`) → first slice → shared DSP → panel/display → MIDI/persistence → verify
+(evidence matrix) → handoff. The skill refuses device writes unless the user
+explicitly requests that action and the §8 gates pass.
 
 `references/` (generated, offline — byte-for-byte copies of the canonical docs,
 verified by `deep-check --skill`): AC79 facts, flash maps + protected ranges, the
@@ -549,7 +553,7 @@ generated recovery taxonomy + code conventions (same drift-checked copies).
 - Windows: everything through WSL2 → Docker.
 - **The image/container are rebuilt, not edited:** after a `docker/Dockerfile` or
   `env.lock` pin change, rebuild the image and recreate the persistent
-  `umetate-host` container — a stale image silently drops a tool (e.g. pyright).
+  `umetate-host` container. A stale image silently drops a tool (e.g. pyright).
   `deep-check` must report a missing tool as *not-run* and fail, not crash with
   `FileNotFoundError`.
 
@@ -601,7 +605,7 @@ control flow (no goto/setjmp/recursion); bounded loops (no `while(1)` in the
 callback); no heap after init; small functions (≤ ~60 lines, `static`+`inline` under
 `-O3`/LTO); assert invariants; smallest scope; check returns + parameters; limited
 preprocessor (only `BOARD_SMK37` / `--dsp` / `--clock` seams); restricted pointers
-(**no per-sample indirect dispatch** — block-rate `switch`/jump-table or
+(**no per-sample indirect dispatch**: block-rate `switch`/jump-table or
 model-as-data, `firmware/README.md` §5.1); warnings-as-errors from day one.
 
 **Data-layout rule:** per-voice parallel state is **SoA**; single-instance control
@@ -649,23 +653,23 @@ vocabulary as an `Enum`. I/O-bound: optimize only measured hot paths.
 
 - **Strict typing** — `mypy --strict` over the owned Python (`umetate/` +
   `firmware/tools/gen_math_tables.py`), enforced in the build, plus
-  `disallow_any_explicit` + `disallow_any_unimported` — **`Any` is banned**. Every
+  `disallow_any_explicit` and `disallow_any_unimported`. **`Any` is banned**. Every
   public function/module is annotated; the fm1tk-lineage `firmware/tools/` +
   `tests/` are excluded (strangler-fig'd, not typed in place). Modern style: PEP 585
   (`list[int]`), PEP 604 (`int | None`), `from __future__ import annotations`,
   `TypeAlias` for callable/union aliases, `Protocol` for structural typing across
   module boundaries (avoids import cycles), `NamedTuple` for tiny value types.
   **Pyright (Pylance) checks the same files in strict mode** (`[tool.pyright]` in
-  `pyproject.toml`, run by `deep-check --pyright`) — a second engine that catches the
-  "partially unknown" cases `mypy`'s flags can't see (an `argparse` attribute in a
-  `list[str]`, `field(default_factory=dict)`, a `NotRequired` key indexed with `[]`),
-  so the editor and CI agree.
+  `pyproject.toml`, run by `deep-check --pyright`). It is a second engine that
+  catches the "partially unknown" cases `mypy`'s flags can't see (an `argparse`
+  attribute in a `list[str]`, `field(default_factory=dict)`, a `NotRequired` key
+  indexed with `[]`), so the editor and CI agree.
 - **Manifests are typed, not `Any`.** Every JSON manifest (`patch`, `macro`,
   `node`, `panel`, `tables`, `params`, `env.lock`, the evidence matrix) is a
   `TypedDict` in `umetate/_schema.py` mirroring its `templates/scaffold/*.schema.json`.
   The JSON boundary (a `json.loads` result) is narrowed by one `as_*` loader per
-  manifest — an `isinstance` check on the required keys, then a single `cast` to the
-  concrete `TypedDict` — so downstream code is fully checked. The fm1tk boundary
+  manifest: an `isinstance` check on the required keys, then a single `cast` to the
+  concrete `TypedDict`, so downstream code is fully checked. The fm1tk boundary
   (`firmware/tools/fm1_install.py`) is the one trusted `cast` to the `Installer`
   `Protocol` (in `_installer.py`); the raw module stays available as
   `load_installer_module()` for the package-synthesis tests.
@@ -692,7 +696,7 @@ Shipped, reviewed nodes in `modules/nodes/`, each = `node.json` + `<node>.c` + a
 test + a budget annotation; shipped macros in `modules/macros/`, each =
 `macro.json` (a reusable subgraph, same shape as a patch's `macros:` entry). The
 node library is generated from the manifests into
-[`docs/module-library.md`](module-library.md) — one row per node (summary + ports +
+[`docs/module-library.md`](module-library.md), one row per node (summary + ports +
 params + state); `umetate lib generate` rewrites it and `deep-check --lib` fails on
 any drift, so it cannot lag the library.
 
@@ -761,8 +765,8 @@ The **fourop-fm dogfood** (`examples/fourop-fm/`) closed the runtime-algorithm
 gap: `dx_env`, `osc.waveform` (12 waveforms, the OPZ+OPL union), `vca.level`,
 `mix4` (the 2-input `mix` → 4-input `mix4`), `route4`, `route`, `lfo` (the
 control-rate vibrato/tremolo source), and the `fm_op` rewrite (per-op tremolo +
-a `pitch` input), with the **algorithm as a runtime `routing` matrix** — a
-`tables:` entry applied by `route`/`route4` rather than a compile-time graph —
+a `pitch` input), with the **algorithm as a runtime `routing` matrix** (a
+`tables:` entry applied by `route`/`route4` rather than a compile-time graph),
 plus the `<<16` FM-index scale on `phasor.fm`.
 
 Build order: `fm_op` + `svf` + `wavefolder` → `ifft` + `lpg` → `pitched_noise` +
@@ -784,8 +788,8 @@ The shipped, tested UI base every project builds on:
   display/flash/logging in the audio callback.
 - **Panel generator:** `panel.json` → the app's UI wiring (bindings, pages,
   navigation); a custom `cv_*` canvas page is the escape hatch.
-- **Theme (palette):** a small, verified-contrast colour set — background / surface /
-  text / muted / accent / success / warning / error — with a **dark-mode default**
+- **Theme (palette):** a small, verified-contrast colour set (background / surface /
+  text / muted / accent / success / warning / error) with a **dark-mode default**
   meeting the applicable WCAG 2.1 subset (1.4.3 contrast, 1.4.11 non-text,
   2.4.7/2.4.13 focus, 1.4.1 not-colour-alone). `umetate theme check|generate|emit`
   does the WCAG math + a contrast report + a C header; the shipped gfx.c palettes
@@ -865,7 +869,7 @@ polyphony budget tool).
 
 #### 6.11.1 Goal
 
-A complete, worked firmware — `examples/fourop-fm/` builds a real FM-1 firmware —
+A complete, worked firmware (`examples/fourop-fm/` builds a real FM-1 firmware)
 that demonstrates the toolkit's full capability: polyphony + voice management,
 velocity, MIDI (notes / CC / sustain / panic / bend), presets (save / load /
 export / import via SysEx), system settings, and **2-part multitimbrality** with
@@ -1253,7 +1257,7 @@ patch carries them) and global (appended last) in a single-timbre patch. Landed:
   delay[]}` (parallel arrays); the voice-zone params become `[N_PART]` arrays read
   as `param[voice_part[v]]`, and the id space is `part × param` (part-major,
   contiguous per part). `note_on_ch(note, velocity, channel)` routes a note to every
-  matching part (channel + keyzone) — one note may layer several parts — each
+  matching part (channel + keyzone). One note may layer several parts, each
   allocating a distinct poly voice from the shared pool (`voice_part[v]` tag).
   `note_on` is the frozen omni forwarder.
 - **Per-part `level` + `delay`** — `level` (q15 gain) scales a voice in the mix
@@ -1342,23 +1346,23 @@ One patch + one panel → byte-identical output every time.
 
 **Level 6 — Firmware** is the *frozen framework + the synth's app glue*.
 `firmware/src/rib.c` ships the platform (boot, USB/MIDI, panel, display, storage,
-recovery, the UI kit) and the **synth services** — `synth_midi` (notes / CC /
+recovery, the UI kit) and the **synth services**: `synth_midi` (notes / CC /
 sustain / panic / bend; a CC value scales to the param's [min, max], the CC
 surface is the patch's `cc:` list), `synth_sysex` (the envelope + the five
-commands), `synth_runtime` (a multi-patch applies its parts through `set_param`),
-over `presets.c` (the 128+64-slot record store, chunked across the measured slot area).
-The *per-voice* allocator (assignment, mono/unison/legato/portamento/retrigger/
-glide, `parts:`) is **generator rails** (`umetate/_voice.py`, F3) — not
-hand-written C. The **transport glue** (the dual-core-aware seam adapters
-`<name>_glue_*` + the frozen `app_audio`, including the scope-tap push) is now
-**generated** too (`glue.h`, `generate_glue`), and the **slot browser** (the
-preset-browse popup: scroll + show name + idle auto-apply) is a framework helper
-(`ui_browser_step` + the `ui_preset_apply` / `ui_save_slot_name` hooks) — so a
-synth project supplies only the *instrument-specific* glue (`app.c`: `app_main` +
-`app_idle` + the `ui_act_*` hooks + the three service contexts, which bind the
-generated adapters to the framework services + the app's banks). `umetate build
---synth <dir>` composes framework + generated code + glue into the firmware (F7,
-done).
+commands), and `synth_runtime` (a multi-patch applies its parts through
+`set_param`), over `presets.c` (the 128+64-slot record store, chunked across the
+measured slot area). The *per-voice* allocator (assignment,
+mono/unison/legato/portamento/retrigger/glide, `parts:`) is **generator rails**
+(`umetate/_voice.py`, F3), not hand-written C. The **transport glue** (the
+dual-core-aware seam adapters `<name>_glue_*` + the frozen `app_audio`, including
+the scope-tap push) is now **generated** too (`glue.h`, `generate_glue`), and the
+**slot browser** (the preset-browse popup: scroll + show name + idle auto-apply) is
+a framework helper (`ui_browser_step` + the `ui_preset_apply` / `ui_save_slot_name`
+hooks). So a synth project supplies only the *instrument-specific* glue (`app.c`:
+`app_main` + `app_idle` + the `ui_act_*` hooks + the three service contexts, which
+bind the generated adapters to the framework services + the app's banks). `umetate
+build --synth <dir>` composes framework + generated code + glue into the firmware
+(F7, done).
 
 **The multitimbral patch** (F3). `parts: N` declares N independent timbres. Each
 part is its own parameter set (the id space is `part × param`) plus routing
@@ -1397,7 +1401,7 @@ mechanism (the selector, the router, the operator, the wave reader, the matrix,
 the rate/level envelope, the app glue).
 
 **Two halves of one architecture.** The composition model above is the
-*structure*; the **workflow loop** is the *process* that produces it — orient →
+*structure*; the **workflow loop** is the *process* that produces it: orient →
 design interview (synth + GUI) → implementation plan → consistency gate → author
 (mechanical translation) → verify → recovery/handoff (the development skill,
 `SKILL.md` §0–8). They stay reconciled through two invariants: the **seam**
@@ -1851,8 +1855,8 @@ node library; 12.6 the UI kit; 12.7 CLI/build/tests; 12.8 the CLI codebase.
 
 ### 12.1 The invariant seam — the `<synth>_dsp_*` contract
 
-**Role.** The single interface every synth engine implements — generated from a
-patch or hand-written — that the runtime calls. It is where the framework (the
+**Role.** The single interface every synth engine implements (generated from a
+patch or hand-written) that the runtime calls. It is where the framework (the
 generator) meets the hardware layer (`app_audio`).
 
 **Interface (frozen).**
@@ -2761,7 +2765,7 @@ the two stay in sync).
 
 1. **Single-line header.** — **done.** Collapsed the 3-line header into 2 lines:
     line 1 = `P1 P2 op 1 2 3 4 ALG(n) menu, pg n/m`; line 2 = the page description
-    (the page's first widget — a `subheader`/two-line `label` — is promoted to the
+    (the page's first widget, a `subheader`/two-line `label`, is promoted to the
     `ui_page.title` and drawn in the header, so the widget rows shift up one).
     Colours: parts + operators white, the selected part/operator light blue,
     `ALG(n)` + param values hot pink, muted ops/parts red (no `x`), `menu, pg n/m`
@@ -3270,7 +3274,7 @@ one block, ~0.7 ms — inaudible for timbre shaping, accepted.)
 
 **Goal.** Cut the audio render from **60% to ≤ 49% ISR @ 320 MHz** (~18% less work)
 so 49 × 1.92 ≈ 94% clears the emulator's documented 1.92× optimism. **20 voices stay;
-output stays bit-exact.** (Async ping-pong was measured and rejected first — §12.1 —
+output stays bit-exact.** (Async ping-pong was measured and rejected first, §12.1,
 because the split already runs both voice halves in parallel, so there was no wait
 to remove.)
 

@@ -82,12 +82,13 @@ et al.). "Band-limited" therefore describes a family of approaches, not one fixe
 algorithm.
 
 The triangle's leaky integrator is `y = (1 − 1/1024)·y + slope·x` with `slope =
-inc/2^16` (note-derived), not the single-coefficient `y += k·(x−y)` form — a single
-`k` must be both the integration gain and the leak, so it either droops low notes
-(k small) or goes unstable above ~7 kHz (k = 2π·dt, Finke's original, which sndkit
-notes is unclear). Splitting the gain from a fixed 1/1024 leak keeps the output
-full-scale at any pitch; the price is a brief note-on transient (the integrator
-starts from 0, decaying over ~2^10 samples) and a ~1 LSB DC offset.
+inc/2^16` (note-derived). It is not the single-coefficient `y += k·(x−y)` form,
+because a single `k` must be both the integration gain and the leak: it either
+droops low notes (k small) or goes unstable above ~7 kHz (k = 2π·dt, Finke's
+original, which sndkit notes is unclear). Splitting the gain from a fixed 1/1024
+leak keeps the output full-scale at any pitch; the price is a brief note-on
+transient (the integrator starts from 0, decaying over ~2^10 samples) and a ~1 LSB
+DC offset.
 
 The same polynomial works in Q15/Q16. In fixed-point code, avoid the divide in
 `poly_blep` (`t /= dt`): compute `1/dt` at **note-on**, while `dt` is constant.
@@ -135,12 +136,12 @@ out = fm1_sin(q << 16);                                     /* shaped phase -> s
 ```
 
 `v` is not confined to `[0,1]`: the phaseshaping allows `v` outside one cycle
-(e.g. `v = 1.5`), and the shaped phase then wraps past the wavecycle (`v < 0`
-saturates to 0 — negative `v` is outside the paper's intent, not a wrap-backward) —
-the Q32 phase accumulator's uint32 wrap does the forward wrap for free. umetate's
-`phase_shape` node keeps it: the slopes are int64 (a *multiply* by 2^15 / 2^17, not
-a `<<` — left-shifting a negative int64 is UB), and the shaped phase is cast to
-uint32. `phase_dist` is the `v = 0.5` classic-PD special case.
+(e.g. `v = 1.5`), and the shaped phase then wraps past the wavecycle. A negative
+`v` saturates to 0, which is outside the paper's intent and not a wrap-backward.
+The Q32 phase accumulator's uint32 wrap does the forward wrap for free. umetate's
+`phase_shape` node keeps this: the slopes are int64 (a *multiply* by 2^15 / 2^17,
+not a `<<`, because left-shifting a negative int64 is UB), and the shaped phase is
+cast to uint32. `phase_dist` is the `v = 0.5` classic-PD special case.
 
 For umetate, VPS is a **parameterized phase shaper**, not a fixed `phase_map`
 table. Its transfer depends on `(d, v)`, which can be modulated through
