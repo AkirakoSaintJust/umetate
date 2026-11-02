@@ -338,6 +338,7 @@ static void platform_poll(void)                 /* one call = one millisecond */
         if (perf_fd >= 0) { ioctl(perf_fd, PERF_EVENT_IOC_RESET, 0); ioctl(perf_fd, PERF_EVENT_IOC_ENABLE, 0); }
 #endif
         app_audio(blk, HALF_FRAMES);
+        scope_push(blk, HALF_FRAMES);           /* ch 0: the final mix (the POST-FX scope) */
 #ifdef __linux__
         if (perf_fd >= 0) {
             long long c = 0;

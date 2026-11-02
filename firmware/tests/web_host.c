@@ -130,6 +130,7 @@ static void platform_poll(void)                    /* one call = one millisecond
         owed -= 1000u * HALF_FRAMES;
         memset(blk, 0, sizeof blk);
         app_audio(blk, HALF_FRAMES);
+        scope_push(blk, HALF_FRAMES);           /* ch 0: the final mix (the POST-FX scope) */
         push_ring(blk, HALF_FRAMES);
     }
 }
