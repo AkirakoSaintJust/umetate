@@ -80,3 +80,19 @@ FM1_KERNEL_INLINE int32_t fm1_kernel_dot_i32(const int32_t *a, const int32_t *b,
     return (int32_t)acc;
 #endif
 }
+
+/* Zero `n` 32-bit words — the `rep` + auto-increment-store primitive. `n` > 0.
+ * `UMETATE_NO_ASM` forces the C fallback on target for the before/after gate. */
+FM1_KERNEL_INLINE void fm1_kernel_zero_i32(int32_t *p, uint32_t n)
+{
+#if defined(UMETATE_TARGET) && !defined(UMETATE_NO_ASM)
+    __asm__ volatile(
+        "r3 = 0\n"
+        "rep %1 %{\n"
+        "  [%0 ++= 4] = r3\n"
+        "%}\n"
+        : "+r"(p), "+r"(n) : : "r3", "memory");
+#else
+    for (uint32_t i = 0; i < n; i++) p[i] = 0;
+#endif
+}

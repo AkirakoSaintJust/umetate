@@ -210,7 +210,8 @@ def _synth_main(args: argparse.Namespace) -> int:
             f" -DUMETATE_TEST_DUMP={args.test_dump}"
             if args.test_dump is not None
             else ""
-        ),
+        )
+        + (" -DUMETATE_NO_ASM=1" if args.no_asm else ""),
         "--dsp-tus",
         f"gen/{name}_dsp.c",
         "gen/tables.c",
@@ -247,6 +248,12 @@ def main(argv: list[str] | None = None) -> int:
         metavar="BLOCK",
         help="build the bit-exactness gate: -DUMETATE_TEST_DUMP=BLOCK (dump the raw "
         "pre-master output of audio block BLOCK to `test_dump` for fm1-emu --dump)",
+    )
+    parser.add_argument(
+        "--no-asm",
+        action="store_true",
+        help="build with -DUMETATE_NO_ASM=1 (the C fallback for the hand-asm kernels) "
+        "for the before/after bit-exactness gate",
     )
     args = parser.parse_args(argv)
 

@@ -77,6 +77,7 @@ static void fm1_led_key_glow(uint32_t id, int on)   /* as fm1_led_key, the dim l
 #include "fm1_timer.h"
 #include "fm1_lcd_hw.h"
 #include "fm1_audio.h"
+#include "fm1_dsp_kernels.h"                     /* the zero/rep primitives (the ISR) */
 #if !BOARD_SMK37
 #include "fm1_adc.h"                            /* (SMK: smk_input.h stands in, MASTER = K1) */
 #endif
@@ -419,8 +420,7 @@ void fm1_alnk0_irq(void)                       /* via isr_alnk0 (hal/fm1_isr.S) 
     if (p & FM1_AUDIO_HALF) {
         int32_t *o = &abuf[fm1_audio_free_half() * HALF_WORDS];
         uint32_t i, b;
-        for (i = 0; i < HALF_WORDS; i++)
-            o[i] = 0;
+        fm1_kernel_zero_i32(o, HALF_WORDS);
         UAC_ONLY(uac_render_start());
         app_audio(o, HALF_FRAMES);
 #ifdef UMETATE_TEST_DUMP
