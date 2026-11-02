@@ -2854,15 +2854,19 @@ the two stay in sync).
 #### H. Process (docs/skills/tutorial/agent — no firmware)
 
 18. **(process)** Descriptive value names, ranges, and knob resolution are settled
-    in the interview cycle *before* authoring, not discovered after.
+    in the interview cycle *before* authoring, not discovered after. — **done.**
+    The GUI interview's minimum bar (L10/L11, §6.11.2) pins per-param display form +
+    range/clamp/unit/resolution before the panel is authored.
 
 19. **(process)** Record the carrier-feedback-removal lesson (removing an early
     feature can leave a stray path that breaks later) in the tutorial, the agent
-    skill, and the workflow.
+    skill, and the workflow. — **done.** Now a standing rule in the dev skill's
+    operating contract ("remove a feature → remove its wiring *and* state in the
+    same increment"), beside the roadmap §6.10 note.
 
 20. **(process)** After each turn's edits, the agent shows them to the user and
     walks through them line-by-line / block-by-block (rubber-ducking + keeping the
-    user aware of the code).
+    user aware of the code). — **done** (standing behaviour, kept in the skill).
 
 ### 13.2 Implementation order
 

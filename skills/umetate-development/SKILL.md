@@ -69,6 +69,9 @@ requires a new design decision, stop and ask. Do not improvise in code.
 - Never flash, erase, force, or run a device-writing command unless the user
   explicitly requests that exact action and the §8 gates pass. A build, test, or
   edit is not permission to write hardware.
+- When you remove a feature, remove its wiring *and* state in the same increment —
+  a scrapped feature leaves a stray path that breaks later (fourop-fm's early
+  carrier-feedback knob left a spurious feedback floor on every carrier).
 - Keep hardware register access in the HAL. Do not invent pinouts, voltages,
   clock values, FPU capabilities, or core ownership.
 
