@@ -276,6 +276,14 @@ for (let i = 0; i < 27; i++) {
     syncKeys();
     setTimeout(() => { keyHeld.delete(id); syncKeys(); }, 120);
   });
+  keys[i].hit.addEventListener("keydown", (e) => {
+    if (e.key === " " || e.key === "Enter") {
+      e.preventDefault();
+      keyAt.t = performance.now();
+      if (!e.repeat) { keyHeld.set("k" + i, i); syncKeys(); }
+    }
+  });
+  keys[i].hit.addEventListener("keyup", (e) => { if (e.key === " " || e.key === "Enter") { keyHeld.delete("k" + i); syncKeys(); } });
 }
 
 // ---- the host keyboard (as fm1-x0x): Q..I / A..K are the white keys, 1..0 / - the
