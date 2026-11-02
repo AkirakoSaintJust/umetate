@@ -3363,3 +3363,20 @@ and no FM routing — so it needs no change. Docs refreshed (route-as-switch, 61
 6. **Filter/wavefolder (bit-exact).** The svf's `fm1_q16_mul`/sample have no
    hoistable part (fc block-constant, band per-sample state); the wavefolder is
    bypassed by default. ~2% total → not the lever; natural SIMD targets (idea 3).
+
+**P2-8 hand-asm plan (2026-11-02).** Three gated steps, each `#ifdef UMETATE_TARGET`
+with a bit-identical C fallback (host/wasm/tutorial untouched) and checkpointed for
+`git revert`:
+1. **Target-vs-host WAV harness** (the gate). `fm1-emu --fwsc … --keys … --wav OUT.wav`
+   already writes the I2S output (44.1 kHz stereo 16-bit, captured as `(w>>8)` of
+   the DMA word → `q15<<7` becomes `q15/2`); the host already writes
+   `build/host/fourop_fm.wav` (raw Q15). Wire `fm1-emu` into `umetate emu --wav`,
+   drive both from one note/time list, pin MASTER full and account for the `/2`, and
+   assert **byte-exact** host == target (after scaling).
+2. **Manual MAC — `fm1_q15_mul` first.** Add `fm1_kernel_q15_mul` to
+   `hal/fm1_dsp_kernels.h` (native pi32v2 MAC + shift vs the compiler's ~4 instr),
+   swap the hot callers, gate on the WAV + `deep-check` + `emu --check --mhz 320`.
+3. **Scoped loop rewrite.** Rewrite the innermost per-voice sample body of
+   `render_voices_block` one operator at a time with `rep` + VLIW `#` dual-issue +
+   `[rN++=4]` auto-increment (the `fm1_dsp_kernels.h` note holds the parser-accepted
+   forms), re-gating on the WAV after each step; register win-or-revert here.
