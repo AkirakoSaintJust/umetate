@@ -3326,6 +3326,16 @@ pre-made nodes + docs + skills; (b) try **skip-silent operators** then **P2-8
 hardware acceleration** (each checkpointed + profiled + cleanly revertible); (c)
 record the conclusions here.
 
+**Propagation done.** `tuned_phasor` got the same 32-bit fix (its `(int64_t)fm *
+65536` was identical). Not applicable elsewhere: `route4` is the *generic* runtime
+`(alg, dest)` row-mixer (the `route` specialization is the 8-algorithm switch, a
+different primitive, and `route4` is test-only); `naive_osc` shares `osc`'s
+`(bl ? mip : 0) << 10` but the mip-hoist is blocked by the same audio-loop
+signal-carry; **RIB** (`rib_dsp.c`) has no hot-loop 64-bit op (its `(uint64_t)inc *
+bend_q16` is block-constant, its inner loop is `phase += step; q15_mul(sine, amp)`)
+and no FM routing — so it needs no change. Docs refreshed (route-as-switch, 61% →
+51% ISR); the tutorial/skill files carry no stale route/ISR internals.
+
 **The six acceleration ideas — considered, verdicts.**
 1. **Log-space math** (multiplies → adds, like DX7 emulators). Only gains are
    exact in log space — *addition* (route `car` sum, `mix`, FM feedback, phase
