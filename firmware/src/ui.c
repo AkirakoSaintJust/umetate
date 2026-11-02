@@ -981,7 +981,7 @@ static const uint8_t ALGO_CAR[8] = {8, 8, 8, 8, 10, 14, 14, 15};
  * `int16_t`: several x-centres exceed 127, so `int8_t` would wrap them negative
  * and draw the blocks off-screen to the left. */
 static const int16_t ALGO_X[8][4] = {
-    {108, 108, 108, 108},  /* 0: vertical chain */
+    {30, 90, 150, 210},    /* 0: horizontal chain 1-2-3-4 */
     {44, 172, 108, 108},   /* 1: 1,2 on top -> 3 -> 4 */
     {44, 172, 108, 108},   /* 2: 2 on top; 1,3 middle -> 4 */
     {108, 44, 172, 108},   /* 3: 1 on top -> 2,3 -> 4 */
@@ -991,7 +991,7 @@ static const int16_t ALGO_X[8][4] = {
     {210, 150, 90, 30},    /* 7: 4,3,2,1 in a row */
 };
 static const int16_t ALGO_Y[8][4] = {
-    {10, 46, 82, 118},     /* 0 */
+    {10, 10, 10, 10},      /* 0 */
     {10, 10, 46, 82},      /* 1 */
     {46, 10, 46, 82},      /* 2 */
     {10, 46, 46, 82},      /* 3 */

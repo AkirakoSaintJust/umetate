@@ -3150,10 +3150,11 @@ one block, ~0.7 ms — inaudible for timbre shaping, accepted.)
     — independent of the sound's character set by the operators and the first
     filter. (This also unblocks the deferred "F2 KEY FOLLOW" page.)
 
-52. **Post-FX scope/spectro show nothing.** The two HOME "POST-FX MULTI-PATCH
-    SCOPE/SPECTRO" pages render blank. Investigate the final-mix tap (the `final`
-    scope flag → scope ch 0) — likely the same tap-channel-count class as items
-    30/37.
+52. **Post-FX scope/spectro show nothing.** — **done.** The final-mix channel (ch 0)
+    is pushed by the *device* platform (`platform.c` `scope_push`), but the host and
+    web emulators (`tests/host.c` / `tests/web_host.c`) never called `scope_push`
+    after `app_audio`, so ch 0 stayed empty and the two HOME "POST-FX MULTI-PATCH
+    SCOPE/SPECTRO" pages rendered blank. Both now push the final mix to ch 0.
 
 53. **VERSION + CREDITS page.** — **done.** (a) The SELECT-scroll is gone — the
     page is static and fits its rows (the custom widget spans 12 rows, 12 lines,
