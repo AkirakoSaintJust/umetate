@@ -400,6 +400,15 @@ static int32_t abuf[2u * HALF_WORDS] __attribute__((aligned(4)));
 static volatile int32_t master_q12 = 2048;
 static void app_audio(int32_t *out, uint32_t n);
 static void app_main(void);
+#ifdef UMETATE_TEST_DUMP
+/* The raw pre-master `app_audio` output (256 stereo frames) of audio block
+   `UMETATE_TEST_DUMP` — the bit-exactness gate. A target build with
+   `-DUMETATE_TEST_DUMP=N` leaves it in `.bss`; `fm1-emu --dump <addr> 512` reads it
+   back, and the before/after of a hand-asm change must be byte-identical. `volatile`
+   so the stores are not dead-store-eliminated (nothing in C reads them back). */
+static volatile int32_t test_dump[HALF_WORDS];
+static uint32_t test_block;
+#endif
 
 void fm1_alnk0_irq(void)                       /* via isr_alnk0 (hal/fm1_isr.S) */
 {
@@ -414,6 +423,12 @@ void fm1_alnk0_irq(void)                       /* via isr_alnk0 (hal/fm1_isr.S) 
             o[i] = 0;
         UAC_ONLY(uac_render_start());
         app_audio(o, HALF_FRAMES);
+#ifdef UMETATE_TEST_DUMP
+        if (test_block == UMETATE_TEST_DUMP)
+            for (i = 0; i < HALF_WORDS; i++)
+                test_dump[i] = o[i];
+        test_block++;
+#endif
         for (i = 0; i < HALF_WORDS; i++) {
             int32_t v = (o[i] * master_q12) >> 12;
             o[i] = v > 32767 ? 32767 : v < -32767 ? -32767 : v;

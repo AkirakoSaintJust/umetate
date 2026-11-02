@@ -87,21 +87,26 @@ def _check(args: argparse.Namespace, fwsc: Path) -> int:
 
 def _wav(args: argparse.Namespace, fwsc: Path) -> int:
     """The batch interpreter (`fm1-emu`, not the GUI) writes the I2S output to a WAV
-    (44.1 kHz stereo 16-bit) — the target-vs-host bit-exactness gate for P2-8."""
-    out = args.wav.resolve()  # fm1-emu runs with cwd = the emu dir, so make it absolute
-    cmd = [str(_emu.EMU_BIN), "--fwsc", str(fwsc), "--wav", str(out)]
+    (44.1 kHz stereo 16-bit) and/or dumps memory — the target bit-exactness gate."""
+    out = args.wav.resolve() if args.wav is not None else None
+    cmd = [str(_emu.EMU_BIN), "--fwsc", str(fwsc)]
+    if out is not None:
+        cmd += ["--wav", str(out)]
+    if args.dump is not None:
+        cmd += ["--dump", str(args.dump[0]), str(args.dump[1])]
     if args.ms:
         cmd += ["--ms", str(args.ms)]
     if args.keys:
         cmd += ["--keys", str(args.keys)]
     if args.ram:
         cmd += ["--ram", str(args.ram)]
-    print(f"emu: {_emu.EMU_BIN.name} --fwsc {fwsc} --wav {out}")
+    label = f"--wav {out}" if out is not None else "--dump"
+    print(f"emu: {_emu.EMU_BIN.name} --fwsc {fwsc} {label}")
     proc = subprocess.run(cmd, cwd=_emu.EMU_DIR, capture_output=True, text=True)
     sys.stdout.write(proc.stdout)
     if proc.stderr:
         sys.stderr.write(proc.stderr)
-    if not out.is_file():
+    if out is not None and not out.is_file():
         print(f"emu: no WAV written to {out}", file=sys.stderr)
         return 1
     if "halt:" in proc.stdout or "halt:" in proc.stderr:
@@ -128,6 +133,13 @@ def main(argv: list[str] | None = None) -> int:
         help="run fm1-emu (the batch interpreter) and write the I2S output here",
     )
     parser.add_argument(
+        "--dump",
+        nargs=2,
+        metavar=("ADDR", "N"),
+        help="fm1-emu --dump ADDR N: dump N words at ADDR at the end (e.g. the "
+        "test-dump gate: --dump 0x1c19400 512)",
+    )
+    parser.add_argument(
         "--ms", type=int, default=5000, help="--check/--wav: emulated ms"
     )
     parser.add_argument(
@@ -148,7 +160,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"emu: {fwsc} not built — run `umetate build` first", file=sys.stderr)
         return 1
 
-    if args.wav is not None:
+    if args.wav is not None or args.dump is not None:
         return _wav(args, fwsc)
     return _check(args, fwsc) if args.check else _gui(args, fwsc)
 

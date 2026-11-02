@@ -3370,14 +3370,15 @@ with a bit-identical C fallback (host/wasm/tutorial untouched) and checkpointed 
 1. **Target-vs-host WAV harness** (the gate). `fm1-emu --fwsc … --keys … --wav OUT.wav`
    already writes the I2S output (44.1 kHz stereo 16-bit, captured as `(w>>8)` of
    the DMA word → `q15<<7` becomes `q15/2`); the host already writes
-   `build/host/fourop_fm.wav` (raw Q15). Wire `fm1-emu` into `umetate emu --wav`
-   (done, `7fe09be`), drive both from one note/time list, pin MASTER full and account
-   for the `/2`, and assert **byte-exact** host == target (after scaling). **Note:**
-   the first run showed the MASTER gain is a *moving average* (`knob_avg` smoothed,
-   `master_q12` ramps 2048→4088), MIDI timing differs (host instant vs UART 320 µs/
-   byte), and the start offsets differ — so a byte-exact WAV diff needs a firmware
-   test hook (dump the raw pre-master output to a fixed RAM word and `--dump` it) or
-   a target-side asm-vs-C self-test reported on the console.
+   `build/host/fourop_fm.wav` (raw Q15). **Built instead a deterministic test-hook
+   gate (2026-11-02):** `platform.c` gains `#ifdef UMETATE_TEST_DUMP` (a `volatile`
+   `test_dump[512]` + a block counter) that records the raw *pre-master* output of
+   audio block `UMETATE_TEST_DUMP`; `umetate build --synth --test-dump N` sets
+   `-DUMETATE_TEST_DUMP=N`, and `umetate emu --dump 0x1c19400 512 --keys '800:k21,…'`
+   reads it back. The gate is a **before/after** diff (same firmware, same timing,
+   only the hand-asm toggle) — byte-identical, no master/timing/offset noise. (The
+   WAV path was tried first but the MASTER gain is a moving average ramping
+   2048→4088 and MIDI timing differs host-vs-UART, so it can't be a single scale.)
 2. **Manual MAC — `fm1_q15_mul` first.** **Investigated and dropped (2026-11-02):**
    the compiler already emits the native 64-bit MAC (`r9_r8 += R * R (s)`) — the
    4-instruction `fm1_q15_mul` is `r8=0x4000; r9=0; MAC; >>15`, and `r1_r0 = #i`

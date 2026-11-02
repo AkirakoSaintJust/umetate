@@ -205,7 +205,12 @@ def _synth_main(args: argparse.Namespace) -> int:
         str(args.model),
         "--profile",
         profile,
-        "--defs=-DUMETATE_SYNTH_APP=1",
+        "--defs=-DUMETATE_SYNTH_APP=1"
+        + (
+            f" -DUMETATE_TEST_DUMP={args.test_dump}"
+            if args.test_dump is not None
+            else ""
+        ),
         "--dsp-tus",
         f"gen/{name}_dsp.c",
         "gen/tables.c",
@@ -235,6 +240,13 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         help="compose a synth project (patch.json + panel.json + app.c) instead of "
         "the demo app",
+    )
+    parser.add_argument(
+        "--test-dump",
+        type=int,
+        metavar="BLOCK",
+        help="build the bit-exactness gate: -DUMETATE_TEST_DUMP=BLOCK (dump the raw "
+        "pre-master output of audio block BLOCK to `test_dump` for fm1-emu --dump)",
     )
     args = parser.parse_args(argv)
 
