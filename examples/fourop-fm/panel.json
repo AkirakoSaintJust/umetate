@@ -304,6 +304,16 @@
           ]
         },
         {
+          "id": "filter2",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "FILTER 2", "plain": true },
+            { "type": "param_row", "row": 3, "param": "filter2_on", "text": "ON" },
+            { "type": "param_row", "row": 4, "param": "cutoff2", "text": "CUTOFF" },
+            { "type": "param_row", "row": 5, "param": "res2", "text": "RES" },
+            { "type": "param_row", "row": 6, "param": "filter2_type", "text": "TYPE" }
+          ]
+        },
+        {
           "id": "f1-key-follow",
           "widgets": [
             { "type": "subheader", "row": 2, "text": "F1 KEY FOLLOW", "plain": true },
@@ -311,6 +321,14 @@
             { "type": "param_row", "row": 4, "param": "f1_cutoff_ks_hi", "text": "F1 CUTOFF KS HI" },
             { "type": "param_row", "row": 5, "param": "fenv_ks_lo", "text": "F-ENV RATE KS LO" },
             { "type": "param_row", "row": 6, "param": "fenv_ks_hi", "text": "F-ENV RATE KS HI" }
+          ]
+        },
+        {
+          "id": "f2-key-follow",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "F2 KEY FOLLOW", "plain": true },
+            { "type": "param_row", "row": 3, "param": "f2_cutoff_ks_lo", "text": "F2 CUTOFF KS LO" },
+            { "type": "param_row", "row": 4, "param": "f2_cutoff_ks_hi", "text": "F2 CUTOFF KS HI" }
           ]
         },
         {

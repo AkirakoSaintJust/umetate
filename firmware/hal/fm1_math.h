@@ -191,6 +191,14 @@ FM1_MATH_INLINE int32_t fm1_key_add(int32_t a, int32_t b)
     return s;
 }
 
+/* Clamp an int32 to the Q16 range [0, 65535] (the SVF cutoff coefficient). */
+FM1_MATH_INLINE int32_t fm1_clamp16(int32_t v)
+{
+    if (v < 0) return 0;
+    if (v > 65535) return 65535;
+    return v;
+}
+
 /* 4-input weighted sum against a routing-matrix row (a `const int16_t *` of four
    0/1 Q15 weights): out = a*w0 + b*w1 + c*w2 + d*w3. The multiply stays (not a
    boolean select): the weights are runtime table data, so a select is a

@@ -2774,29 +2774,28 @@ the two stay in sync).
 
 #### C. Web build — very important
 
-5. **Fix the web build.** The standalone wasm app fails to boot in the browser
-   (`fetch` of the wasm/tables does not resolve; a couple of controls appear, the
-   synth never starts). Investigate against the x0x FM-1 firmware's web-app approach
-   for ideas. Target: run the synth in the browser for the user's human trial runs
-   (fm1-emu chokes on their Windows machine at any MHz).
+5. **Fix the web build.** — **done.** The standalone wasm app is now a full
+   firmware emulator (`firmware.wasm` + the AudioWorklet page in `web_emu/`): it
+   boots, renders, and runs the synth in the browser (deep-check `--web` parity is
+   exact). The parity lab (`web.build`/`check_parity`) stays for CI.
 
 #### D. Popups and auto-close
 
-6. **Save popup auto-close.** The save popup silently closes (no write) after ~3 s
-   of idle.
+6. **Save popup auto-close.** — **done.** Every modal popup auto-closes after ~3 s
+   of no input (non-destructive, `ui_popup_cancel_all`); see §13.6 item 44.
 
-9. **Init patch / init part.** Fix SEL+SAVE (does not reset everything — the
-   algorithm is not reset). `init patch` asks for confirmation (a popup, ~3 s idle
-   auto-close without initialising). `init part` defaults: ALG 0, all FX off, P-ENV
-   off, all A-LFOs and the P-LFO off (DEPTH 0), every OP RATIO 1.00, LEVEL ~70–75,
-   FEEDBACK 0%, waveform sine, VOICE MODE poly, no portamento, unison voice count 1,
-   part name `INIT PART`, A-ENV organ (R1=R2=R3=R4=99, L1=L2=L3=99).
+9. **Init patch / init part.** — **done.** SEL+SAVE resets everything (including
+   the algorithm) and asks for confirmation via a popup; INIT PART resets one
+   part's timbre to the spec defaults (ALG 0, all FX off, P-ENV off, LFOs off,
+   OP RATIO 1.00 / LEVEL ~70 / FEEDBACK 0% / sine, VOICE MODE poly, no portamento,
+   stack count 1, name `INIT PART`, organ A-ENV) — `ui_act_init_patch` /
+   `ui_act_init_part` in `app.c`.
 
-12. **Save slot list.** The save slot chooser becomes a scrollable list of presets
-    (showing names) so the user sees what they overwrite; overwriting asks for
-    confirmation. Every load/save/init popup auto-closes after ~3 s idle WITHOUT
-    committing. Bake the auto-close (opt-in, settable duration) into the shipped
-    widget library.
+12. **Save slot list.** — **partial.** The save chooser is a two-row kind + slot
+    picker (single part / multi-patch), overwriting asks for confirmation, and
+    every load/save/init popup auto-closes (~3 s idle). *Open:* the chooser shows
+    the slot *number*, not the preset *name* — showing the name needs the app to
+    feed the framework the slot's stored name (an app↔framework callback), deferred.
 
 #### E. GLO menu
 

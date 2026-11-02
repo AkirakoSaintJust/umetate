@@ -3137,13 +3137,13 @@ def main() -> int:
     else:
         print("ok: the cc header carries the per-param [min, max] ranges")
 
-    # the patch-level `cc:` list limits the CC map (the fourop patch's 173 params
-    # overflow the CC space; it declares its 50-param surface).
+    # the patch-level `cc:` list limits the CC map (the fourop patch's params
+    # overflow the CC space; it declares its surface — the global FX + part 0).
     cm_sub = generate_cc_map(ffm)
-    if len(cm_sub["entries"]) == 56 and all(
+    if len(cm_sub["entries"]) == 58 and all(
         e["cc"] != 64 and not 120 <= e["cc"] <= 127 for e in cm_sub["entries"]
     ):
-        print("ok: the cc: list limits the map (56 exposed, reserved skipped)")
+        print("ok: the cc: list limits the map (58 exposed, reserved skipped)")
     else:
         print("FAIL: the cc: list does not limit the map as declared")
         failures += 1
