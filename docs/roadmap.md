@@ -3290,16 +3290,21 @@ ones. Envelopes/tremolo/key-vel follow are control-rate — not the target.
    routing table programmatically (all 8 algorithms match `_ROUTING`).
 2. **Phasor 32-bit.** `(int64)fm * 65536` → `(uint32_t)fm << 16`; the `phase + step`
    accumulation in `uint32` (mod-2³² wrap). Provably bit-exact.
+3. **Skip zero-gain (`vca`/`tl`).** When the block-derived effective level is 0 (the
+   per-op self-feedback with `feedback` = 0, or a `level` 0 operator) the two nested
+   multiplies are skipped via a perfectly-predicted `level_eff ? … : 0` — bit-exact,
+   since `fm1_q15_mul(x, 0)` = 0 and `fm1_level_gain[0] >> 2` = 0.
 
-**Measured result: 60% → 53% ISR @ 320 MHz** (190.5 → 169.3 M instr/s), no halt,
-full-scale audio, `deep-check --all` green (host ↔ wasm parity exact). The
-optimizations cleared ~11.7% — most of the ~18% goal, but **not yet 49%**.
+**Measured result: 60% → 53% → 51% ISR @ 320 MHz** (190.5 → 169.3 → 163.3 M
+instr/s), no halt, full-scale audio, `deep-check --all` green (host ↔ wasm parity
+exact). The three optimizations cleared ~15% — close to the ~18% goal, but **not yet
+49%**.
 
-**Remaining gap (53% → 49%).** The next 4 points are the `tl`/`vca`/`fmvel` nested
-multiplies (~5 per operator) plus the oscillator's mip-index conditional — none are
-bit-exact-reducible further at this level (the `tl`/`vca` `mul(mul(audio,cv),gain)`
-double-rounding is inherent, and `mip` is carried through the audio loop via the
-phasor's output local). The levers left are:
+**Remaining gap (51% → 49%).** The `tl`/`fmvel` multiplies (not zero-gain in the
+default) are the last hot multiplies; the `tl` `mul(mul(audio,cv),gain)`
+double-rounding is inherent (not bit-exact-reducible), and the `fmvel` × unity
+(`vel_fm` 0 → 32768) can't be skipped bit-exactly for arbitrary audio. The levers
+left are:
 - **P2-8 hardware acceleration** — hand-asm `fm1_dsp_kernels.h` VLIW/`rep` loops (the
   compiler's clang 4.0.1 emits neither); the documented next step, a larger change.
 - **Skip silent operators** (bit-exact; 0% in the default all-active patch).
