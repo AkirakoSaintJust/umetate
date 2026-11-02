@@ -367,6 +367,7 @@ def build_app(synth_dir: Path, out: Path) -> int:
         generate,
         generate_cc_header,
         generate_dsp_header,
+        generate_glue,
         generate_synth_header,
         generate_tables,
         param_ids,
@@ -390,6 +391,7 @@ def build_app(synth_dir: Path, out: Path) -> int:
     outputs: dict[str, str] = {
         f"{name}_dsp.c": generate(patch),
         "dsp.h": generate_dsp_header(patch),
+        "glue.h": generate_glue(patch),
         "tables.h": tables_h,
         "tables.c": tables_c,
         "panel.h": generate_panel(panel, ids, meta),

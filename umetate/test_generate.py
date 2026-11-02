@@ -25,6 +25,7 @@ from ._schema import Patch, as_panel, as_patch
 from .generate import (
     generate,
     generate_dsp_header,
+    generate_glue,
     generate_params,
     generate_tables,
     load_library,
@@ -3087,6 +3088,26 @@ def main() -> int:
         failures += 1
     else:
         print("ok: synth_layout.h carries the runtime constants")
+
+    # the generated glue.h is the app-transport layer: the seam adapters + app_audio.
+    glue = generate_glue(PARTS_PATCH)
+    if (
+        "parts_test_glue_note_on" in glue
+        and "parts_test_glue_note_on_ch" in glue
+        and "static void app_audio(int32_t *out, uint32_t n)" in glue
+        and "parts_test_dsp_render" in glue
+        and "(void)n;" in glue  # no taps -> the dual-core render takes only `out`
+    ):
+        print("ok: glue.h carries the seam adapters + app_audio")
+    else:
+        print("FAIL: glue.h is missing the seam adapters or app_audio")
+        failures += 1
+    glue_taps = generate_glue({**PARTS_PATCH, "taps": ["osc.audio"]})
+    if "scope_push_ch" in glue_taps and "N_TAP_CH" in glue_taps:
+        print("ok: glue.h pushes the per-op scope taps when the patch declares taps")
+    else:
+        print("FAIL: glue.h does not push the scope taps")
+        failures += 1
 
     # the fixed cc map: one CC per param, ascending from base 16, skipping the
     # reserved CCs (sustain 64 + the channel-mode 120..127).

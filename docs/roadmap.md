@@ -1292,8 +1292,8 @@ CLI, RIB rails, agent, tutorial, and docs all follow this model.
 | 2 · Macro | `modules/macros/<m>/macro.json` | an expanded subgraph | `modules/macros/` |
 | 3 · Patch | `patch.json` | `dsp.c` (the `<synth>_dsp_*` seam) | the project |
 | 4 · Panel | `panel.json` | `panel.h` (`ui_tables`) | the project |
-| 5 · Generator | — (the AOT compiler) | `dsp.c`, `panel.h`, `params.json`, `tables.{c,h}`, `cc-map`, `sysex-layout` | `umetate/` |
-| 6 · Firmware | `app.c` (the app glue: `app_audio` + `app_main` + the service contexts) | the device binary (via `umetate build --synth`) | the project + `firmware/` |
+| 5 · Generator | — (the AOT compiler) | `dsp.c`, `dsp.h`, `glue.h`, `panel.h`, `params.json`, `tables.{c,h}`, `cc-map`, `sysex-layout` | `umetate/` |
+| 6 · Firmware | `app.c` (the instrument glue: `app_main` + `app_idle` + the `ui_act_*` hooks + the service contexts) | the device binary (via `umetate build --synth`) | the project + `firmware/` |
 
 **Level 1 — Node** is *one DSP algorithm*. `node.json` declares `ins`/`outs`/
 `params`/`state` with Q-formats; `node.c` is the body template with the
@@ -1338,10 +1338,13 @@ commands), `synth_runtime` (a multi-patch applies its parts through `set_param`)
 over `presets.c` (the 128+64-slot record store, chunked across the measured slot area).
 The *per-voice* allocator (assignment, mono/unison/legato/portamento/retrigger/
 glide, `parts:`) is **generator rails** (`umetate/_voice.py`, F3) — not
-hand-written C. A synth project supplies only the **app glue** (`app.c`:
-`app_audio` + `app_main` + `app_idle` + the `ui_act_*` hooks + the three service
-contexts), and `umetate build --synth <dir>` composes framework + generated code
-+ glue into the firmware (F7, done).
+hand-written C. The **transport glue** (the dual-core-aware seam adapters
+`<name>_glue_*` + the frozen `app_audio`, including the scope-tap push) is now
+**generated** too (`glue.h`, `generate_glue`) — so a synth project supplies only
+the *instrument-specific* glue (`app.c`: `app_main` + `app_idle` + the `ui_act_*`
+hooks + the three service contexts, which bind the generated adapters to the
+framework services + the app's banks). `umetate build --synth <dir>` composes
+framework + generated code + glue into the firmware (F7, done).
 
 **The multitimbral patch** (F3). `parts: N` declares N independent timbres. Each
 part is its own parameter set (the id space is `part × param`) plus routing
@@ -1360,8 +1363,10 @@ span 3 slots, 64 multi patches fit 1.
 
 **The gaps** (what's still hand-written or missing): the docs/tutorial/skill
 finalization (F8); the **dev-skill GUI interview revamp** (L10 — raise its minimum
-spec depth to the fourop-fm restructure spec); device acceptance, flash, debrick,
-the FPU probe, and the clock soak stay blocked until hardware arrives.
+spec depth to the fourop-fm restructure spec); the **preset-browser orchestration**
+(the browser open/scroll/auto-load state machine is still app-side; the transport
+seam is now generated `glue.h`); device acceptance, flash, debrick, the FPU probe,
+and the clock soak stay blocked until hardware arrives.
 
 **Universal vs fourop-fm-specific.** Of the four-op-FM work, the *universal*
 tooling is: `gain`/`cmul`/`csum` (the control/audio-separated gain family),

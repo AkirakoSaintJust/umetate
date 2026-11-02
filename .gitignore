@@ -29,6 +29,7 @@ dist/
 firmware/gen/*_dsp.c
 firmware/gen/app.c
 firmware/gen/dsp.h
+firmware/gen/glue.h
 firmware/gen/cc_map.h
 firmware/gen/synth_layout.h
 firmware/gen/panel.h

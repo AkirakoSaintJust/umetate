@@ -10,6 +10,7 @@
  * multi patch / SysEx). The engine owns the param truth; the panel's values are
  * mirrored in and out every pass. */
 #include "dsp.h"            /* the generated seam prototypes (gen/dsp.h) */
+#include "glue.h"           /* the generated seam adapters + app_audio (gen/glue.h) */
 #include "cc_map.h"         /* the generated cc -> param + [min, max] tables */
 #include "synth_layout.h"   /* the generated model byte + param/part counts */
 #include "panel.h"          /* the generated UI tables (gen/panel.h) */
@@ -32,48 +33,12 @@ static uint32_t idle_ok, bank_dirty, multi_dirty, set_dirty, t_change;
 static uint8_t part_slot_cur[SYNTH_N_PARTS];
 static uint32_t cur_slot;                      /* the loaded multi-patch slot (0 = boot) */
 
-/* ---- the engine seam wrappers (the synth_midi / synth_runtime seams). Dual-core
- * (D3, the default): core 0 pushes note events, core 1 allocates + renders (the
- * generated <name>_render_block). Single-core fallback (or CPU1 gave up): direct. */
-static void note_on_seam(uint32_t note, uint32_t velocity, uint32_t channel)
-{
-#if FM1_CPU1_USED
-    if (fm1_c1_on) {
-        dsp_cmd_push(UMETATE_DSP_CMD_NOTE_ON, (uint8_t)(channel & 0xFFu),
-                     (uint16_t)note, (uint16_t)velocity);
-        return;
-    }
-#endif
-    fourop_fm_dsp_note_on_ch(note, velocity, channel);
-}
-static void note_off_seam(uint32_t note)
-{
-#if FM1_CPU1_USED
-    if (fm1_c1_on) {
-        dsp_cmd_push(UMETATE_DSP_CMD_NOTE_OFF, 0xFFu, (uint16_t)note, 0);
-        return;
-    }
-#endif
-    fourop_fm_dsp_note_off(note);
-}
-static void all_off_seam(void)
-{
-#if FM1_CPU1_USED
-    if (fm1_c1_on) {
-        dsp_cmd_push(UMETATE_DSP_CMD_ALL_OFF, 0xFFu, 0, 0);
-        return;
-    }
-#endif
-    fourop_fm_dsp_all_notes_off();
-}
-static int set_param_seam(uint32_t id, int32_t value)
-{
-    return fourop_fm_dsp_set_param(id, value);
-}
-static void bend_seam(uint32_t bend) { fourop_fm_dsp_set_bend_q16(bend); }
-
+/* ---- the engine seam + the audio callback are generated glue (gen/glue.h): the
+ * dual-core-aware adapters (`<name>_glue_*`) + `app_audio`. The app keeps only the
+ * contexts, which bind the adapters to the framework services + the app's banks. */
 static synth_midi_ctx midi_ctx = {
-    note_on_seam, note_off_seam, all_off_seam, set_param_seam, bend_seam,
+    fourop_fm_glue_note_on_ch, fourop_fm_glue_note_off, fourop_fm_glue_all_off,
+    fourop_fm_glue_set_param, fourop_fm_glue_bend,
     cc_to_param, param_min, param_max,
 };
 static synth_sysex_ctx sysex_ctx = {
@@ -81,33 +46,9 @@ static synth_sysex_ctx sysex_ctx = {
     part_bank, multi_bank, settings,
 };
 static synth_runtime_ctx runtime_ctx = {
-    SYNTH_N_PARAMS, SYNTH_N_PARTS, SYNTH_ROUTING_BASE, set_param_seam,
+    SYNTH_N_PARAMS, SYNTH_N_PARTS, SYNTH_ROUTING_BASE, fourop_fm_glue_set_param,
     part_bank, multi_bank,
 };
-
-/* ---- audio callback (split-core by default: CPU0 drains + renders its range,
-   dispatching CPU1 for the other half; single-core fallback) */
-static void app_audio(int32_t *out, uint32_t n)
-{
-#if FM1_CPU1_USED
-    fourop_fm_render_block((uint32_t)(uintptr_t)out);   /* CPU0: drain + split render */
-#else
-    fourop_fm_dsp_render(out, n);
-#endif
-    /* the per-op scope taps: channel 0 = the final mix (platform.c), channels
-     * 1..N_TAP_CH = the 4 operators x 2 parts (the HOME 4-op scope/spectro). */
-    for (uint32_t k = 0; k < fourop_fm_N_TAP_CH; k++)
-        scope_push_ch(1u + k, fourop_fm_dsp_tap(k), n);
-}
-
-static int quiet_seam(void)
-{
-#if FM1_CPU1_USED
-    return (int)dsp_status.quiet;
-#else
-    return fourop_fm_dsp_quiet();
-#endif
-}
 
 /* ---- the panel <-> engine mirror: the engine owns the truth */
 static int32_t last_ui[UI_PARAM_MAX];
@@ -139,34 +80,16 @@ static void ui_sync(void)
 /* ---- the app's action hooks (called by ui.c) */
 void ui_act_note_on(uint8_t note, uint8_t vel)
 {
-#if FM1_CPU1_USED
-    if (fm1_c1_on) {
-        dsp_cmd_push(UMETATE_DSP_CMD_NOTE_ON, 0xFFu, note, vel);
-        return;
-    }
-#endif
-    fourop_fm_dsp_note_on(note, vel);                /* omni: every matching part */
+    fourop_fm_glue_note_on(note, vel);               /* omni: every matching part */
 }
 void ui_act_note_off(uint8_t note)
 {
-#if FM1_CPU1_USED
-    if (fm1_c1_on) {
-        dsp_cmd_push(UMETATE_DSP_CMD_NOTE_OFF, 0xFFu, note, 0);
-        return;
-    }
-#endif
-    fourop_fm_dsp_note_off(note);
+    fourop_fm_glue_note_off(note);
 }
 void ui_act_set_step(uint8_t step) { (void)step; }
 void ui_act_panic(void)
 {
-#if FM1_CPU1_USED
-    if (fm1_c1_on) {
-        dsp_cmd_push(UMETATE_DSP_CMD_ALL_OFF, 0xFFu, 0, 0);
-        return;
-    }
-#endif
-    fourop_fm_dsp_all_notes_off();
+    fourop_fm_glue_all_off();
 }
 void ui_act_play(void) { }
 void ui_act_stop(void) { }
@@ -440,7 +363,7 @@ static void app_init(void)
     if (preset_settings_load(settings) || !preset_settings_unpack(settings, &bc, &mt))
         bc = 0, mt = 0;
     if (bc >= 0 && bc <= 15)
-        set_param_seam(SYNTH_ROUTING_BASE + 0u * SYNTH_N_PARTS + 0u, bc);  /* part 0's channel */
+        fourop_fm_glue_set_param(SYNTH_ROUTING_BASE + 0u * SYNTH_N_PARTS + 0u, bc);  /* part 0's channel */
     /* master_tune has no pitch-tune param in this patch; it rides along for later */
     (void)mt;
     memcpy(saved_settings, settings, ST_RECORD);
@@ -815,7 +738,7 @@ static void app_step(void)
     ui_redraw(fm1_ms);
     idle_ok = 0;
 
-    if (quiet_seam() && fm1_ms - t_change > 2000u) {
+    if (fourop_fm_glue_quiet() && fm1_ms - t_change > 2000u) {
         if (bank_dirty) {                          /* silent-only saves (the store erases) */
             preset_part_bank_save(part_bank, SYNTH_N_PARAMS);
             bank_dirty = 0;
