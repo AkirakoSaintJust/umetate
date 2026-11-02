@@ -369,11 +369,15 @@ def _render_voices_block(
                 lines.append(f"        {i.state_ref(field, 'v')} = {expr};")
         lines.append("    }")
 
-    # audio loop
-    lines.append(f"    for (uint32_t f = b; f < b + {cb}u && f < frames; f++) {{")
-    lines.append("        bus[f - b] = 0;")
-    lines.append("        for (uint32_t v = v0; v < v1; v++) {")
-    lines.append("            if (!voice_gate[v] && !voice_rel[v]) continue;")
+    # audio loop — voice-outer (§13.9 3c): the per-voice block-constant values
+    # (`step`/`base`/`mip`/`bl`/levels/cvs) and the delay1/phase state are
+    # loop-invariant over `f`, so with the voice loop outside the sample loop the
+    # compiler hoists them into registers (no per-sample SoA reload), and the
+    # delay1/phase stay live in registers across the sample loop.
+    lines.append(f"    for (uint32_t i = 0; i < {cb}u; i++) bus[i] = 0;")
+    lines.append("    for (uint32_t v = v0; v < v1; v++) {")
+    lines.append("        if (!voice_gate[v] && !voice_rel[v]) continue;")
+    lines.append(f"        for (uint32_t f = b; f < b + {cb}u && f < frames; f++) {{")
 
     breakers = [i for i in voice_audio if i.is_breaker()]
     normal = [i for i in voice_audio if not i.is_breaker()]
