@@ -63,9 +63,14 @@
   <span id="alert" role="alert"></span>
   <button id="mute" type="button" aria-pressed="false">Mute</button>
 </div>
-<p style="color:#9aa1a9; font-size:.9rem; margin-top:.9rem">
-  Knobs: drag up/down or use the scroll wheel. Buttons/keys: click, or use the keyboard
-  (<kbd>Tab</kbd> to focus, <kbd>Space</kbd>/<kbd>Enter</kbd> to press, arrow keys turn a knob).</p>
+<p style="color:#9aa1a9; font-size:.85rem; line-height:1.55; margin-top:.9rem; max-width:60rem">
+  <kbd>Tab</kbd> moves between the knobs, buttons and keys. On a knob, the arrow keys turn it
+  (<kbd>Page Up</kbd> / <kbd>Page Down</kbd> faster). On a button or key, <kbd>Space</kbd> or
+  <kbd>Enter</kbd> presses it for as long as you hold it; <kbd>Shift</kbd>+<kbd>Space</kbd> keeps
+  a button held down until you press it again.<br>
+  While the FM-1 has focus, shortcuts play it: white keys 1-8 Q-I, 9-16 A-K; black keys 1-11
+  1-0, -; <kbd>Space</kbd> PLAY, <kbd>Enter</kbd> REC, <kbd>Shift</kbd> SEL (held),
+  <kbd>Esc</kbd> HOME, <kbd>Z</kbd> / <kbd>X</kbd> OCT- / OCT+, ↑ ↓ turn SELECT.</p>
 </main>
 
 <script type="module">
@@ -156,7 +161,8 @@ function hit(c, kind, name) {
   const b = c.g.getBBox(), d = document.createElement(kind === "knob" ? "div" : "button");
   d.className = "hit" + (kind === "knob" ? " knob" : "");
   Object.assign(d.style, { left: `${b.x / 10}%`, top: `${b.y / 6.4}%`, width: `${b.width / 10}%`, height: `${b.height / 6.4}%` });
-  if (kind !== "knob") d.type = "button";
+  if (kind === "knob") { d.tabIndex = 0; d.setAttribute("role", "slider"); }
+  else d.type = "button";
   d.setAttribute("aria-label", name);
   d.addEventListener("touchstart", (e) => e.preventDefault(), { passive: false });
   controls.append(d);
@@ -169,11 +175,11 @@ for (const [n] of [...ROW1, ...ROW2]) hit(buttons[n], "btn", n);
 for (let i = 0; i < 27; i++) hit(keys[i], "key", "Key " + (i + 1));
 
 // ---- state and input
-let node = null, gain = null, btnMask = 0, keyMask = 0, litButtons = 0, dimKeys = 0;
+let node = null, gain = null, btnMask = 0, keyMask = 0, litButtons = 0, dimKeys = 0, latched = 0;
 const btnHeld = new Map(), keyHeld = new Map();
 function send(m) { if (node) node.port.postMessage(m); }
 function syncButtons() {
-  let m = 0;
+  let m = latched;
   for (const b of btnHeld.values()) m |= 1 << b;
   if (m !== btnMask) { btnMask = m; send({ type: "buttons", mask: m }); }
   for (const b of Object.values(buttons)) b.g.classList.toggle("lit", !!(litButtons & (1 << b.bit)));
@@ -241,7 +247,11 @@ for (const b of Object.values(buttons)) {
     setTimeout(() => { btnHeld.delete(id); syncButtons(); }, 120);
   });
   b.hit.addEventListener("keydown", (e) => {
-    if (e.key === " " || e.key === "Enter") {
+    if (e.shiftKey && (e.key === " " || e.key === "Enter")) {
+      e.preventDefault();
+      latched ^= 1 << b.bit;                 // Shift+Space: hold until pressed again
+      syncButtons();
+    } else if (e.key === " " || e.key === "Enter") {
       e.preventDefault();
       keyAt.t = performance.now();
       if (!e.repeat) { btnHeld.set("k" + b.bit, b.bit); syncButtons(); }
@@ -277,6 +287,7 @@ const KEYMAP = {};
 KEYMAP.Minus = { key: BLACK[10] };
 Object.assign(KEYMAP, {
   Space: { btn: BTN.PLAY }, Enter: { btn: BTN.REC }, Escape: { btn: BTN.HOME },
+  ShiftLeft: { btn: BTN.SEL }, ShiftRight: { btn: BTN.SEL },
   KeyZ: { btn: BTN.OCTd }, KeyX: { btn: BTN.OCTu },
 });
 addEventListener("keydown", (e) => {
