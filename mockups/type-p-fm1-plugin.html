@@ -116,15 +116,13 @@
   }
   .sq.active { background: var(--pink); color: #000; border: 1px solid var(--pink); }
   .sq.muted { background: #000; color: var(--pink); border: 1px solid var(--pink); }
-  .mcell { display: flex; flex-direction: column; align-items: center; gap: 2px; }
   .mutebox {
-    width: 26px; height: 22px; display: flex; align-items: center; justify-content: center;
-    font-family: var(--font-ui); font-size: 14px; line-height: 1; cursor: pointer;
-    background: var(--pink); color: #000; border: 1px solid var(--pink); padding: 0;
+    min-width: 30px; height: 22px; display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-ui); font-size: 10px; line-height: 1; cursor: pointer;
+    background: var(--pink); color: #000; border: 1px solid var(--pink); padding: 0 4px;
   }
   .mutebox.muted { background: #000; color: var(--pink); }
   .mutebox:hover { border-color: var(--pink2); }
-  .mcap { font-size: 7px; color: var(--faint); letter-spacing: .04em; }
   .tgroup { display: flex; align-items: center; gap: 6px; }
   .tlabel { font-family: var(--font-head); font-size: 7px; letter-spacing: .14em; color: var(--faint); margin-right: 3px; }
   .tdiv { width: 1px; height: 26px; background: var(--line2); margin: 0 6px; }
@@ -214,6 +212,7 @@
   .envbox .egrid { stroke: #1a1a1a; stroke-width: 1; }
   .envbox .ecurve { fill: none; stroke: var(--purple); stroke-width: 1.4; }
   .envbox .ecurve2 { fill: none; stroke: var(--green); stroke-width: 1.4; }
+  .envbox .ezero { stroke: #3a3a3a; stroke-width: 1; stroke-dasharray: 2 3; }
 
   /* ---------------- operators ---------------- */
   .ops-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
@@ -265,7 +264,13 @@
   }
   .fxmod-grid .card { display: flex; flex-direction: column; }
   .fxmod-grid .span2 { grid-column: span 2; }
-  .fxmod-grid .span2 .knobs { justify-content: space-between; }
+  .kvcols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; flex: 1; }
+  .kvcol { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .kvcol.off { opacity: .45; }
+  .kvhead { font-family: var(--font-head); font-size: 8px; letter-spacing: .08em; color: var(--dim); display: flex; justify-content: space-between; align-items: center; }
+  .penvcard .knobs { gap: 6px 4px; }
+  .penvcard .knob { width: 46px; }
+  .penvcard .dial, .penvcard .dial svg { width: 38px; height: 38px; }
 
   /* ---------------- status strip ---------------- */
   .status { display: flex; align-items: center; justify-content: flex-start;
@@ -557,8 +562,51 @@
   ];
   const PART_SLOTS = [null, null, null, null, null, null, null, null];
   const PITCH_LFO = { rate: 0, depth: 0, wave: "sine" };
-  const PITCH_ENV = { amount: 0, rate: 50, r: [99, 40, 30, 60], l: [60, 25, 0] };
+  const PITCH_ENV = { on: false, r: [80, 60, 50, 80], l: [2, -1, 0] };
   const FILTER_ENV = { r: [99, 50, 40, 60], l: [99, 40, 0] };
+  const KEY_FOLLOW = {
+    bp: 60,
+    sel: 0,
+    targets: [
+      { name: "op1 level", lo: 0, hi: 0 },
+      { name: "op1 feedback", lo: 0, hi: 0 },
+      { name: "op1 amp env", lo: 0, hi: 0 },
+      { name: "op2 level", lo: 0, hi: 0 },
+      { name: "op2 feedback", lo: 0, hi: 0 },
+      { name: "op2 amp env", lo: 0, hi: 0 },
+      { name: "op3 level", lo: 0, hi: 0 },
+      { name: "op3 feedback", lo: 0, hi: 0 },
+      { name: "op3 amp env", lo: 0, hi: 0 },
+      { name: "op4 level", lo: 0, hi: 0 },
+      { name: "op4 feedback", lo: 0, hi: 0 },
+      { name: "op4 amp env", lo: 0, hi: 0 },
+      { name: "pitch env", lo: 0, hi: 0 },
+      { name: "filter 1 cutoff", lo: 0, hi: 0 },
+      { name: "filter 2 cutoff", lo: 0, hi: 0 },
+      { name: "filter env", lo: 0, hi: 0 }
+    ]
+  };
+  const VEL_FOLLOW = {
+    on: true,
+    sel: 0,
+    targets: [
+      { name: "op1 level", amount: 0 },
+      { name: "op1 feedback", amount: 0 },
+      { name: "op1 amp env", amount: 0 },
+      { name: "op2 level", amount: 0 },
+      { name: "op2 feedback", amount: 0 },
+      { name: "op2 amp env", amount: 0 },
+      { name: "op3 level", amount: 0 },
+      { name: "op3 feedback", amount: 0 },
+      { name: "op3 amp env", amount: 0 },
+      { name: "op4 level", amount: 0 },
+      { name: "op4 feedback", amount: 0 },
+      { name: "op4 amp env", amount: 0 },
+      { name: "pitch env", amount: 0 },
+      { name: "filter 1 cutoff", amount: 0 },
+      { name: "filter env", amount: 0 }
+    ]
+  };
   const VOICE = { mode: "poly", unison: 1, detune: 0, porta: 0 };
 
   let clipboard = null;
@@ -615,6 +663,7 @@
       acts.append(cpy, pst);
       head.appendChild(acts);
     }
+    if (opts.headExtra) head.appendChild(opts.headExtra);
     card.appendChild(head);
     if (opts.before) card.appendChild(opts.before);
     card.appendChild(knobRow(bindings));
@@ -686,6 +735,28 @@
     return '<svg viewBox="0 0 ' + W + " " + H + '">' +
       '<line class="egrid" x1="6" y1="' + (H - 3) + '" x2="' + (W - 6) + '" y2="' + (H - 3) + '"/>' +
       '<path class="' + (cls || "ecurve") + '" d="' + d + '"/></svg>';
+  }
+
+  function noteName(n) {
+    const names = ["c", "c#", "d", "d#", "e", "f", "f#", "g", "g#", "a", "a#", "b"];
+    return names[n % 12] + (Math.floor(n / 12) - 1);
+  }
+  function bipFmt(v) { return (v > 0 ? "+" : "") + v + "%"; }
+
+  function penvSvg(r, l) {
+    const W = 240, H = 62, mid = H / 2;
+    const widths = r.map(function (rr) { return 8 + (99 - rr) / 99 * 26; });
+    const total = widths.reduce(function (a, b) { return a + b; }, 0);
+    const scale = (W - 12) / total;
+    let x = 6, d = "M 6 " + mid;
+    [l[0], l[1], l[2], 0].forEach(function (lev, i) {
+      x += widths[i] * scale;
+      const y = mid - lev / 12 * (mid - 5);
+      d += " L " + x.toFixed(1) + " " + y.toFixed(1);
+    });
+    return '<svg viewBox="0 0 ' + W + " " + H + '">' +
+      '<line class="ezero" x1="6" y1="' + mid + '" x2="' + (W - 6) + '" y2="' + mid + '"/>' +
+      '<path class="ecurve" d="' + d + '"/></svg>';
   }
 
   /* alg diagrams: white = modulator, pink = carrier */
@@ -966,7 +1037,7 @@
       const ll = document.createElement("span"); ll.className = "lbl"; ll.textContent = "WAVE";
       lfoRow.append(ll, makeSelect(LFO_WAVES, o.lfoWave, function (v) { o.lfoWave = v; }));
 
-      col.appendChild(makeSection("PITCH", "pitch", [
+      col.appendChild(makeSection("OSCILLATOR", "osc", [
         b(o, "ratio", "RATIO", 0.5, 8, function (v) { return v.toFixed(2); }, 0.01),
         b(o, "detune", "DETUNE", -50, 50, function (v) { return (v > 0 ? "+" : "") + v + "c"; }, 1),
         b(o, "level", "LEVEL", 0, 99, function (v) { return v; }, 1),
@@ -1074,19 +1145,72 @@
 
     const penvBox = document.createElement("div");
     penvBox.className = "envbox";
-    penvBox.innerHTML = envSvg(PITCH_ENV.r, PITCH_ENV.l);
-    wrap.appendChild(makeSection("PITCH ENVELOPE", "penv", [
-      b(PITCH_ENV, "amount", "AMOUNT", -100, 100, function (x) { return (x > 0 ? "+" : "") + x + "c"; }, 1),
-      b(PITCH_ENV, "rate", "RATE", 0, 99, function (x) { return x; }, 1)
-    ], { before: penvBox, copy: false }));
+    penvBox.innerHTML = penvSvg(PITCH_ENV.r, PITCH_ENV.l);
+    const penvOn = makeToggle("on", PITCH_ENV.on, function (v) { PITCH_ENV.on = v; rerender(); });
+    const penvCard = makeSection("PITCH ENVELOPE", "penv", [
+      ba(PITCH_ENV, "r", 0, "R1", 0, 99, function (v) { return v; }, 1),
+      ba(PITCH_ENV, "r", 1, "R2", 0, 99, function (v) { return v; }, 1),
+      ba(PITCH_ENV, "r", 2, "R3", 0, 99, function (v) { return v; }, 1),
+      ba(PITCH_ENV, "r", 3, "R4", 0, 99, function (v) { return v; }, 1),
+      ba(PITCH_ENV, "l", 0, "L1", -12, 12, function (v) { return (v > 0 ? "+" : "") + v + "st"; }, 1),
+      ba(PITCH_ENV, "l", 1, "L2", -12, 12, function (v) { return (v > 0 ? "+" : "") + v + "st"; }, 1),
+      ba(PITCH_ENV, "l", 2, "L3", -12, 12, function (v) { return (v > 0 ? "+" : "") + v + "st"; }, 1)
+    ], { before: penvBox, headExtra: penvOn, copy: false });
+    penvCard.classList.add("penvcard");
+    wrap.appendChild(penvCard);
 
-    const follow = makeSection("KEY / VELOCITY FOLLOW", "follow", [
-      b({ v: 0 }, "v", "KEY LO", -100, 100, function (x) { return (x > 0 ? "+" : "") + x + "%"; }, 1),
-      b({ v: 0 }, "v", "KEY HI", -100, 100, function (x) { return (x > 0 ? "+" : "") + x + "%"; }, 1),
-      b({ v: 0 }, "v", "VEL", -100, 100, function (x) { return (x > 0 ? "+" : "") + x + "%"; }, 1)
-    ], { copy: false });
-    follow.classList.add("span2");
-    wrap.appendChild(follow);
+    const kvCard = document.createElement("div");
+    kvCard.className = "card span2 kvcard";
+    const kvHead = document.createElement("div");
+    kvHead.className = "sec-head";
+    kvHead.innerHTML = "<h3>key / velocity follow</h3>";
+    kvCard.appendChild(kvHead);
+    const cols = document.createElement("div");
+    cols.className = "kvcols";
+
+    const kcol = document.createElement("div");
+    kcol.className = "kvcol";
+    const kh = document.createElement("div");
+    kh.className = "kvhead"; kh.textContent = "key follow";
+    kcol.appendChild(kh);
+    kcol.appendChild(knobRow([b(KEY_FOLLOW, "bp", "BREAKPOINT", 0, 127, noteName, 1)]));
+    const kt = KEY_FOLLOW.targets[KEY_FOLLOW.sel];
+    const krow = document.createElement("div");
+    krow.className = "inline";
+    const kl = document.createElement("span"); kl.className = "lbl"; kl.textContent = "target";
+    krow.append(kl, makeSelect(KEY_FOLLOW.targets.map(function (t) { return t.name; }), kt.name, function (v) {
+      KEY_FOLLOW.sel = KEY_FOLLOW.targets.findIndex(function (t) { return t.name === v; });
+      rerender();
+    }));
+    kcol.appendChild(krow);
+    kcol.appendChild(knobRow([
+      b(kt, "lo", "BELOW", -100, 100, bipFmt, 1),
+      b(kt, "hi", "ABOVE", -100, 100, bipFmt, 1)
+    ]));
+    cols.appendChild(kcol);
+
+    const vcol = document.createElement("div");
+    vcol.className = "kvcol" + (VEL_FOLLOW.on ? "" : " off");
+    const vh = document.createElement("div");
+    vh.className = "kvhead";
+    const vl = document.createElement("span"); vl.textContent = "velocity follow";
+    const von = makeToggle("on", VEL_FOLLOW.on, function (v) { VEL_FOLLOW.on = v; rerender(); });
+    vh.append(vl, von);
+    vcol.appendChild(vh);
+    const vt = VEL_FOLLOW.targets[VEL_FOLLOW.sel];
+    const vrow = document.createElement("div");
+    vrow.className = "inline";
+    const vll = document.createElement("span"); vll.className = "lbl"; vll.textContent = "target";
+    vrow.append(vll, makeSelect(VEL_FOLLOW.targets.map(function (t) { return t.name; }), vt.name, function (v) {
+      VEL_FOLLOW.sel = VEL_FOLLOW.targets.findIndex(function (t) { return t.name === v; });
+      rerender();
+    }));
+    vcol.appendChild(vrow);
+    vcol.appendChild(knobRow([b(vt, "amount", "AMOUNT", -100, 100, bipFmt, 1)]));
+    cols.appendChild(vcol);
+
+    kvCard.appendChild(cols);
+    wrap.appendChild(kvCard);
     return wrap;
   }
 
@@ -1155,33 +1279,23 @@
     const g1 = document.createElement("div");
     g1.className = "tgroup";
     OPS.forEach(function (o) {
-      const cell = document.createElement("div");
-      cell.className = "mcell";
       const btn = document.createElement("button");
       btn.className = "mutebox" + (o.mute ? " muted" : "");
-      btn.textContent = "\u732b";
+      btn.textContent = o.name;
       btn.title = (o.mute ? "unmute " : "mute ") + o.name;
       btn.addEventListener("click", function () { setOpMute(o.name, !o.mute); });
-      const cap = document.createElement("span");
-      cap.className = "mcap"; cap.textContent = o.name;
-      cell.append(btn, cap);
-      g1.appendChild(cell);
+      g1.appendChild(btn);
     });
     const d1 = document.createElement("div");
     d1.className = "tdiv";
     g1.appendChild(d1);
     PARTS.forEach(function (p, i) {
-      const cell = document.createElement("div");
-      cell.className = "mcell";
       const btn = document.createElement("button");
       btn.className = "mutebox" + (p.mute ? " muted" : "");
-      btn.textContent = "\u732b";
+      btn.textContent = "p" + (i + 1);
       btn.title = (p.mute ? "unmute " : "mute ") + "part " + (i + 1);
       btn.addEventListener("click", function () { setPartMute(i, !p.mute); });
-      const cap = document.createElement("span");
-      cap.className = "mcap"; cap.textContent = "p" + (i + 1);
-      cell.append(btn, cap);
-      g1.appendChild(cell);
+      g1.appendChild(btn);
     });
     toolbarEl.appendChild(g1);
 
