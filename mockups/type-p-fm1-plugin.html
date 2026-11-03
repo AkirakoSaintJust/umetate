@@ -1,0 +1,869 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Type P.fm1 — plugin GUI mockup</title>
+<style>
+  :root {
+    --bg: #000000;
+    --surface: #0a1414;
+    --panel: #0c1717;
+    --panel2: #0f1c1c;
+    --line: #172626;
+    --line2: #223333;
+    --text: #e8e8e8;
+    --dim: #7f968a;
+    --faint: #4d6157;
+    --muted: #5ca666;
+    --purple: #c780ff;
+    --pink: #ff4d94;
+    --accent: #ff2e7e;
+    --select: #7ec8ff;
+    --red: #ff3c3c;
+    --popup: #1e1e1e;
+    --white: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    background: radial-gradient(1200px 720px at 50% -8%, #121a1a, #040606 72%);
+    font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--text);
+    display: flex; align-items: center; justify-content: center;
+    padding: 30px; min-height: 100vh;
+  }
+  .plugin {
+    width: 1080px; max-width: 100%;
+    background: linear-gradient(180deg, #0b1515, #060b0b);
+    border: 1px solid #1b2b2b; border-radius: 12px;
+    box-shadow: 0 30px 90px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.03);
+    overflow: hidden; display: flex; flex-direction: column;
+  }
+
+  /* ---------------- header ---------------- */
+  .hdr {
+    display: grid; grid-template-columns: 1.05fr 1.35fr 1.15fr auto;
+    gap: 18px; align-items: center;
+    padding: 12px 18px; background: #0b1616; border-bottom: 1px solid var(--line);
+  }
+  .brand .logo { font-size: 20px; font-weight: 800; letter-spacing: .04em; }
+  .brand .logo .dot { color: var(--pink); }
+  .brand .sub { font-size: 10px; letter-spacing: .14em; color: var(--dim); margin-top: 3px; }
+  .brand .sub .sel { color: var(--select); font-weight: 700; }
+
+  .alg { display: flex; align-items: center; gap: 14px; }
+  .alg-meta .lbl { font-size: 9px; letter-spacing: .16em; color: var(--dim); }
+  .alg-meta .val { font-size: 30px; font-weight: 800; color: var(--pink); line-height: 1; }
+  .alg-svg { width: 170px; height: 64px; }
+  .op-sq { fill: #0f1c1c; stroke: var(--line2); stroke-width: 1.2; }
+  .op-sq.carrier { stroke: var(--pink); }
+  .op-txt { fill: var(--text); font-size: 11px; font-weight: 700; text-anchor: middle; }
+  .arrow { stroke: var(--faint); stroke-width: 1.3; }
+  .arrowhead { fill: var(--faint); }
+  .out-txt { fill: var(--purple); font-size: 9px; letter-spacing: .1em; text-anchor: middle; }
+
+  .scope { min-width: 0; }
+  .scope .lbl { font-size: 9px; letter-spacing: .16em; color: var(--dim); margin-bottom: 3px; }
+  .scope canvas { width: 100%; height: 48px; display: block; border: 1px solid var(--line);
+    border-radius: 6px; background: #050b0b; }
+
+  .hdr-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+  .patch-btn {
+    background: #0f1c1c; border: 1px solid var(--line2); color: var(--text);
+    border-radius: 7px; padding: 8px 12px; font-size: 11px; letter-spacing: .06em;
+    cursor: pointer; display: flex; align-items: center; gap: 8px;
+  }
+  .patch-btn:hover { border-color: var(--pink); }
+  .patch-btn .k { color: var(--faint); font-size: 9px; letter-spacing: .12em; }
+  .leds { display: flex; gap: 10px; align-items: center; font-size: 9px; letter-spacing: .12em; color: var(--dim); }
+  .led { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); display: inline-block; }
+  .led.on { background: var(--muted); box-shadow: 0 0 6px rgba(92,166,102,.8); }
+  .led.pink { background: var(--pink); box-shadow: 0 0 6px rgba(255,77,148,.8); }
+
+  /* ---------------- tabs ---------------- */
+  .tabs {
+    display: flex; gap: 2px; padding: 0 12px; background: #081010;
+    border-bottom: 1px solid var(--line);
+  }
+  .tab {
+    background: none; border: 0; border-bottom: 2px solid transparent;
+    color: var(--dim); font-size: 10.5px; letter-spacing: .13em; font-weight: 700;
+    padding: 11px 14px 9px; cursor: pointer;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--pink); border-bottom-color: var(--pink); }
+
+  /* ---------------- body ---------------- */
+  .body { padding: 16px 18px 18px; min-height: 500px; }
+  .grid { display: grid; gap: 14px; }
+  .op-grid { display: grid; grid-template-columns: 1.15fr 1.5fr .85fr; gap: 14px; }
+  .fx-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .mod-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .glo-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px; }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 9px; padding: 12px 13px; min-width: 0;
+  }
+  .card h3 {
+    margin: 0 0 10px; font-size: 9px; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--muted); font-weight: 700;
+  }
+  .knobs { display: flex; flex-wrap: wrap; gap: 10px 6px; }
+
+  /* ---------------- knobs ---------------- */
+  .knob { width: 62px; text-align: center; user-select: none; }
+  .knobs.compact .knob { width: 50px; }
+  .dial { width: 46px; height: 46px; margin: 0 auto 4px; cursor: ns-resize; touch-action: none; }
+  .dial svg { width: 46px; height: 46px; display: block; }
+  .dial .track { fill: none; stroke: #243434; stroke-width: 3; stroke-linecap: round; }
+  .dial .arc { fill: none; stroke: var(--pink); stroke-width: 3; stroke-linecap: round;
+    filter: drop-shadow(0 0 3px rgba(255,77,148,.35)); }
+  .dial .ptr { stroke: var(--text); stroke-width: 2; stroke-linecap: round; }
+  .knob-name { font-size: 8.5px; letter-spacing: .1em; color: var(--dim); text-transform: uppercase; }
+  .knob-val { font-size: 11px; font-weight: 700; color: var(--pink);
+    font-variant-numeric: tabular-nums; margin-top: 1px; }
+  .knob:hover .knob-name { color: var(--text); }
+
+  .inline { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+  .inline .lbl { font-size: 9px; letter-spacing: .14em; color: var(--dim); }
+  select.sel {
+    background: #0f1c1c; color: var(--text); border: 1px solid var(--line2);
+    border-radius: 6px; padding: 5px 22px 5px 8px; font-size: 11px; letter-spacing: .03em;
+    outline: none; appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%237f968a' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 7px center;
+  }
+  select.sel:focus { border-color: var(--pink); }
+
+  .toggle { display: flex; align-items: center; gap: 9px; cursor: pointer; margin-top: 12px; }
+  .toggle .trk { width: 30px; height: 16px; border-radius: 999px; background: #243434; position: relative; transition: .15s; }
+  .toggle .thb { position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--faint); transition: .15s; }
+  .toggle.on .trk { background: rgba(255,77,148,.28); box-shadow: inset 0 0 0 1px rgba(255,77,148,.6); }
+  .toggle.on .thb { left: 16px; background: var(--pink); }
+  .toggle .tname { font-size: 9px; letter-spacing: .12em; color: var(--dim); }
+  .toggle.on .tname { color: var(--text); }
+
+  /* ---------------- home ---------------- */
+  .home-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px; }
+  .opcards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .opcard {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 9px;
+    padding: 10px; cursor: pointer; transition: .15s;
+  }
+  .opcard:hover { border-color: var(--pink); }
+  .opcard .on { font-size: 10px; letter-spacing: .14em; color: var(--muted); font-weight: 700; }
+  .opcard .wave { font-size: 12px; color: var(--text); margin: 6px 0 2px; }
+  .opcard .meta { font-size: 9.5px; color: var(--dim); letter-spacing: .04em; }
+  .opcard .mini { height: 26px; margin-top: 6px; opacity: .9; }
+  .opcard .mini path { fill: none; stroke: var(--purple); stroke-width: 1.4; }
+
+  .analyser { height: 150px; border: 1px solid var(--line); border-radius: 8px;
+    background: #050b0b; overflow: hidden; }
+  .analyser canvas { width: 100%; height: 100%; display: block; }
+
+  .parts { display: flex; gap: 10px; margin-top: 12px; }
+  .part {
+    flex: 1; background: var(--panel); border: 1px solid var(--line); border-radius: 9px;
+    padding: 10px 12px;
+  }
+  .part .ph { display: flex; justify-content: space-between; align-items: baseline; }
+  .part .pn { font-size: 10px; letter-spacing: .14em; color: var(--select); font-weight: 700; }
+  .part .pv { font-size: 9px; color: var(--dim); letter-spacing: .06em; }
+  .part .bar { height: 4px; border-radius: 3px; background: #1a2a2a; margin-top: 8px; overflow: hidden; }
+  .part .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--purple), var(--pink)); }
+
+  /* ---------------- envelope ---------------- */
+  .envbox { height: 92px; border: 1px solid var(--line); border-radius: 7px;
+    background: #050b0b; margin-bottom: 10px; }
+  .envbox svg { width: 100%; height: 100%; display: block; }
+  .envbox .egrid { stroke: #13201f; stroke-width: 1; }
+  .envbox .ecurve { fill: none; stroke: var(--purple); stroke-width: 1.6; }
+  .envbox .ecurve2 { fill: none; stroke: var(--pink); stroke-width: 1.6; }
+
+  /* ---------------- table ---------------- */
+  table.parts-tbl { width: 100%; border-collapse: collapse; font-size: 11px; }
+  table.parts-tbl th { text-align: left; font-size: 8.5px; letter-spacing: .14em;
+    color: var(--faint); font-weight: 700; padding: 0 8px 8px; text-transform: uppercase; }
+  table.parts-tbl td { padding: 6px 8px; border-top: 1px solid var(--line); color: var(--text); }
+  table.parts-tbl td.mono { font-variant-numeric: tabular-nums; color: var(--pink); }
+  table.parts-tbl td.dim { color: var(--dim); }
+  table.parts-tbl tr.active td:first-child { color: var(--select); font-weight: 700; }
+
+  /* ---------------- footer ---------------- */
+  .ftr {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 18px; background: #081010; border-top: 1px solid var(--line);
+    font-size: 10px; letter-spacing: .08em; color: var(--dim);
+  }
+  .ftr .left, .ftr .right { display: flex; align-items: center; gap: 14px; }
+  .ftr .nav { display: flex; gap: 6px; }
+  .ftr button {
+    background: #0f1c1c; border: 1px solid var(--line2); color: var(--text);
+    border-radius: 6px; padding: 5px 10px; font-size: 10px; letter-spacing: .06em; cursor: pointer;
+  }
+  .ftr button:hover { border-color: var(--pink); }
+  .ftr .badge { color: var(--faint); }
+
+  /* ---------------- popup ---------------- */
+  .backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,.62);
+    display: none; align-items: center; justify-content: center; z-index: 20;
+  }
+  .backdrop.show { display: flex; }
+  .popup {
+    width: 460px; max-width: 92vw; background: var(--popup);
+    border: 1px solid #333; border-radius: 10px;
+    box-shadow: 0 30px 80px rgba(0,0,0,.8); overflow: hidden;
+  }
+  .popup .ph {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px; border-bottom: 1px solid #2e2e2e;
+    font-size: 11px; letter-spacing: .14em; color: var(--white); font-weight: 700;
+  }
+  .popup .ph .x { cursor: pointer; color: #999; font-size: 15px; }
+  .popup .ph .x:hover { color: var(--pink); }
+  .popup .list { max-height: 300px; overflow: auto; }
+  .popup .row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 16px; font-size: 12px; color: var(--white); cursor: pointer;
+    border-left: 3px solid transparent;
+  }
+  .popup .row:hover { background: #262626; }
+  .popup .row.sel { background: rgba(199,128,255,.16); border-left-color: var(--purple); }
+  .popup .row .meta { font-size: 9.5px; color: #9a9a9a; letter-spacing: .1em; }
+  .popup .row.sel .meta { color: var(--purple); }
+  .popup .row .tag { font-size: 9px; color: var(--pink); letter-spacing: .1em; margin-left: 8px; }
+  .popup .pf { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 16px; border-top: 1px solid #2e2e2e; }
+  .popup .pf button {
+    border-radius: 6px; padding: 6px 14px; font-size: 11px; letter-spacing: .08em; cursor: pointer;
+    border: 1px solid #3a3a3a; background: #2a2a2a; color: var(--white);
+  }
+  .popup .pf button.primary { border-color: var(--pink); color: var(--pink); background: rgba(255,77,148,.08); }
+  .popup .pf button:hover { filter: brightness(1.15); }
+</style>
+</head>
+<body>
+<div class="plugin" id="plugin">
+  <header class="hdr">
+    <div class="brand">
+      <div class="logo">TYPE P<span class="dot">.</span>fm1</div>
+      <div class="sub">FM PLUGIN · <span class="sel">P1</span> · 10 VOICES · 4 OP</div>
+    </div>
+    <div class="alg">
+      <div class="alg-meta">
+        <div class="lbl">ALGORITHM</div>
+        <div class="val" id="algVal">4</div>
+      </div>
+      <svg class="alg-svg" viewBox="0 0 176 64" aria-hidden="true">
+        <!-- left stack: O4 -> O3 (carrier) -->
+        <rect class="op-sq" x="20" y="4" width="46" height="20" rx="4"></rect>
+        <text class="op-txt" x="43" y="18">O4</text>
+        <line class="arrow" x1="43" y1="24" x2="43" y2="38"></line>
+        <polygon class="arrowhead" points="43,43 38,35 48,35"></polygon>
+        <rect class="op-sq carrier" x="20" y="43" width="46" height="20" rx="4"></rect>
+        <text class="op-txt" x="43" y="57">O3</text>
+        <!-- right stack: O2 -> O1 (carrier) -->
+        <rect class="op-sq" x="86" y="4" width="46" height="20" rx="4"></rect>
+        <text class="op-txt" x="109" y="18">O2</text>
+        <line class="arrow" x1="109" y1="24" x2="109" y2="38"></line>
+        <polygon class="arrowhead" points="109,43 104,35 114,35"></polygon>
+        <rect class="op-sq carrier" x="86" y="43" width="46" height="20" rx="4"></rect>
+        <text class="op-txt" x="109" y="57">O1</text>
+        <!-- carriers to out -->
+        <line class="arrow" x1="66" y1="53" x2="82" y2="53"></line>
+        <line class="arrow" x1="132" y1="53" x2="148" y2="53"></line>
+        <rect x="148" y="44" width="24" height="18" rx="4" fill="#0f1c1c" stroke="#ff4d94" stroke-width="1.2"></rect>
+        <text class="out-txt" x="160" y="56">OUT</text>
+      </svg>
+    </div>
+    <div class="scope">
+      <div class="lbl">OUTPUT</div>
+      <canvas id="scope" width="240" height="48"></canvas>
+    </div>
+    <div class="hdr-actions">
+      <button class="patch-btn" id="presetBtn"><span class="k">PATCH</span><span id="patchName">INIT PATCH</span></button>
+      <div class="leds"><span class="led on"></span>MIDI <span class="led pink"></span>SYNC</div>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs"></nav>
+
+  <main class="body" id="body"></main>
+
+  <footer class="ftr">
+    <div class="left">
+      <span>POLY · 10 VOICES</span>
+      <span class="badge">MOCKUP · DESIGN ONLY</span>
+    </div>
+    <div class="right">
+      <div class="nav">
+        <button id="prevBtn">&#9664;</button>
+        <button id="nextBtn">&#9654;</button>
+      </div>
+      <span id="footPatch">INIT PATCH</span>
+    </div>
+  </footer>
+</div>
+
+<div class="backdrop" id="backdrop">
+  <div class="popup" role="dialog" aria-label="Preset browser">
+    <div class="ph"><span>PRESETS · PART 1</span><span class="x" id="popupClose">&times;</span></div>
+    <div class="list" id="popupList"></div>
+    <div class="pf">
+      <button id="popupCancel">CANCEL</button>
+      <button class="primary" id="popupLoad">LOAD</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  "use strict";
+
+  /* ---------------- knob helpers ---------------- */
+  const A0 = 135, SWEEP = 270;
+  function angleFor(f) { return A0 + SWEEP * f; }
+  function pt(cx, cy, r, deg) {
+    const a = deg * Math.PI / 180;
+    return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+  }
+  function arc(cx, cy, r, f0, f1) {
+    const a0 = angleFor(f0), a1 = angleFor(f1);
+    const p0 = pt(cx, cy, r, a0), p1 = pt(cx, cy, r, a1);
+    const large = (a1 - a0) > 180 ? 1 : 0;
+    return "M " + p0[0].toFixed(2) + " " + p0[1].toFixed(2) +
+      " A " + r + " " + r + " 0 " + large + " 1 " + p1[0].toFixed(2) + " " + p1[1].toFixed(2);
+  }
+  function fmtVal(s) { return s.fmt ? s.fmt(s.val) : (Math.round(s.val) + (s.unit || "")); }
+
+  function makeKnob(spec) {
+    const el = document.createElement("div");
+    el.className = "knob";
+    const dial = document.createElement("div");
+    dial.className = "dial";
+    dial.innerHTML =
+      '<svg viewBox="0 0 46 46">' +
+      '<path class="track" d="' + arc(23, 23, 18, 0, 1) + '"/>' +
+      '<path class="arc" d="' + arc(23, 23, 18, 0, 0.0001) + '"/>' +
+      '<line class="ptr" x1="23" y1="23" x2="23" y2="23"/>' +
+      "</svg>";
+    const name = document.createElement("div");
+    name.className = "knob-name";
+    name.textContent = spec.name;
+    const val = document.createElement("div");
+    val.className = "knob-val";
+    el.append(dial, name, val);
+    el.__spec = spec;
+    el.__dial = dial;
+    refreshKnob(el);
+
+    dial.addEventListener("pointerdown", function (e) {
+      e.preventDefault();
+      dial.setPointerCapture(e.pointerId);
+      const startY = e.clientY, startVal = spec.val;
+      const range = spec.max - spec.min;
+      const step = spec.step != null ? spec.step : (range > 30 ? 1 : 0.01);
+      function move(ev) {
+        const scale = ev.shiftKey ? 0.12 : 1;
+        let v = startVal + (startY - ev.clientY) / 170 * range * scale;
+        v = Math.max(spec.min, Math.min(spec.max, v));
+        spec.val = Math.round(v / step) * step;
+        refreshKnob(el);
+      }
+      function up() {
+        dial.removeEventListener("pointermove", move);
+        dial.removeEventListener("pointerup", up);
+      }
+      dial.addEventListener("pointermove", move);
+      dial.addEventListener("pointerup", up);
+    });
+    return el;
+  }
+
+  function refreshKnob(el) {
+    const s = el.__spec;
+    const frac = (s.val - s.min) / (s.max - s.min);
+    const svg = el.__dial.querySelector("svg");
+    svg.querySelector(".arc").setAttribute("d", arc(23, 23, 18, 0, Math.max(frac, 0.0001)));
+    const p = pt(23, 23, 17, angleFor(frac));
+    const q = pt(23, 23, 7, angleFor(frac));
+    const line = svg.querySelector(".ptr");
+    line.setAttribute("x1", q[0].toFixed(2)); line.setAttribute("y1", q[1].toFixed(2));
+    line.setAttribute("x2", p[0].toFixed(2)); line.setAttribute("y2", p[1].toFixed(2));
+    el.querySelector(".knob-val").textContent = fmtVal(s);
+  }
+
+  function makeSelect(options, current, onChange) {
+    const sel = document.createElement("select");
+    sel.className = "sel";
+    options.forEach(function (o) {
+      const opt = document.createElement("option");
+      opt.value = o; opt.textContent = o;
+      if (o === current) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    if (onChange) sel.addEventListener("change", function () { onChange(sel.value); });
+    return sel;
+  }
+
+  function makeToggle(name, on, onChange) {
+    const el = document.createElement("div");
+    el.className = "toggle" + (on ? " on" : "");
+    el.innerHTML = '<div class="trk"><div class="thb"></div></div><div class="tname">' + name + "</div>";
+    el.addEventListener("click", function () {
+      el.classList.toggle("on");
+      if (onChange) onChange(el.classList.contains("on"));
+    });
+    return el;
+  }
+
+  function card(title, cls) {
+    const el = document.createElement("div");
+    el.className = "card" + (cls ? " " + cls : "");
+    if (title) { const h = document.createElement("h3"); h.textContent = title; el.appendChild(h); }
+    return el;
+  }
+  function row(cls) { const d = document.createElement("div"); d.className = cls; return d; }
+
+  /* ---------------- operator data ---------------- */
+  const OPS = [
+    { name: "O1", ratio: 1.0, detune: 0, level: 99, fb: 0, wave: "sine", r: [99, 40, 30, 60], l: [99, 70, 0] },
+    { name: "O2", ratio: 2.0, detune: 0, level: 0, fb: 0, wave: "sine", r: [99, 45, 35, 60], l: [0, 0, 0] },
+    { name: "O3", ratio: 1.0, detune: 0, level: 0, fb: 0, wave: "sine", r: [99, 40, 30, 60], l: [0, 0, 0] },
+    { name: "O4", ratio: 3.0, detune: 0, level: 0, fb: 0, wave: "sine", r: [99, 40, 30, 60], l: [0, 0, 0] }
+  ];
+  const WAVES = ["sine", "triangle", "half sine", "half tri", "2x sine", "2x tri",
+    "2x half sine", "2x half tri", "rect sine", "pulse", "square", "saw"];
+
+  /* a tiny waveform preview per shape */
+  function wavePath(shape, w, h) {
+    const n = 60, pts = [];
+    function v(t) {
+      const s = Math.sin(2 * Math.PI * t);
+      switch (shape) {
+        case "triangle": return 2 / Math.PI * Math.asin(s);
+        case "half sine": return Math.sin(Math.PI * t);
+        case "half tri": return Math.abs(2 / Math.PI * Math.asin(s)) * 2 - 1;
+        case "2x sine": return Math.sin(4 * Math.PI * t);
+        case "2x tri": return 2 / Math.PI * Math.asin(Math.sin(4 * Math.PI * t));
+        case "2x half sine": return Math.sin(2 * Math.PI * t) >= 0 ? Math.sin(2 * Math.PI * t) : 0;
+        case "2x half tri": return Math.max(0, 2 / Math.PI * Math.asin(Math.sin(4 * Math.PI * t)));
+        case "rect sine": return Math.abs(s) * 2 - 1;
+        case "pulse": return t % 1 < 0.25 ? 1 : -1;
+        case "square": return s >= 0 ? 1 : -1;
+        case "saw": return 2 * (t - Math.floor(t + 0.5));
+        default: return s;
+      }
+    }
+    for (let i = 0; i <= n; i++) {
+      const x = i / n * w, y = h / 2 - v(i / n) * (h / 2 - 3);
+      pts.push((i ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1));
+    }
+    return pts.join(" ");
+  }
+
+  function envSvg(r, l, cls) {
+    const W = 260, H = 92;
+    const widths = r.map(function (rr) { return 8 + (99 - rr) / 99 * 26; });
+    const total = widths.reduce(function (a, b) { return a + b; }, 0);
+    const scale = (W - 16) / total;
+    let x = 8, d = "M 8 " + H;
+    const pts = [[x, H]];
+    const levels = [l[0], l[1], l[2], l[2]];
+    for (let i = 0; i < 4; i++) {
+      x += widths[i] * scale;
+      const y = H - 4 - levels[i] / 99 * (H - 12);
+      d += " L " + x.toFixed(1) + " " + y.toFixed(1);
+    }
+    x += widths[3] * scale;
+    d += " L " + x.toFixed(1) + " " + H;
+    const body = '<svg viewBox="0 0 ' + W + " " + H + '">' +
+      '<path class="' + cls + '" d="' + d + '"/>' +
+      '<line class="egrid" x1="8" y1="' + (H - 4) + '" x2="' + (W - 8) + '" y2="' + (H - 4) + '"/>' +
+      "</svg>";
+    return body;
+  }
+
+  /* ---------------- tab views ---------------- */
+  function viewHome() {
+    const wrap = document.createElement("div");
+    wrap.className = "grid";
+    const cards = document.createElement("div");
+    cards.className = "opcards";
+    OPS.forEach(function (o, i) {
+      const c = document.createElement("div");
+      c.className = "opcard";
+      c.innerHTML =
+        '<div class="on">' + o.name + "</div>" +
+        '<div class="wave">' + o.wave + "</div>" +
+        '<div class="meta">RATIO ' + o.ratio.toFixed(2) + " · LEVEL " + o.level + "</div>" +
+        '<svg class="mini" viewBox="0 0 120 26"><path d="' + wavePath(o.wave, 120, 26) + '"/></svg>';
+      c.addEventListener("click", function () { showTab("op" + (i + 1)); });
+      cards.appendChild(c);
+    });
+
+    const low = document.createElement("div");
+    low.className = "home-grid";
+    const left = card("SIGNAL FLOW · ALGORITHM 4");
+    const big = document.createElement("div");
+    big.className = "analyser";
+    big.innerHTML =
+      '<svg viewBox="0 0 400 150" style="width:100%;height:100%">' +
+      '<text x="10" y="20" fill="#5ca666" font-size="10" letter-spacing="2">TWO 2-OP STACKS</text>' +
+      '<rect x="40" y="44" width="70" height="30" rx="6" fill="#0f1c1c" stroke="#223333"/>' +
+      '<text x="75" y="64" fill="#e8e8e8" font-size="13" text-anchor="middle">O4</text>' +
+      '<rect x="40" y="98" width="70" height="30" rx="6" fill="#0f1c1c" stroke="#ff4d94"/>' +
+      '<text x="75" y="118" fill="#e8e8e8" font-size="13" text-anchor="middle">O3</text>' +
+      '<line x1="75" y1="74" x2="75" y2="94" stroke="#4d6157" stroke-width="1.5"/>' +
+      '<rect x="180" y="44" width="70" height="30" rx="6" fill="#0f1c1c" stroke="#223333"/>' +
+      '<text x="215" y="64" fill="#e8e8e8" font-size="13" text-anchor="middle">O2</text>' +
+      '<rect x="180" y="98" width="70" height="30" rx="6" fill="#0f1c1c" stroke="#ff4d94"/>' +
+      '<text x="215" y="118" fill="#e8e8e8" font-size="13" text-anchor="middle">O1</text>' +
+      '<line x1="215" y1="74" x2="215" y2="94" stroke="#4d6157" stroke-width="1.5"/>' +
+      '<path d="M110 113 L150 113 L150 80 L176 80" fill="none" stroke="#4d6157" stroke-width="1.5"/>' +
+      '<path d="M250 113 L290 113 L290 80 L318 80" fill="none" stroke="#4d6157" stroke-width="1.5"/>' +
+      '<rect x="318" y="66" width="44" height="28" rx="5" fill="#0f1c1c" stroke="#ff4d94"/>' +
+      '<text x="340" y="84" fill="#c780ff" font-size="9" text-anchor="middle" letter-spacing="1">OUT</text>' +
+      "</svg>";
+    left.appendChild(big);
+    const right = card("LIVE · PART 1");
+    const an = document.createElement("div");
+    an.className = "analyser";
+    an.innerHTML = '<canvas id="analyser" width="300" height="150"></canvas>';
+    right.appendChild(an);
+    low.append(left, right);
+    wrap.append(cards, low);
+
+    const parts = document.createElement("div");
+    parts.className = "parts";
+    [["P1", "CH 1 · 1-127", 70], ["P2", "CH 2 · 1-127", 30]].forEach(function (p) {
+      const d = document.createElement("div");
+      d.className = "part";
+      d.innerHTML =
+        '<div class="ph"><span class="pn">PART ' + p[0] + "</span><span class=\"pv\">" + p[1] + "</span></div>" +
+        '<div class="bar"><i style="width:' + p[2] + '%"></i></div>';
+      parts.appendChild(d);
+    });
+    wrap.appendChild(parts);
+    return wrap;
+  }
+
+  function viewOp(n) {
+    const o = OPS[n - 1];
+    const wrap = document.createElement("div");
+    wrap.className = "op-grid";
+
+    const pitch = card("OPERATOR " + n + " · PITCH");
+    const pk = row("knobs");
+    pk.append(
+      makeKnob({ name: "RATIO", min: 0.5, max: 8, val: o.ratio, fmt: function (v) { return v.toFixed(2); } }),
+      makeKnob({ name: "DETUNE", min: -50, max: 50, val: o.detune, fmt: function (v) { return (v > 0 ? "+" : "") + v + "c"; } }),
+      makeKnob({ name: "LEVEL", min: 0, max: 99, val: o.level, fmt: function (v) { return v; } }),
+      makeKnob({ name: "FEEDBACK", min: 0, max: 99, val: o.fb, fmt: function (v) { return v; } })
+    );
+    pitch.appendChild(pk);
+    const wv = row("inline");
+    const wl = document.createElement("span"); wl.className = "lbl"; wl.textContent = "WAVE";
+    wv.append(wl, makeSelect(WAVES, o.wave));
+    pitch.appendChild(wv);
+    const pv = document.createElement("div");
+    pv.className = "analyser";
+    pv.style.height = "58px";
+    pv.style.marginTop = "12px";
+    pv.innerHTML = '<svg viewBox="0 0 220 58" style="width:100%;height:100%"><path d="' +
+      wavePath(o.wave, 220, 58) + '" fill="none" stroke="#c780ff" stroke-width="1.5"/></svg>';
+    pitch.appendChild(pv);
+
+    const env = card("ENVELOPE · RATE / LEVEL");
+    const box = document.createElement("div");
+    box.className = "envbox";
+    box.innerHTML = envSvg(o.r, o.l, "ecurve");
+    env.appendChild(box);
+    const ek = row("knobs compact");
+    ["R1", "R2", "R3", "R4"].forEach(function (nm, i) {
+      ek.appendChild(makeKnob({ name: nm, min: 0, max: 99, val: o.r[i], fmt: function (v) { return v; } }));
+    });
+    ["L1", "L2", "L3"].forEach(function (nm, i) {
+      ek.appendChild(makeKnob({ name: nm, min: 0, max: 99, val: o.l[i], fmt: function (v) { return v; } }));
+    });
+    env.appendChild(ek);
+
+    const trem = card("TREMOLO");
+    const tk = row("knobs");
+    tk.append(
+      makeKnob({ name: "RATE", min: 0, max: 20, val: 5.0, fmt: function (v) { return v.toFixed(1) + "Hz"; } }),
+      makeKnob({ name: "DEPTH", min: 0, max: 100, val: 0, fmt: function (v) { return v + "%"; } })
+    );
+    trem.appendChild(tk);
+    trem.appendChild(makeToggle("MUTE", false));
+
+    wrap.append(pitch, env, trem);
+    return wrap;
+  }
+
+  function viewFx() {
+    const wrap = document.createElement("div");
+    wrap.className = "fx-grid";
+
+    const f1 = card("FILTER 1 · ENVELOPE");
+    const f1k = row("knobs");
+    f1k.append(
+      makeKnob({ name: "CUTOFF", min: 0, max: 100, val: 60, fmt: function (v) { return v + "%"; } }),
+      makeKnob({ name: "RES", min: 0, max: 100, val: 20, fmt: function (v) { return v + "%"; } }),
+      makeKnob({ name: "F-ENV", min: 0, max: 100, val: 0, fmt: function (v) { return v + "%"; } })
+    );
+    f1.appendChild(f1k);
+    const f1r = row("inline");
+    const l1 = document.createElement("span"); l1.className = "lbl"; l1.textContent = "TYPE";
+    f1r.append(l1, makeSelect(["lpf", "bpf", "hpf"], "lpf"));
+    f1.appendChild(f1r);
+    f1.appendChild(makeToggle("ON", true));
+
+    const f2 = card("FILTER 2 · KEY FOLLOW");
+    const f2k = row("knobs");
+    f2k.append(
+      makeKnob({ name: "CUTOFF", min: 0, max: 100, val: 70, fmt: function (v) { return v + "%"; } }),
+      makeKnob({ name: "RES", min: 0, max: 100, val: 0, fmt: function (v) { return v + "%"; } }),
+      makeKnob({ name: "KEY", min: -100, max: 100, val: 0, fmt: function (v) { return (v > 0 ? "+" : "") + v + "%"; } })
+    );
+    f2.appendChild(f2k);
+    const f2r = row("inline");
+    const l2 = document.createElement("span"); l2.className = "lbl"; l2.textContent = "TYPE";
+    f2r.append(l2, makeSelect(["lpf", "bpf", "hpf"], "lpf"));
+    f2.appendChild(f2r);
+    f2.appendChild(makeToggle("ON", true));
+
+    const wf = card("WAVEFOLDER");
+    const wfk = row("knobs");
+    wfk.append(
+      makeKnob({ name: "AMOUNT", min: 0, max: 100, val: 0, fmt: function (v) { return v + "%"; } }),
+      makeKnob({ name: "THRESH", min: 0, max: 100, val: 0, fmt: function (v) { return v + "%"; } }),
+      makeKnob({ name: "FOLDS", min: 1, max: 8, val: 1, fmt: function (v) { return v; } })
+    );
+    wf.appendChild(wfk);
+    const wfr = row("inline");
+    const l3 = document.createElement("span"); l3.className = "lbl"; l3.textContent = "TYPE";
+    wfr.append(l3, makeSelect(["sine"], "sine"));
+    wf.appendChild(wfr);
+    wf.appendChild(makeToggle("ON", true));
+
+    wrap.append(f1, f2, wf);
+    return wrap;
+  }
+
+  function viewMod() {
+    const wrap = document.createElement("div");
+    wrap.className = "mod-grid";
+
+    const lfo = card("PITCH LFO");
+    const lk = row("knobs");
+    lk.append(
+      makeKnob({ name: "RATE", min: 0, max: 20, val: 0.0, fmt: function (v) { return v.toFixed(1) + "Hz"; } }),
+      makeKnob({ name: "DEPTH", min: 0, max: 100, val: 0, fmt: function (v) { return v + "%"; } })
+    );
+    lfo.appendChild(lk);
+    const lv = document.createElement("div");
+    lv.className = "analyser";
+    lv.style.height = "70px";
+    lv.style.marginTop = "10px";
+    lv.innerHTML = '<svg viewBox="0 0 220 70" style="width:100%;height:100%"><path d="' +
+      wavePath("sine", 220, 70) + '" fill="none" stroke="#c780ff" stroke-width="1.5"/></svg>';
+    lfo.appendChild(lv);
+
+    const penv = card("PITCH ENVELOPE");
+    const pk = row("knobs");
+    pk.append(
+      makeKnob({ name: "AMOUNT", min: -100, max: 100, val: 0, fmt: function (v) { return (v > 0 ? "+" : "") + v + "c"; } }),
+      makeKnob({ name: "RATE", min: 0, max: 99, val: 50, fmt: function (v) { return v; } })
+    );
+    penv.appendChild(pk);
+    const pv = document.createElement("div");
+    pv.className = "envbox";
+    pv.style.marginTop = "10px";
+    pv.innerHTML = envSvg([99, 40, 30, 60], [60, 25, 0], "ecurve2");
+    penv.appendChild(pv);
+
+    const fol = card("KEY & VELOCITY FOLLOW");
+    const fk = row("knobs");
+    fk.append(
+      makeKnob({ name: "KEY LO", min: -100, max: 100, val: 0, fmt: function (v) { return (v > 0 ? "+" : "") + v + "%"; } }),
+      makeKnob({ name: "KEY HI", min: -100, max: 100, val: 0, fmt: function (v) { return (v > 0 ? "+" : "") + v + "%"; } }),
+      makeKnob({ name: "VEL", min: -100, max: 100, val: 0, fmt: function (v) { return (v > 0 ? "+" : "") + v + "%"; } })
+    );
+    fol.appendChild(fk);
+
+    wrap.append(lfo, penv, fol);
+    return wrap;
+  }
+
+  function viewGlo() {
+    const wrap = document.createElement("div");
+    wrap.className = "glo-grid";
+
+    const parts = card("PARTS · ROUTING");
+    parts.innerHTML =
+      '<table class="parts-tbl"><thead><tr><th>PART</th><th>CH</th><th>LOW</th><th>HIGH</th>' +
+      "<th>LEVEL</th><th>DELAY</th></tr></thead><tbody>" +
+      '<tr class="active"><td>P1</td><td class="mono">1</td><td class="mono">0</td>' +
+      '<td class="mono">127</td><td class="mono">99</td><td class="mono">0ms</td></tr>' +
+      '<tr><td>P2</td><td class="mono">2</td><td class="mono">0</td><td class="mono">127</td>' +
+      '<td class="mono">99</td><td class="mono">0ms</td></tr>' +
+      "</tbody></table>";
+
+    const voice = card("VOICE MODE");
+    const vk = row("knobs");
+    vk.append(
+      makeKnob({ name: "UNISON", min: 1, max: 8, val: 1, fmt: function (v) { return v; } }),
+      makeKnob({ name: "DETUNE", min: 0, max: 100, val: 0, fmt: function (v) { return v + "%"; } }),
+      makeKnob({ name: "PORTA", min: 0, max: 100, val: 0, fmt: function (v) { return v + "%"; } })
+    );
+    voice.appendChild(vk);
+    const vr = row("inline");
+    const vl = document.createElement("span"); vl.className = "lbl"; vl.textContent = "MODE";
+    vr.append(vl, makeSelect(["poly", "mono", "mono stack"], "poly"));
+    voice.appendChild(vr);
+    voice.appendChild(makeToggle("LEGATO", false));
+
+    wrap.append(parts, voice);
+    return wrap;
+  }
+
+  /* ---------------- tabs ---------------- */
+  const TABS = [
+    { id: "home", label: "HOME", view: viewHome },
+    { id: "op1", label: "OP1", view: function () { return viewOp(1); } },
+    { id: "op2", label: "OP2", view: function () { return viewOp(2); } },
+    { id: "op3", label: "OP3", view: function () { return viewOp(3); } },
+    { id: "op4", label: "OP4", view: function () { return viewOp(4); } },
+    { id: "fx", label: "FX", view: viewFx },
+    { id: "mod", label: "MOD", view: viewMod },
+    { id: "glo", label: "GLO", view: viewGlo }
+  ];
+  const body = document.getElementById("body");
+  const tabsEl = document.getElementById("tabs");
+  let current = "home";
+
+  TABS.forEach(function (t) {
+    const b = document.createElement("button");
+    b.className = "tab" + (t.id === current ? " active" : "");
+    b.textContent = t.label;
+    b.dataset.tab = t.id;
+    b.addEventListener("click", function () { showTab(t.id); });
+    tabsEl.appendChild(b);
+  });
+
+  function showTab(id) {
+    current = id;
+    tabsEl.querySelectorAll(".tab").forEach(function (b) {
+      b.classList.toggle("active", b.dataset.tab === id);
+    });
+    body.innerHTML = "";
+    const t = TABS.find(function (x) { return x.id === id; });
+    body.appendChild(t.view());
+    if (id === "home") startAnalyser();
+  }
+
+  /* ---------------- scopes ---------------- */
+  function drawWave(cv, amp, freq, t) {
+    const ctx = cv.getContext("2d");
+    const W = cv.width, H = cv.height;
+    ctx.clearRect(0, 0, W, H);
+    ctx.beginPath();
+    for (let x = 0; x <= W; x++) {
+      const p = x / W;
+      const y = H / 2 + Math.sin(p * Math.PI * freq + t) * amp * H * Math.sin(p * Math.PI) +
+        Math.sin(p * Math.PI * freq * 2.3 - t * 1.3) * amp * 0.25 * H;
+      if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = "#ff4d94";
+    ctx.lineWidth = 1.4;
+    ctx.shadowColor = "rgba(255,77,148,.5)";
+    ctx.shadowBlur = 5;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  let t0 = 0;
+  function scopeLoop() {
+    const cv = document.getElementById("scope");
+    if (cv) drawWave(cv, 0.34, 9, t0);
+    t0 += 0.045;
+    requestAnimationFrame(scopeLoop);
+  }
+  scopeLoop();
+
+  function startAnalyser() {
+    const cv = document.getElementById("analyser");
+    if (!cv) return;
+    let t = 0;
+    (function loop() {
+      if (!document.body.contains(cv)) return;
+      drawWave(cv, 0.42, 6, t);
+      t += 0.04;
+      requestAnimationFrame(loop);
+    })();
+  }
+
+  /* ---------------- preset popup ---------------- */
+  const PRESETS = [
+    ["INIT PATCH", "default", true],
+    ["BRASS PAD", "part 1", false],
+    ["GLASS BELL", "part 1", false],
+    ["SUB BASS", "part 1", false],
+    ["E.PIANO 84", "part 1", false],
+    ["CLANG BELL", "part 2", false],
+    ["ORGAN PAD", "part 2", false],
+    ["HARSH LEAD", "part 2", false]
+  ];
+  const backdrop = document.getElementById("backdrop");
+  const list = document.getElementById("popupList");
+  const patchName = document.getElementById("patchName");
+  const footPatch = document.getElementById("footPatch");
+  let selectedPreset = 0;
+
+  function renderPresets() {
+    list.innerHTML = "";
+    PRESETS.forEach(function (p, i) {
+      const r = document.createElement("div");
+      r.className = "row" + (i === selectedPreset ? " sel" : "");
+      r.innerHTML = '<span>' + p[0] + (p[2] ? '<span class="tag">ACTIVE</span>' : "") +
+        '</span><span class="meta">' + p[1] + "</span>";
+      r.addEventListener("click", function () { selectedPreset = i; renderPresets(); });
+      list.appendChild(r);
+    });
+  }
+  function openPopup() { renderPresets(); backdrop.classList.add("show"); }
+  function closePopup() { backdrop.classList.remove("show"); }
+
+  document.getElementById("presetBtn").addEventListener("click", openPopup);
+  document.getElementById("popupClose").addEventListener("click", closePopup);
+  document.getElementById("popupCancel").addEventListener("click", closePopup);
+  document.getElementById("popupLoad").addEventListener("click", function () {
+    const name = PRESETS[selectedPreset][0];
+    patchName.textContent = name;
+    footPatch.textContent = name;
+    closePopup();
+  });
+  backdrop.addEventListener("click", function (e) { if (e.target === backdrop) closePopup(); });
+
+  let stepIdx = 0;
+  function step(dir) {
+    stepIdx = (stepIdx + dir + PRESETS.length) % PRESETS.length;
+    patchName.textContent = PRESETS[stepIdx][0];
+    footPatch.textContent = PRESETS[stepIdx][0];
+  }
+  document.getElementById("prevBtn").addEventListener("click", function () { step(-1); });
+  document.getElementById("nextBtn").addEventListener("click", function () { step(1); });
+
+  function fromHash() {
+    const h = (location.hash || "").replace("#", "");
+    if (h === "presets") { showTab("home"); openPopup(); return; }
+    if (TABS.some(function (t) { return t.id === h; })) showTab(h);
+    else showTab("home");
+  }
+  window.addEventListener("hashchange", fromHash);
+  fromHash();
+</script>
+</body>
+</html>
