@@ -3574,7 +3574,8 @@ Follow-ups beyond the universalisation backlog, in rough priority order.
    tone. The states are not clamped (the feedback clip bounds the loop), and the
    feedback runs at 4.5x so the discretized ladder actually sustains.
 3. **JUCE plugin ports (multi-platform).** DAW plugin ports of the firmware, with a
-   multi-platform GUI designed in collaboration.
+   multi-platform GUI designed in collaboration. The interface language is now
+   settled in `design/` (§13.16). Next is the reusable host plan.
 4. **Comb filter node (done).** Shipped as `modules/nodes/comb`: a fractional
    feedback comb with `cutoff` (Q16, 0..65535, the comb's fundamental ≈
    cutoff/65536 · fs/2, so it is linear in frequency up to Nyquist, and the delay
@@ -3633,3 +3634,26 @@ read). Two `_Static_assert`s pin it: both 1 MiB parts are accepted and an unknow
 id is refused, on both the FM-1 and SMK-37 branches. The SMK flash test checks
 `0xB36014` at runtime. Credit: Sven, The Firmware Hub, for the report and the
 `FL_JEDEC_OK` fix (OberVave 3.3.1, sloopDX and Dinghy already carry it).
+
+### 13.16 Interface language (2026-11-03)
+
+The Type P.fm1 plugin mockup is signed off and extracted into a shared interface
+language for the web and JUCE sides:
+
+- `design/README.md`, the principles, colour, type, metrics, components and state
+  language.
+- `design/tokens.json`, the machine-readable source.
+- `design/tokens.css`, the web projection.
+- `design/juce.md`, the JUCE mapping and the build-time token rule.
+- `design/agent-workflow.md`, the process lessons and the review checklist.
+
+The language is black-first and borderless on content surfaces, with pink for
+identity and carriers, green for live signal and active state, and purple for
+selection and modulation. Zen Dots carries the headers, DotGothic16 everything
+else, lowercase throughout except the wordmark and user names. Controls, selected
+states and the structural frame keep their outlines.
+
+The optional JUCE ports in §13.13 item 3 now have a design language and a working
+method. The next step is the plugin plan: reusable host, generated project, the
+full parameter manifest, the 44.1 kHz core with output-only resampling, and the
+GPLv3 and font licence checks.
