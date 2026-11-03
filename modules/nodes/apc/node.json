@@ -1,0 +1,10 @@
+{
+  "name": "apc",
+  "summary": "Atari Punk Console (band-limited): a 555 astable drives a 555 monostable. `width` is the monostable pulse width as an absolute time (Q16 samples), so the duty is width/period and changes with pitch (the authentic cross-coupling). `fm` (audio) scales the frequency (1 + fm/32768) and `width_mod` (control) scales the width (1 + width_mod/32768), the cross-mod inputs. Both edges are band-limited with two polyBLEP corrections (like the `pulse` node), so a swept frequency stays clean. A width past the period clamps to a near-full pulse.",
+  "ins": { "fm": "audio", "width_mod": "control" },
+  "outs": { "audio": "audio" },
+  "params": { "inc_ratio": "q16", "width": { "kind": "q16", "default": "1441792" } },
+  "state": { "inc": "q32", "inv_inc": "q32", "phase": "phase" },
+  "note_derived": { "inc": "inc_ratio" },
+  "note_reciprocal": { "inv_inc": "inc" }
+}

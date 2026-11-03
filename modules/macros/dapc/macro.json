@@ -1,0 +1,46 @@
+{
+  "summary": "Dual cross-modulated Atari Punk Console: two `apc` nodes feed each other's frequency (`fm`) and width (`width_mod`) at audio rate, so each pulse train shapes the other. `ratio1`/`ratio2` tune the two astables (note-derived Q16 ratios), `width1`/`width2` are the monostable widths (Q16 samples, absolute time), and `xf12`/`xw12`/`xf21`/`xw21` are the four cross-mod depths (Q15, unity = full). The two outputs sum through `level` and a `dc_block` removes the pulse DC. Each cross-mod path has a `delay1` breaker so the graph cycle resolves; the modulation is therefore one sample late (standard audio-rate feedback). Set the depths below unity for subtle chaos, at unity for the full aggressive DAPC.",
+  "ins": {},
+  "outs": { "out": "audio" },
+  "params": {
+    "ratio1": "a1.inc_ratio",
+    "width1": "a1.width",
+    "ratio2": "a2.inc_ratio",
+    "width2": "a2.width",
+    "xf12": "g12.level",
+    "xw12": "w12.level",
+    "xf21": "g21.level",
+    "xw21": "w21.level",
+    "level": "lvl.level"
+  },
+  "nodes": [
+    { "id": "a1", "type": "apc" },
+    { "id": "a2", "type": "apc" },
+    { "id": "d12", "type": "delay1" },
+    { "id": "d21", "type": "delay1" },
+    { "id": "g12", "type": "vca" },
+    { "id": "w12", "type": "vca" },
+    { "id": "g21", "type": "vca" },
+    { "id": "w21", "type": "vca" },
+    { "id": "sum", "type": "mix" },
+    { "id": "lvl", "type": "vca" },
+    { "id": "dc", "type": "dc_block" }
+  ],
+  "wires": [
+    { "from": "a1.audio", "to": "d12.in" },
+    { "from": "d12.out", "to": "g12.audio" },
+    { "from": "d12.out", "to": "w12.audio" },
+    { "from": "g12.audio", "to": "a2.fm" },
+    { "from": "w12.audio", "to": "a2.width_mod" },
+    { "from": "a2.audio", "to": "d21.in" },
+    { "from": "d21.out", "to": "g21.audio" },
+    { "from": "d21.out", "to": "w21.audio" },
+    { "from": "g21.audio", "to": "a1.fm" },
+    { "from": "w21.audio", "to": "a1.width_mod" },
+    { "from": "a1.audio", "to": "sum.in0" },
+    { "from": "a2.audio", "to": "sum.in1" },
+    { "from": "sum.audio", "to": "lvl.audio" },
+    { "from": "lvl.audio", "to": "dc.in" },
+    { "from": "dc.out", "to": "out" }
+  ]
+}

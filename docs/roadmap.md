@@ -3568,5 +3568,15 @@ Follow-ups beyond the universalisation backlog, in rough priority order.
    fractional and variable, so it cannot compose from the fixed `delayN`, and a
    separate feedforward/notch (flanger) flavour can be a later sibling rather than a
    `type` switch here.
-5. **Atari Punk Console node(s).** The single and dual cross-modulated APC, reviewed
-   for aliasing and fitted to the umetate node model.
+5. **Atari Punk Console nodes + macro (done).** Shipped as `naive_apc` (raw,
+   aliasing) and `apc` (band-limited) nodes, plus the `dapc` macro. The APC is
+   modelled as a 555 astable (Q32 phase accumulator) triggering a 555 monostable
+   whose `width` is an absolute time (Q16 samples), so the duty is width/period and
+   changes with pitch (the authentic cross-coupling). `fm` (audio) scales the
+   frequency and `width_mod` (control) scales the width; `apc` band-limits both
+   edges with polyBLEP (reusing the `pulse` machinery) while `naive_apc` leaves the
+   edges raw. The duty is clamped to [inc, 2^32-inc] so the two BLEP edges never
+   collide. `dapc` cross-modulates two APCs through `vca` depth cells, with a
+   `delay1` breaker per direction (the cross-mod is a graph cycle, so the
+   modulation is one sample late), sums them through a `level` cell and a
+   `dc_block`, and exposes the four cross-mod depths as `xf12`/`xw12`/`xf21`/`xw21`.

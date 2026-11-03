@@ -1,0 +1,8 @@
+{
+  "name": "dc_block",
+  "summary": "One-pole DC blocker (high-pass at a few Hz): y = x - x[n-1] + r·y[n-1], removing the DC offset of an asymmetric pulse (the APC), a folded signal, or a one-sided waveform. `r` (Q15, default ~0.999) sets the pole: higher r = lower cutoff, longer settle. Cheap and stable.",
+  "ins": { "in": "audio" },
+  "outs": { "out": "audio" },
+  "params": { "r": { "kind": "q15", "default": "32735" } },
+  "state": { "x1": "q15", "y1": "q15" }
+}

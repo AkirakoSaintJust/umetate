@@ -285,6 +285,75 @@ COMB_TEST: Patch = {
     },
 }
 
+# the `apc` node: a band-limited Atari Punk Console pulse train, gated by an
+# envelope so the sound contract (non-silent then silent) applies.
+APC_TEST: Patch = {
+    "name": "apc_test",
+    "voices": 1,
+    "voice": {
+        "nodes": [
+            {"id": "osc", "type": "apc"},
+            {"id": "env", "type": "env"},
+            {"id": "vca", "type": "vca"},
+        ],
+        "wires": [
+            {"from": "osc.audio", "to": "vca.audio"},
+            {"from": "env.cv", "to": "vca.cv"},
+        ],
+        "voice_out": "vca.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
+# the `naive_apc` node: the aliasing APC variant (same control surface).
+NAIVE_APC_TEST: Patch = {
+    "name": "naive_apc_test",
+    "voices": 1,
+    "voice": {
+        "nodes": [
+            {"id": "osc", "type": "naive_apc"},
+            {"id": "env", "type": "env"},
+            {"id": "vca", "type": "vca"},
+        ],
+        "wires": [
+            {"from": "osc.audio", "to": "vca.audio"},
+            {"from": "env.cv", "to": "vca.cv"},
+        ],
+        "voice_out": "vca.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
+# the `dapc` macro: two cross-modulated APCs, summed through a DC blocker and an
+# envelope. The cross-mod depths are set below unity so the chaos is musical.
+DAPC_TEST: Patch = {
+    "name": "dapc_test",
+    "voices": 1,
+    "voice": {
+        "nodes": [
+            {
+                "id": "d",
+                "type": "dapc",
+                "params": {
+                    "level": 16000,
+                    "xf12": 12000,
+                    "xf21": 12000,
+                    "xw12": 8000,
+                    "xw21": 8000,
+                },
+            },
+            {"id": "env", "type": "env"},
+            {"id": "vca", "type": "vca"},
+        ],
+        "wires": [
+            {"from": "d.out", "to": "vca.audio"},
+            {"from": "env.cv", "to": "vca.cv"},
+        ],
+        "voice_out": "vca.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
 # the `mute` node: an oscillator gated by a runtime `mute` param (0 = pass, 1 = 0).
 MUTE_TEST: Patch = {
     "name": "mute_test",
@@ -3131,6 +3200,27 @@ def main() -> int:
     print(
         ("ok: " if ok else "FAIL: ")
         + (msg or "comb filter renders non-silent then decays to near-silence")
+    )
+    failures += 0 if ok else 1
+
+    ok, msg = _sound(APC_TEST)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "apc (band-limited) renders non-silent then silent")
+    )
+    failures += 0 if ok else 1
+
+    ok, msg = _sound(NAIVE_APC_TEST)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "naive_apc (aliasing) renders non-silent then silent")
+    )
+    failures += 0 if ok else 1
+
+    ok, msg = _sound(DAPC_TEST)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "dapc (dual cross-modulated apc) renders non-silent then silent")
     )
     failures += 0 if ok else 1
 
