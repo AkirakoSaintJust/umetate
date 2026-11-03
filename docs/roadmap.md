@@ -3701,8 +3701,8 @@ JUCE 8.0.9, fetched by tag with `FetchContent`. The processor exposes the 313
 manifest parameters through the APVTS, applies automation and MIDI at the
 32-sample control block, renders the 44.1 kHz core bit-exactly and saves and
 restores the parameter state. The APVTS key is the stable manifest name and the
-engine id is the manifest index. The generic JUCE editor is a placeholder for
-Milestone 3.
+engine id is the manifest index. The generic JUCE editor was the Milestone 2
+placeholder.
 
 The `plugin_smoke` CTest checks 313 parameters with unique ids, contiguous engine
 ids, a bit-exact 44.1 kHz note render against the engine reference, an automation
@@ -3749,3 +3749,38 @@ and key-switch test reports both target sets wiped and the key card off. The
 generator test covers the key gate and the +100 cent part tune. The host tests,
 the web parity, the target package, the Python layer and `plugin_smoke` are green.
 Physical device acceptance remains blocked.
+
+### 13.20 Designed editor (2026-11-04)
+
+Milestone 3 is done. The JUCE plugin no longer uses the generic parameter panel.
+`plugin/tools/gen_tokens.py` generates `UiTokens.h` from `design/tokens.json`, so
+the editor reads the colours, type sizes, page metrics and control geometry from
+one source. DotGothic16 and Zen Dots are bundled under the SIL Open Font License.
+The brand font is still not bundled. `TYPE P.` uses Arial Black with a default
+bold sans fallback, and `fm1` uses Zen Dots.
+
+The editor canvas is fixed at 1240 by 985 logical pixels and scales uniformly to
+the host window. The three pages are patch settings, operators and fx / mod. The
+patch page shows both part cards and the voice mode block. The operators page
+binds to the active part and shows the two-row rate/level envelopes. The fx / mod
+page has separate key and velocity follow cards, both filter env amounts, the
+pitch LFO and pitch envelope, the wavefolder and the filter envelope.
+
+The header algorithm block opens the eight-tile picker and cycles the active
+part's algorithm on the mouse wheel. The algorithm picker keeps each graph
+centred above its `alg n` caption. The rename dialogs and the part menu are in.
+The part menu supports rename, copy, paste and init.
+
+The audio thread pushes the output and ten tap channels into lock-free scope
+rings. A 30 Hz editor timer drives the scopes and spectros. The spectros use a
+512-point FFT. The editor does not allocate, lock or read files on the audio
+thread.
+
+`plugin_editor_snapshot` renders the patch, operators, fx / mod, algorithm
+picker, rename dialog, active part 2 and the 50 percent scale to PNG under Xvfb.
+It also checks the algorithm write and the part mute round trip. `plugin_smoke`
+continues to check the 313-parameter APVTS and the 44.1 kHz audio path. The
+plugin CTest suite has `engine_parity`, `plugin_smoke` and
+`plugin_editor_snapshot`, all green. The feature contract is
+`plugin/feature-contract-editor.md`. Physical device acceptance remains blocked.
+Milestone 4 adds the patch and part banks.

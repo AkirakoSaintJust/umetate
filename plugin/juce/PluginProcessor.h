@@ -14,6 +14,19 @@
 #include "Params.h"
 #include "RateBridge.hpp"
 
+class ScopeRing {
+public:
+    ScopeRing();
+    void push(const float* data, int count);
+    void read(float* destination, int count);
+
+private:
+    static constexpr int kCapacity = 2048;
+    juce::AbstractFifo fifo_{kCapacity};
+    std::array<float, kCapacity> buffer_{};
+    std::array<float, kCapacity> scratch_{};
+};
+
 class TypePFm1AudioProcessor : public juce::AudioProcessor {
 public:
     TypePFm1AudioProcessor();
@@ -45,6 +58,18 @@ public:
 
     juce::AudioProcessorValueTreeState& parameters() { return apvts_; }
 
+    void readOutputScope(float* destination, int count);
+    void readTapScope(int channel, float* destination, int count);
+
+    juce::String getPatchName() const { return patchName_; }
+    void setPatchName(const juce::String& name) { patchName_ = name; }
+    juce::String getPartName(int part) const;
+    void setPartName(int part, const juce::String& name);
+    int getUiActivePart() const { return uiActivePart_; }
+    void setUiActivePart(int part) { uiActivePart_ = juce::jlimit(0, 1, part); }
+    int getUiPage() const { return uiPage_; }
+    void setUiPage(int page) { uiPage_ = juce::jlimit(0, 2, page); }
+
 private:
     static juce::AudioProcessorValueTreeState::ParameterLayout createLayout();
     static void feedMessage(p1::MidiBridge& midi, const juce::MidiMessage& message);
@@ -60,4 +85,11 @@ private:
     std::vector<int32_t> directBuffer_;
     std::atomic<bool> paramsDirty_{false};
     double hostRate_ = 44100.0;
+
+    ScopeRing outputScope_;
+    std::array<ScopeRing, 10> tapScopes_;
+    juce::String patchName_{"init patch"};
+    std::array<juce::String, 2> partNames_{{"init", "init"}};
+    int uiActivePart_ = 0;
+    int uiPage_ = 0;
 };

@@ -1,0 +1,254 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+#pragma once
+
+#include <array>
+#include <functional>
+#include <memory>
+#include <vector>
+
+#include <juce_audio_processors/juce_audio_processors.h>
+#include <juce_dsp/juce_dsp.h>
+#include <juce_gui_basics/juce_gui_basics.h>
+
+#include "Params.h"
+#include "Theme.h"
+
+namespace p1::ui {
+
+using APVTS = juce::AudioProcessorValueTreeState;
+
+const P1ParamSpec* findSpec(const juce::String& id);
+juce::String formatParamValue(const P1ParamSpec& spec, double value);
+double parseParamValue(const P1ParamSpec& spec, const juce::String& text);
+
+class ParamKnob : public juce::Component {
+public:
+    ParamKnob(APVTS& state, juce::String paramID, juce::String label,
+              float dialSize = 42.0f);
+    ~ParamKnob() override;
+
+    void setParamID(const juce::String& paramID);
+    void resized() override;
+    void paint(juce::Graphics& g) override;
+
+private:
+    void updateValueText();
+    void commitValue();
+
+    APVTS& state_;
+    juce::String paramID_;
+    const P1ParamSpec* spec_ = nullptr;
+    juce::Slider slider_;
+    juce::Label name_;
+    juce::Label value_;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> attach_;
+    float dialSize_ = 42.0f;
+};
+
+class P1Button : public juce::Button {
+public:
+    explicit P1Button(const juce::String& text, bool mini = false);
+    void paintButton(juce::Graphics& g, bool shouldDrawButtonAsHighlighted,
+                     bool shouldDrawButtonAsDown) override;
+};
+
+class P1MuteTile : public juce::Button {
+public:
+    P1MuteTile(const juce::String& label, bool muted,
+               std::function<void(bool)> onToggle = {});
+    void paintButton(juce::Graphics& g, bool shouldDrawButtonAsHighlighted,
+                     bool shouldDrawButtonAsDown) override;
+};
+
+class P1Toggle : public juce::Button {
+public:
+    P1Toggle(APVTS& state, const juce::String& paramID,
+             const juce::String& label = "on");
+    void paintButton(juce::Graphics& g, bool shouldDrawButtonAsHighlighted,
+                     bool shouldDrawButtonAsDown) override;
+
+private:
+    juce::String label_;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> attach_;
+};
+
+class P1Choice : public juce::ComboBox {
+public:
+    P1Choice() = default;
+    P1Choice(juce::StringArray items, int selected = 0);
+};
+
+class ParamChoice : public juce::Component {
+public:
+    ParamChoice(APVTS& state, const juce::String& paramID,
+                juce::StringArray items);
+    void resized() override;
+
+private:
+    void updateFromNormalized(float normalized);
+
+    juce::ComboBox combo_;
+    juce::RangedAudioParameter* param_ = nullptr;
+    int min_ = 0;
+    std::unique_ptr<juce::ParameterAttachment> attach_;
+};
+
+class P1TabBar : public juce::Component {
+public:
+    P1TabBar();
+    void setActive(int index);
+    void resized() override;
+    void paint(juce::Graphics& g) override;
+    std::function<void(int)> onTabChanged;
+
+private:
+    class Tab : public juce::Button {
+    public:
+        Tab(const juce::String& text, int index, P1TabBar& owner);
+        void paintButton(juce::Graphics& g, bool highlighted, bool down) override;
+
+    private:
+        int index_;
+        P1TabBar& owner_;
+    };
+
+    std::array<std::unique_ptr<Tab>, 3> tabs_;
+    int active_ = 0;
+};
+
+class P1Scope : public juce::Component {
+public:
+    P1Scope();
+    void setSamples(const float* samples, int count);
+    void paint(juce::Graphics& g) override;
+
+private:
+    std::vector<float> samples_;
+};
+
+class P1Spectro : public juce::Component {
+public:
+    P1Spectro();
+    void setSamples(const float* samples, int count);
+    void paint(juce::Graphics& g) override;
+
+private:
+    juce::dsp::FFT fft_{9};
+    std::array<float, 1024> fftData_{};
+    std::vector<float> samples_;
+};
+
+class P1Envelope : public juce::Component {
+public:
+    P1Envelope(APVTS& state, juce::StringArray rateIDs,
+               juce::StringArray levelIDs, juce::Colour curveColour,
+               double levelMin, double levelMax, bool zeroLine);
+    void paint(juce::Graphics& g) override;
+    void refresh() { repaint(); }
+
+private:
+    APVTS& state_;
+    juce::StringArray rateIDs_;
+    juce::StringArray levelIDs_;
+    juce::Colour colour_;
+    double levelMin_ = 0.0;
+    double levelMax_ = 99.0;
+    bool zeroLine_ = false;
+};
+
+class P1Wave : public juce::Component {
+public:
+    P1Wave(APVTS& state, juce::String waveID, juce::Colour curveColour);
+    void paint(juce::Graphics& g) override;
+
+private:
+    APVTS& state_;
+    juce::String waveID_;
+    juce::Colour colour_;
+};
+
+class P1LevelSlider : public juce::Component {
+public:
+    P1LevelSlider(APVTS& state, const juce::String& paramID);
+    void resized() override;
+    void paint(juce::Graphics& g) override;
+    void mouseDown(const juce::MouseEvent& event) override;
+    void mouseDrag(const juce::MouseEvent& event) override;
+
+private:
+    void setFromMouse(const juce::MouseEvent& event);
+
+    APVTS& state_;
+    juce::String paramID_;
+    const P1ParamSpec* spec_ = nullptr;
+    float value_ = 0.0f;
+    juce::Rectangle<int> track_;
+    std::unique_ptr<juce::ParameterAttachment> attach_;
+};
+
+class P1Card : public juce::Component {
+public:
+    P1Card(juce::String title, bool panelBackground = true);
+    void paint(juce::Graphics& g) override;
+
+    juce::Rectangle<int> contentArea() const;
+
+private:
+    juce::String title_;
+    bool panel_ = true;
+};
+
+class P1AlgorithmGraph : public juce::Component {
+public:
+    explicit P1AlgorithmGraph(int algorithm = 4);
+    void setAlgorithm(int algorithm);
+    void paint(juce::Graphics& g) override;
+
+private:
+    int algorithm_ = 4;
+};
+
+class P1AlgorithmBlock : public juce::Component {
+public:
+    P1AlgorithmBlock();
+    void setAlgorithm(int algorithm);
+    void paint(juce::Graphics& g) override;
+    void mouseUp(const juce::MouseEvent& event) override;
+    void mouseEnter(const juce::MouseEvent& event) override;
+    void mouseExit(const juce::MouseEvent& event) override;
+    void mouseWheelMove(const juce::MouseEvent& event,
+                        const juce::MouseWheelDetails& wheel) override;
+
+    std::function<void()> onClick;
+    std::function<void(int)> onWheel;
+
+private:
+    int algorithm_ = 4;
+    bool hover_ = false;
+};
+
+class P1Dialog : public juce::Component {
+public:
+    P1Dialog(juce::String title, std::unique_ptr<juce::Component> body,
+             int width, int height, juce::StringArray buttons,
+             std::function<void(int)> onButton = {},
+             std::function<void()> onClose = {});
+    void paint(juce::Graphics& g) override;
+    void resized() override;
+    void mouseUp(const juce::MouseEvent& event) override;
+
+private:
+    juce::String title_;
+    std::unique_ptr<juce::Component> body_;
+    juce::StringArray buttons_;
+    std::vector<std::unique_ptr<P1Button>> buttonComponents_;
+    std::function<void(int)> onButton_;
+    std::function<void()> onClose_;
+    juce::Rectangle<int> panel_;
+    juce::Rectangle<int> closeArea_;
+};
+
+void drawAlgorithmGraph(juce::Graphics& g, juce::Rectangle<float> area,
+                        int algorithm);
+
+} // namespace p1::ui

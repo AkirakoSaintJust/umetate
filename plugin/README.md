@@ -1,8 +1,8 @@
 # Type P.fm1 plugin plan
 
-Status: Milestone 2 done, 2026-11-03. The JUCE VST3 and standalone host build,
-render audio, accept MIDI and save state. The editor is still the generic JUCE
-panel.
+Status: Milestone 3 done, 2026-11-04. The JUCE VST3 and standalone host build,
+render audio, accept MIDI and save state. The designed three-page editor is in,
+with the token-driven look, visualisers, dialogs and the fixed 1240 by 985 scale.
 
 This is the plan for the optional JUCE build path in umetate: a reusable plugin
 host plus a generated `type-p-fm1` project. The visual language is in
@@ -219,22 +219,40 @@ Use the device MIDI handler so the behavior does not fork.
 
 Use the tokens and components from `design/`.
 
-- Fixed 1240 wide design grid, one uniform scale.
-- Pages: patch settings, operators, fx / mod.
+Milestone 3 implements:
+
+- `plugin/tools/gen_tokens.py` generates `UiTokens.h` from `design/tokens.json`.
+  The JUCE editor reads only that header for colours, type sizes and metrics.
+- `DotGothic16` and `Zen Dots` are bundled with `juce_add_binary_data` under the
+  SIL Open Font License. The brand font is not bundled. The `TYPE P.` prefix uses
+  Arial Black, with a default bold sans fallback on systems that lack it. `fm1`
+  always uses Zen Dots.
+- The editor canvas is fixed at 1240 by 985 logical pixels and scales uniformly
+  to the host window. The host cannot reflow the pages.
+- Pages: patch settings, operators and fx / mod.
 - The active part selector is UI state. The patch page shows both parts. The
-  operators page binds to the active part. The fx / mod page is global.
-- The header algorithm block shows the active part's algorithm. The picker writes
-  the active part's `algorithm` parameter.
-- The four operator scopes and spectros read the operator taps. The two part
-  scopes and spectros read each part's carrier tap.
-- The key and velocity card uses target selectors, exactly as the mockup does.
-  The hidden parameters stay exposed to the host.
-- Dialogs scroll. Patch browser uses 64 slots. Part slots use 128. The mockup's
-  eight rows are illustrative.
-- Names use the device record limit of 15 characters. A longer plugin-only name
-  would break round-tripping with the device.
+  operators page binds to the active part. The fx / mod page uses the active
+  part for the key and velocity targets.
+- The header algorithm block shows the active part's algorithm. Clicking opens
+  the eight-tile picker. The mouse wheel cycles the algorithm without opening
+  the picker.
+- The output scope and spectro read the host output. The four operator scopes
+  and spectros read the operator taps. The two part scopes and spectros read the
+  part carrier taps. The audio thread fills lock-free scope rings.
+- The key follow and velocity follow are separate cards with on switches, target
+  selectors and wipe buttons. The target parameters remain host-automatable.
+- The operator envelope puts R1 to R4 on one row and L1 to L3 on the next.
+- Dialogs: the algorithm picker, patch rename and part rename. The part menu
+  offers rename, copy, paste and init.
+- `plugin_editor_snapshot` renders the patch, operators, fx / mod, algorithm
+  picker, rename dialog, active part 2 and the 50 percent scale to PNG. It runs
+  under `xvfb-run` in the Linux test.
 - Text entry, keyboard focus and the cut-polygon tabs follow the design language.
 - No filler copy.
+
+The patch and part banks are still Milestone 4. The editor stores patch and
+part names as UI state in the plugin state blob. The device record limit of 15
+characters is enforced when the banks land.
 
 ## 10. Presets and state
 
@@ -334,7 +352,7 @@ Plugin work adds a new evidence layer. It does not replace the firmware layers.
 | 0 | Instance-safe engine state | done, physical device blocked |
 | 1 | Engine bridge harness, no JUCE | done |
 | 2 | JUCE host skeleton | done |
-| 3 | Editor | three pages, tokens, visualisers, dialogs, fixed scale |
+| 3 | Editor | done |
 | 4 | Presets and banks | 64 multi and 128 part slots, device record round trip |
 | 5 | Rate bridge | bypass exact, 48/96/192 measured, latency reported |
 | 6 | CLAP and platform matrix | clap-validator, pluginval, two DAWs per platform |
@@ -351,12 +369,23 @@ Milestone 2 is done. `plugin/juce` builds a VST3 and a standalone app against
 JUCE 8.0.9. The processor exposes the 313 manifest parameters through the APVTS,
 applies automation at the 32-sample control block, feeds MIDI through
 `synth_midi_feed`, renders the 44.1 kHz core bit-exactly, and saves and restores
-the parameter state. The generic JUCE editor is a placeholder for Milestone 3.
+the parameter state. The generic JUCE editor was the Milestone 2 placeholder.
 The 48 kHz path uses the temporary linear RateBridge, so it renders audio but is
 not yet release quality. The `plugin_smoke` CTest checks the parameter count,
 unique ids, contiguous engine ids, bit-exact 44.1 kHz output, an automation
 write at the 32-sample control block, a MIDI offset at its control block and a
 state round trip. `engine_parity` remains green.
+
+Milestone 3 is done. The generic JUCE panel is replaced by the designed editor.
+`UiTokens.h` is generated from `design/tokens.json`, the two OFL fonts are
+bundled, and the three pages match the v1.1 design. The editor scales the whole
+1240 by 985 canvas uniformly. The header algorithm block opens the picker and
+cycles on the wheel. The patch, operator and part visualisers read the lock-free
+scope rings. The key and velocity follow cards have real on switches and wipe
+buttons. The operator envelopes use the two-row rate and level layout. The
+algorithm picker and rename dialogs are in. `plugin_editor_snapshot` renders the
+pages and dialogs under Xvfb and the PNGs are the visual evidence. The plugin
+state now stores patch and part names plus the active part and page.
 
 Host bridge build:
 
@@ -377,6 +406,8 @@ ctest --test-dir build/plugin-juce --output-on-failure
 
 The artifacts are under
 `build/plugin-juce/juce/type_p_fm1_artefacts/Release/VST3` and `Standalone`.
+The editor snapshots are under `build/plugin-juce/juce/snapshots`. The
+`plugin_editor_snapshot` CTest uses `xvfb-run` when it is available.
 On Linux, install `pkg-config`, `libasound2-dev`, the X11, Xrandr, Xcursor,
 Xinerama, Xcomposite and Xrender headers, freetype and fontconfig, and the
 OpenGL headers. JUCE 8.0.9 is fetched at configure time.

@@ -8,6 +8,10 @@ Scope: a reusable plugin host inside umetate plus a generated `type-p-fm1`
 project. The first targets are VST3 and CLAP on Windows, macOS and Linux. AU is a
 later macOS addition.
 
+Status: Milestone 3 implements this mapping. `plugin/tools/gen_tokens.py` emits
+`UiTokens.h`, the editor is `plugin/juce/PluginEditor.*` and `plugin/ui/*`, and
+`plugin_editor_snapshot` renders the pages and dialogs for review.
+
 ## One source of tokens
 
 Do not retype colours, sizes or metrics in C++. Generate a `UiTokens.h` from
@@ -183,7 +187,8 @@ output to the host rate. Do not resample the input or change the core rate.
 
 ## Open items
 
-- Generate `UiTokens.h` and fail the build when it drifts from `tokens.json`.
-- Confirm the brand font licence.
+- Confirm the brand font licence. Until then the `TYPE P.` prefix uses Arial
+  Black with a default bold sans fallback.
 - Decide whether AU joins VST3 and CLAP in the first macOS build.
-- Measure the editor height from the operator page and pin it in the host.
+- Add the patch and part bank dialogs in Milestone 4. The current dialogs are
+  the algorithm picker and the two rename dialogs.

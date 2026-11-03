@@ -108,7 +108,8 @@
 - `ctest` passes `engine_parity` and `plugin_smoke`.
 - The Linux build used Debian 13, GCC 14.2 and CMake 3.31 in the existing host
   container. The firmware Docker gate is not affected.
-- Milestone 2 uses JUCE's generic editor. The designed editor is Milestone 3.
+- Milestone 2 used JUCE's generic editor. Milestone 3 replaces it and is
+  recorded in `plugin/feature-contract-editor.md`.
 - The rate bridge is still the temporary linear placeholder. Release-quality
   resampling is Milestone 5.
 - Physical device acceptance and timing remain blocked.

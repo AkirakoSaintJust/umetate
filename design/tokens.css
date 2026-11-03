@@ -54,6 +54,12 @@
 
   /* layout */
   --p1-window-width: 1240px;
+  --p1-window-height: 985px;
+  --p1-header-height: 159px;
+  --p1-toolbar-height: 44px;
+  --p1-tabs-height: 37px;
+  --p1-body-height: 715px;
+  --p1-status-height: 28px;
   --p1-page-padding-top: 14px;
   --p1-page-padding-x: 16px;
   --p1-page-padding-bottom: 16px;

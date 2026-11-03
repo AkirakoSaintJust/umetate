@@ -7,6 +7,8 @@
 
 #include <juce_audio_utils/juce_audio_utils.h>
 
+#include "PluginEditor.h"
+
 namespace {
 
 constexpr double kCoreRate = 44100.0;
@@ -27,6 +29,65 @@ bool isEngineMessage(const juce::MidiMessage& message)
 extern "C" int midi_get(uint8_t*, uint8_t*, uint8_t*)
 {
     return 0; /* the plugin feeds MidiBridge directly */
+}
+
+ScopeRing::ScopeRing() = default;
+
+void ScopeRing::push(const float* data, int count)
+{
+    count = juce::jlimit(0, kCapacity, count);
+    int start1 = 0, size1 = 0, start2 = 0, size2 = 0;
+    fifo_.prepareToWrite(count, start1, size1, start2, size2);
+    const int total = size1 + size2;
+    if (total <= 0)
+        return;
+    std::copy(data, data + size1, buffer_.begin() + start1);
+    std::copy(data + size1, data + total, buffer_.begin() + start2);
+    fifo_.finishedWrite(total);
+}
+
+void ScopeRing::read(float* destination, int count)
+{
+    count = juce::jlimit(0, kCapacity, count);
+    const int available = fifo_.getNumReady();
+    int start1 = 0, size1 = 0, start2 = 0, size2 = 0;
+    fifo_.prepareToRead(available, start1, size1, start2, size2);
+    const int total = size1 + size2;
+    if (total > 0) {
+        std::copy(buffer_.begin() + start1, buffer_.begin() + start1 + size1,
+                  scratch_.begin());
+        std::copy(buffer_.begin() + start2, buffer_.begin() + start2 + size2,
+                  scratch_.begin() + size1);
+        fifo_.finishedRead(total);
+    }
+    for (int i = 0; i < count; ++i) {
+        const int source = total - count + i;
+        destination[i] = source >= 0 ? scratch_[static_cast<size_t>(source)] : 0.0f;
+    }
+}
+
+juce::String TypePFm1AudioProcessor::getPartName(int part) const
+{
+    return partNames_[static_cast<size_t>(juce::jlimit(0, 1, part))];
+}
+
+void TypePFm1AudioProcessor::setPartName(int part, const juce::String& name)
+{
+    partNames_[static_cast<size_t>(juce::jlimit(0, 1, part))] = name;
+}
+
+void TypePFm1AudioProcessor::readOutputScope(float* destination, int count)
+{
+    outputScope_.read(destination, count);
+}
+
+void TypePFm1AudioProcessor::readTapScope(int channel, float* destination, int count)
+{
+    if (channel < 0 || channel >= static_cast<int>(tapScopes_.size())) {
+        std::fill(destination, destination + count, 0.0f);
+        return;
+    }
+    tapScopes_[static_cast<size_t>(channel)].read(destination, count);
 }
 
 TypePFm1AudioProcessor::TypePFm1AudioProcessor()
@@ -152,6 +213,14 @@ void TypePFm1AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
                     right[pos + i] =
                         static_cast<float>(directBuffer_[index + 1u]) * kIntToFloat;
             }
+            outputScope_.push(left + pos, length);
+            float tapData[32] = {};
+            for (int channel = 0; channel < 10; ++channel) {
+                const int32_t* tap = engine_.tap(static_cast<uint32_t>(channel));
+                for (int i = 0; i < length; ++i)
+                    tapData[i] = static_cast<float>(tap[i]) * kIntToFloat;
+                tapScopes_[static_cast<size_t>(channel)].push(tapData, length);
+            }
             pos = end;
         }
 
@@ -171,6 +240,14 @@ void TypePFm1AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         float* left = buffer.getWritePointer(0);
         float* right = channels > 1 ? buffer.getWritePointer(1) : left;
         rateBridge_.process(engine_, left, right, frames);
+        outputScope_.push(left, frames);
+        float tapData[32] = {};
+        for (int channel = 0; channel < 10; ++channel) {
+            const int32_t* tap = engine_.tap(static_cast<uint32_t>(channel));
+            for (int i = 0; i < 32; ++i)
+                tapData[i] = static_cast<float>(tap[i]) * kIntToFloat;
+            tapScopes_[static_cast<size_t>(channel)].push(tapData, 32);
+        }
     }
 
     midi.clear();
@@ -178,13 +255,18 @@ void TypePFm1AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
 juce::AudioProcessorEditor* TypePFm1AudioProcessor::createEditor()
 {
-    return new juce::GenericAudioProcessorEditor(*this);
+    return new PluginEditor(*this);
 }
 
 void TypePFm1AudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
     auto state = apvts_.copyState();
     state.setProperty("stateVersion", kStateVersion, nullptr);
+    state.setProperty("patchName", patchName_, nullptr);
+    state.setProperty("part1Name", partNames_[0], nullptr);
+    state.setProperty("part2Name", partNames_[1], nullptr);
+    state.setProperty("uiActivePart", uiActivePart_, nullptr);
+    state.setProperty("uiPage", uiPage_, nullptr);
     if (auto xml = state.createXml())
         copyXmlToBinary(*xml, destData);
 }
@@ -197,6 +279,11 @@ void TypePFm1AudioProcessor::setStateInformation(const void* data, int sizeInByt
     auto state = juce::ValueTree::fromXml(*xml);
     if (!state.isValid() || !state.hasType(apvts_.state.getType()))
         return;
+    patchName_ = state.getProperty("patchName", "init patch").toString();
+    partNames_[0] = state.getProperty("part1Name", "init").toString();
+    partNames_[1] = state.getProperty("part2Name", "init").toString();
+    uiActivePart_ = juce::jlimit(0, 1, static_cast<int>(state.getProperty("uiActivePart", 0)));
+    uiPage_ = juce::jlimit(0, 2, static_cast<int>(state.getProperty("uiPage", 0)));
     apvts_.replaceState(state);
     paramsDirty_.store(true, std::memory_order_relaxed);
 }
