@@ -5,13 +5,13 @@ I was a bit anxious about the proliferation of vibecoded firmwares so I wanted t
 
 Anyway, besides being a test, Type P is this synth idea I've had forever, and which I've been thinking of for a long time. It's a 2-part, 4-op phase distortion synth with feedback and a bunch of waveforms on every operator. Broadly it's a Yamaha-style synth, but it's not meant to be an emulation of any of them, mostly because the idea comes from the limits I've encountered using actual Yamaha synths and actual emulators. Besides, the DSP is reimplemented from scratch although ymfm and msfa/Dexed were a reference.
 
-It's got 2x4-op because I feel like it's the best compromise between ease and power. You can do keyboard splits or send two different sequences in over two different MIDI channels, but the main purpose of having two parts is being able to easily compose complex patches out of partials, just like Wendy Carlos taught us. So it's a 20-voice bitimbral synth if you want, and there are no restrictions for that use case, but I was mostly aiming for a 10-voice, 8-operator synth, without the complexity of having 3 million algorithms and the ability to design your patches incrementally.
+It's got 2x4-op because I feel like it's the best compromise between ease and power. You can do keyboard splits or send two different sequences in over two different MIDI channels, but the main purpose of having two parts is being able to easily compose complex patches out of partials, just like Wendy Carlos taught us. So it's a 20-voice bitimbral synth if you want, and there are no restrictions for that use case, but I was mostly aiming for a 10-voice, 8-operator synth, without the complexity of having 3 million algorithms, and with the ability to design your patches incrementally.
 
 You've got feedback on every operator, which I feel gives a lot of freedom, and all of the waveforms from the OPL3 and the OPZ (DX11, TX81z), although the pulse, square and saw are a bit different to the OPL3 versions to avoid the nasty aliasing the naive, single-table version gave.
 
 Something cool is a sine operator at roughly 30% or 35% feedback will give you a reverse saw, so if you pair that with a saw operator you can do pseudo-PWM tricks if you want.
 
-You've also got two (global) multimode filters and a (global) wavefolder. The first filter has an envelope of its own and is meant to help you shape your timbres, whilst the second filter has no envelope and is meant to sift aliasing or harshness out if you feel like you need it. It's got a key follow param so you can make it clamp harder on brighter notes if you find they get to shrill, for instance. The wavefolder is mostly meant for expression, i.e. if you got a patch that swells up, it might cross the wavefolder's threshold at its peak and give you this nice kind of dynamic "breaking point". You can use that for string bow effects, for instance. Or of course, simply as a source of grime and distortion. 2 or 3 folds add distorted harmonics, 4 folds is noisy, and going beyond that is proper noise. I prioritised those effects over delay, reverb, chorus and so on because I felt they were the most useful for sound design. If the complexity and computing budget won't allow for modulated delay, reverb, etc., I feel like having them on board doesn't make a lot of sense over just using whatever external VST or pedal you like most.
+You've also got two (global) multimode filters and a (global) wavefolder. The first filter has an envelope of its own and is meant to help you shape your timbres, whilst the second filter has no envelope and is meant to sift aliasing or harshness out if you feel like you need it. It's got a key follow param so you can make it clamp harder on brighter notes if you find they get too shrill, for instance. The wavefolder is mostly meant for expression, i.e. if you got a patch that swells up, it might cross the wavefolder's threshold at its peak and give you this nice kind of dynamic "breaking point". You can use that for string bow effects, for instance. Or of course, simply as a source of grime and distortion. 2 or 3 folds add distorted harmonics, 4 folds is noisy, and going beyond that is proper noise. I prioritised those effects over delay, reverb, chorus and so on because I felt they were the most useful for sound design. If the complexity and computing budget won't allow for modulated delay, reverb, etc., I feel like having them on board doesn't make a lot of sense over just using whatever external VST or pedal you like most.
 
 Oh, so this is a sound design-focused synth. I wanted whatever implementation of my dream phase modulation synth the FM1 and umetate allowed for, rather than a groovebox which isn't my thing, so there is no sequencer. You can implement your own if you want though!
 
@@ -20,7 +20,7 @@ Phase on, industrial punks!
 
 ## Try it online
 
-[https://celiacasanovas.github.io/type-p-fm1/](https://celiacasanovas.github.io/type-p-fm1/)
+[https://akirakosaintjust.github.io/type-p-fm1/](https://akirakosaintjust.github.io/type-p-fm1/)
 
 ## Install on the FM-1
 
@@ -50,4 +50,4 @@ GPL-3.0-only licence. See [LICENSE](LICENSE), and [LICENSING.md](LICENSING.md) f
 
 ## Source
 
-[`src/`](src/) (this project) and [`framework/`](framework/) (the full umetate framework source, also GPL-3.0, at <https://github.com/CeliaCasanovas/umetate>). The generated DSP lives in [`framework/firmware/gen/`](framework/firmware/gen/), so the tree builds as-is.
+[`src/`](src/) (this project) and [`framework/`](framework/) (the full umetate framework source, also GPL-3.0, at <https://github.com/AkirakoSaintJust/umetate>). The generated DSP is more of an object code generated from the JSONs, but it's bundled at [`framework/firmware/gen/`](framework/firmware/gen/), so the tree builds as-is.

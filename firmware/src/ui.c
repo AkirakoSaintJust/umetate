@@ -1150,11 +1150,25 @@ static void ui_draw_header(void)
      * operators are the white base text (selected = light blue, muted = red); ALG is
      * pink; the menu + page is purple. */
     x = 0;
-    for (i = 0; i < ui_t->n_part; i++) {
-        tok[0] = 'P';
-        tok[1] = (char)('1' + i);
-        tok[2] = 0;
-        x = ui_htok(x, 0, tok, i == ui_selected_part, ui_part_mute[i]);
+    if (ui_t->n_part <= 4u) {
+        for (i = 0; i < ui_t->n_part; i++) {
+            tok[0] = 'P';
+            tok[1] = (char)('1' + i);
+            tok[2] = 0;
+            x = ui_htok(x, 0, tok, i == ui_selected_part, ui_part_mute[i]);
+            x = ui_htok(x, 0, " ", 0, 0);
+        }
+    } else {
+        /* too many parts for one row: "P<active>/<n>" keeps the header inside
+         * 240 px while the mutes stay visible in the part chooser + the legend. */
+        uint32_t sel = ui_selected_part < ui_t->n_part ? ui_selected_part : 0u;
+        ui_strcpy(tok, "P");
+        ui_itoa((int32_t)sel + 1, t);
+        ui_strcat(tok, t);
+        ui_strcat(tok, "/");
+        ui_itoa((int32_t)ui_t->n_part, t);
+        ui_strcat(tok, t);
+        x = ui_htok(x, 0, tok, 1, ui_part_mute[sel]);
         x = ui_htok(x, 0, " ", 0, 0);
     }
     if (ui_t->n_op) {
@@ -1696,7 +1710,8 @@ uint8_t ui_part_chooser_part(void) { return ui_part_sel_which; }
 
 void ui_part_chooser_begin(uint8_t part, const char *title)
 {
-    ui_part_sel_which = part < 2u ? part : 0u;
+    uint32_t n = ui_t && ui_t->n_part ? ui_t->n_part : 1u;
+    ui_part_sel_which = part < n ? part : 0u;
     ui_part_title = title;
     if (!ui_part_sel_on)
         ui_reset_page();
@@ -1705,10 +1720,18 @@ void ui_part_chooser_begin(uint8_t part, const char *title)
 
 void ui_part_chooser_move(int32_t delta)
 {
-    (void)delta;
+    uint32_t n;
+    int32_t s;
     if (!ui_part_sel_on)
         return;
-    ui_part_sel_which = ui_part_sel_which ? 0u : 1u;   /* two parts: toggle */
+    n = ui_t && ui_t->n_part ? ui_t->n_part : 1u;
+    if (n <= 1u)
+        return;
+    s = (int32_t)ui_part_sel_which + delta;
+    s %= (int32_t)n;
+    if (s < 0)
+        s += (int32_t)n;
+    ui_part_sel_which = (uint8_t)s;
 }
 
 void ui_part_chooser_commit(void)
@@ -1728,27 +1751,36 @@ void ui_part_chooser_cancel(void)
 }
 
 /* the "which single part" chooser pop-up: an optional extra first line (e.g.
- * "INIT PATCH"), the title + two rows (selected in purple), and the legend. */
+ * "INIT PATCH"), the title, one row per part (selected in purple), and the
+ * legend. Up to UI_PART_MAX parts fit the 240 px screen at one row each. */
 static void ui_draw_part_chooser(void)
 {
-    static const char *const ui_part_text[2] = {"PART 1", "PART 2"};
-    uint32_t i;
+    uint32_t i, n = ui_t && ui_t->n_part ? ui_t->n_part : 1u;
     int32_t y = 2;
-    cv_begin(240u, (ui_part_title ? 6u : 5u) * UI_ROW_H, C_POPUP_BG);
+    if (n > UI_PART_MAX)
+        n = UI_PART_MAX;
+    cv_begin(240u, ((ui_part_title ? 1u : 0u) + n + 3u) * UI_ROW_H, C_POPUP_BG);
     if (ui_part_title) {
         cv_text(6, y, &FONT_S, ui_part_title, C_POPUP_TXT);
         y += UI_ROW_H;
     }
     cv_text(6, y, &FONT_S, "WHICH SINGLE PART", C_POPUP_TXT);
     y += UI_ROW_H;
-    for (i = 0; i < 2u; i++) {
+    for (i = 0; i < n; i++) {
         char row[16];
-        ui_strcpy(row, i == ui_part_sel_which ? "> " : "  ");
-        ui_strcat(row, ui_part_text[i]);
+        row[0] = i == ui_part_sel_which ? '>' : ' ';
+        row[1] = ' ';
+        row[2] = 'P';
+        row[3] = 'A';
+        row[4] = 'R';
+        row[5] = 'T';
+        row[6] = ' ';
+        row[7] = (char)('1' + i);
+        row[8] = 0;
         cv_text(6, y + (int32_t)i * UI_ROW_H, &FONT_S, row,
                 i == ui_part_sel_which ? C_AMB : C_HI);
     }
-    y += 2 * UI_ROW_H;
+    y += (int32_t)n * UI_ROW_H;
     cv_text(6, y, &FONT_S, "K1=part SAVE=apply HOME=cancel", C_POPUP_TXT);
     cv_blit(0, 4 * UI_ROW_H);
 }

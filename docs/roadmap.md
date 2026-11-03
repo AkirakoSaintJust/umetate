@@ -1469,7 +1469,7 @@ synchronic, written from the instrument's point of view, and follow the no
 em-dash and no semi-colon rule. The web app is served from the repo root (the
 emulator page + worklet are source files in `firmware/web_emu/`, `firmware.wasm`
 is the built artifact), and the first publish is live at
-https://celiacasanovas.github.io/type-p-fm1/ (repo `CeliaCasanovas/type-p-fm1`).
+https://akirakosaintjust.github.io/type-p-fm1/ (repo `AkirakoSaintJust/type-p-fm1`).
 
 ---
 
