@@ -354,6 +354,33 @@ DAPC_TEST: Patch = {
     "global": {"nodes": [], "wires": []},
 }
 
+# the `sh101` node: a 4-pole ladder lowpass in a voice chain, driven by an osc.
+SH101_TEST: Patch = {
+    "name": "sh101_test",
+    "voices": 1,
+    "voice": {
+        "nodes": [
+            {"id": "ph", "type": "phasor"},
+            {"id": "osc", "type": "osc"},
+            {
+                "id": "flt",
+                "type": "sh101",
+                "params": {"f": 30000, "res": 40000, "comp": 16384, "on": 1},
+            },
+            {"id": "env", "type": "env"},
+            {"id": "vca", "type": "vca"},
+        ],
+        "wires": [
+            {"from": "ph.phase", "to": "osc.phase"},
+            {"from": "osc.audio", "to": "flt.audio"},
+            {"from": "flt.out", "to": "vca.audio"},
+            {"from": "env.cv", "to": "vca.cv"},
+        ],
+        "voice_out": "vca.audio",
+    },
+    "global": {"nodes": [], "wires": []},
+}
+
 # the `mute` node: an oscillator gated by a runtime `mute` param (0 = pass, 1 = 0).
 MUTE_TEST: Patch = {
     "name": "mute_test",
@@ -856,6 +883,49 @@ int main(void) {
         return 1;
     }
     printf("ok: __NAME__ renders non-silent then decays to near-silence\\n");
+    return 0;
+}
+"""
+
+# The SH-101 filter contract: a low `f` coefficient attenuates the input (lowpass),
+# a high `f` passes it, and at a cutoff near the input a high `res` boosts it above
+# res=0 (the resonant peak). `__F__` / `__RES__` are the param ids.
+SH101_HARNESS = """\
+#include <stdio.h>
+#include <stdint.h>
+void __NAME___dsp_reset(void);
+void __NAME___dsp_note_on(uint32_t note, uint32_t velocity);
+void __NAME___dsp_render(int32_t *out, uint32_t frames);
+int __NAME___dsp_set_param(uint32_t id, int32_t value);
+static int32_t out[8192];
+static long long energy(void) {
+    long long e = 0; int i;
+    for (i = 4096; i < 8192; i++) e += (long long)out[i] * out[i];
+    return e;
+}
+static long long run(int f, int res) {
+    __NAME___dsp_reset();
+    __NAME___dsp_set_param(__F__, f);
+    __NAME___dsp_set_param(__RES__, res);
+    __NAME___dsp_note_on(69, 100);
+    __NAME___dsp_render(out, 4096);
+    return energy();
+}
+int main(void) {
+    long long lo = run(2000, 0);
+    long long hi = run(55000, 0);
+    long long r0 = run(3985, 0);
+    long long r1 = run(3985, 65535);
+    if (!(hi > lo * 2)) {
+        printf("FAIL: not a lowpass (lo=%lld hi=%lld)\\n", lo, hi);
+        return 1;
+    }
+    if (!(r1 > r0)) {
+        printf("FAIL: no resonant peak (r0=%lld r1=%lld)\\n", r0, r1);
+        return 1;
+    }
+    printf("ok: __NAME__ lowpass + resonant peak (lo=%lld hi=%lld r0=%lld r1=%lld)\\n",
+        lo, hi, r0, r1);
     return 0;
 }
 """
@@ -2216,6 +2286,42 @@ def _sound_decay(patch: Patch) -> tuple[bool, str]:
         return run.returncode == 0, run.stdout.strip()
 
 
+def _sh101_behaves(patch: Patch) -> tuple[bool, str]:
+    """Generate, compile, and run the SH-101 filter contract: a low `f` attenuates
+    the input (lowpass), a high `f` passes it, and at a matched cutoff a high `res`
+    boosts it above res=0 (the resonant peak)."""
+    src = generate(patch)
+    ids = param_ids(patch)
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        cname = patch["name"].replace("-", "_").replace(".", "_")
+        harness = (
+            SH101_HARNESS.replace("__NAME__", cname)
+            .replace("__F__", str(ids["flt.f"]))
+            .replace("__RES__", str(ids["flt.res"]))
+        )
+        (d / "harness.c").write_text(harness)
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            return False, "compile failed:\n" + proc.stderr
+        run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+        return run.returncode == 0, run.stdout.strip()
+
+
 def _sound_tables(patch: Patch) -> tuple[bool, str]:
     """Generate + compile (with tables.c) + run the sound contract for a table patch."""
     src = generate(patch)
@@ -3215,6 +3321,17 @@ def main() -> int:
         ("ok: " if ok else "FAIL: ")
         + (msg or "naive_apc (aliasing) renders non-silent then silent")
     )
+    failures += 0 if ok else 1
+
+    ok, msg = _sound(SH101_TEST)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "sh101 (4-pole ladder) renders non-silent then silent")
+    )
+    failures += 0 if ok else 1
+
+    ok, msg = _sh101_behaves(SH101_TEST)
+    print(("ok: " if ok else "FAIL: ") + (msg or "sh101 lowpass + resonant peak"))
     failures += 0 if ok else 1
 
     ok, msg = _sound(DAPC_TEST)

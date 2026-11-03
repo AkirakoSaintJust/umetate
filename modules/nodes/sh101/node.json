@@ -1,0 +1,30 @@
+{
+  "name": "sh101",
+  "summary": "Roland SH-101-style 4-pole (24 dB/oct) resonant lowpass: an IR3109-style ladder of four one-pole OTA stages with a soft-clipped negative feedback (so it self-oscillates cleanly at high resonance) and the SH-101's output-level resonance compensation. Character references: Mutable Instruments Ripples / Audible Instruments Liquid Filter, and LFO-lab's SH-010. `f` (Q16) is the per-stage one-pole coefficient (≈ 2*sin(pi*fc/fs), 0..65535); `res` (Q16, 0..65535) is the resonance; `comp` (Q15) is the SH-101 output boost as resonance rises; `on` 0 = bypass. `k`/`vk` (Q15) push `f` toward 0/65535 (key/velocity follow), and `fenv` (control) scales `fenv_depth` (Q16) into the cutoff. Outputs: `out` (4-pole LP), `lp2` (2-pole LP), `band` (2-pole BP tap).",
+  "ins": {
+    "audio": "audio",
+    "fenv": { "rate": "control", "default": "0" },
+    "k": { "rate": "control", "format": "q15", "default": "0" },
+    "vk": { "rate": "control", "format": "q15", "default": "0" }
+  },
+  "outs": { "out": "audio", "lp2": "audio", "band": "audio" },
+  "params": {
+    "f": { "kind": "q16", "default": "32768" },
+    "res": { "kind": "q16", "default": "0" },
+    "comp": { "kind": "q15", "default": "16384" },
+    "on": "uint32",
+    "fenv_depth": "q16"
+  },
+  "state": {
+    "z1": "q15",
+    "z2": "q15",
+    "z3": "q15",
+    "z4": "q15",
+    "f_eff": "q16",
+    "fc": "q16"
+  },
+  "block_derived": {
+    "f_eff": "fm1_key_apply(${param.f}, fm1_key_add(${in.k}, ${in.vk}), 0, 65535)",
+    "fc": "fm1_clamp16(${state.f_eff} + fm1_q16_mul(${param.fenv_depth}, ${in.fenv}))"
+  }
+}
