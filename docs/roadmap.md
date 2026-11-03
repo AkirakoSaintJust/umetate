@@ -3570,14 +3570,15 @@ Follow-ups beyond the universalisation backlog, in rough priority order.
 3. **JUCE plugin ports (multi-platform).** DAW plugin ports of the firmware, with a
    multi-platform GUI designed in collaboration.
 4. **Comb filter node (done).** Shipped as `modules/nodes/comb`: a fractional
-   feedback comb with `freq` (cutoff as a Q32 rate, delay = fs/freq), `res`
-   (feedback), `tone` (one-pole damping in the loop, 0 = dark / 32767 = bright),
-   and `mix` (dry/wet). The delay read interpolates between the two nearest taps
-   and is bounded to [1, 7350] samples, and the written sample saturates to Q15, so
-   the line can never overflow. Settled as a node, not a macro: the delay is
-   fractional and variable, so it cannot compose from the fixed `delayN`, and a
-   separate feedforward/notch (flanger) flavour can be a later sibling rather than a
-   `type` switch here.
+   feedback comb with `cutoff` (Q16, 0..65535, the comb's fundamental ≈
+   cutoff/65536 · fs/2, so it is linear in frequency up to Nyquist, and the delay
+   is 131072/cutoff samples), `res` (feedback), `tone` (one-pole damping in the
+   loop, 0 = dark / 32767 = bright), and `mix` (dry/wet). The delay read
+   interpolates between the two nearest taps and is bounded to [2, 8190] samples,
+   and the written sample saturates to Q15, so the line can never overflow.
+   Settled as a node, not a macro: the delay is fractional and variable, so it
+   cannot compose from the fixed `delayN`, and a separate feedforward/notch
+   (flanger) flavour can be a later sibling rather than a `type` switch here.
 5. **Atari Punk Console nodes + macro (done).** Shipped as `naive_apc` (raw,
    aliasing) and `apc` (band-limited) nodes, plus the `dapc` macro. The APC is
    modelled as a 555 astable (Q32 phase accumulator) triggering a 555 monostable

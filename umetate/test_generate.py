@@ -275,7 +275,7 @@ COMB_TEST: Patch = {
             {
                 "id": "cb",
                 "type": "comb",
-                "params": {"freq": 48695774, "res": 16384, "tone": 24576, "mix": 32767},
+                "params": {"cutoff": 2048, "res": 16384, "tone": 24576, "mix": 32767},
             }
         ],
         "wires": [

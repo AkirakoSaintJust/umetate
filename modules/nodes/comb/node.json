@@ -1,16 +1,16 @@
 {
   "name": "comb",
-  "summary": "Feedback comb filter: a fractional delay line whose length is set by the cutoff (`freq`, a Q32 rate in Hz, delay = fs/freq) with feedback (`res`), a one-pole damping lowpass in the feedback path (`tone`, 0 = dark, 32767 = bright), and a dry/wet `mix`. Global-zone filter (one shared delay line).",
+  "summary": "Feedback comb filter: a fractional delay line whose length is set by `cutoff` (Q16, 0..65535; the comb's fundamental is ≈ cutoff/65536 · fs/2, so it is linear in frequency up to Nyquist, and the delay is 131072/cutoff samples) with feedback (`res`), a one-pole damping lowpass in the feedback path (`tone`, 0 = dark, 32767 = bright), and a dry/wet `mix`. Global-zone filter (one shared delay line).",
   "ins": { "in": "audio" },
   "outs": { "out": "audio" },
   "params": {
-    "freq": { "kind": "q32", "default": "48695774" },
+    "cutoff": { "kind": "q16", "default": "2048" },
     "res": { "kind": "q15", "default": "16384" },
     "tone": { "kind": "q15", "default": "24576" },
     "mix": { "kind": "q15", "default": "32767" }
   },
   "state": { "buf": "pool", "idx": "uint32", "lp": "q15", "dly": "uint32" },
   "block_derived": {
-    "dly": "(((uint32_t)${param.freq} < 584349u) ? 481689600u : (uint32_t)((0x1000000000000ULL) / (uint64_t)${param.freq}))"
+    "dly": "((${param.cutoff} < 17) ? 536739840u : (uint32_t)((0x200000000ULL) / (uint64_t)${param.cutoff}))"
   }
 }

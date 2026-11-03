@@ -1,10 +1,11 @@
 /* Feedback comb filter: a fractional delay line + damped feedback + dry/wet mix.
-   `freq` is the cutoff as a Q32 rate (Hz); the block-derived `dly` is the delay in
-   Q16 samples (fs/freq). The read interpolates linearly between the two nearest
-   taps; `tone` is the one-pole damping coefficient in the feedback path (0 = dark,
-   32767 = bright); `res` is the feedback amount; `mix` crossfades the dry input and
-   the wet comb signal. The wet signal is saturated to Q15 before it is written, so
-   the line can never overflow. */
+   `cutoff` (Q16, 0..65535) sets the comb's fundamental (≈ cutoff/65536 · fs/2, so
+   it is linear in frequency up to Nyquist); the block-derived `dly` is the delay
+   in Q16 samples (131072/cutoff). The read interpolates linearly between the two
+   nearest taps; `tone` is the one-pole damping coefficient in the feedback path
+   (0 = dark, 32767 = bright); `res` is the feedback amount; `mix` crossfades the
+   dry input and the wet comb signal. The wet signal is saturated to Q15 before it
+   is written, so the line can never overflow. */
 int32_t ${out.out};
 ${out.out} = ${state.buf}[(${state.idx} - (${state.dly} >> 16)) & ${const.mask}]
     + fm1_q16_mul(
