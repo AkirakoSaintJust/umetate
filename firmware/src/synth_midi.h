@@ -8,6 +8,10 @@
 #pragma once
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SYNTH_CC_NONE 0xFFFFu
 
 typedef struct {
@@ -19,6 +23,13 @@ typedef struct {
     const uint16_t *cc_map;    /* cc_to_param[128]; SYNTH_CC_NONE = unassigned */
     const int32_t *param_min;  /* per-param ranges, indexed by param id */
     const int32_t *param_max;
+    uint8_t sustain_on;        /* per-context pedal state */
+    uint8_t sustain_pend[128]; /* per-context deferred note-offs */
 } synth_midi_ctx;
 
-void synth_midi_poll(const synth_midi_ctx *ctx);
+void synth_midi_poll(synth_midi_ctx *ctx);
+void synth_midi_feed(synth_midi_ctx *ctx, uint8_t status, uint8_t data1, uint8_t data2);
+
+#ifdef __cplusplus
+}
+#endif

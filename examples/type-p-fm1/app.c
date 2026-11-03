@@ -42,7 +42,7 @@ static uint32_t idle_ok;                            /* MIDI may poll while the s
 static synth_midi_ctx midi_ctx = {
     type_p_fm1_glue_note_on_ch, type_p_fm1_glue_note_off, type_p_fm1_glue_all_off,
     type_p_fm1_glue_set_param, type_p_fm1_glue_bend,
-    cc_to_param, param_min, param_max,
+    cc_to_param, param_min, param_max, 0u, {0},
 };
 static synth_sysex_ctx sysex_ctx = {
     SYNTH_MODEL, SYNTH_N_PARAMS, SYNTH_N_PARTS, type_p_fm1_glue_get_param,

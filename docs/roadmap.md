@@ -3685,3 +3685,11 @@ type-p-fm1 script are byte-identical, two states in one process stay isolated,
 the full generator suite passes, the web parity gate is exact, and the target
 package builds. The host A/B shows no regression, 120.7 us before and 115.1 us
 after per `render(256)`. Physical device acceptance and timing remain blocked.
+
+Milestone 1 is done. `plugin/` builds a JUCE-free `p1_engine` library and an
+`engine_parity` test. The engine matches the firmware render bit-exactly, two
+instances stay isolated, a MIDI script through `synth_midi_poll` and through the
+bridge produces the same 309 parameters, note state and samples, and sustain
+state is per bridge. The `synth_midi` sustain state moved from file scope into
+the per-context struct, so two bridges do not share a pedal. The full
+`deep-check --all` remains green. The JUCE host skeleton is next.

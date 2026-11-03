@@ -79,7 +79,7 @@ int main(void)
 {
     uint32_t i;
     synth_midi_ctx ctx = {st_note_on, st_note_off, st_all_off, st_set_param, st_bend,
-                          cc_map, pmin, pmax};
+                          cc_map, pmin, pmax, 0u, {0}};
     for (i = 0; i < 128u; i++)
         cc_map[i] = SYNTH_CC_NONE;
     cc_map[16] = 3;

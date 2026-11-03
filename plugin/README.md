@@ -325,7 +325,7 @@ Plugin work adds a new evidence layer. It does not replace the firmware layers.
 | # | Milestone | Exit |
 | --- | --- | --- |
 | 0 | Instance-safe engine state | done, physical device blocked |
-| 1 | Engine bridge harness, no JUCE | 44.1 kHz bit-exact with the host render, MIDI parity |
+| 1 | Engine bridge harness, no JUCE | done |
 | 2 | JUCE host skeleton | VST3 and standalone, audio, MIDI, all 309 params, state save |
 | 3 | Editor | three pages, tokens, visualisers, dialogs, fixed scale |
 | 4 | Presets and banks | 64 multi and 128 part slots, device record round trip |
@@ -334,6 +334,23 @@ Plugin work adds a new evidence layer. It does not replace the firmware layers.
 | 7 | Generator and CLI | `plugin-generate`, `plugin-build`, `plugin-check`, template and docs |
 
 Milestone 0 is firmware work and can start before any JUCE dependency is added.
+
+Milestone 1 is done. `plugin/` builds a JUCE-free `p1_engine` library and an
+`engine_parity` test. The engine matches the firmware render bit-exactly, two
+instances stay isolated, a MIDI script matches the `synth_midi_poll` reference,
+and sustain state is per bridge. The full `deep-check --all` remains green.
+
+Host bridge build:
+
+```sh
+umetate build --synth examples/type-p-fm1   # regenerate firmware/gen first
+cmake -S plugin -B build/plugin
+cmake --build build/plugin
+ctest --test-dir build/plugin --output-on-failure
+```
+
+The bridge build is host-native and optional. It is separate from the firmware
+Docker gate. The generated `firmware/gen` must exist before CMake configures.
 
 ## 14. Risks
 
