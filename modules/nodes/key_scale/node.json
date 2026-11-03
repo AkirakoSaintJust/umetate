@@ -1,9 +1,12 @@
 {
   "name": "key_scale",
-  "summary": "Key-follow factor: the bipolar Q15 push factor (0 at the breakpoint, ramping to `hi`/`lo` at the keyboard extremes) from the voice's note + a breakpoint input + bipolar LO/HI percent amounts. Feeds a target node's `fm1_key_apply`.",
-  "ins": { "bp": { "rate": "control", "default": "60" } },
+  "summary": "Key-follow factor: the bipolar Q15 push factor (0 at the breakpoint, ramping to `hi`/`lo` at the keyboard extremes) from the voice's note + a breakpoint input + bipolar LO/HI percent amounts. Gated by an `on` input. Feeds a target node's `fm1_key_apply`.",
+  "ins": {
+    "bp": { "rate": "control", "default": "60" },
+    "on": { "rate": "control", "default": "1" }
+  },
   "outs": { "k": "control" },
   "params": { "lo": "int32", "hi": "int32" },
   "state": { "k": "q15" },
-  "block_derived": { "k": "fm1_key_scale((uint32_t)voice_note[v], (uint32_t)${in.bp}, ${param.lo}, ${param.hi})" }
+  "block_derived": { "k": "${in.on} ? fm1_key_scale((uint32_t)voice_note[v], (uint32_t)${in.bp}, ${param.lo}, ${param.hi}) : 0" }
 }

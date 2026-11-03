@@ -3666,8 +3666,8 @@ The plan is `plugin/README.md`. It covers a reusable JUCE host plus a generated
 plugin reuses the generated DSP and the device MIDI, preset and parameter code. It
 does not reimplement the voice graph in C++.
 
-The generated manifest currently has **309** parameters: 133 per part plus 5
-routing parameters per part, plus 33 global. The earlier 194 estimate is retired.
+The generated manifest currently has **313** parameters: 134 per part plus 5
+routing parameters per part, plus 35 global. The earlier 194 estimate is retired.
 Every parameter is exposed to the host. The editor may hide some behind target
 selectors, and a coverage test proves that no parameter is orphaned.
 
@@ -3689,7 +3689,7 @@ after per `render(256)`. Physical device acceptance and timing remain blocked.
 Milestone 1 is done. `plugin/` builds a JUCE-free `p1_engine` library and an
 `engine_parity` test. The engine matches the firmware render bit-exactly, two
 instances stay isolated, a MIDI script through `synth_midi_poll` and through the
-bridge produces the same 309 parameters, note state and samples, and sustain
+bridge produces the same 313 parameters, note state and samples, and sustain
 state is per bridge. The `synth_midi` sustain state moved from file scope into
 the per-context struct, so two bridges do not share a pedal. The full
 `deep-check --all` remains green. The JUCE host skeleton followed in §13.18.
@@ -3697,14 +3697,14 @@ the per-context struct, so two bridges do not share a pedal. The full
 ### 13.18 JUCE host skeleton (2026-11-03)
 
 Milestone 2 is done. `plugin/juce` builds a VST3 and a standalone app against
-JUCE 8.0.9, fetched by tag with `FetchContent`. The processor exposes the 309
+JUCE 8.0.9, fetched by tag with `FetchContent`. The processor exposes the 313
 manifest parameters through the APVTS, applies automation and MIDI at the
 32-sample control block, renders the 44.1 kHz core bit-exactly and saves and
 restores the parameter state. The APVTS key is the stable manifest name and the
 engine id is the manifest index. The generic JUCE editor is a placeholder for
 Milestone 3.
 
-The `plugin_smoke` CTest checks 309 parameters with unique ids, contiguous engine
+The `plugin_smoke` CTest checks 313 parameters with unique ids, contiguous engine
 ids, a bit-exact 44.1 kHz note render against the engine reference, an automation
 write at the 32-sample control block, a MIDI offset at its control block, the
 state round trip and the 48 kHz placeholder path. `engine_parity` remains green. The 48 kHz path is the temporary linear rate bridge, so it renders
@@ -3713,3 +3713,39 @@ are Milestone 5. The JUCE build stays optional behind `P1_BUILD_JUCE` and does n
 change the Docker firmware gate. The feature contract is
 `plugin/feature-contract-host.md`. Physical device acceptance and timing remain
 blocked. The designed editor is next.
+
+### 13.19 Design revision: follow cards, part tune and algorithm graphs (2026-11-03)
+
+The plugin mockup and the shared design language moved to v1.1. The wordmark now
+sets `TYPE P.` in the brand font and `fm1` in lowercase Zen Dots, with the same
+solid shadow. The algorithm graphs are centred in their 240 by 128 viewBox, so
+the header and the picker tiles share one optical centre. The picker reserves the
+`alg n` caption line below each graph. The header algorithm block cycles the eight
+algorithms on the mouse wheel without opening the picker.
+
+The fx / mod page now has separate key follow and velocity follow cards. Each has
+its own on switch and a `wipe all` button that sets every target amount to 0. The
+two filter cards both show cutoff, resonance and env amount. Key and velocity
+tracking live in the follow cards, so filter 2 no longer carries a duplicate key
+knob. The operator envelope puts R1 to R4 on the first row and L1 to L3 on the
+second row. The part card adds a `tune` knob for the part detune.
+
+The engine gained three things to make the design honest. `key_sens_on` gates
+every key follower, mirroring `vel_sens_on`. `f2_cutoff_vs` gives filter 2 the
+same velocity follow as filter 1. `vm_detune` is a per-part tune in cents,
+applied to every voice in the part at note-on. The mode params are now seven.
+The manifest is **313** parameters: 134 per-part timbre plus 5 routing parameters
+per part, plus 35 global. `SYNTH_N_PARAMS` is 134 and `SYNTH_ROUTING_BASE` is 303.
+
+The device panel exposes the three new controls: `KEY SENS ON` on the key scaling
+page, `F2 CUTOFF VS` on the filter velocity page and `TUNE` on the voice mode
+page. The part patch record grows with the new timbre param, so the generated
+sysex layout and the preset bank sizes move with it. The plugin state and the
+future banks must use the new layout.
+
+Evidence: the mockup screenshots for patch, operators, fx / mod and the picker
+are current at 1240 by 985. The wheel test reports `alg=5 dialogs=0`. The wipe
+and key-switch test reports both target sets wiped and the key card off. The
+generator test covers the key gate and the +100 cent part tune. The host tests,
+the web parity, the target package, the Python layer and `plugin_smoke` are green.
+Physical device acceptance remains blocked.

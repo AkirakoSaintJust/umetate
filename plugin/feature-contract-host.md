@@ -26,7 +26,7 @@
 - **Platform/API/HAL changes:** a new host-native CMake path guarded by
   `P1_BUILD_JUCE`. The firmware gate and the Docker target build are unchanged.
 - **Persistence/version impact:** the plugin state is an APVTS XML blob with a
-  `stateVersion` property. It stores the 309 parameters. The device preset banks
+  `stateVersion` property. It stores the 313 parameters. The device preset banks
   and their byte layout are untouched.
 - **MIDI/clock impact:** notes, CC, sustain, panic and bend use `synth_midi`.
   Clock and transport are ignored.
@@ -76,7 +76,7 @@
 
 ## Verification
 
-- **Host vector(s):** `plugin_smoke` instantiates the processor, checks 309
+- **Host vector(s):** `plugin_smoke` instantiates the processor, checks 313
   parameters with unique ids and contiguous engine ids, renders a note at
   44.1 kHz and compares every float with the engine reference, writes an
   automation value and compares the next render with the changed parameter,
@@ -96,7 +96,7 @@
 - `P1_BUILD_JUCE=ON` builds a VST3 and a standalone target against JUCE 8.0.9.
 - The VST3 and standalone artifacts are produced under
   `build/plugin-juce/juce/type_p_fm1_artefacts/Release`.
-- The APVTS exposes 309 parameters. The ids are the manifest names and are
+- The APVTS exposes 313 parameters. The ids are the manifest names and are
   unique. The engine ids cover 0 to 308 with no gap.
 - The 44.1 kHz path is bit-exact with the engine reference on a note render.
 - An automation write to `algorithm.p0` changes the next render exactly at the

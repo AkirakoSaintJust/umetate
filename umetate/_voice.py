@@ -29,13 +29,14 @@ from ._ir import ParamEntry
 # once its envelope actually reaches zero; this only bounds the hold.
 RELEASE_BLOCKS = 8192
 
-# (cname, default, friendly name, min, max, unit, display) for the six universal
-# voice-mode params. Multi-timbre: per-part arrays addressed through the part
-# index; the single-timbre fallback keeps them global scalars.
+# (cname, default, friendly name, min, max, unit, display, curve) for the seven
+# universal voice-mode params. Multi-timbre: per-part arrays addressed through the
+# part index; the single-timbre fallback keeps them global scalars.
 MODE_PARAMS: tuple[tuple[str, int, str, int, int, str, str, str], ...] = (
     ("vm_mode", 0, "mode", 0, 1, "", "mode", "linear"),  # 0=poly 1=mono
     ("vm_unison_count", 1, "unison_count", 1, 8, "", "raw", "linear"),
     ("vm_unison_detune", 0, "unison_detune", 0, 200, "cents", "raw", "linear"),
+    ("vm_detune", 0, "detune", -100, 100, "cents", "cent", "linear"),
     ("vm_legato", 0, "legato", 0, 1, "", "onoff", "linear"),
     (
         "vm_portamento",
@@ -63,7 +64,7 @@ MODE_PARAMS: tuple[tuple[str, int, str, int, int, str, str, str], ...] = (
 def mode_param_entries(
     start_id: int, n_parts: int = 1, only_part: int | None = None
 ) -> list[ParamEntry]:
-    """The six mode params as ParamEntrys. Single-timbre (n_parts == 1): global
+    """The seven mode params as ParamEntrys. Single-timbre (n_parts == 1): global
     (part=None). Multi-timbre: per-part (part 0..n_parts-1, `.p{p}` names);
     `only_part` restricts to one part (the voice block builds them part-major)."""
     entries: list[ParamEntry] = []
@@ -269,6 +270,8 @@ def _note_on_ch_single(name: str) -> list[str]:
         "                int32_t cents = -span / 2 + (int32_t)k * step;",
         "                voice_detune[bp] = 65536 + cents * 38;",
         "            }",
+        "            voice_detune[bp] = fm1_q16_mul(voice_detune[bp],",
+        "                                       fm1_tune_q16(0, 0, vm_detune));",
         "            picked[k] = bp;",
         "        }",
         "        npicked = count;",
@@ -282,6 +285,8 @@ def _note_on_ch_single(name: str) -> list[str]:
         "        }",
         "        npicked = 1;",
         "        voice_detune[picked[0]] = 65536;",
+        "        voice_detune[picked[0]] = fm1_q16_mul(voice_detune[picked[0]],",
+        "                                             fm1_tune_q16(0, 0, vm_detune));",
         "    }",
         "",
         "    for (uint32_t k = 0; k < npicked; k++) {",
@@ -364,6 +369,8 @@ def _note_on_ch_parts(name: str) -> list[str]:
         "                    int32_t cents = -span / 2 + (int32_t)k * step;",
         "                    voice_detune[mv] = 65536 + cents * 38;",
         "                }",
+        "                voice_detune[mv] = fm1_q16_mul(voice_detune[mv],",
+        "                                              fm1_tune_q16(0, 0, vm_detune[p]));",
         "                voice_delay[mv] = (uint32_t)(part_delay[p] > 0 ? part_delay[p] * 44 : 0);",
         "                voice_note[mv] = (uint8_t)active;",
         "                voice_age[mv] = ++ages;",
@@ -389,7 +396,7 @@ def _note_on_ch_parts(name: str) -> list[str]:
         "            }",
         "            chosen[bp] = 1;",
         "            voice_part[bp] = (uint8_t)p;",
-        "            voice_detune[bp] = 65536;",
+        "            voice_detune[bp] = fm1_q16_mul(65536, fm1_tune_q16(0, 0, vm_detune[p]));",
         "            voice_delay[bp] = (uint32_t)(part_delay[p] > 0 ? part_delay[p] * 44 : 0);",
         "            picked[npicked++] = bp;",
         "        }",

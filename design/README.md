@@ -5,7 +5,9 @@ The reference implementation is the clickable mockup at
 `mockups/type-p-fm1-plugin.html`. The machine-readable source is `tokens.json`,
 with a CSS projection in `tokens.css` and platform notes in `juce.md`.
 
-Status: v1.0, 2026-11-03. Signed off on the mockup.
+Status: v1.1, 2026-11-03. Signed off on the mockup. Revised for the split
+follow cards, part tune, filter env symmetry, centred algorithm graphs and the
+two-row operator envelopes.
 
 ## Principles
 
@@ -17,7 +19,8 @@ Status: v1.0, 2026-11-03. Signed off on the mockup.
 4. Square corners, flat fills, no gradients, no blur, no glow. The only shadow is
    the solid offset behind the wordmark.
 5. Type is lowercase and pixel-sharp. Headers use Zen Dots, everything else uses
-   DotGothic16. The wordmark and user-entered names keep their case.
+   DotGothic16. The wordmark and user-entered names keep their case. The `fm1`
+   suffix is lowercase Zen Dots.
 6. Every label earns its place. No filler text such as voice counts, operator
    counts, or descriptions of what the product already is.
 7. One algorithm per node, one meaning per colour, one home for every token.
@@ -57,14 +60,15 @@ Families:
 
 | Family | Use | Licence |
 | --- | --- | --- |
-| Zen Dots | section titles, tabs, operator and part names, dialog titles, toolbar labels, status | SIL Open Font License |
+| Zen Dots | section titles, tabs, operator and part names, dialog titles, toolbar labels, status, wordmark suffix | SIL Open Font License |
 | DotGothic16 | all other interface text, values, labels, buttons, notes | SIL Open Font License |
-| Digital Desolation Plus | wordmark only | unverified, do not bundle until cleared |
+| Digital Desolation Plus | `TYPE P.` wordmark prefix | unverified, do not bundle until cleared |
 
 The mockup loads both OFL families from Google Fonts after first paint. A
 production web build should self-host them. The JUCE build must bundle the OFL
-files as binary resources. The current mockup uses `Arial Black` as the wordmark
-fallback because the brand font licence is not confirmed.
+files as binary resources. The current mockup uses `Arial Black` as the `TYPE P.`
+prefix fallback because the brand font licence is not confirmed. The `fm1`
+suffix always uses Zen Dots.
 
 Scale:
 
@@ -94,19 +98,22 @@ Scale:
 | status | Zen Dots | 11 | lower |
 | algorithm label | Zen Dots | 10 | lower |
 | algorithm number | Zen Dots | 30 | lower |
-| wordmark | Digital Desolation Plus | 30 | as drawn |
+| wordmark prefix | Digital Desolation Plus | 30 | as drawn |
+| wordmark suffix | Zen Dots | 30 | lower |
 
 Tracking is tight, between 0.01em and 0.06em. Section titles carry a `//` prefix
-in `faint`. The wordmark keeps its uppercase form and the solid shadow. The select
-text at 9px is the one survivor from the old scale and should be reviewed when the
-real control is rebuilt.
+in `faint`. The wordmark is `TYPE P.` in the brand font and `fm1` in lowercase
+Zen Dots. It keeps the solid shadow. Zen Dots has one weight, so the suffix uses
+400 at the same 30px em size. The select text at 9px is the one survivor from the
+old scale and should be reviewed when the real control is rebuilt.
 
 ## Metrics
 
 | Item | Value |
 | --- | --- |
 | window width | 1240 |
-| window height | fixed, shared by all pages, set by the operator page |
+| window height | 985 |
+| window height note | fixed across pages, set by the operator page |
 | page padding | 14 top, 16 sides, 16 bottom |
 | grid gap | 10 |
 | card padding | 9 |
@@ -126,7 +133,7 @@ Knob cells and dials:
 | operator oscillator and amplitude LFO | 56 | 34 |
 | part settings | 62 | 38 |
 | pitch envelope | 52 | 38 |
-| key and velocity | 64 | 42 |
+| key follow and velocity follow | 64 | 42 |
 
 Borders:
 
@@ -154,14 +161,17 @@ Shape:
 ### Header
 
 Brand left, algorithm centre-left, output scope right, patch controls far right.
-The wordmark is `TYPE P.fm1` with a pink dot. The brand line is
+The wordmark is `TYPE P.` in the brand font and `fm1` in lowercase Zen Dots,
+with a pink dot. The brand line is
 `p1onken // パンク派第１音響合成研究班` in 12px DotGothic `dim`.
 
 The algorithm block is a button. It shows a 30px Zen Dots number, a caret, and the
 routing graph. The graph is 240 by 128 in the viewBox, scaled to about 244 by 130.
-White operators are modulators, pink operators are carriers, grey lines are
-modulation, purple downward arrows mark carrier output. Clicking the block opens
-the algorithm picker.
+The graph content is centred in that viewBox, so the header and the picker tiles
+share one optical centre. White operators are modulators, pink operators are
+carriers, grey lines are modulation, purple downward arrows mark carrier output.
+Clicking the block opens the algorithm picker. The mouse wheel over the block
+cycles the eight algorithms without opening the picker.
 
 The output section is a label plus a `scope` and `spectro` segmented control. The
 active segment is purple. The plot is 50px high, borderless, black.
@@ -189,36 +199,46 @@ a pink cut polygon, not a rectangle. Inactive tabs are dim text on black.
 
 Two part cards. The title is `part n: name` in Zen Dots. The active part has a
 green border, the inactive part has no visible border. Each card holds rename,
-copy, paste and a mute switch, four knobs, a wide level slider with the caption
+copy, paste and a mute switch, five knobs, a wide level slider with the caption
 `level`, and two borderless visualisers, one scope and one spectro. No captions on
-the visualisers. Then a voice mode block with `poly`, `mono`, `legato`, `unison`
-and the unison, detune and porta knobs.
+the visualisers. The five knobs are `midi channel`, `keyzone start`, `keyzone
+end`, `tune` and `delay`. `tune` is the part detune in cents. Then a voice mode
+block with `poly`, `mono`, `legato`, `unison` and the unison, detune and porta
+knobs.
 
 ### Operators
 
 Four borderless columns. Each has the operator name, copy and paste, the mute
 switch, a scope and spectro pair, and three cards: `oscillator`, `envelope`,
 `amplitude lfo`. The oscillator card holds ratio, detune, level, feedback and the
-wave select. The envelope holds R1 to R4 and L1 to L3. The amplitude LFO holds
-rate, depth and the wave select. The four oscillator knobs spread across the card,
-the two LFO knobs sit apart, and the envelope keeps the compact seven-knob row.
+wave select. The envelope holds R1 to R4 on the first row and L1 to L3 on the
+second row. The amplitude LFO holds rate, depth and the wave select. The four
+oscillator knobs spread across the card, the two LFO knobs sit apart, and the
+envelope rates and levels each get their own row.
 
 ### FX / MOD
 
 One page, a four by two grid that fills the window. Filters 1 and 2, filter
-envelope, wavefolder, pitch LFO, pitch envelope, and a double-width key and
-velocity card. Key follow has a breakpoint, a target selector and below and above
-amounts. Velocity follow has a global on switch, a target selector and an amount.
-Targets match the firmware manifest: operator level, feedback and amp envelope,
-pitch envelope, filter 1 and 2 cutoff and filter envelope for key, and the same
-set minus filter 2 for velocity.
+envelope and wavefolder fill the first row. Pitch LFO, pitch envelope, key follow
+and velocity follow fill the second row. Each filter card has cutoff, resonance
+and env amount. Key and velocity tracking live in the two follow cards, not on
+the filter cards.
+
+Key follow and velocity follow are separate cards. Each has an on switch, a
+`wipe all` button and its own target selector. Key follow has a breakpoint and
+below and above amounts. Velocity follow has one amount. The wipe button sets
+every target amount to 0%, so the card can be cleared without visiting each
+target. The same target set is used for both cards: operator level, feedback and
+amp envelope, pitch envelope, filter 1 and 2 cutoff, and filter envelope.
 
 ### Dialogs
 
 Patch browser and part slot lists are vertical scrollers with a thin scrollbar.
 Rows show the slot number, the name, and the state. Selected rows use a purple
 border and text. Confirmations use the same dialog frame. The algorithm picker is
-a wide dialog with eight routing tiles.
+a wide dialog with eight routing tiles. Each tile centres its graph in the figure
+area and keeps `alg n` on its own line below, with enough tile height that the
+graph cannot clip or touch the caption.
 
 ### Status
 
@@ -276,7 +296,7 @@ before changing the interface.
 ## Open items
 
 - Confirm the Digital Desolation Plus licence before bundling it. Until then the
-  wordmark uses Arial Black.
+  `TYPE P.` prefix uses Arial Black and the `fm1` suffix uses Zen Dots.
 - Review the 9px select text when the real control is built.
 - The `part settings` page is intentionally sparse at the top and fills with the
   two part visualisers. Do not add filler widgets to fill space.

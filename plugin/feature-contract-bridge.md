@@ -82,7 +82,7 @@
   identical to the legacy firmware API, including the release tail.
 - Two `Engine` instances stay isolated.
 - A MIDI script through `synth_midi_poll` and the same script through
-  `MidiBridge` produce the same 309 parameters, note state and rendered samples.
+  `MidiBridge` produce the same 313 parameters, note state and rendered samples.
 - Sustain state is per MIDI bridge, so one instance's pedal does not affect
   another.
 - `engine_parity` passes under CMake and CTest.

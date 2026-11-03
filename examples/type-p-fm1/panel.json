@@ -334,9 +334,10 @@
         {
           "id": "f1-vel-sens",
           "widgets": [
-            { "type": "subheader", "row": 2, "text": "F1 VEL SENS", "plain": true },
+            { "type": "subheader", "row": 2, "text": "FILTER VEL SENS", "plain": true },
             { "type": "param_row", "row": 3, "param": "f1_cutoff_vs", "text": "F1 CUTOFF VS" },
-            { "type": "param_row", "row": 4, "param": "fenv_vs", "text": "F-ENV RATE VS" }
+            { "type": "param_row", "row": 4, "param": "f2_cutoff_vs", "text": "F2 CUTOFF VS" },
+            { "type": "param_row", "row": 5, "param": "fenv_vs", "text": "F-ENV RATE VS" }
           ]
         }
       ],
@@ -382,6 +383,7 @@
           "widgets": [
             { "type": "label", "row": 2, "span": 2, "text": "KEY SCALING" },
             { "type": "param_row", "row": 4, "param": "breakpoint", "text": "BREAKPOINT" },
+            { "type": "param_row", "row": 5, "param": "key_sens_on", "text": "KEY SENS ON" },
             { "type": "label", "row": 7, "text": "targets live in EDIT/FX/ENV" }
           ]
         },
@@ -400,7 +402,8 @@
             { "type": "param_row", "row": 3, "param": "mode", "part": true, "text": "MODE" },
             { "type": "param_row", "row": 4, "param": "note_priority", "part": true, "text": "PRIORITY" },
             { "type": "param_row", "row": 5, "param": "legato", "part": true, "text": "LEGATO" },
-            { "type": "param_row", "row": 6, "param": "portamento", "part": true, "text": "PORTA" }
+            { "type": "param_row", "row": 6, "param": "portamento", "part": true, "text": "PORTA" },
+            { "type": "param_row", "row": 7, "param": "detune", "part": true, "text": "TUNE" }
           ]
         },
         {

@@ -51,10 +51,11 @@ Bundle DotGothic16 and Zen Dots as binary resources. Both are SIL Open Font
 License. Do not load them from the network in the plugin.
 
 - Zen Dots: section titles, tabs, operator and part names, dialog titles, toolbar
-  labels, status, algorithm number.
+  labels, status, algorithm number and the lowercase `fm1` wordmark suffix.
 - DotGothic16: everything else, including values, labels, buttons and notes.
 - Digital Desolation Plus: do not bundle until the licence is confirmed. Use the
-  Arial Black fallback for the wordmark in the first build.
+  Arial Black fallback for the `TYPE P.` wordmark prefix in the first build. Draw
+  `fm1` with Zen Dots in both cases.
 
 JUCE takes a font height in logical pixels. Use the CSS pixel sizes from
 `tokens.json` directly at 1x. Keep the whole editor on one uniform scale factor
@@ -67,8 +68,8 @@ covers both.
 ## Layout
 
 - Design at 1240 logical pixels wide.
-- Height is fixed and shared by every page. Take it from the operator page and do
-  not let page changes resize the editor.
+- Height is fixed at 985 logical pixels and shared by every page. Do not let page
+  changes resize the editor.
 - Apply one uniform scale to the whole 1240 wide layout when the host gives a
   different editor size. Do not reflow the design.
 - Use integer rectangles and align 1px strokes to the pixel grid.
@@ -77,12 +78,27 @@ covers both.
 
 Every page fills the same height:
 
-- patch settings: two part cards, each with a scope and spectro that grow to fill
-  the remaining card height, then the voice mode block.
-- operators: four columns with oscillator, envelope and amplitude LFO.
+- patch settings: two part cards, each with five knobs, a level slider and a
+  scope and spectro that grow to fill the remaining card height, then the voice
+  mode block.
+- operators: four columns with oscillator, envelope and amplitude LFO. The
+  envelope uses one row for R1 to R4 and a second row for L1 to L3.
 - fx / mod: a four by two grid. Filters, filter envelope and wavefolder on the
-  first row. Pitch LFO, pitch envelope and the double-width key and velocity card
-  on the second row.
+  first row. Pitch LFO, pitch envelope, key follow and velocity follow on the
+  second row. The two follow cards are separate and each has its own on switch
+  and wipe button.
+
+## Header
+
+- Draw `TYPE P.` with the brand font and `fm1` with Zen Dots, both at the 30px
+  wordmark size. Keep the solid `brandShadow` offset behind the whole wordmark.
+- The algorithm block is a button. Draw the 30px number, the caret and the 240 by
+  128 graph. Centre the graph content in its viewBox so the header and the picker
+  tiles share one optical centre.
+- Clicking the algorithm block opens the picker. The mouse wheel over the block
+  cycles the active part's algorithm and must not open the picker.
+- In the picker, reserve the caption line below each graph. Centre the graph in the
+  remaining figure area so it cannot clip or touch `alg n`.
 
 ## Shape and borders
 
@@ -105,11 +121,11 @@ stepped.
 Context sizes:
 
 - default 52 cell, 42 dial
-- operator envelope 36 cell, 34 dial
+- operator envelope 37 cell, 34 dial
 - operator oscillator and amplitude LFO 56 cell, 34 dial
 - part settings 62 cell, 38 dial
 - pitch envelope 52 cell, 38 dial
-- key and velocity 64 cell, 42 dial
+- key follow and velocity follow 64 cell, 42 dial
 
 Mute controls are tiles, not switches. Active is a solid pink tile with a black
 label such as `op1` or `p1`. Muted is a black tile with a pink outline and a pink

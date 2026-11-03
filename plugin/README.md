@@ -52,14 +52,14 @@ Out of scope for the first release:
 
 ## 3. Parameter count
 
-The generated manifest is the authority. It currently contains **309** parameters:
+The generated manifest is the authority. It currently contains **313** parameters:
 
 | Group | Count | Notes |
 | --- | --- | --- |
-| per-part timbre | 133 × 2 = 266 | `SYNTH_N_PARAMS` is 133. Operators, envelopes, LFOs, pitch envelope, algorithm, voice mode. |
-| global | 33 | Filters, filter envelopes, wavefolder, key and velocity follow. |
+| per-part timbre | 134 × 2 = 268 | `SYNTH_N_PARAMS` is 134. Operators, envelopes, LFOs, pitch envelope, algorithm, voice mode, part tune. |
+| global | 35 | Filters, filter envelopes, wavefolder, key and velocity follow, key and velocity switches. |
 | per-part routing | 5 × 2 = 10 | Channel, keyzone low, keyzone high, level, delay. |
-| total | 309 | `SYNTH_ROUTING_BASE` is 299. |
+| total | 313 | `SYNTH_ROUTING_BASE` is 303. |
 
 The earlier "194 parameters" figure was a pre-manifest estimate and is retired.
 The official number is whatever `params.json` says. The plugin generator reads it
@@ -67,9 +67,9 @@ at build time.
 
 Two details matter:
 
-- `params.json` has 138 names ending in `.p0` and 138 ending in `.p1`. That is 133
+- `params.json` has 139 names ending in `.p0` and 139 ending in `.p1`. That is 134
   timbre parameters plus the 5 routing parameters for each part.
-- A single-part preset stores the 133 timbre parameters, not the routing. The
+- A single-part preset stores the 134 timbre parameters, not the routing. The
   multi patch stores the routing and the part references.
 
 ## 4. Architecture
@@ -242,7 +242,7 @@ The plugin state is a versioned blob:
 
 ```text
 version
-APVTS state (309 parameters)
+APVTS state (313 parameters)
 ui_active_part, ui_page
 multi bank (64 records)
 part bank (128 records)
@@ -316,7 +316,7 @@ Plugin work adds a new evidence layer. It does not replace the firmware layers.
    alias rejection, passband ripple and reported latency.
 5. **MIDI parity.** The same MIDI file produces the same parameter changes, note
    allocation and bend in the device host and the plugin engine.
-6. **State round trip.** Save, reload and compare all 309 parameters and both
+6. **State round trip.** Save, reload and compare all 313 parameters and both
    banks. Automation writes reach the engine at the next control block.
 7. **GUI.** A snapshot of each page and dialog at 1x. Manual keyboard, scroll,
    rename and mute checks on each platform.
@@ -348,7 +348,7 @@ instances stay isolated, a MIDI script matches the `synth_midi_poll` reference,
 and sustain state is per bridge. The full `deep-check --all` remains green.
 
 Milestone 2 is done. `plugin/juce` builds a VST3 and a standalone app against
-JUCE 8.0.9. The processor exposes the 309 manifest parameters through the APVTS,
+JUCE 8.0.9. The processor exposes the 313 manifest parameters through the APVTS,
 applies automation at the 32-sample control block, feeds MIDI through
 `synth_midi_feed`, renders the 44.1 kHz core bit-exactly, and saves and restores
 the parameter state. The generic JUCE editor is a placeholder for Milestone 3.

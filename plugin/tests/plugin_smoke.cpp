@@ -16,7 +16,6 @@
 namespace {
 
 constexpr int kFrames = 256;
-constexpr int kAlgorithmId = 112;
 
 int failures = 0;
 
@@ -37,8 +36,9 @@ void renderReference(int32_t* out, int frames, int noteOffset, int32_t algorithm
     p1::Engine reference;
     reference.reset();
     for (const auto& spec : kP1ParamSpecs)
-        reference.setParam(static_cast<uint32_t>(spec.engineId), spec.def);
-    reference.setParam(static_cast<uint32_t>(kAlgorithmId), algorithm);
+        reference.setParam(
+            static_cast<uint32_t>(spec.engineId),
+            std::strcmp(spec.id, "algorithm.p0") == 0 ? algorithm : spec.def);
     if (noteOffset > 0)
         reference.render(out, static_cast<uint32_t>(noteOffset));
     reference.noteOn(60, 100, 0);
@@ -66,7 +66,7 @@ int main()
 {
     TypePFm1AudioProcessor processor;
 
-    check(kP1ParamCount == 309, "the manifest exposes 309 parameters");
+    check(kP1ParamCount == 313, "the manifest exposes 313 parameters");
     check(processor.getParameters().size() == kP1ParamCount,
           "the APVTS exposes every manifest parameter");
     check(processor.acceptsMidi() && !processor.producesMidi(),

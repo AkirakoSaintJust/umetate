@@ -699,6 +699,45 @@ KS_TEST: Patch = {
     },
 }
 
+# the same key follower, gated by the global `key_sens_on` switch.
+KEY_GATE_TEST: Patch = {
+    "name": "key_gate_test",
+    "voices": 1,
+    "params": {
+        "key_sens_on": {
+            "target": "key_on.on",
+            "min": 0,
+            "max": 1,
+            "curve": "linear",
+            "display": "onoff",
+        }
+    },
+    "voice": {
+        "nodes": [
+            {"id": "ph", "type": "phasor"},
+            {"id": "osc", "type": "osc"},
+            {"id": "ks", "type": "key_scale", "params": {"lo": -100, "hi": 100}},
+            {"id": "tl", "type": "tl", "params": {"level": 50}},
+        ],
+        "wires": [
+            {"from": "ph.phase", "to": "osc.phase"},
+            {"from": "ks.k", "to": "tl.k"},
+            {"from": "osc.audio", "to": "tl.audio"},
+        ],
+        "voice_out": "tl.audio",
+    },
+    "global": {
+        "nodes": [
+            {"id": "bp", "type": "key_bp", "params": {"bp": 60}},
+            {"id": "key_on", "type": "key_on", "params": {"on": 1}},
+        ],
+        "wires": [
+            {"from": "bp.bp", "to": "ks.bp"},
+            {"from": "key_on.on", "to": "ks.on"},
+        ],
+    },
+}
+
 # the `saw` node uses the note-on reciprocal (inv_inc = 2^32/inc) via an inline
 # macro that sets the note-derived `inc`.
 SAW_TEST: Patch = {
@@ -865,6 +904,81 @@ int main(void) {
         return 1;
     }
     printf("ok: __NAME__ renders non-silent then silent\\n");
+    return 0;
+}
+"""
+
+# The key-follow gate: with `key_sens_on` at 1 the player shapes low/high notes,
+# with it at 0 both notes render the same level.
+KEY_GATE_HARNESS = """\
+#include <math.h>
+#include <stdint.h>
+#include <stdio.h>
+void __NAME___dsp_reset(void);
+void __NAME___dsp_note_on(uint32_t note, uint32_t velocity);
+void __NAME___dsp_render(int32_t *out, uint32_t frames);
+int __NAME___dsp_set_param(uint32_t id, int32_t value);
+static int32_t out[4096];
+static double rms(uint32_t n) {
+    long long e = 0;
+    for (uint32_t i = 0; i < n; i++) e += (long long)out[2 * i] * out[2 * i];
+    return sqrt((double)e / (double)n);
+}
+static double run(uint32_t note, int32_t on) {
+    __NAME___dsp_reset();
+    __NAME___dsp_set_param(__KEY_ID__, on);
+    __NAME___dsp_note_on(note, 100);
+    __NAME___dsp_render(out, 2048);
+    return rms(2048);
+}
+int main(void) {
+    double lo_on = run(24, 1), hi_on = run(96, 1);
+    double lo_off = run(24, 0), hi_off = run(96, 0);
+    if (!(hi_on > lo_on * 2.0)) {
+        printf("FAIL: key gate did not shape low/high (%.0f/%.0f)\\n", lo_on, hi_on);
+        return 1;
+    }
+    if (hi_off > lo_off * 1.15 || lo_off > hi_off * 1.15) {
+        printf("FAIL: key gate off did not flatten (%.0f/%.0f)\\n", lo_off, hi_off);
+        return 1;
+    }
+    printf("ok: key follow gate (on %.0f/%.0f, off %.0f/%.0f)\\n",
+           lo_on, hi_on, lo_off, hi_off);
+    return 0;
+}
+"""
+
+# The per-part tune: +100 cents raises the fundamental by 2^(100/1200).
+DETUNE_HARNESS = """\
+#include <stdint.h>
+#include <stdio.h>
+void __NAME___dsp_reset(void);
+void __NAME___dsp_note_on(uint32_t note, uint32_t velocity);
+void __NAME___dsp_render(int32_t *out, uint32_t frames);
+int __NAME___dsp_set_param(uint32_t id, int32_t value);
+static int32_t out[8192];
+static double fundamental(int32_t cents) {
+    __NAME___dsp_reset();
+    __NAME___dsp_set_param(__DETUNE_ID__, cents);
+    __NAME___dsp_note_on(69, 100);
+    __NAME___dsp_render(out, 4096);
+    int crossings = 0, prev = out[0] < 0;
+    for (uint32_t i = 1; i < 4096; i++) {
+        int cur = out[2 * i] < 0;
+        if (cur != prev) crossings++;
+        prev = cur;
+    }
+    return crossings * 44100.0 / (2.0 * 4096.0);
+}
+int main(void) {
+    double base = fundamental(0), sharp = fundamental(100);
+    double ratio = sharp / base;
+    if (ratio < 1.055 || ratio > 1.064) {
+        printf("FAIL: +100 cents ratio %.4f (base %.1f, sharp %.1f)\\n",
+               ratio, base, sharp);
+        return 1;
+    }
+    printf("ok: part tune +100c ratio %.4f (base %.1f Hz)\\n", ratio, base);
     return 0;
 }
 """
@@ -1651,6 +1765,51 @@ def _sound(patch: Patch) -> tuple[bool, str]:
             return False, "compile failed:\n" + proc.stderr
         run = subprocess.run([str(d / "t")], capture_output=True, text=True)
         return run.returncode == 0, run.stdout.strip()
+
+
+def _run_custom(
+    patch: Patch, harness: str, replacements: dict[str, str]
+) -> tuple[bool, str]:
+    """Generate + compile + run a custom C harness for one contract."""
+    src = generate(patch)
+    cname = patch["name"].replace("-", "_").replace(".", "_")
+    text = harness.replace("__NAME__", cname)
+    for key, value in replacements.items():
+        text = text.replace(key, value)
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        (d / "harness.c").write_text(text)
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            return False, "compile failed:\n" + proc.stderr
+        run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+        return run.returncode == 0, run.stdout.strip()
+
+
+def _key_gate() -> tuple[bool, str]:
+    ids = param_ids(KEY_GATE_TEST)
+    return _run_custom(
+        KEY_GATE_TEST, KEY_GATE_HARNESS, {"__KEY_ID__": str(ids["key_sens_on"])}
+    )
+
+
+def _part_detune() -> tuple[bool, str]:
+    ids = param_ids(SINE_ENV)
+    return _run_custom(SINE_ENV, DETUNE_HARNESS, {"__DETUNE_ID__": str(ids["detune"])})
 
 
 def _noise_varies(patch: Patch) -> tuple[bool, str]:
@@ -3493,7 +3652,7 @@ def main() -> int:
         and "type_p_fm1_INIT_N" in hdr
         and "{ 112u, 7 }" in hdr  # algorithm 7 (the additive algorithm)
         and "{ 0u, 65536 }" in hdr  # op1 ratio, part 0
-        and "{ 133u, 65536 }" in hdr  # op1 ratio, part 1 (per-part expansion)
+        and "{ 134u, 65536 }" in hdr  # op1 ratio, part 1 (per-part expansion)
     ):
         print("ok: the init: table emits (algorithm 7 + per-part op params)")
     else:
@@ -3604,7 +3763,7 @@ def main() -> int:
     if pids.get("osc.waveform.p0") is None or pids.get("osc.waveform.p1") is None:
         print("FAIL: per-part voice params are not in the param id space")
         failures += 1
-    elif pids["osc.waveform.p0"] != pids["osc.waveform.p1"] - 9:
+    elif pids["osc.waveform.p0"] != pids["osc.waveform.p1"] - 10:
         print("FAIL: per-part params are not part-major contiguous")
         failures += 1
     elif pids.get("channel.p0") is None or pids.get("channel.p1") is None:
@@ -3618,7 +3777,7 @@ def main() -> int:
     from .generate import generate_sysex_layout
 
     layout = generate_sysex_layout(PARTS_PATCH)
-    n_params = 9  # 3 voice params (phasor inc_ratio+detune, osc waveform) + 6 mode
+    n_params = 10  # 3 voice params (phasor inc_ratio+detune, osc waveform) + 7 mode
     expect = {
         "model": 0,
         "n_params": n_params,
@@ -3633,7 +3792,7 @@ def main() -> int:
         print(f"FAIL: sysex-layout geometry is wrong ({layout})")
         failures += 1
     else:
-        print("ok: sysex-layout pins the record geometry (9 params, 2 parts)")
+        print("ok: sysex-layout pins the record geometry (10 params, 2 parts)")
 
     # the type-p-fm1 patch's per-part count + part-patch frame must fit the C caps
     # (presets.h SYNTH_PARAM_MAX + synth_sysex.h SYNTH_SX_MAX); the key/velocity
@@ -3666,7 +3825,7 @@ def main() -> int:
     hdr = generate_synth_header(PARTS_PATCH)
     want = (
         "#define SYNTH_MODEL 0u\n"
-        "#define SYNTH_N_PARAMS 9u\n"
+        "#define SYNTH_N_PARAMS 10u\n"
         "#define SYNTH_N_PARTS 2u\n"
         "#define SYNTH_N_GLOBAL 0u\n"
         "#define SYNTH_ROUTING_BASE (SYNTH_N_PARTS * SYNTH_N_PARAMS + SYNTH_N_GLOBAL)\n"
@@ -4015,6 +4174,14 @@ def main() -> int:
         print(f"FAIL: key scaling: {exc}")
         failures += 1
 
+    ok, msg = _key_gate()
+    print(("ok: " if ok else "FAIL: ") + (msg or "key follow gate"))
+    failures += 0 if ok else 1
+
+    ok, msg = _part_detune()
+    print(("ok: " if ok else "FAIL: ") + (msg or "per-part tune"))
+    failures += 0 if ok else 1
+
     # the pulse width is a settable param (default 0.5 = square), not a wireable
     # control input — it must appear in the flattened param table with that default.
     width_params = [
@@ -4219,9 +4386,9 @@ def main() -> int:
     by_name = {p["name"]: p for p in params}
     lp = by_name.get("lp.cutoff")
     # `lp` is the last node in the two-op patch's graph, so its cutoff is the last
-    # *node* id; the six universal voice-mode params (`vm_*`) are appended after it
-    # (robust against param additions to earlier nodes — e.g. osc.waveform, vca.level).
-    n_mode = 6
+    # *node* id; the seven universal voice-mode params (`vm_*`) are appended after
+    # it (robust against param additions to earlier nodes - e.g. osc.waveform).
+    n_mode = 7
     if lp is None or lp["id"] != len(params) - 1 - n_mode:
         print("FAIL: params.json does not map lp.cutoff to the last node id")
         failures += 1
@@ -4231,6 +4398,7 @@ def main() -> int:
         "mode",
         "unison_count",
         "unison_detune",
+        "detune",
         "legato",
         "portamento",
         "note_priority",
@@ -4238,7 +4406,7 @@ def main() -> int:
         print("FAIL: the universal voice-mode params are not appended last")
         failures += 1
     else:
-        print("ok: the six universal voice-mode params are appended last")
+        print("ok: the seven universal voice-mode params are appended last")
 
     # the params: manifest binds a friendly name to a flattened param + metadata
     params = generate_params(TABLE_DEMO)["params"]

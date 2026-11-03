@@ -1,9 +1,12 @@
 {
   "name": "key_scale_g",
-  "summary": "Key-follow factor for a global target (the filter/F-ENV): the bipolar Q15 push factor from the *highest held note* + a breakpoint input + bipolar LO/HI percent amounts. The one key follower.",
-  "ins": { "bp": { "rate": "control", "default": "60" } },
+  "summary": "Key-follow factor for a global target (the filter/F-ENV): the bipolar Q15 push factor from the *highest held note* + a breakpoint input + bipolar LO/HI percent amounts. Gated by an `on` input. The one key follower.",
+  "ins": {
+    "bp": { "rate": "control", "default": "60" },
+    "on": { "rate": "control", "default": "1" }
+  },
   "outs": { "k": "control" },
   "params": { "lo": "int32", "hi": "int32" },
   "state": { "k": "q15" },
-  "block_derived": { "k": "fm1_key_scale(voice_highest_note(), (uint32_t)${in.bp}, ${param.lo}, ${param.hi})" }
+  "block_derived": { "k": "${in.on} ? fm1_key_scale(voice_highest_note(), (uint32_t)${in.bp}, ${param.lo}, ${param.hi}) : 0" }
 }

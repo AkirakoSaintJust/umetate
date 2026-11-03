@@ -1,6 +1,6 @@
 {
-  "summary": "The complete DX-style FM operator: phasor + osc(12 waveforms) + dx_env(rate/level) + tl(total-level), with per-op 1-sample self-feedback (the `feedback` param), velocity → amplitude (`vel_amp`), velocity → FM (`vel_fm`), velocity → envelope rate (`vel_rate`), a q16 `ratio` frequency multiplier (runtime), a per-op `detune` (cents −50..50), a per-op amplitude LFO (tremolo), a per-op `mute` gate, a `pitch` input (the shared vibrato LFO), per-op key-follow (level + feedback + A-ENV LO/HI) and velocity-follow (level + feedback + A-ENV amount), driven by a shared `bp` (breakpoint) and `von` (velocity sensitivity) input.",
-  "ins": { "fm": "audio", "pitch": "control", "bp": "control", "von": "control" },
+  "summary": "The complete DX-style FM operator: phasor + osc(12 waveforms) + dx_env(rate/level) + tl(total-level), with per-op 1-sample self-feedback (the `feedback` param), velocity → amplitude (`vel_amp`), velocity → FM (`vel_fm`), velocity → envelope rate (`vel_rate`), a q16 `ratio` frequency multiplier (runtime), a per-op `detune` (cents -50..50), a per-op amplitude LFO (tremolo), a per-op `mute` gate, a `pitch` input (the shared vibrato LFO), per-op key-follow (level + feedback + A-ENV LO/HI) and velocity-follow (level + feedback + A-ENV amount), driven by a shared `bp` (breakpoint), `kon` (key sensitivity switch) and `von` (velocity sensitivity) input.",
+  "ins": { "fm": "audio", "pitch": "control", "bp": "control", "kon": "control", "von": "control" },
   "outs": { "audio": "audio" },
   "params": {
     "ratio": { "target": "ph.inc", "note_derived": true },
@@ -71,9 +71,12 @@
     { "from": "ampvel.cv", "to": "tl.cv" },
     { "from": "bp", "to": "level_ks.bp" },
     { "from": "bp", "to": "fb_ks.bp" },
+    { "from": "bp", "to": "eg_ks.bp" },
+    { "from": "kon", "to": "level_ks.on" },
+    { "from": "kon", "to": "fb_ks.on" },
+    { "from": "kon", "to": "eg_ks.on" },
     { "from": "level_ks.k", "to": "tl.k" },
     { "from": "fb_ks.k", "to": "fb.k" },
-    { "from": "bp", "to": "eg_ks.bp" },
     { "from": "eg_ks.k", "to": "eg.k" },
     { "from": "von", "to": "level_vs.on" },
     { "from": "von", "to": "fb_vs.on" },
