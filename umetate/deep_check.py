@@ -103,6 +103,35 @@ def _pyright() -> int:
         return 1
 
 
+def _memory() -> int:
+    """The memory-safety gate (host-side): boot the built firmware on the emulator
+    with FM1_STRICT (the hardware guard + the misaligned-access fault) and fail on a
+    CPU exception. Skipped inside the container, where the host emulator is absent."""
+    from . import _emu, emu
+
+    if not runner.probe().docker:
+        # inside the container there is no host emulator to run
+        print(
+            "deep-check --memory: skipped in the container "
+            "(run `umetate emu --memory` on the host)",
+        )
+        return 0
+    if not _emu.emulator_built():
+        print(
+            "deep-check --memory: fm1-emu not built - run `umetate setup` first",
+            file=sys.stderr,
+        )
+        return 1
+    fwsc = emu._default_fwsc("fm1")  # pyright: ignore[reportPrivateUsage]
+    if not fwsc.is_file():
+        print(
+            "deep-check --memory: no built .fwsc - run `umetate build --synth` first",
+            file=sys.stderr,
+        )
+        return 1
+    return emu._memory_check(fwsc)  # pyright: ignore[reportPrivateUsage]
+
+
 # the Python layer: lint + format + types + the owned test modules. One list, so
 # a new test module is a one-line addition (and the gate stays deterministic).
 _PYTHON_STEPS: tuple[tuple[str, list[str]], ...] = (
@@ -156,6 +185,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--links", action="store_true", help="docs cross-references")
     parser.add_argument("--lib", action="store_true", help="the generated node library")
     parser.add_argument("--pyright", action="store_true", help="the strict type-check")
+    parser.add_argument(
+        "--memory", action="store_true", help="the memory-safety gate (host-side)"
+    )
     parser.add_argument("--all", action="store_true", help="everything available")
     args = parser.parse_args(argv)
 
@@ -169,6 +201,7 @@ def main(argv: list[str] | None = None) -> int:
             args.links,
             args.lib,
             args.pyright,
+            args.memory,
             args.all,
         )
     ):
@@ -204,6 +237,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.pyright or args.all:
         rc = _pyright()
         print(f"deep-check --pyright: {'ok' if rc == 0 else 'failed'}")
+        failures += 0 if rc == 0 else 1
+    if args.memory or args.all:
+        rc = _memory()
+        print(f"deep-check --memory: {'ok' if rc == 0 else 'failed'}")
         failures += 0 if rc == 0 else 1
     return 1 if failures else 0
 

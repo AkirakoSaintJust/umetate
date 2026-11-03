@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -85,6 +86,39 @@ def _check(args: argparse.Namespace, fwsc: Path) -> int:
     return 0
 
 
+def _memory_check(fwsc: Path, ms: int = 3000, mhz: int = 240) -> int:
+    """Boot the package on the emulator with FM1_STRICT (the hardware guard and the
+    misaligned 16-/32-bit RAM-access fault are both enforced) and hold a chord. A
+    memory-safety bug raises the CPU exception, which stops the audio; a clean render
+    fills the buffer. Returns 0 = clean, 1 = the firmware faulted.
+
+    This is a host-side check: it runs the host-built `fm1-live`, not the container."""
+    env = dict(os.environ)
+    env["FM1_STRICT"] = "1"
+    cmd = [str(_emu.LIVE_BIN), "--shot", str(ms), "--fwsc", str(fwsc)]
+    if mhz:
+        cmd += ["--mhz", str(mhz)]
+    proc = subprocess.run(
+        cmd, cwd=_emu.EMU_DIR, env=env, capture_output=True, text=True
+    )
+    peak = re.search(
+        r"audio peak over the last 0\.5 s: (\d+)", proc.stdout + proc.stderr
+    )
+    if peak and int(peak.group(1)) == 0:
+        print(
+            "memory check: no audio - the firmware raised the CPU exception "
+            "(a guard or a misaligned access)",
+            file=sys.stderr,
+        )
+        return 1
+    if "halt:" in proc.stdout or "halt:" in proc.stderr:
+        print("memory check: the firmware halted", file=sys.stderr)
+        return 1
+    peak_s = peak.group(1) if peak else "n/a"
+    print(f"memory check: ok ({mhz} MHz, {ms} ms, audio peak {peak_s})")
+    return 0
+
+
 def _wav(args: argparse.Namespace, fwsc: Path) -> int:
     """The batch interpreter (`fm1-emu`, not the GUI) writes the I2S output to a WAV
     (44.1 kHz stereo 16-bit) and/or dumps memory — the target bit-exactness gate."""
@@ -128,6 +162,11 @@ def main(argv: list[str] | None = None) -> int:
         "--check", action="store_true", help="headless regression, not the GUI"
     )
     parser.add_argument(
+        "--memory",
+        action="store_true",
+        help="memory-safety gate: FM1_STRICT on, fail on a CPU exception",
+    )
+    parser.add_argument(
         "--wav",
         type=Path,
         help="run fm1-emu (the batch interpreter) and write the I2S output here",
@@ -163,6 +202,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.wav is not None or args.dump is not None:
         return _wav(args, fwsc)
+    if args.memory:
+        return _memory_check(fwsc, ms=args.ms, mhz=args.mhz or 240)
     return _check(args, fwsc) if args.check else _gui(args, fwsc)
 
 
