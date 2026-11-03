@@ -74,8 +74,8 @@
   }
   .logo .dot { color: var(--pink); text-shadow: 4px 4px 0 #c2ad00; }
   .brand-sub {
-    margin-top: 7px; font-family: var(--font-ui); font-size: 9px;
-    letter-spacing: .06em; color: var(--dim); white-space: nowrap;
+    margin-top: 7px; font-family: var(--font-ui); font-size: 12px;
+    letter-spacing: .04em; color: var(--dim); white-space: nowrap;
   }
 
   .alg { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; cursor: pointer; }
@@ -676,7 +676,7 @@
 
   function makeSection(title, kind, bindings, opts) {    opts = opts || {};
     const card = document.createElement("div");
-    card.className = "card";
+    card.className = "card " + kind;
     const head = document.createElement("div");
     head.className = "sec-head";
     const h = document.createElement("h3");
