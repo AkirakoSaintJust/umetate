@@ -159,6 +159,7 @@ def main(argv: list[str] | None = None) -> int:
     if not fwsc.is_file():
         print(f"emu: {fwsc} not built — run `umetate build` first", file=sys.stderr)
         return 1
+    fwsc = fwsc.resolve()  # fm1-live runs in a different cwd: absolute path
 
     if args.wav is not None or args.dump is not None:
         return _wav(args, fwsc)
