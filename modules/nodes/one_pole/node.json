@@ -1,6 +1,6 @@
 {
   "name": "one_pole",
-  "summary": "One-pole lowpass (Q15); `cutoff` sets the pole.",
+  "summary": "One-pole lowpass (Q15), `cutoff` sets the pole.",
   "ins": { "audio": "audio", "cut": "control" },
   "outs": { "audio": "audio" },
   "params": { "cutoff": "q15" },

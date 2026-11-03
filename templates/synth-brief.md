@@ -22,9 +22,9 @@
 - **Envelopes and velocity:**
 - **Modulation (LFO, envelopes, macros):**
 - **Effects and output stage:**
-- **Multi-timbrality (`parts:`):** (number of parts; each an independent timbre or
-  shared; per-part routing `channel` + keyzone `low`/`high`; per-part gain/timing
-  `level` + `delay`; note→part routing rule; layering allowed; per-part voice pool)
+- **Multi-timbrality (`parts:`):** (number of parts. Each an independent timbre or
+  shared. Per-part routing `channel` + keyzone `low`/`high`. Per-part gain/timing
+  `level` + `delay`. Note→part routing rule. Layering allowed. Per-part voice pool)
 
 ### 2.1 Voice architecture (the node/macro graph)
 
@@ -40,7 +40,7 @@
 
 ### 2.2 Parameter manifest
 
-> The source of the generated `params.json`. List **every** parameter; the GUI and
+> The source of the generated `params.json`. List **every** parameter. The GUI and
 > MIDI map can only expose what is listed here (or marked internal).
 
 | Param (name) | Target `<instance>.<param>` | Min | Max | Default | Curve | Unit | Rate | Modulatable |
@@ -66,7 +66,7 @@
 
 - **MIDI in / out / thru:**
 - **Channels, velocity-zero note-off, sustain, panic:**
-- **CC map** (fixed generator-assigned vs user-assignable; which params; sustain/panic/bend/program change):
+- **CC map** (fixed generator-assigned vs user-assignable. Which params. Sustain/panic/bend/program change):
 - **Clock and transport:**
 - **USB roles (MIDI, audio, update):**
 - **Overflow and back-pressure behaviour:**

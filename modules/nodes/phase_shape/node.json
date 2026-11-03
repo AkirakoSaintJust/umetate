@@ -1,6 +1,6 @@
 {
   "name": "phase_shape",
-  "summary": "Vector phaseshaping (VPS, DAFx-11 — Kleimola/Lazzarini/Timoney/Välimäki): one 2-D inflection point p=(d,v) reshapes the phase ramp piecewise-linearly before the wave read. `d` = the breakpoint's x-coordinate (0..1), a settable, modulatable param (wired `d_mod` + `d_depth`); `v` = its y-coordinate (control) — `v` > 1 wraps forward past the cycle (uint32, one wrap: v < 2), `v` < 0 saturates to 0. Classic phase distortion is the v=0.5 case (`phase_dist`). Both are control-rate (the slopes are block_derived).",
+  "summary": "Vector phaseshaping (VPS, DAFx-11, Kleimola/Lazzarini/Timoney/Välimäki): one 2-D inflection point p=(d,v) reshapes the phase ramp piecewise-linearly before the wave read. `d` = the breakpoint's x-coordinate (0..1), a settable, modulatable param (wired `d_mod` + `d_depth`), `v` = its y-coordinate (control), `v` > 1 wraps forward past the cycle (uint32, one wrap: v < 2), `v` < 0 saturates to 0. Classic phase distortion is the v=0.5 case (`phase_dist`). Both are control-rate (the slopes are block_derived).",
   "ins": { "phase": { "rate": "audio", "format": "phase" }, "v": { "rate": "control", "default": "16384" } },
   "outs": { "phase": { "rate": "audio", "format": "phase" } },
   "params": { "d": { "kind": "q15", "default": "16384", "modulatable": true } },

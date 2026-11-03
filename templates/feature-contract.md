@@ -1,7 +1,7 @@
 # Feature contract
 
 > One contract per accepted feature. A feature is not "done" because the code
-> compiles; it is done when the contract and its evidence are satisfied.
+> compiles. It is done when the contract and its evidence are satisfied.
 
 ## Identity
 

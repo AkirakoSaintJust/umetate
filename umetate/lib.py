@@ -81,7 +81,7 @@ def _param(p: str, spec: str | ParamSpec) -> str:
 
 
 def _join(items: list[str]) -> str:
-    return ", ".join(items) if items else "—"
+    return ", ".join(items) if items else "-"
 
 
 def _row(manifest: NodeManifest) -> str:
@@ -128,7 +128,7 @@ def render_markdown() -> str:
         for m in sorted(_MACROS.glob("*/macro.json"))
     ]
     return (
-        "<!-- GENERATED — do not edit. Source: modules/nodes/*/node.json + "
+        "<!-- GENERATED - do not edit. Source: modules/nodes/*/node.json + "
         "modules/macros/*/macro.json. Regenerate with `umetate lib generate`. -->\n\n"
         "# Module library\n\n"
         "## Nodes\n\n"

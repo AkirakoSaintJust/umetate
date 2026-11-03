@@ -1,4 +1,4 @@
-<!-- GENERATED — do not edit. Source: docs/platform-facts.md. Regenerate with `python -m umetate._skill generate`. -->
+<!-- GENERATED - do not edit. Source: docs/platform-facts.md. Regenerate with `python -m umetate._skill generate`. -->
 
 # FM-1 / SMK-37 platform facts
 

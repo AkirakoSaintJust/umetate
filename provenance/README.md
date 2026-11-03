@@ -1,26 +1,26 @@
 # Provenance records
 
-This directory contains baseline and release records. They document evidence;
+This directory contains baseline and release records. They document evidence.
 they do not track current project status. See `docs/roadmap.md` for that.
 
 ## Naming
 
-- `baseline-YYYY-MM-DD.md` — a frozen source baseline and its inputs.
-- `release-vX.Y.Z.md` — a published or candidate release.
-- `incident-YYYY-MM-DD.md` — a security or recovery event with its evidence.
+- `baseline-YYYY-MM-DD.md`, a frozen source baseline and its inputs.
+- `release-vX.Y.Z.md`, a published or candidate release.
+- `incident-YYYY-MM-DD.md`, a security or recovery event with its evidence.
 
 ## Required fields
 
 Each record should include:
 
-- source commit/tag and whether the tree was clean;
-- board/model(s) and package identity;
-- toolchain/SDK versions and hashes;
-- Emscripten version and WASM result, if applicable;
-- build commands/flags;
-- `SEC-1`/`SEC-2` gate status;
-- evidence layers that passed, failed, or are blocked;
-- backup/rollback/recovery notes;
+- source commit/tag and whether the tree was clean.
+- board/model(s) and package identity.
+- toolchain/SDK versions and hashes.
+- Emscripten version and WASM result, if applicable.
+- build commands/flags.
+- `SEC-1`/`SEC-2` gate status.
+- evidence layers that passed, failed, or are blocked.
+- backup/rollback/recovery notes.
 - who approved any device write or publication.
 
 ## Current records

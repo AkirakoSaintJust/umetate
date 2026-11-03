@@ -1,6 +1,6 @@
 {
   "name": "adsr",
-  "summary": "Linear ADSR envelope (Q15, control rate). `gate` defaults to the patch gate (any voice sounding), so a global note-on triggers it. attack -> decay -> sustain (level) -> release. rates are Q16 one-pole coefficients; `a`/`d`/`r` advance toward the stage target, sustain holds `s`.",
+  "summary": "Linear ADSR envelope (Q15, control rate). `gate` defaults to the patch gate (any voice sounding), so a global note-on triggers it. attack -> decay -> sustain (level) -> release. rates are Q16 one-pole coefficients, `a`/`d`/`r` advance toward the stage target, sustain holds `s`.",
   "ins": { "gate": { "rate": "event", "default": "patch_gate" } },
   "outs": { "cv": "control" },
   "params": { "a": "q16", "d": "q16", "s": "q15", "r": "q16" },

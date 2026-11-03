@@ -1,61 +1,61 @@
 # Synth brief: Type P.fm1
 
 > One brief as the source of truth. `patch.json` + `panel.json` are the
-> translation of this brief; `dsp-algorithm.md` holds the math.
+> translation of this brief. `dsp-algorithm.md` holds the math.
 
 ## 1. Instrument and player
 
 - **Working name:** type-p-fm1 (a 4-operator Yamaha FM synth).
 - **Who plays it and in what setting:** a desktop/tabletop FM voice in the
-  OPZ/DX21 lineage — pads, bells, EPs, basses. Played from the keys or MIDI.
-- **What should it feel like to play:** immediate, bright-but-tameable; the
+  OPZ/DX21 lineage, pads, bells, EPs, basses. Played from the keys or MIDI.
+- **What should it feel like to play:** immediate, bright-but-tameable. The
   algorithm knob should be the headline gesture, the filter + wavefolder the
   softening stage.
 - **Three reference sounds:** (1) a DX7-style E-piano (algorithm 4, two
-  2-operator stacks); (2) a clangorous bell (algorithm 0, deep stack + feedback);
+  2-operator stacks). (2) a clangorous bell (algorithm 0, deep stack + feedback).
   (3) an additive organ pad (algorithm 7, all four carriers).
 - **Explicit non-goals:** no effects beyond filter + wavefolder (patch
-  persistence, SysEx, and velocity scaling are now shipped — see §4/§5).
+  persistence, SysEx, and velocity scaling are now shipped, see §4/§5).
 
 ## 2. Sound and voice architecture
 
 - **Synthesis method(s):** 4-operator phase-modulation FM, per-operator
   self-feedback, 12 waveforms per operator (the OPZ + OPL union), rate/level
   envelopes.
-- **Polyphony and voice stealing:** 20 voices; oldest-steal on overflow.
-- **Pitch range and tuning:** 12-TET, full MIDI note range; per-op `ratio`
+- **Polyphony and voice stealing:** 20 voices. Oldest-steal on overflow.
+- **Pitch range and tuning:** 12-TET, full MIDI note range. Per-op `ratio`
   (note-derived, non-integer ratios stay in tune).
 - **Oscillators / operators / noise:** 4 operators, each `phasor → osc →
   dx_env → vca` with 1-sample self-feedback (`fm_op` macro).
 - **Filter(s) and resonance:** one global `svf`, `type` selectable (LP/BP/HP),
   `q` = damping, with an **on/off bypass** and an **ADSR envelope routed to
   cutoff**.
-- **Envelopes and velocity:** DX rate/level (`dx_env`, 4 rates + 3 levels);
+- **Envelopes and velocity:** DX rate/level (`dx_env`, 4 rates + 3 levels).
   velocity → amplitude/FM/envelope-rate is wired (F2), but the dogfood defaults
-  the depths to 0 (off) — settable via `set_param` (`opN.velamp.depth` etc.),
+  the depths to 0 (off), settable via `set_param` (`opN.velamp.depth` etc.),
   not on the panel.
 - **Modulation:** the routing matrix (8 algorithms) selects which operator
-  phase-modulates which; feedback = self-modulation. One **per-part pitch LFO**
+  phase-modulates which. Feedback = self-modulation. One **per-part pitch LFO**
   (vibrato), one **per-note pitch envelope** (the "pitch blip": a `base` offset
   that decays back at note-on), and one **amplitude LFO per operator** (tremolo,
   per-voice).
 - **Effects and output stage:** carrier sum → `svf` (type LP/BP/HP + bypass +
   a cutoff ADSR) → `wavefolder` (threshold + fold count + type) → `out` (the
-  `MASTER` pot is the volume; no output VCA).
+  `MASTER` pot is the volume. No output VCA).
 
 ### 2.1a The output chain (filter + fold), specified
 
-- **Filter (`svf` extension).** Params: `type` (0 = LP, 1 = BP, 2 = HP — the
+- **Filter (`svf` extension).** Params: `type` (0 = LP, 1 = BP, 2 = HP, the
   node already computes `low`/`band`/`high`, so `type` selects the output), `on`
   (0 = bypass = pass the input straight through), `f` (cutoff, Q16), `q`
-  (damping, Q16). A **cutoff envelope** (F-ENV) — a global `dx_env` (the Yamaha
+  (damping, Q16). A **cutoff envelope** (F-ENV), a global `dx_env` (the Yamaha
   rate/level envelope: 4 rates + 3 levels, gated by `patch_gate`) whose Q15 output
-  scales a `fenv_depth` and is added to `f`. On a note-on it opens the filter; on
+  scales a `fenv_depth` and is added to `f`. On a note-on it opens the filter. On
   note-off it closes.
 - **Fold (`wavefolder` extension).** Params: `on` (0 = dry), `threshold` (the
-  input level, Q15, above which folding engages), `folds` (the fold count —
-  number of sine folds applied; 1 = the current single fold), `type` (0 = sine
-  fold, others reserved). Folding applies to the signal above `threshold`; the
+  input level, Q15, above which folding engages), `folds` (the fold count,
+  number of sine folds applied. 1 = the current single fold), `type` (0 = sine
+  fold, others reserved). Folding applies to the signal above `threshold`. The
   dry signal below `threshold` passes unmodified.
 
 ### 2.1b Per-part voice modes (moved from global)
@@ -80,12 +80,12 @@ the global six to a per-part array.
   The four `delay1` make the graph acyclic for *every* algorithm (all modulation
   reads the 1-sample-delayed output of its sources).
 - **Global-zone graph:** `algo` (the algorithm selector) → `alg` into the `route`
-  node; `lp` (`svf`) → `wf` (`wavefolder`) → `out`: `voice → lp.audio`,
+  node. `lp` (`svf`) → `wf` (`wavefolder`) → `out`: `voice → lp.audio`,
   `lp.low → wf.audio`, `wf.audio → out`.
 - **Voice-zone additions:** `penv` (a per-note `pitch_env`, retriggered on every
   note-on) + `plfo` (the per-part vibrato LFO) + `psum` (a `csum`):
   `plfo.cv + penv.cv → op1..op4.pitch`.
-- **Macros:** `fm_op` (shipped, `modules/macros/fm_op/`) — the operator, with
+- **Macros:** `fm_op` (shipped, `modules/macros/fm_op/`), the operator, with
   params `ratio` (note-derived), `detune` (cents −50..50), `waveform`, `level`,
   `feedback` (per-op self-modulation), `trem_rate`, `trem_depth`, `r1..r4`,
   `l1..l3` mapped inward, and inputs `fm` (audio) + `pitch` (control).
@@ -95,8 +95,8 @@ the global six to a per-part array.
   tapped *pre*-envelope/pre-tremolo so the amplitude LFO never leaks into pitch).
   Feedback is **per-op only**: `opN_feedback` (its own self-modulation, on the op
   page) scales that operator's delayed oscillator output. (The earlier
-  carrier-gated `feedback` master — the scrapped HOME knob that pushed a master
-  amount onto whichever operator was the current carrier — is gone; it left a
+  carrier-gated `feedback` master, the scrapped HOME knob that pushed a master
+  amount onto whichever operator was the current carrier, is gone. It left a
   spurious feedback floor on every carrier even at zero.)
 
 ### 2.2 Parameter manifest
@@ -108,7 +108,7 @@ the global six to a per-part array.
 > voice-mode params) × 2 parts + 20 global (the filter + fold output chain) +
 > 10 routing = **194 `set_param` ids**, part-major (`part × param`). The patch's
 > `cc:` list exposes 56 of them (part 0's timbre + the global FX + both parts'
-> mode params) as the fixed CC surface; part 1's timbre comes from the
+> mode params) as the fixed CC surface. Part 1's timbre comes from the
 > multi-patch / SysEx. The six voice-mode params (`mode`, `unison_count`,
 > `unison_detune`, `legato`, `portamento`, `note_priority`) are **per-part**
 > (each part its own poly/mono + stack count/detune + times).
@@ -157,28 +157,28 @@ knob reaches its whole range in a sane number of turns and clamps at the ends.
 (`level` is the Yamaha total-level (0–99, 0.25 dB/step: 99 = max, 50 ≈ −12 dB,
 0 = silence) that gates the operator's
 output with −12 dB single-operator headroom (`fm1_level_gain[level] >> 2`), so a
-solo carrier never clips and a four-carrier additive algorithm sums to ~0 dBFS;
+solo carrier never clips and a four-carrier additive algorithm sums to ~0 dBFS.
 `opN_feedback` is each operator's own self-modulation depth. The DX rates
 (`r1..r4`, `penv_r1..r4`) are 0–99 → a one-pole coefficient via
-`fm1_rate_coeff` (a non-uniform Yamaha-style curve: 99 = instant ≈ 0.73 ms, 0 ≈ 7 s); the DX levels (`l1..l3`) are
+`fm1_rate_coeff` (a non-uniform Yamaha-style curve: 99 = instant ≈ 0.73 ms, 0 ≈ 7 s). The DX levels (`l1..l3`) are
 0–99 → Q15 gain via `fm1_level_gain` (0.25 dB/step). `rate` is a Q32 phase
-increment per sample — `f · 2³² / 44100`, so ~97392 = 1 Hz. `depth` is `depth/32768` in the
+increment per sample, `f · 2³² / 44100`, so ~97392 = 1 Hz. `depth` is `depth/32768` in the
 use's units: octaves of vibrato for `pitch_depth` (273 ≈ ±10 cents), fraction of
 full amplitude for `trem_depth` (~16000 ≈ ±50%). `ratio` is the q16 frequency
-multiplier — `ratio/65536` = the multiplier (65536 = 1.0, 32768 = 0.5). The
+multiplier, `ratio/65536` = the multiplier (65536 = 1.0, 32768 = 0.5). The
 per-note pitch envelope (`penv`) retriggers on every note-on, releases on
-note-off, and is off by default; its levels `l1..l3` are q15 pitch offsets
+note-off, and is off by default. Its levels `l1..l3` are q15 pitch offsets
 (32768 = +1 octave, 2731 ≈ +1 semitone). All block rate.)
 
 ### 2.3 Tables
 
-- **`routing` → kind `routing`** — the 8-algorithm 4-op FM matrix (8 rows × 5
+- **`routing` → kind `routing`**, the 8-algorithm 4-op FM matrix (8 rows × 5
   sub-rows × 4 Q15 0/1 weights = 160 entries), ymfm's `s_algorithm_ops`
   {0,1,2,3,4,5,6,7} (the full standard TX81Z/DX100/DX21 4-op set).
 
 ### 2.4 Scope taps
 
-`taps: ["op1.audio", "op2.audio", "op3.audio", "op4.audio"]` — four per-operator
+`taps: ["op1.audio", "op2.audio", "op3.audio", "op4.audio"]`, four per-operator
 audio tap points (resolved to each operator's post-mute output), exposed per part
 as `N_TAP × N_PART` = 8 channels via `type_p_fm1_dsp_tap(ch)` (`ch = tap × 2 +
 part`, the last block's Q15 samples). These feed the HOME 4-op scope/spectro
@@ -195,13 +195,13 @@ pages (§3.3): the active part's four operators are its four channels, so the
 fold), `GLO` (parts + patch), `HOME` (the visual pages), `ARP`/`SEQ`/`PLAY`/`REC`
 (operator mutes 1–4), `SEL` (operator select + part switch + part mute combos),
 `PRESETS` (the patch-browser popup), `OCT−`/`OCT+` (shift the keybed a whole
-octave, ±2, firmware-level). The keybed plays notes; `SEL`+key is the mute chord.
+octave, ±2, firmware-level). The keybed plays notes. `SEL`+key is the mute chord.
 
 ### 3.2 Always visible (every page, a fixed header)
 
 The header is two lines. Line 1 shows, at all times: every **part** (`P1 P2`) and
 **operator** (`op 1 2 3 4`), each with its **ON/OFF** (muted, red) state and the
-active one highlighted; the **current algorithm** (`ALG n`); and the **current menu
+active one highlighted. The **current algorithm** (`ALG n`). And the **current menu
 name + page number/total** (`EDIT 1/2`). Line 2 is the **page description** (the
 page's first widget, e.g. `OSCILLATOR`, `OP DETUNES`). Colours: parts + operators
 white, the selected part/operator light blue, `ALG` + values hot pink, muted red,
@@ -209,44 +209,44 @@ menu/page purple, the description bright green. No page may hide any of it.
 
 ### 3.3 Contexts (menus) and their pages
 
-- **HOME** (visual, column layout — each widget a row, part 1 / op 1 on top):
-  1. envelope graphs of all 4 operators of the active part;
-  2. oscilloscope of all 4 operators of the active part;
-  3. spectrogram of all 4 operators of the active part;
-  4. oscilloscope of both parts;
+- **HOME** (visual, column layout, each widget a row, part 1 / op 1 on top):
+  1. envelope graphs of all 4 operators of the active part.
+  2. oscilloscope of all 4 operators of the active part.
+  3. spectrogram of all 4 operators of the active part.
+  4. oscilloscope of both parts.
   5. spectrogram of both parts.
 - **EDIT** (the active operator): ratio · level · feedback · waveform + a live
-  scope/spectro (one page); then **PART n OP DETUNES** — all four operators'
+  scope/spectro (one page). Then **PART n OP DETUNES**, all four operators'
   detunes (±50 cents) of the active part.
-- **ENV**: the active operator's **amplitude envelope** in two pages — rates
-  (r1/r2/r3/r4) then levels (l1/l2/l3); then the **per-part pitch envelope**
+- **ENV**: the active operator's **amplitude envelope** in two pages, rates
+  (r1/r2/r3/r4) then levels (l1/l2/l3). Then the **per-part pitch envelope**
   (base + rate). The envelope graph is drawn on both amplitude-envelope pages.
-- **LFO**: the active operator's **amplitude LFO** (rate + depth); then the
+- **LFO**: the active operator's **amplitude LFO** (rate + depth). Then the
   **per-part pitch LFO** (vibrato rate + depth).
-- **FX** (the output chain): **filter** — on/off, cutoff, rez, type, and an ADSR
-  envelope routed to cutoff; **fold** — on/off, threshold, folds (count), type.
+- **FX** (the output chain): **filter**, on/off, cutoff, rez, type, and an ADSR
+  envelope routed to cutoff. **fold**, on/off, threshold, folds (count), type.
 - **GLO** (parts + patch): per-part **level** (scales the part's maximum
-  amplitude) and **delay**; per-part **voice mode** (poly / mono, with the mono
-  stack's voice count + detune, legato, portamento time); part
-  **name**, MIDI **channel**, **keyboard split**, **INIT PART**; **save/load a
-  single part into either part** from the preset store; multi-patch settings —
+  amplitude) and **delay**. Per-part **voice mode** (poly / mono, with the mono
+  stack's voice count + detune, legato, portamento time). Part
+  **name**, MIDI **channel**, **keyboard split**, **INIT PART**. **save/load a
+  single part into either part** from the preset store. Multi-patch settings,
   **multi-patch name**, **INIT PATCH** (additive algorithm, gate-type envelopes,
   waveform 0, no feedback, ratio 1, all ops ON, part 2 OFF, part 1 active,
   level 75).
 
 ### 3.4 The shortcuts and modifiers
 
-`SEL` **taps** the next active operator; a **double-tap** switches the active
+`SEL` **taps** the next active operator. A **double-tap** switches the active
 part. **Holding `SEL` + a key** mutes that operator (chord, not a note). **Holding
-`SEL` + `ARP` or `PLAY`** toggles part 1 mute; **`SEL` + `SEQ` or `REC`** toggles
-part 2 mute. `ARP`/`SEQ`/`PLAY`/`REC` (plain) toggle operator mutes 1–4 — the
+`SEL` + `ARP` or `PLAY`** toggles part 1 mute. **`SEL` + `SEQ` or `REC`** toggles
+part 2 mute. `ARP`/`SEQ`/`PLAY`/`REC` (plain) toggle operator mutes 1–4, the
 old mute sub-page is gone. The `PRESETS` encoder opens the **multi-patch (2-part)
-preset browser** as a popup; after 2 s with no preset-encoder input, the selected
-patch loads and the popup clears (unless it is already loaded — then it just
+preset browser** as a popup. After 2 s with no preset-encoder input, the selected
+patch loads and the popup clears (unless it is already loaded, then it just
 clears). Single-part presets load from the `GLO` menu. `SAVE` opens the **save
-chooser** — a two-row `single part` / `multi-patch` dialog (`KNOB1` = row,
-`KNOB2` = slot, `SAVE` = commit, `HOME` = cancel; no idle timeout). Saving a
-multi-patch then asks what to do with the active part's live edits — **discard
+chooser**, a two-row `single part` / `multi-patch` dialog (`KNOB1` = row,
+`KNOB2` = slot, `SAVE` = commit, `HOME` = cancel. No idle timeout). Saving a
+multi-patch then asks what to do with the active part's live edits, **discard
 edits**, **save as a new part**, or **mutate in place** (`KNOB1` picks, `SAVE`
 commits, `HOME` goes back).
 
@@ -258,26 +258,26 @@ page/context change, held notes stay playable. Per-param display scale (ratio
 
 ## 4. MIDI and connectivity
 
-- **MIDI in / out:** in — notes, CC (the `cc:` list, sustain CC64, panic CC123),
-  pitch bend (±2 semitones); out — the local keys echo on part 0's channel.
-- **Channels:** two parts — part 0 = channel 0, part 1 = channel 1 (a note
-  routes to every part whose channel + keyzone match; layering allowed).
-- **Velocity-zero note-off, sustain, panic:** velocity-zero = note-off; sustain
-  defers note-offs until the pedal lifts; `all_notes_off` (CC123) = panic.
+- **MIDI in / out:** in, notes, CC (the `cc:` list, sustain CC64, panic CC123),
+  pitch bend (±2 semitones). Out, the local keys echo on part 0's channel.
+- **Channels:** two parts, part 0 = channel 0, part 1 = channel 1 (a note
+  routes to every part whose channel + keyzone match. Layering allowed).
+- **Velocity-zero note-off, sustain, panic:** velocity-zero = note-off. Sustain
+  defers note-offs until the pedal lifts. `all_notes_off` (CC123) = panic.
 - **Clock and transport:** none (ignored).
-- **USB roles:** MIDI in/out; firmware update via the normal flash path.
+- **USB roles:** MIDI in/out. Firmware update via the normal flash path.
 - **Overflow and back-pressure:** voice stealing (oldest) on >20 voices.
 
 ## 5. State and persistence
 
 - **What survives reboot:** 128 single parts + 64 multi patches + the settings
   record (base channel, master tune), saved to flash **only when silent** and
-  only on an explicit save; the multi-patch in slot 0 applies at boot.
+  only on an explicit save. The multi-patch in slot 0 applies at boot.
 - **Patch/sequence format and version:** the preset records (`docs/roadmap.md`
   §6.11.4): `u8 version | name[16] | params | crc32`, 128 single-part slots +
   64 multi-patch slots (chunked across the slot area's measured 16 372 B
   ceiling).
-- **Storage budget and CRC/commit rule:** per-record CRC-32 + the area CRC;
+- **Storage budget and CRC/commit rule:** per-record CRC-32 + the area CRC.
   a corrupt record is skipped, never the bank.
 - **Backup, import/export, migration, rollback:** `umetate preset export/import`
   (the bank ↔ `.syx`), and the five SysEx commands (identity / param dump /
@@ -285,33 +285,33 @@ page/context change, held notes stay playable. Per-param display scale (ratio
 
 ## 6. Browser prototype
 
-- **What you want to hear or compare locally:** the 8 algorithms side-by-side;
+- **What you want to hear or compare locally:** the 8 algorithms side-by-side.
   confirm the routing matrix sounds like the DX algorithm family.
 - **Which parameters and MIDI controls the page needs:** algorithm + the 5
-  output-chain params; keys via mouse/MIDI.
-- **Supported browsers and offline expectation:** any WebAudio browser; offline
+  output-chain params. Keys via mouse/MIDI.
+- **Supported browsers and offline expectation:** any WebAudio browser. Offline
   once built.
-- **What the browser must not be used to claim:** device performance — the WASM
+- **What the browser must not be used to claim:** device performance, the WASM
   build is the parity lab, not the device.
 
 ## 7. Acceptance and evidence
 
-- **Must-have features:** 8 runtime algorithms; 12 waveforms; per-op + carrier
-  feedback; rate/level envelopes; a per-part pitch LFO + per-note pitch envelope +
-  per-op amplitude LFO; the filter + wavefolder output chain; a panel; **two
+- **Must-have features:** 8 runtime algorithms. 12 waveforms. Per-op + carrier
+  feedback. Rate/level envelopes. A per-part pitch LFO + per-note pitch envelope +
+  per-op amplitude LFO. The filter + wavefolder output chain. A panel. **two
   timbres** (parts), **presets** (128+64 + settings), **SysEx**, **MIDI CC /
   sustain / panic / bend**.
 - **Optional features (shipped, defaulted off):** velocity scaling (the depths
   default to 0).
-- **Host tests:** `umetate deep-check --all` — mypy + ruff + pyright, the four
+- **Host tests:** `umetate deep-check --all`, mypy + ruff + pyright, the four
   test modules (`test_generate` renders the patch + proves the 8 algorithms +
-  resolves the panel; `test_cli` runs the `build --synth` composition), plus
+  resolves the panel. `test_cli` runs the `build --synth` composition), plus
   `umetate budget` (the measured polyphony claim).
 - **Target package checks:** `umetate build --synth examples/type-p-fm1` →
-  `umetate-fm1-pro-type_p_fm1.fwsc` (82 060 B image, `.dsp_text` in SRAM); the
+  `umetate-fm1-pro-type_p_fm1.fwsc` (82 060 B image, `.dsp_text` in SRAM). The
   JieLi build's own checks green.
 - **Emulator:** `umetate emu --check --mhz 240` boots the package and holds a
-  chord — no halt, full-scale audio peak.
+  chord, no halt, full-scale audio peak.
 - **Physical timing and device checks:** device acceptance is `blocked`
   (hardware ~10 days out).
 - **Known unknowns:** the `svf` sub-LSB limit cycle (recorded in the roadmap,
@@ -321,7 +321,7 @@ page/context change, held notes stay playable. Per-param display scale (ratio
 
 - **Brief owner:** P1Onken.
 - **Date confirmed:** 2026-10-27.
-- **Open questions that still change architecture:** none — the 8-algorithm set
-  (ymfm `s_algorithm_ops` 0..7) is locked in `dsp-algorithm.md`; the F7 additions
+- **Open questions that still change architecture:** none, the 8-algorithm set
+  (ymfm `s_algorithm_ops` 0..7) is locked in `dsp-algorithm.md`. The F7 additions
   (two timbres, presets, SysEx, the `cc:` surface, the app glue) are locked in
   the roadmap §6.11.

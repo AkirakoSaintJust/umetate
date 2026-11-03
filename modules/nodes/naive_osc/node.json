@@ -1,6 +1,6 @@
 {
   "name": "naive_osc",
-  "summary": "Wave reader: 0 = saw, 1 = sine, 2 = triangle, 3 = square (one Q15 table `fm1_naive_wave`), 4 = white noise (a self-seeded xorshift). Saw (0) and square (3) are six band-limited tables each (the top-octave anti-aliasing); the `mip` input (from the phasor's `fm1_wave_mip(step)`) selects the level. Sine/triangle ignore `mip`. Pulse width is *not* a shape: apply a `phase_dist` bend before this read (PWM).",
+  "summary": "Wave reader: 0 = saw, 1 = sine, 2 = triangle, 3 = square (one Q15 table `fm1_naive_wave`), 4 = white noise (a self-seeded xorshift). Saw (0) and square (3) are six band-limited tables each (the top-octave anti-aliasing), the `mip` input (from the phasor's `fm1_wave_mip(step)`) selects the level. Sine/triangle ignore `mip`. Pulse width is *not* a shape: apply a `phase_dist` bend before this read (PWM).",
   "ins": { "phase": { "rate": "audio", "format": "phase" }, "mip": { "rate": "control", "format": "q32" } },
   "outs": { "audio": "audio" },
   "params": { "shape": "uint32" },

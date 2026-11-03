@@ -1,5 +1,5 @@
 {
-  "summary": "Naive (non-band-limited) oscillator: tuned_phasor → phase_dist (PWM) → naive_osc. `shape` (0 = saw, 1 = sine, 2 = triangle, 3 = square); `octave` (−3..3), `semi` (−11..11), `cent` (−100..100) tune the pitch (note-derived); `width` is the phase_dist bend `d` — 0.5 (default) = no bend, anything else phase-distorts *every* shape (the classic PWM on square/pulse, a bent timbre on saw/sine/triangle); `width_mod` wires a control source into the bend.",
+  "summary": "Naive (non-band-limited) oscillator: tuned_phasor → phase_dist (PWM) → naive_osc. `shape` (0 = saw, 1 = sine, 2 = triangle, 3 = square), `octave` (−3..3), `semi` (−11..11), `cent` (−100..100) tune the pitch (note-derived), `width` is the phase_dist bend `d`, 0.5 (default) = no bend, anything else phase-distorts *every* shape (the classic PWM on square/pulse, a bent timbre on saw/sine/triangle), `width_mod` wires a control source into the bend.",
   "ins": { "pitch": "control", "fm": "audio", "width_mod": "control" },
   "outs": { "audio": "audio" },
   "params": {

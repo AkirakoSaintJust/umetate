@@ -3,9 +3,9 @@
 > The exact granular structure of any code the project must write, beyond the
 > declarative `patch.json`/`panel.json`. When complete, translation is mechanical:
 > every file, signature, and data-layout decision is already made here. Link this
-> from `project-plan.md`; do not duplicate it there.
+> from `project-plan.md`. Do not duplicate it there.
 
-> The invariant seam is `<synth>_dsp_*` (`<synth>` from the project name); the
+> The invariant seam is `<synth>_dsp_*` (`<synth>` from the project name). The
 > generator emits it from a patch, and a hand-written `dsp.c` must match the same
 > shape (`firmware/README.md` §1, `docs/roadmap.md` §12.1).
 
@@ -37,14 +37,14 @@ const int32_t *<synth>_dsp_output(void);
 
 ### New node (`modules/nodes/<name>/`)
 
-- **`node.json`** (ports, params, state — conform to `node.schema.json`):
+- **`node.json`** (ports, params, state, conform to `node.schema.json`):
 - **`node.c`** core: `static inline void <name>_process(ctx, n)`:
 - **Host test + budget annotation** (add both):
 
 ## 3. Data layout
 
-- **Per-voice state** — SoA or struct, and why (SoA is the default for the hot loop):
-- **Single-instance control state** — struct:
+- **Per-voice state**, SoA or struct, and why (SoA is the default for the hot loop):
+- **Single-instance control state**, struct:
 - **Section placement** (`.dsp_text` = hot code, `.pool` = big buffers,
   `.cpu1_bss` = engine state, `const` = XIP):
 
@@ -55,8 +55,8 @@ const int32_t *<synth>_dsp_output(void);
 
 ## 5. Host-test hook
 
-- **Which test file exercises it, and the vector** (silence → note-on → release;
-  clamp at extremes; out-of-range id rejected):
+- **Which test file exercises it, and the vector** (silence → note-on → release.
+  clamp at extremes. Out-of-range id rejected):
 
 ## 6. Forbidden dependencies (re-check)
 

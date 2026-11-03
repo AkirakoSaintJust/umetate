@@ -1,6 +1,6 @@
 {
   "name": "triangle",
-  "summary": "Band-limited triangle: a polyBLEP'd square (width 0.5) through a leaky integrator (one extra state). `inc` note-derived; `inv_inc` = 2^32/inc (note-on reciprocal); `slope` = inc/2^16 is the integration gain (block-derived), so the output is full-scale at any pitch.",
+  "summary": "Band-limited triangle: a polyBLEP'd square (width 0.5) through a leaky integrator (one extra state). `inc` note-derived, `inv_inc` = 2^32/inc (note-on reciprocal), `slope` = inc/2^16 is the integration gain (block-derived), so the output is full-scale at any pitch.",
   "ins": { "mod": "control", "fm": "audio" },
   "outs": { "audio": "audio" },
   "params": { "inc_ratio": "q16" },

@@ -1,6 +1,6 @@
 {
   "name": "gain",
-  "summary": "Pure gain cell: Q15 multiply of audio × cv (no static `level` — the modulatable gain without a trim).",
+  "summary": "Pure gain cell: Q15 multiply of audio × cv (no static `level`, the modulatable gain without a trim).",
   "ins": { "audio": "audio", "cv": { "rate": "control", "default": "32768" } },
   "outs": { "audio": "audio" },
   "params": {},

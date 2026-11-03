@@ -1,4 +1,4 @@
-<!-- GENERATED — do not edit. Source: firmware/README.md. Regenerate with `python -m umetate._skill generate`. -->
+<!-- GENERATED - do not edit. Source: firmware/README.md. Regenerate with `python -m umetate._skill generate`. -->
 
 # RIB: the starter firmware contract
 

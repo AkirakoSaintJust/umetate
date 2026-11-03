@@ -1,6 +1,6 @@
 {
   "name": "pitch_env",
-  "summary": "Per-note pitch envelope (control rate): on/off + 4 rates (0..99) + 3 levels (Q15 pitch offset, bipolar). Retriggers to attack on every note-on (`trigger` = voice_trig[v]); a gate edge starts release. The one-pole uses `fm1_rate_coeff[rate]`; `k` (key-follow) and `vk` (velocity-follow) factors (Q15) push the rates toward 0 (slower) / 99 (faster); the level targets are the signed Q15 levels l1..l3; `cv` is the pitch offset (0 when off).",
+  "summary": "Per-note pitch envelope (control rate): on/off + 4 rates (0..99) + 3 levels (Q15 pitch offset, bipolar). Retriggers to attack on every note-on (`trigger` = voice_trig[v]), a gate edge starts release. The one-pole uses `fm1_rate_coeff[rate]`, `k` (key-follow) and `vk` (velocity-follow) factors (Q15) push the rates toward 0 (slower) / 99 (faster), the level targets are the signed Q15 levels l1..l3, `cv` is the pitch offset (0 when off).",
   "ins": {
     "gate": { "rate": "event", "default": "voice_gate[v]" },
     "trigger": { "rate": "event", "default": "voice_trig[v]" },

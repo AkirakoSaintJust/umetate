@@ -1,6 +1,6 @@
 {
   "name": "pulse",
-  "summary": "Band-limited pulse/square (2nd-order polyBLEP, two BLEPs — one per edge). `width` (Q15, default 0.5 = square) is the duty — the high fraction of the cycle; a settable, modulatable param (wired `width_mod` + `width_depth`), clamped to [0.01, 0.99] so the two BLEPs never collide into a narrow-pulse artifact. `inc` note-derived; `inv_inc` = 2^32/inc (note-on reciprocal).",
+  "summary": "Band-limited pulse/square (2nd-order polyBLEP, two BLEPs, one per edge). `width` (Q15, default 0.5 = square) is the duty, the high fraction of the cycle, a settable, modulatable param (wired `width_mod` + `width_depth`), clamped to [0.01, 0.99] so the two BLEPs never collide into a narrow-pulse artifact. `inc` note-derived, `inv_inc` = 2^32/inc (note-on reciprocal).",
   "ins": { "mod": "control", "fm": "audio" },
   "outs": { "audio": "audio" },
   "params": { "inc_ratio": "q16", "width": { "kind": "q15", "default": "16384", "modulatable": true } },

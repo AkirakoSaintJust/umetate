@@ -19,8 +19,8 @@ from pathlib import Path
 
 _ROADMAP = Path(__file__).resolve().parents[1] / "docs" / "roadmap.md"
 
-_PHASE = re.compile(r"^### Phase (\d+) — (.*?) \(P\d+\) — (.*)$")
-_STEP = re.compile(r"^\*\*(P\d+-\d+) — (.*?)\.\*\* — (.*)$")
+_PHASE = re.compile(r"^### Phase (\d+)\s*(?:—|,)\s*(.*?) \(P\d+\)\s*(?:—|,)\s*(.*)$")
+_STEP = re.compile(r"^\*\*(P\d+-\d+)\s*(?:—|,)\s*(.*?)\.\*\*\s*(?:—|,)\s*(.*)$")
 _EXIT = re.compile(r"^\*\*Exit (P\d+):\*\* (.*)$")
 _BOLD = re.compile(r"\*\*([^*]+)\*\*")
 

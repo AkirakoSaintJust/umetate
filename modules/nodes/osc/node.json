@@ -1,6 +1,6 @@
 {
   "name": "osc",
-  "summary": "Wave reader: the 12-waveform OPZ + OPL union (0-7 = OPZ: sine/triangle/half/double derivatives; 8-11 = OPL: rectified/pulse/square/saw) as one Q15 table (`fm1_wave`), selected by a `waveform` param (0 = sine). Waves 9/10/11 (pulse/square/saw) are six band-limited tables each (the top-octave anti-aliasing); the `mip` input (from the phasor's `fm1_wave_mip(step)`) selects the level whose top harmonic sits below Nyquist. Waves 0-8 ignore `mip` (a single, already-band-limited table).",
+  "summary": "Wave reader: the 12-waveform OPZ + OPL union (0-7 = OPZ: sine/triangle/half/double derivatives, 8-11 = OPL: rectified/pulse/square/saw) as one Q15 table (`fm1_wave`), selected by a `waveform` param (0 = sine). Waves 9/10/11 (pulse/square/saw) are six band-limited tables each (the top-octave anti-aliasing), the `mip` input (from the phasor's `fm1_wave_mip(step)`) selects the level whose top harmonic sits below Nyquist. Waves 0-8 ignore `mip` (a single, already-band-limited table).",
   "ins": { "phase": { "rate": "audio", "format": "phase" }, "mip": { "rate": "control", "format": "q32" } },
   "outs": { "audio": "audio" },
   "params": { "waveform": "uint32" },

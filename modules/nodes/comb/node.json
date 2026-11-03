@@ -1,6 +1,6 @@
 {
   "name": "comb",
-  "summary": "Feedback comb filter: a fractional delay line whose length is set by `cutoff` (Q16, 0..65535; the comb's fundamental is ≈ cutoff/65536 · fs/2, so it is linear in frequency up to Nyquist, and the delay is 131072/cutoff samples) with feedback (`res`), a one-pole damping lowpass in the feedback path (`tone`, 0 = dark, 32767 = bright), and a dry/wet `mix`. Global-zone filter (one shared delay line).",
+  "summary": "Feedback comb filter: a fractional delay line whose length is set by `cutoff` (Q16, 0..65535, the comb's fundamental is ≈ cutoff/65536 · fs/2, so it is linear in frequency up to Nyquist, and the delay is 131072/cutoff samples) with feedback (`res`), a one-pole damping lowpass in the feedback path (`tone`, 0 = dark, 32767 = bright), and a dry/wet `mix`. Global-zone filter (one shared delay line).",
   "ins": { "in": "audio" },
   "outs": { "out": "audio" },
   "params": {

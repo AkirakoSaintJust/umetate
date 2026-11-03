@@ -1483,9 +1483,9 @@ is updated in the same commit.
 > the toolkit strengthening it forces) ran on top of the P-phases below and is
 > **done**, milestones F1–F8 in §6.11.
 
-### Phase 0 — Governance & skeleton (P0) — **done** (2026-10-26)
+### Phase 0, Governance & skeleton (P0), **done** (2026-10-26)
 
-**P0-1 — Repository skeleton and naming.** — **done**, Flat tree (§4.1), `umetate`
+**P0-1, Repository skeleton and naming.**, **done**, Flat tree (§4.1), `umetate`
 name, CMake project, `UMETATE_*` env prefix, `rib` identifiers, and the frozen
 `_990` identities (D6) locked, `.gitignore`, `.gitattributes`, `.clang-format`,
 `.clang-tidy`, and the four schemas (with the §12.7.5 fixes: `gate`/`note`/
@@ -1493,20 +1493,20 @@ name, CMake project, `UMETATE_*` env prefix, `rib` identifiers, and the frozen
 place, the stale root `umetate-roadmap.md` removed. The frozen identities header
 (`hal/fm1_cc.h`) is created in P2-1 with the firmware import. **Layer: source.**
 
-**P0-2 — Canonical documents.** — **done**, `README.md`, `docs/roadmap.md`,
+**P0-2, Canonical documents.**, **done**, `README.md`, `docs/roadmap.md`,
 `docs/platform-facts.md`, `docs/tutorial.md` (§6.6 skeleton), `LICENSING.md`,
 `LICENSE`, and `firmware/README.md` in place. **Layer: docs.**
 
-**P0-3 — Dependency & licence manifest.** — **done**, `env.lock` pins the toolchain
+**P0-3, Dependency & licence manifest.**, **done**, `env.lock` pins the toolchain
 versions + the SDK asset-hash placeholders (filled at P2-1), `LICENSING.md` records
 per-dependency licences + the non-redistribution rule. **Layer: docs.**
 
 **Exit P0:** **met**, a reader names the toolkit, the firmware component, and the
 first command, identity and doc set are frozen.
 
-### Phase 1 — Docker image + volume (P1) — **done**
+### Phase 1, Docker image + volume (P1), **done**
 
-**P1-1 — Pinned Linux dev container.** — **done** (2026-10-26, hardened 2026-10-27),
+**P1-1, Pinned Linux dev container.**, **done** (2026-10-26, hardened 2026-10-27),
 `docker/Dockerfile` (Debian 13 trixie, Emscripten 6.0.13 pinned), `.dockerignore`,
 `build.sh`, compose + `.env.example`. Node comes from emsdk's own node 24 (not apt's
 EOL node 18), `apt-get upgrade` + `setuptools` are kept current. *Verified:* `docker
@@ -1516,7 +1516,7 @@ all resolve, the firmware host test runs green inside it. `docker scout cves` re
 build-tooling + Debian packages awaiting upstream fixes (picked up by `apt-get
 upgrade` on rebuild). **Layer: host.**
 
-**P1-2 — Target volume + setup.** — **done**, `umetate setup` installs the JieLi Linux
+**P1-2, Target volume + setup.**, **done**, `umetate setup` installs the JieLi Linux
 pi32v2 toolchain (`jieli-linux-toolchains-20260730.1`, SHA-256 `a1545cdd…`, `clang
 4.0.1`) and the AC79 SDK (`AC79NN_SDK_V1.2.1_2023-12-13`) into the `umetate-target`
 volume at `/opt/jieli/toolchain` + `/opt/jieli/sdk`. The toolchain tarball SHA-256 and
@@ -1524,9 +1524,9 @@ the three SDK assets (`uboot.boot`, `cfg_tool.bin`, `cfg/eq_cfg_hw.bin`) are ver
 against `env.lock`, `--force` accepts a mismatch, `--dry-run`/`--json` print the plan.
 A git-ignored `.jieli/` checkout remains as a per-checkout fallback. **Layer: host.**
 
-### Phase 2 — RIB runtime + generator (P2) — **done (host + target), blocked (device)**
+### Phase 2, RIB runtime + generator (P2), **done (host + target), blocked (device)**
 
-**P2-1 — Import the Dinghy/Felucca baseline and flatten.** — **done (import + host +
+**P2-1, Import the Dinghy/Felucca baseline and flatten.**, **done (import + host +
 target packages)**, Imported source-owned C (app `rib.c`/`rib_dsp.c`,
 platform, HAL, loader, `crt0.S`, `app.ld`, SMK board layer) into `firmware/`.
 CMake/Ninja with a **separate DSP TU**, platform/USB/loader at `-Os`. Renamed
@@ -1542,8 +1542,8 @@ also fixed the two spots that carried the wrong `SMK-37 MKE-P37_99` prefix,
 matches the on-device `SMK_MODEL` value the installer recognizes).
 **Layer: source/host/target.**
 
-**P2-2 — Dual-core bring-up (default).** — **done (source/host/target), blocked (device)**
-,  Imported Felucca's proven core-1 layer verbatim (`hal/fm1_cpu1.h` + `hal/fm1_cpu1.S`,
+**P2-2, Dual-core bring-up (default).**, **done (source/host/target), blocked (device)**
+, Imported Felucca's proven core-1 layer verbatim (`hal/fm1_cpu1.h` + `hal/fm1_cpu1.S`,
 lineage X0X/Melodee/Jangada via Felucca): the synchronous one-job mailbox (`fn(arg)`
 + a check word that is itself the `0x00200000` boot probe) and the built-in fallback
 (bad check / 4 ms stall → hold core 1 → single core). Restored the dropped core-1
@@ -1555,8 +1555,8 @@ branches in `app_audio`/`play`/`stop`/`quiet`. *Verified:* host build green, `ds
 + `ipc_test` (FIFO / wrap-around / overrun / no-lost-note-off) pass. *Blocked:* the
 device probe needs hardware. **Layer: source/host/target.**
 
-**P2-3 — Hardware acceleration HAL.** — **done (source/host/target), blocked (device)**
-,  `hal/fm1_math.h`: saturating Q arithmetic (`fm1_q15_mul`/`q16_mul`/`q31_mul`,
+**P2-3, Hardware acceleration HAL.**, **done (source/host/target), blocked (device)**
+, `hal/fm1_math.h`: saturating Q arithmetic (`fm1_q15_mul`/`q16_mul`/`q31_mul`,
 `fm1_sat_add32`/`sat_sub32`, `fm1_madd_sat`, `fm1_shr_round`) + the transcendental
 tables (`fm1_sin`/`fm1_cos` from a 256-entry quarter-sine, `fm1_exp2_q16`,
 `fm1_log2_q16`) + the ROM transcendental passthrough (`fm1_cos_sin`/`fm1_exp`/
@@ -1576,32 +1576,32 @@ checkout like the binary assets. The hardware FFT (`hwfft_*`) and vector DSP
 (`vector_*`) are **deferred** (blocked on device parity). *Blocked:* the hw FFT/vector DSP + hw-vs-sw parity
 (the target link now works, the device acceptance is `blocked`). **Layer: source/host/target.**
 
-**P2-4 — FPU opt-in (`--dsp float`).** — **blocked** (the flag is accepted but the
+**P2-4, FPU opt-in (`--dsp float`).**, **blocked** (the flag is accepted but the
 float DSP TU is unwired, the DSP is integer-only), DSP-TU-only FPU, no `double`.
 prove context ownership. *Acceptance:* no soft-float helpers in DSP, no FP outside
 the DSP object, host integer-vs-float parity, device `blocked`. **Layer: source/host/target.**
 
-**P2-5 — Clock profiles (240/320).** — **done (CLI), blocked (device)**, the CLI
+**P2-5, Clock profiles (240/320).**, **done (CLI), blocked (device)**, the CLI
 rejects 360/396 (`--clock 240|320`), the app reports the bootloader's clock and never
 sets it. *Acceptance:*
 `status`/screen reports measured clock + revision, 360/396 rejected at the CLI.
 Device soak `blocked`. **Layer: source/target.**
 
-**P2-6 — SMK-37 board layer.** — **done (builds), blocked (device)**, Velocity keybed,
+**P2-6, SMK-37 board layer.**, **done (builds), blocked (device)**, Velocity keybed,
 16 RGB pads, 4 faders, 8 encoders,
 wheels, outer keys, per-model identities, SMK flash map + owner tag. FM-1
 byte-identical (`BOARD_SMK37`). *Acceptance:* all three SMK models build. FM-1
 byte-identical, flash-map test covers every object. **Layer: source/host/target.**
 
-**P2-7 — Recovery & safety in firmware.** — **done (host), blocked (device)**,
+**P2-7, Recovery & safety in firmware.**, **done (host), blocked (device)**,
 App-level rescue, boot guard, running
 chord, custom loader (`ota-<identity>` + resume + model check), single-bank-OTA
 `uboot.boot`, protected-range guards, `SEC-1`/`SEC-2` fixes. *Acceptance:* host
 `bootguard` test, `lint --c` encodes SEC-1/SEC-2 + flash allow-list. Device `blocked`.
 **Layer: source/host.**
 
-**P2-8 — Patch generator (the AOT compiler).** — **done (host + WASM + target)**
-,  A compiler pipeline (the §12.4 spec): `_ir.py` (Port/Edge/PortSpec NamedTuples,
+**P2-8, Patch generator (the AOT compiler).**, **done (host + WASM + target)**
+, A compiler pipeline (the §12.4 spec): `_ir.py` (Port/Edge/PortSpec NamedTuples,
 `NodeSpec`, `NodeInstance`, `CompiledGraph`, `GenError`), `_frontend.py` (parse →
 macro expand → wire resolve → type-check → cycle-check + topo), `_backend.py` (rate
 split → state alloc → allocator → emission), and `generate.py` (the thin pure entry).
@@ -1621,8 +1621,8 @@ table + `const` XIP `tables:` landed in P3-3, the WASM build in P4-1, the target
 in P3-2 (the `model`-enum dispatch idea was superseded by the monomorphic inlining,
 no dispatch at all). **Layer: host/WASM/target.**
 
-**P2-9 — UI base + panel generator.** — **done (host + target), blocked (device)**
-,  Shipped `firmware/src/ui.c`/`ui.h` (the context-stack runtime: push/pop/pop_home,
+**P2-9, UI base + panel generator.**, **done (host + target), blocked (device)**
+, Shipped `firmware/src/ui.c`/`ui.h` (the context-stack runtime: push/pop/pop_home,
 global binding fallthrough, entry/exit hooks, the 7 widget renderers + the
 `UI_CUSTOM` canvas escape hatch, the binding resolver + action dispatch, and the
 retained-mode dirty/redraw engine, rate-bounded ~30 Hz, redraw touches only dirty
@@ -1645,9 +1645,9 @@ for FM-1 + SMK-37, the generator compiles patches to the invariant `<synth>_dsp_
 seam and panels to the shipped UI kit. Every device gate is explicitly
 `blocked`/`not-run`.
 
-### Phase 3 — CLI (P3) — **done (host/browser/target), blocked (device)**
+### Phase 3, CLI (P3), **done (host/browser/target), blocked (device)**
 
-**P3-1 — CLI skeleton.** — **done**, `pyproject.toml` (`[build-system]` setuptools +
+**P3-1, CLI skeleton.**, **done**, `pyproject.toml` (`[build-system]` setuptools +
 `[project.scripts] umetate = "umetate.cli:main"`), the `umetate/` package, `cli.py`
 (dispatch, `--help`/`help CMD`, no import side effects), `evidence.py` (the §5.5
 `Status`/`Layer` enums), `version.py`, `status.py` (the per-layer roadmap parser),
@@ -1656,7 +1656,7 @@ their phase. *Verified:* `pip install -e .`, `umetate --help` lists all commands
 `umetate status` parses the roadmap, `python3 -m umetate.test_cli` + `mypy --strict`
 + `ruff` green. **Layer: host.**
 
-**P3-2 — Env + build orchestration.** — **done (host + target)**, `runner.py`
+**P3-2, Env + build orchestration.**, **done (host + target)**, `runner.py`
 (the persistent-container docker shim: `ensure_container`/`run`/`run_writable`/
 `probe`, native `docker.exe` on Windows), `setup.py` (auto/manual toolchain+SDK fetch,
 SHA-256 verify vs `env.lock`, smoke-test, `--dry-run`/`--clock`/`--force`), `build.py`
@@ -1671,7 +1671,7 @@ installs both into the `umetate-target` volume with all three SDK assets hash-ve
 `umetate-fm1-pro.fwsc` (FM-1_990) and `umetate-smk37-pro.fwsc` (SMK-37 Pro_990).
 `umetate quick-check` reports the TARGET layer as the volume. **Layer: host/target.**
 
-**P3-3 — `scaffold`/`lib`, `lint`, `fmt` + the param table.** — **done (host)**,
+**P3-3, `scaffold`/`lib`, `lint`, `fmt` + the param table.**, **done (host)**,
 `scaffold.py` (generate a node/macro/patch skeleton, `--template` copies a shipped
 example, e.g. `type-p-fm1`, a generated patch is verified to build), `lib.py`
 (`lib list`, the shipped nodes + macros + templates, local only), `lint.py` (`lint --c`, the
@@ -1691,7 +1691,7 @@ display metadata (min/max/curve/unit/rate/modulatable) to a flattened
 emits `tables.c`/`.h` (built-in shapes + inline spec, referenceable by
 `${table.<name>}`). **Layer: host.**
 
-**P3-4 — `flash`, `debrick` (direct, gated).** — **done (host), blocked (device)**,
+**P3-4, `flash`, `debrick` (direct, gated).**, **done (host), blocked (device)**,
 `flash.py` wraps the inherited `fm1_install.py` (strangler-fig, not a rewrite): the
 §8 `--device` gate, package identity/CRC verification before any MIDI, the named
 recovery routes, then the installer (wrong-model exits 6). `debrick.py` names the
@@ -1701,7 +1701,7 @@ package exits 2, a wrong-model fake device exits 6 (the inherited `install_test.
 `backend` seam), `debrick` lists the routes, `mypy --strict` + `ruff` + `test_cli`
 green. Real-device acceptance is `blocked`. **Layer: host.**
 
-**P3-5 — `web-build`/`web-serve` + `evidence`.** — **done (host/browser)**,
+**P3-5, `web-build`/`web-serve` + `evidence`.**, **done (host/browser)**,
 `web.py` (`web-build` emscripten-compiles the generated `dsp.c` to a standalone
 `dsp.wasm`, no import section, + a minimal `index.html`/`app.js` harness (a manual
 browser poke), `web-serve` is a loopback static server), `evidence.py` (validate an
@@ -1713,9 +1713,9 @@ browser (peak 32765 on note-on, silent after off), `web-serve` serves the harnes
 + `ruff` + `test_cli` green. The real parity lab (AudioWorklet + the automated
 host↔browser check) is **P4-1**. **Layer: host/browser.**
 
-### Phase 4 — Web lab + emulator (P4) — **done**
+### Phase 4, Web lab + emulator (P4), **done**
 
-**P4-1 — WASM parity lab.** — **done (browser)**, the P3-5 harness grew an
+**P4-1, WASM parity lab.**, **done (browser)**, the P3-5 harness grew an
 **AudioWorklet** (`worklet.js`: wasm instance, 128→256 block conversion, Q15→float) +
 a **versioned message protocol** (`{v: 1, op: …}`, rejected unless v1) + a
 **gesture-gated start** (`main.js`/`index.html`), and `deep-check --web` now proves
@@ -1726,7 +1726,7 @@ and the 512 `int32` samples match **exactly**. *Verified:* `deep-check --web par
 --strict` + `ruff` clean. (Also fixed the latent `--out` path bug in `_emcc_args`.)
 **Layer: browser.**
 
-**P4-2 — fm1-emu as model layer.** — **done (emulator)**, `umetate setup` (no flags)
+**P4-2, fm1-emu as model layer.**, **done (emulator)**, `umetate setup` (no flags)
 now installs Rust (rustup) and builds fm1-emu at the pinned commit, the `fm1-emu`
 batch interpreter *and* the `fm1-live` GUI. `umetate emu` runs the GUI (`--fwsc`,
 `--persist`, `--midi`, `--mhz`) or `--check` (headless `fm1-live --shot` → panel +
@@ -1735,7 +1735,7 @@ audio peak). *Verified:* `umetate emu --check` boots `umetate-fm1-pro.fwsc` (aud
 audio peak 6720, no halt), `quick-check` reports the `emulator` layer as `pass`. RIB
 runs unchanged in the emulator. No device-acceptance claim. **Layer: emulator.**
 
-### Phase 5 — Skills (P5) — **done**
+### Phase 5, Skills (P5), **done**
 
 **P5-1, umetate-development skill.** **done**, `SKILL.md` (a **design-first**
 workflow: orient → design interview (voice architecture + parameter manifest +
@@ -1768,7 +1768,7 @@ blocked." **Layer: docs.**
 copies of the canonical docs (drift is a hard failure), `deep-check --skill` proves
 them in sync. No device-layer claim.
 
-### Phase 6 — Tutorial + start guide final (P6) — **done**
+### Phase 6, Tutorial + start guide final (P6), **done**
 
 **P6-1, Tutorial.** **done**, `docs/tutorial.md` is now the full 13-stage learner
 path: stages 1–9 (no hardware) give real commands + flags, the dual-core/FPU/clock
@@ -1787,7 +1787,7 @@ first command. **Layer: docs.**
 **Exit P6:** **met**, a reader can reach a target package without hardware, with
 device steps clearly `blocked`, the docs' cross-references are machine-checked.
 
-### Phase 7 — Release & provenance (P7) — **done**
+### Phase 7, Release & provenance (P7), **done**
 
 **P7-1, Baseline tag + provenance.** **done**, `provenance/` (`README.md` naming +
 required fields, `baseline-2026-10-27.md`) records the commit/tag, the four package
@@ -2332,7 +2332,7 @@ void <synth>_dsp_render(int32_t *out, uint32_t frames) {
 ```
 
 Each node's body is **inlined per sample** from its `node.c` template (§12.5)
-,  monomorphic, no per-sample dispatch. `delay1` emits a `static int32_t` register
+, monomorphic, no per-sample dispatch. `delay1` emits a `static int32_t` register
 (1-sample, so FM feedback is correct), `delayN` a `static` `.pool` buffer. The
 voice→global boundary is an emitted `mix` that sums the `NVOICE` voice streams.
 The placeholder substitution is **zone-agnostic**, a template writes `${state.x}`
@@ -3527,7 +3527,7 @@ the guard at all, so the crash was invisible in the normal test loop.
 
 **Symptom.** `00000001 01C08002 020006DA` on the RIB CRASH screen: vector 1, the PC
 at the first instruction of `.dsp_text`. fm1-emu v0.4.0 (which added the guard model)
-reports it; `a374e75` does not. The crash is a firmware crash loop (crash screen, 8 s,
+reports it. `a374e75` does not. The crash is a firmware crash loop (crash screen, 8 s,
 reboot, crash again), which the headless `--bench`/`--shot` runs do not detect because
 they never render the screen.
 
@@ -3543,7 +3543,7 @@ stack guard bands and the reserved top `0x01C7FD50..0x01C7FFFF`. Stack limit cov
 memory map (`app.ld`) and the guard windows agree, and `FM1_STRICT` finds no misaligned
 16- or 32-bit RAM access in the render.
 
-**Lesson.** The emulator is a memory-safety oracle only when it models the guard; the
+**Lesson.** The emulator is a memory-safety oracle only when it models the guard. The
 pinned `a374e75` predates that model. A firmware that must be memory safe should be
 exercised on a guard-modelling emulator (`FM1_STRICT` for alignment, and a run that
 renders the screen so a crash loop is visible), not only on `a374e75`.
@@ -3584,10 +3584,32 @@ Follow-ups beyond the universalisation backlog, in rough priority order.
    modelled as a 555 astable (Q32 phase accumulator) triggering a 555 monostable
    whose `width` is an absolute time (Q16 samples), so the duty is width/period and
    changes with pitch (the authentic cross-coupling). `fm` (audio) scales the
-   frequency and `width_mod` (control) scales the width; `apc` band-limits both
+   frequency and `width_mod` (control) scales the width. `apc` band-limits both
    edges with polyBLEP (reusing the `pulse` machinery) while `naive_apc` leaves the
    edges raw. The duty is clamped to [inc, 2^32-inc] so the two BLEP edges never
    collide. `dapc` cross-modulates two APCs through `vca` depth cells, with a
    `delay1` breaker per direction (the cross-mod is a graph cycle, so the
    modulation is one sample late), sums them through a `level` cell and a
    `dc_block`, and exposes the four cross-mod depths as `xf12`/`xw12`/`xf21`/`xw21`.
+
+### 13.14 Documentation pass (2026-11-03)
+
+The docs, skills, and tutorial now read clean in prose. No em dashes and no
+semicolons outside code fences, inline code, and code-like table cells. The node
+and macro summaries were cleaned too, so `umetate lib` and the generated
+`docs/module-library.md` read clean as well.
+
+The sweep forced three fixes in the tooling, each of which would have re-introduced
+a tell or broken a parser:
+
+- `lib.py`: the empty-cell placeholder and the GENERATED banner are now ASCII (`-`
+  instead of an em dash).
+- `_skill.py`: the generated skill-reference banner is now ASCII, so the four
+  generated references stay clean and in sync.
+- `status.py`: the phase and step regexes now accept a comma or an em dash as the
+  separator, so the roadmap can stay comma-separated and `umetate status` still
+  parses it.
+
+Verified with `deep-check --all` (host, safety, web parity, every Python module,
+skill sync, lib sync, links, pyright). No facts were dropped: the sweep only
+re-punctuated prose, and every code fence and inline code span was left untouched.

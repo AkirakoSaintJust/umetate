@@ -63,7 +63,7 @@ _SOURCES: dict[tuple[str, str], tuple[str, bool]] = {
 
 def _banner(source: str) -> str:
     return (
-        f"<!-- GENERATED — do not edit. Source: {source}. "
+        f"<!-- GENERATED - do not edit. Source: {source}. "
         "Regenerate with `python -m umetate._skill generate`. -->\n\n"
     )
 

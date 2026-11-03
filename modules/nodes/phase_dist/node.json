@@ -1,6 +1,6 @@
 {
   "name": "phase_dist",
-  "summary": "Classic phase distortion (Casio CZ): the VPS (d,v) inflection with v fixed at 0.5 — a single bend at x=`d` distorts the phase ramp along x only. `d` = the bend position (0..1), a settable, modulatable param (wired `d_mod` + `d_depth`), clamped to (0,1).",
+  "summary": "Classic phase distortion (Casio CZ): the VPS (d,v) inflection with v fixed at 0.5, a single bend at x=`d` distorts the phase ramp along x only. `d` = the bend position (0..1), a settable, modulatable param (wired `d_mod` + `d_depth`), clamped to (0,1).",
   "ins": { "phase": { "rate": "audio", "format": "phase" } },
   "outs": { "phase": { "rate": "audio", "format": "phase" } },
   "params": { "d": { "kind": "q15", "default": "16384", "modulatable": true } },

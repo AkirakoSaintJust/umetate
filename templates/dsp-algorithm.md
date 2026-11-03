@@ -3,19 +3,19 @@
 > One section per DSP component (oscillator, filter, envelope, LFO, mixer,
 > delay, …). This is the *math* the `patch.json`/`node.c` translation follows:
 > when it is complete, a fresh agent can write the code without re-deriving
-> anything. Link this from `project-plan.md`; do not duplicate it there.
+> anything. Link this from `project-plan.md`. Do not duplicate it there.
 
 > **Research first.** When specifying or implementing an algorithm, research how
-> it is best done — start from the default reference points below, honor any the
+> it is best done, start from the default reference points below, honor any the
 > user supplies, and let online search surface more. Record what you consulted and
 > **give credit**: distinguish *consulting* (learn the technique) from
 > *copying/deriving* (preserve the source's notice and record it in
-> `LICENSING.md`). Check each source's licence before copying; incompatible
+> `LICENSING.md`). Check each source's licence before copying. Incompatible
 > licences are consulted, never copied.
 
 > **Performance + memory safety are standing constraints:** bounded loops, no
 > allocation, no 64-bit division, no `double`, no per-sample dispatch in the hot
-> loop; one writer per shared value or a snapshot protocol.
+> loop. One writer per shared value or a snapshot protocol.
 
 ## Default reference points
 
@@ -39,10 +39,10 @@ Pure Data, Dexed/msfa, Nuked, ymfm, SAPF).
 - **Algorithm** (the fixed-point formula, exactly):
 - **Inputs / outputs** (port, rate `event|control|audio`, format `q15|q16|q32|phase`):
 - **Parameters** (name, Q-format, range, default, `sample`/`block` rate, modulatable):
-- **Coefficients / precompute** (recomputed at block rate, not per sample — the formula):
+- **Coefficients / precompute** (recomputed at block rate, not per sample, the formula):
 - **State** (SoA fields, Q-format):
 - **Edge cases** (div-by-zero guard, clamp/saturate, phase wrap, denormal):
 - **Reference + credit** (source consulted, URL, licence, what was derived vs. merely learned):
-- **Performance note** (per-sample vs per-block work; any cycle-breaker `delay1`/`delayN`):
+- **Performance note** (per-sample vs per-block work. Any cycle-breaker `delay1`/`delayN`):
 
 ## Component: `___`

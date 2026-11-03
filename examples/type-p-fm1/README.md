@@ -1,7 +1,7 @@
 # Worked example: Type P.fm1 (4-op Yamaha FM)
 
 This worked example puts the framework through a complete four-operator FM
-synth — the **type-p-fm1 program** in `docs/roadmap.md` §6.11 (the modules it
+synth, the **type-p-fm1 program** in `docs/roadmap.md` §6.11 (the modules it
 shipped are documented in §6.9). The instrument follows the OPZ/DX21 lineage and
 includes per-operator feedback, eight runtime-selectable algorithms,
 rate/level envelopes, and 12 waveforms. It also has a per-part pitch LFO and a
@@ -23,13 +23,13 @@ glue `app.c` onto the frozen `rib.c` framework (`umetate build --synth`).
   before `out`. A per-part `plfo` (vibrato) and a per-note `penv` (pitch
   envelope) feed each operator's `pitch` through `csum`.
 - **Algorithms:** eight rows from ymfm's `s_algorithm_ops`: {0, 1, 2, 3, 4, 5, 6,
-  7} — the full standard TX81Z/DX100/DX21 4-op set; see `dsp-algorithm.md`.
+  7}, the full standard TX81Z/DX100/DX21 4-op set. See `dsp-algorithm.md`.
 
 ## 2. Files
 
 | File | What it holds |
 | --- | --- |
-| `patch.json` | the declarative synth (voice/global zones, the `routing` table, `parts: 2`, the `model` byte, the `cc:` list — 56 exposed params → 194 set_param ids) |
+| `patch.json` | the declarative synth (voice/global zones, the `routing` table, `parts: 2`, the `model` byte, the `cc:` list, 56 exposed params → 194 set_param ids) |
 | `panel.json` | the UI (`home` + `op` + `fx` + `glo` contexts) |
 | `app.c` | the app glue (the `app_audio`/`app_main`/`app_idle` + service contexts) the framework composes |
 | `host-script.txt` | the host leg's script (notes on both parts, a CC, panic → WAV + screens) |
@@ -63,9 +63,9 @@ The list below notes whether each is recorded, deferred, or shipped:
    cycle. The `phasor` node now scales `fm << 16`, so full-scale = ±π (the FM
    index). See `dsp-algorithm.md` §`fm_op`.
 2. **Five `route4` nodes was the wrong shape (fixed).** The plan's five
-   `route4` instances would each carry their own `algorithm` param — five knobs
+   `route4` instances would each carry their own `algorithm` param, five knobs
    for one selection. A single `route` node (one `algorithm`, four rows) replaced
-   them. `route4` stays as the general primitive; `route` is the ergonomic 4-op
+   them. `route4` stays as the general primitive. `route` is the ergonomic 4-op
    wrapper.
 3. **Patch `params:` `default` is ignored (recorded).** `patch.schema.json`
    accepts a `default` on a param binding, but the generator uses the node
@@ -76,14 +76,14 @@ The list below notes whether each is recorded, deferred, or shipped:
    decay-to-near-silence contract. Recorded in the roadmap §6.9.
 5. **Velocity → amplitude/FM/envelope-rate is wired, defaulted off (shipped,
    F2).** The `fm_op` macro has `vel_amp`/`vel_fm`/`vel_rate` depths (the
-   reserved `velocity` input), so velocity reaches the operators — but the
+   reserved `velocity` input), so velocity reaches the operators, but the
    dogfood defaults each depth to 0, so velocity is inaudible until set via
    `set_param` (`opN.velamp.depth` etc.). Not on the panel/CC surface.
 6. **Control-rate LFO (shipped).** Each tick, the `lfo` node advances by
    `rate × CONTROL_BLOCK`, using the macro emitted by the generator. Its phase is
    therefore measured in samples, and its output holds for one sub-block. This
    works for sub-audio rates without adding per-sample work. The pitch LFO runs
-   per voice (its rate/depth are per-part params); tremolo LFOs run per voice.
+   per voice (its rate/depth are per-part params). Tremolo LFOs run per voice.
    **Vibrato scales `inc`, not phase.** The `phasor`'s `pitch` input applies
    `inc × (1 + pitch/32768)`, producing a relative pitch change (constant cents
    across the keyboard) rather than the absolute-Hz wobble from reusing `fm`.

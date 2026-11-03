@@ -1,6 +1,6 @@
 {
   "name": "phasor",
-  "summary": "Q32 phase accumulator. `inc` (note-derived) is the pitch; `pitch` (control, Q15) scales it — full-scale = ±1 octave — and `detune` (cents −50..50) adds an exact per-operator offset via `fm1_detune_pitch`. `fm` (audio, Q15) is scaled `<<16` (full-scale = ±π, the FM index); `mod` (control) is a small additive offset. Also outputs `mip` — the band-limited wave-table level `fm1_wave_mip(step)` — so a downstream `osc` can select the table whose top harmonic sits below Nyquist.",
+  "summary": "Q32 phase accumulator. `inc` (note-derived) is the pitch, `pitch` (control, Q15) scales it, full-scale = ±1 octave, and `detune` (cents −50..50) adds an exact per-operator offset via `fm1_detune_pitch`. `fm` (audio, Q15) is scaled `<<16` (full-scale = ±π, the FM index), `mod` (control) is a small additive offset. Also outputs `mip`, the band-limited wave-table level `fm1_wave_mip(step)`, so a downstream `osc` can select the table whose top harmonic sits below Nyquist.",
   "ins": { "mod": "control", "fm": "audio", "pitch": "control" },
   "outs": { "phase": { "rate": "audio", "format": "phase" }, "mip": { "rate": "control", "format": "q32" } },
   "params": { "inc_ratio": "q16", "detune": "int32" },
