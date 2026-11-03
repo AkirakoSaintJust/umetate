@@ -3692,4 +3692,24 @@ instances stay isolated, a MIDI script through `synth_midi_poll` and through the
 bridge produces the same 309 parameters, note state and samples, and sustain
 state is per bridge. The `synth_midi` sustain state moved from file scope into
 the per-context struct, so two bridges do not share a pedal. The full
-`deep-check --all` remains green. The JUCE host skeleton is next.
+`deep-check --all` remains green. The JUCE host skeleton followed in §13.18.
+
+### 13.18 JUCE host skeleton (2026-11-03)
+
+Milestone 2 is done. `plugin/juce` builds a VST3 and a standalone app against
+JUCE 8.0.9, fetched by tag with `FetchContent`. The processor exposes the 309
+manifest parameters through the APVTS, applies automation and MIDI at the
+32-sample control block, renders the 44.1 kHz core bit-exactly and saves and
+restores the parameter state. The APVTS key is the stable manifest name and the
+engine id is the manifest index. The generic JUCE editor is a placeholder for
+Milestone 3.
+
+The `plugin_smoke` CTest checks 309 parameters with unique ids, contiguous engine
+ids, a bit-exact 44.1 kHz note render against the engine reference, an automation
+write at the 32-sample control block, a MIDI offset at its control block, the
+state round trip and the 48 kHz placeholder path. `engine_parity` remains green. The 48 kHz path is the temporary linear rate bridge, so it renders
+audio but is not release quality. The 32-tap polyphase bridge and its measurements
+are Milestone 5. The JUCE build stays optional behind `P1_BUILD_JUCE` and does not
+change the Docker firmware gate. The feature contract is
+`plugin/feature-contract-host.md`. Physical device acceptance and timing remain
+blocked. The designed editor is next.

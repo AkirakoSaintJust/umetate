@@ -1,6 +1,8 @@
 # Type P.fm1 plugin plan
 
-Status: plan, 2026-11-03. No plugin code has been written yet.
+Status: Milestone 2 done, 2026-11-03. The JUCE VST3 and standalone host build,
+render audio, accept MIDI and save state. The editor is still the generic JUCE
+panel.
 
 This is the plan for the optional JUCE build path in umetate: a reusable plugin
 host plus a generated `type-p-fm1` project. The visual language is in
@@ -74,8 +76,8 @@ Two details matter:
 
 ```text
 host processBlock
-  -> MidiBridge (host events to synth_midi_feed at 44.1 kHz offsets)
-  -> ParamQueue (message thread changes to the audio thread)
+  -> MidiBridge (host events to synth_midi_feed, at 44.1 kHz control blocks)
+  -> ParamSync (APVTS raw values read at each 32-sample control block)
   -> EngineInstance (one per plugin instance)
        -> generated type_p_fm1_dsp_* functions at 44.1 kHz
        -> int32 interleaved stereo
@@ -90,8 +92,9 @@ EngineInstance taps
 Layers:
 
 - **Generated engine.** `type_p_fm1_dsp_*` from the umetate generator. No edits.
-- **Engine bridge.** C++ wrapper that owns one engine state, applies queued params
-  and MIDI, renders 32-sample control blocks, and converts int32 to float.
+- **Engine bridge.** C++ wrapper that owns one engine state, applies APVTS
+  parameter changes and MIDI at 32-sample control blocks, and converts int32 to
+  float.
 - **Rate bridge.** Output-only resampler. Bypass at 44.1 kHz.
 - **Parameter model.** Generated from `params.json` into APVTS and a display
   formatter.
@@ -151,27 +154,31 @@ C++ class, one per plugin instance:
 ```cpp
 class Engine {
 public:
-    void prepare(double hostRate, int maxBlock);
+    Engine();
     void reset();
-    void setParam(int id, int value);        // queued, applied at a control block
-    void noteOn(int note, int velocity, int channel);
-    void noteOff(int note);
-    void allOff();
-    void setBend(double semitones);
-    void render(juce::AudioBuffer<float>& out, const juce::MidiBuffer& midi);
+    int setParam(uint32_t id, int32_t value);
+    int32_t getParam(uint32_t id);
+    void noteOn(uint32_t note, uint32_t velocity, uint32_t channel);
+    void noteOff(uint32_t note);
+    void allNotesOff();
+    void setBend(uint32_t q16);
+    void render(int32_t* out, uint32_t frames);
+    uint32_t lit(uint32_t base);
+    bool quiet();
+    const int32_t* tap(uint32_t channel);
 private:
-    type_p_fm1_state* state_;
-    // 44.1 kHz scratch, tap readers, rate bridge
+    std::unique_ptr<type_p_fm1_state> state_;
 };
 ```
 
 Rules:
 
 - The audio thread never allocates, locks, touches files or calls into the UI.
-- Parameter changes come from a lock-free queue filled by APVTS listeners. The
-  audio thread drains it at the next 32-sample control block.
-- MIDI events split the block at their 44.1 kHz sample positions. Note and bend
-  events apply at the split. CC events go through `synth_midi_feed`.
+- Parameter changes are read from the APVTS atomic raw values at each 32-sample
+  control block. The message thread does not write engine state directly.
+- MIDI events apply at the 32-sample control block that contains their 44.1 kHz
+  sample position. Note and bend events apply at that boundary. CC events go
+  through `synth_midi_feed`.
 - The engine renders int32 interleaved stereo. Convert with `1/32768.0f`.
 - All-zero input is silence. The engine has no audio input.
 - Two instances share only read-only tables.
@@ -199,8 +206,8 @@ Use the device MIDI handler so the behavior does not fork.
 
 - Add `synth_midi_feed(ctx, status, data1, data2)` to `synth_midi.c`. The existing
   `synth_midi_poll` becomes a loop over `midi_get` that calls it.
-- The plugin shim implements `midi_get` over a lock-free byte queue filled from
-  the host `MidiBuffer`.
+- The processor feeds `synth_midi_feed` directly from the host `MidiBuffer`. The
+  `midi_get` shim exists only so `synth_midi.c` links outside the firmware app.
 - Note on and note off go through the generated `note_on_ch` and `note_off`, so
   channel to part routing matches the device.
 - Sustain, panic, pitch bend and the generated CC map match the device.
@@ -326,7 +333,7 @@ Plugin work adds a new evidence layer. It does not replace the firmware layers.
 | --- | --- | --- |
 | 0 | Instance-safe engine state | done, physical device blocked |
 | 1 | Engine bridge harness, no JUCE | done |
-| 2 | JUCE host skeleton | VST3 and standalone, audio, MIDI, all 309 params, state save |
+| 2 | JUCE host skeleton | done |
 | 3 | Editor | three pages, tokens, visualisers, dialogs, fixed scale |
 | 4 | Presets and banks | 64 multi and 128 part slots, device record round trip |
 | 5 | Rate bridge | bypass exact, 48/96/192 measured, latency reported |
@@ -340,6 +347,17 @@ Milestone 1 is done. `plugin/` builds a JUCE-free `p1_engine` library and an
 instances stay isolated, a MIDI script matches the `synth_midi_poll` reference,
 and sustain state is per bridge. The full `deep-check --all` remains green.
 
+Milestone 2 is done. `plugin/juce` builds a VST3 and a standalone app against
+JUCE 8.0.9. The processor exposes the 309 manifest parameters through the APVTS,
+applies automation at the 32-sample control block, feeds MIDI through
+`synth_midi_feed`, renders the 44.1 kHz core bit-exactly, and saves and restores
+the parameter state. The generic JUCE editor is a placeholder for Milestone 3.
+The 48 kHz path uses the temporary linear RateBridge, so it renders audio but is
+not yet release quality. The `plugin_smoke` CTest checks the parameter count,
+unique ids, contiguous engine ids, bit-exact 44.1 kHz output, an automation
+write at the 32-sample control block, a MIDI offset at its control block and a
+state round trip. `engine_parity` remains green.
+
 Host bridge build:
 
 ```sh
@@ -348,6 +366,20 @@ cmake -S plugin -B build/plugin
 cmake --build build/plugin
 ctest --test-dir build/plugin --output-on-failure
 ```
+
+JUCE VST3 and standalone build:
+
+```sh
+cmake -S plugin -B build/plugin-juce -DP1_BUILD_JUCE=ON
+cmake --build build/plugin-juce
+ctest --test-dir build/plugin-juce --output-on-failure
+```
+
+The artifacts are under
+`build/plugin-juce/juce/type_p_fm1_artefacts/Release/VST3` and `Standalone`.
+On Linux, install `pkg-config`, `libasound2-dev`, the X11, Xrandr, Xcursor,
+Xinerama, Xcomposite and Xrender headers, freetype and fontconfig, and the
+OpenGL headers. JUCE 8.0.9 is fetched at configure time.
 
 The bridge build is host-native and optional. It is separate from the firmware
 Docker gate. The generated `firmware/gen` must exist before CMake configures.
@@ -372,8 +404,8 @@ Docker gate. The generated `firmware/gen` must exist before CMake configures.
 - Is AU required on macOS in the first release?
 - Does the first release need device preset import and export, or only the
   in-plugin banks?
-- Is block-accurate automation acceptable for v1, or is sample-accurate
-  automation a release blocker?
+- Block-accurate automation is accepted for v1. The processor reads the APVTS at
+  the 32-sample control block. A sample-accurate claim is not part of v1.
 - Should the plugin expose both parts on the operators page at once, or keep the
   active-part model from the mockup?
 - How should a DAW preset relate to a device multi patch when names are limited

@@ -135,8 +135,8 @@ def _memory() -> int:
 # the Python layer: lint + format + types + the owned test modules. One list, so
 # a new test module is a one-line addition (and the gate stays deterministic).
 _PYTHON_STEPS: tuple[tuple[str, list[str]], ...] = (
-    ("ruff check", ["ruff", "check", "umetate/"]),
-    ("ruff format", ["ruff", "format", "--check", "umetate/"]),
+    ("ruff check", ["ruff", "check", "umetate/", "plugin/tools/"]),
+    ("ruff format", ["ruff", "format", "--check", "umetate/", "plugin/tools/"]),
     ("mypy", ["mypy", "--strict"]),
     ("test_generate", ["python3", "-m", "umetate.test_generate"]),
     ("test_panel", ["python3", "-m", "umetate.test_panel"]),
