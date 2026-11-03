@@ -17,6 +17,8 @@
     --pink: #ff2e7e;
     --pink2: #ff4d94;
     --purple: #c780ff;
+    --green: #3dff9e;
+    --green2: #9dffcd;
     --select: #7ec8ff;
     --yellow: #ffe600;
     --white: #ffffff;
@@ -53,9 +55,9 @@
     font-family: "Digital Desolation Plus", "Arial Black", Impact, sans-serif;
     font-weight: 900; font-size: 27px; line-height: 1;
     color: var(--white); letter-spacing: .02em;
-    text-shadow: 9px 9px 0 var(--yellow);
+    text-shadow: 4px 4px 0 var(--yellow);
   }
-  .logo .dot { color: var(--pink); text-shadow: 9px 9px 0 var(--yellow); }
+  .logo .dot { color: var(--pink); text-shadow: 4px 4px 0 var(--yellow); }
 
   .alg { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
   .alg-meta .lbl { font-size: 8px; letter-spacing: .2em; color: var(--dim); }
@@ -82,13 +84,26 @@
   }
   .btn:hover { border-color: var(--pink); }
   .btn .k { color: var(--faint); font-size: 8px; letter-spacing: .14em; }
-  .btn.part { padding: 0; }
-  .btn.part .plabel { padding: 8px 8px; }
-  .btn.part .caret { padding: 8px 7px; border-left: 1px solid var(--line2); color: var(--dim); }
-  .btn.part .caret:hover { color: var(--pink); }
-  .btn.part.active { border-color: var(--pink); }
-  .btn.part.active .plabel { color: var(--pink); }
-  .btn.part.active .caret { color: var(--pink); border-left-color: var(--pink); }
+
+  /* ---------------- toolbar ---------------- */
+  .toolbar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 16px; background: #000; border-bottom: 1px solid var(--line2);
+  }
+  .tgroup { display: flex; align-items: center; gap: 5px; }
+  .tlabel { font-size: 7px; letter-spacing: .2em; color: var(--faint); margin-right: 3px; text-transform: uppercase; }
+  .tdiv { width: 1px; height: 18px; background: var(--line2); margin: 0 6px; }
+  .tbtn {
+    background: #000; border: 1px solid var(--line2); color: var(--dim);
+    font-size: 8px; letter-spacing: .1em; padding: 4px 7px; cursor: pointer;
+  }
+  .tbtn:hover { border-color: var(--pink); color: var(--text); }
+  .tbtn.muted { background: var(--pink); border-color: var(--pink); color: #000; font-weight: 700; }
+  .tbtn.partsel { padding: 4px 11px; }
+  .tbtn.partsel.active { border-color: var(--green); color: var(--green); }
+  .tbtn.pmenu { padding: 4px 9px; }
+  .tsignal { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 7px; letter-spacing: .18em; color: var(--faint); }
+  .tsignal b { color: var(--green); font-weight: 700; letter-spacing: .12em; }
 
   /* ---------------- tabs ---------------- */
   .tabs { display: flex; gap: 0; padding: 0; background: #000; border-bottom: 1px solid var(--line2); }
@@ -101,7 +116,7 @@
   .tab.active { color: #000; background: var(--pink); }
 
   /* ---------------- body ---------------- */
-  .body { padding: 14px 16px 16px; min-height: 470px; }
+  .body { padding: 14px 16px 16px; min-height: 560px; }
   .grid { display: grid; gap: 10px; }
 
   .card { background: var(--panel); border: 1px solid var(--line); padding: 10px; min-width: 0; }
@@ -114,6 +129,7 @@
   }
   button.mini:hover:not(:disabled) { color: var(--pink); border-color: var(--pink); }
   button.mini:disabled { opacity: .3; cursor: default; }
+  button.mini.muted { background: var(--pink); border-color: var(--pink); color: #000; }
 
   .knobs { display: flex; flex-wrap: wrap; gap: 8px 4px; }
   .knob { width: 52px; text-align: center; user-select: none; }
@@ -123,7 +139,13 @@
   .dial .arc { fill: none; stroke: var(--pink); stroke-width: 3; }
   .dial .ptr { stroke: var(--white); stroke-width: 2; }
   .knob-name { font-size: 7.5px; letter-spacing: .08em; color: var(--dim); text-transform: uppercase; }
-  .knob-val { font-size: 10px; font-weight: 700; color: var(--pink2); font-variant-numeric: tabular-nums; }
+  .knob-val { font-size: 10px; font-weight: 700; color: var(--pink2); font-variant-numeric: tabular-nums; cursor: text; }
+  .knob-val:hover { color: var(--white); text-decoration: underline; text-underline-offset: 2px; }
+  .knob-input {
+    width: 46px; background: #000; border: 1px solid var(--green); color: var(--green);
+    font-family: inherit; font-size: 10px; font-weight: 700; text-align: center;
+    padding: 0; outline: none; font-variant-numeric: tabular-nums;
+  }
   .knob:hover .knob-name { color: var(--text); }
 
   .inline { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
@@ -140,20 +162,25 @@
   .toggle { display: flex; align-items: center; gap: 7px; cursor: pointer; }
   .toggle .trk { width: 24px; height: 12px; background: #1a1a1a; border: 1px solid var(--line2); position: relative; }
   .toggle .thb { position: absolute; top: 1px; left: 1px; width: 8px; height: 8px; background: var(--faint); }
-  .toggle.on .trk { border-color: var(--pink); }
-  .toggle.on .thb { left: 13px; background: var(--pink); }
+  .toggle.on .trk { border-color: var(--green); }
+  .toggle.on .thb { left: 13px; background: var(--green); }
   .toggle .tname { font-size: 8px; letter-spacing: .12em; color: var(--dim); }
-  .toggle.on .tname { color: var(--pink); }
+  .toggle.on .tname { color: var(--green); }
 
   .envbox { height: 62px; border: 1px solid var(--line); background: #000; margin-bottom: 8px; }
   .envbox svg { width: 100%; height: 100%; display: block; }
   .envbox .egrid { stroke: #1a1a1a; stroke-width: 1; }
   .envbox .ecurve { fill: none; stroke: var(--purple); stroke-width: 1.4; }
-  .envbox .ecurve2 { fill: none; stroke: var(--pink); stroke-width: 1.4; }
+  .envbox .ecurve2 { fill: none; stroke: var(--green); stroke-width: 1.4; }
 
   /* ---------------- operators ---------------- */
   .ops-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-  .opcol { border: 1px solid var(--line2); background: #000; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+  .opcol { border: 1px solid var(--line2); background: #000; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+  .opcol .card { padding: 8px; }
+  .opcol .knobs { gap: 5px 0; }
+  .opcol .knob { width: 36px; }
+  .opcol .dial, .opcol .dial svg { width: 34px; height: 34px; }
+  .opcol .envbox { height: 52px; margin-bottom: 6px; }
   .opcol-head { display: flex; align-items: center; justify-content: space-between; }
   .opname { font-size: 12px; font-weight: 700; letter-spacing: .14em; color: var(--white); }
   .op-name.car, .opname.car { color: var(--pink); }
@@ -177,30 +204,42 @@
   .analyser { height: 150px; border: 1px solid var(--line); background: #000; }
   .analyser canvas { width: 100%; height: 100%; display: block; }
 
-  .parts { display: flex; gap: 10px; }
-  .part { flex: 1; border: 1px solid var(--line2); background: #000; padding: 8px 10px; }
-  .part .ph { display: flex; justify-content: space-between; align-items: baseline; }
-  .part .pn { font-size: 9px; letter-spacing: .14em; color: var(--select); font-weight: 700; }
-  .part .pv { font-size: 8px; color: var(--dim); }
-  .part .bar { height: 3px; background: #1a1a1a; margin-top: 7px; }
-  .part .bar i { display: block; height: 100%; background: var(--pink); }
+  .parts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .part { border: 1px solid var(--line2); background: #000; padding: 8px 10px 10px; }
+  .part.active { border-color: var(--green); }
+  .part .ph { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .part .pn { font-size: 9px; letter-spacing: .14em; color: var(--dim); font-weight: 700; }
+  .part.active .pn { color: var(--green); }
+  .part .pch { font-size: 8px; color: var(--faint); letter-spacing: .1em; margin-left: 6px; }
+  .part .pacts { display: flex; gap: 4px; align-items: center; }
+  .part .knobs { gap: 6px 2px; }
+  .part .knob { width: 48px; }
+  .part .dial, .part .dial svg { width: 38px; height: 38px; }
 
-  /* ---------------- fx / mod / glo ---------------- */
-  .fx-grid, .mod-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; align-items: start; }
-  .glo-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 10px; }
-  table.parts-tbl { width: 100%; border-collapse: collapse; font-size: 9px; }
-  table.parts-tbl th { text-align: left; font-size: 7px; letter-spacing: .16em; color: var(--faint); padding: 0 8px 7px; text-transform: uppercase; }
-  table.parts-tbl td { padding: 6px 8px; border-top: 1px solid var(--line); }
-  table.parts-tbl td.mono { color: var(--pink2); font-variant-numeric: tabular-nums; }
-  table.parts-tbl td.dim { color: var(--dim); }
-  table.parts-tbl tr.active td:first-child { color: var(--select); font-weight: 700; }
+  .vmode { border: 1px solid var(--line2); background: #000; padding: 8px 10px; }
+  .vmode h3 { margin: 0; font-size: 8px; letter-spacing: .18em; color: var(--pink); font-weight: 700; text-transform: uppercase; }
+  .vmode .vh { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .vmode .vrow { display: flex; align-items: center; gap: 10px; }
+  .vmode .vbtns { display: flex; }
+  .vmode .vbtns button {
+    background: #000; border: 1px solid var(--line2); color: var(--dim);
+    font-size: 8px; letter-spacing: .12em; padding: 5px 9px; cursor: pointer;
+  }
+  .vmode .vbtns button + button { border-left: 0; }
+  .vmode .vbtns button.active { background: var(--green); border-color: var(--green); color: #000; font-weight: 700; }
+  .vmode .knobs { gap: 6px 2px; flex: 1; justify-content: flex-end; }
+
+  /* ---------------- fx / mod ---------------- */
+  .fx-grid, .mod-grid { display: grid; gap: 10px; align-items: start; }
+  .fx-grid { grid-template-columns: repeat(4, 1fr); }
+  .mod-grid { grid-template-columns: repeat(3, 1fr); }
 
   /* ---------------- status strip ---------------- */
   .status { display: flex; align-items: center; justify-content: space-between;
     padding: 7px 16px; background: #000; border-top: 1px solid var(--line2); }
   .status .leds { display: flex; gap: 14px; align-items: center; font-size: 8px; letter-spacing: .14em; color: var(--dim); }
   .led { width: 6px; height: 6px; background: var(--faint); display: inline-block; }
-  .led.on { background: var(--pink); }
+  .led.on { background: var(--green); }
   .status .rt { font-size: 8px; letter-spacing: .14em; color: var(--faint); }
 
   .mocktag { font-size: 8px; letter-spacing: .2em; color: var(--faint); }
@@ -234,7 +273,8 @@
     background: none; border: 0; border-bottom: 1px solid #262626;
     color: var(--white); font-size: 9px; letter-spacing: .1em; padding: 9px 10px; cursor: pointer;
   }
-  .part-menu button:hover { background: #262626; color: var(--pink); }
+  .part-menu button:hover:not(:disabled) { background: #262626; color: var(--pink); }
+  .part-menu button:disabled { color: #555; cursor: default; }
 
   .slots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
   .slots .slot {
@@ -284,10 +324,10 @@
 
     <div class="actions">
       <button class="btn patch" id="patchBtn"><span class="k">PATCH</span><span id="patchName">INIT PATCH</span></button>
-      <button class="btn part active" data-part="1"><span class="plabel">P1</span><span class="caret">&#9662;</span></button>
-      <button class="btn part" data-part="2"><span class="plabel">P2</span><span class="caret">&#9662;</span></button>
     </div>
   </header>
+
+  <div class="toolbar" id="toolbar"></div>
 
   <nav class="tabs" id="tabs"></nav>
   <main class="body" id="body"></main>
@@ -338,12 +378,52 @@
     el.__spec = spec; el.__dial = dial;
     refreshKnob(el);
 
+    function stepFor() {
+      return spec.step != null ? spec.step : ((spec.max - spec.min) > 30 ? 1 : 0.01);
+    }
+
+    val.title = "Click to type a value";
+    val.addEventListener("click", function () { editValue(); });
+
+    function editValue() {
+      if (val.querySelector("input")) return;
+      const input = document.createElement("input");
+      input.className = "knob-input";
+      input.type = "text";
+      input.value = String(spec.val);
+      val.textContent = "";
+      val.appendChild(input);
+      input.focus();
+      input.select();
+      let done = false;
+      function finish(commit) {
+        if (done) return;
+        done = true;
+        if (commit) {
+          const n = parseFloat(input.value);
+          if (isFinite(n)) {
+            const step = stepFor();
+            let v = Math.max(spec.min, Math.min(spec.max, n));
+            v = Math.round(v / step) * step;
+            spec.val = +v.toFixed(6);
+            if (spec.onChange) spec.onChange(spec.val);
+          }
+        }
+        refreshKnob(el);
+      }
+      input.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter") { ev.preventDefault(); finish(true); }
+        else if (ev.key === "Escape") { ev.preventDefault(); finish(false); }
+      });
+      input.addEventListener("blur", function () { finish(true); });
+    }
+
     dial.addEventListener("pointerdown", function (e) {
       e.preventDefault();
       dial.setPointerCapture(e.pointerId);
       const startY = e.clientY, startVal = spec.val;
       const rng = spec.max - spec.min;
-      const step = spec.step != null ? spec.step : (rng > 30 ? 1 : 0.01);
+      const step = stepFor();
       function move(ev) {
         const scale = ev.shiftKey ? 0.12 : 1;
         let v = startVal + (startY - ev.clientY) / 160 * rng * scale;
@@ -401,29 +481,47 @@
 
   /* ---------------- data ---------------- */
   const OPS = [
-    { name: "O1", role: "car", ratio: 1.0, detune: 0, level: 99, fb: 0, wave: "sine", r: [99, 40, 30, 60], l: [99, 70, 0], lfoRate: 5.0, lfoDepth: 0, mute: false },
-    { name: "O2", role: "mod", ratio: 2.0, detune: 0, level: 0, fb: 0, wave: "sine", r: [99, 45, 35, 60], l: [0, 0, 0], lfoRate: 5.0, lfoDepth: 0, mute: false },
-    { name: "O3", role: "car", ratio: 1.0, detune: 0, level: 0, fb: 0, wave: "sine", r: [99, 40, 30, 60], l: [0, 0, 0], lfoRate: 5.0, lfoDepth: 0, mute: false },
-    { name: "O4", role: "mod", ratio: 3.0, detune: 0, level: 0, fb: 0, wave: "sine", r: [99, 40, 30, 60], l: [0, 0, 0], lfoRate: 5.0, lfoDepth: 0, mute: false }
+    { name: "O1", role: "car", ratio: 1.0, detune: 0, level: 99, fb: 0, wave: "sine", r: [99, 40, 30, 60], l: [99, 70, 0], lfoRate: 5.0, lfoDepth: 0, lfoWave: "sine", mute: false },
+    { name: "O2", role: "mod", ratio: 2.0, detune: 0, level: 0, fb: 0, wave: "sine", r: [99, 45, 35, 60], l: [0, 0, 0], lfoRate: 5.0, lfoDepth: 0, lfoWave: "sine", mute: false },
+    { name: "O3", role: "car", ratio: 1.0, detune: 0, level: 0, fb: 0, wave: "sine", r: [99, 40, 30, 60], l: [0, 0, 0], lfoRate: 5.0, lfoDepth: 0, lfoWave: "sine", mute: false },
+    { name: "O4", role: "mod", ratio: 3.0, detune: 0, level: 0, fb: 0, wave: "sine", r: [99, 40, 30, 60], l: [0, 0, 0], lfoRate: 5.0, lfoDepth: 0, lfoWave: "sine", mute: false }
   ];
   const WAVES = ["sine", "triangle", "half sine", "half tri", "2x sine", "2x tri",
     "2x half sine", "2x half tri", "rect sine", "pulse", "square", "saw"];
+  const LFO_WAVES = ["sine", "triangle", "saw", "inverse saw", "square", "random"];
+  const PARTS = [
+    { name: "P1", midi: 1, low: 0, high: 127, level: 99, delay: 0, mute: false },
+    { name: "P2", midi: 2, low: 0, high: 127, level: 99, delay: 0, mute: false }
+  ];
+  const PITCH_LFO = { rate: 0, depth: 0, wave: "sine" };
+  const PITCH_ENV = { amount: 0, rate: 50, r: [99, 40, 30, 60], l: [60, 25, 0] };
+  const FILTER_ENV = { r: [99, 50, 40, 60], l: [99, 40, 0] };
+  const VOICE = { mode: "poly", unison: 1, detune: 0, porta: 0 };
 
   let clipboard = null;
   let current = "home";
   let activePart = 1;
   let visMode = "scope";
 
-  function b(obj, key, name, min, max, fmt) {
-    return { name: name, min: min, max: max, fmt: fmt, get: function () { return obj[key]; }, set: function (v) { obj[key] = v; } };
+  function b(obj, key, name, min, max, fmt, step) {
+    return { name: name, min: min, max: max, fmt: fmt, step: step,
+      get: function () { return obj[key]; }, set: function (v) { obj[key] = v; } };
   }
-  function ba(obj, arr, i, name, min, max, fmt) {
-    return { name: name, min: min, max: max, fmt: fmt,
+  function ba(obj, arr, i, name, min, max, fmt, step) {
+    return { name: name, min: min, max: max, fmt: fmt, step: step,
       get: function () { return obj[arr][i]; }, set: function (v) { obj[arr][i] = v; } };
   }
 
-  function makeSection(title, kind, bindings, opts) {
-    opts = opts || {};
+  function knobRow(bindings) {
+    const kn = document.createElement("div");
+    kn.className = "knobs";
+    bindings.forEach(function (x) {
+      kn.appendChild(makeKnob({ name: x.name, min: x.min, max: x.max, val: x.get(), fmt: x.fmt, step: x.step, onChange: x.set }));
+    });
+    return kn;
+  }
+
+  function makeSection(title, kind, bindings, opts) {    opts = opts || {};
     const card = document.createElement("div");
     card.className = "card";
     const head = document.createElement("div");
@@ -454,12 +552,7 @@
     }
     card.appendChild(head);
     if (opts.before) card.appendChild(opts.before);
-    const kn = document.createElement("div");
-    kn.className = "knobs";
-    bindings.forEach(function (x) {
-      kn.appendChild(makeKnob({ name: x.name, min: x.min, max: x.max, val: x.get(), fmt: x.fmt, onChange: x.set }));
-    });
-    card.appendChild(kn);
+    card.appendChild(knobRow(bindings));
     if (opts.after) card.appendChild(opts.after);
     return card;
   }
@@ -476,7 +569,7 @@
       const y = H / 2 + Math.sin(p * Math.PI * f + t + seed) * amp * H * Math.sin(p * Math.PI);
       if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
     }
-    ctx.strokeStyle = "#ff2e7e";
+    ctx.strokeStyle = "#3dff9e";
     ctx.lineWidth = 1.3;
     ctx.stroke();
   }
@@ -513,7 +606,7 @@
     requestAnimationFrame(tick);
   }
 
-  function envSvg(r, l) {
+  function envSvg(r, l, cls) {
     const W = 240, H = 62;
     const widths = r.map(function (rr) { return 8 + (99 - rr) / 99 * 26; });
     const total = widths.reduce(function (a, b) { return a + b; }, 0);
@@ -529,7 +622,7 @@
     d += " L " + x.toFixed(1) + " " + H;
     return '<svg viewBox="0 0 ' + W + " " + H + '">' +
       '<line class="egrid" x1="6" y1="' + (H - 3) + '" x2="' + (W - 6) + '" y2="' + (H - 3) + '"/>' +
-      '<path class="ecurve" d="' + d + '"/></svg>';
+      '<path class="' + (cls || "ecurve") + '" d="' + d + '"/></svg>';
   }
 
   /* alg diagram helper: white = modulator, pink = carrier, no outline */
@@ -598,14 +691,63 @@
 
     const parts = document.createElement("div");
     parts.className = "parts";
-    [["P1", "CH 1", 70], ["P2", "CH 2", 30]].forEach(function (p, i) {
+    PARTS.forEach(function (p, i) {
       const d = document.createElement("div");
-      d.className = "part";
-      d.innerHTML = '<div class="ph"><span class="pn">PART ' + p[0] + '</span><span class="pv">' + p[1] + "</span></div>" +
-        '<div class="bar"><i style="width:' + p[2] + '%"></i></div>';
+      d.className = "part" + (activePart === i + 1 ? " active" : "");
+      const ph = document.createElement("div");
+      ph.className = "ph";
+      const nameWrap = document.createElement("div");
+      nameWrap.innerHTML = '<span class="pn">PART ' + (i + 1) + '</span><span class="pch">MIDI ' + p.midi + "</span>";
+      const acts = document.createElement("div");
+      acts.className = "pacts";
+      const cpy = document.createElement("button");
+      cpy.className = "mini"; cpy.textContent = "COPY";
+      cpy.addEventListener("click", function () { copyPart(); });
+      const pst = document.createElement("button");
+      pst.className = "mini"; pst.textContent = "PASTE";
+      pst.disabled = !(clipboard && clipboard.kind === "part");
+      pst.addEventListener("click", function () { pastePart(i + 1); });
+      const mute = document.createElement("button");
+      mute.className = "mini" + (p.mute ? " muted" : "");
+      mute.textContent = p.mute ? "MUTED" : "MUTE";
+      mute.addEventListener("click", function () { setPartMute(i, !p.mute); });
+      acts.append(cpy, pst, mute);
+      ph.append(nameWrap, acts);
+      d.appendChild(ph);
+      d.appendChild(knobRow([
+        b(p, "midi", "MIDI CHANNEL", 1, 16, function (v) { return v; }, 1),
+        b(p, "low", "KEYZONE START", 0, 127, function (v) { return v; }, 1),
+        b(p, "high", "KEYZONE END", 0, 127, function (v) { return v; }, 1),
+        b(p, "level", "AMPLITUDE", 0, 99, function (v) { return v; }, 1),
+        b(p, "delay", "DELAY", 0, 1000, function (v) { return v + "ms"; }, 1)
+      ]));
       parts.appendChild(d);
     });
-    wrap.appendChild(parts);
+
+    const vm = document.createElement("div");
+    vm.className = "vmode";
+    const vh = document.createElement("div");
+    vh.className = "vh";
+    vh.innerHTML = "<h3>VOICE MODE</h3>";
+    vm.appendChild(vh);
+    const vrow = document.createElement("div");
+    vrow.className = "vrow";
+    const vbtns = document.createElement("div");
+    vbtns.className = "vbtns";
+    ["poly", "mono", "legato", "unison"].forEach(function (m) {
+      const btn = document.createElement("button");
+      btn.textContent = m.toUpperCase();
+      if (VOICE.mode === m) btn.className = "active";
+      btn.addEventListener("click", function () { VOICE.mode = m; rerender(); });
+      vbtns.appendChild(btn);
+    });
+    vrow.append(vbtns, knobRow([
+      b(VOICE, "unison", "UNISON", 1, 8, function (v) { return v; }, 1),
+      b(VOICE, "detune", "DETUNE", 0, 100, function (v) { return v + "%"; }, 1),
+      b(VOICE, "porta", "PORTA", 0, 100, function (v) { return v + "%"; }, 1)
+    ]));
+    vm.appendChild(vrow);
+    wrap.append(parts, vm);
     return wrap;
   }
 
@@ -628,7 +770,7 @@
   function copyOp(o) {
     clipboard = { kind: "op", data: {
       ratio: o.ratio, detune: o.detune, level: o.level, fb: o.fb, wave: o.wave,
-      r: o.r.slice(), l: o.l.slice(), lfoRate: o.lfoRate, lfoDepth: o.lfoDepth
+      r: o.r.slice(), l: o.l.slice(), lfoRate: o.lfoRate, lfoDepth: o.lfoDepth, lfoWave: o.lfoWave
     } };
     rerender();
   }
@@ -636,7 +778,34 @@
     if (!clipboard || clipboard.kind !== "op") return;
     const d = clipboard.data;
     o.ratio = d.ratio; o.detune = d.detune; o.level = d.level; o.fb = d.fb; o.wave = d.wave;
-    o.r = d.r.slice(); o.l = d.l.slice(); o.lfoRate = d.lfoRate; o.lfoDepth = d.lfoDepth;
+    o.r = d.r.slice(); o.l = d.l.slice(); o.lfoRate = d.lfoRate; o.lfoDepth = d.lfoDepth; o.lfoWave = d.lfoWave;
+    rerender();
+  }
+
+  function copyPart() {
+    const p = PARTS[activePart - 1];
+    clipboard = { kind: "part", data: {
+      ops: JSON.parse(JSON.stringify(OPS)),
+      part: { midi: p.midi, low: p.low, high: p.high, level: p.level, delay: p.delay },
+      voice: { mode: VOICE.mode, unison: VOICE.unison, detune: VOICE.detune, porta: VOICE.porta }
+    } };
+    rerender();
+  }
+  function pastePart(n) {
+    if (!clipboard || clipboard.kind !== "part") return;
+    const d = clipboard.data;
+    d.ops.forEach(function (s, i) {
+      const o = OPS[i];
+      o.ratio = s.ratio; o.detune = s.detune; o.level = s.level; o.fb = s.fb;
+      o.wave = s.wave; o.r = s.r.slice(); o.l = s.l.slice();
+      o.lfoRate = s.lfoRate; o.lfoDepth = s.lfoDepth; o.lfoWave = s.lfoWave;
+    });
+    const p = PARTS[n - 1];
+    p.midi = d.part.midi; p.low = d.part.low; p.high = d.part.high;
+    p.level = d.part.level; p.delay = d.part.delay;
+    VOICE.mode = d.voice.mode; VOICE.unison = d.voice.unison;
+    VOICE.detune = d.voice.detune; VOICE.porta = d.voice.porta;
+    buildToolbar();
     rerender();
   }
 
@@ -664,7 +833,7 @@
       pst.disabled = !(clipboard && clipboard.kind === "op");
       pst.addEventListener("click", function () { pasteOp(o); });
       acts.append(cpy, pst);
-      right.append(acts, makeToggle("MUTE", o.mute, function (v) { o.mute = v; }));
+      right.append(acts, makeToggle("MUTE", o.mute, function (v) { setOpMute(o.name, v); }));
       head.append(nameEl, right);
       col.appendChild(head);
 
@@ -682,41 +851,55 @@
       const wl = document.createElement("span"); wl.className = "lbl"; wl.textContent = "WAVE";
       waveRow.append(wl, makeSelect(WAVES, o.wave, function (v) { o.wave = v; }));
 
+      const lfoRow = document.createElement("div");
+      lfoRow.className = "inline";
+      const ll = document.createElement("span"); ll.className = "lbl"; ll.textContent = "WAVE";
+      lfoRow.append(ll, makeSelect(LFO_WAVES, o.lfoWave, function (v) { o.lfoWave = v; }));
+
       col.appendChild(makeSection("PITCH", "pitch", [
-        b(o, "ratio", "RATIO", 0.5, 8, function (v) { return v.toFixed(2); }),
-        b(o, "detune", "DETUNE", -50, 50, function (v) { return (v > 0 ? "+" : "") + v + "c"; }),
-        b(o, "level", "LEVEL", 0, 99, function (v) { return v; }),
-        b(o, "fb", "FB", 0, 99, function (v) { return v; })
+        b(o, "ratio", "RATIO", 0.5, 8, function (v) { return v.toFixed(2); }, 0.01),
+        b(o, "detune", "DETUNE", -50, 50, function (v) { return (v > 0 ? "+" : "") + v + "c"; }, 1),
+        b(o, "level", "LEVEL", 0, 99, function (v) { return v; }, 1),
+        b(o, "fb", "FB", 0, 99, function (v) { return v; }, 1)
       ], { after: waveRow }));
 
       const envBox = document.createElement("div");
       envBox.className = "envbox";
       envBox.innerHTML = envSvg(o.r, o.l);
       col.appendChild(makeSection("ENVELOPE", "env", [
-        ba(o, "r", 0, "R1", 0, 99, function (v) { return v; }),
-        ba(o, "r", 1, "R2", 0, 99, function (v) { return v; }),
-        ba(o, "r", 2, "R3", 0, 99, function (v) { return v; }),
-        ba(o, "r", 3, "R4", 0, 99, function (v) { return v; }),
-        ba(o, "l", 0, "L1", 0, 99, function (v) { return v; }),
-        ba(o, "l", 1, "L2", 0, 99, function (v) { return v; }),
-        ba(o, "l", 2, "L3", 0, 99, function (v) { return v; })
+        ba(o, "r", 0, "R1", 0, 99, function (v) { return v; }, 1),
+        ba(o, "r", 1, "R2", 0, 99, function (v) { return v; }, 1),
+        ba(o, "r", 2, "R3", 0, 99, function (v) { return v; }, 1),
+        ba(o, "r", 3, "R4", 0, 99, function (v) { return v; }, 1),
+        ba(o, "l", 0, "L1", 0, 99, function (v) { return v; }, 1),
+        ba(o, "l", 1, "L2", 0, 99, function (v) { return v; }, 1),
+        ba(o, "l", 2, "L3", 0, 99, function (v) { return v; }, 1)
       ], { before: envBox }));
 
       col.appendChild(makeSection("AMPLITUDE LFO", "amplfo", [
-        b(o, "lfoRate", "RATE", 0, 20, function (v) { return v.toFixed(1) + "Hz"; }),
-        b(o, "lfoDepth", "DEPTH", 0, 100, function (v) { return v + "%"; })
-      ]));
+        b(o, "lfoRate", "RATE", 0, 20, function (v) { return v.toFixed(1) + "Hz"; }, 0.1),
+        b(o, "lfoDepth", "DEPTH", 0, 100, function (v) { return v + "%"; }, 1)
+      ], { after: lfoRow }));
 
       wrap.appendChild(col);
     });
     return wrap;
   }
 
-  function sineSvg() {
+  function lfoSvg(wave) {
     let d = "M 4 31";
-    for (let x = 4; x <= 236; x++) {
-      const p = (x - 4) / 232;
-      d += " L " + x + " " + (31 - Math.sin(p * Math.PI * 4) * 22).toFixed(1);
+    const N = 232;
+    for (let x = 0; x <= N; x++) {
+      const p = x / N;
+      const ph = (p * 2) % 1;
+      let v;
+      if (wave === "triangle") v = 1 - 4 * Math.abs(ph - 0.5);
+      else if (wave === "saw") v = 1 - 2 * ph;
+      else if (wave === "inverse saw") v = 2 * ph - 1;
+      else if (wave === "square") v = ph < 0.5 ? 1 : -1;
+      else if (wave === "random") v = Math.sin(x * 1.7) * Math.cos(x * 0.37);
+      else v = Math.sin(p * Math.PI * 4);
+      d += " L " + (4 + x) + " " + (31 - v * 22).toFixed(1);
     }
     return '<svg viewBox="0 0 240 62"><path d="' + d + '" fill="none" stroke="#c780ff" stroke-width="1.4"/></svg>';
   }
@@ -737,20 +920,34 @@
   function viewFx() {
     const wrap = document.createElement("div");
     wrap.className = "fx-grid";
-    wrap.appendChild(fxCard("FILTER 1 / ENVELOPE", [
-      b({ v: 60 }, "v", "CUTOFF", 0, 100, function (x) { return x + "%"; }),
-      b({ v: 20 }, "v", "RES", 0, 100, function (x) { return x + "%"; }),
-      b({ v: 0 }, "v", "F-ENV", 0, 100, function (x) { return x + "%"; })
+    wrap.appendChild(fxCard("FILTER 1", [
+      b({ v: 60 }, "v", "CUTOFF", 0, 100, function (x) { return x + "%"; }, 1),
+      b({ v: 20 }, "v", "RES", 0, 100, function (x) { return x + "%"; }, 1),
+      b({ v: 0 }, "v", "ENV AMT", 0, 100, function (x) { return x + "%"; }, 1)
     ], ["lpf", "bpf", "hpf"]));
-    wrap.appendChild(fxCard("FILTER 2 / KEY FOLLOW", [
-      b({ v: 70 }, "v", "CUTOFF", 0, 100, function (x) { return x + "%"; }),
-      b({ v: 0 }, "v", "RES", 0, 100, function (x) { return x + "%"; }),
-      b({ v: 0 }, "v", "KEY", -100, 100, function (x) { return (x > 0 ? "+" : "") + x + "%"; })
+    wrap.appendChild(fxCard("FILTER 2", [
+      b({ v: 70 }, "v", "CUTOFF", 0, 100, function (x) { return x + "%"; }, 1),
+      b({ v: 0 }, "v", "RES", 0, 100, function (x) { return x + "%"; }, 1),
+      b({ v: 0 }, "v", "KEY", -100, 100, function (x) { return (x > 0 ? "+" : "") + x + "%"; }, 1)
     ], ["lpf", "bpf", "hpf"]));
+
+    const feBox = document.createElement("div");
+    feBox.className = "envbox";
+    feBox.innerHTML = envSvg(FILTER_ENV.r, FILTER_ENV.l, "ecurve2");
+    wrap.appendChild(makeSection("FILTER ENVELOPE", "fenv", [
+      ba(FILTER_ENV, "r", 0, "R1", 0, 99, function (v) { return v; }, 1),
+      ba(FILTER_ENV, "r", 1, "R2", 0, 99, function (v) { return v; }, 1),
+      ba(FILTER_ENV, "r", 2, "R3", 0, 99, function (v) { return v; }, 1),
+      ba(FILTER_ENV, "r", 3, "R4", 0, 99, function (v) { return v; }, 1),
+      ba(FILTER_ENV, "l", 0, "L1", 0, 99, function (v) { return v; }, 1),
+      ba(FILTER_ENV, "l", 1, "L2", 0, 99, function (v) { return v; }, 1),
+      ba(FILTER_ENV, "l", 2, "L3", 0, 99, function (v) { return v; }, 1)
+    ], { before: feBox, copy: false }));
+
     wrap.appendChild(fxCard("WAVEFOLDER", [
-      b({ v: 0 }, "v", "AMOUNT", 0, 100, function (x) { return x + "%"; }),
-      b({ v: 0 }, "v", "THRESH", 0, 100, function (x) { return x + "%"; }),
-      b({ v: 1 }, "v", "FOLDS", 1, 8, function (x) { return x; })
+      b({ v: 0 }, "v", "AMOUNT", 0, 100, function (x) { return x + "%"; }, 1),
+      b({ v: 0 }, "v", "THRESH", 0, 100, function (x) { return x + "%"; }, 1),
+      b({ v: 1 }, "v", "FOLDS", 1, 8, function (x) { return x; }, 1)
     ], ["sine"]));
     return wrap;
   }
@@ -760,42 +957,29 @@
     wrap.className = "mod-grid";
     const lfoBox = document.createElement("div");
     lfoBox.className = "envbox";
-    lfoBox.innerHTML = sineSvg();
+    lfoBox.innerHTML = lfoSvg(PITCH_LFO.wave);
+    const lfoRow = document.createElement("div");
+    lfoRow.className = "inline";
+    const ll = document.createElement("span"); ll.className = "lbl"; ll.textContent = "WAVE";
+    lfoRow.append(ll, makeSelect(LFO_WAVES, PITCH_LFO.wave, function (v) { PITCH_LFO.wave = v; rerender(); }));
     wrap.appendChild(makeSection("PITCH LFO", "plfo", [
-      b({ v: 0 }, "v", "RATE", 0, 20, function (x) { return x.toFixed(1) + "Hz"; }),
-      b({ v: 0 }, "v", "DEPTH", 0, 100, function (x) { return x + "%"; })
-    ], { before: lfoBox, copy: false }));
+      b(PITCH_LFO, "rate", "RATE", 0, 20, function (x) { return x.toFixed(1) + "Hz"; }, 0.1),
+      b(PITCH_LFO, "depth", "DEPTH", 0, 100, function (x) { return x + "%"; }, 1)
+    ], { before: lfoBox, after: lfoRow, copy: false }));
+
     const penvBox = document.createElement("div");
     penvBox.className = "envbox";
-    penvBox.innerHTML = envSvg([99, 40, 30, 60], [60, 25, 0]);
+    penvBox.innerHTML = envSvg(PITCH_ENV.r, PITCH_ENV.l);
     wrap.appendChild(makeSection("PITCH ENVELOPE", "penv", [
-      b({ v: 0 }, "v", "AMOUNT", -100, 100, function (x) { return (x > 0 ? "+" : "") + x + "c"; }),
-      b({ v: 50 }, "v", "RATE", 0, 99, function (x) { return x; })
+      b(PITCH_ENV, "amount", "AMOUNT", -100, 100, function (x) { return (x > 0 ? "+" : "") + x + "c"; }, 1),
+      b(PITCH_ENV, "rate", "RATE", 0, 99, function (x) { return x; }, 1)
     ], { before: penvBox, copy: false }));
-    wrap.appendChild(makeSection("KEY / VELOCITY FOLLOW", "follow", [
-      b({ v: 0 }, "v", "KEY LO", -100, 100, function (x) { return (x > 0 ? "+" : "") + x + "%"; }),
-      b({ v: 0 }, "v", "KEY HI", -100, 100, function (x) { return (x > 0 ? "+" : "") + x + "%"; }),
-      b({ v: 0 }, "v", "VEL", -100, 100, function (x) { return (x > 0 ? "+" : "") + x + "%"; })
-    ], { copy: false }));
-    return wrap;
-  }
 
-  function viewGlo() {
-    const wrap = document.createElement("div");
-    wrap.className = "glo-grid";
-    const parts = document.createElement("div");
-    parts.className = "card";
-    parts.innerHTML = "<h3>PARTS / ROUTING</h3>" +
-      '<table class="parts-tbl"><thead><tr><th>PART</th><th>CH</th><th>LOW</th><th>HIGH</th><th>LEVEL</th><th>DELAY</th></tr></thead><tbody>' +
-      '<tr class="active"><td>P1</td><td class="mono">1</td><td class="mono">0</td><td class="mono">127</td><td class="mono">99</td><td class="mono">0ms</td></tr>' +
-      '<tr><td>P2</td><td class="mono">2</td><td class="mono">0</td><td class="mono">127</td><td class="mono">99</td><td class="mono">0ms</td></tr>' +
-      "</tbody></table>";
-    const voice = makeSection("VOICE MODE", "voice", [
-      b({ v: 1 }, "v", "UNISON", 1, 8, function (x) { return x; }),
-      b({ v: 0 }, "v", "DETUNE", 0, 100, function (x) { return x + "%"; }),
-      b({ v: 0 }, "v", "PORTA", 0, 100, function (x) { return x + "%"; })
-    ]);
-    wrap.append(parts, voice);
+    wrap.appendChild(makeSection("KEY / VELOCITY FOLLOW", "follow", [
+      b({ v: 0 }, "v", "KEY LO", -100, 100, function (x) { return (x > 0 ? "+" : "") + x + "%"; }, 1),
+      b({ v: 0 }, "v", "KEY HI", -100, 100, function (x) { return (x > 0 ? "+" : "") + x + "%"; }, 1),
+      b({ v: 0 }, "v", "VEL", -100, 100, function (x) { return (x > 0 ? "+" : "") + x + "%"; }, 1)
+    ], { copy: false }));
     return wrap;
   }
 
@@ -804,8 +988,7 @@
     { id: "home", label: "HOME", view: viewHome },
     { id: "ops", label: "OPERATORS", view: viewOps },
     { id: "fx", label: "FX", view: viewFx },
-    { id: "mod", label: "MOD", view: viewMod },
-    { id: "glo", label: "GLO", view: viewGlo }
+    { id: "mod", label: "MOD", view: viewMod }
   ];
   const body = document.getElementById("body");
   const tabsEl = document.getElementById("tabs");
@@ -834,46 +1017,114 @@
     this.querySelectorAll("button").forEach(function (x) { x.classList.toggle("active", x === b); });
   });
 
-  /* ---------------- parts ---------------- */
+  /* ---------------- toolbar, mutes, parts ---------------- */
   const plugin = document.getElementById("plugin");
   const statusPart = document.getElementById("statusPart");
-  const partButtons = Array.from(document.querySelectorAll(".btn.part"));
+  const toolbarEl = document.getElementById("toolbar");
 
-  function setActivePart(p) {
-    activePart = p;
-    partButtons.forEach(function (b) { b.classList.toggle("active", +b.dataset.part === p); });
-    statusPart.textContent = "PART " + p + " ACTIVE";
+  function findOp(name) { return OPS.filter(function (o) { return o.name === name; })[0]; }
+  function setOpMute(name, on) {
+    findOp(name).mute = on;
+    buildToolbar();
+    if (current === "home" || current === "ops") rerender();
+  }
+  function setPartMute(i, on) {
+    PARTS[i].mute = on;
+    buildToolbar();
     if (current === "home") rerender();
   }
-  partButtons.forEach(function (btn) {
-    const p = +btn.dataset.part;
-    btn.querySelector(".plabel").addEventListener("click", function (e) { e.stopPropagation(); setActivePart(p); closePartMenu(); });
-    btn.querySelector(".caret").addEventListener("click", function (e) { e.stopPropagation(); setActivePart(p); openPartMenu(p, btn); });
-  });
+  function setActivePart(p) {
+    activePart = p;
+    statusPart.textContent = "PART " + p + " ACTIVE";
+    buildToolbar();
+    if (current === "home") rerender();
+  }
+
+  function buildToolbar() {
+    toolbarEl.innerHTML = "";
+    const g1 = document.createElement("div");
+    g1.className = "tgroup";
+    const l1 = document.createElement("span");
+    l1.className = "tlabel"; l1.textContent = "MUTE";
+    g1.appendChild(l1);
+    OPS.forEach(function (o) {
+      const btn = document.createElement("button");
+      btn.className = "tbtn" + (o.mute ? " muted" : "");
+      btn.textContent = o.name;
+      btn.title = "Mute " + o.name;
+      btn.addEventListener("click", function () { setOpMute(o.name, !o.mute); });
+      g1.appendChild(btn);
+    });
+    const d1 = document.createElement("div");
+    d1.className = "tdiv";
+    g1.appendChild(d1);
+    PARTS.forEach(function (p, i) {
+      const btn = document.createElement("button");
+      btn.className = "tbtn" + (p.mute ? " muted" : "");
+      btn.textContent = "P" + (i + 1);
+      btn.title = "Mute part " + (i + 1);
+      btn.addEventListener("click", function () { setPartMute(i, !p.mute); });
+      g1.appendChild(btn);
+    });
+    toolbarEl.appendChild(g1);
+
+    const g2 = document.createElement("div");
+    g2.className = "tgroup";
+    const l2 = document.createElement("span");
+    l2.className = "tlabel"; l2.textContent = "ACTIVE";
+    g2.appendChild(l2);
+    PARTS.forEach(function (p, i) {
+      const btn = document.createElement("button");
+      btn.className = "tbtn partsel" + (activePart === i + 1 ? " active" : "");
+      btn.textContent = "PART " + (i + 1);
+      btn.addEventListener("click", function () { setActivePart(i + 1); closePartMenu(); });
+      g2.appendChild(btn);
+    });
+    const edit = document.createElement("button");
+    edit.className = "tbtn pmenu";
+    edit.textContent = "EDIT \u25BE";
+    edit.title = "Part save, init, copy, paste";
+    edit.addEventListener("click", function (e) { e.stopPropagation(); openPartMenu(edit); });
+    g2.appendChild(edit);
+    toolbarEl.appendChild(g2);
+
+    const sig = document.createElement("div");
+    sig.className = "tsignal";
+    sig.innerHTML = "EDITING <b>PART " + activePart + "</b>";
+    toolbarEl.appendChild(sig);
+  }
 
   let partMenu = null;
   function closePartMenu() { if (partMenu) { partMenu.remove(); partMenu = null; } }
-  function openPartMenu(p, btn) {
+  function openPartMenu(btn) {
     closePartMenu();
+    const p = activePart;
+    const canPaste = clipboard && clipboard.kind === "part";
     const menu = document.createElement("div");
     menu.className = "part-menu";
     menu.innerHTML = '<div class="pm-head">PART ' + p + "</div>" +
       '<button data-act="save">SAVE TO SLOT&hellip;</button>' +
-      '<button data-act="init">INIT PART</button>';
+      '<button data-act="init">INIT PART</button>' +
+      '<button data-act="copy">COPY PART</button>' +
+      '<button data-act="paste"' + (canPaste ? "" : " disabled") + '>PASTE PART</button>';
     menu.addEventListener("click", function (e) {
       const b = e.target.closest("button");
-      if (!b) return;
+      if (!b || b.disabled) return;
       closePartMenu();
       if (b.dataset.act === "save") openSlotPicker(p);
       else if (b.dataset.act === "init") openInitConfirm(p);
+      else if (b.dataset.act === "copy") { copyPart(); toast("PART " + p + " COPIED"); }
+      else if (b.dataset.act === "paste") { pastePart(p); toast("PART " + p + " PASTED"); }
     });
     plugin.appendChild(menu);
-    menu.style.left = (btn.offsetLeft) + "px";
-    menu.style.top = (btn.offsetTop + btn.offsetHeight + 4) + "px";
+    const r = btn.getBoundingClientRect();
+    const pr = plugin.getBoundingClientRect();
+    menu.style.left = (r.left - pr.left) + "px";
+    menu.style.top = (r.bottom - pr.top + 4) + "px";
     partMenu = menu;
   }
   document.addEventListener("click", function (e) {
-    if (partMenu && !e.target.closest(".part-menu") && !e.target.closest(".caret")) closePartMenu();
+    if (partMenu && !e.target.closest(".part-menu") && !e.target.closest(".pmenu")) closePartMenu();
   });
 
   /* ---------------- dialogs ---------------- */
@@ -994,14 +1245,15 @@
 
   /* ---------------- init ---------------- */
   document.getElementById("hdrAlg").innerHTML = algDiagram();
+  buildToolbar();
   tick();
 
   function fromHash() {
     const h = (location.hash || "").replace("#", "");
     if (h === "presets") { showTab("home"); document.getElementById("patchBtn").click(); return; }
-    if (h === "save") { showTab("home"); openSlotPicker(1); return; }
-    if (h === "init") { showTab("home"); openInitConfirm(1); return; }
-    if (h === "menu") { showTab("home"); openPartMenu(1, document.querySelector('.btn.part[data-part="1"]')); return; }
+    if (h === "save") { showTab("home"); openSlotPicker(activePart); return; }
+    if (h === "init") { showTab("home"); openInitConfirm(activePart); return; }
+    if (h === "menu") { showTab("home"); openPartMenu(document.querySelector(".pmenu")); return; }
     if (TABS.some(function (x) { return x.id === h; })) showTab(h);
     else showTab("home");
   }
