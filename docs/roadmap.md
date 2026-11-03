@@ -3683,4 +3683,5 @@ Milestone 0 is done. The generated engine exposes `type_p_fm1_state` and the
 and the existing tests keep their calls. The old and new host renders of the
 type-p-fm1 script are byte-identical, two states in one process stay isolated,
 the full generator suite passes, the web parity gate is exact, and the target
-package builds. Physical device acceptance and timing remain blocked.
+package builds. The host A/B shows no regression, 120.7 us before and 115.1 us
+after per `render(256)`. Physical device acceptance and timing remain blocked.

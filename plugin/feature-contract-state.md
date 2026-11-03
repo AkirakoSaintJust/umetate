@@ -99,6 +99,10 @@
   tap and ASan checks.
 - The full `umetate deep-check --all` gate passes.
 - The web parity gate passes, host and WASM exact on 512 int32 samples.
+- Host A/B with the same compiler and the same workload: the old generator at
+  `4ba97fe` renders `render(256)` in 120.7 us and the new one in 115.1 us, about
+  5 percent faster. The container perf guard reports 104.5 us against a 400 us
+  budget.
 - The target package builds with the Docker/JieLi toolchain. The performance
   profile reports 215544 B of 581564 for the image, RAM through `.bss` 96908 B of
   98304, pool 105536 B of 344064, and 18860 B of `.dsp_text` in SRAM.

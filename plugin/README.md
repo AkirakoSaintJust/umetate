@@ -140,8 +140,9 @@ and the `_s` API. The legacy API wraps one static instance, so the firmware, the
 web lab and the existing host tests keep their calls. The old and new host
 renders of the type-p-fm1 script are byte-identical, two states stay isolated,
 the full generator suite passes, the web parity gate is exact, and the target
-package builds with the Docker/JieLi toolchain. Physical device acceptance and
-timing remain blocked.
+package builds with the Docker/JieLi toolchain. The host A/B is slightly faster,
+120.7 us before and 115.1 us after per `render(256)`. Physical device acceptance
+and timing remain blocked.
 
 ## 6. Engine bridge
 
