@@ -3568,9 +3568,11 @@ Follow-ups beyond the universalisation backlog, in rough priority order.
    (LP2), `band` (BP tap). Renamed from an early `sh101` draft to avoid Roland
    claims we cannot sustain, and reworked after a review that correctly noted the
    saturation belongs on the feedback path. Verified with a host contract: a low
-   `f` attenuates the input (lowpass), a high `f` passes it, and at a matched
-   cutoff full `res` boosts the output about 5.5x above `res`=0 (the resonant
-   peak), all bounded (no overflow).
+   `f` attenuates the input (lowpass), a high `f` passes it, at a matched cutoff
+   full `res` boosts the output about 7.5x above `res`=0 (the resonant peak), and at
+   full `res` with the source released it self-oscillates and sustains a bounded
+   tone. The states are not clamped (the feedback clip bounds the loop), and the
+   feedback runs at 4.5x so the discretized ladder actually sustains.
 3. **JUCE plugin ports (multi-platform).** DAW plugin ports of the firmware, with a
    multi-platform GUI designed in collaboration.
 4. **Comb filter node (done).** Shipped as `modules/nodes/comb`: a fractional
