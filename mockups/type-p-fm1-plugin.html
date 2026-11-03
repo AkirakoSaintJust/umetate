@@ -4,14 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Type P.fm1 — plugin GUI mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Zen+Dots&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #000000;
-    --panel: #0a0a0a;
-    --panel2: #0f0f0f;
-    --line: #222222;
-    --line2: #333333;
-    --text: #e8e8e8;
+    --panel: #070707;
+    --panel2: #0c0c0c;
+    --line: #1c1c1c;
+    --line2: #2e2e2e;
+    --text: #d2d2d2;
     --dim: #7d7d7d;
     --faint: #4a4a4a;
     --pink: #ff2e7e;
@@ -22,19 +25,24 @@
     --select: #7ec8ff;
     --yellow: #ffe600;
     --white: #ffffff;
-    --popup: #1e1e1e;
+    --popup: #1b1b1b;
+    --font-ui: "DotGothic16", "Cascadia Mono", ui-monospace, Consolas, monospace;
+    --font-head: "Zen Dots", "DotGothic16", ui-monospace, monospace;
   }
   * { box-sizing: border-box; border-radius: 0; }
   html, body { margin: 0; min-height: 100%; }
   body {
     background: #000;
     color: var(--text);
-    font-family: "Fira Code", "Cascadia Code", "Cascadia Mono", ui-monospace, Consolas, monospace;
-    font-size: 10px;
+    font-family: var(--font-ui);
+    font-size: 11px;
+    letter-spacing: .02em;
+    text-transform: lowercase;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 12px; padding: 26px; min-height: 100vh;
   }
-  button, select { font-family: inherit; }
+  button, select, input { font-family: inherit; letter-spacing: inherit; text-transform: inherit; }
+  input { text-transform: none; }
 
   .plugin {
     position: relative;
@@ -43,31 +51,37 @@
     border: 1px solid var(--line2);
     display: flex; flex-direction: column;
   }
+  .plugin::before, .plugin::after {
+    content: ""; position: absolute; width: 11px; height: 11px; pointer-events: none;
+  }
+  .plugin::before { top: -1px; left: -1px; border-top: 2px solid var(--pink); border-left: 2px solid var(--pink); }
+  .plugin::after { bottom: -1px; right: -1px; border-bottom: 2px solid var(--pink); border-right: 2px solid var(--pink); }
 
   /* ---------------- header ---------------- */
   .hdr {
-    display: flex; align-items: center; gap: 34px;
+    display: flex; align-items: center; gap: 28px;
     padding: 14px 16px; background: #000;
     border-bottom: 1px solid var(--line2);
   }
-  .brand { flex: 0 0 auto; padding-right: 22px; padding-bottom: 10px; }
+  .brand { flex: 0 0 auto; padding-right: 14px; padding-bottom: 10px; }
   .logo {
     font-family: "Digital Desolation Plus", "Arial Black", Impact, sans-serif;
-    font-weight: 900; font-size: 27px; line-height: 1;
-    color: #d6d6d6; letter-spacing: .02em;
+    font-weight: 900; font-size: 30px; line-height: 1;
+    color: #d6d6d6; letter-spacing: .02em; text-transform: none;
     text-shadow: 4px 4px 0 #c2ad00;
   }
   .logo .dot { color: var(--pink); text-shadow: 4px 4px 0 #c2ad00; }
 
-  .alg { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; cursor: pointer; }
+  .alg { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; cursor: pointer; }
   .alg:hover .val { color: var(--pink2); }
-  .alg-meta .lbl { font-size: 8px; letter-spacing: .2em; color: var(--dim); }
-  .alg-meta .val { font-size: 30px; font-weight: 700; color: var(--pink); line-height: 1; }
-  .alg-meta .caret { font-size: 9px; color: var(--faint); margin-left: 3px; vertical-align: middle; }
+  .alg-meta .lbl { font-family: var(--font-head); font-size: 8px; letter-spacing: .16em; color: var(--dim); }
+  .alg-meta .val { font-family: var(--font-head); font-size: 28px; color: var(--pink); line-height: 1; }
+  .alg-meta .caret { font-family: var(--font-ui); font-size: 10px; color: var(--faint); margin-left: 3px; vertical-align: middle; }
+  .alg-svg { width: 244px; height: 130px; }
 
   .out { flex: 1 1 auto; min-width: 180px; }
   .out-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-  .out-head .lbl { font-size: 8px; letter-spacing: .2em; color: var(--dim); }
+  .out-head .lbl { font-family: var(--font-head); font-size: 8px; letter-spacing: .16em; color: var(--dim); }
   .seg { display: flex; gap: 0; }
   .seg button {
     background: #000; border: 1px solid var(--line2); color: var(--dim);
@@ -80,11 +94,13 @@
   .actions { display: flex; gap: 8px; flex: 0 0 auto; align-items: stretch; }
   .btn {
     background: #000; border: 1px solid var(--line2); color: var(--text);
-    font-size: 9px; letter-spacing: .1em; padding: 8px 10px; cursor: pointer;
+    font-size: 10px; letter-spacing: .04em; padding: 8px 10px; cursor: pointer;
     display: flex; align-items: center; gap: 7px; white-space: nowrap;
   }
   .btn:hover { border-color: var(--pink); }
-  .btn .k { color: var(--faint); font-size: 8px; letter-spacing: .14em; }
+  .btn .k { color: var(--faint); font-size: 9px; letter-spacing: .04em; }
+  .btn.renamer { color: var(--dim); }
+  .btn.renamer:hover { color: var(--pink); }
 
   /* ---------------- toolbar ---------------- */
   .toolbar {
@@ -92,7 +108,7 @@
     padding: 7px 16px; background: #000; border-bottom: 1px solid var(--line2);
   }
   .tgroup { display: flex; align-items: center; gap: 5px; }
-  .tlabel { font-size: 7px; letter-spacing: .2em; color: var(--faint); margin-right: 3px; text-transform: uppercase; }
+  .tlabel { font-family: var(--font-head); font-size: 7px; letter-spacing: .14em; color: var(--faint); margin-right: 3px; }
   .tdiv { width: 1px; height: 18px; background: var(--line2); margin: 0 6px; }
   .tbtn {
     background: #000; border: 1px solid var(--line2); color: var(--dim);
@@ -112,19 +128,20 @@
   .tabs { display: flex; gap: 0; padding: 0; background: #000; border-bottom: 1px solid var(--line2); }
   .tab {
     background: #000; border: 0; border-right: 1px solid var(--line);
-    color: var(--dim); font-size: 9px; letter-spacing: .16em; font-weight: 700;
-    padding: 12px 18px; cursor: pointer;
+    color: var(--dim); font-family: var(--font-head); font-size: 10px; letter-spacing: .04em;
+    padding: 11px 16px; cursor: pointer;
   }
   .tab:hover { color: var(--text); }
   .tab.active { color: #000; background: var(--pink); }
 
   /* ---------------- body ---------------- */
-  .body { padding: 14px 16px 16px; min-height: 560px; }
+  .body { padding: 14px 16px 16px; min-height: 566px; }
   .grid { display: grid; gap: 10px; }
 
-  .card { background: var(--panel); border: 1px solid var(--line); padding: 10px; min-width: 0; }
-  .sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-  .card h3 { margin: 0; font-size: 8px; letter-spacing: .18em; color: var(--pink); font-weight: 700; text-transform: uppercase; }
+  .card { background: var(--panel); border: 1px solid var(--line); padding: 9px; min-width: 0; }
+  .sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
+  .card h3 { margin: 0; font-family: var(--font-head); font-size: 9px; letter-spacing: .1em; color: var(--pink); font-weight: 400; }
+  .card h3::before, .vmode h3::before { content: "// "; color: var(--faint); }
   .sec-actions { display: flex; gap: 3px; }
   button.mini {
     background: #000; border: 1px solid var(--line2); color: var(--dim);
@@ -141,8 +158,8 @@
   .dial .track { fill: none; stroke: #2a2a2a; stroke-width: 3; }
   .dial .arc { fill: none; stroke: var(--pink); stroke-width: 3; }
   .dial .ptr { stroke: var(--white); stroke-width: 2; }
-  .knob-name { font-size: 7.5px; letter-spacing: .08em; color: var(--dim); text-transform: uppercase; }
-  .knob-val { font-size: 10px; font-weight: 700; color: var(--pink2); font-variant-numeric: tabular-nums; cursor: text; }
+  .knob-name { font-size: 8px; letter-spacing: .04em; color: var(--dim); }
+  .knob-val { font-size: 12px; color: var(--pink2); font-variant-numeric: tabular-nums; cursor: text; }
   .knob-val:hover { color: var(--white); text-decoration: underline; text-underline-offset: 2px; }
   .knob-input {
     width: 46px; background: #000; border: 1px solid var(--green); color: var(--green);
@@ -163,10 +180,10 @@
   select.sel:focus { border-color: var(--pink); }
 
   .toggle { display: flex; align-items: center; gap: 7px; cursor: pointer; }
-  .toggle .trk { width: 24px; height: 12px; background: #1a1a1a; border: 1px solid var(--line2); position: relative; }
-  .toggle .thb { position: absolute; top: 1px; left: 1px; width: 8px; height: 8px; background: var(--faint); }
+  .toggle .trk { width: 26px; height: 12px; background: #1a1a1a; border: 1px solid var(--line2); position: relative; }
+  .toggle .thb { position: absolute; top: 1px; left: 1px; width: 10px; height: 8px; background: var(--faint); }
   .toggle.on .trk { border-color: var(--green); }
-  .toggle.on .thb { left: 13px; background: var(--green); }
+  .toggle.on .thb { left: 14px; background: var(--green); }
   .toggle .tname { font-size: 8px; letter-spacing: .12em; color: var(--dim); }
   .toggle.on .tname { color: var(--green); }
 
@@ -174,7 +191,7 @@
   .toggle.mute .thb { left: 1px; background: var(--pink); }
   .toggle.mute .tname { color: var(--pink); }
   .toggle.mute.muted .trk { border-color: var(--line2); }
-  .toggle.mute.muted .thb { left: 13px; background: #3a3a3a; }
+  .toggle.mute.muted .thb { left: 14px; background: #3a3a3a; }
   .toggle.mute.muted .tname { color: var(--faint); }
   .toggle.mute:hover .trk { border-color: var(--pink2); }
 
@@ -193,44 +210,28 @@
   .opcol .dial, .opcol .dial svg { width: 34px; height: 34px; }
   .opcol .envbox { height: 52px; margin-bottom: 6px; }
   .opcol-head { display: flex; align-items: center; justify-content: space-between; }
-  .opname { font-size: 12px; font-weight: 700; letter-spacing: .14em; color: var(--white); }
+  .opname { font-family: var(--font-head); font-size: 12px; letter-spacing: .06em; color: var(--white); }
   .op-name.car, .opname.car { color: var(--pink); }
   .opvis { display: flex; gap: 6px; }
   .opvis canvas { width: 50%; height: 40px; display: block; border: 1px solid var(--line); background: #000; }
-
-  /* ---------------- home ---------------- */
-  .opcards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-  .opcard { border: 1px solid var(--line2); background: #000; padding: 9px; cursor: pointer; }
-  .opcard:hover { border-color: var(--pink); }
-  .opcard .ch { display: flex; justify-content: space-between; align-items: center; }
-  .opcard .on { font-size: 12px; font-weight: 700; letter-spacing: .12em; }
-  .opcard .role { font-size: 7px; letter-spacing: .14em; padding: 1px 5px; }
-  .role.mod { background: var(--white); color: #000; }
-  .role.car { background: var(--pink); color: #000; }
-  .opcard .mini { height: 30px; margin-top: 7px; }
-  .opcard .meta { font-size: 8px; color: var(--dim); letter-spacing: .04em; margin-top: 5px; }
-  .opcard .mini canvas { width: 100%; height: 100%; display: block; }
-
-  .home-low { display: grid; grid-template-columns: 1.5fr 1fr; gap: 10px; }
-  .analyser { height: 150px; border: 1px solid var(--line); background: #000; position: relative; }
-  .analyser canvas { width: 100%; height: 100%; display: block; }
-  .analyser svg { width: 100%; height: 100%; display: block; }
-  .alg-note { position: absolute; left: 8px; bottom: 5px; font-size: 7px; letter-spacing: .14em; color: var(--faint); }
 
   .parts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .part { border: 1px solid var(--line2); background: #000; padding: 8px 10px 10px; }
   .part.active { border-color: var(--green); }
   .part .ph { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-  .part .pn { font-size: 9px; letter-spacing: .14em; color: var(--dim); font-weight: 700; }
+  .part .pn { font-family: var(--font-head); font-size: 10px; letter-spacing: .05em; color: var(--dim); }
   .part.active .pn { color: var(--green); }
   .part .pch { font-size: 8px; color: var(--faint); letter-spacing: .1em; margin-left: 6px; }
   .part .pacts { display: flex; gap: 4px; align-items: center; }
   .part .knobs { gap: 6px 2px; }
   .part .knob { width: 48px; }
   .part .dial, .part .dial svg { width: 38px; height: 38px; }
+  .keyzone { position: relative; height: 14px; margin-top: 9px; border: 1px solid var(--line); background: #050505; }
+  .keyzone i { position: absolute; top: 0; bottom: 0; background: var(--pink); opacity: .5; }
+  .keyzone span { position: absolute; top: 0; bottom: 0; width: 1px; background: #1f1f1f; }
 
   .vmode { border: 1px solid var(--line2); background: #000; padding: 8px 10px; }
-  .vmode h3 { margin: 0; font-size: 8px; letter-spacing: .18em; color: var(--pink); font-weight: 700; text-transform: uppercase; }
+  .vmode h3 { margin: 0; font-family: var(--font-head); font-size: 9px; letter-spacing: .1em; color: var(--pink); font-weight: 400; }
   .vmode .vh { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
   .vmode .vrow { display: flex; align-items: center; gap: 10px; }
   .vmode .vbtns { display: flex; }
@@ -250,7 +251,7 @@
   /* ---------------- status strip ---------------- */
   .status { display: flex; align-items: center; justify-content: space-between;
     padding: 7px 16px; background: #000; border-top: 1px solid var(--line2); }
-  .status .leds { display: flex; gap: 14px; align-items: center; font-size: 8px; letter-spacing: .14em; color: var(--dim); }
+  .status .leds { display: flex; gap: 14px; align-items: center; font-family: var(--font-head); font-size: 8px; letter-spacing: .08em; color: var(--dim); }
   .led { width: 6px; height: 6px; background: var(--faint); display: inline-block; }
   .led.on { background: var(--green); }
   .status .rt { font-size: 8px; letter-spacing: .14em; color: var(--faint); }
@@ -264,7 +265,7 @@
   }
   .dialog { width: 420px; max-width: 92vw; background: var(--popup); border: 1px solid var(--line2); }
   .dialog.wide { width: 780px; }
-  .dialog-head { padding: 12px 14px; border-bottom: 1px solid #2e2e2e; font-size: 9px; letter-spacing: .16em; color: var(--white); font-weight: 700; display:flex; justify-content:space-between; }
+  .dialog-head { padding: 12px 14px; border-bottom: 1px solid #2e2e2e; font-family: var(--font-head); font-size: 9px; letter-spacing: .08em; color: var(--white); display:flex; justify-content:space-between; }
   .dialog-head .x { cursor: pointer; color: #999; font-size: 11px; letter-spacing: 0; }
   .dialog-head .x:hover { color: var(--pink); }
   .dialog-body { padding: 14px; color: var(--white); font-size: 10px; line-height: 1.7; }
@@ -290,12 +291,21 @@
   .part-menu button:hover:not(:disabled) { background: #262626; color: var(--pink); }
   .part-menu button:disabled { color: #555; cursor: default; }
 
-  .slots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }  .slots .slot {
+  .slots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .slots .slot {
     background: #000; border: 1px solid #3a3a3a; color: var(--white);
-    font-size: 12px; padding: 14px 0; cursor: pointer; letter-spacing: .1em;
+    font-size: 12px; padding: 10px 0 8px; cursor: pointer; letter-spacing: .1em;
   }
-  .slots .slot:hover { border-color: var(--purple); }
+  .slots .slot .sname { display: block; margin-top: 4px; font-size: 8px; letter-spacing: 0; color: var(--dim); }
+  .slots .slot.sel .sname { color: var(--purple); }
+  .slots .slot.dead { opacity: .3; cursor: default; }
+  .slots .slot:hover:not(:disabled) { border-color: var(--purple); }
   .slots .slot.sel { border-color: var(--purple); color: var(--purple); background: rgba(199,128,255,.08); }
+  .textin {
+    width: 100%; background: #000; border: 1px solid var(--line2); color: var(--white);
+    font-size: 14px; padding: 8px 10px; outline: none;
+  }
+  .textin:focus { border-color: var(--green); }
   .alg-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
   .alg-tile { border: 1px solid var(--line2); background: #000; padding: 6px 6px 4px; cursor: pointer; }
   .alg-tile:hover { border-color: var(--pink); }
@@ -305,11 +315,13 @@
   .alg-tile.sel .an { color: var(--green); }
   .note { margin-top: 10px; color: #9a9a9a; font-size: 9px; letter-spacing: .04em; }
 
-  .preset-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 10px; cursor: pointer; border-left: 2px solid transparent; }
+  .preset-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 7px 10px; cursor: pointer; border-left: 2px solid transparent; }
   .preset-row:hover { background: #262626; }
   .preset-row.sel { background: rgba(199,128,255,.14); border-left-color: var(--purple); }
-  .preset-row .tag { color: var(--pink); font-size: 8px; margin-left: 8px; letter-spacing: .1em; }
-  .preset-row .meta { color: #9a9a9a; font-size: 8px; letter-spacing: .1em; }
+  .preset-row .pno { color: var(--faint); font-size: 9px; min-width: 20px; }
+  .preset-row .pname { flex: 1; color: var(--white); }
+  .preset-row .tag { color: var(--pink); font-size: 8px; margin-left: 8px; letter-spacing: .06em; }
+  .preset-row .meta { color: #9a9a9a; font-size: 9px; letter-spacing: .04em; }
 
   .toast {
     position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
@@ -328,6 +340,7 @@
         <div class="lbl">ALGORITHM</div>
         <div class="val"><span id="algVal">4</span><span class="caret">&#9662;</span></div>
       </div>
+      <svg class="alg-svg" viewBox="0 0 240 128" preserveAspectRatio="xMidYMid meet" aria-hidden="true" id="hdrAlg"></svg>
     </div>
 
     <div class="out">
@@ -342,7 +355,8 @@
     </div>
 
     <div class="actions">
-      <button class="btn patch" id="patchBtn"><span class="k">PATCH</span><span id="patchName">INIT PATCH</span></button>
+      <button class="btn patch" id="patchBtn"><span class="k">patch</span><span id="patchName">init patch</span></button>
+      <button class="btn renamer" id="patchRename" title="Rename patch">rename</button>
     </div>
   </header>
 
@@ -353,7 +367,7 @@
 
   <div class="status">
     <div class="leds"><span class="led on"></span>MIDI <span class="led on"></span>SYNC</div>
-    <div class="rt" id="statusPart">PART 1 ACTIVE</div>
+    <div class="rt" id="statusPart">editing part 1</div>
   </div>
 </div>
 
@@ -512,28 +526,30 @@
 
   /* ---------------- data ---------------- */
   const OPS = [
-    { name: "O1", role: "car", ratio: 1.0, detune: 0, level: 99, fb: 0, wave: "sine", r: [99, 40, 30, 60], l: [99, 70, 0], lfoRate: 5.0, lfoDepth: 0, lfoWave: "sine", mute: false },
-    { name: "O2", role: "mod", ratio: 2.0, detune: 0, level: 0, fb: 0, wave: "sine", r: [99, 45, 35, 60], l: [0, 0, 0], lfoRate: 5.0, lfoDepth: 0, lfoWave: "sine", mute: false },
-    { name: "O3", role: "car", ratio: 1.0, detune: 0, level: 0, fb: 0, wave: "sine", r: [99, 40, 30, 60], l: [0, 0, 0], lfoRate: 5.0, lfoDepth: 0, lfoWave: "sine", mute: false },
-    { name: "O4", role: "mod", ratio: 3.0, detune: 0, level: 0, fb: 0, wave: "sine", r: [99, 40, 30, 60], l: [0, 0, 0], lfoRate: 5.0, lfoDepth: 0, lfoWave: "sine", mute: false }
+    { name: "op1", role: "car", ratio: 1.0, detune: 0, level: 99, fb: 0, wave: "sine", r: [99, 40, 30, 60], l: [99, 70, 0], lfoRate: 5.0, lfoDepth: 0, lfoWave: "sine", mute: false },
+    { name: "op2", role: "mod", ratio: 2.0, detune: 0, level: 0, fb: 0, wave: "sine", r: [99, 45, 35, 60], l: [0, 0, 0], lfoRate: 5.0, lfoDepth: 0, lfoWave: "sine", mute: false },
+    { name: "op3", role: "car", ratio: 1.0, detune: 0, level: 0, fb: 0, wave: "sine", r: [99, 40, 30, 60], l: [0, 0, 0], lfoRate: 5.0, lfoDepth: 0, lfoWave: "sine", mute: false },
+    { name: "op4", role: "mod", ratio: 3.0, detune: 0, level: 0, fb: 0, wave: "sine", r: [99, 40, 30, 60], l: [0, 0, 0], lfoRate: 5.0, lfoDepth: 0, lfoWave: "sine", mute: false }
   ];
   const WAVES = ["sine", "triangle", "half sine", "half tri", "2x sine", "2x tri",
     "2x half sine", "2x half tri", "rect sine", "pulse", "square", "saw"];
   const LFO_WAVES = ["sine", "triangle", "saw", "inverse saw", "square", "random"];
   const PARTS = [
-    { name: "P1", midi: 1, low: 0, high: 127, level: 99, delay: 0, mute: false },
-    { name: "P2", midi: 2, low: 0, high: 127, level: 99, delay: 0, mute: false }
+    { name: "part 1", midi: 1, low: 0, high: 127, level: 99, delay: 0, mute: false },
+    { name: "part 2", midi: 2, low: 0, high: 127, level: 99, delay: 0, mute: false }
   ];
+  const PART_SLOTS = [null, null, null, null, null, null, null, null];
   const PITCH_LFO = { rate: 0, depth: 0, wave: "sine" };
   const PITCH_ENV = { amount: 0, rate: 50, r: [99, 40, 30, 60], l: [60, 25, 0] };
   const FILTER_ENV = { r: [99, 50, 40, 60], l: [99, 40, 0] };
   const VOICE = { mode: "poly", unison: 1, detune: 0, porta: 0 };
 
   let clipboard = null;
-  let current = "home";
+  let current = "patch";
   let activePart = 1;
   let visMode = "scope";
   let ALG = 4;
+  let loadedSlot = 0;
 
   function b(obj, key, name, min, max, fmt, step) {
     return { name: name, min: min, max: max, fmt: fmt, step: step,
@@ -623,8 +639,6 @@
   function tick() {
     const hcv = document.getElementById("scope");
     if (hcv) { if (visMode === "scope") drawScope(hcv, 1.1, t, 0.34); else drawSpectro(hcv, 1.1, t); }
-    const acv = document.getElementById("analyser");
-    if (acv) { if (visMode === "scope") drawScope(acv, 2.1, t, 0.42); else drawSpectro(acv, 2.1, t); }
     document.querySelectorAll(".oscope").forEach(function (cv, i) {
       drawScope(cv, 1 + i * 0.6, t * 1.1, 0.42 * (+(cv.dataset.level || 99) / 99));
     });
@@ -695,19 +709,19 @@
       g += '<rect x="' + p[0] + '" y="' + p[1] + '" width="' + OPW + '" height="' + OPH + '" fill="' +
         (isCar ? "#ff2e7e" : "#ffffff") + '"/>' +
         '<text x="' + (p[0] + OPW / 2) + '" y="' + (p[1] + 12.5) + '" fill="#000" font-size="9" font-weight="700" ' +
-        'text-anchor="middle" font-family="Fira Code, monospace">O' + (i + 1) + "</text>";
+        'text-anchor="middle" font-family="DotGothic16, monospace">op' + (i + 1) + "</text>";
     });
     return '<svg viewBox="0 0 240 128" preserveAspectRatio="xMidYMid meet">' + g + "</svg>";
   }
 
   function renderAlg() {
     document.getElementById("algVal").textContent = ALG;
+    document.getElementById("hdrAlg").innerHTML = algSvg(ALG);
   }
 
   function setAlg(n) {
     ALG = n;
     renderAlg();
-    if (current === "home") rerender();
   }
 
   function openAlgPicker() {
@@ -739,46 +753,9 @@
   }
 
   /* ---------------- views ---------------- */
-  function viewHome() {
+  function viewPatch() {
     const wrap = document.createElement("div");
     wrap.className = "grid";
-    const cards = document.createElement("div");
-    cards.className = "opcards";
-    OPS.forEach(function (o, i) {
-      const c = document.createElement("div");
-      c.className = "opcard";
-      c.innerHTML = '<div class="ch"><span class="on">' + o.name + '</span>' +
-        '<span class="role ' + o.role + '">' + (o.role === "car" ? "CAR" : "MOD") + "</span></div>" +
-        '<div class="mini"><canvas class="opmini" width="220" height="30"></canvas></div>' +
-        '<div class="meta">RATIO ' + o.ratio.toFixed(2) + " / LEVEL " + o.level + "</div>";
-      c.querySelector(".opmini").dataset.level = o.level;
-      c.addEventListener("click", function () { showTab("ops"); });
-      cards.appendChild(c);
-    });
-
-    const low = document.createElement("div");
-    low.className = "home-low";
-    const left = document.createElement("div");
-    left.className = "card";
-    const lh = document.createElement("div"); lh.className = "sec-head";
-    lh.innerHTML = "<h3>SIGNAL FLOW / ALG " + ALG + "</h3>";
-    left.appendChild(lh);
-    const big = document.createElement("div");
-    big.className = "analyser";
-    big.innerHTML = algSvg(ALG) + '<div class="alg-note">WHITE = MODULATOR / PINK = CARRIER</div>';
-    left.appendChild(big);
-
-    const right = document.createElement("div");
-    right.className = "card";
-    const rh = document.createElement("div"); rh.className = "sec-head";
-    rh.innerHTML = "<h3>LIVE / PART " + activePart + "</h3>";
-    right.appendChild(rh);
-    const an = document.createElement("div");
-    an.className = "analyser";
-    an.innerHTML = '<canvas id="analyser" width="300" height="150"></canvas>';
-    right.appendChild(an);
-    low.append(left, right);
-    wrap.append(cards, low);
 
     const parts = document.createElement("div");
     parts.className = "parts";
@@ -788,18 +765,21 @@
       const ph = document.createElement("div");
       ph.className = "ph";
       const nameWrap = document.createElement("div");
-      nameWrap.innerHTML = '<span class="pn">PART ' + (i + 1) + '</span><span class="pch">MIDI ' + p.midi + "</span>";
+      nameWrap.innerHTML = '<span class="pn">' + p.name + '</span><span class="pch">midi ' + p.midi + "</span>";
       const acts = document.createElement("div");
       acts.className = "pacts";
+      const ren = document.createElement("button");
+      ren.className = "mini"; ren.textContent = "rename";
+      ren.addEventListener("click", function () { renamePart(i); });
       const cpy = document.createElement("button");
-      cpy.className = "mini"; cpy.textContent = "COPY";
+      cpy.className = "mini"; cpy.textContent = "copy";
       cpy.addEventListener("click", function () { copyPart(); });
       const pst = document.createElement("button");
-      pst.className = "mini"; pst.textContent = "PASTE";
+      pst.className = "mini"; pst.textContent = "paste";
       pst.disabled = !(clipboard && clipboard.kind === "part");
       pst.addEventListener("click", function () { pastePart(i + 1); });
       const mute = makeMuteSwitch(p.mute, function (v) { setPartMute(i, v); });
-      acts.append(cpy, pst, mute);
+      acts.append(ren, cpy, pst, mute);
       ph.append(nameWrap, acts);
       d.appendChild(ph);
       d.appendChild(knobRow([
@@ -809,6 +789,15 @@
         b(p, "level", "AMPLITUDE", 0, 99, function (v) { return v; }, 1),
         b(p, "delay", "DELAY", 0, 1000, function (v) { return v + "ms"; }, 1)
       ]));
+      const kz = document.createElement("div");
+      kz.className = "keyzone";
+      let ticks = "";
+      for (let k = 12; k < 128; k += 12) {
+        ticks += '<span style="left:' + (k / 127 * 100).toFixed(2) + '%"></span>';
+      }
+      kz.innerHTML = ticks + '<i style="left:' + (p.low / 127 * 100).toFixed(2) +
+        '%; width:' + (Math.max(p.high - p.low, 0) / 127 * 100).toFixed(2) + '%"></i>';
+      d.appendChild(kz);
       parts.appendChild(d);
     });
 
@@ -816,7 +805,7 @@
     vm.className = "vmode";
     const vh = document.createElement("div");
     vh.className = "vh";
-    vh.innerHTML = "<h3>VOICE MODE</h3>";
+    vh.innerHTML = "<h3>voice mode</h3>";
     vm.appendChild(vh);
     const vrow = document.createElement("div");
     vrow.className = "vrow";
@@ -824,7 +813,7 @@
     vbtns.className = "vbtns";
     ["poly", "mono", "legato", "unison"].forEach(function (m) {
       const btn = document.createElement("button");
-      btn.textContent = m.toUpperCase();
+      btn.textContent = m;
       if (VOICE.mode === m) btn.className = "active";
       btn.addEventListener("click", function () { VOICE.mode = m; rerender(); });
       vbtns.appendChild(btn);
@@ -1057,10 +1046,10 @@
 
   /* ---------------- tabs ---------------- */
   const TABS = [
-    { id: "home", label: "HOME", view: viewHome },
-    { id: "ops", label: "OPERATORS", view: viewOps },
-    { id: "fx", label: "FX", view: viewFx },
-    { id: "mod", label: "MOD", view: viewMod }
+    { id: "patch", label: "patch settings", view: viewPatch },
+    { id: "ops", label: "operators", view: viewOps },
+    { id: "fx", label: "fx", view: viewFx },
+    { id: "mod", label: "mod", view: viewMod }
   ];
   const body = document.getElementById("body");
   const tabsEl = document.getElementById("tabs");
@@ -1098,18 +1087,18 @@
   function setOpMute(name, on) {
     findOp(name).mute = on;
     buildToolbar();
-    if (current === "home" || current === "ops") rerender();
+    if (current === "ops") rerender();
   }
   function setPartMute(i, on) {
     PARTS[i].mute = on;
     buildToolbar();
-    if (current === "home") rerender();
+    if (current === "patch") rerender();
   }
   function setActivePart(p) {
     activePart = p;
-    statusPart.textContent = "PART " + p + " ACTIVE";
+    statusPart.textContent = "editing " + PARTS[p - 1].name;
     buildToolbar();
-    if (current === "home") rerender();
+    rerender();
   }
 
   function buildToolbar() {
@@ -1133,8 +1122,8 @@
     PARTS.forEach(function (p, i) {
       const btn = document.createElement("button");
       btn.className = "tbtn mutebtn" + (p.mute ? " muted" : "");
-      btn.textContent = "P" + (i + 1);
-      btn.title = "Mute part " + (i + 1);
+      btn.textContent = "p" + (i + 1);
+      btn.title = "Mute " + p.name;
       btn.addEventListener("click", function () { setPartMute(i, !p.mute); });
       g1.appendChild(btn);
     });
@@ -1148,7 +1137,7 @@
     PARTS.forEach(function (p, i) {
       const btn = document.createElement("button");
       btn.className = "tbtn partsel" + (activePart === i + 1 ? " active" : "");
-      btn.textContent = "PART " + (i + 1);
+      btn.textContent = p.name;
       btn.addEventListener("click", function () { setActivePart(i + 1); closePartMenu(); });
       g2.appendChild(btn);
     });
@@ -1162,7 +1151,7 @@
 
     const sig = document.createElement("div");
     sig.className = "tsignal";
-    sig.innerHTML = "EDITING <b>PART " + activePart + "</b>";
+    sig.innerHTML = "editing <b>" + PARTS[activePart - 1].name + "</b>";
     toolbarEl.appendChild(sig);
   }
 
@@ -1174,8 +1163,9 @@
     const canPaste = clipboard && clipboard.kind === "part";
     const menu = document.createElement("div");
     menu.className = "part-menu";
-    menu.innerHTML = '<div class="pm-head">PART ' + p + "</div>" +
-      '<button data-act="save">SAVE TO SLOT&hellip;</button>' +
+    menu.innerHTML = '<div class="pm-head">' + PARTS[p - 1].name + "</div>" +
+      '<button data-act="load">LOAD PART&hellip;</button>' +
+      '<button data-act="save">SAVE PART&hellip;</button>' +
       '<button data-act="init">INIT PART</button>' +
       '<button data-act="copy">COPY PART</button>' +
       '<button data-act="paste"' + (canPaste ? "" : " disabled") + '>PASTE PART</button>';
@@ -1183,10 +1173,11 @@
       const b = e.target.closest("button");
       if (!b || b.disabled) return;
       closePartMenu();
-      if (b.dataset.act === "save") openSlotPicker(p);
+      if (b.dataset.act === "load") openPartSlots("load");
+      else if (b.dataset.act === "save") openPartSlots("save");
       else if (b.dataset.act === "init") openInitConfirm(p);
-      else if (b.dataset.act === "copy") { copyPart(); toast("PART " + p + " COPIED"); }
-      else if (b.dataset.act === "paste") { pastePart(p); toast("PART " + p + " PASTED"); }
+      else if (b.dataset.act === "copy") { copyPart(); toast("part copied"); }
+      else if (b.dataset.act === "paste") { pastePart(p); toast("part pasted"); }
     });
     plugin.appendChild(menu);
     const r = btn.getBoundingClientRect();
@@ -1237,95 +1228,85 @@
     setTimeout(function () { el.remove(); }, 1600);
   }
 
-  function openSlotPicker(p) {
-    let sel = 0;
+  /* ---------------- rename ---------------- */
+  function openRename(title, currentName, onSave) {
     const bodyEl = document.createElement("div");
-    const grid = document.createElement("div");
-    grid.className = "slots";
-    const cells = [];
-    for (let i = 0; i < 8; i++) {
-      const c = document.createElement("button");
-      c.className = "slot" + (i === sel ? " sel" : "");
-      c.textContent = String(i + 1).padStart(2, "0");
-      c.addEventListener("click", function () {
-        sel = i;
-        cells.forEach(function (x, j) { x.classList.toggle("sel", j === sel); });
-      });
-      grid.appendChild(c); cells.push(c);
-    }
-    bodyEl.appendChild(grid);
+    const input = document.createElement("input");
+    input.className = "textin";
+    input.value = currentName;
+    input.maxLength = 24;
+    bodyEl.appendChild(input);
     const note = document.createElement("div");
     note.className = "note";
-    note.textContent = "Pick a target slot, then SAVE.";
+    note.textContent = "max 24 characters.";
     bodyEl.appendChild(note);
-    openDialog("SAVE PART " + p + " TO SLOT", bodyEl, [
-      { label: "CANCEL", onClick: function (close) { close(); } },
-      { label: "SAVE", primary: true, onClick: function (close) { close(); openSaveConfirm(p, sel + 1); } }
+    openDialog(title, bodyEl, [
+      { label: "cancel", onClick: function (close) { close(); } },
+      { label: "save", primary: true, onClick: function (close) {
+        const v = input.value.trim();
+        close();
+        if (v) onSave(v);
+      } }
     ]);
+    setTimeout(function () { input.focus(); input.select(); }, 30);
   }
 
-  function openSaveConfirm(p, slot) {
-    const bodyEl = document.createElement("div");
-    bodyEl.innerHTML = "Save <b>PART " + p + "</b> to slot <b>" + String(slot).padStart(2, "0") +
-      "</b>?<br><span style='color:#9a9a9a'>This overwrites the slot.</span>";
-    openDialog("CONFIRM SAVE", bodyEl, [
-      { label: "CANCEL", onClick: function (close) { close(); } },
-      { label: "SAVE", primary: true, onClick: function (close) { close(); toast("PART " + p + " SAVED TO SLOT " + String(slot).padStart(2, "0")); } }
-    ]);
+  function renamePart(i) {
+    openRename("rename part", PARTS[i].name, function (v) {
+      PARTS[i].name = v;
+      statusPart.textContent = "editing " + PARTS[activePart - 1].name;
+      buildToolbar();
+      rerender();
+      toast("part renamed");
+    });
   }
 
-  function openInitConfirm(p) {
-    const bodyEl = document.createElement("div");
-    bodyEl.innerHTML = "Initialise <b>PART " + p + "</b>?<br><span style='color:#9a9a9a'>" +
-      "This clears the current part. Unsaved work will be lost.</span>";
-    openDialog("INIT PART " + p, bodyEl, [
-      { label: "CANCEL", onClick: function (close) { close(); } },
-      { label: "CONTINUE", primary: true, onClick: function (close) { close(); toast("PART " + p + " INITIALISED"); } }
-    ]);
+  /* ---------------- part slots ---------------- */
+  function partSnapshot(i) {
+    const p = PARTS[i];
+    return {
+      name: p.name,
+      part: { midi: p.midi, low: p.low, high: p.high, level: p.level, delay: p.delay },
+      ops: JSON.parse(JSON.stringify(OPS)),
+      voice: { mode: VOICE.mode, unison: VOICE.unison, detune: VOICE.detune, porta: VOICE.porta }
+    };
   }
 
-  /* ---------------- presets (patch button) ---------------- */
-  const PRESETS = [
-    ["INIT PATCH", "default"], ["BRASS PAD", "part 1"], ["GLASS BELL", "part 1"],
-    ["SUB BASS", "part 1"], ["E.PIANO 84", "part 1"], ["CLANG BELL", "part 2"],
-    ["ORGAN PAD", "part 2"], ["HARSH LEAD", "part 2"]
-  ];
-  const patchName = document.getElementById("patchName");
+  function applyPartSnapshot(i, s) {
+    const p = PARTS[i];
+    p.name = s.name;
+    p.midi = s.part.midi; p.low = s.part.low; p.high = s.part.high;
+    p.level = s.part.level; p.delay = s.part.delay;
+    s.ops.forEach(function (o, j) {
+      const t = OPS[j];
+      t.ratio = o.ratio; t.detune = o.detune; t.level = o.level; t.fb = o.fb;
+      t.wave = o.wave; t.r = o.r.slice(); t.l = o.l.slice();
+      t.lfoRate = o.lfoRate; t.lfoDepth = o.lfoDepth; t.lfoWave = o.lfoWave;
+    });
+    VOICE.mode = s.voice.mode; VOICE.unison = s.voice.unison;
+    VOICE.detune = s.voice.detune; VOICE.porta = s.voice.porta;
+    buildToolbar();
+    rerender();
+  }
 
-  document.getElementById("patchBtn").addEventListener("click", function () {
-    let sel = 0;
-    const bodyEl = document.createElement("div");
-    const list = document.createElement("div");
-    function render() {
-      list.innerHTML = "";
-      PRESETS.forEach(function (p, i) {
-        const r = document.createElement("div");
-        r.className = "preset-row" + (i === sel ? " sel" : "");
-        r.innerHTML = "<span>" + p[0] + (p[0] === patchName.textContent ? '<span class="tag">ACTIVE</span>' : "") +
-          '</span><span class="meta">' + p[1] + "</span>";
-        r.addEventListener("click", function () { sel = i; render(); });
-        list.appendChild(r);
-      });
-    }
-    render();
-    bodyEl.appendChild(list);
-    openDialog("PRESETS", bodyEl, [
-      { label: "CANCEL", onClick: function (close) { close(); } },
-      { label: "SAVE", onClick: function (close) { close(); openPatchSave(); } },
-      { label: "LOAD", primary: true, onClick: function (close) { patchName.textContent = PRESETS[sel][0]; close(); } }
-    ]);
-  });
-
-  function openPatchSave() {
-    let sel = 0;
+  function openPartSlots(mode) {
+    const partIdx = activePart - 1;
+    let sel = -1;
+    const first = mode === "load"
+      ? PART_SLOTS.findIndex(function (s) { return s; })
+      : 0;
+    if (first >= 0) sel = first;
     const bodyEl = document.createElement("div");
     const grid = document.createElement("div");
-    grid.className = "slots";
+    grid.className = "slots partslots";
     const cells = [];
     for (let i = 0; i < 8; i++) {
+      const s = PART_SLOTS[i];
       const c = document.createElement("button");
-      c.className = "slot" + (i === sel ? " sel" : "");
-      c.textContent = String(i + 1).padStart(2, "0");
+      c.className = "slot" + (i === sel ? " sel" : "") + (mode === "load" && !s ? " dead" : "");
+      c.innerHTML = String(i + 1).padStart(2, "0") +
+        '<span class="sname">' + (s ? s.name : "empty") + "</span>";
+      if (mode === "load" && !s) c.disabled = true;
       c.addEventListener("click", function () {
         sel = i;
         cells.forEach(function (x, j) { x.classList.toggle("sel", j === sel); });
@@ -1336,47 +1317,155 @@
     bodyEl.appendChild(grid);
     const note = document.createElement("div");
     note.className = "note";
-    note.textContent = "Pick a slot for the current patch, then SAVE.";
+    note.textContent = mode === "save"
+      ? "pick a slot for " + PARTS[partIdx].name + ", then save."
+      : "pick a stored part, then load.";
     bodyEl.appendChild(note);
-    openDialog("SAVE PATCH TO SLOT", bodyEl, [
-      { label: "CANCEL", onClick: function (close) { close(); } },
-      { label: "SAVE", primary: true, onClick: function (close) { close(); openPatchSaveConfirm(sel + 1); } }
+    openDialog(mode === "save" ? "save part" : "load part", bodyEl, [
+      { label: "cancel", onClick: function (close) { close(); } },
+      { label: mode, primary: true, onClick: function (close) {
+        if (sel < 0) return;
+        close();
+        if (mode === "save") savePartToSlot(sel);
+        else loadPartFromSlot(sel);
+      } }
     ]);
   }
 
-  function openPatchSaveConfirm(slot) {
-    const pad = String(slot).padStart(2, "0");
+  function savePartToSlot(idx) {
     const bodyEl = document.createElement("div");
-    bodyEl.innerHTML = "Save the current patch to slot <b>" + pad +
-      "</b>?<br><span style='color:#9a9a9a'>This overwrites the slot.</span>";
-    openDialog("CONFIRM SAVE", bodyEl, [
-      { label: "CANCEL", onClick: function (close) { close(); } },
-      { label: "SAVE", primary: true, onClick: function (close) {
+    bodyEl.innerHTML = "Save <b>" + PARTS[activePart - 1].name + "</b> to part slot <b>" +
+      String(idx + 1).padStart(2, "0") + "</b>?<br><span style='color:#9a9a9a'>This overwrites the slot.</span>";
+    openDialog("confirm save", bodyEl, [
+      { label: "cancel", onClick: function (close) { close(); } },
+      { label: "save", primary: true, onClick: function (close) {
         close();
-        const name = "USER PATCH " + pad;
-        PRESETS[slot - 1] = [name, "user"];
-        patchName.textContent = name;
-        toast("PATCH SAVED TO SLOT " + pad);
+        PART_SLOTS[idx] = partSnapshot(activePart - 1);
+        toast("part saved to slot " + String(idx + 1).padStart(2, "0"));
+      } }
+    ]);
+  }
+
+  function loadPartFromSlot(idx) {
+    const s = PART_SLOTS[idx];
+    if (!s) return;
+    applyPartSnapshot(activePart - 1, s);
+    toast("part loaded from slot " + String(idx + 1).padStart(2, "0"));
+  }
+
+  function openInitConfirm(p) {
+    const bodyEl = document.createElement("div");
+    bodyEl.innerHTML = "Initialise <b>" + PARTS[p - 1].name + "</b>?<br><span style='color:#9a9a9a'>" +
+      "This clears the current part. Unsaved work will be lost.</span>";
+    openDialog("init part", bodyEl, [
+      { label: "cancel", onClick: function (close) { close(); } },
+      { label: "continue", primary: true, onClick: function (close) {
+        close();
+        const t = PARTS[p - 1];
+        t.midi = p; t.low = 0; t.high = 127; t.level = 99; t.delay = 0;
+        buildToolbar();
+        rerender();
+        toast("part initialised");
+      } }
+    ]);
+  }
+
+  /* ---------------- patches ---------------- */
+  const PATCHES = [
+    { name: "init patch", tag: "default" },
+    { name: "brass pad", tag: "part 1" },
+    { name: "glass bell", tag: "part 1" },
+    { name: "sub bass", tag: "part 1" },
+    { name: "e.piano 84", tag: "part 1" },
+    { name: "clang bell", tag: "part 2" },
+    { name: "organ pad", tag: "part 2" },
+    { name: "harsh lead", tag: "part 2" }
+  ];
+  const patchNameEl = document.getElementById("patchName");
+
+  function showPatchName() {
+    patchNameEl.textContent = PATCHES[loadedSlot].name;
+  }
+
+  document.getElementById("patchBtn").addEventListener("click", function () {
+    let sel = loadedSlot;
+    const bodyEl = document.createElement("div");
+    const list = document.createElement("div");
+    list.className = "patchlist";
+    function render() {
+      list.innerHTML = "";
+      PATCHES.forEach(function (p, i) {
+        const r = document.createElement("div");
+        r.className = "preset-row" + (i === sel ? " sel" : "");
+        r.innerHTML = '<span class="pno">' + String(i + 1).padStart(2, "0") + "</span>" +
+          '<span class="pname">' + p.name + (i === loadedSlot ? '<span class="tag">active</span>' : "") + "</span>" +
+          '<span class="meta">' + p.tag + "</span>";
+        r.addEventListener("click", function () { sel = i; render(); });
+        list.appendChild(r);
+      });
+    }
+    render();
+    bodyEl.appendChild(list);
+    const note = document.createElement("div");
+    note.className = "note";
+    note.textContent = "select a slot, then load or save. save writes the current patch into that slot.";
+    bodyEl.appendChild(note);
+    openDialog("patches", bodyEl, [
+      { label: "cancel", onClick: function (close) { close(); } },
+      { label: "save", onClick: function (close) { close(); openPatchSaveConfirm(sel); } },
+      { label: "load", primary: true, onClick: function (close) {
+        close();
+        loadedSlot = sel;
+        showPatchName();
+        toast("loaded " + PATCHES[sel].name);
+      } }
+    ]);
+  });
+
+  function openPatchSaveConfirm(idx) {
+    const pad = String(idx + 1).padStart(2, "0");
+    const bodyEl = document.createElement("div");
+    bodyEl.innerHTML = "Save <b>" + PATCHES[loadedSlot].name + "</b> to slot <b>" + pad +
+      "</b>?<br><span style='color:#9a9a9a'>This overwrites the slot.</span>";
+    openDialog("confirm save", bodyEl, [
+      { label: "cancel", onClick: function (close) { close(); } },
+      { label: "save", primary: true, onClick: function (close) {
+        close();
+        PATCHES[idx] = { name: PATCHES[loadedSlot].name, tag: "user" };
+        loadedSlot = idx;
+        showPatchName();
+        toast("saved to slot " + pad);
       } }
     ]);
   }
 
   /* ---------------- init ---------------- */
+  showPatchName();
+  document.getElementById("patchRename").addEventListener("click", function () {
+    openRename("rename patch", PATCHES[loadedSlot].name, function (v) {
+      PATCHES[loadedSlot].name = v;
+      showPatchName();
+      toast("patch renamed");
+    });
+  });
   renderAlg();
   document.getElementById("algPick").addEventListener("click", openAlgPicker);
+  if (!PART_SLOTS.some(Boolean)) PART_SLOTS[0] = partSnapshot(0);
   buildToolbar();
   tick();
 
   function fromHash() {
     const h = (location.hash || "").replace("#", "");
-    if (h === "presets") { showTab("home"); document.getElementById("patchBtn").click(); return; }
-    if (h === "save") { showTab("home"); openSlotPicker(activePart); return; }
-    if (h === "init") { showTab("home"); openInitConfirm(activePart); return; }
-    if (h === "menu") { showTab("home"); openPartMenu(document.querySelector(".pmenu")); return; }
-    if (h === "alg") { showTab("home"); openAlgPicker(); return; }
-    if (h === "patchsave") { showTab("home"); openPatchSave(); return; }
+    if (h === "home") { showTab("patch"); return; }
+    if (h === "presets") { showTab("patch"); document.getElementById("patchBtn").click(); return; }
+    if (h === "save") { showTab("patch"); openPartSlots("save"); return; }
+    if (h === "load") { showTab("patch"); openPartSlots("load"); return; }
+    if (h === "init") { showTab("patch"); openInitConfirm(activePart); return; }
+    if (h === "menu") { showTab("patch"); openPartMenu(document.querySelector(".pmenu")); return; }
+    if (h === "alg") { showTab("patch"); openAlgPicker(); return; }
+    if (h === "rename") { showTab("patch"); renamePart(0); return; }
     if (TABS.some(function (x) { return x.id === h; })) showTab(h);
-    else showTab("home");
+    else showTab("patch");
   }
   window.addEventListener("hashchange", fromHash);
   fromHash();
