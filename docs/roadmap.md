@@ -3547,3 +3547,19 @@ memory map (`app.ld`) and the guard windows agree, and `FM1_STRICT` finds no mis
 pinned `a374e75` predates that model. A firmware that must be memory safe should be
 exercised on a guard-modelling emulator (`FM1_STRICT` for alignment, and a run that
 renders the screen so a crash loop is visible), not only on `a374e75`.
+
+### 13.13 Extras (new backlog, 2026-11-03)
+
+Follow-ups beyond the universalisation backlog, in rough priority order.
+
+1. **K5000-style firmware (low priority).** A Type P variant whose operators are
+   Kawai K5000 additive IFFT operators plus formant filters, with no phase
+   modulation and no PM algorithms.
+2. **SH-101-style filter node.** A Roland SH-101 flavoured filter, referencing
+   Audible Instruments' "Liquid Filter" and LFO-lab's "SH-010".
+3. **JUCE plugin ports (multi-platform).** DAW plugin ports of the firmware, with a
+   multi-platform GUI designed in collaboration.
+4. **Comb filter macro.** A feedback and feedforward comb with damping, ready for
+   users. Parameters and interface to be settled (see the discussion).
+5. **Atari Punk Console node(s).** The single and dual cross-modulated APC, reviewed
+   for aliasing and fitted to the umetate node model.
