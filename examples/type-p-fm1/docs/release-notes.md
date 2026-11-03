@@ -1,5 +1,13 @@
 # Release notes
 
+## 1.0.1
+
+- Works on units that ship the UC25HQ80 flash chip (JEDEC id `0xB36014`), common
+  on recent AliExpress stock. Before this, those units showed a flash error when
+  saving (saves stayed in RAM) and the update loader refused to install. The
+  firmware now accepts both the Puya P25Q80 (`0x856014`) and the UC25HQ80
+  (`0xB36014`), in the app and in the update loader.
+
 ## 1.0.0
 
 First release.
