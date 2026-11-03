@@ -54,15 +54,16 @@
   .logo {
     font-family: "Digital Desolation Plus", "Arial Black", Impact, sans-serif;
     font-weight: 900; font-size: 27px; line-height: 1;
-    color: var(--white); letter-spacing: .02em;
-    text-shadow: 4px 4px 0 var(--yellow);
+    color: #d6d6d6; letter-spacing: .02em;
+    text-shadow: 4px 4px 0 #c2ad00;
   }
-  .logo .dot { color: var(--pink); text-shadow: 4px 4px 0 var(--yellow); }
+  .logo .dot { color: var(--pink); text-shadow: 4px 4px 0 #c2ad00; }
 
-  .alg { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
+  .alg { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; cursor: pointer; }
+  .alg:hover .val { color: var(--pink2); }
   .alg-meta .lbl { font-size: 8px; letter-spacing: .2em; color: var(--dim); }
   .alg-meta .val { font-size: 30px; font-weight: 700; color: var(--pink); line-height: 1; }
-  .alg-svg { width: 176px; height: 64px; }
+  .alg-meta .caret { font-size: 9px; color: var(--faint); margin-left: 3px; vertical-align: middle; }
 
   .out { flex: 1 1 auto; min-width: 180px; }
   .out-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
@@ -98,7 +99,9 @@
     font-size: 8px; letter-spacing: .1em; padding: 4px 7px; cursor: pointer;
   }
   .tbtn:hover { border-color: var(--pink); color: var(--text); }
-  .tbtn.muted { background: var(--pink); border-color: var(--pink); color: #000; font-weight: 700; }
+  .tbtn.mutebtn { color: var(--pink); border-color: #6b2338; }
+  .tbtn.mutebtn:hover { border-color: var(--pink); }
+  .tbtn.mutebtn.muted { color: #565656; border-color: #2a2a2a; background: #070707; }
   .tbtn.partsel { padding: 4px 11px; }
   .tbtn.partsel.active { border-color: var(--green); color: var(--green); }
   .tbtn.pmenu { padding: 4px 9px; }
@@ -167,6 +170,14 @@
   .toggle .tname { font-size: 8px; letter-spacing: .12em; color: var(--dim); }
   .toggle.on .tname { color: var(--green); }
 
+  .toggle.mute .trk { border-color: var(--pink); }
+  .toggle.mute .thb { left: 1px; background: var(--pink); }
+  .toggle.mute .tname { color: var(--pink); }
+  .toggle.mute.muted .trk { border-color: var(--line2); }
+  .toggle.mute.muted .thb { left: 13px; background: #3a3a3a; }
+  .toggle.mute.muted .tname { color: var(--faint); }
+  .toggle.mute:hover .trk { border-color: var(--pink2); }
+
   .envbox { height: 62px; border: 1px solid var(--line); background: #000; margin-bottom: 8px; }
   .envbox svg { width: 100%; height: 100%; display: block; }
   .envbox .egrid { stroke: #1a1a1a; stroke-width: 1; }
@@ -201,8 +212,10 @@
   .opcard .mini canvas { width: 100%; height: 100%; display: block; }
 
   .home-low { display: grid; grid-template-columns: 1.5fr 1fr; gap: 10px; }
-  .analyser { height: 150px; border: 1px solid var(--line); background: #000; }
+  .analyser { height: 150px; border: 1px solid var(--line); background: #000; position: relative; }
   .analyser canvas { width: 100%; height: 100%; display: block; }
+  .analyser svg { width: 100%; height: 100%; display: block; }
+  .alg-note { position: absolute; left: 8px; bottom: 5px; font-size: 7px; letter-spacing: .14em; color: var(--faint); }
 
   .parts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .part { border: 1px solid var(--line2); background: #000; padding: 8px 10px 10px; }
@@ -250,6 +263,7 @@
     display: flex; align-items: center; justify-content: center; z-index: 30;
   }
   .dialog { width: 420px; max-width: 92vw; background: var(--popup); border: 1px solid var(--line2); }
+  .dialog.wide { width: 780px; }
   .dialog-head { padding: 12px 14px; border-bottom: 1px solid #2e2e2e; font-size: 9px; letter-spacing: .16em; color: var(--white); font-weight: 700; display:flex; justify-content:space-between; }
   .dialog-head .x { cursor: pointer; color: #999; font-size: 11px; letter-spacing: 0; }
   .dialog-head .x:hover { color: var(--pink); }
@@ -276,13 +290,19 @@
   .part-menu button:hover:not(:disabled) { background: #262626; color: var(--pink); }
   .part-menu button:disabled { color: #555; cursor: default; }
 
-  .slots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-  .slots .slot {
+  .slots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }  .slots .slot {
     background: #000; border: 1px solid #3a3a3a; color: var(--white);
     font-size: 12px; padding: 14px 0; cursor: pointer; letter-spacing: .1em;
   }
   .slots .slot:hover { border-color: var(--purple); }
   .slots .slot.sel { border-color: var(--purple); color: var(--purple); background: rgba(199,128,255,.08); }
+  .alg-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .alg-tile { border: 1px solid var(--line2); background: #000; padding: 6px 6px 4px; cursor: pointer; }
+  .alg-tile:hover { border-color: var(--pink); }
+  .alg-tile.sel { border-color: var(--green); background: rgba(61,255,158,.05); }
+  .alg-tile svg { width: 100%; height: auto; display: block; }
+  .alg-tile .an { margin-top: 3px; text-align: center; font-size: 8px; letter-spacing: .16em; color: var(--dim); }
+  .alg-tile.sel .an { color: var(--green); }
   .note { margin-top: 10px; color: #9a9a9a; font-size: 9px; letter-spacing: .04em; }
 
   .preset-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 10px; cursor: pointer; border-left: 2px solid transparent; }
@@ -303,12 +323,11 @@
   <header class="hdr">
     <div class="brand"><div class="logo">TYPE P<span class="dot">.</span>fm1</div></div>
 
-    <div class="alg">
+    <div class="alg" id="algPick" title="Change algorithm">
       <div class="alg-meta">
         <div class="lbl">ALGORITHM</div>
-        <div class="val" id="algVal">4</div>
+        <div class="val"><span id="algVal">4</span><span class="caret">&#9662;</span></div>
       </div>
-      <svg class="alg-svg" viewBox="0 0 176 64" aria-hidden="true" id="hdrAlg"></svg>
     </div>
 
     <div class="out">
@@ -479,6 +498,18 @@
     return el;
   }
 
+  function makeMuteSwitch(muted, onchange) {
+    const el = document.createElement("div");
+    el.className = "toggle mute" + (muted ? " muted" : "");
+    el.innerHTML = '<div class="trk"><div class="thb"></div></div><div class="tname">MUTE</div>';
+    el.addEventListener("click", function () {
+      const nowMuted = !el.classList.contains("muted");
+      el.classList.toggle("muted", nowMuted);
+      if (onchange) onchange(nowMuted);
+    });
+    return el;
+  }
+
   /* ---------------- data ---------------- */
   const OPS = [
     { name: "O1", role: "car", ratio: 1.0, detune: 0, level: 99, fb: 0, wave: "sine", r: [99, 40, 30, 60], l: [99, 70, 0], lfoRate: 5.0, lfoDepth: 0, lfoWave: "sine", mute: false },
@@ -502,6 +533,7 @@
   let current = "home";
   let activePart = 1;
   let visMode = "scope";
+  let ALG = 4;
 
   function b(obj, key, name, min, max, fmt, step) {
     return { name: name, min: min, max: max, fmt: fmt, step: step,
@@ -625,26 +657,85 @@
       '<path class="' + (cls || "ecurve") + '" d="' + d + '"/></svg>';
   }
 
-  /* alg diagram helper: white = modulator, pink = carrier, no outline */
-  function algDiagram(scale) {
-    var s = 'fill="none" stroke="#555" stroke-width="1.4"';
-    var txt = 'fill="#000" font-size="11" font-weight="700" text-anchor="middle" font-family="Fira Code, monospace"';
-    return '<rect x="20" y="4" width="46" height="20" fill="#fff"/>' +
-      '<text x="43" y="18" ' + txt + '>O4</text>' +
-      '<line x1="43" y1="24" x2="43" y2="38" ' + s + '/>' +
-      '<polygon points="43,44 38,35 48,35" fill="#555"/>' +
-      '<rect x="20" y="44" width="46" height="20" fill="#ff2e7e"/>' +
-      '<text x="43" y="58" ' + txt + '>O3</text>' +
-      '<rect x="86" y="4" width="46" height="20" fill="#fff"/>' +
-      '<text x="109" y="18" ' + txt + '>O2</text>' +
-      '<line x1="109" y1="24" x2="109" y2="38" ' + s + '/>' +
-      '<polygon points="109,44 104,35 114,35" fill="#555"/>' +
-      '<rect x="86" y="44" width="46" height="20" fill="#ff2e7e"/>' +
-      '<text x="109" y="58" ' + txt + '>O1</text>' +
-      '<line x1="66" y1="54" x2="82" y2="54" ' + s + '/>' +
-      '<line x1="132" y1="54" x2="146" y2="54" ' + s + '/>' +
-      '<rect x="146" y="45" width="26" height="18" fill="#ff2e7e"/>' +
-      '<text x="159" y="58" ' + txt + '>OUT</text>';
+  /* alg diagrams: white = modulator, pink = carrier */
+  const ALG_LAYOUT = [
+    { pos: [[60, 6], [60, 34], [60, 62], [60, 90]], edges: [[0, 1], [1, 2], [2, 3]], car: [3] },
+    { pos: [[18, 6], [92, 6], [55, 44], [55, 82]], edges: [[0, 2], [1, 2], [2, 3]], car: [3] },
+    { pos: [[16, 6], [96, 6], [96, 44], [56, 82]], edges: [[1, 2], [0, 3], [2, 3]], car: [3] },
+    { pos: [[80, 6], [22, 46], [138, 46], [80, 86]], edges: [[0, 1], [0, 2], [1, 3], [2, 3]], car: [3] },
+    { pos: [[32, 10], [32, 50], [108, 10], [108, 50]], edges: [[0, 1], [2, 3]], car: [1, 3] },
+    { pos: [[80, 8], [10, 58], [80, 58], [150, 58]], edges: [[0, 1], [0, 2], [0, 3]], car: [1, 2, 3] },
+    { pos: [[24, 8], [24, 58], [90, 58], [156, 58]], edges: [[0, 1]], car: [1, 2, 3] },
+    { pos: [[16, 38], [66, 38], [116, 38], [166, 38]], edges: [], car: [0, 1, 2, 3] }
+  ];
+  const OPW = 36, OPH = 18;
+
+  function wire(x1, y1, x2, y2) {
+    const a = Math.atan2(y2 - y1, x2 - x1);
+    const bx = x2 - 4.4 * Math.cos(a), by = y2 - 4.4 * Math.sin(a);
+    const p1x = x2 - 5.8 * Math.cos(a) + 2.4 * Math.sin(a);
+    const p1y = y2 - 5.8 * Math.sin(a) - 2.4 * Math.cos(a);
+    const p2x = x2 - 5.8 * Math.cos(a) - 2.4 * Math.sin(a);
+    const p2y = y2 - 5.8 * Math.sin(a) + 2.4 * Math.cos(a);
+    return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + bx.toFixed(1) + '" y2="' + by.toFixed(1) +
+      '" stroke="#666" stroke-width="1.2"/>' +
+      '<polygon points="' + x2 + "," + y2 + " " + p1x.toFixed(1) + "," + p1y.toFixed(1) + " " +
+      p2x.toFixed(1) + "," + p2y.toFixed(1) + '" fill="#666"/>';
+  }
+
+  function algSvg(n) {
+    const L = ALG_LAYOUT[n] || ALG_LAYOUT[0];
+    let g = "";
+    L.edges.forEach(function (e) {
+      const a = L.pos[e[0]], b = L.pos[e[1]];
+      g += wire(a[0] + OPW / 2, a[1] + OPH, b[0] + OPW / 2, b[1]);
+    });
+    L.pos.forEach(function (p, i) {
+      const isCar = L.car.indexOf(i) >= 0;
+      g += '<rect x="' + p[0] + '" y="' + p[1] + '" width="' + OPW + '" height="' + OPH + '" fill="' +
+        (isCar ? "#ff2e7e" : "#ffffff") + '"/>' +
+        '<text x="' + (p[0] + OPW / 2) + '" y="' + (p[1] + 12.5) + '" fill="#000" font-size="9" font-weight="700" ' +
+        'text-anchor="middle" font-family="Fira Code, monospace">O' + (i + 1) + "</text>";
+    });
+    return '<svg viewBox="0 0 240 128" preserveAspectRatio="xMidYMid meet">' + g + "</svg>";
+  }
+
+  function renderAlg() {
+    document.getElementById("algVal").textContent = ALG;
+  }
+
+  function setAlg(n) {
+    ALG = n;
+    renderAlg();
+    if (current === "home") rerender();
+  }
+
+  function openAlgPicker() {
+    let sel = ALG;
+    const bodyEl = document.createElement("div");
+    const grid = document.createElement("div");
+    grid.className = "alg-grid";
+    const tiles = [];
+    for (let i = 0; i < 8; i++) {
+      const tile = document.createElement("div");
+      tile.className = "alg-tile" + (i === sel ? " sel" : "");
+      tile.innerHTML = algSvg(i) + '<div class="an">ALG ' + i + "</div>";
+      tile.addEventListener("click", function () {
+        sel = i;
+        tiles.forEach(function (t, j) { t.classList.toggle("sel", j === sel); });
+      });
+      grid.appendChild(tile);
+      tiles.push(tile);
+    }
+    bodyEl.appendChild(grid);
+    const note = document.createElement("div");
+    note.className = "note";
+    note.textContent = "Pink operators are carriers. Click a routing, then LOAD.";
+    bodyEl.appendChild(note);
+    openDialog("ALGORITHM", bodyEl, [
+      { label: "CANCEL", onClick: function (close) { close(); } },
+      { label: "LOAD", primary: true, onClick: function (close) { close(); setAlg(sel); } }
+    ], true);
   }
 
   /* ---------------- views ---------------- */
@@ -670,11 +761,11 @@
     const left = document.createElement("div");
     left.className = "card";
     const lh = document.createElement("div"); lh.className = "sec-head";
-    lh.innerHTML = "<h3>SIGNAL FLOW / ALG 4</h3>";
+    lh.innerHTML = "<h3>SIGNAL FLOW / ALG " + ALG + "</h3>";
     left.appendChild(lh);
     const big = document.createElement("div");
     big.className = "analyser";
-    big.innerHTML = '<svg viewBox="0 0 400 150" style="width:100%;height:100%">' + algDiagramQ(400, 150) + "</svg>";
+    big.innerHTML = algSvg(ALG) + '<div class="alg-note">WHITE = MODULATOR / PINK = CARRIER</div>';
     left.appendChild(big);
 
     const right = document.createElement("div");
@@ -707,10 +798,7 @@
       pst.className = "mini"; pst.textContent = "PASTE";
       pst.disabled = !(clipboard && clipboard.kind === "part");
       pst.addEventListener("click", function () { pastePart(i + 1); });
-      const mute = document.createElement("button");
-      mute.className = "mini" + (p.mute ? " muted" : "");
-      mute.textContent = p.mute ? "MUTED" : "MUTE";
-      mute.addEventListener("click", function () { setPartMute(i, !p.mute); });
+      const mute = makeMuteSwitch(p.mute, function (v) { setPartMute(i, v); });
       acts.append(cpy, pst, mute);
       ph.append(nameWrap, acts);
       d.appendChild(ph);
@@ -749,22 +837,6 @@
     vm.appendChild(vrow);
     wrap.append(parts, vm);
     return wrap;
-  }
-
-  function algDiagramQ(W, H) {
-    var t = 'fill="#000" font-size="12" font-weight="700" text-anchor="middle" font-family="Fira Code, monospace"';
-    var s = 'stroke="#555" stroke-width="1.5"';
-    return '<text x="10" y="20" fill="#ff2e7e" font-size="9" letter-spacing="3" font-family="Fira Code, monospace">TWO 2-OP STACKS</text>' +
-      '<rect x="40" y="44" width="70" height="30" fill="#fff"/><text x="75" y="64" ' + t + '>O4</text>' +
-      '<line x1="75" y1="74" x2="75" y2="94" ' + s + '/>' +
-      '<rect x="40" y="98" width="70" height="30" fill="#ff2e7e"/><text x="75" y="118" ' + t + '>O3</text>' +
-      '<rect x="180" y="44" width="70" height="30" fill="#fff"/><text x="215" y="64" ' + t + '>O2</text>' +
-      '<line x1="215" y1="74" x2="215" y2="94" ' + s + '/>' +
-      '<rect x="180" y="98" width="70" height="30" fill="#ff2e7e"/><text x="215" y="118" ' + t + '>O1</text>' +
-      '<path d="M110 113 L150 113 L150 62 L176 62" fill="none" ' + s + '/>' +
-      '<path d="M250 113 L290 113 L290 62 L316 62" fill="none" ' + s + '/>' +
-      '<rect x="316" y="48" width="48" height="28" fill="#ff2e7e"/>' +
-      '<text x="340" y="66" ' + t + '>OUT</text>';
   }
 
   function copyOp(o) {
@@ -833,7 +905,7 @@
       pst.disabled = !(clipboard && clipboard.kind === "op");
       pst.addEventListener("click", function () { pasteOp(o); });
       acts.append(cpy, pst);
-      right.append(acts, makeToggle("MUTE", o.mute, function (v) { setOpMute(o.name, v); }));
+      right.append(acts, makeMuteSwitch(o.mute, function (v) { setOpMute(o.name, v); }));
       head.append(nameEl, right);
       col.appendChild(head);
 
@@ -1049,7 +1121,7 @@
     g1.appendChild(l1);
     OPS.forEach(function (o) {
       const btn = document.createElement("button");
-      btn.className = "tbtn" + (o.mute ? " muted" : "");
+      btn.className = "tbtn mutebtn" + (o.mute ? " muted" : "");
       btn.textContent = o.name;
       btn.title = "Mute " + o.name;
       btn.addEventListener("click", function () { setOpMute(o.name, !o.mute); });
@@ -1060,7 +1132,7 @@
     g1.appendChild(d1);
     PARTS.forEach(function (p, i) {
       const btn = document.createElement("button");
-      btn.className = "tbtn" + (p.mute ? " muted" : "");
+      btn.className = "tbtn mutebtn" + (p.mute ? " muted" : "");
       btn.textContent = "P" + (i + 1);
       btn.title = "Mute part " + (i + 1);
       btn.addEventListener("click", function () { setPartMute(i, !p.mute); });
@@ -1128,11 +1200,11 @@
   });
 
   /* ---------------- dialogs ---------------- */
-  function openDialog(title, bodyNode, buttons) {
+  function openDialog(title, bodyNode, buttons, wide) {
     const back = document.createElement("div");
     back.className = "backdrop";
     const dlg = document.createElement("div");
-    dlg.className = "dialog";
+    dlg.className = "dialog" + (wide ? " wide" : "");
     const head = document.createElement("div");
     head.className = "dialog-head";
     head.innerHTML = "<span>" + title + '</span><span class="x">X</span>';
@@ -1239,12 +1311,59 @@
     bodyEl.appendChild(list);
     openDialog("PRESETS", bodyEl, [
       { label: "CANCEL", onClick: function (close) { close(); } },
+      { label: "SAVE", onClick: function (close) { close(); openPatchSave(); } },
       { label: "LOAD", primary: true, onClick: function (close) { patchName.textContent = PRESETS[sel][0]; close(); } }
     ]);
   });
 
+  function openPatchSave() {
+    let sel = 0;
+    const bodyEl = document.createElement("div");
+    const grid = document.createElement("div");
+    grid.className = "slots";
+    const cells = [];
+    for (let i = 0; i < 8; i++) {
+      const c = document.createElement("button");
+      c.className = "slot" + (i === sel ? " sel" : "");
+      c.textContent = String(i + 1).padStart(2, "0");
+      c.addEventListener("click", function () {
+        sel = i;
+        cells.forEach(function (x, j) { x.classList.toggle("sel", j === sel); });
+      });
+      grid.appendChild(c);
+      cells.push(c);
+    }
+    bodyEl.appendChild(grid);
+    const note = document.createElement("div");
+    note.className = "note";
+    note.textContent = "Pick a slot for the current patch, then SAVE.";
+    bodyEl.appendChild(note);
+    openDialog("SAVE PATCH TO SLOT", bodyEl, [
+      { label: "CANCEL", onClick: function (close) { close(); } },
+      { label: "SAVE", primary: true, onClick: function (close) { close(); openPatchSaveConfirm(sel + 1); } }
+    ]);
+  }
+
+  function openPatchSaveConfirm(slot) {
+    const pad = String(slot).padStart(2, "0");
+    const bodyEl = document.createElement("div");
+    bodyEl.innerHTML = "Save the current patch to slot <b>" + pad +
+      "</b>?<br><span style='color:#9a9a9a'>This overwrites the slot.</span>";
+    openDialog("CONFIRM SAVE", bodyEl, [
+      { label: "CANCEL", onClick: function (close) { close(); } },
+      { label: "SAVE", primary: true, onClick: function (close) {
+        close();
+        const name = "USER PATCH " + pad;
+        PRESETS[slot - 1] = [name, "user"];
+        patchName.textContent = name;
+        toast("PATCH SAVED TO SLOT " + pad);
+      } }
+    ]);
+  }
+
   /* ---------------- init ---------------- */
-  document.getElementById("hdrAlg").innerHTML = algDiagram();
+  renderAlg();
+  document.getElementById("algPick").addEventListener("click", openAlgPicker);
   buildToolbar();
   tick();
 
@@ -1254,6 +1373,8 @@
     if (h === "save") { showTab("home"); openSlotPicker(activePart); return; }
     if (h === "init") { showTab("home"); openInitConfirm(activePart); return; }
     if (h === "menu") { showTab("home"); openPartMenu(document.querySelector(".pmenu")); return; }
+    if (h === "alg") { showTab("home"); openAlgPicker(); return; }
+    if (h === "patchsave") { showTab("home"); openPatchSave(); return; }
     if (TABS.some(function (x) { return x.id === h; })) showTab(h);
     else showTab("home");
   }
