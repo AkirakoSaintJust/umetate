@@ -3619,3 +3619,17 @@ a tell or broken a parser:
 Verified with `deep-check --all` (host, safety, web parity, every Python module,
 skill sync, lib sync, links, pyright). No facts were dropped: the sweep only
 re-punctuated prose, and every code fence and inline code span was left untouched.
+
+### 13.15 Flash chip compatibility (UC25HQ80)
+
+Recent FM-1 units (mostly AliExpress) ship a UC25HQ80 flash, JEDEC id `0xB36014`,
+instead of the Puya P25Q80 (`0x856014`). Same 1 MiB, same plain SPI NOR commands.
+The firmware only accepted `0x856014`, so those units reported "flash error" (saves
+stayed in RAM) and the update loader refused to install.
+
+`FL_JEDEC_OK` in `firmware/hal/fm1_flash_map.h` now accepts `0xB36014` on both
+boards (it is the single place the app, the recovery path, and the update loader
+read). Two `_Static_assert`s pin it: both 1 MiB parts are accepted and an unknown
+id is refused, on both the FM-1 and SMK-37 branches. The SMK flash test checks
+`0xB36014` at runtime. Credit: Sven, The Firmware Hub, for the report and the
+`FL_JEDEC_OK` fix (OberVave 3.3.1, sloopDX and Dinghy already carry it).

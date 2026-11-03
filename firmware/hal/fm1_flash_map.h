@@ -11,14 +11,21 @@
 #define FL_IN(off, n, lo, hi) ((uint32_t)(off) >= (lo) && (uint32_t)(off) <= (hi) && \
                                (uint32_t)(n) <= (hi) - (uint32_t)(off))
 /* The flash chip the app's storage and the update loader accept (JEDEC id from 0x9F). One place
- * for the app (platform.c, recovery.c) and the loader (loader.c); extend it here for another part. */
+ * for the app (platform.c, recovery.c) and the loader (loader.c); extend it here for another part.
+ * Two 1 MiB SPI NOR parts ship on these units: the Puya P25Q80 (0x856014) and the newer UC25HQ80
+ * (0xB36014, seen on recent AliExpress units). Both speak the same plain SPI NOR commands the
+ * driver uses (9F, 05/35, 06, 20, 02, 0B). */
 #if BOARD_SMK37
 /* SMK-37 Pro: 0xEB6014, 1 MiB, read from a unit over mask-ROM UBOOT (2026-10-09; jl-uboot-tool "Online device:
  * ID: 0xeb6014"). The driver uses only generic SPI NOR commands (9F, 05/35, 06, 20, 02, 0B). */
-#define FL_JEDEC_OK(id) ((id) == 0xEB6014u || (id) == 0x856014u)
+#define FL_JEDEC_OK(id) ((id) == 0xEB6014u || (id) == 0x856014u || (id) == 0xB36014u)
 #else
-#define FL_JEDEC_OK(id) ((id) == 0x856014u)
+#define FL_JEDEC_OK(id) ((id) == 0x856014u || (id) == 0xB36014u)
 #endif
+/* The two 1 MiB parts must always be accepted, and an unknown id refused (both boards). */
+_Static_assert(FL_JEDEC_OK(0x856014u), "the Puya P25Q80 (0x856014) must be accepted");
+_Static_assert(FL_JEDEC_OK(0xB36014u), "the UC25HQ80 (0xB36014) must be accepted");
+_Static_assert(!FL_JEDEC_OK(0xFFFFFFu), "an unknown JEDEC id must be refused");
 
 #if BOARD_SMK37
 /* ---- SMK-37 Pro flash map (see the fm1-to-smk37 guide) ----
