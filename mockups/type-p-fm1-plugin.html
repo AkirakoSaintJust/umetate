@@ -139,12 +139,15 @@
   /* ---------------- tabs ---------------- */
   .tabs { display: flex; gap: 0; padding: 0; background: #000; border-bottom: 1px solid var(--line2); }
   .tab {
-    background: #000; border: 0; border-right: 1px solid var(--line);
+    background: #000; border: 0;
     color: var(--dim); font-family: var(--font-head); font-size: 12px; letter-spacing: .03em;
     padding: 11px 16px; cursor: pointer;
   }
   .tab:hover { color: var(--text); }
-  .tab.active { color: #000; background: var(--pink); }
+  .tab.active {
+    color: #000; background: var(--pink);
+    clip-path: polygon(5px 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 7px) 100%, 0 100%, 5px 50%);
+  }
 
   /* ---------------- body ---------------- */
   .body { padding: 14px 16px 16px; min-height: 624px; }
@@ -221,8 +224,9 @@
   .opcol .card { padding: 8px; }
   .opcol .knobs { gap: 5px 0; }
   .opcol .knob { width: 36px; }
-  .opcol .osc .knob, .opcol .amplfo .knob { width: 62px; }
-  .opcol .osc .knobs, .opcol .amplfo .knobs { gap: 6px 5px; }
+  .opcol .osc .knob, .opcol .amplfo .knob { width: 56px; }
+  .opcol .osc .knobs { gap: 6px 0; justify-content: space-between; }
+  .opcol .amplfo .knobs { gap: 6px 24px; }
   .opcol .env .knob { width: 37px; }
   .opcol .dial, .opcol .dial svg { width: 34px; height: 34px; }
   .opcol .envbox { height: 52px; margin-bottom: 6px; }
