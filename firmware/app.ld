@@ -18,7 +18,11 @@ MEMORY
 }
 SECTIONS
 {
-    .text : { KEEP(*(.text.crt0)) *(.text*) *(.rodata*) . = ALIGN(4); _etext = .; } > XIP
+    /* `.text.veneer` holds the generated engine seams: they call into `.dsp_text`
+     * (SRAM) and must sit at the XIP base so the ~4.3 MB cross-region jump stays
+     * inside R_PI32V2_LONG_JUMP_23M2 (build.py's DSP-first ordering is the other
+     * half of that budget). */
+    .text : { KEEP(*(.text.crt0)) KEEP(*(.text.veneer)) *(.text*) *(.rodata*) . = ALIGN(4); _etext = .; } > XIP
     .ram_text : { _rt_start = .; KEEP(*(.ram_text*)) . = ALIGN(4); _rt_end = .; } > RAMTEXT AT > XIP
     _rt_load = LOADADDR(.ram_text);
     .c1_text : { _c1_start = .; KEEP(*(.c1_text*)) . = ALIGN(4); _c1_end = .; } > RAMTEXT AT > XIP

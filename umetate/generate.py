@@ -276,8 +276,17 @@ def generate_glue(
         '#include "fm1_ipc.h"',  # dsp_cmd_push / dsp_status / FM1_CPU1_USED
         '#include "scope.h"',  # scope_push_ch (the per-op taps)
         "",
+        "/* The generated seams are the only XIP code that calls into `.dsp_text`",
+        " * (SRAM): the ~4.3 MB distance sits at the limit of",
+        " * R_PI32V2_LONG_JUMP_23M2. `app.ld` pins this section at the XIP base. */",
+        "#define UMETATE_GLUE_API "
+        '__attribute__((section(".text.veneer"), noinline, used))',
+        "",
         "/* the seam adapters: dual-core (core 0 pushes a note command) or direct. */",
-        f"static inline void {name}_glue_note_on(uint32_t note, uint32_t vel)",
+        (
+            f"static UMETATE_GLUE_API void {name}_glue_note_on(uint32_t note, "
+            "uint32_t vel)"
+        ),
         "{",
         "#if FM1_CPU1_USED",
         "    if (fm1_c1_on) {",
@@ -289,8 +298,8 @@ def generate_glue(
         f"    {name}_dsp_note_on(note, vel);",
         "}",
         (
-            f"static inline void {name}_glue_note_on_ch(uint32_t note, uint32_t vel, "
-            "uint32_t ch)"
+            f"static UMETATE_GLUE_API void {name}_glue_note_on_ch(uint32_t note, "
+            "uint32_t vel, uint32_t ch)"
         ),
         "{",
         "#if FM1_CPU1_USED",
@@ -302,7 +311,7 @@ def generate_glue(
         "#endif",
         f"    {name}_dsp_note_on_ch(note, vel, ch);",
         "}",
-        f"static inline void {name}_glue_note_off(uint32_t note)",
+        f"static UMETATE_GLUE_API void {name}_glue_note_off(uint32_t note)",
         "{",
         "#if FM1_CPU1_USED",
         "    if (fm1_c1_on) {",
@@ -312,7 +321,7 @@ def generate_glue(
         "#endif",
         f"    {name}_dsp_note_off(note);",
         "}",
-        f"static inline void {name}_glue_all_off(void)",
+        f"static UMETATE_GLUE_API void {name}_glue_all_off(void)",
         "{",
         "#if FM1_CPU1_USED",
         "    if (fm1_c1_on) {",
@@ -322,15 +331,30 @@ def generate_glue(
         "#endif",
         f"    {name}_dsp_all_notes_off();",
         "}",
-        f"static inline int {name}_glue_set_param(uint32_t id, int32_t value)",
+        (
+            f"static UMETATE_GLUE_API int {name}_glue_set_param(uint32_t id, "
+            "int32_t value)"
+        ),
         "{",
         f"    return {name}_dsp_set_param(id, value);",
         "}",
-        f"static inline void {name}_glue_bend(uint32_t bend)",
+        f"static UMETATE_GLUE_API void {name}_glue_bend(uint32_t bend)",
         "{",
         f"    {name}_dsp_set_bend_q16(bend);",
         "}",
-        f"static inline int {name}_glue_quiet(void)",
+        f"static UMETATE_GLUE_API int32_t {name}_glue_get_param(uint32_t id)",
+        "{",
+        f"    return {name}_dsp_get_param(id);",
+        "}",
+        f"static UMETATE_GLUE_API void {name}_glue_reset(void)",
+        "{",
+        f"    {name}_dsp_reset();",
+        "}",
+        f"static UMETATE_GLUE_API uint32_t {name}_glue_lit(uint32_t base)",
+        "{",
+        f"    return {name}_dsp_lit(base);",
+        "}",
+        f"static UMETATE_GLUE_API int {name}_glue_quiet(void)",
         "{",
         "#if FM1_CPU1_USED",
         "    return (int)dsp_status.quiet;",
@@ -340,7 +364,7 @@ def generate_glue(
         "}",
         "",
         "/* the frozen `app_audio` contract: render (split-core or direct) + taps. */",
-        "static void app_audio(int32_t *out, uint32_t n)",
+        "static UMETATE_GLUE_API void app_audio(int32_t *out, uint32_t n)",
         "{",
         "#if FM1_CPU1_USED",
         f"    {name}_render_block((uint32_t)(uintptr_t)out);",

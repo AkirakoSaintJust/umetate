@@ -2878,9 +2878,12 @@ the two stay in sync).
    voice block. (The KEY SPLIT / MIDI CH / SINGLE PART / MULTI-PATCH "description
    clipping" note was unreproducible against the current header, likely stale.)
 
-10. **Name entry consolidation.**, **done.** The name model is now three slots
-    (part 1, part 2, multi-patch) instead of two (single-part, multi-patch), and the
-    GLO `part` + `patch` pages merge into one **NAMES** page holding `single part 1
+10. **Name entry consolidation.**, **done.** The name model is now one slot per
+    part plus the multi-patch (`UI_PART_MAX` = 8, `UI_NAME_SLOTS` = 9) instead of
+    two fixed slots (single-part, multi-patch). The generator rejects a panel that
+    declares more parts than the kit tracks, and the name editor titles a part slot
+    `single part N name` and the slot after the parts `multi-patch name`. The GLO
+    `part` + `patch` pages merge into one **NAMES** page holding `single part 1
     name`, `single part 2 name`, `multi-patch name` + the load/save/init hints.
 
 11. **SINGLE PART LAYERING.**, **done.** Renamed the GLO `PART LEVEL` page to

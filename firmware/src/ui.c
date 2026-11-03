@@ -61,13 +61,13 @@ static int32_t ui_custom_v[UI_MAX_WIDGETS];     /* UI_CUSTOM widgets' dirty valu
 static int32_t ui_cursor;                        /* list/grid selection */
 static uint8_t ui_selected_op;                   /* the selected operator (0..3) for OP_* */
 static uint8_t ui_selected_part;                 /* the active part (0..n_part-1) */
-static uint8_t ui_part_mute[4];                  /* part mute flags (up to 4 parts) */
+static uint8_t ui_part_mute[UI_PART_MAX];        /* part mute flags, one per part */
 static int32_t ui_header_last = 0x7FFFFFFF;      /* the header's last-drawn value */
 static char ui_popup_line[40];                   /* the preset-browser popup text */
 static uint8_t ui_popup_on;                      /* 1 = the popup is showing */
 static uint8_t ui_popup_alg_on;                  /* 1 = the algorithm-graph popup is showing */
 static uint8_t ui_popup_alg_val;                 /* the algorithm the graph popup shows */
-static char ui_name[3][UI_NAME_LEN];              /* [0] part 1, [1] part 2, [2] multi-patch */
+static char ui_name[UI_NAME_SLOTS][UI_NAME_LEN];  /* [part], and [n_part] = multi-patch */
 static char ui_name_saved[UI_NAME_LEN];          /* the pre-edit copy (for cancel) */
 static uint8_t ui_name_which, ui_name_cursor, ui_name_on;  /* the name-editor state */
 static uint8_t ui_save_on, ui_save_which;        /* the save chooser: open flag + selected row */
@@ -715,7 +715,7 @@ static void ui_draw_value(const ui_widget *w)
 static void ui_draw_name_row(const ui_widget *w)
 {
     uint32_t x, y, wd, ht;
-    const char *name = ui_name_get(w->param < 3u ? w->param : 0u);
+    const char *name = ui_name_get((uint8_t)w->param);
     ui_region(w, &x, &y, &wd, &ht);
     cv_begin(wd, ht, C_BLACK);
     {
@@ -1122,7 +1122,7 @@ static int32_t ui_header_value(void)
         if (p < ui_t->n_params && ui_param_v[p])
             v |= 1 << (int32_t)(17u + i);
     }
-    for (i = 0; i < 4u && i < ui_t->n_part; i++)
+    for (i = 0; i < UI_PART_MAX && i < ui_t->n_part; i++)
         if (ui_part_mute[i])
             v |= 1 << (int32_t)(21u + i);
     return v;
@@ -1242,7 +1242,7 @@ static int32_t ui_widget_value(const ui_widget *w, uint32_t slot)
             return (int32_t)ui_selected_part;
         return 0;                                    /* 2/3/4: no number, static */
     case UI_NAME: {                                 /* redraw when the name changes */
-        const char *n = ui_name_get(w->param < 3u ? w->param : 0u);
+        const char *n = ui_name_get((uint8_t)w->param);
         int32_t h = 0;
         while (*n)
             h += *n++;
@@ -1426,13 +1426,13 @@ static uint8_t ui_charset_idx(char c)
 
 const char *ui_name_get(uint8_t which)
 {
-    return ui_name[which < 3u ? which : 0u];
+    return ui_name[which < UI_NAME_SLOTS ? which : 0u];
 }
 
 void ui_name_set(uint8_t which, const char *name)
 {
     uint32_t i;
-    if (which >= 3u)
+    if (which >= UI_NAME_SLOTS)
         return;
     for (i = 0; i < UI_NAME_LEN - 1u && name[i]; i++)
         ui_name[which][i] = name[i];
@@ -1444,7 +1444,7 @@ uint8_t ui_name_editing(void) { return ui_name_on ? ui_name_which : 0xFFu; }
 void ui_name_editor_begin(uint8_t which)
 {
     uint32_t i;
-    if (which >= 3u)
+    if (which >= UI_NAME_SLOTS)
         return;
     ui_name_which = which;
     ui_name_cursor = 0;
@@ -1517,10 +1517,15 @@ void ui_name_editor_backspace(void)
 /* the name editor pop-up: title + the name (cursor char in purple) + the legend. */
 static void ui_draw_name_editor(void)
 {
-    static const char *const titles[3] = {
-        "single part 1 name", "single part 2 name", "multi-patch name"};
+    static const char *const part_titles[UI_PART_MAX] = {
+        "single part 1 name", "single part 2 name", "single part 3 name",
+        "single part 4 name", "single part 5 name", "single part 6 name",
+        "single part 7 name", "single part 8 name"};
     char s[UI_NAME_LEN + 8];
-    const char *title = titles[ui_name_which < 3u ? ui_name_which : 2u];
+    const char *title =
+        ui_t && ui_name_which < ui_t->n_part && ui_name_which < UI_PART_MAX
+            ? part_titles[ui_name_which]
+            : "multi-patch name";
     uint32_t i;
     cv_begin(240u, 6u * UI_ROW_H, C_POPUP_BG);
     cv_text(6, 2, &FONT_S, title, C_POPUP_TXT);

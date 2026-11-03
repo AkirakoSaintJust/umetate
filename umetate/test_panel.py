@@ -87,6 +87,41 @@ def main() -> int:
     except GenError as exc:
         print(f"ok: unknown action rejected ({exc})")
 
+    # a panel cannot declare more parts than ui.h's UI_PART_MAX: the header mute
+    # flags and the per-part name slots are fixed-size arrays.
+    too_many: PanelManifest = {
+        "name": "too-many-parts",
+        "parts": 9,
+        "contexts": {
+            "home": {"pages": [{"id": "home", "widgets": []}]},
+        },
+    }
+    try:
+        generate_panel(too_many)
+        print("FAIL: a panel beyond UI_PART_MAX not rejected")
+        failures += 1
+    except GenError as exc:
+        print(f"ok: a panel beyond UI_PART_MAX rejected ({exc})")
+
+    # a name widget addresses a part, or the multi-patch slot just after the parts
+    bad_name: PanelManifest = {
+        "name": "bad-name",
+        "parts": 2,
+        "contexts": {
+            "home": {
+                "pages": [
+                    {"id": "home", "widgets": [{"type": "name", "row": 1, "name": 3}]}
+                ]
+            },
+        },
+    }
+    try:
+        generate_panel(bad_name)
+        print("FAIL: a name index outside 0..n_parts not rejected")
+        failures += 1
+    except GenError as exc:
+        print(f"ok: a name index outside 0..n_parts rejected ({exc})")
+
     # generate_panel(panel, param_ids) shares the DSP set_param id space
     bound: PanelManifest = {
         "name": "demo",

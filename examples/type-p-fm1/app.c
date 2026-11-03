@@ -5,6 +5,10 @@
  * framework's synth services. Included by src/rib.c (the framework) in the
  * `umetate build --synth examples/type-p-fm1` composition.
  *
+ * The generic preset save/load/init/name flow and the modal popup state machine are
+ * the framework's `synth_app.c` (shared by every project). This file keeps only
+ * type-p-fm1's control map, its engine<->panel mirror, and its credits page.
+ *
  * Two independent-timbre parts: part 0 = MIDI channel 0 (the panel + the CC
  * surface edit part 0's timbre), part 1 = channel 1 (its timbre comes from the
  * multi patch / SysEx). The engine owns the param truth; the panel's values are
@@ -18,6 +22,7 @@
 #include "synth_midi.h"     /* the framework's MIDI handler */
 #include "synth_sysex.h"    /* the framework's SysEx handler */
 #include "synth_runtime.h"  /* the framework's preset apply */
+#include "synth_app.h"      /* the framework's generic app core (presets + popups) */
 
 /* ---- the preset store's writable memory (the banks + the settings record) ----
  * The 128 single-part records (40 576 B) do not fit CPU0's 96 KiB .bss alongside
@@ -26,29 +31,30 @@
  * boot. */
 static uint8_t part_bank[PP_BANK(SYNTH_N_PARAMS)] __attribute__((section(".pool")));
 static uint8_t multi_bank[MP_BANK(SYNTH_N_PARTS)] __attribute__((section(".pool")));
-static uint8_t settings[ST_RECORD], saved_settings[ST_RECORD];
-static uint32_t idle_ok, bank_dirty, multi_dirty, set_dirty, t_change;
-/* each part's source single-part slot (0xFF = live, no slot) — the multi-patch's
- * part_slot[] refs; set by load/save, reset by INIT. */
-static uint8_t part_slot_cur[SYNTH_N_PARTS];
-static uint32_t cur_slot;                      /* the loaded multi-patch slot (0 = boot) */
+static uint8_t settings[ST_RECORD];
 
-/* ---- the engine seam + the audio callback are generated glue (gen/glue.h): the
- * dual-core-aware adapters (`<name>_glue_*`) + `app_audio`. The app keeps only the
- * contexts, which bind the adapters to the framework services + the app's banks. */
+/* the shared app core: the preset banks + the generated seam, driven by the UI's
+ * SAVE/INIT/name/browser actions (synth_app.c). */
+static synth_app_ctx app;
+
+/* ---- the engine seam + the audio callback are generated glue (gen/glue.h). */
+static uint32_t idle_ok;                            /* MIDI may poll while the screen draws */
 static synth_midi_ctx midi_ctx = {
     type_p_fm1_glue_note_on_ch, type_p_fm1_glue_note_off, type_p_fm1_glue_all_off,
     type_p_fm1_glue_set_param, type_p_fm1_glue_bend,
     cc_to_param, param_min, param_max,
 };
 static synth_sysex_ctx sysex_ctx = {
-    SYNTH_MODEL, SYNTH_N_PARAMS, SYNTH_N_PARTS, type_p_fm1_dsp_get_param,
+    SYNTH_MODEL, SYNTH_N_PARAMS, SYNTH_N_PARTS, type_p_fm1_glue_get_param,
     part_bank, multi_bank, settings,
 };
-static synth_runtime_ctx runtime_ctx = {
-    SYNTH_N_PARAMS, SYNTH_N_PARTS, SYNTH_ROUTING_BASE, type_p_fm1_glue_set_param,
-    part_bank, multi_bank,
-};
+
+/* the generated init table, read through a callback (no type-punning) */
+static void type_p_fm1_get_init(uint32_t i, uint16_t *id, int32_t *value)
+{
+    *id = type_p_fm1_init[i].id;
+    *value = type_p_fm1_init[i].value;
+}
 
 /* ---- the panel <-> engine mirror: the engine owns the truth */
 static int32_t last_ui[UI_PARAM_MAX];
@@ -57,27 +63,26 @@ static void ui_sync(void)
     int32_t *v = ui_params();
     uint32_t i;
     for (i = 0; i < PANEL.n_params; i++) {
-        int32_t e = type_p_fm1_dsp_get_param(i);
+        int32_t e = type_p_fm1_glue_get_param(i);
         if (v[i] != e) {
             if (last_ui[i] != v[i]) {                 /* the panel wrote it */
-                type_p_fm1_dsp_set_param(i, v[i]);
-                e = type_p_fm1_dsp_get_param(i);      /* the clamped value */
+                type_p_fm1_glue_set_param(i, v[i]);
+                e = type_p_fm1_glue_get_param(i);      /* the clamped value */
             }
             v[i] = e;
         }
         last_ui[i] = v[i];
     }
     /* part mute: force a muted part's `level` routing param to 0 (the UI's level
-     * value is preserved; unmuting restores it through the normal mirror). The
-     * routing layout is field-major (channel/low/high/level/delay), so part p's
-     * level is SYNTH_ROUTING_BASE + 3*SYNTH_N_PARTS + p. */
+     * value is preserved; unmuting restores it through the normal mirror). */
     for (i = 0; i < SYNTH_N_PARTS; i++) {
         if (ui_part_muted((uint8_t)i))
-            type_p_fm1_dsp_set_param(SYNTH_ROUTING_BASE + 3u * SYNTH_N_PARTS + i, 0);
+            type_p_fm1_glue_set_param(SYNTH_ROUTING_BASE + 3u * SYNTH_N_PARTS + i, 0);
     }
 }
 
-/* ---- the app's action hooks (called by ui.c) */
+/* ---- the app's action hooks (called by ui.c); the generic bodies are the
+ * framework's synth_app_* ---- */
 void ui_act_note_on(uint8_t note, uint8_t vel)
 {
     type_p_fm1_glue_note_on(note, vel);               /* omni: every matching part */
@@ -87,189 +92,22 @@ void ui_act_note_off(uint8_t note)
     type_p_fm1_glue_note_off(note);
 }
 void ui_act_set_step(uint8_t step) { (void)step; }
-void ui_act_panic(void)
-{
-    type_p_fm1_glue_all_off();
-}
+void ui_act_panic(void) { type_p_fm1_glue_all_off(); }
 void ui_act_play(void) { }
 void ui_act_stop(void) { }
-/* ---- the app's save/load/apply helpers (the "single part" / "multi-patch" split) ---- */
-
-/* save one part's timbre into a single-part slot; remember it as that part's
- * source so a multi-patch can reference it. */
-static void save_part_to(uint8_t part, uint16_t slot)
-{
-    int32_t params[SYNTH_PARAM_MAX];
-    uint32_t i, base = (uint32_t)part * SYNTH_N_PARAMS;
-    if (slot >= PRESET_PART_SLOTS)
-        return;
-    for (i = 0; i < SYNTH_N_PARAMS; i++)
-        params[i] = type_p_fm1_dsp_get_param(base + i);
-    preset_part_pack(part_bank + (uint32_t)slot * PP_RECORD(SYNTH_N_PARAMS),
-                     ui_name_get(part), params, SYNTH_N_PARAMS);
-    part_slot_cur[part] = (uint8_t)slot;
-    bank_dirty = 1;
-    t_change = fm1_ms;
-}
-
-static void save_part(uint8_t part, uint16_t slot) { save_part_to(part, slot); }
-
-/* the first empty single-part slot (0xFF), or 0xFF when the bank is full */
-static uint8_t empty_part_slot(void)
-{
-    uint32_t i;
-    for (i = 0; i < PRESET_PART_SLOTS; i++)
-        if (part_bank[i * PP_RECORD(SYNTH_N_PARAMS)] == PRESET_EMPTY)
-            return (uint8_t)i;
-    return 0xFFu;
-}
-
-/* save the composition (each part's source single part + the routing) into a
- * multi-patch slot. `mode` = what to do with the active part's live edits:
- * 0 = discard, 1 = save-as-new, 2 = mutate in place. */
-static void save_multi(uint16_t slot, uint8_t mode)
-{
-    int32_t lv[SYNTH_N_PARTS], dl[SYNTH_N_PARTS], ch[SYNTH_N_PARTS];
-    int32_t lo[SYNTH_N_PARTS], hi[SYNTH_N_PARTS];
-    uint32_t i;
-    if (slot >= PRESET_MULTI_SLOTS)
-        return;
-    if (mode != 0u) {
-        uint8_t part = ui_part(), dst = part_slot_cur[part];
-        if (mode == 1u || dst == 0xFFu) {          /* save-as-new, or no source yet */
-            dst = empty_part_slot();
-            if (dst == 0xFFu)
-                return;                            /* bank full: nothing to save */
-        }
-        save_part_to(part, dst);                   /* mode 2 overwrites the source slot */
-    }
-    for (i = 0; i < SYNTH_N_PARTS; i++) {
-        ch[i] = type_p_fm1_dsp_get_param(SYNTH_ROUTING_BASE + 0u * SYNTH_N_PARTS + i);
-        lo[i] = type_p_fm1_dsp_get_param(SYNTH_ROUTING_BASE + 1u * SYNTH_N_PARTS + i);
-        hi[i] = type_p_fm1_dsp_get_param(SYNTH_ROUTING_BASE + 2u * SYNTH_N_PARTS + i);
-        lv[i] = type_p_fm1_dsp_get_param(SYNTH_ROUTING_BASE + 3u * SYNTH_N_PARTS + i);
-        dl[i] = type_p_fm1_dsp_get_param(SYNTH_ROUTING_BASE + 4u * SYNTH_N_PARTS + i);
-    }
-    preset_multi_pack(multi_bank + (uint32_t)slot * MP_RECORD(SYNTH_N_PARTS),
-                      ui_name_get(2u), part_slot_cur, lv, dl, ch, lo, hi, SYNTH_N_PARTS);
-    multi_dirty = 1;
-    t_change = fm1_ms;
-}
-
-/* load a single-part slot into a part (its params, not its routing). */
-static void load_part(uint8_t part, uint32_t slot)
-{
-    char name[PRESET_NAME_LEN];
-    int32_t params[SYNTH_PARAM_MAX];
-    const uint8_t *rec = part_bank + slot * PP_RECORD(SYNTH_N_PARAMS);
-    uint32_t i, base = (uint32_t)part * SYNTH_N_PARAMS;
-    if (slot >= PRESET_PART_SLOTS || rec[0] == PRESET_EMPTY ||
-        !preset_part_unpack(rec, SYNTH_N_PARAMS, name, params))
-        return;
-    for (i = 0; i < SYNTH_N_PARAMS; i++)
-        type_p_fm1_dsp_set_param(base + i, params[i]);
-    ui_name_set(part, name);                        /* reflect the loaded part's name */
-    part_slot_cur[part] = (uint8_t)slot;
-}
-
-/* apply a multi patch and remember its name + each part's source single part. */
-static void apply_multi(uint32_t slot)
-{
-    char name[PRESET_NAME_LEN];
-    uint8_t ps[SYNTH_N_PARTS];
-    int32_t lv[SYNTH_N_PARTS], dl[SYNTH_N_PARTS], ch[SYNTH_N_PARTS];
-    int32_t lo[SYNTH_N_PARTS], hi[SYNTH_N_PARTS];
-    uint32_t i;
-    synth_preset_apply(&runtime_ctx, slot);
-    if (slot >= PRESET_MULTI_SLOTS)
-        return;
-    if (preset_multi_unpack(multi_bank + slot * MP_RECORD(SYNTH_N_PARTS),
-                            SYNTH_N_PARTS, name, ps, lv, dl, ch, lo, hi)) {
-        for (i = 0; i < SYNTH_N_PARTS; i++)
-            part_slot_cur[i] = ps[i];
-        ui_name_set(1u, name);
-    }
-}
-
-void ui_act_save(void)
-{
-    /* SAVE opens the save chooser (single part / multi-patch + slot); the commit
-     * runs in the main loop. Pre-fill with the active part's source slot and the
-     * current multi-patch slot. */
-    uint16_t ps = part_slot_cur[ui_part()];
-    ui_save_begin(0u, ps == 0xFFu ? 0u : ps, (uint16_t)cur_slot);
-}
-
+void ui_act_save(void) { synth_app_save(&app); }
 void ui_act_init_patch(void)
 {
-    uint32_t i;
-    for (i = 0; i < type_p_fm1_INIT_N; i++)
-        type_p_fm1_dsp_set_param(type_p_fm1_init[i].id, type_p_fm1_init[i].value);
-    /* the spec's init state: part 1 active, op 1 active, part 1 unmuted, part 2 muted */
-    ui_part_set(0u);
-    ui_op_set(0u);
-    ui_part_mute_set(0u, 0u);
-    ui_part_mute_set(1u, 1u);
-    part_slot_cur[0] = part_slot_cur[1] = 0xFFu;
-    ui_name_set(0u, "INIT PART");
-    ui_name_set(1u, "INIT PART");
-    ui_name_set(2u, "INIT MULTI");
+    synth_app_init_patch(&app);
+    ui_part_mute_set(1u, 1u);                         /* the spec: part 2 muted on init */
 }
-/* reset one part's timbre to the spec's init values + clear its source slot + name. */
-static void init_part(uint8_t part)
-{
-    uint32_t i;
-    for (i = 0; i < type_p_fm1_INIT_N; i++) {
-        uint16_t id = type_p_fm1_init[i].id;
-        if (id >= (uint32_t)part * SYNTH_N_PARAMS &&
-            id < (uint32_t)(part + 1u) * SYNTH_N_PARAMS)
-            type_p_fm1_dsp_set_param(id, type_p_fm1_init[i].value);
-    }
-    part_slot_cur[part] = 0xFFu;
-    ui_name_set(part, "INIT PART");
-}
-void ui_act_init_part(void)
-{
-    init_part(ui_part());
-}
-void ui_act_name(uint8_t which)
-{
-    ui_name_editor_begin(which);
-}
+void ui_act_init_part(void) { synth_app_init_part(&app); }
+void ui_act_name(uint8_t which) { ui_name_editor_begin(which); }
 void ui_save_slot_name(uint8_t kind, uint16_t slot, char *out, uint32_t cap)
 {
-    uint32_t i;
-    if (!out || !cap)
-        return;
-    out[0] = 0;
-    if (kind == 0u) {
-        if (slot < PRESET_PART_SLOTS) {
-            char name[PRESET_NAME_LEN];
-            int32_t params[SYNTH_PARAM_MAX];
-            const uint8_t *rec = part_bank + (uint32_t)slot * PP_RECORD(SYNTH_N_PARAMS);
-            if (rec[0] != PRESET_EMPTY &&
-                preset_part_unpack(rec, SYNTH_N_PARAMS, name, params)) {
-                for (i = 0; i + 1u < cap && name[i]; i++)
-                    out[i] = name[i];
-                out[i] = 0;
-            }
-        }
-    } else {
-        if (slot < PRESET_MULTI_SLOTS) {
-            char name[PRESET_NAME_LEN];
-            uint8_t ps[SYNTH_N_PARTS];
-            int32_t lv[SYNTH_N_PARTS], dl[SYNTH_N_PARTS], ch[SYNTH_N_PARTS];
-            int32_t lo[SYNTH_N_PARTS], hi[SYNTH_N_PARTS];
-            const uint8_t *rec = multi_bank + (uint32_t)slot * MP_RECORD(SYNTH_N_PARTS);
-            if (rec[0] != PRESET_EMPTY &&
-                preset_multi_unpack(rec, SYNTH_N_PARTS, name, ps, lv, dl, ch, lo, hi)) {
-                for (i = 0; i + 1u < cap && name[i]; i++)
-                    out[i] = name[i];
-                out[i] = 0;
-            }
-        }
-    }
+    synth_app_slot_name(&app, kind, slot, out, cap);
 }
+void ui_preset_apply(uint8_t kind, uint16_t slot) { synth_app_apply(&app, kind, slot); }
 
 /* the credits page (a UI_CUSTOM widget): the firmware version + credits, drawn
  * static (it fits the widget rows; no SELECT-scroll). The typeface credit is
@@ -316,48 +154,26 @@ static void app_idle(void)
 #define KEY0 53u   /* key 0 = F3 */
 #define GLO_CTX 5u /* the GLO context id (panel.json key order: home/edit/env/lfo/fx/glo) */
 
-/* ---- the main loop, split for the browser emulator: app_init (the setup) +
-   app_step (one millisecond of the loop). app_main keeps the frozen contract for
-   the host/target builds; a web build drives app_init + app_step from an
-   AudioWorklet instead of the blocking loop. */
+/* ---- the main loop, split for the browser emulator: app_init (the setup) + app_step
+   (one millisecond of the loop). app_main keeps the frozen contract for the
+   host/target builds; a web build drives app_init + app_step from an AudioWorklet
+   instead of the blocking loop. */
 static uint32_t app_prev, app_lit;
 static uint8_t app_held[27];
 static int32_t app_oct;
 static uint32_t app_last_scl_ms, app_scl_pending, app_scl_pending_ms;
-static ui_browser browser;                          /* the preset-browse popup (framework state) */
-static uint8_t app_pending_part;                    /* 0 = none, 1 = load, 2 = save, 3 = init */
-static uint16_t app_pending_slot;                   /* the slot for a pending load/save */
 static uint32_t app_alg_ms;                         /* the last ALGORITHM-knob turn (popup auto-close) */
-static uint32_t app_saved_ms;                       /* the last save (the "SAVED SUCCESSFULLY" linger) */
-static uint32_t app_last_input_ms;                  /* the last control input (the popup idle auto-close) */
-
-/* the browser's apply hook: a multi-patch applies straight in; a single part opens
- * the part chooser (load into the active part). */
-void ui_preset_apply(uint8_t kind, uint16_t slot)
-{
-    if (kind == 0u) {
-        app_pending_part = 1u;                       /* load a single part */
-        app_pending_slot = slot;
-        ui_part_chooser_begin(ui_part(), 0);
-    } else if (slot != cur_slot) {
-        apply_multi(slot);
-        cur_slot = slot;
-    }
-}
 
 static void app_init(void)
 {
-    int32_t bc, mt;
-
     app_prev = 0;
     app_lit = 0;
     memset(app_held, 0, sizeof app_held);
     app_oct = 0;
-    app_last_input_ms = 0;
     app_last_scl_ms = app_scl_pending = app_scl_pending_ms = 0;
-    browser.open = 0;
+    app_alg_ms = 0;
 
-    type_p_fm1_dsp_reset();
+    type_p_fm1_glue_reset();
 #if FM1_CPU1_USED
     {
         fm1_guard_unlock_top();
@@ -368,25 +184,22 @@ static void app_init(void)
     }
     lit_base = KEY0;
 #endif
-    memset(part_bank, 0xFF, sizeof part_bank);         /* 0xFF = empty before a load */
-    memset(multi_bank, 0xFF, sizeof multi_bank);
-    preset_part_bank_load(part_bank, SYNTH_N_PARAMS);   /* an unreadable slot stays 0xFF = empty */
-    preset_multi_bank_load(multi_bank, SYNTH_N_PARAMS, SYNTH_N_PARTS);
-    if (preset_settings_load(settings) || !preset_settings_unpack(settings, &bc, &mt))
-        bc = 0, mt = 0;
-    if (bc >= 0 && bc <= 15)
-        type_p_fm1_glue_set_param(SYNTH_ROUTING_BASE + 0u * SYNTH_N_PARTS + 0u, bc);  /* part 0's channel */
-    /* master_tune has no pitch-tune param in this patch; it rides along for later */
-    (void)mt;
-    memcpy(saved_settings, settings, ST_RECORD);
-    part_slot_cur[0] = part_slot_cur[1] = 0xFFu;
-    cur_slot = 0u;
-    apply_multi(0u);                                   /* multi slot 0: a valid record applies */
+
+    /* the generic app core: the generated seam + layout + init table + banks. */
+    app.get_param = type_p_fm1_glue_get_param;
+    app.set_param = type_p_fm1_glue_set_param;
+    app.reset = type_p_fm1_glue_reset;
+    app.n_params = SYNTH_N_PARAMS;
+    app.n_parts = SYNTH_N_PARTS;
+    app.routing_base = SYNTH_ROUTING_BASE;
+    app.get_init = type_p_fm1_get_init;
+    app.init_n = type_p_fm1_INIT_N;
+    app.part_bank = part_bank;
+    app.multi_bank = multi_bank;
+    app.settings = settings;
 
     ui_init(&PANEL);
-    ui_name_set(0u, "INIT PART");
-    ui_name_set(1u, "INIT PART");
-    ui_name_set(2u, "INIT MULTI");
+    synth_app_boot(&app);                              /* load banks, apply multi 0, seed names */
     ui_sync();                                         /* the engine's defaults reach the screen */
 }
 
@@ -406,112 +219,11 @@ static void app_step(void)
     {
         uint32_t now = fm1_ms;
         uint32_t scl = fm1_in.buttons & (1u << BTN_SEL);
-        ch0 = type_p_fm1_dsp_get_param(SYNTH_ROUTING_BASE + 0u * SYNTH_N_PARTS + 0u);
+        ch0 = type_p_fm1_glue_get_param(SYNTH_ROUTING_BASE + 0u * SYNTH_N_PARTS + 0u);
         if (ch0 < 0 || ch0 > 15)
             ch0 = 0;
-        if (ui_name_editing() != 0xFFu) {
-            /* the name editor: KNOB1 = char, KNOB2 = cursor, SEL = backspace,
-               SAVE = ok, HOME = cancel; the keys + page are inert while open. */
-            int32_t k1 = fm1_enc_take(ENC_KNOB1);
-            int32_t k2 = fm1_enc_take(ENC_KNOB2);
-            if (k1 || k2)
-                input_seen = 1;
-            if (k1)
-                ui_name_editor_char(k1);
-            if (k2)
-                ui_name_editor_move(k2);
-            b = fm1_input_edges(&rel);
-            if (b & (1u << BTN_SEL))
-                ui_name_editor_backspace();
-            if (b & (1u << BTN_SAVE))
-                ui_name_editor_commit();
-            if (b & (1u << BTN_HOME))
-                ui_name_editor_cancel();
-        } else if (ui_save_mode_open()) {
-            /* the save-mode chooser (step 2 of a multi-patch save): KNOB1 =
-               mode, SAVE = save, HOME = back to the slot chooser. */
-            int32_t k1 = fm1_enc_take(ENC_KNOB1);
-            int32_t k2 = fm1_enc_take(ENC_KNOB2);
-            if (k1)
-                ui_save_mode_move(k1);
-            (void)k2;                              /* the slot is fixed in step 2 */
-            input_seen |= (uint32_t)(k1 != 0) | (uint32_t)(k2 != 0);
-            b = fm1_input_edges(&rel);
-            if (b & (1u << BTN_SAVE)) {
-                uint8_t mode = ui_save_mode();
-                uint16_t slot = ui_save_slot();
-                ui_save_mode_commit();
-                ui_save_commit();
-                save_multi(slot, mode);
-                ui_popup_msg("SAVED SUCCESSFULLY");
-                app_saved_ms = fm1_ms;
-            }
-            if (b & (1u << BTN_HOME))
-                ui_save_mode_cancel();
-        } else if (ui_save_open()) {
-            /* the save chooser: KNOB1 = kind, KNOB2 = slot, SAVE = save,
-               HOME = cancel; the keys + page are inert while open. */
-            int32_t k1 = fm1_enc_take(ENC_KNOB1);
-            int32_t k2 = fm1_enc_take(ENC_KNOB2);
-            if (k1)
-                ui_save_kind_move(k1);
-            if (k2)
-                ui_save_slot_move(k2);
-            input_seen |= (uint32_t)(k1 != 0) | (uint32_t)(k2 != 0);
-            b = fm1_input_edges(&rel);
-            if (b & (1u << BTN_SAVE)) {
-                uint8_t kind = ui_save_kind();
-                uint16_t slot = ui_save_slot();
-                if (kind == 0u) {
-                    ui_save_commit();
-                    app_pending_part = 2u;             /* save a single part */
-                    app_pending_slot = slot;
-                    ui_part_chooser_begin(ui_part(), 0);
-                } else {
-                    ui_save_mode_begin();          /* step 2 for a multi-patch */
-                }
-            }
-            if (b & (1u << BTN_HOME))
-                ui_save_cancel();
-        } else if (ui_part_chooser_open()) {
-            /* the "which single part" chooser: KNOB1 = part, SAVE = apply, HOME = cancel */
-            int32_t k1 = fm1_enc_take(ENC_KNOB1);
-            if (k1)
-                ui_part_chooser_move(k1);
-            input_seen |= (uint32_t)(k1 != 0);
-            b = fm1_input_edges(&rel);
-            if (b & (1u << BTN_SAVE)) {
-                uint8_t part = ui_part_chooser_part(), pending = app_pending_part;
-                ui_part_chooser_commit();
-                if (pending == 1u) load_part(part, app_pending_slot);
-                else if (pending == 2u) {
-                    save_part(part, app_pending_slot);
-                    ui_popup_msg("SAVED SUCCESSFULLY");
-                    app_saved_ms = fm1_ms;
-                } else if (pending == 3u) init_part(part);
-                app_pending_part = 0u;
-            }
-            if (b & (1u << BTN_HOME)) {
-                ui_part_chooser_cancel();
-                app_pending_part = 0u;
-            }
-        } else if (ui_copy_open()) {
-            /* the page-copy chooser: KNOB1 = target, SAVE = copy, HOME = cancel */
-            int32_t k1 = fm1_enc_take(ENC_KNOB1);
-            if (k1)
-                ui_copy_move(k1);
-            input_seen |= (uint32_t)(k1 != 0);
-            b = fm1_input_edges(&rel);
-            if (b & (1u << BTN_SAVE)) {
-                uint8_t part, op;
-                ui_copy_target(&part, &op);
-                ui_copy_commit();
-                ui_copy_apply(part, op);
-                ui_popup_msg("COPIED SUCCESSFULLY");
-                app_saved_ms = fm1_ms;
-            }
-            if (b & (1u << BTN_HOME))
-                ui_copy_cancel();
+        if (synth_app_step(&app)) {
+            /* a modal popup consumed the control this step (synth_app drained it) */
         } else {
         for (k = 0; k < 27u; k++) {                /* the keys: play + echo, or SEL chords */
             if (down >> k & 1u) {
@@ -585,7 +297,7 @@ static void app_step(void)
         if (b & (1u << BTN_SAVE)) {
             if (scl) {
                 if (ui_top() == GLO_CTX) {
-                    app_pending_part = 3u;             /* init a single part */
+                    app.pending_part = 3u;             /* init a single part */
                     ui_part_chooser_begin(ui_part(), "INIT PATCH");
                 } else
                     ui_act_init_patch();
@@ -630,27 +342,14 @@ static void app_step(void)
         if ((e = fm1_enc_take(ENC_KNOB4)) != 0) { input_seen = 1; ui_handle(UI_SRC_ENC_KNOB4, e); }
     }
 
-    /* the popup idle auto-close: any input this step resets the timer */
+    /* any input this step resets the popup idle auto-close timer */
     if (input_seen)
-        app_last_input_ms = fm1_ms;
+        synth_app_input(&app);
 
     /* the algorithm scroll popup auto-closes ~600 ms after the knob stops */
     if (app_alg_ms && fm1_ms - app_alg_ms >= 600u) {
         ui_popup_hide();
         app_alg_ms = 0u;
-    }
-
-    /* a modal popup with no input for ~3 s closes without committing */
-    if (ui_popup_active() && fm1_ms - app_last_input_ms >= 3000u) {
-        ui_popup_cancel_all();
-        app_pending_part = 0u;
-        app_last_input_ms = fm1_ms;
-    }
-
-    /* the "SAVED SUCCESSFULLY" acknowledgement lingers ~750 ms */
-    if (app_saved_ms && fm1_ms - app_saved_ms >= 750u) {
-        ui_popup_hide();
-        app_saved_ms = 0u;
     }
 
     /* the preset browser (framework): the PRESETS encoder opens the multi-patch
@@ -659,29 +358,22 @@ static void app_step(void)
     {
         int32_t pe = fm1_enc_take(ENC_PRESETS);
         if (pe != 0)
-            input_seen = 1;
-        if (ui_top() == GLO_CTX)
-            ui_browser_step(&browser, pe, fm1_ms, 0u, PRESET_PART_SLOTS, 0u, 2000u);
-        else
-            ui_browser_step(&browser, pe, fm1_ms, 1u, PRESET_MULTI_SLOTS,
-                            (uint16_t)cur_slot, 2000u);
+            synth_app_input(&app);
+        synth_app_browser_step(&app, pe, fm1_ms, ui_top() == GLO_CTX ? 1u : 0u);
     }
 
     synth_midi_poll(&midi_ctx);
     synth_sysex_poll(&sysex_ctx);
     ui_sync();
 
-    /* the SysEx settings write reached `settings`: persist it once silent */
-    if (memcmp(settings, saved_settings, ST_RECORD)) {
-        set_dirty = 1;
-        t_change = fm1_ms;
-    }
+    /* the SAVED linger, the popup idle auto-close, and the silent-only persistence */
+    synth_app_tick(&app, fm1_ms, (uint8_t)type_p_fm1_glue_quiet());
 
 #if FM1_CPU1_USED
     lit_base = base;
     app_lit = dsp_status.lit;                    /* published by the render job */
 #else
-    app_lit = type_p_fm1_dsp_lit(base);
+    app_lit = type_p_fm1_glue_lit(base);
 #endif
     for (k = 0; k < 27u; k++)
         fm1_led_key(KEY_LED(k), app_lit >> k & 1u);
@@ -691,22 +383,6 @@ static void app_step(void)
     idle_ok = 1;
     ui_redraw(fm1_ms);
     idle_ok = 0;
-
-    if (type_p_fm1_glue_quiet() && fm1_ms - t_change > 2000u) {
-        if (bank_dirty) {                          /* silent-only saves (the store erases) */
-            preset_part_bank_save(part_bank, SYNTH_N_PARAMS);
-            bank_dirty = 0;
-        }
-        if (multi_dirty) {
-            preset_multi_bank_save(multi_bank, SYNTH_N_PARAMS, SYNTH_N_PARTS);
-            multi_dirty = 0;
-        }
-        if (set_dirty) {
-            preset_settings_save(settings);
-            memcpy(saved_settings, settings, ST_RECORD);
-            set_dirty = 0;
-        }
-    }
 }
 
 static void app_main(void)

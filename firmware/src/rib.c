@@ -31,6 +31,7 @@ static void app_idle(void);
 #include "synth_sysex.c"
 #include "synth_midi.c"
 #include "synth_runtime.c"
+#include "synth_app.c"                          /* the generic app core (presets + popups) */
 
 #ifdef UMETATE_SYNTH_APP
 #include "app.c"                                /* a synth project's glue (gen/app.c) */

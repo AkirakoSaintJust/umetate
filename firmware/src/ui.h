@@ -189,8 +189,11 @@ void ui_popup_alg(uint32_t alg);                 /* the algorithm scroll popup (
 void ui_popup_hide(void);                        /* clear the popup */
 
 /* ---- the name strings + the name editor (the GLO part / multi-patch rows) ---- */
+#define UI_PART_MAX 8u                           /* the parts the kit tracks (the header mutes + names) */
 #define UI_NAME_LEN 16u                          /* 15 chars + NUL (the record's name field) */
-const char *ui_name_get(uint8_t which);          /* 0 = part 1, 1 = part 2, 2 = multi-patch */
+#define UI_NAME_SLOTS (UI_PART_MAX + 1u)         /* one per part, plus the multi-patch */
+/* `which` = a part index (0..n_part-1), or `n_part` for the multi-patch name. */
+const char *ui_name_get(uint8_t which);          /* out of range -> the part-1 name */
 void ui_name_set(uint8_t which, const char *name);
 uint8_t ui_name_editing(void);                   /* 0xFF = none, else the name being edited */
 void ui_name_editor_begin(uint8_t which);        /* open the editor pre-filled + saved copy */

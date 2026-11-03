@@ -3284,9 +3284,13 @@ def main() -> int:
     if (
         "parts_test_glue_note_on" in glue
         and "parts_test_glue_note_on_ch" in glue
-        and "static void app_audio(int32_t *out, uint32_t n)" in glue
+        and "static UMETATE_GLUE_API void app_audio(int32_t *out, uint32_t n)" in glue
         and "parts_test_dsp_render" in glue
         and "(void)n;" in glue  # no taps -> the dual-core render takes only `out`
+        and 'section(".text.veneer")' in glue  # the XIP-base seam block
+        and "parts_test_glue_get_param" in glue
+        and "parts_test_glue_reset" in glue
+        and "parts_test_glue_lit" in glue
     ):
         print("ok: glue.h carries the seam adapters + app_audio")
     else:

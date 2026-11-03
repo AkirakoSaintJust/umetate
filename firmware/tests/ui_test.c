@@ -247,6 +247,16 @@ int main(void)
         ui_name_editor_commit();                 /* keep "BBC" */
         CHECK(ui_streq(ui_name_get(0u), "BBC"), "name editor commit keeps the edit");
         CHECK(ui_name_editing() == 0xFFu, "name editor closed after commit");
+        /* every tracked part has a slot, and the multi-patch follows them */
+        ui_name_set((uint8_t)UI_PART_MAX, "MULTI");
+        CHECK(ui_streq(ui_name_get((uint8_t)UI_PART_MAX), "MULTI"),
+              "the multi-patch name slot follows the part slots");
+        ui_name_set((uint8_t)UI_NAME_SLOTS, "NOPE");
+        CHECK(ui_streq(ui_name_get(0u), "BBC"),
+              "a name outside the slot range is ignored");
+        ui_name_editor_begin((uint8_t)UI_NAME_SLOTS);
+        CHECK(ui_name_editing() == 0xFFu,
+              "the name editor rejects a slot outside the range");
     }
 
     /* the save chooser (kind toggle + slot wrap + commit/cancel) */
