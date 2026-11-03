@@ -354,9 +354,9 @@ DAPC_TEST: Patch = {
     "global": {"nodes": [], "wires": []},
 }
 
-# the `sh101` node: a 4-pole ladder lowpass in a voice chain, driven by an osc.
-SH101_TEST: Patch = {
-    "name": "sh101_test",
+# the `liquid_filter` node: a 4-pole ladder lowpass in a voice chain, driven by an osc.
+LIQUID_TEST: Patch = {
+    "name": "liquid_test",
     "voices": 1,
     "voice": {
         "nodes": [
@@ -364,7 +364,7 @@ SH101_TEST: Patch = {
             {"id": "osc", "type": "osc"},
             {
                 "id": "flt",
-                "type": "sh101",
+                "type": "liquid_filter",
                 "params": {"f": 30000, "res": 40000, "comp": 16384, "on": 1},
             },
             {"id": "env", "type": "env"},
@@ -890,7 +890,7 @@ int main(void) {
 # The SH-101 filter contract: a low `f` coefficient attenuates the input (lowpass),
 # a high `f` passes it, and at a cutoff near the input a high `res` boosts it above
 # res=0 (the resonant peak). `__F__` / `__RES__` are the param ids.
-SH101_HARNESS = """\
+LIQUID_HARNESS = """\
 #include <stdio.h>
 #include <stdint.h>
 void __NAME___dsp_reset(void);
@@ -2286,7 +2286,7 @@ def _sound_decay(patch: Patch) -> tuple[bool, str]:
         return run.returncode == 0, run.stdout.strip()
 
 
-def _sh101_behaves(patch: Patch) -> tuple[bool, str]:
+def _liquid_behaves(patch: Patch) -> tuple[bool, str]:
     """Generate, compile, and run the SH-101 filter contract: a low `f` attenuates
     the input (lowpass), a high `f` passes it, and at a matched cutoff a high `res`
     boosts it above res=0 (the resonant peak)."""
@@ -2297,7 +2297,7 @@ def _sh101_behaves(patch: Patch) -> tuple[bool, str]:
         (d / "dsp.c").write_text(src)
         cname = patch["name"].replace("-", "_").replace(".", "_")
         harness = (
-            SH101_HARNESS.replace("__NAME__", cname)
+            LIQUID_HARNESS.replace("__NAME__", cname)
             .replace("__F__", str(ids["flt.f"]))
             .replace("__RES__", str(ids["flt.res"]))
         )
@@ -3323,15 +3323,17 @@ def main() -> int:
     )
     failures += 0 if ok else 1
 
-    ok, msg = _sound(SH101_TEST)
+    ok, msg = _sound(LIQUID_TEST)
     print(
         ("ok: " if ok else "FAIL: ")
-        + (msg or "sh101 (4-pole ladder) renders non-silent then silent")
+        + (msg or "liquid_filter (4-pole ladder) renders non-silent then silent")
     )
     failures += 0 if ok else 1
 
-    ok, msg = _sh101_behaves(SH101_TEST)
-    print(("ok: " if ok else "FAIL: ") + (msg or "sh101 lowpass + resonant peak"))
+    ok, msg = _liquid_behaves(LIQUID_TEST)
+    print(
+        ("ok: " if ok else "FAIL: ") + (msg or "liquid_filter lowpass + resonant peak")
+    )
     failures += 0 if ok else 1
 
     ok, msg = _sound(DAPC_TEST)

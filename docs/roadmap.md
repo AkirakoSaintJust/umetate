@@ -3555,18 +3555,22 @@ Follow-ups beyond the universalisation backlog, in rough priority order.
 1. **K5000-style firmware (low priority).** A Type P variant whose operators are
    Kawai K5000 additive IFFT operators plus formant filters, with no phase
    modulation and no PM algorithms.
-2. **SH-101-style filter node (done).** Shipped as `modules/nodes/sh101`: an
-   IR3109-style 4-pole (24 dB/oct) resonant lowpass. Four one-pole OTA stages with
-   a 4x negative feedback that reaches unity at the cutoff (so it self-oscillates),
-   a cubic/flat soft clip standing in for the OTA tanh and the SH-101's feedback
-   diodes, and the SH-101's output-level resonance compensation (not the Juno's
-   input compensation). `f` (Q16) is the per-stage coefficient, `res`/`comp` the
-   resonance and compensation, plus `fenv`/`k`/`vk` cutoff modulation and `on`
-   bypass. Outputs `out` (LP4), `lp2` (LP2), `band` (BP tap). Character references:
-   Mutable Instruments Ripples / Audible Instruments Liquid Filter and LFO-lab's
-   SH-010. Verified with a host contract: a low `f` attenuates the input (lowpass),
-   a high `f` passes it, and at a matched cutoff full `res` boosts the output 2.7x
-   above `res`=0 (the resonant peak), all bounded (no overflow).
+2. **Liquid Filter node (done).** Shipped as `modules/nodes/liquid_filter`: a
+   4-pole (24 dB/oct) resonant lowpass ladder in the spirit of the Mutable
+   Instruments Ripples / Audible Instruments Liquid Filter. Four one-pole OTA
+   stages with a 4x negative feedback that reaches unity at the cutoff (so it
+   self-oscillates). The cubic/flat soft clip sits on the resonance feedback path
+   (the Ripples OTA, and the SH-101's feedback diodes), not on the input, so the
+   input stays linear and the self-oscillation amplitude does not change with the
+   input level. Each cell is clamped to the opamp rail. `f` (Q16) is the per-stage
+   coefficient, `res`/`comp` the resonance and output compensation, plus
+   `fenv`/`k`/`vk` cutoff modulation and `on` bypass. Outputs `out` (LP4), `lp2`
+   (LP2), `band` (BP tap). Renamed from an early `sh101` draft to avoid Roland
+   claims we cannot sustain, and reworked after a review that correctly noted the
+   saturation belongs on the feedback path. Verified with a host contract: a low
+   `f` attenuates the input (lowpass), a high `f` passes it, and at a matched
+   cutoff full `res` boosts the output about 5.5x above `res`=0 (the resonant
+   peak), all bounded (no overflow).
 3. **JUCE plugin ports (multi-platform).** DAW plugin ports of the firmware, with a
    multi-platform GUI designed in collaboration.
 4. **Comb filter node (done).** Shipped as `modules/nodes/comb`: a fractional
