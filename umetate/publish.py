@@ -134,10 +134,9 @@ attribution.
 The `.fwsc` is the compiled firmware. Its corresponding source is the project
 files in [`src/`](src/) (the patch, the panel, and the app glue) and the complete
 umetate framework source in [`framework/`](framework/), also GPL-3.0, at
-<https://github.com/CeliaCasanovas/umetate>. The generated DSP is in
-[`framework/firmware/gen/`](framework/firmware/gen/), so the tree builds as-is.
-The preferred form for modification is the `src/` files and the umetate generator,
-not the compiled binary.
+<https://github.com/AkirakoSaintJust/umetate>. The generated DSP is more of an
+object code generated from the JSONs, but it's bundled at
+framework/firmware/gen/, so the tree builds as-is.
 """
 
 
