@@ -3574,8 +3574,9 @@ Follow-ups beyond the universalisation backlog, in rough priority order.
    tone. The states are not clamped (the feedback clip bounds the loop), and the
    feedback runs at 4.5x so the discretized ladder actually sustains.
 3. **JUCE plugin ports (multi-platform).** DAW plugin ports of the firmware, with a
-   multi-platform GUI designed in collaboration. The interface language is now
-   settled in `design/` (§13.16). Next is the reusable host plan.
+   multi-platform GUI designed in collaboration. The interface language is settled
+   in `design/` (§13.16) and the plan is `plugin/README.md` (§13.17). Milestone 0
+   is the instance-safe engine state, not JUCE.
 4. **Comb filter node (done).** Shipped as `modules/nodes/comb`: a fractional
    feedback comb with `cutoff` (Q16, 0..65535, the comb's fundamental ≈
    cutoff/65536 · fs/2, so it is linear in frequency up to Nyquist, and the delay
@@ -3657,3 +3658,22 @@ The optional JUCE ports in §13.13 item 3 now have a design language and a worki
 method. The next step is the plugin plan: reusable host, generated project, the
 full parameter manifest, the 44.1 kHz core with output-only resampling, and the
 GPLv3 and font licence checks.
+
+### 13.17 JUCE plugin plan (2026-11-03)
+
+The plan is `plugin/README.md`. It covers a reusable JUCE host plus a generated
+`type-p-fm1` project, VST3 first, CLAP through a pinned wrapper, and AU later. The
+plugin reuses the generated DSP and the device MIDI, preset and parameter code. It
+does not reimplement the voice graph in C++.
+
+The generated manifest currently has **309** parameters: 133 per part plus 5
+routing parameters per part, plus 33 global. The earlier 194 estimate is retired.
+Every parameter is exposed to the host. The editor may hide some behind target
+selectors, and a coverage test proves that no parameter is orphaned.
+
+The first blocking step is not JUCE. It is an instance-safe engine state. The
+generated DSP currently uses 332 file-scope statics, so two plugin instances in
+one process would share voice and parameter state. Milestone 0 moves the state
+into a generated struct, keeps the firmware API over one static instance, and
+proves device, host and web parity plus two-instance isolation. The plugin build
+stays an optional host-native path and does not change the Docker firmware gate.
