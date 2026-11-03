@@ -38,7 +38,7 @@ def emit(graph: CompiledGraph) -> str:
     lines.append('#include "fm1_ipc.h"')
     if graph.tables:
         lines.append('#include "tables.h"')
-    lines.append('#include <stddef.h>')
+    lines.append("#include <stddef.h>")
     lines.append("")
     lines.append("#ifndef UMETATE_CPU1")
     lines.append("#define UMETATE_CPU1")
@@ -67,9 +67,7 @@ def emit(graph: CompiledGraph) -> str:
     for _fname, decl in fields:
         lines.append(f"    {decl}")
     lines.append(f"}} {graph.name}_state;")
-    lines.append(
-        "_Static_assert(UMETATE_DSP_BLOCK_FRAMES == DSP_TAP_FRAMES,"
-    )
+    lines.append("_Static_assert(UMETATE_DSP_BLOCK_FRAMES == DSP_TAP_FRAMES,")
     lines.append('               "tap frames must match the DSP block size");')
     lines.append("")
     lines.extend(_note_to_inc())
@@ -118,9 +116,7 @@ def _state_fields(
             if kind == POOL:
                 pool_defs.append(f"#define {fname}_len 8192")
                 pool_defs.append(f"#define {i.c}_delay_mask 8191")
-                pool_defs.append(
-                    f"static int16_t {fname}[{fname}_len] UMETATE_POOL;"
-                )
+                pool_defs.append(f"static int16_t {fname}[{fname}_len] UMETATE_POOL;")
                 fields.append((fname, f"int16_t *{fname};"))
                 pool_bind.append((fname, fname))
             elif i.zone == "voice":
@@ -138,9 +134,7 @@ def _routing_fields(graph: CompiledGraph) -> list[StateField]:
     for p in graph.params:
         if p.part is not None and p.cname.startswith("part_"):
             defaults.setdefault(p.cname, []).append(p.default)
-    return [
-        (cname, f"int32_t {cname}[{graph.n_parts}];") for cname in defaults
-    ]
+    return [(cname, f"int32_t {cname}[{graph.n_parts}];") for cname in defaults]
 
 
 def _param_fields(graph: CompiledGraph) -> list[StateField]:
@@ -284,9 +278,7 @@ def _state_access(fields: list[StateField], name: str) -> list[str]:
     return lines
 
 
-def _legacy_state(
-    graph: CompiledGraph, pool_bind: list[tuple[str, str]]
-) -> list[str]:
+def _legacy_state(graph: CompiledGraph, pool_bind: list[tuple[str, str]]) -> list[str]:
     """The firmware's single global state and its lazy init. Compiled out of the
     plugin build with UMETATE_INSTANCE_ONLY."""
     name = graph.name

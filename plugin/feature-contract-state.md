@@ -97,8 +97,13 @@
   isolated over four interleaved blocks.
 - The full generator suite passes, including the sound, algorithm, mode, part,
   tap and ASan checks.
-- The target package and the web parity gate are blocked by the local
-  environment. Recorded as blocked, not as a pass.
+- The full `umetate deep-check --all` gate passes.
+- The web parity gate passes, host and WASM exact on 512 int32 samples.
+- The target package builds with the Docker/JieLi toolchain. The performance
+  profile reports 215544 B of 581564 for the image, RAM through `.bss` 96908 B of
+  98304, pool 105536 B of 344064, and 18860 B of `.dsp_text` in SRAM.
+- Physical device acceptance and timing remain blocked. They are recorded as
+  blocked, not as a pass.
 
 ## Risks and fallback
 
