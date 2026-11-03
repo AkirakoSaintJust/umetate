@@ -109,19 +109,12 @@ def mode_param_entries(
     return entries
 
 
-def mode_param_decls(n_parts: int) -> list[str]:
-    """The `static int32_t vm_*` backing variables: global scalars (single-timbre)
-    or per-part arrays (multi-timbre)."""
+def mode_param_fields(n_parts: int) -> list[tuple[str, str]]:
+    """The `vm_*` backing fields: global scalars (single-timbre) or per-part
+    arrays (multi-timbre). Defaults are applied by the generated state_init."""
     if n_parts > 1:
-        return [
-            f"static int32_t {cname}[{n_parts}] = {{ "
-            + ", ".join(str(default_) for _ in range(n_parts))
-            + " };"
-            for cname, default_, *_ in MODE_PARAMS
-        ]
-    return [
-        f"static int32_t {cname} = {default_};" for cname, default_, *_ in MODE_PARAMS
-    ]
+        return [(cname, f"int32_t {cname}[{n_parts}];") for cname, *_ in MODE_PARAMS]
+    return [(cname, f"int32_t {cname};") for cname, *_ in MODE_PARAMS]
 
 
 def mode_ref(cname: str, per_part: bool, part_expr: str) -> str:
@@ -130,37 +123,37 @@ def mode_ref(cname: str, per_part: bool, part_expr: str) -> str:
     return f"{cname}[{part_expr}]" if per_part else cname
 
 
-def voice_state_decls(per_part: bool) -> list[str]:
-    """Per-voice SoA state + the mono held-note tracker (all CPU1)."""
-    lines = [
-        "static uint8_t voice_gate[NVOICE] UMETATE_CPU1;",
-        "static uint8_t voice_note[NVOICE] UMETATE_CPU1;",
-        "static uint32_t voice_age[NVOICE] UMETATE_CPU1;",
-        "static int32_t voice_velocity[NVOICE] UMETATE_CPU1;",
-        "static uint8_t voice_trig[NVOICE] UMETATE_CPU1;",
-        "static uint8_t voice_part[NVOICE] UMETATE_CPU1; /* the part a voice belongs to */",
-        "static uint32_t voice_delay[NVOICE] UMETATE_CPU1; /* onset-offset samples (0 = live) */",
-        "static uint16_t voice_rel[NVOICE] UMETATE_CPU1; /* release-tail blocks (0 = live or idle) */",
-        "static uint32_t voice_inc[NVOICE] UMETATE_CPU1; /* current base increment */",
-        "static uint32_t voice_target_inc[NVOICE] UMETATE_CPU1; /* glide target */",
-        "static int32_t voice_detune[NVOICE] UMETATE_CPU1;",
+def voice_state_fields(per_part: bool) -> list[tuple[str, str]]:
+    """Per-voice SoA state fields + the mono held-note tracker + ages."""
+    fields: list[tuple[str, str]] = [
+        ("voice_gate", "uint8_t voice_gate[NVOICE];"),
+        ("voice_note", "uint8_t voice_note[NVOICE];"),
+        ("voice_age", "uint32_t voice_age[NVOICE];"),
+        ("voice_velocity", "int32_t voice_velocity[NVOICE];"),
+        ("voice_trig", "uint8_t voice_trig[NVOICE];"),
+        ("voice_part", "uint8_t voice_part[NVOICE];"),
+        ("voice_delay", "uint32_t voice_delay[NVOICE];"),
+        ("voice_rel", "uint16_t voice_rel[NVOICE];"),
+        ("voice_inc", "uint32_t voice_inc[NVOICE];"),
+        ("voice_target_inc", "uint32_t voice_target_inc[NVOICE];"),
+        ("voice_detune", "int32_t voice_detune[NVOICE];"),
     ]
     if per_part:
-        lines += [
-            "static uint8_t mono_held[N_PART][128] UMETATE_CPU1;",
-            "static uint32_t mono_order[N_PART][128] UMETATE_CPU1;",
-            "static uint32_t mono_serial[N_PART] UMETATE_CPU1;",
-            "static uint8_t part_mono_voice[N_PART][8] UMETATE_CPU1; /* the part's mono stack */",
-            "static uint8_t part_mono_count[N_PART] UMETATE_CPU1; /* the stack size (0 = none) */",
+        fields += [
+            ("mono_held", "uint8_t mono_held[N_PART][128];"),
+            ("mono_order", "uint32_t mono_order[N_PART][128];"),
+            ("mono_serial", "uint32_t mono_serial[N_PART];"),
+            ("part_mono_voice", "uint8_t part_mono_voice[N_PART][8];"),
+            ("part_mono_count", "uint8_t part_mono_count[N_PART];"),
         ]
     else:
-        lines += [
-            "static uint8_t mono_held[128] UMETATE_CPU1;",
-            "static uint32_t mono_order[128] UMETATE_CPU1;",
-            "static uint32_t mono_serial;",
+        fields += [
+            ("mono_held", "uint8_t mono_held[128];"),
+            ("mono_order", "uint32_t mono_order[128];"),
+            ("mono_serial", "uint32_t mono_serial;"),
         ]
-    lines.append("static uint32_t ages;")
-    return lines
+    fields.append(("ages", "uint32_t ages;"))
+    return fields
 
 
 def helpers(per_part: bool) -> list[str]:
@@ -230,12 +223,13 @@ def helpers(per_part: bool) -> list[str]:
 
 
 def note_on(name: str, n_parts: int) -> list[str]:
-    """The `<name>_dsp_note_on_ch` implementation (mode-aware single-timbre, or
-    per-part mode/channel/keyzone routing for parts) + the frozen forwarder."""
+    """The `<name>_dsp_note_on_ch_s` + `<name>_dsp_note_on_s` implementations
+    (mode-aware single-timbre, or per-part mode/channel/keyzone routing for parts)."""
     impl = _note_on_ch_parts(name) if n_parts > 1 else _note_on_ch_single(name)
     return impl + [
-        f"UMETATE_DSP_API void {name}_dsp_note_on(uint32_t note, uint32_t velocity) {{",
-        f"    {name}_dsp_note_on_ch(note, velocity, 0xFFFFFFFFu); /* omni */",
+        f"UMETATE_DSP_API void {name}_dsp_note_on_s({name}_state *state, uint32_t note, uint32_t velocity) {{",
+        "    S = state;",
+        f"    {name}_dsp_note_on_ch_s(state, note, velocity, 0xFFFFFFFFu); /* omni */",
         "}",
         "",
     ]
@@ -243,9 +237,10 @@ def note_on(name: str, n_parts: int) -> list[str]:
 
 def _note_on_ch_single(name: str) -> list[str]:
     """The mode-aware allocation (mono with stacked voices / poly), as
-    `<name>_dsp_note_on_ch`."""
+    `<name>_dsp_note_on_ch_s`."""
     return [
-        f"UMETATE_DSP_API void {name}_dsp_note_on_ch(uint32_t note, uint32_t velocity, uint32_t channel) {{",
+        f"UMETATE_DSP_API void {name}_dsp_note_on_ch_s({name}_state *state, uint32_t note, uint32_t velocity, uint32_t channel) {{",
+        "    S = state;",
         "    (void)channel;",
         "    if (note > 127u || !velocity) return;",
         "    uint8_t picked[NVOICE];",
@@ -315,7 +310,8 @@ def _note_on_ch_parts(name: str) -> list[str]:
     keyzone), each allocating per its own voice mode — poly (one voice) or mono
     (the part's `unison_count` stacked voices, legato/priority/portamento)."""
     return [
-        f"UMETATE_DSP_API void {name}_dsp_note_on_ch(uint32_t note, uint32_t velocity, uint32_t channel) {{",
+        f"UMETATE_DSP_API void {name}_dsp_note_on_ch_s({name}_state *state, uint32_t note, uint32_t velocity, uint32_t channel) {{",
+        "    S = state;",
         "    if (note > 127u || !velocity) return;",
         "    uint8_t picked[NVOICE];",
         "    uint8_t chosen[NVOICE];",
@@ -429,7 +425,8 @@ def note_off(name: str, n_parts: int) -> list[str]:
     per-part mode-aware release for parts."""
     if n_parts > 1:
         return [
-            f"UMETATE_DSP_API void {name}_dsp_note_off(uint32_t note) {{",
+            f"UMETATE_DSP_API void {name}_dsp_note_off_s({name}_state *state, uint32_t note) {{",
+            "    S = state;",
             "    if (note > 127u) return;",
             "    for (uint32_t p = 0; p < N_PART; p++) {",
             "        if ((uint32_t)vm_mode[p] == 1u) {",
@@ -463,7 +460,8 @@ def note_off(name: str, n_parts: int) -> list[str]:
             "",
         ]
     return [
-        f"UMETATE_DSP_API void {name}_dsp_note_off(uint32_t note) {{",
+        f"UMETATE_DSP_API void {name}_dsp_note_off_s({name}_state *state, uint32_t note) {{",
+        "    S = state;",
         "    if (note > 127u) return;",
         "    if (vm_mode == 1) {",
         "        if (mono_held[note]) mono_held[note]--;",

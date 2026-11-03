@@ -18,7 +18,6 @@ from ._ir import (
     GenError,
     NodeInstance,
     ParamEntry,
-    param_default,
 )
 from ._tables import table_cname
 
@@ -39,6 +38,7 @@ def emit(graph: CompiledGraph) -> str:
     lines.append('#include "fm1_ipc.h"')
     if graph.tables:
         lines.append('#include "tables.h"')
+    lines.append('#include <stddef.h>')
     lines.append("")
     lines.append("#ifndef UMETATE_CPU1")
     lines.append("#define UMETATE_CPU1")
@@ -55,19 +55,32 @@ def emit(graph: CompiledGraph) -> str:
     lines.append("#define UMETATE_DSP_API")
     lines.append("#endif")
     lines.append("")
+    per_part = graph.n_parts > 1
+    fields, pool_defs, pool_bind = state_fields(graph)
     lines.append(f"#define NVOICE {graph.voices}")
     lines.append(f"#define N_PART {graph.n_parts}")
     lines.append(f"#define CONTROL_BLOCK {graph.control_block}")
+    lines.append("#define DSP_TAP_FRAMES 256u")
+    if graph.taps:
+        lines.append(f"#define N_TAP_CH {len(graph.taps) * graph.n_parts}u")
+    lines.append(f"typedef struct {graph.name}_state {{")
+    for _fname, decl in fields:
+        lines.append(f"    {decl}")
+    lines.append(f"}} {graph.name}_state;")
+    lines.append(
+        "_Static_assert(UMETATE_DSP_BLOCK_FRAMES == DSP_TAP_FRAMES,"
+    )
+    lines.append('               "tap frames must match the DSP block size");')
     lines.append("")
-    per_part = graph.n_parts > 1
     lines.extend(_note_to_inc())
-    lines.extend(_state_decls(graph))
-    lines.extend(_voice.voice_state_decls(per_part))
-    lines.extend(_voice.mode_param_decls(graph.n_parts))
-    lines.extend(_routing_decls(graph))
-    lines.append("static uint32_t patch_gate UMETATE_CPU1;")
-    lines.extend(_param_decls(graph))
+    if pool_defs:
+        lines.append("#ifndef UMETATE_INSTANCE_ONLY")
+        lines.extend(pool_defs)
+        lines.append("#endif")
     lines.extend(_param_tables(graph))
+    lines.extend(_state_init_support(graph, graph.params))
+    lines.extend(_legacy_state(graph, pool_bind))
+    lines.extend(_state_access(fields, graph.name))
     lines.append("")
     lines.extend(_voice.helpers(per_part))  # voice_mono_active (used by note_on/off)
     lines.extend(_note_derived_fn(graph))  # <name>_note_derived (render + seam)
@@ -88,76 +101,222 @@ def _state_ctype(kind: str) -> str:
     return "uint32_t"
 
 
-def _state_decls(graph: CompiledGraph) -> list[str]:
-    """Emit SoA (voice) / scalar (global) state and pool ring buffers."""
-    lines: list[str] = []
+StateField = tuple[str, str]
+
+
+def _state_fields(
+    graph: CompiledGraph,
+) -> tuple[list[StateField], list[str], list[tuple[str, str]]]:
+    """The node state as struct fields, plus the target pool globals and the
+    legacy pool bindings. Pool buffers stay in `.pool`; the state holds pointers."""
+    fields: list[StateField] = []
+    pool_defs: list[str] = []
+    pool_bind: list[tuple[str, str]] = []
     for i in graph.instances:
         for sname, kind in i.spec.state.items():
+            fname = f"{i.c}_{sname}"
             if kind == POOL:
-                lines.append(f"#define {i.c}_{sname}_len 8192")
-                lines.append(f"#define {i.c}_delay_mask 8191")
-                lines.append(
-                    f"static int16_t {i.c}_{sname}[{i.c}_{sname}_len] UMETATE_POOL;"
+                pool_defs.append(f"#define {fname}_len 8192")
+                pool_defs.append(f"#define {i.c}_delay_mask 8191")
+                pool_defs.append(
+                    f"static int16_t {fname}[{fname}_len] UMETATE_POOL;"
                 )
+                fields.append((fname, f"int16_t *{fname};"))
+                pool_bind.append((fname, fname))
             elif i.zone == "voice":
-                lines.append(
-                    f"static {_state_ctype(kind)} {i.c}_{sname}[NVOICE] UMETATE_CPU1;"
-                )
+                fields.append((fname, f"{_state_ctype(kind)} {fname}[NVOICE];"))
             else:
-                lines.append(f"static {_state_ctype(kind)} {i.c}_{sname} UMETATE_CPU1;")
-    return lines
+                fields.append((fname, f"{_state_ctype(kind)} {fname};"))
+    return fields, pool_defs, pool_bind
 
 
-def _routing_decls(graph: CompiledGraph) -> list[str]:
-    """The per-part routing backing arrays (`part_channel`/`part_low`/`part_high`/
-    `part_level`/`part_delay`), initialized from the routing params' defaults."""
+def _routing_fields(graph: CompiledGraph) -> list[StateField]:
+    """The per-part routing backing fields."""
     if graph.n_parts <= 1:
         return []
     defaults: dict[str, list[int]] = {}
     for p in graph.params:
         if p.part is not None and p.cname.startswith("part_"):
             defaults.setdefault(p.cname, []).append(p.default)
-    lines: list[str] = []
-    for cname, vals in defaults.items():
-        lines.append(
-            f"static int32_t {cname}[{graph.n_parts}] = {{ "
-            f"{', '.join(str(v) for v in vals)} }};"
-        )
-    return lines
+    return [
+        (cname, f"int32_t {cname}[{graph.n_parts}];") for cname in defaults
+    ]
 
 
-def _param_decls(graph: CompiledGraph) -> list[str]:
-    """Emit one `static int32_t` (or a `[N_PART]` array) per node param, per-part
-    for the voice zone, initialized to its default/value."""
-    lines: list[str] = []
+def _param_fields(graph: CompiledGraph) -> list[StateField]:
+    """The node params as struct fields (per-part arrays for the voice zone)."""
+    fields: list[StateField] = []
     per_part = graph.n_parts > 1
     for i in graph.instances:
-        for pname, kind in i.spec.params.items():
-            default = param_default(
-                kind, i.params.get(pname) or i.spec.param_defaults.get(pname)
-            )
+        for pname in i.spec.params:
+            fname = i.param_expr(pname)
             if per_part and i.zone == "voice":
-                init = ", ".join(str(default) for _ in range(graph.n_parts))
-                lines.append(
-                    f"static int32_t {i.param_expr(pname)}[{graph.n_parts}] = {{ {init} }};"
-                )
+                fields.append((fname, f"int32_t {fname}[{graph.n_parts}];"))
             else:
-                lines.append(f"static int32_t {i.param_expr(pname)} = {default};")
+                fields.append((fname, f"int32_t {fname};"))
+    return fields
+
+
+def _render_fields(
+    graph: CompiledGraph, by_id: dict[str, NodeInstance]
+) -> list[StateField]:
+    """The render prologue temps, the buses and the tap buffers."""
+    fields: list[StateField] = [("patch_gate", "uint32_t patch_gate;")]
+    for i in _control_rate_nodes(graph, by_id):
+        for port in i.spec.outs:
+            fname = f"{i.c}_{port}_x"
+            if i.zone == "voice":
+                fields.append((fname, f"int32_t {fname}[NVOICE];"))
+            else:
+                fields.append((fname, f"int32_t {fname};"))
+    fields.append(
+        (
+            f"{graph.name}_render_bus0",
+            f"int32_t {graph.name}_render_bus0[CONTROL_BLOCK];",
+        )
+    )
+    fields.append(
+        (
+            f"{graph.name}_render_bus1",
+            f"int32_t {graph.name}_render_bus1[CONTROL_BLOCK];",
+        )
+    )
+    if graph.taps:
+        fields.append(
+            (
+                f"{graph.name}_tap0",
+                f"int32_t {graph.name}_tap0[N_TAP_CH][DSP_TAP_FRAMES];",
+            )
+        )
+        fields.append(
+            (
+                f"{graph.name}_tap1",
+                f"int32_t {graph.name}_tap1[N_TAP_CH][DSP_TAP_FRAMES];",
+            )
+        )
+    return fields
+
+
+def state_fields(
+    graph: CompiledGraph,
+) -> tuple[list[StateField], list[str], list[tuple[str, str]]]:
+    """Every engine state field, sorted by alignment to keep struct padding low.
+    Returns `(fields, pool_globals, pool_bindings)`."""
+    by_id = {i.id: i for i in graph.instances}
+    fields, pool_defs, pool_bind = _state_fields(graph)
+    fields += _voice.voice_state_fields(graph.n_parts > 1)
+    fields += _voice.mode_param_fields(graph.n_parts)
+    fields += _routing_fields(graph)
+    fields += _param_fields(graph)
+    fields += _render_fields(graph, by_id)
+    seen: set[str] = set()
+    for fname, _ in fields:
+        if fname in seen:
+            raise GenError(f"duplicate engine state field {fname!r}")
+        seen.add(fname)
+
+    def rank(field: StateField) -> int:
+        decl = field[1]
+        if "*" in decl:
+            return 0
+        if "int32_t" in decl or "uint32_t" in decl:
+            return 1
+        if "int16_t" in decl or "uint16_t" in decl:
+            return 2
+        return 3
+
+    return sorted(fields, key=rank), pool_defs, pool_bind
+
+
+def _state_init_support(
+    graph: CompiledGraph,
+    params: list[ParamEntry],
+) -> list[str]:
+    """The per-state parameter lookup and the state init. Emitted before the field
+    access macros so `offsetof` and the pool bindings see real field names."""
+    name = graph.name
+    lines = [
+        f"typedef struct {{ uint32_t off; uint8_t part; }} {name}_slot_t;",
+        f"static const {name}_slot_t {name}_slots[{len(params) or 1}] = {{",
+    ]
+    if params:
+        for p in params:
+            part = 0xFF if p.part is None else p.part
+            lines.append(
+                f"    {{ (uint32_t)offsetof({name}_state, {p.cname}), {part}u }},"
+            )
+    else:
+        lines.append("    { 0u, 0xFFu },")
+    lines += [
+        "};",
+        f"_Static_assert(sizeof({name}_state) % sizeof(uint32_t) == 0,",
+        '               "the engine state must be a whole number of words");',
+        "",
+        "static inline __attribute__((always_inline)) int32_t *",
+        f"{name}_param_slot({name}_state *s, uint32_t id) {{",
+        f"    const {name}_slot_t *p = &{name}_slots[id];",
+        "    return (int32_t *)((uint8_t *)s + p->off +",
+        "                       (p->part == 0xFFu ? 0u : (uint32_t)p->part * 4u));",
+        "}",
+        "",
+        f"UMETATE_DSP_API void {name}_dsp_state_init({name}_state *s) {{",
+        "    for (uint32_t i = 0; i < sizeof *s / sizeof(uint32_t); i++)",
+        "        ((volatile uint32_t *)s)[i] = 0u;",
+        "    for (uint32_t i = 0; i < PARAM_COUNT; i++)",
+        f"        *{name}_param_slot(s, i) = {name}_dsp_params[i].def;",
+        "}",
+        "",
+    ]
     return lines
 
 
-def _slot_ref(p: ParamEntry) -> str:
-    """The `&backing` (or `&backing[part]`) expression for a param's slot."""
-    return f"&{p.cname}[{p.part}]" if p.part is not None else f"&{p.cname}"
+def _state_access(fields: list[StateField], name: str) -> list[str]:
+    """The field access macros and the current-state pointer."""
+    lines = [f"#define {fname} (S->{fname})" for fname, _ in fields]
+    lines += [
+        "",
+        "#ifndef UMETATE_STATE_PTR",
+        "#define UMETATE_STATE_PTR",
+        "#endif",
+        f"static UMETATE_STATE_PTR {name}_state *S;",
+        "",
+    ]
+    return lines
+
+
+def _legacy_state(
+    graph: CompiledGraph, pool_bind: list[tuple[str, str]]
+) -> list[str]:
+    """The firmware's single global state and its lazy init. Compiled out of the
+    plugin build with UMETATE_INSTANCE_ONLY."""
+    name = graph.name
+    lines = [
+        "#ifndef UMETATE_INSTANCE_ONLY",
+        f"static {name}_state {name}_legacy_state UMETATE_CPU1;",
+        f"static uint8_t {name}_legacy_ready;",
+        f"static UMETATE_DSP_API {name}_state *{name}_legacy(void) {{",
+        f"    if (!{name}_legacy_ready) {{",
+        f"        {name}_dsp_state_init(&{name}_legacy_state);",
+    ]
+    for fname, global_name in pool_bind:
+        lines.append(f"        {name}_legacy_state.{fname} = {global_name};")
+    lines += [
+        f"        {name}_legacy_ready = 1;",
+        "    }",
+        f"    return &{name}_legacy_state;",
+        "}",
+        "#endif",
+        "",
+    ]
+    return lines
 
 
 def _param_tables(graph: CompiledGraph) -> list[str]:
-    """The param slot table + the `dsp_param` metadata table (both `const`, XIP)."""
+    """The `dsp_param` metadata table (const, XIP). The slot lookup lives in
+    `_state_support` because it now offsets from a state pointer."""
     params = graph.params
-    slots = ", ".join(_slot_ref(p) for p in params) if params else "0"
     lines = [
         f"#define PARAM_COUNT {len(params)}",
-        f"static int32_t *const synth_param_slots[{len(params) or 1}] = {{ {slots} }};",
         "",
         "typedef struct { uint32_t id; const char *name; int32_t min, max, def;",
         "                 uint8_t curve; uint8_t rate; const char *unit; } dsp_param;",
@@ -206,35 +365,7 @@ def _render(
 
     lines: list[str] = []
 
-    # Split-core render (docs/roadmap.md §4.2, D3): the hot per-voice loop is a
-    # separable phase `render_voices_block` (one CONTROL_BLOCK's worth of voice
-    # synthesis into a caller bus), so it can later run on both cores. `dsp_render`
-    # keeps the block loop and does the global control prologue + global audio
-    # (filter/wavefolder) inline — those stay single-core. The global control-rate
-    # outputs are file-scope temps: `dsp_render` writes them each block, and
-    # `render_voices_block` reads them.
-    for i in _control_rate_nodes(graph, by_id):
-        for port in i.spec.outs:
-            if i.zone == "voice":
-                lines.append(f"static int32_t {i.c}_{port}_x[NVOICE] UMETATE_CPU1;")
-            else:
-                lines.append(f"static int32_t {i.c}_{port}_x UMETATE_CPU1;")
-    lines.append(
-        f"static int32_t {graph.name}_render_bus0[CONTROL_BLOCK] UMETATE_CPU1;"
-    )
-    lines.append(
-        f"static int32_t {graph.name}_render_bus1[CONTROL_BLOCK] UMETATE_CPU1;"
-    )
     if graph.taps:
-        n_ch = len(graph.taps) * graph.n_parts
-        lines.append(f"#define N_TAP {len(graph.taps)}u")
-        lines.append(f"#define N_TAP_CH {n_ch}u")
-        lines.append(
-            f"static int32_t {graph.name}_tap0[N_TAP_CH][UMETATE_DSP_BLOCK_FRAMES] UMETATE_CPU1;"
-        )
-        lines.append(
-            f"static int32_t {graph.name}_tap1[N_TAP_CH][UMETATE_DSP_BLOCK_FRAMES] UMETATE_CPU1;"
-        )
         lines.extend(_tap_clear_fn(graph.name))
     lines.append("")
 
@@ -438,7 +569,8 @@ def _render_dsp_render(graph: CompiledGraph) -> list[str]:
     name, cb = graph.name, graph.control_block
     if graph.taps:
         return [
-            f"UMETATE_DSP_API void {name}_dsp_render(int32_t *out, uint32_t frames) {{",
+            f"UMETATE_DSP_API void {name}_dsp_render_s({name}_state *state, int32_t *out, uint32_t frames) {{",
+            "    S = state;",
             f"    {name}_taps_clear({name}_tap0);",
             f"    for ({_CONTROL_BLOCK_TYPE} b = 0; b < frames; b += {cb}u) {{",
             f"        {name}_render_pre_block();",
@@ -449,7 +581,8 @@ def _render_dsp_render(graph: CompiledGraph) -> list[str]:
             "",
         ]
     return [
-        f"UMETATE_DSP_API void {name}_dsp_render(int32_t *out, uint32_t frames) {{",
+        f"UMETATE_DSP_API void {name}_dsp_render_s({name}_state *state, int32_t *out, uint32_t frames) {{",
+        "    S = state;",
         f"    for ({_CONTROL_BLOCK_TYPE} b = 0; b < frames; b += {cb}u) {{",
         f"        {name}_render_pre_block();",
         f"        {name}_render_voices_block({name}_render_bus0, 0u, NVOICE, b, frames);",
@@ -756,7 +889,8 @@ def _seam(graph: CompiledGraph, by_id: dict[str, NodeInstance]) -> list[str]:
     lines: list[str] = []
     lines.extend(
         [
-            f"UMETATE_DSP_API void {name}_dsp_reset(void) {{",
+            f"UMETATE_DSP_API void {name}_dsp_reset_s({name}_state *state) {{",
+            "    S = state;",
             *_voice.reset(per_part),
             "}",
             "",
@@ -766,13 +900,18 @@ def _seam(graph: CompiledGraph, by_id: dict[str, NodeInstance]) -> list[str]:
     lines.extend(_voice.note_off(name, graph.n_parts))
     lines.extend(
         [
-            f"UMETATE_DSP_API void {name}_dsp_all_notes_off(void) {{",
+            f"UMETATE_DSP_API void {name}_dsp_all_notes_off_s({name}_state *state) {{",
+            "    S = state;",
             *_voice.all_off(per_part),
             "}",
             "",
-            f"UMETATE_DSP_API void {name}_dsp_set_bend_q16(uint32_t bend) {{ (void)bend; }}",
+            f"UMETATE_DSP_API void {name}_dsp_set_bend_q16_s({name}_state *state, uint32_t bend) {{",
+            "    S = state;",
+            "    (void)bend;",
+            "}",
             "",
-            f"UMETATE_DSP_API uint32_t {name}_dsp_lit(uint32_t base) {{",
+            f"UMETATE_DSP_API uint32_t {name}_dsp_lit_s({name}_state *state, uint32_t base) {{",
+            "    S = state;",
             "    uint32_t lit = 0;",
             "    for (uint32_t v = 0; v < NVOICE; v++)",
             "        if (voice_gate[v] && voice_note[v] >= base && voice_note[v] < base + 27u)",
@@ -780,21 +919,22 @@ def _seam(graph: CompiledGraph, by_id: dict[str, NodeInstance]) -> list[str]:
             "    return lit;",
             "}",
             "",
-            f"UMETATE_DSP_API int {name}_dsp_quiet(void) {{",
+            f"UMETATE_DSP_API int {name}_dsp_quiet_s({name}_state *state) {{",
+            "    S = state;",
             "    for (uint32_t v = 0; v < NVOICE; v++) if (voice_gate[v]) return 0;",
             "    return 1;",
             "}",
             "",
-            f"UMETATE_DSP_API int {name}_dsp_set_param(uint32_t id, int32_t value) {{",
+            f"UMETATE_DSP_API int {name}_dsp_set_param_s({name}_state *state, uint32_t id, int32_t value) {{",
             "    if (id >= PARAM_COUNT) return -1;",
             f"    if (value < {name}_dsp_params[id].min) value = {name}_dsp_params[id].min;",
             f"    if (value > {name}_dsp_params[id].max) value = {name}_dsp_params[id].max;",
-            "    *synth_param_slots[id] = value;",
+            f"    *{name}_param_slot(state, id) = value;",
             "    return 0;",
             "}",
             "",
-            f"UMETATE_DSP_API int32_t {name}_dsp_get_param(uint32_t id) {{",
-            "    return id < PARAM_COUNT ? *synth_param_slots[id] : 0;",
+            f"UMETATE_DSP_API int32_t {name}_dsp_get_param_s({name}_state *state, uint32_t id) {{",
+            f"    return id < PARAM_COUNT ? *{name}_param_slot(state, id) : 0;",
             "}",
             "",
             f"UMETATE_DSP_API uint32_t {name}_dsp_param_count(void) {{ return PARAM_COUNT; }}",
@@ -805,23 +945,25 @@ def _seam(graph: CompiledGraph, by_id: dict[str, NodeInstance]) -> list[str]:
             # rib_render_block. Compiled out on the host (no second core).
             "#if FM1_CPU1_USED",
             f"void {name}_render_block(uint32_t arg) {{",
+            f"    {name}_state *state = {name}_legacy();",
             "    int32_t *out = (int32_t *)(uintptr_t)arg;",
             "    dsp_cmd c;",
+            "    S = state;",
             "    if (dsp_all_off_pending) {",
-            f"        {name}_dsp_all_notes_off();",
+            f"        {name}_dsp_all_notes_off_s(state);",
             "        dsp_all_off_pending = 0;",
             "    }",
             "    while (dsp_cmd_pop(&c)) {",
             "        if (c.kind == UMETATE_DSP_CMD_NOTE_ON)",
-            f"            {name}_dsp_note_on_ch(c.note, c.vel, c.ch == 0xFFu ? 0xFFFFFFFFu : c.ch);",
+            f"            {name}_dsp_note_on_ch_s(state, c.note, c.vel, c.ch == 0xFFu ? 0xFFFFFFFFu : c.ch);",
             "        else if (c.kind == UMETATE_DSP_CMD_NOTE_OFF)",
-            f"            {name}_dsp_note_off(c.note);",
+            f"            {name}_dsp_note_off_s(state, c.note);",
             "        else",
-            f"            {name}_dsp_all_notes_off();",
+            f"            {name}_dsp_all_notes_off_s(state);",
             "    }",
             f"    {name}_render_split(out, UMETATE_DSP_BLOCK_FRAMES);",
-            f"    dsp_status.lit = {name}_dsp_lit(lit_base);",
-            f"    dsp_status.quiet = (uint32_t){name}_dsp_quiet();",
+            f"    dsp_status.lit = {name}_dsp_lit_s(state, lit_base);",
+            f"    dsp_status.quiet = (uint32_t){name}_dsp_quiet_s(state);",
             "    FM1_CSYNC();",
             "}",
             "#endif",
@@ -833,12 +975,34 @@ def _seam(graph: CompiledGraph, by_id: dict[str, NodeInstance]) -> list[str]:
             [
                 # the per-op scope tap channels (§6.11.4 L11): `ch` = tap × N_PART +
                 # part, each the last block's Q15 samples (UMETATE_DSP_BLOCK_FRAMES).
-                f"UMETATE_DSP_API const int32_t *{name}_dsp_tap(uint32_t ch) {{",
+                f"UMETATE_DSP_API const int32_t *{name}_dsp_tap_s({name}_state *state, uint32_t ch) {{",
+                "    S = state;",
                 f"    return ch < N_TAP_CH ? {name}_tap0[ch] : {name}_tap0[0];",
                 "}",
                 "",
             ]
         )
+    lines.extend(
+        [
+            "#ifndef UMETATE_INSTANCE_ONLY",
+            f"UMETATE_DSP_API void {name}_dsp_reset(void) {{ {name}_dsp_reset_s({name}_legacy()); }}",
+            f"UMETATE_DSP_API void {name}_dsp_note_on(uint32_t note, uint32_t velocity) {{ {name}_dsp_note_on_s({name}_legacy(), note, velocity); }}",
+            f"UMETATE_DSP_API void {name}_dsp_note_on_ch(uint32_t note, uint32_t velocity, uint32_t channel) {{ {name}_dsp_note_on_ch_s({name}_legacy(), note, velocity, channel); }}",
+            f"UMETATE_DSP_API void {name}_dsp_note_off(uint32_t note) {{ {name}_dsp_note_off_s({name}_legacy(), note); }}",
+            f"UMETATE_DSP_API void {name}_dsp_all_notes_off(void) {{ {name}_dsp_all_notes_off_s({name}_legacy()); }}",
+            f"UMETATE_DSP_API void {name}_dsp_set_bend_q16(uint32_t bend) {{ {name}_dsp_set_bend_q16_s({name}_legacy(), bend); }}",
+            f"UMETATE_DSP_API uint32_t {name}_dsp_lit(uint32_t base) {{ return {name}_dsp_lit_s({name}_legacy(), base); }}",
+            f"UMETATE_DSP_API int {name}_dsp_quiet(void) {{ return {name}_dsp_quiet_s({name}_legacy()); }}",
+            f"UMETATE_DSP_API int {name}_dsp_set_param(uint32_t id, int32_t value) {{ return {name}_dsp_set_param_s({name}_legacy(), id, value); }}",
+            f"UMETATE_DSP_API int32_t {name}_dsp_get_param(uint32_t id) {{ return {name}_dsp_get_param_s({name}_legacy(), id); }}",
+            f"UMETATE_DSP_API void {name}_dsp_render(int32_t *out, uint32_t frames) {{ {name}_dsp_render_s({name}_legacy(), out, frames); }}",
+        ]
+    )
+    if graph.taps:
+        lines.append(
+            f"UMETATE_DSP_API const int32_t *{name}_dsp_tap(uint32_t ch) {{ return {name}_dsp_tap_s({name}_legacy(), ch); }}"
+        )
+    lines.extend(["#endif", ""])
     return lines
 
 

@@ -135,6 +135,14 @@ Exit evidence:
 This is a generator change, not a plugin-only change. It gets its own feature
 contract and its own commit.
 
+Milestone 0 status: **done on the host**. The generated engine exposes
+`type_p_fm1_state` and the `_s` API. The legacy API wraps one static instance, so
+the firmware, the web lab and the existing host tests keep their calls. The old
+and new host renders of the type-p-fm1 script are byte-identical, two states stay
+isolated, and the full generator suite passes. The target package and the web
+parity gates are blocked by the local environment (Docker and the WASM toolchain
+are not available here).
+
 ## 6. Engine bridge
 
 C++ class, one per plugin instance:
@@ -315,7 +323,7 @@ Plugin work adds a new evidence layer. It does not replace the firmware layers.
 
 | # | Milestone | Exit |
 | --- | --- | --- |
-| 0 | Instance-safe engine state | device bytes, host samples, two-instance isolation, web parity |
+| 0 | Instance-safe engine state | done on host, target and web blocked |
 | 1 | Engine bridge harness, no JUCE | 44.1 kHz bit-exact with the host render, MIDI parity |
 | 2 | JUCE host skeleton | VST3 and standalone, audio, MIDI, all 309 params, state save |
 | 3 | Editor | three pages, tokens, visualisers, dialogs, fixed scale |

@@ -3677,3 +3677,10 @@ one process would share voice and parameter state. Milestone 0 moves the state
 into a generated struct, keeps the firmware API over one static instance, and
 proves device, host and web parity plus two-instance isolation. The plugin build
 stays an optional host-native path and does not change the Docker firmware gate.
+
+Milestone 0 is done on the host. The generated engine exposes
+`type_p_fm1_state` and the `_s` API. The legacy API wraps one static instance, so
+the firmware, the web lab and the existing tests keep their calls. The old and
+new host renders of the type-p-fm1 script are byte-identical, two states in one
+process stay isolated, and the full generator suite passes. The target package
+and the web parity gate are blocked by the local environment.
