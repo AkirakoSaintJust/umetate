@@ -3514,3 +3514,36 @@ The generated glue gained `get_param`/`reset`/`lit` wrappers and pins every seam
 per part plus the multi-patch (`UI_NAME_SLOTS` = `UI_PART_MAX` + 1). The engine seam
 the app calls is now the generated `<name>_glue_*` set, never the raw `<name>_dsp_*`.
 The host WAV and screenshots are byte-identical to `0abfad3`.
+
+### 13.12 Memory safety: the PC guard did not cover `.dsp_text` (2026-11-03)
+
+**Bug.** `fm1_guard.h` set the PC guard's RAM-code window to end at `_c1_end` (or
+`_rt_end`). The generated render lives in `.dsp_text` (`0x01C08000`, loaded from XIP
+at boot), which sits outside that window and outside the XIP window, so executing it
+raised the CPU exception (vector 1) and the RIB CRASH screen. Every synth project with
+the performance profile was affected. The firmware never ran on hardware, so the
+hardware guard was never exercised, and the pinned emulator `a374e75` does not model
+the guard at all, so the crash was invisible in the normal test loop.
+
+**Symptom.** `00000001 01C08002 020006DA` on the RIB CRASH screen: vector 1, the PC
+at the first instruction of `.dsp_text`. fm1-emu v0.4.0 (which added the guard model)
+reports it; `a374e75` does not. The crash is a firmware crash loop (crash screen, 8 s,
+reboot, crash again), which the headless `--bench`/`--shot` runs do not detect because
+they never render the screen.
+
+**Fix.** `FM1_RAMCODE_END` is now `_dsp_end`, so the RAM-code window is one span:
+`.ram_text` + `.c1_text` + `.dsp_text`, across the reserved RAM-run debug gap. Verified
+on fm1-emu v0.4.0 with `FM1_STRICT=1` (misaligned-access faults on): the 20-voice
+render produces full-scale audio and responds to keys, no exception.
+
+**Memory-safety audit (the rest of the guard).** The other windows were checked and are
+complete. PC limit covers XIP and all RAM code. Write limit covers the two 256-byte
+stack guard bands and the reserved top `0x01C7FD50..0x01C7FFFF`. Stack limit covers
+`[_ustack_lo, _sstack_top]`. Bus-invalid covers unmapped space and XIP writes. The
+memory map (`app.ld`) and the guard windows agree, and `FM1_STRICT` finds no misaligned
+16- or 32-bit RAM access in the render.
+
+**Lesson.** The emulator is a memory-safety oracle only when it models the guard; the
+pinned `a374e75` predates that model. A firmware that must be memory safe should be
+exercised on a guard-modelling emulator (`FM1_STRICT` for alignment, and a run that
+renders the screen so a crash loop is visible), not only on `a374e75`.
