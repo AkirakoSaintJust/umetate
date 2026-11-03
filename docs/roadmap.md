@@ -3462,3 +3462,55 @@ with a bit-identical C fallback (host/wasm/tutorial untouched) and checkpointed 
    so 45 × 1.92 ≈ 86% clears the 1.92× optimism with margin (the original 49% goal
    is met). The remaining per-operator-pass restructure (32-sample buffers + per-
    algorithm pass order) and any hand-asm are now optional headroom, not required.
+
+### 13.10 Universal UI: part chooser, header, scope budget, popup roles (2026-11-03)
+
+**Goal.** Every UI feature type-p-fm1 uses must work for any synth project, not only
+for 2-part patches. The app core moved to `firmware/src/synth_app.c` (§13.11), so the
+remaining 2-part assumptions were in the kit itself.
+
+**Done.**
+1. **Part chooser follows `n_part`.** `ui_part_chooser_move` wraps over
+   `ui_t->n_part` (1..`UI_PART_MAX` = 8) instead of toggling rows 0 and 1. The popup
+   draws one `PART N` row per part, so a 1-part project cannot move and an 8-part
+   patch fits 8 rows plus its title and legend in the 240 px screen.
+2. **Header stays inside 240 px.** Up to four parts keep the exact `P1 P2 P3 P4`
+   tokens. Above four, the header prints `P<active>/<n>` so the active part is always
+   visible without running into `op`, `ALG`, or the menu name. The mute bits still
+   cover all 8 parts, so a mute change redraws the header.
+3. **Scope/spectro selectors are validated.** The panel generator rejects a
+   `mix_part` outside `0..n_part-1` and a `channel` outside `0..n_op-1` when the panel
+   declares operators. The patch generator rejects a tap set where
+   `1 + len(taps) * n_parts` exceeds `SCOPE_CH` (12, `scope.h`), which used to drop
+   the excess channels silently and show a flat scope.
+4. **The part count is capped once.** `_UI_PART_MAX` = 8 in both the patch front-end
+   and the panel generator, matching `ui.h`'s `UI_PART_MAX`, and `synth_app.h` has a
+   `_Static_assert` that its part cap fits the name slots.
+5. **Popup roles are locked by a test.** Every popup uses the `#1E1E1E` container,
+   `#FFFFFF` text, purple (`C_AMB`) selection, and hot-pink (`C_HI`) highlight.
+   `test_theme.py` now asserts white-on-container is 16.67:1 and both accents stay at
+   least 3:1 on the container in all six shipped palettes. The non-destructive idle
+   auto-close is the shared `synth_app_tick` path (§13.6 item 44).
+
+**Tests.** `ui_test` cycles the 8-part chooser forward and backward and redraws the
+compact header. `test_panel` rejects bad part counts, name indices, and scope
+selectors. `test_generate` rejects an over-budget tap set and an over-cap part count.
+`deep-check --all` is green, and the type-p-fm1 host WAV plus screenshots are
+byte-identical to `0abfad3`.
+
+### 13.11 Universal app core (2026-11-03)
+
+The preset save/load/init/name flow and the modal popup state machine moved out of
+type-p-fm1's `app.c` into `firmware/src/synth_app.c`/`synth_app.h`, shared by every
+project. A project fills a `synth_app_ctx` with its generated `<name>_glue_*` seam,
+the `SYNTH_*` layout, the init table, and its `.pool` bank buffers, then routes the
+`ui_act_*` hooks to `synth_app_*`. type-p-fm1's `app.c` is now only its control map,
+the engine panel mirror, and its credits page (675 lines to ~367), and the scaffold
+template gets the same flow.
+
+The generated glue gained `get_param`/`reset`/`lit` wrappers and pins every seam in
+`.text.veneer` at the XIP base (`app.ld`), so the XIP-to-SRAM jump stays inside
+`R_PI32V2_LONG_JUMP_23M2` for any project, not just the dogfood. Names are one slot
+per part plus the multi-patch (`UI_NAME_SLOTS` = `UI_PART_MAX` + 1). The engine seam
+the app calls is now the generated `<name>_glue_*` set, never the raw `<name>_dsp_*`.
+The host WAV and screenshots are byte-identical to `0abfad3`.

@@ -3788,6 +3788,34 @@ def main() -> int:
     except GenError as exc:
         print(f"ok: tap naming an input rejected ({exc})")
 
+    # the tap set must fit scope.h's SCOPE_CH (ch 0 + taps x parts); 12 distinct
+    # taps on a 1-part patch need 13 channels.
+    many_taps: Patch = {
+        "name": "tap_many",
+        "voices": 1,
+        "voice": {
+            "nodes": [{"id": f"o{i}", "type": "osc"} for i in range(12)],
+            "wires": [],
+            "voice_out": "o0.audio",
+        },
+        "global": {"nodes": [], "wires": []},
+        "taps": [f"o{i}.audio" for i in range(12)],
+    }
+    try:
+        generate(many_taps)
+        print("FAIL: a tap set beyond SCOPE_CH not rejected")
+        failures += 1
+    except GenError as exc:
+        print(f"ok: a tap set beyond SCOPE_CH rejected ({exc})")
+
+    # the part count must fit the UI kit's fixed per-part state
+    try:
+        generate({**tap_patch, "parts": {"count": 9}})
+        print("FAIL: a part count beyond UI_PART_MAX not rejected")
+        failures += 1
+    except GenError as exc:
+        print(f"ok: a part count beyond UI_PART_MAX rejected ({exc})")
+
     # the flattened param table maps a named param to its set_param id
     params = generate_params(MINIMAL_FM)["params"]
     by_name = {p["name"]: p for p in params}

@@ -410,14 +410,25 @@ def generate_panel(
             # with the high bit so the runtime can tell them apart); `final` =
             # the final post-FX mix (0xC0, ch 0).
             mix_part = w.get("mix_part")
+            channel = w.get("channel", 0)
             if w.get("final"):
                 param = str(0xC0)
             elif w.get("active"):
                 param = str(0x40)
             elif mix_part is not None:
+                if not 0 <= mix_part < n_parts:
+                    raise GenError(
+                        f"{w['type']} widget: mix_part {mix_part} outside "
+                        f"0..{n_parts - 1}"
+                    )
                 param = str(0x80 | mix_part)
             else:
-                param = str(w.get("channel", 0))
+                if operators and not 0 <= channel < len(operators):
+                    raise GenError(
+                        f"{w['type']} widget: channel {channel} outside "
+                        f"0..{len(operators) - 1}"
+                    )
+                param = str(channel)
         elif w["type"] == "subheader":
             typ = "UI_SUBHEADER"
             # param = the prefix mode (see subheader_mode)

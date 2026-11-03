@@ -45,6 +45,14 @@ from ._schema import (
 from ._tables import build_tables
 from ._voice import MODE_PARAMS, mode_param_entries
 
+# firmware/src/scope.h SCOPE_CH: ch 0 is the final mix, 1.. are the taps. A patch
+# whose taps overflow it would silently lose channels at the scope/spectro widget.
+_SCOPE_CH = 12
+
+# the part count must also fit the UI kit's fixed per-part state (ui.h
+# UI_PART_MAX: the header mute flags, the name slots, and the part chooser).
+_UI_PART_MAX = 8
+
 
 def compile(
     patch: Patch,
@@ -106,6 +114,15 @@ def compile(
     n_parts = parts["count"] if parts else 1
     if n_parts < 1:
         raise GenError("parts: 'count' must be >= 1")
+    if n_parts > _UI_PART_MAX:
+        raise GenError(
+            f"parts: {n_parts} exceeds the UI kit's UI_PART_MAX ({_UI_PART_MAX})"
+        )
+    if 1 + len(taps) * n_parts > _SCOPE_CH:
+        raise GenError(
+            f"taps: {len(taps)} sources x {n_parts} parts + the mix exceed "
+            f"firmware/src/scope.h SCOPE_CH ({_SCOPE_CH})"
+        )
 
     n_voice_params = sum(
         sum(1 for k in i.spec.params.values() if k != TABLE)

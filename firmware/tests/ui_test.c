@@ -65,6 +65,14 @@ static int ui_streq(const char *a, const char *b)
     return *a == *b;
 }
 
+/* a minimal 8-part panel: the part chooser + the compact header must follow
+ * n_part, independent of the demo panel's part count. */
+static const ui_page ui_page8 = {0, 0xFFu, 0, 0};
+static const ui_context ui_ctx8 = {"HOME", &ui_page8, 1u, 0, 0, 0, 0};
+static const ui_tables ui_panel8 = {
+    .name = "EIGHT", .home = 0u, .ctx = &ui_ctx8, .n_ctx = 1u, .n_part = 8u,
+};
+
 int main(void)
 {
     ui_init(&PANEL);
@@ -299,21 +307,35 @@ int main(void)
         CHECK(ui_save_mode_open() == 0, "save-mode chooser cancel closes");
     }
 
-    /* the "which single part" chooser: toggle + commit/cancel */
+    /* the "which single part" chooser: a one-part demo panel cannot move */
     {
         ui_part_chooser_begin(0u, 0);
         CHECK(ui_part_chooser_open() == 1 && ui_part_chooser_part() == 0u,
               "part chooser opens on the active part");
-        ui_part_chooser_move(1u);                   /* -> part 2 */
-        CHECK(ui_part_chooser_part() == 1u, "part chooser toggles to part 2");
-        ui_part_chooser_move(1u);                   /* -> part 1 (toggle back) */
-        CHECK(ui_part_chooser_part() == 0u, "part chooser toggles back to part 1");
+        ui_part_chooser_move(1u);
+        CHECK(ui_part_chooser_part() == 0u, "one-part chooser stays on part 1");
         ui_part_chooser_commit();
         CHECK(ui_part_chooser_open() == 0, "part chooser commit closes");
         ui_part_chooser_begin(1u, 0);
         ui_part_chooser_cancel();
         CHECK(ui_part_chooser_open() == 0, "part chooser cancel closes");
     }
+
+    /* an 8-part panel: the chooser cycles every part, the compact header draws */
+    {
+        ui_init(&ui_panel8);
+        ui_part_chooser_begin(0u, 0);
+        CHECK(ui_part_chooser_part() == 0u, "8-part chooser opens on part 1");
+        ui_part_chooser_move(7);                  /* part 1 -> part 8 */
+        CHECK(ui_part_chooser_part() == 7u, "8-part chooser advances by seven");
+        ui_part_chooser_move(1);                  /* wraps -> part 1 */
+        CHECK(ui_part_chooser_part() == 0u, "8-part chooser wraps forward");
+        ui_part_chooser_move(-1);                 /* wraps -> part 8 */
+        CHECK(ui_part_chooser_part() == 7u, "8-part chooser wraps backward");
+        ui_part_chooser_cancel();
+        ui_redraw(100u);                          /* the compact P<active>/<n> header */
+    }
+    ui_init(&PANEL);                    /* restore the demo panel for the rest */
 
     /* the slot browser: scroll wraps, the timeout applies the selection once */
     {

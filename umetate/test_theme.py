@@ -94,6 +94,25 @@ def main() -> int:
         else:
             print(f"ok: {name} palette meets contrast ({label:.2f}/{amb:.2f}/{hi:.2f})")
 
+    # 4b. the popup roles (gfx.c): #1E1E1E container, #FFFFFF text, C_AMB selected,
+    #     C_HI highlights. The text must read (4.5:1) and both accents stay visible
+    #     (3:1) on the container in every palette.
+    popup_bg = (30, 30, 30)
+    text_contrast = contrast((255, 255, 255), popup_bg)
+    if text_contrast < 4.5:
+        print(f"FAIL: popup text contrast {text_contrast:.2f}")
+        failures += 1
+    else:
+        print(f"ok: popup text contrast {text_contrast:.2f}")
+    for name, steps in _SHIPPED.items():
+        sel = contrast(steps[3], popup_bg)
+        hi = contrast(steps[4], popup_bg)
+        if sel < 3.0 or hi < 3.0:
+            print(f"FAIL: {name} popup roles too dim ({sel:.2f}/{hi:.2f})")
+            failures += 1
+        else:
+            print(f"ok: {name} popup roles legible ({sel:.2f}/{hi:.2f})")
+
     # 5. the round-trip: hex <-> rgb.
     if rgb_to_hex(hex_to_rgb("#00ff80")) != "#00ff80":
         print("FAIL: hex/rgb round-trip")

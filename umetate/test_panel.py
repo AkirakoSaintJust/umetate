@@ -122,6 +122,29 @@ def main() -> int:
     except GenError as exc:
         print(f"ok: a name index outside 0..n_parts rejected ({exc})")
 
+    # a scope/spectro selector must name a real part (or operator)
+    bad_scope: PanelManifest = {
+        "name": "bad-scope",
+        "parts": 2,
+        "operators": ["op1", "op2", "op3", "op4"],
+        "contexts": {
+            "home": {
+                "pages": [
+                    {
+                        "id": "home",
+                        "widgets": [{"type": "scope", "row": 1, "mix_part": 2}],
+                    }
+                ]
+            },
+        },
+    }
+    try:
+        generate_panel(bad_scope)
+        print("FAIL: a scope mix_part outside 0..n_parts not rejected")
+        failures += 1
+    except GenError as exc:
+        print(f"ok: a scope mix_part outside 0..n_parts rejected ({exc})")
+
     # generate_panel(panel, param_ids) shares the DSP set_param id space
     bound: PanelManifest = {
         "name": "demo",
@@ -255,6 +278,8 @@ def main() -> int:
     # mix (0x80|part).
     vis: PanelManifest = {
         "name": "vis",
+        "parts": 2,
+        "operators": ["op1", "op2", "op3", "op4"],
         "contexts": {
             "home": {
                 "pages": [
