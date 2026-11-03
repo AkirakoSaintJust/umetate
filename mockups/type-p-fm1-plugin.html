@@ -26,8 +26,8 @@
     --yellow: #ffe600;
     --white: #ffffff;
     --popup: #1b1b1b;
-    --font-ui: "DotGothic16", "Cascadia Mono", ui-monospace, Consolas, monospace;
-    --font-head: "Zen Dots", "DotGothic16", ui-monospace, monospace;
+    --font-ui: "DotGothic16", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", "Cascadia Mono", ui-monospace, monospace;
+    --font-head: "Zen Dots", "DotGothic16", "Hiragino Kaku Gothic ProN", "Yu Gothic", ui-monospace, monospace;
   }
   * { box-sizing: border-box; border-radius: 0; }
   html, body { margin: 0; min-height: 100%; }
@@ -35,7 +35,7 @@
     background: #000;
     color: var(--text);
     font-family: var(--font-ui);
-    font-size: 11px;
+    font-size: 12px;
     letter-spacing: .02em;
     text-transform: lowercase;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -81,14 +81,14 @@
 
   .out { flex: 1 1 auto; min-width: 180px; }
   .out-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-  .out-head .lbl { font-family: var(--font-head); font-size: 8px; letter-spacing: .16em; color: var(--dim); }
+  .out-head .lbl { font-family: var(--font-head); font-size: 8px; letter-spacing: .16em; color: var(--green); }
   .seg { display: flex; gap: 0; }
   .seg button {
     background: #000; border: 1px solid var(--line2); color: var(--dim);
     font-size: 8px; letter-spacing: .12em; padding: 3px 8px; cursor: pointer;
   }
   .seg button + button { border-left: 0; }
-  .seg button.active { color: var(--pink); border-color: var(--pink); }
+  .seg button.active { color: var(--purple); border-color: var(--purple); }
   .out canvas { width: 100%; height: 50px; display: block; border: 1px solid var(--line); background: #000; }
 
   .actions { display: flex; gap: 8px; flex: 0 0 auto; align-items: stretch; }
@@ -104,25 +104,37 @@
 
   /* ---------------- toolbar ---------------- */
   .toolbar {
-    display: flex; align-items: center; gap: 8px;
+    display: flex; align-items: center; gap: 10px;
     padding: 7px 16px; background: #000; border-bottom: 1px solid var(--line2);
   }
-  .tgroup { display: flex; align-items: center; gap: 5px; }
+  .legend { display: flex; align-items: center; gap: 6px; padding-right: 6px; border-right: 1px solid var(--line2); }
+  .legend .lbl { font-size: 8px; color: var(--faint); margin-right: 8px; }
+  .sq {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 15px; height: 15px; font-size: 10px; line-height: 1;
+  }
+  .sq.active { background: var(--pink); color: #000; border: 1px solid var(--pink); }
+  .sq.muted { background: #000; color: var(--pink); border: 1px solid var(--pink); }
+  .mcell { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .mutebox {
+    width: 26px; height: 22px; display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-ui); font-size: 14px; line-height: 1; cursor: pointer;
+    background: var(--pink); color: #000; border: 1px solid var(--pink); padding: 0;
+  }
+  .mutebox.muted { background: #000; color: var(--pink); }
+  .mutebox:hover { border-color: var(--pink2); }
+  .mcap { font-size: 7px; color: var(--faint); letter-spacing: .04em; }
+  .tgroup { display: flex; align-items: center; gap: 6px; }
   .tlabel { font-family: var(--font-head); font-size: 7px; letter-spacing: .14em; color: var(--faint); margin-right: 3px; }
-  .tdiv { width: 1px; height: 18px; background: var(--line2); margin: 0 6px; }
+  .tdiv { width: 1px; height: 26px; background: var(--line2); margin: 0 6px; }
   .tbtn {
     background: #000; border: 1px solid var(--line2); color: var(--dim);
-    font-size: 8px; letter-spacing: .1em; padding: 4px 7px; cursor: pointer;
+    font-size: 9px; letter-spacing: .04em; padding: 5px 8px; cursor: pointer;
   }
   .tbtn:hover { border-color: var(--pink); color: var(--text); }
-  .tbtn.mutebtn { color: var(--pink); border-color: #6b2338; }
-  .tbtn.mutebtn:hover { border-color: var(--pink); }
-  .tbtn.mutebtn.muted { color: #565656; border-color: #2a2a2a; background: #070707; }
-  .tbtn.partsel { padding: 4px 11px; }
+  .tbtn.partsel { padding: 5px 11px; }
   .tbtn.partsel.active { border-color: var(--green); color: var(--green); }
-  .tbtn.pmenu { padding: 4px 9px; }
-  .tsignal { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 7px; letter-spacing: .18em; color: var(--faint); }
-  .tsignal b { color: var(--green); font-weight: 700; letter-spacing: .12em; }
+  .tbtn.pmenu { padding: 5px 9px; }
 
   /* ---------------- tabs ---------------- */
   .tabs { display: flex; gap: 0; padding: 0; background: #000; border-bottom: 1px solid var(--line2); }
@@ -135,7 +147,7 @@
   .tab.active { color: #000; background: var(--pink); }
 
   /* ---------------- body ---------------- */
-  .body { padding: 14px 16px 16px; min-height: 566px; }
+  .body { padding: 14px 16px 16px; min-height: 576px; }
   .grid { display: grid; gap: 10px; }
 
   .card { background: var(--panel); border: 1px solid var(--line); padding: 9px; min-width: 0; }
@@ -145,7 +157,7 @@
   .sec-actions { display: flex; gap: 3px; }
   button.mini {
     background: #000; border: 1px solid var(--line2); color: var(--dim);
-    font-size: 7px; letter-spacing: .1em; padding: 2px 5px; cursor: pointer;
+    font-size: 8px; letter-spacing: .04em; padding: 2px 5px; cursor: pointer;
   }
   button.mini:hover:not(:disabled) { color: var(--pink); border-color: var(--pink); }
   button.mini:disabled { opacity: .3; cursor: default; }
@@ -158,7 +170,7 @@
   .dial .track { fill: none; stroke: #2a2a2a; stroke-width: 3; }
   .dial .arc { fill: none; stroke: var(--pink); stroke-width: 3; }
   .dial .ptr { stroke: var(--white); stroke-width: 2; }
-  .knob-name { font-size: 8px; letter-spacing: .04em; color: var(--dim); }
+  .knob-name { font-size: 9px; letter-spacing: .04em; color: var(--dim); }
   .knob-val { font-size: 12px; color: var(--pink2); font-variant-numeric: tabular-nums; cursor: text; }
   .knob-val:hover { color: var(--white); text-decoration: underline; text-underline-offset: 2px; }
   .knob-input {
@@ -169,7 +181,7 @@
   .knob:hover .knob-name { color: var(--text); }
 
   .inline { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-  .inline .lbl { font-size: 8px; letter-spacing: .14em; color: var(--dim); }
+  .inline .lbl { font-size: 9px; letter-spacing: .08em; color: var(--dim); }
   select.sel {
     background: #000; color: var(--text); border: 1px solid var(--line2);
     padding: 4px 20px 4px 7px; font-size: 9px; outline: none;
@@ -189,10 +201,11 @@
 
   .toggle.mute .trk { border-color: var(--pink); }
   .toggle.mute .thb { left: 1px; background: var(--pink); }
-  .toggle.mute .tname { color: var(--pink); }
+  .toggle.mute .tname { font-size: 7px; letter-spacing: .02em; color: var(--faint); }
+  .toggle.mute:not(.muted) .tname.l { color: var(--pink); }
+  .toggle.mute.muted .tname.r { color: var(--pink); }
   .toggle.mute.muted .trk { border-color: var(--line2); }
   .toggle.mute.muted .thb { left: 14px; background: #3a3a3a; }
-  .toggle.mute.muted .tname { color: var(--faint); }
   .toggle.mute:hover .trk { border-color: var(--pink2); }
 
   .envbox { height: 62px; border: 1px solid var(--line); background: #000; margin-bottom: 8px; }
@@ -221,14 +234,15 @@
   .part .ph { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
   .part .pn { font-family: var(--font-head); font-size: 10px; letter-spacing: .05em; color: var(--dim); }
   .part.active .pn { color: var(--green); }
-  .part .pch { font-size: 8px; color: var(--faint); letter-spacing: .1em; margin-left: 6px; }
   .part .pacts { display: flex; gap: 4px; align-items: center; }
   .part .knobs { gap: 6px 2px; }
   .part .knob { width: 48px; }
   .part .dial, .part .dial svg { width: 38px; height: 38px; }
-  .keyzone { position: relative; height: 14px; margin-top: 9px; border: 1px solid var(--line); background: #050505; }
-  .keyzone i { position: absolute; top: 0; bottom: 0; background: var(--pink); opacity: .5; }
-  .keyzone span { position: absolute; top: 0; bottom: 0; width: 1px; background: #1f1f1f; }
+  .lvl { margin-top: 10px; }
+  .lvlcap { display: flex; justify-content: space-between; align-items: baseline; font-size: 8px; letter-spacing: .06em; color: var(--dim); margin-bottom: 4px; }
+  .lvlval { color: var(--pink2); }
+  .lvltrack { height: 14px; background: #111; border: 1px solid var(--line2); position: relative; cursor: ew-resize; touch-action: none; }
+  .lvltrack i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--purple); }
 
   .vmode { border: 1px solid var(--line2); background: #000; padding: 8px 10px; }
   .vmode h3 { margin: 0; font-family: var(--font-head); font-size: 9px; letter-spacing: .1em; color: var(--pink); font-weight: 400; }
@@ -244,17 +258,20 @@
   .vmode .knobs { gap: 6px 2px; flex: 1; justify-content: flex-end; }
 
   /* ---------------- fx / mod ---------------- */
-  .fx-grid, .mod-grid { display: grid; gap: 10px; align-items: start; }
-  .fx-grid { grid-template-columns: repeat(4, 1fr); }
-  .mod-grid { grid-template-columns: repeat(3, 1fr); }
+  .fxmod-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: 1fr 1fr; gap: 10px; min-height: 546px;
+  }
+  .fxmod-grid .card { display: flex; flex-direction: column; }
+  .fxmod-grid .span2 { grid-column: span 2; }
+  .fxmod-grid .span2 .knobs { justify-content: space-between; }
 
   /* ---------------- status strip ---------------- */
-  .status { display: flex; align-items: center; justify-content: space-between;
+  .status { display: flex; align-items: center; justify-content: flex-start;
     padding: 7px 16px; background: #000; border-top: 1px solid var(--line2); }
   .status .leds { display: flex; gap: 14px; align-items: center; font-family: var(--font-head); font-size: 8px; letter-spacing: .08em; color: var(--dim); }
   .led { width: 6px; height: 6px; background: var(--faint); display: inline-block; }
   .led.on { background: var(--green); }
-  .status .rt { font-size: 8px; letter-spacing: .14em; color: var(--faint); }
 
   .mocktag { font-size: 8px; letter-spacing: .2em; color: var(--faint); }
 
@@ -268,7 +285,7 @@
   .dialog-head { padding: 12px 14px; border-bottom: 1px solid #2e2e2e; font-family: var(--font-head); font-size: 9px; letter-spacing: .08em; color: var(--white); display:flex; justify-content:space-between; }
   .dialog-head .x { cursor: pointer; color: #999; font-size: 11px; letter-spacing: 0; }
   .dialog-head .x:hover { color: var(--pink); }
-  .dialog-body { padding: 14px; color: var(--white); font-size: 10px; line-height: 1.7; }
+  .dialog-body { padding: 14px; color: var(--white); font-size: 11px; line-height: 1.7; }
   .dialog-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 14px; border-top: 1px solid #2e2e2e; }
   .dialog-foot button {
     background: #242424; border: 1px solid #3a3a3a; color: var(--white);
@@ -313,7 +330,7 @@
   .alg-tile svg { width: 100%; height: auto; display: block; }
   .alg-tile .an { margin-top: 3px; text-align: center; font-size: 8px; letter-spacing: .16em; color: var(--dim); }
   .alg-tile.sel .an { color: var(--green); }
-  .note { margin-top: 10px; color: #9a9a9a; font-size: 9px; letter-spacing: .04em; }
+  .note { margin-top: 10px; color: #9a9a9a; font-size: 10px; letter-spacing: .03em; }
 
   .preset-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 7px 10px; cursor: pointer; border-left: 2px solid transparent; }
   .preset-row:hover { background: #262626; }
@@ -366,8 +383,7 @@
   <main class="body" id="body"></main>
 
   <div class="status">
-    <div class="leds"><span class="led on"></span>MIDI <span class="led on"></span>SYNC</div>
-    <div class="rt" id="statusPart">editing part 1</div>
+    <div class="leds"><span class="led on"></span>midi <span class="led on"></span>sync</div>
   </div>
 </div>
 
@@ -515,7 +531,7 @@
   function makeMuteSwitch(muted, onchange) {
     const el = document.createElement("div");
     el.className = "toggle mute" + (muted ? " muted" : "");
-    el.innerHTML = '<div class="trk"><div class="thb"></div></div><div class="tname">MUTE</div>';
+    el.innerHTML = '<span class="tname l">active</span><div class="trk"><div class="thb"></div></div><span class="tname r">mute</span>';
     el.addEventListener("click", function () {
       const nowMuted = !el.classList.contains("muted");
       el.classList.toggle("muted", nowMuted);
@@ -535,8 +551,8 @@
     "2x half sine", "2x half tri", "rect sine", "pulse", "square", "saw"];
   const LFO_WAVES = ["sine", "triangle", "saw", "inverse saw", "square", "random"];
   const PARTS = [
-    { name: "part 1", midi: 1, low: 0, high: 127, level: 99, delay: 0, mute: false },
-    { name: "part 2", midi: 2, low: 0, high: 127, level: 99, delay: 0, mute: false }
+    { name: "init", midi: 1, low: 0, high: 127, level: 99, delay: 0, mute: false },
+    { name: "init", midi: 2, low: 0, high: 127, level: 99, delay: 0, mute: false }
   ];
   const PART_SLOTS = [null, null, null, null, null, null, null, null];
   const PITCH_LFO = { rate: 0, depth: 0, wave: "sine" };
@@ -752,6 +768,47 @@
     ], true);
   }
 
+  function makeLevelSlider(obj, key, label) {
+    const el = document.createElement("div");
+    el.className = "lvl";
+    const cap = document.createElement("div");
+    cap.className = "lvlcap";
+    const l = document.createElement("span");
+    l.textContent = label;
+    const v = document.createElement("span");
+    v.className = "lvlval";
+    cap.append(l, v);
+    const track = document.createElement("div");
+    track.className = "lvltrack";
+    const fill = document.createElement("i");
+    track.appendChild(fill);
+    el.append(cap, track);
+    function draw() {
+      fill.style.width = (obj[key] / 99 * 100) + "%";
+      v.textContent = obj[key];
+    }
+    draw();
+    function setFromEvent(e) {
+      const r = track.getBoundingClientRect();
+      const f = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+      obj[key] = Math.round(f * 99);
+      draw();
+    }
+    track.addEventListener("pointerdown", function (e) {
+      e.preventDefault();
+      track.setPointerCapture(e.pointerId);
+      setFromEvent(e);
+      function move(ev) { setFromEvent(ev); }
+      function up() {
+        track.removeEventListener("pointermove", move);
+        track.removeEventListener("pointerup", up);
+      }
+      track.addEventListener("pointermove", move);
+      track.addEventListener("pointerup", up);
+    });
+    return el;
+  }
+
   /* ---------------- views ---------------- */
   function viewPatch() {
     const wrap = document.createElement("div");
@@ -765,7 +822,7 @@
       const ph = document.createElement("div");
       ph.className = "ph";
       const nameWrap = document.createElement("div");
-      nameWrap.innerHTML = '<span class="pn">' + p.name + '</span><span class="pch">midi ' + p.midi + "</span>";
+      nameWrap.innerHTML = '<span class="pn">part ' + (i + 1) + ": " + p.name + "</span>";
       const acts = document.createElement("div");
       acts.className = "pacts";
       const ren = document.createElement("button");
@@ -786,18 +843,9 @@
         b(p, "midi", "MIDI CHANNEL", 1, 16, function (v) { return v; }, 1),
         b(p, "low", "KEYZONE START", 0, 127, function (v) { return v; }, 1),
         b(p, "high", "KEYZONE END", 0, 127, function (v) { return v; }, 1),
-        b(p, "level", "AMPLITUDE", 0, 99, function (v) { return v; }, 1),
         b(p, "delay", "DELAY", 0, 1000, function (v) { return v + "ms"; }, 1)
       ]));
-      const kz = document.createElement("div");
-      kz.className = "keyzone";
-      let ticks = "";
-      for (let k = 12; k < 128; k += 12) {
-        ticks += '<span style="left:' + (k / 127 * 100).toFixed(2) + '%"></span>';
-      }
-      kz.innerHTML = ticks + '<i style="left:' + (p.low / 127 * 100).toFixed(2) +
-        '%; width:' + (Math.max(p.high - p.low, 0) / 127 * 100).toFixed(2) + '%"></i>';
-      d.appendChild(kz);
+      d.appendChild(makeLevelSlider(p, "level", "level"));
       parts.appendChild(d);
     });
 
@@ -962,7 +1010,7 @@
       else v = Math.sin(p * Math.PI * 4);
       d += " L " + (4 + x) + " " + (31 - v * 22).toFixed(1);
     }
-    return '<svg viewBox="0 0 240 62"><path d="' + d + '" fill="none" stroke="#c780ff" stroke-width="1.4"/></svg>';
+    return '<svg viewBox="0 0 240 62"><path d="' + d + '" fill="none" stroke="#3dff9e" stroke-width="1.4"/></svg>';
   }
 
   function fxCard(title, specs, types) {
@@ -978,9 +1026,9 @@
     return card;
   }
 
-  function viewFx() {
+  function viewFxMod() {
     const wrap = document.createElement("div");
-    wrap.className = "fx-grid";
+    wrap.className = "fxmod-grid";
     wrap.appendChild(fxCard("FILTER 1", [
       b({ v: 60 }, "v", "CUTOFF", 0, 100, function (x) { return x + "%"; }, 1),
       b({ v: 20 }, "v", "RES", 0, 100, function (x) { return x + "%"; }, 1),
@@ -1010,12 +1058,7 @@
       b({ v: 0 }, "v", "THRESH", 0, 100, function (x) { return x + "%"; }, 1),
       b({ v: 1 }, "v", "FOLDS", 1, 8, function (x) { return x; }, 1)
     ], ["sine"]));
-    return wrap;
-  }
 
-  function viewMod() {
-    const wrap = document.createElement("div");
-    wrap.className = "mod-grid";
     const lfoBox = document.createElement("div");
     lfoBox.className = "envbox";
     lfoBox.innerHTML = lfoSvg(PITCH_LFO.wave);
@@ -1036,11 +1079,13 @@
       b(PITCH_ENV, "rate", "RATE", 0, 99, function (x) { return x; }, 1)
     ], { before: penvBox, copy: false }));
 
-    wrap.appendChild(makeSection("KEY / VELOCITY FOLLOW", "follow", [
+    const follow = makeSection("KEY / VELOCITY FOLLOW", "follow", [
       b({ v: 0 }, "v", "KEY LO", -100, 100, function (x) { return (x > 0 ? "+" : "") + x + "%"; }, 1),
       b({ v: 0 }, "v", "KEY HI", -100, 100, function (x) { return (x > 0 ? "+" : "") + x + "%"; }, 1),
       b({ v: 0 }, "v", "VEL", -100, 100, function (x) { return (x > 0 ? "+" : "") + x + "%"; }, 1)
-    ], { copy: false }));
+    ], { copy: false });
+    follow.classList.add("span2");
+    wrap.appendChild(follow);
     return wrap;
   }
 
@@ -1048,8 +1093,7 @@
   const TABS = [
     { id: "patch", label: "patch settings", view: viewPatch },
     { id: "ops", label: "operators", view: viewOps },
-    { id: "fx", label: "fx", view: viewFx },
-    { id: "mod", label: "mod", view: viewMod }
+    { id: "fxmod", label: "fx / mod", view: viewFxMod }
   ];
   const body = document.getElementById("body");
   const tabsEl = document.getElementById("tabs");
@@ -1080,7 +1124,6 @@
 
   /* ---------------- toolbar, mutes, parts ---------------- */
   const plugin = document.getElementById("plugin");
-  const statusPart = document.getElementById("statusPart");
   const toolbarEl = document.getElementById("toolbar");
 
   function findOp(name) { return OPS.filter(function (o) { return o.name === name; })[0]; }
@@ -1096,63 +1139,70 @@
   }
   function setActivePart(p) {
     activePart = p;
-    statusPart.textContent = "editing " + PARTS[p - 1].name;
     buildToolbar();
     rerender();
   }
 
   function buildToolbar() {
     toolbarEl.innerHTML = "";
+    const legend = document.createElement("div");
+    legend.className = "legend";
+    legend.innerHTML = '<span class="sq muted">\u732b</span><span class="lbl">muted</span>' +
+      '<span class="sq active">\u732b</span><span class="lbl">active</span>';
+    toolbarEl.appendChild(legend);
+
     const g1 = document.createElement("div");
     g1.className = "tgroup";
-    const l1 = document.createElement("span");
-    l1.className = "tlabel"; l1.textContent = "MUTE";
-    g1.appendChild(l1);
     OPS.forEach(function (o) {
+      const cell = document.createElement("div");
+      cell.className = "mcell";
       const btn = document.createElement("button");
-      btn.className = "tbtn mutebtn" + (o.mute ? " muted" : "");
-      btn.textContent = o.name;
-      btn.title = "Mute " + o.name;
+      btn.className = "mutebox" + (o.mute ? " muted" : "");
+      btn.textContent = "\u732b";
+      btn.title = (o.mute ? "unmute " : "mute ") + o.name;
       btn.addEventListener("click", function () { setOpMute(o.name, !o.mute); });
-      g1.appendChild(btn);
+      const cap = document.createElement("span");
+      cap.className = "mcap"; cap.textContent = o.name;
+      cell.append(btn, cap);
+      g1.appendChild(cell);
     });
     const d1 = document.createElement("div");
     d1.className = "tdiv";
     g1.appendChild(d1);
     PARTS.forEach(function (p, i) {
+      const cell = document.createElement("div");
+      cell.className = "mcell";
       const btn = document.createElement("button");
-      btn.className = "tbtn mutebtn" + (p.mute ? " muted" : "");
-      btn.textContent = "p" + (i + 1);
-      btn.title = "Mute " + p.name;
+      btn.className = "mutebox" + (p.mute ? " muted" : "");
+      btn.textContent = "\u732b";
+      btn.title = (p.mute ? "unmute " : "mute ") + "part " + (i + 1);
       btn.addEventListener("click", function () { setPartMute(i, !p.mute); });
-      g1.appendChild(btn);
+      const cap = document.createElement("span");
+      cap.className = "mcap"; cap.textContent = "p" + (i + 1);
+      cell.append(btn, cap);
+      g1.appendChild(cell);
     });
     toolbarEl.appendChild(g1);
 
     const g2 = document.createElement("div");
     g2.className = "tgroup";
     const l2 = document.createElement("span");
-    l2.className = "tlabel"; l2.textContent = "ACTIVE";
+    l2.className = "tlabel"; l2.textContent = "now editing part:";
     g2.appendChild(l2);
     PARTS.forEach(function (p, i) {
       const btn = document.createElement("button");
       btn.className = "tbtn partsel" + (activePart === i + 1 ? " active" : "");
-      btn.textContent = p.name;
+      btn.textContent = "part " + (i + 1);
       btn.addEventListener("click", function () { setActivePart(i + 1); closePartMenu(); });
       g2.appendChild(btn);
     });
     const edit = document.createElement("button");
     edit.className = "tbtn pmenu";
-    edit.textContent = "EDIT \u25BE";
+    edit.textContent = "edit \u25BE";
     edit.title = "Part save, init, copy, paste";
     edit.addEventListener("click", function (e) { e.stopPropagation(); openPartMenu(edit); });
     g2.appendChild(edit);
     toolbarEl.appendChild(g2);
-
-    const sig = document.createElement("div");
-    sig.className = "tsignal";
-    sig.innerHTML = "editing <b>" + PARTS[activePart - 1].name + "</b>";
-    toolbarEl.appendChild(sig);
   }
 
   let partMenu = null;
@@ -1163,7 +1213,7 @@
     const canPaste = clipboard && clipboard.kind === "part";
     const menu = document.createElement("div");
     menu.className = "part-menu";
-    menu.innerHTML = '<div class="pm-head">' + PARTS[p - 1].name + "</div>" +
+    menu.innerHTML = '<div class="pm-head">part ' + p + ": " + PARTS[p - 1].name + "</div>" +
       '<button data-act="load">LOAD PART&hellip;</button>' +
       '<button data-act="save">SAVE PART&hellip;</button>' +
       '<button data-act="init">INIT PART</button>' +
@@ -1254,7 +1304,6 @@
   function renamePart(i) {
     openRename("rename part", PARTS[i].name, function (v) {
       PARTS[i].name = v;
-      statusPart.textContent = "editing " + PARTS[activePart - 1].name;
       buildToolbar();
       rerender();
       toast("part renamed");
@@ -1464,6 +1513,7 @@
     if (h === "menu") { showTab("patch"); openPartMenu(document.querySelector(".pmenu")); return; }
     if (h === "alg") { showTab("patch"); openAlgPicker(); return; }
     if (h === "rename") { showTab("patch"); renamePart(0); return; }
+    if (h === "fx" || h === "mod") { showTab("fxmod"); return; }
     if (TABS.some(function (x) { return x.id === h; })) showTab(h);
     else showTab("patch");
   }
