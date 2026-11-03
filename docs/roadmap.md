@@ -3559,7 +3559,14 @@ Follow-ups beyond the universalisation backlog, in rough priority order.
    Audible Instruments' "Liquid Filter" and LFO-lab's "SH-010".
 3. **JUCE plugin ports (multi-platform).** DAW plugin ports of the firmware, with a
    multi-platform GUI designed in collaboration.
-4. **Comb filter macro.** A feedback and feedforward comb with damping, ready for
-   users. Parameters and interface to be settled (see the discussion).
+4. **Comb filter node (done).** Shipped as `modules/nodes/comb`: a fractional
+   feedback comb with `freq` (cutoff as a Q32 rate, delay = fs/freq), `res`
+   (feedback), `tone` (one-pole damping in the loop, 0 = dark / 32767 = bright),
+   and `mix` (dry/wet). The delay read interpolates between the two nearest taps
+   and is bounded to [1, 7350] samples, and the written sample saturates to Q15, so
+   the line can never overflow. Settled as a node, not a macro: the delay is
+   fractional and variable, so it cannot compose from the fixed `delayN`, and a
+   separate feedforward/notch (flanger) flavour can be a later sibling rather than a
+   `type` switch here.
 5. **Atari Punk Console node(s).** The single and dual cross-modulated APC, reviewed
    for aliasing and fitted to the umetate node model.

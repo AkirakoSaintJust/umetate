@@ -250,6 +250,41 @@ LFO_TEST: Patch = {
     "global": {"nodes": [], "wires": []},
 }
 
+# the `comb` node: a feedback comb filter (fractional delay + damped feedback +
+# dry/wet) in the global zone, after a plain oscillator voice. The feedback tail
+# rings after note-off, so it uses the decay contract (not exact silence).
+COMB_TEST: Patch = {
+    "name": "comb_test",
+    "voices": 4,
+    "voice": {
+        "nodes": [
+            {"id": "ph", "type": "phasor"},
+            {"id": "osc", "type": "osc"},
+            {"id": "env", "type": "env"},
+            {"id": "vca", "type": "vca"},
+        ],
+        "wires": [
+            {"from": "ph.phase", "to": "osc.phase"},
+            {"from": "osc.audio", "to": "vca.audio"},
+            {"from": "env.cv", "to": "vca.cv"},
+        ],
+        "voice_out": "vca.audio",
+    },
+    "global": {
+        "nodes": [
+            {
+                "id": "cb",
+                "type": "comb",
+                "params": {"freq": 48695774, "res": 16384, "tone": 24576, "mix": 32767},
+            }
+        ],
+        "wires": [
+            {"from": "voice", "to": "cb.in"},
+            {"from": "cb.out", "to": "out"},
+        ],
+    },
+}
+
 # the `mute` node: an oscillator gated by a runtime `mute` param (0 = pass, 1 = 0).
 MUTE_TEST: Patch = {
     "name": "mute_test",
@@ -2083,6 +2118,35 @@ def _cc_map_reaches(patch: Patch) -> tuple[bool, str]:
         return run.returncode == 0, run.stdout.strip()
 
 
+def _sound_decay(patch: Patch) -> tuple[bool, str]:
+    """Generate, compile, and run the decay contract (non-silent, then a ringing
+    tail that decays to near-silence) for a feedback filter without tables."""
+    src = generate(patch)
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        (d / "dsp.c").write_text(src)
+        cname = patch["name"].replace("-", "_").replace(".", "_")
+        (d / "harness.c").write_text(DECAY_HARNESS.replace("__NAME__", cname))
+        proc = subprocess.run(
+            [
+                "cc",
+                "-std=c11",
+                *_include_args(),
+                "-o",
+                str(d / "t"),
+                str(d / "harness.c"),
+                str(d / "dsp.c"),
+                "-lm",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            return False, "compile failed:\n" + proc.stderr
+        run = subprocess.run([str(d / "t")], capture_output=True, text=True)
+        return run.returncode == 0, run.stdout.strip()
+
+
 def _sound_tables(patch: Patch) -> tuple[bool, str]:
     """Generate + compile (with tables.c) + run the sound contract for a table patch."""
     src = generate(patch)
@@ -3060,6 +3124,13 @@ def main() -> int:
     print(
         ("ok: " if ok else "FAIL: ")
         + (msg or "osc waveform (double half sine) renders non-silent then silent")
+    )
+    failures += 0 if ok else 1
+
+    ok, msg = _sound_decay(COMB_TEST)
+    print(
+        ("ok: " if ok else "FAIL: ")
+        + (msg or "comb filter renders non-silent then decays to near-silence")
     )
     failures += 0 if ok else 1
 
