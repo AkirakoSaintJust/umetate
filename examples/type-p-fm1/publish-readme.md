@@ -50,4 +50,4 @@ GPL-3.0-only licence. See [LICENSE](LICENSE), and [LICENSING.md](LICENSING.md) f
 
 ## Source
 
-[`src/`](src/) (this project) and [`framework/`](framework/) (the full umetate framework source, also GPL-3.0, at <https://github.com/CeliaCasanovas/umetate>).
+[`src/`](src/) (this project) and [`framework/`](framework/) (the full umetate framework source, also GPL-3.0, at <https://github.com/CeliaCasanovas/umetate>). The generated DSP lives in [`framework/firmware/gen/`](framework/firmware/gen/), so the tree builds as-is.

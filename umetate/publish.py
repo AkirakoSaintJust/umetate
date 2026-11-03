@@ -59,7 +59,8 @@ _LICENCE_FILES = ("LICENSE", "LICENSING.md")
 # corresponding source is self-contained (a user does not need the umetate repo to
 # rebuild the firmware). `git archive` lists only tracked files, so the gitignored
 # build artifacts and the generated-from-patch `firmware/gen/*.c` stay out; the
-# generator (`umetate/`) regenerates them from `src/patch.json`.
+# generator (`umetate/`) regenerates them from `src/patch.json`, and `_bundle_dsp`
+# additionally copies the already-generated DSP so the tree also compiles as-is.
 _FRAMEWORK_PATHS = (
     "LICENSE",
     "LICENSING.md",
@@ -69,6 +70,21 @@ _FRAMEWORK_PATHS = (
     "umetate",
     "modules",
     "templates/scaffold",
+)
+
+# the generated-from-patch files in `firmware/gen/` (gitignored, so `git archive`
+# omits them). The per-patch `<cname>_dsp.c` is added separately.
+_GENERATED_FILES = (
+    "dsp.h",
+    "glue.h",
+    "cc_map.h",
+    "synth_layout.h",
+    "panel.h",
+    "tables.c",
+    "tables.h",
+    "params.json",
+    "sysex-layout.json",
+    "app.c",
 )
 
 _README = """# {title}
@@ -118,8 +134,10 @@ attribution.
 The `.fwsc` is the compiled firmware. Its corresponding source is the project
 files in [`src/`](src/) (the patch, the panel, and the app glue) and the complete
 umetate framework source in [`framework/`](framework/), also GPL-3.0, at
-<https://github.com/CeliaCasanovas/umetate>. The preferred form for modification
-is the `src/` files and the umetate generator, not the compiled binary.
+<https://github.com/CeliaCasanovas/umetate>. The generated DSP is in
+[`framework/firmware/gen/`](framework/firmware/gen/), so the tree builds as-is.
+The preferred form for modification is the `src/` files and the umetate generator,
+not the compiled binary.
 """
 
 
@@ -181,8 +199,27 @@ def _gather(synth_dir: Path, name: str, cname: str, out: Path) -> list[str]:
     return missing
 
 
-def _snapshot_framework(out: Path) -> bool:
-    """Snapshot the umetate source (tracked files at HEAD) into `out/framework/`.
+def _bundle_dsp(framework: Path, cname: str) -> bool:
+    """Copy the already-generated DSP from `firmware/gen/` into the snapshot, so the
+    published tree compiles as-is (not only via the generator). Returns True when the
+    per-patch `<cname>_dsp.c` was found."""
+    src_dir = _ROOT / "firmware" / "gen"
+    dest_dir = framework / "firmware" / "gen"
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dsp = src_dir / f"{cname}_dsp.c"
+    if not dsp.is_file():
+        return False
+    shutil.copy2(dsp, dest_dir / dsp.name)
+    for f in _GENERATED_FILES:
+        src = src_dir / f
+        if src.is_file():
+            shutil.copy2(src, dest_dir / f)
+    return True
+
+
+def _snapshot_framework(out: Path, cname: str) -> bool:
+    """Snapshot the umetate source (tracked files at HEAD) into `out/framework/`,
+    then add the generated DSP so the tree is both regenerable and compilable as-is.
 
     Returns True on success. Falls back to False (the README still links the umetate
     repo) when `git archive` is unavailable or there is no commit to snapshot.
@@ -201,6 +238,7 @@ def _snapshot_framework(out: Path) -> bool:
             tf.extractall(dest, filter="data")
         except TypeError:  # Python < 3.12 has no `filter=` argument
             tf.extractall(dest)
+    _bundle_dsp(dest, cname)
     return True
 
 
@@ -237,7 +275,7 @@ def main(argv: list[str] | None = None) -> int:
 
     out.mkdir(parents=True, exist_ok=True)
     missing = _gather(synth_dir, name, cname, out)
-    bundled = _snapshot_framework(out)
+    bundled = _snapshot_framework(out, cname)
 
     # the project's own README wins over the generated template, so a human-written
     # front door is preserved verbatim (not overwritten by the loop).
