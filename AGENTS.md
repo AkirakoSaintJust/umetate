@@ -22,6 +22,8 @@ router, not a second manual. The authoritative documents are:
 - Do not weaken a test to make a build pass. Fix the code or record the limit.
 - Do not describe a blocked layer as passed. The physical device pass is
   `blocked` until hardware is available.
+- Raw design-interview notes stay in the project and out of the release. Publish
+  the edited design note, not the transcript.
 - The source is GPL-3.0-only. The plugin binary also carries JUCE 8's
   AGPL-3.0-only terms. Read `LICENSING.md` before packaging a binary.
 - Do not bundle the Digital Desolation Plus brand font.
@@ -56,6 +58,13 @@ Keep its contractions, asides, light UK slang, and self-description. Do not flat
 it back to a spec sheet. `humanizer-context.md` carries the same rules for the
 humanizer skill.
 
+Before a manual preface or design note, run the design interview. `umetate
+interview --synth <project> --write` writes the form. Ask the questions in
+`skills/umetate-documentation/references/design-interview.md` one topic at a time.
+Ask for a specific patch, model, bug, or constraint, not a philosophy statement.
+Keep the raw notes private. Write the public design note from them, in the author's
+voice.
+
 ## UI work
 
 Before a panel, screen, editor, or web UI change, read
@@ -72,6 +81,7 @@ screen with the dot grid and guides. The casebook and research links are in
 python -m umetate.cli deep-check --all          # the full gate
 python -m umetate.cli tokens                    # design tokens + hard-coded UI values
 python -m umetate.cli build --synth examples/type-p-fm1
+python -m umetate.cli interview --synth examples/type-p-fm1 --write
 python -m umetate.cli plugin-generate --synth examples/type-p-fm1
 python -m umetate.cli plugin-build --synth examples/type-p-fm1
 python -m umetate.cli plugin-check --synth examples/type-p-fm1

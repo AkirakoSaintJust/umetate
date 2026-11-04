@@ -4288,3 +4288,38 @@ The skills changed:
 
 The published manual was copied back into `examples/type-p-fm1/docs/manual.md`, so
 the next `umetate publish` does not replace the rewrite with the old version.
+
+### 13.35 Design interview for the docs (2026-11-05)
+
+The documentation skill now starts a manual preface with a design interview. The
+author's hand rewrite showed that the preface carries the history, the lineage,
+and the design decisions, and that those do not come out when someone is asked for
+a philosophy statement. The interview asks for a specific patch, model, bug, or
+constraint, then follows up.
+
+The form is `templates/design-interview.md`. It has nine sections: the first
+sound, the lineage, the architecture, the output chain, the interface, the
+tradeoffs, the sound, the person and the name, and the closing question. The
+questions ask for concrete decisions and the origin of the idea, not a mission
+statement.
+
+`umetate interview --synth <project> --write` copies the form into the project.
+`--next N` prints the next unanswered questions. `--check` lists every gap and
+exits non-zero until they are answered. The command is a guide for the
+conversation, not a chatbot. The agent asks one topic at a time, records the
+answers in the author's words, and uses the answers to write the public design
+note.
+
+The protocol is `skills/umetate-documentation/references/design-interview.md`. It
+covers the journalist role, the rule to follow up on vague answers, the lineage and
+DSP specifics, how to record, how to turn the transcript into the design note, and
+when to stop. The documentation skill has a "The design interview" section, and
+`AGENTS.md` makes the raw notes private.
+
+The raw notes live at `<project>/design-interview.md`. `publish` does not copy
+that file. The public design note is the edited version in the manual or a `docs/`
+page.
+
+Tests: `umetate.test_cli` writes the form, parses a multi-line question, reports
+the gaps, reports all answered, refuses an overwrite without `--force`, and
+overwrites with `--force`.

@@ -13,8 +13,8 @@ the M-VAVE FM-1 and SMK-37, with help from AI agents. The firmware runs on **RIB
    builds, emulation, inspection, device installation and recovery, scaffolding,
    linting, formatting, the web lab, evidence, status, and help. Commands include
    `quick-check`, `setup`, `build`, `emu`, `deep-check`, `inspect`, `flash`,
-   `debrick`, `scaffold node|macro|patch`, `lib`, `lint`, `fmt`, `web-build`,
-   `web-serve`, `evidence`, `status`, `version`, and `help`.
+   `debrick`, `scaffold node|macro|patch`, `interview`, `lib`, `lint`, `fmt`,
+   `web-build`, `web-serve`, `evidence`, `status`, `version`, and `help`.
 2. **Development skill**, guides the design-to-build workflow using offline
    references.
 3. **Safety skill**, documents the threat model, attack surfaces, and gates for
@@ -93,6 +93,15 @@ umetate publish --plugins --vendor-deps build/plugin-juce/_deps
 
 A hand-written `publish-readme.md` in the project is copied verbatim as the release
 front door. Without one, `publish` writes a README from its template.
+
+## Write the docs
+
+`umetate interview --synth examples/type-p-fm1 --write` writes the design interview
+form. The documentation skill uses the answers to write the manual preface:
+personal history, the synthesis lineage, the design decisions, the trade-offs, and
+the first patch. The raw notes stay in the project and out of the release.
+`umetate interview --next 3` prints the next gaps, and `--check` lists every open
+question.
 
 ## Continuous integration
 

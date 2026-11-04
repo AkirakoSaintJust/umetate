@@ -28,6 +28,7 @@ COMMANDS: dict[str, tuple[str, str]] = {
     "scaffold": ("generate a node/macro/patch/synth skeleton", "scaffold"),
     "lib": ("list the shipped nodes + templates", "lib"),
     "preset": ("export/import the preset bank as SysEx", "preset"),
+    "interview": ("run the design interview question bank", "interview"),
     "publish": ("assemble a distributable firmware repo", "publish"),
     "plugin-generate": (
         "render a synth project's plugin sources",

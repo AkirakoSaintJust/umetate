@@ -1057,6 +1057,61 @@ def _publish_vendor_copy() -> None:
         assert not (dest / "juce-subbuild").exists()
 
 
+def _interview_roundtrip() -> None:
+    """The design interview form writes, reports gaps, and round-trips."""
+    from . import interview
+
+    with tempfile.TemporaryDirectory() as tmp:
+        synth = Path(tmp)
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+            rc = interview.main(["--synth", str(synth), "--write"])
+        assert rc == 0, buf.getvalue()
+
+        form = synth / "design-interview.md"
+        assert form.is_file(), "interview --write did not create the form"
+        text = form.read_text(encoding="utf-8")
+        questions = interview.parse_questions(text)
+        assert len(questions) >= 20, len(questions)
+        assert not any(question.answered for question in questions)
+        assert any(
+            "Which Yamaha models or chips" in question.prompt
+            and "from each?" in question.prompt
+            for question in questions
+        ), "a multi-line question was truncated"
+
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+            rc = interview.main(["--synth", str(synth), "--check"])
+        assert rc == 1, "a fresh form must have gaps"
+        assert "questions still open" in buf.getvalue()
+
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = interview.main(["--synth", str(synth), "--next", "1"])
+        assert rc == 0
+        assert "The first sound" in buf.getvalue()
+
+        form.write_text(text.replace("**A:**", "**A:** answered"), encoding="utf-8")
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+            rc = interview.main(["--synth", str(synth), "--check"])
+        assert rc == 0, buf.getvalue()
+        assert "all" in buf.getvalue()
+
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+            rc = interview.main(["--synth", str(synth), "--write"])
+        assert rc == 1, "an existing form needs --force"
+        assert "exists" in buf.getvalue()
+
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+            rc = interview.main(["--synth", str(synth), "--write", "--force"])
+        assert rc == 0, buf.getvalue()
+        assert "answered" not in form.read_text(encoding="utf-8")
+
+
 def main() -> int:
     tests: _Tests = [
         ("no import side effects", _no_import_side_effects),
@@ -1096,6 +1151,7 @@ def main() -> int:
             _publish_release_manifest,
         ),
         ("publish copies only the vendored source", _publish_vendor_copy),
+        ("the design interview form round-trips", _interview_roundtrip),
         (
             "plugin-generate renders the project and catches drift",
             _plugin_generate_roundtrip,

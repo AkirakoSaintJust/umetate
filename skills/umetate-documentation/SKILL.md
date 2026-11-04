@@ -1,7 +1,7 @@
 ---
 name: umetate-documentation
-description: Write thorough, readable, human documentation for end users of a synthesizer built on umetate. Covers the user manual, panel reference, MIDI and SysEx reference, patch sheet, installation guide, and release notes. Rewrites are synchronic (current state, not history), written from the instrument's point of view, and measured against the author's own corpus and hand-rewritten manual so they read like a person wrote them. Never uses em dashes or semi-colons, never loses information, and bans negative parallelism, heading chains, false dichotomies, and marketing hooks. Preserves the author's contractions, asides, light UK slang, and self-description.
-version: 1.2.0
+description: Write thorough, readable, human documentation for end users of a synthesizer built on umetate. Covers the user manual, panel reference, MIDI and SysEx reference, patch sheet, installation guide, and release notes. Includes a journalist-style design interview for the manual preface and design note. Rewrites are synchronic (current state, not history), written from the instrument's point of view, and measured against the author's own corpus and hand-rewritten manual so they read like a person wrote them. Never uses em dashes or semi-colons, never loses information, and bans negative parallelism, heading chains, false dichotomies, and marketing hooks. Preserves the author's contractions, asides, light UK slang, and self-description.
+version: 1.3.0
 license: GPL-3.0-only
 compatibility: OpenCode and Agent Skills-compatible loaders
 allowed-tools: read, grep, glob, edit, write, shell, websearch, webfetch
@@ -76,6 +76,34 @@ One or two personal asides in the preface, one per section in the body. Never in
 step.
 
 
+## The design interview
+
+The manual preface and any design note come from the author. A point-blank "what is
+your design philosophy?" produces nothing. Run the interview before you write the
+preface.
+
+`umetate interview --synth <dir> --write` puts the question form in
+`<dir>/design-interview.md`. Conduct the interview in conversation, one topic at a
+time. `--next 3` prints the next gaps. `--check` lists every gap. The full protocol
+is in `references/design-interview.md`, and the form is
+`templates/design-interview.md`.
+
+Ask for:
+
+- the first patch or sound that made the synth happen,
+- the synths or chips it came from, and what was rejected,
+- the design decisions and what each one cost,
+- a failure, a limit, and a patch recipe,
+- what the author wants a player to understand.
+
+Follow up on every vague answer. "Which model?" "What did it sound like?" "What
+broke?" "What did you keep?" A setting and a sound beat an adjective.
+
+The raw notes are private. Do not copy them into `docs/` or the release. Write the
+public design note from them, in the author's voice, with the manual calibration.
+Cut the questions, keep the concrete details and the author's asides. Do not invent
+an answer.
+
 ## The document set
 
 A synthesizer project ships these user-facing documents. Each one has a job.
@@ -102,7 +130,8 @@ The manual can open with a design note, not a spec sheet. The design note is in 
 front-door register: the history, the constraint, the things the author wanted to
 change, and a short numbered list. The hand rewrite has seven. Then hand over to the
 manual register. The preface can run to several paragraphs and 150-word paragraphs.
-The parameter sections stay 40 to 120 words.
+The parameter sections stay 40 to 120 words. The design note comes from the
+interview, not from the model. Use the answers in `design-interview.md`.
 
 Fetch real manuals as style and content references before you write. Good anchors:
 the Yamaha DX7 owner's manual and the Reface DX, the Korg opsix and Volca FM, the
@@ -298,6 +327,8 @@ Checklist for the final pass:
 - [ ] The author's slang, asides, and self-description survive.
 - [ ] The manual is not flatter than the corpus. The median is roughly 13 to 16
       words and the variance is visible.
+- [ ] The preface has at least one concrete design decision, one lineage reference,
+      one failure or limit, and one first-patch recipe from the interview.
 - [ ] No negative parallelism ("not just X, but Y", "not X, it's Y", "less X than Y").
 - [ ] No heading chain ("The X", "The Y", "The Z: ...").
 - [ ] No false dichotomy and no invented contrast.

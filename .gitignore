@@ -25,6 +25,9 @@ dist/
 *.elf
 *.map
 
+# raw design-interview notes stay private
+examples/*/design-interview.md
+
 # the `umetate publish` output (a separate distributable repo, not this repo's)
 publish/
 
