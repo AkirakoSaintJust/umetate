@@ -149,12 +149,12 @@
   SHA-256
   `3fae1844eb0096a9344f46dfefb6b981908ba7238f774a1844425919092cdb87`.
 - The Docker image carries Ardour 8.12 and Carla 2.6.0-alpha1. The `linux_daws`
-  CTest passes in about 24 seconds. Ardour renders a one-note VST3 session to
+  CTest passes in about 25 seconds. Ardour renders a one-note VST3 session to
   88200 frames at 44100 Hz, 24-bit stereo, peak 0.609467 and RMS 0.196450.
   Carla renders the VST3 and CLAP builds to 132300 frames at 44100 Hz, 24-bit
   stereo, peak 0.609467.
 - The fresh `umetate-host-build:dawtest` image configures with JUCE and CLAP
-  enabled and passes all 6 CTests, with `linux_daws` at 24.42 seconds.
+  enabled and passes all 6 CTests, with `linux_daws` at 24.92 seconds.
 - `plugin_smoke` now proves a full 313-parameter state round trip, not only one
   parameter.
 - The remaining warning is in the wrapper state loader, not in the processor.

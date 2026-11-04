@@ -142,7 +142,7 @@ else()
 endif()
 
 find_program(ARDOUR8_EXPORT ardour8-export)
-find_program(CARLA_JACK_SINGLE carla-jack-single)
+find_program(CARLA_JACK_SINGLE carla-jack-single HINTS /opt/carla/bin)
 find_program(JACK_REC jack_rec)
 if(UNIX AND NOT APPLE AND XVFB_RUN AND ARDOUR8_EXPORT AND CARLA_JACK_SINGLE AND JACK_REC)
     set(P1_LINUX_DAWS_CLAP)

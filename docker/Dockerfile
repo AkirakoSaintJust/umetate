@@ -59,6 +59,10 @@ RUN git init /tmp/carla-src \
     && rm -rf /tmp/carla-src
 ENV PATH="/opt/carla/bin:${PATH}"
 
+# Login shells rebuild PATH from /etc/profile, which drops /opt/carla/bin.
+RUN printf '%s\n' 'export PATH="/opt/carla/bin:$PATH"' \
+        > /etc/profile.d/carla.sh
+
 ENV LANG=C.UTF-8
 
 WORKDIR /work

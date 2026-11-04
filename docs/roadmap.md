@@ -3905,6 +3905,6 @@ with an empty project, adds each plugin through the OSC control API, sends a
 MIDI note and records the plugin outputs with `jack_rec`. The Ardour render is
 88200 frames at 44100 Hz, 24-bit stereo, peak 0.609467 and RMS 0.196450. The
 Carla VST3 and CLAP renders are 132300 frames at 44100 Hz, 24-bit stereo, peak
-0.609467. A fresh image passes all six CTests, with `linux_daws` at 24.42
+0.609467. A fresh image passes all six CTests, with `linux_daws` at 24.92
 seconds. The Linux DAW matrix is now automated alongside the Windows REAPER and
 Renoise matrix. The macOS build and AU remain open.
