@@ -1,6 +1,6 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-3.0-only
-# Linux DAW acceptance: Ardour renders the VST3, Zrythm scans it.
+# Linux DAW acceptance: Ardour renders the VST3, Carla renders both formats.
 #
 # Usage: linux_daws.sh <vst3-bundle> [work-dir] [clap-binary]
 set -eu
@@ -24,8 +24,9 @@ case "$WORK" in
         ;;
 esac
 
-for tool in ardour8-new_session ardour8-lua ardour8-export zrythm \
-            xvfb-run python3 timeout setsid readlink; do
+for tool in ardour8-new_session ardour8-lua ardour8-export \
+            carla-jack-single jackd jack_lsp jack_rec oscsend \
+            xvfb-run python3 timeout readlink; do
     if ! command -v "$tool" >/dev/null 2>&1; then
         echo "linux-daws: missing $tool" >&2
         exit 1
@@ -34,7 +35,7 @@ done
 
 rm -rf "$WORK"
 mkdir -p "$WORK/home/.vst3" "$WORK/home/.clap" "$WORK/home/.config" \
-         "$WORK/home/.local/share" "$WORK/ardour" "$WORK/zrythm"
+         "$WORK/home/.local/share" "$WORK/ardour"
 cp -a "$VST3" "$WORK/home/.vst3/"
 if [ -n "$CLAP" ]; then
     cp -a "$CLAP" "$WORK/home/.clap/"
@@ -54,6 +55,45 @@ if [ ! -x "$VST3_SCANNER" ]; then
 fi
 LD_LIBRARY_PATH="$ARDOUR_LIB_DIR" "$VST3_SCANNER" \
     "$WORK/home/.vst3/$(basename "$VST3")" >"$WORK/ardour-scan.log" 2>&1
+
+check_wav() {
+    python3 - "$1" "$2" <<'PY'
+import math
+import struct
+import sys
+import wave
+
+path = sys.argv[1]
+label = sys.argv[2]
+with wave.open(path, "rb") as wav:
+    frames = wav.getnframes()
+    rate = wav.getframerate()
+    channels = wav.getnchannels()
+    width = wav.getsampwidth()
+    data = wav.readframes(frames)
+
+if width == 3:
+    values = []
+    for i in range(0, len(data), 3):
+        value = data[i] | (data[i + 1] << 8) | (data[i + 2] << 16)
+        if value & 0x800000:
+            value -= 1 << 24
+        values.append(value)
+    scale = 8388608.0
+elif width == 2:
+    values = struct.unpack("<%dh" % (len(data) // 2), data)
+    scale = 32768.0
+else:
+    raise SystemExit("unexpected WAV sample width %d" % width)
+
+peak = max(abs(value) for value in values) / scale
+rms = math.sqrt(sum((value / scale) ** 2 for value in values) / len(values))
+print("%s: frames=%d rate=%d channels=%d peak=%.6f rms=%.6f"
+      % (label, frames, rate, channels, peak, rms))
+if frames == 0 or peak <= 0.001:
+    raise SystemExit(label + " rendered silence")
+PY
+}
 
 SESSION_DIR="$WORK/ardour/session"
 SESSION_NAME="TypePFm1"
@@ -186,76 +226,155 @@ if [ ! -f "$WORK/ardour.wav" ]; then
     exit 1
 fi
 
-python3 - "$WORK/ardour.wav" <<'PY'
-import math
-import struct
-import sys
-import wave
+check_wav "$WORK/ardour.wav" ardour
 
-path = sys.argv[1]
-with wave.open(path, "rb") as wav:
-    frames = wav.getnframes()
-    rate = wav.getframerate()
-    channels = wav.getnchannels()
-    width = wav.getsampwidth()
-    data = wav.readframes(frames)
+CARLA_CONFIG="$HOME/.config/falkTX"
+mkdir -p "$CARLA_CONFIG"
+cat >"$CARLA_CONFIG/Carla2.conf" <<'INI'
+[OSC]
+Enabled=true
+TCPEnabled=true
+TCPNumber=12345
+TCPRandom=false
+UDPEnabled=true
+UDPNumber=12345
+UDPRandom=false
+INI
 
-if width == 3:
-    values = []
-    for i in range(0, len(data), 3):
-        value = data[i] | (data[i + 1] << 8) | (data[i + 2] << 16)
-        if value & 0x800000:
-            value -= 1 << 24
-        values.append(value)
-    scale = 8388608.0
-elif width == 2:
-    values = struct.unpack("<%dh" % (len(data) // 2), data)
-    scale = 32768.0
-else:
-    raise SystemExit("unexpected WAV sample width %d" % width)
+CARXP="$WORK/empty.carxp"
+cat >"$CARXP" <<'XML'
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE CARLA-PROJECT>
+<CARLA-PROJECT VERSION='2.0'>
+ <EngineSettings>
+  <ForceStereo>false</ForceStereo>
+  <PreferPluginBridges>false</PreferPluginBridges>
+  <PreferUiBridges>false</PreferUiBridges>
+  <UIsAlwaysOnTop>false</UIsAlwaysOnTop>
+  <MaxParameters>200</MaxParameters>
+  <UIBridgesTimeout>4000</UIBridgesTimeout>
+ </EngineSettings>
+</CARLA-PROJECT>
+XML
 
-peak = max(abs(value) for value in values) / scale
-rms = math.sqrt(sum((value / scale) ** 2 for value in values) / len(values))
-print("ardour: frames=%d rate=%d channels=%d peak=%.6f rms=%.6f"
-      % (frames, rate, channels, peak, rms))
-if frames == 0 or peak <= 0.001:
-    raise SystemExit("Ardour rendered silence")
-PY
-
-PLUGIN_CACHE="$XDG_DATA_HOME/Zrythm.org/Zrythm/known_plugins.xml"
-rm -f "$PLUGIN_CACHE"
-setsid timeout 20s xvfb-run -a zrythm --dummy \
-    --new-project "$WORK/zrythm/TestProject" >"$WORK/zrythm.log" 2>&1 &
-ZRYTHM_PID=$!
-for _ in $(seq 1 40); do
-    if [ -f "$PLUGIN_CACHE" ] &&
-       grep 'name="Type P.fm1"' "$PLUGIN_CACHE" | grep -q 'format="VST3"'; then
-        break
+JACK_PID=""
+CARLA_PID=""
+cleanup() {
+    if [ -n "$CARLA_PID" ]; then
+        kill "$CARLA_PID" 2>/dev/null || true
+        wait "$CARLA_PID" 2>/dev/null || true
     fi
-    sleep 0.5
-done
-kill -- -"$ZRYTHM_PID" 2>/dev/null || true
-wait "$ZRYTHM_PID" 2>/dev/null || true
+    if [ -n "$JACK_PID" ]; then
+        kill "$JACK_PID" 2>/dev/null || true
+        wait "$JACK_PID" 2>/dev/null || true
+    fi
+}
+trap cleanup EXIT HUP INT TERM
 
-if [ ! -f "$PLUGIN_CACHE" ]; then
-    echo "linux-daws: Zrythm did not write a plugin cache" >&2
-    tail -30 "$WORK/zrythm.log" >&2
+if ! jack_lsp >/dev/null 2>&1; then
+    jackd --no-realtime -d dummy -r 44100 -p 256 >"$WORK/jackd.log" 2>&1 &
+    JACK_PID=$!
+    for _ in $(seq 1 50); do
+        jack_lsp >/dev/null 2>&1 && break
+        sleep 0.1
+    done
+fi
+if ! jack_lsp >/dev/null 2>&1; then
+    echo "linux-daws: JACK did not start" >&2
+    echo "linux-daws: the container needs --shm-size=512m" >&2
+    tail -20 "$WORK/jackd.log" >&2
     exit 1
 fi
-if ! grep 'name="Type P.fm1"' "$PLUGIN_CACHE" | grep -q 'format="VST3"'; then
-    echo "linux-daws: Zrythm did not scan Type P.fm1 as VST3" >&2
-    tail -30 "$WORK/zrythm.log" >&2
-    exit 1
-fi
-echo "zrythm: Type P.fm1 scanned as VST3"
 
-if [ -n "$CLAP" ]; then
-    if ! grep 'name="Type P.fm1"' "$PLUGIN_CACHE" | grep -q 'format="CLAP"'; then
-        echo "linux-daws: Zrythm did not scan Type P.fm1 as CLAP" >&2
-        tail -30 "$WORK/zrythm.log" >&2
+carla_start() {
+    if [ -n "$CARLA_PID" ]; then
+        kill "$CARLA_PID" 2>/dev/null || true
+        wait "$CARLA_PID" 2>/dev/null || true
+        CARLA_PID=""
+        sleep 1
+    fi
+    QT_QPA_PLATFORM=offscreen carla-jack-single --no-gui "$CARXP" \
+        >"$WORK/carla.log" 2>&1 &
+    CARLA_PID=$!
+    sleep 2
+    if ! kill -0 "$CARLA_PID" 2>/dev/null; then
+        echo "linux-daws: Carla did not start" >&2
+        tail -30 "$WORK/carla.log" >&2
         exit 1
     fi
-    echo "zrythm: Type P.fm1 scanned as CLAP"
+}
+
+carla_add() {
+    python3 - "$1" "$2" "$3" <<'PY'
+import sys
+import time
+
+import pyliblo3 as liblo
+
+filename, label, ptype = sys.argv[1], sys.argv[2], int(sys.argv[3])
+server = liblo.Server(0, proto="TCP")
+target = liblo.Address("osc.tcp://127.0.0.1:12345")
+liblo.send(target, "/register", server.get_url() + "Carla")
+time.sleep(0.3)
+liblo.send(
+    target,
+    "/ctrl/add_plugin",
+    3,
+    2,
+    ptype,
+    filename,
+    "Type P.fm1",
+    label,
+    0,
+    0,
+)
+for _ in range(30):
+    server.recv(100)
+PY
+}
+
+carla_record() {
+    tag=$1
+    filename=$2
+    label=$3
+    ptype=$4
+    carla_start
+    carla_add "$filename" "$label" "$ptype"
+    for _ in $(seq 1 50); do
+        if jack_lsp 2>/dev/null | grep -q 'Carla:Type P.fm1:output_1'; then
+            break
+        fi
+        sleep 0.1
+    done
+    if ! jack_lsp 2>/dev/null | grep -q 'Carla:Type P.fm1:output_1'; then
+        echo "linux-daws: Carla did not load Type P.fm1 as $tag" >&2
+        tail -30 "$WORK/carla.log" >&2
+        exit 1
+    fi
+
+    wav="$WORK/carla-$tag.wav"
+    rm -f "$wav"
+    jack_rec -f "$wav" -d 3 -b 24 \
+        'Carla:Type P.fm1:output_1' 'Carla:Type P.fm1:output_2' \
+        >"$WORK/jackrec-$tag.log" 2>&1 &
+    record_pid=$!
+    sleep 0.5
+    oscsend osc.udp://127.0.0.1:12345 /Carla/0/note_on iii 0 60 100
+    sleep 1
+    oscsend osc.udp://127.0.0.1:12345 /Carla/0/note_off ii 0 60
+    wait "$record_pid" || true
+    if [ ! -f "$wav" ]; then
+        echo "linux-daws: Carla did not record $tag audio" >&2
+        tail -20 "$WORK/jackrec-$tag.log" >&2
+        exit 1
+    fi
+    check_wav "$wav" "carla-$tag"
+}
+
+carla_record vst3 "$WORK/home/.vst3/Type P.fm1.vst3" "Type P.fm1" 6
+if [ -n "$CLAP" ]; then
+    carla_record clap "$WORK/home/.clap/Type P.fm1.clap" \
+        "com.p1onken.typepfm1" 14
 fi
 
 echo "linux-daws: ok"

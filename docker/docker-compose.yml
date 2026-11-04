@@ -3,6 +3,8 @@
 services:
   host:
     image: umetate-host-build:latest
+    # JACK needs more than the Docker default 64 MB /dev/shm.
+    shm_size: 512mb
     volumes:
       - ..:/work
       - umetate-target:/opt/jieli:ro

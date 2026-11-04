@@ -6,7 +6,7 @@ designed editor, the 64 multi and 128 part banks and the 32-tap output rate
 bridge are in. The VST3 and CLAP artefacts pass their validators on both
 platforms. REAPER renders the Windows VST3 and CLAP builds byte-identically.
 Renoise loads the Windows VST3 and renders a one-note project. The Windows DAW
-matrix is done. The Docker image adds Ardour and Zrythm, and the `linux_daws`
+matrix is done. The Docker image adds Ardour and Carla, and the `linux_daws`
 CTest covers the Linux DAW matrix. The macOS build and the AU target remain
 open.
 
@@ -328,9 +328,10 @@ Toolchain:
   copy instead of a volatile struct cast.
 - macOS: Xcode command line tools, universal binary if the build host allows it.
 - Linux: ALSA and X11 development packages, plus the usual JUCE dependencies.
-- Linux DAWs: the Docker image carries Ardour 8.12 and Zrythm 2.0.0-alpha.7.
-  Ardour renders a session with `ardour8-export`. Zrythm scans VST3 and CLAP.
-  The `linux_daws` CTest drives both.
+- Linux DAWs: the Docker image carries Ardour 8.12 and Carla 2.6.0-alpha1.
+  Ardour renders a session with `ardour8-export`. Carla runs headless through
+  JACK and its OSC API, and renders both VST3 and CLAP. The `linux_daws` CTest
+  drives both.
 
 CLI, later phase:
 
@@ -362,8 +363,8 @@ Plugin work adds a new evidence layer. It does not replace the firmware layers.
    rename and mute checks on each platform.
 8. **Plugin validation.** `pluginval` for VST3 and `clap-validator` for CLAP at
    several strictness levels. Load in at least two DAWs per platform. On Linux
-   the `linux_daws` CTest uses Ardour for a headless render and Zrythm for a
-   VST3 and CLAP scan.
+   the `linux_daws` CTest uses Ardour for a headless VST3 render and Carla for
+   headless VST3 and CLAP renders.
 9. **Performance.** 20 voices at 44.1 and 96 kHz, 32 to 1024 frame blocks. Record
    the real-time factor and the worst block.
 10. **Licensing.** GPL-3.0-only, JUCE GPL path, OFL font files and notices, no
@@ -451,12 +452,15 @@ identical. The VST3 bundle was installed in
 Hz, 24-bit stereo, peak 0.225197 and RMS 0.105559. The Windows DAW matrix now has
 REAPER and Renoise.
 
-The Docker image carries Ardour 8.12 and Zrythm 2.0.0-alpha.7. The `linux_daws`
+The Docker image carries Ardour 8.12 and Carla 2.6.0-alpha1. The `linux_daws`
 CTest copies the VST3 and CLAP to an isolated `$HOME`, scans them with Ardour's
-VST3 scanner, builds a one-note Ardour session and exports it headlessly. The
-render is 88200 frames at 44100 Hz, 24-bit stereo, peak 0.609467 and RMS
-0.196450. Zrythm scans the same build and records `Type P.fm1` as both VST3 and
-CLAP. The Linux DAW matrix is now automated. The macOS build and AU remain open.
+VST3 scanner, builds a one-note Ardour session and exports it headlessly. It
+then starts a dummy JACK server, runs Carla headless, adds each plugin through
+Carla's OSC API, sends a MIDI note and records the plugin output with `jack_rec`.
+The Ardour render is 88200 frames at 44100 Hz, 24-bit stereo, peak 0.609467 and
+RMS 0.196450. The Carla VST3 and CLAP renders are 132300 frames at 44100 Hz,
+24-bit stereo, peak 0.609467. The Linux DAW matrix is now automated. The macOS
+build and AU remain open.
 
 Host bridge build:
 
@@ -518,23 +522,26 @@ On Linux, install `pkg-config`, `libasound2-dev`, the X11, Xrandr, Xcursor,
 Xinerama, Xcomposite and Xrender headers, freetype and fontconfig, and the
 OpenGL headers. JUCE 8.0.9 is fetched at configure time.
 
-The Docker image already carries those packages plus Ardour, Xvfb and Zrythm.
-Build it with `docker/build.sh`. `ctest` then runs `linux_daws` automatically
-when `ardour8-export` and `zrythm` are on `PATH`. The test keeps its own `$HOME`
-under the build tree and does not touch the host plugin folders.
+The Docker image already carries those packages plus Ardour, Carla, JACK, Xvfb
+and the Qt runtime. Build it with `docker/build.sh`. `ctest` then runs
+`linux_daws` automatically when `ardour8-export`, `carla-jack-single` and
+`jack_rec` are on `PATH`. The test keeps its own `$HOME` under the build tree
+and does not touch the host plugin folders. The container needs
+`--shm-size=512m` for JACK. `umetate/runner.py` and `docker/docker-compose.yml`
+set it.
 
 Platform matrix:
 
 | Platform | VST3 | CLAP | Standalone | Evidence |
 | --- | --- | --- | --- | --- |
-| Linux x86-64 | built, pluginval pass, Ardour render, Zrythm scan | built, clap-validator pass, Zrythm scan | built | Linux container, 2026-11-04 |
+| Linux x86-64 | built, pluginval pass, Ardour and Carla render | built, clap-validator pass, Carla render | built | Linux container, 2026-11-04 |
 | Windows x86-64 | built, pluginval pass, REAPER and Renoise render | built, clap-validator pass, REAPER render | built | Windows host, MSVC 19.51, 2026-11-04 |
 | macOS arm64 and x86-64 | not built | not built | not built | no macOS runner |
 
 The Windows VST3 and CLAP builds render equivalent one-note REAPER projects to
 byte-identical WAV files. REAPER 7.84 and Renoise 3.5.4 both load the Windows
 VST3 build and render it. The `linux_daws` CTest renders the Linux VST3 in
-Ardour 8.12 and scans both Linux formats in Zrythm 2.0.0-alpha.7. Both DAW
+Ardour 8.12 and renders both Linux formats in Carla 2.6.0-alpha1. Both DAW
 matrices are done. The macOS rows are not claims of support. They need a native
 build, `pluginval` and two DAWs per platform before they move to pass. AU
 remains a later macOS target.
@@ -550,6 +557,8 @@ Docker gate. The generated `firmware/gen` must exist before CMake configures.
 | Two instances still share state | A second instance changes the first | Treat as a Milestone 0 failure |
 | JUCE fetch is unavailable | No network in the build environment | Support `JUCE_DIR` and a pinned local archive |
 | CLAP wrapper rots | The extension lags JUCE | Keep VST3 as the primary target, CLAP behind a flag |
+| Carla source drifts | The build fails or CLAP breaks | Keep the commit pin, rebuild the image, rerun `linux_daws` |
+| JACK shared memory is too small | `jackd` cannot start in the container | Keep `--shm-size=512m` in the runner and compose file |
 | Firmware C stops compiling on MSVC | GCC attributes or volatile casts reach the plugin build | Keep `msvc_compat.h` and the Windows CTest target green |
 | CLAP state load reports success on invalid bytes | `clap-validator` warning | Document it, keep the processor rejection, do not fake a valid state |
 | Rate bridge colors the sound | THD or alias above the budget | Raise the tap count or change the filter, never change the core rate |

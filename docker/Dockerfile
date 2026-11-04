@@ -31,30 +31,33 @@ RUN git clone --depth 1 --branch "${EMSDK_VERSION}" https://github.com/emscripte
     && /opt/emsdk/emsdk activate "${EMSDK_VERSION}"
 ENV PATH="/opt/emsdk:/opt/emsdk/upstream/emscripten:/opt/emsdk/node/24.19.0_64bit/bin:${PATH}"
 
-# Linux DAW acceptance. Ardour renders a session headlessly. Zrythm is an
-# AppImage because Debian trixie does not package it. Both scan $HOME/.vst3, and
-# Zrythm also scans $HOME/.clap, which the linux_daws CTest fills from the build
-# tree.
+# Linux DAW acceptance. Ardour renders a session headlessly. Carla renders both
+# VST3 and CLAP through its no-gui mode, JACK and the OSC control API. Carla is
+# built from the pinned main commit because the 2.5.x releases lack CLAP.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ardour xvfb xauth libopengl0 libegl1 libgles2 \
         libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-xkb1 \
         libxcb-shape0 \
+        pkg-config jackd2 jack-example-tools liblo-tools python3-liblo \
+        python3-pyqt5 python3-pyqt5.qtsvg python3-rdflib pyqt5-dev-tools \
+        libmagic-dev liblo-dev libasound2-dev libpulse-dev libx11-dev \
+        libxcursor-dev libxext-dev qtbase5-dev libfluidsynth-dev \
+        libjack-jackd2-dev \
+        libfreetype-dev libfontconfig1-dev libxrandr-dev libxinerama-dev \
+        libxcomposite-dev libxrender-dev libxfixes-dev libgl1-mesa-dev \
+        libxkbcommon-dev \
     && rm -rf /var/lib/apt/lists/*
 
-ARG ZRYTHM_VERSION=2.0.0-alpha.7
-ARG ZRYTHM_SHA256=7d9c7c01da93841c55d1703ad04ea66e633319ed1808c3a55d72789bd9d3b9d9
-RUN curl -L --fail -o /tmp/Zrythm.AppImage \
-        "https://github.com/zrythm/zrythm/releases/download/v${ZRYTHM_VERSION}/Zrythm-${ZRYTHM_VERSION}-Linux-x86_64.AppImage" \
-    && echo "${ZRYTHM_SHA256}  /tmp/Zrythm.AppImage" | sha256sum -c - \
-    && chmod +x /tmp/Zrythm.AppImage \
-    && mkdir -p /opt/zrythm \
-    && cd /opt/zrythm \
-    && /tmp/Zrythm.AppImage --appimage-extract >/dev/null \
-    && rm /tmp/Zrythm.AppImage \
-    && printf '%s\n' '#!/bin/sh' \
-        'exec /opt/zrythm/squashfs-root/AppRun "$@"' \
-        > /usr/local/bin/zrythm \
-    && chmod +x /usr/local/bin/zrythm
+ARG CARLA_COMMIT=97a9e0740baf6df2df942495c02532a624c44682
+RUN git init /tmp/carla-src \
+    && cd /tmp/carla-src \
+    && git remote add origin https://github.com/falkTX/Carla.git \
+    && git fetch --depth 1 origin "${CARLA_COMMIT}" \
+    && git checkout FETCH_HEAD \
+    && make -j"$(nproc)" \
+    && make install PREFIX=/opt/carla \
+    && rm -rf /tmp/carla-src
+ENV PATH="/opt/carla/bin:${PATH}"
 
 ENV LANG=C.UTF-8
 

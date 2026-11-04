@@ -3886,21 +3886,25 @@ REAPER and Renoise. The macOS build and AU remain open. The feature contract is
 
 ### 13.24 Linux DAW acceptance (2026-11-04)
 
-The Docker image now carries Ardour 8.12 and Zrythm 2.0.0-alpha.7. Ardour is in
-Debian trixie. Zrythm is a pinned AppImage extracted into `/opt/zrythm`, because
-Debian does not package it. The image also adds Xvfb, xauth, the Qt xcb
-cursor, icccm, keysyms and xkb libraries, and the OpenGL and EGL runtime
-libraries.
+The Docker image now carries Ardour 8.12 and Carla 2.6.0-alpha1. Ardour is in
+Debian trixie. Carla is built from the pinned main commit
+`97a9e0740baf6df2df942495c02532a624c44682`, because the 2.5.x releases lack
+CLAP. The image also adds JACK, `jack-example-tools`, PyQt5, Xvfb, xauth, the
+Qt xcb libraries and the OpenGL and EGL runtime libraries.
 
-`plugin/tests/linux_daws.sh` runs as the `linux_daws` CTest when Ardour, Zrythm
-and `xvfb-run` are present. It gives both DAWs an isolated `$HOME`, copies the
-VST3 and CLAP into `$HOME/.vst3` and `$HOME/.clap`, and leaves the host plugin
-folders alone. Ardour's VST3 scanner builds the cache, then `ardour8-lua` creates
-a MIDI track with the Type P.fm1 instrument. A one-note SMF and a matching MIDI
-region are added to the session, and `ardour8-export` renders it headlessly.
+`plugin/tests/linux_daws.sh` runs as the `linux_daws` CTest when Ardour, Carla,
+JACK and `xvfb-run` are present. It gives both hosts an isolated `$HOME`, copies
+the VST3 and CLAP into `$HOME/.vst3` and `$HOME/.clap`, and leaves the host
+plugin folders alone. Ardour's VST3 scanner builds the cache, then `ardour8-lua`
+creates a MIDI track with the Type P.fm1 instrument. A one-note SMF and a
+matching MIDI region are added to the session, and `ardour8-export` renders it
+headlessly.
 
-The Ardour render is 88200 frames at 44100 Hz, 24-bit stereo, peak 0.609467 and
-RMS 0.196450. Zrythm scans the same build and records `Type P.fm1` as both VST3
-and CLAP in `known_plugins.xml`. The test passes in 6.8 seconds. The Linux DAW
-matrix is now automated alongside the Windows REAPER and Renoise matrix. The
-macOS build and AU remain open.
+The test then starts a dummy JACK server at 44.1 kHz, runs Carla in no-gui mode
+with an empty project, adds each plugin through the OSC control API, sends a
+MIDI note and records the plugin outputs with `jack_rec`. The Ardour render is
+88200 frames at 44100 Hz, 24-bit stereo, peak 0.609467 and RMS 0.196450. The
+Carla VST3 and CLAP renders are 132300 frames at 44100 Hz, 24-bit stereo, peak
+0.609467. A fresh image passes all six CTests, with `linux_daws` at 24.42
+seconds. The Linux DAW matrix is now automated alongside the Windows REAPER and
+Renoise matrix. The macOS build and AU remain open.

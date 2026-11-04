@@ -142,8 +142,9 @@ else()
 endif()
 
 find_program(ARDOUR8_EXPORT ardour8-export)
-find_program(ZRYTHM zrythm)
-if(UNIX AND NOT APPLE AND XVFB_RUN AND ARDOUR8_EXPORT AND ZRYTHM)
+find_program(CARLA_JACK_SINGLE carla-jack-single)
+find_program(JACK_REC jack_rec)
+if(UNIX AND NOT APPLE AND XVFB_RUN AND ARDOUR8_EXPORT AND CARLA_JACK_SINGLE AND JACK_REC)
     set(P1_LINUX_DAWS_CLAP)
     if(P1_BUILD_CLAP)
         set(P1_LINUX_DAWS_CLAP

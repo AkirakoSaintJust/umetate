@@ -65,6 +65,7 @@ def ensure_container() -> None:
                 "-d",
                 "--name",
                 CONTAINER,
+                "--shm-size=512m",
                 "-v",
                 mount,
                 "-v",
