@@ -12,6 +12,7 @@
 #include "Engine.hpp"
 #include "MidiBridge.hpp"
 #include "Params.h"
+#include "PresetStore.hpp"
 #include "RateBridge.hpp"
 
 class ScopeRing {
@@ -57,6 +58,8 @@ public:
     void setStateInformation(const void* data, int sizeInBytes) override;
 
     juce::AudioProcessorValueTreeState& parameters() { return apvts_; }
+    p1::PresetStore& presets() { return presets_; }
+    const p1::PresetStore& presets() const { return presets_; }
 
     void readOutputScope(float* destination, int count);
     void readTapScope(int channel, float* destination, int count);
@@ -92,4 +95,5 @@ private:
     std::array<juce::String, 2> partNames_{{"init", "init"}};
     int uiActivePart_ = 0;
     int uiPage_ = 0;
+    p1::PresetStore presets_{kP1PartParamCount, kP1PartCount};
 };

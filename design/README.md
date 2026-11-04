@@ -277,6 +277,8 @@ graph cannot clip or touch the caption.
 - Note readouts show both forms, for example `60/c4` and `127/g9`.
 - The mute words are `active` and `mute`.
 - Part titles are `part n: name`.
+- Names use the device record limit of 15 characters, so a plugin bank
+  round-trips with the device.
 - Do not add descriptions of the obvious.
 
 ## Platform mapping

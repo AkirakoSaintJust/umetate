@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstdio>
 #include <memory>
+#include <vector>
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
@@ -38,6 +39,18 @@ int main(int argc, char** argv)
     TypePFm1AudioProcessor processor;
     processor.setRateAndBufferSizeDetails(44100.0, 256);
     processor.prepareToPlay(44100.0, 256);
+    {
+        auto& store = processor.presets();
+        const std::vector<int32_t> params(
+            static_cast<std::size_t>(kP1PartParamCount), 0);
+        store.savePart(0, "init part", params);
+        store.savePart(1, "bass", params);
+        store.saveMulti(0, "init multi", std::vector<uint8_t>{0, 1},
+                        std::vector<int32_t>{99, 80}, std::vector<int32_t>{0, 20},
+                        std::vector<int32_t>{0, 1}, std::vector<int32_t>{0, 0},
+                        std::vector<int32_t>{127, 127});
+        store.setCurrentMulti(0);
+    }
     std::unique_ptr<juce::AudioProcessorEditor> editor(processor.createEditor());
     if (editor == nullptr) {
         std::printf("editor snapshot: createEditor failed\n");
@@ -78,6 +91,15 @@ int main(int argc, char** argv)
     p1editor->showRenameDialog(false, 0);
     ok = saveSnapshot(*editor, directory.getChildFile("editor-rename.png")) && ok;
     p1editor->closeDialog();
+    p1editor->showPatchBrowser();
+    ok = saveSnapshot(*editor, directory.getChildFile("editor-patches.png")) && ok;
+    p1editor->closeDialog();
+    p1editor->showPartBrowser(true);
+    ok = saveSnapshot(*editor, directory.getChildFile("editor-parts.png")) && ok;
+    p1editor->closeDialog();
+    p1editor->showConfirm("overwrite patch slot 01?", [] {});
+    ok = saveSnapshot(*editor, directory.getChildFile("editor-confirm.png")) && ok;
+    p1editor->closeDialog();
 
     p1editor->applyAlgorithm(7);
     const auto* algorithm0 = processor.parameters().getRawParameterValue("algorithm.p0");
@@ -110,6 +132,49 @@ int main(int argc, char** argv)
     editor->setSize(620, 493);
     fill();
     ok = saveSnapshot(*editor, directory.getChildFile("editor-half.png")) && ok;
+
+    p1editor->setActivePart(0);
+    auto setRaw = [&processor](const juce::String& id, int value) {
+        if (auto* parameter = processor.parameters().getParameter(id))
+            parameter->setValueNotifyingHost(
+                parameter->convertTo0to1(static_cast<float>(value)));
+    };
+    auto raw = [&processor](const juce::String& id) {
+        if (auto* value = processor.parameters().getRawParameterValue(id))
+            return static_cast<int>(std::lround(value->load()));
+        return -999;
+    };
+    processor.setPartName(0, "bank test part");
+    processor.setPatchName("bank test");
+    setRaw("op1_ratio.p0", 131072);
+    p1editor->savePartToSlot(10);
+    const auto& savedParams = processor.presets().partParams(10);
+    if (savedParams.size() != static_cast<std::size_t>(kP1PartParamCount) ||
+        savedParams[0] != 131072) {
+        std::printf("editor snapshot: part slot did not store the parameter\n");
+        ok = false;
+    }
+    setRaw("op1_ratio.p0", 65536);
+    p1editor->loadPartFromSlot(10);
+    if (raw("op1_ratio.p0") != 131072) {
+        std::printf("editor snapshot: part slot did not restore the parameter\n");
+        ok = false;
+    }
+    p1editor->savePatchToSlot(5);
+    p1::PresetStore::Multi multi;
+    if (!processor.presets().loadMulti(5, multi) ||
+        multi.partSlot[0] != 10 || multi.name != "bank test") {
+        std::printf("editor snapshot: patch slot did not store the multi\n");
+        ok = false;
+    }
+    setRaw("op1_ratio.p0", 32768);
+    processor.setPatchName("changed");
+    p1editor->loadPatchFromSlot(5);
+    if (raw("op1_ratio.p0") != 131072 ||
+        processor.getPatchName() != "bank test") {
+        std::printf("editor snapshot: patch slot did not restore the multi\n");
+        ok = false;
+    }
 
     std::printf("editor snapshot: %s -> %s\n", ok ? "ok" : "FAIL",
                 directory.getFullPathName().toRawUTF8());

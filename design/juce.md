@@ -141,7 +141,8 @@ word for the current state is pink and the other word is faint.
 The level slider is a 14px track with a purple fill and a `level` caption.
 
 List dialogs scroll. Patch browser rows are 260px maximum. Part slots are 240px
-maximum. Use a thin scrollbar.
+maximum. Use a thin scrollbar. Names use the device record limit of 15
+characters, so the plugin banks round-trip with the device.
 
 ## Visualisers
 
@@ -190,5 +191,5 @@ output to the host rate. Do not resample the input or change the core rate.
 - Confirm the brand font licence. Until then the `TYPE P.` prefix uses Arial
   Black with a default bold sans fallback.
 - Decide whether AU joins VST3 and CLAP in the first macOS build.
-- Add the patch and part bank dialogs in Milestone 4. The current dialogs are
-  the algorithm picker and the two rename dialogs.
+- Device preset bank import and export through SysEx is a later milestone. The
+  in-plugin 64 multi and 128 part banks are in.

@@ -1519,11 +1519,11 @@
     const input = document.createElement("input");
     input.className = "textin";
     input.value = currentName;
-    input.maxLength = 24;
+    input.maxLength = 15;
     bodyEl.appendChild(input);
     const note = document.createElement("div");
     note.className = "note";
-    note.textContent = "max 24 characters.";
+    note.textContent = "max 15 characters.";
     bodyEl.appendChild(note);
     openDialog(title, bodyEl, [
       { label: "cancel", onClick: function (close) { close(); } },

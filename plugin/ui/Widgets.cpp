@@ -789,9 +789,15 @@ P1Dialog::P1Dialog(juce::String title, std::unique_ptr<juce::Component> body,
         addAndMakeVisible(*body_);
     for (int i = 0; i < buttons_.size(); ++i) {
         auto button = std::make_unique<P1Button>(buttons_[i], false);
-        button->onClick = [this, i] {
-            if (onButton_)
-                onButton_(i);
+        juce::Component::SafePointer<P1Dialog> safe(this);
+        button->onClick = [safe, i] {
+            juce::MessageManager::callAsync([safe, i] {
+                if (safe == nullptr)
+                    return;
+                auto callback = safe->onButton_;
+                if (callback)
+                    callback(i);
+            });
         };
         addAndMakeVisible(*button);
         buttonComponents_.push_back(std::move(button));
@@ -839,8 +845,14 @@ void P1Dialog::resized()
 
 void P1Dialog::mouseUp(const juce::MouseEvent& event)
 {
-    if (closeArea_.contains(event.getPosition()) && onClose_)
-        onClose_();
+    if (closeArea_.contains(event.getPosition())) {
+        juce::Component::SafePointer<P1Dialog> safe(this);
+        auto callback = onClose_;
+        juce::MessageManager::callAsync([safe, callback] {
+            if (safe != nullptr && callback)
+                callback();
+        });
+    }
 }
 
 void drawAlgorithmGraph(juce::Graphics& g, juce::Rectangle<float> area, int algorithm)

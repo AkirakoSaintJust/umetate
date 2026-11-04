@@ -2,9 +2,11 @@
 #pragma once
 
 #include <array>
+#include <cstdint>
 #include <functional>
 #include <map>
 #include <memory>
+#include <vector>
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
@@ -50,10 +52,17 @@ public:
     void applyAlgorithm(int algorithm);
     void showRenameDialog(bool part, int index);
     void showPartMenu();
+    void showPatchBrowser();
+    void showPartBrowser(bool saveMode);
     void copyPart(int part);
     void pastePart(int part);
     void initPart(int part);
     void togglePartMute(int part, bool muted);
+    void savePartToSlot(int slot);
+    void loadPartFromSlot(int slot);
+    void savePatchToSlot(int slot);
+    void loadPatchFromSlot(int slot);
+    void showConfirm(const juce::String& message, std::function<void()> onConfirm);
     void closeDialog();
     void updateVisualizers();
 
@@ -64,6 +73,10 @@ private:
     void buildPage();
     void setSpectroMode(bool spectro);
     void setStatusMessage(const juce::String& message);
+    std::vector<int32_t> currentPartParams(int part);
+    void applyPartParams(int part, const std::vector<int32_t>& params);
+    int currentRouting(int field, int part);
+    void applyRouting(int field, int part, int value);
 
     TypePFm1AudioProcessor& processor_;
     p1::ui::P1LookAndFeel lookAndFeel_;

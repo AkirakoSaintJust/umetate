@@ -1,8 +1,9 @@
 # Type P.fm1 plugin plan
 
-Status: Milestone 3 done, 2026-11-04. The JUCE VST3 and standalone host build,
+Status: Milestone 4 done, 2026-11-04. The JUCE VST3 and standalone host build,
 render audio, accept MIDI and save state. The designed three-page editor is in,
 with the token-driven look, visualisers, dialogs and the fixed 1240 by 985 scale.
+The in-plugin 64 multi and 128 part banks round-trip through the device records.
 
 This is the plan for the optional JUCE build path in umetate: a reusable plugin
 host plus a generated `type-p-fm1` project. The visual language is in
@@ -250,9 +251,9 @@ Milestone 3 implements:
 - Text entry, keyboard focus and the cut-polygon tabs follow the design language.
 - No filler copy.
 
-The patch and part banks are still Milestone 4. The editor stores patch and
-part names as UI state in the plugin state blob. The device record limit of 15
-characters is enforced when the banks land.
+The patch and part banks are in. The editor stores patch and part names as UI
+state in the plugin state blob. The rename dialog enforces the device record
+limit of 15 characters.
 
 ## 10. Presets and state
 
@@ -262,22 +263,25 @@ The plugin state is a versioned blob:
 version
 APVTS state (313 parameters)
 ui_active_part, ui_page
-multi bank (64 records)
-part bank (128 records)
+multi bank (64 records, base64)
+part bank (128 records, base64)
 current multi slot, part source slots
 ```
 
-- Use `preset_multi_pack`, `preset_multi_unpack`, `preset_part_pack` and
-  `preset_part_unpack` from `presets.c`. The byte layout stays device-compatible.
+- The banks use `preset_multi_pack`, `preset_multi_unpack`,
+  `preset_part_pack` and `preset_part_unpack` from `presets.c`. The byte layout
+  stays device-compatible.
 - The plugin state owns an in-memory bank. It does not write files on the audio
   thread.
 - The patch browser edits the 64 multi slots. The part save and load dialogs edit
   the 128 single-part slots.
 - DAW presets save the whole state. The bank size is small enough for one state
-  blob.
+  blob. The part bank is 128 x 557 bytes and the multi bank is 64 x 63 bytes.
 - Import and export of a device preset bank through SysEx is a later milestone.
-- The plugin must not silently rewrite a device bank. User confirmation is
-  required before an overwrite, as in the mockup.
+- The plugin does not rewrite a device bank. A save into a used slot opens a
+  confirmation dialog before overwriting. Device bank import and export will
+  require explicit confirmation.
+- Names use the device record limit of 15 characters.
 
 ## 11. Build and toolchain
 
@@ -353,7 +357,7 @@ Plugin work adds a new evidence layer. It does not replace the firmware layers.
 | 1 | Engine bridge harness, no JUCE | done |
 | 2 | JUCE host skeleton | done |
 | 3 | Editor | done |
-| 4 | Presets and banks | 64 multi and 128 part slots, device record round trip |
+| 4 | Presets and banks | done |
 | 5 | Rate bridge | bypass exact, 48/96/192 measured, latency reported |
 | 6 | CLAP and platform matrix | clap-validator, pluginval, two DAWs per platform |
 | 7 | Generator and CLI | `plugin-generate`, `plugin-build`, `plugin-check`, template and docs |
@@ -386,6 +390,18 @@ buttons. The operator envelopes use the two-row rate and level layout. The
 algorithm picker and rename dialogs are in. `plugin_editor_snapshot` renders the
 pages and dialogs under Xvfb and the PNGs are the visual evidence. The plugin
 state now stores patch and part names plus the active part and page.
+
+Milestone 4 is done. The plugin has 64 multi slots and 128 part slots. The banks
+reuse the firmware `presets.c` pack and unpack functions, so a part record is
+557 bytes and a multi record is 63 bytes. Empty slots are `0xFF` and corrupt
+records are skipped. The plugin state version is 2 and restores both banks, the
+current multi and the part source slots. The patch button opens the 64-slot
+browser. The part menu opens the 128-slot browser in save or load mode. A save
+into a used slot opens a confirmation dialog before overwriting. A multi save
+uses the saved part source slots and puts a part with no source into a free slot
+first. `preset_smoke` proves the device record round trip. `plugin_smoke` proves
+the bank state round trip. `plugin_editor_snapshot` saves and loads a part and a
+multi through the editor.
 
 Host bridge build:
 

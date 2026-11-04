@@ -46,7 +46,7 @@ public:
                    juce::Justification::centredLeft, false);
         g.setFont(p1::ui::uiFont(p1::tokens::textButton));
         g.setColour(p1::ui::colour(p1::tokens::white));
-        g.drawText(ellipsis(name_, 16), 46, 0, getWidth() - 52, getHeight(),
+        g.drawText(ellipsis(name_, 15), 46, 0, getWidth() - 52, getHeight(),
                    juce::Justification::centredLeft, false);
     }
 
@@ -136,7 +136,7 @@ public:
         };
         addAndMakeVisible(alg_);
 
-        patch_.onClick = [this] { editor_.showRenameDialog(false, 0); };
+        patch_.onClick = [this] { editor_.showPatchBrowser(); };
         addAndMakeVisible(patch_);
         rename_.onClick = [this] { editor_.showRenameDialog(false, 0); };
         addAndMakeVisible(rename_);
@@ -354,6 +354,84 @@ private:
 
 namespace {
 
+using namespace p1;
+using namespace p1::ui;
+
+class SlotListBody : public juce::Component, private juce::ListBoxModel {
+public:
+    SlotListBody(int count, std::function<juce::String(int)> nameFor,
+                 std::function<bool(int)> usedFor, int selected)
+        : count_(count),
+          nameFor_(std::move(nameFor)),
+          usedFor_(std::move(usedFor)),
+          selected_(juce::jlimit(0, juce::jmax(0, count - 1), selected)),
+          list_("slots", this)
+    {
+        addAndMakeVisible(list_);
+        list_.setRowHeight(24);
+        list_.setColour(juce::ListBox::backgroundColourId,
+                        colour(tokens::popup));
+        list_.setColour(juce::ListBox::outlineColourId,
+                        juce::Colours::transparentBlack);
+        list_.setColour(juce::ListBox::textColourId, colour(tokens::text));
+        list_.selectRow(selected_, true, true);
+    }
+
+    int selected() const { return selected_; }
+
+    void resized() override
+    {
+        list_.setBounds(getLocalBounds());
+        list_.scrollToEnsureRowIsOnscreen(selected_);
+    }
+
+    int getNumRows() override { return count_; }
+
+    void paintListBoxItem(int row, juce::Graphics& g, int width, int height,
+                          bool selected) override
+    {
+        const auto area = juce::Rectangle<int>(0, 0, width, height);
+        const bool used = usedFor_ && usedFor_(row);
+        if (selected) {
+            g.setColour(colour(tokens::purple).withAlpha(0.08f));
+            g.fillRect(area);
+            g.setColour(colour(tokens::purple));
+            g.drawRect(area, 1);
+        } else {
+            g.setColour(colour(tokens::popup));
+            g.fillRect(area);
+        }
+        g.setColour(colour(tokens::line));
+        g.fillRect(8, height - 1, width - 16, 1);
+        g.setFont(uiFont(tokens::textSlotRow));
+        g.setColour(colour(selected ? tokens::purple
+                                    : used ? tokens::dim : tokens::faint));
+        g.drawText(juce::String(row + 1).paddedLeft('0', 2), area.reduced(8, 0),
+                   juce::Justification::centredLeft, false);
+        juce::String name = used && nameFor_ ? nameFor_(row) : "empty";
+        if (name.isEmpty())
+            name = "empty";
+        g.setColour(colour(selected ? tokens::purple
+                                    : used ? tokens::text : tokens::faint));
+        g.drawText(name, area.withTrimmedLeft(42).withTrimmedRight(8),
+                   juce::Justification::centredLeft, true);
+    }
+
+    void listBoxItemClicked(int row, const juce::MouseEvent&) override
+    {
+        selected_ = juce::jlimit(0, juce::jmax(0, count_ - 1), row);
+        list_.selectRow(selected_, true, true);
+        repaint();
+    }
+
+private:
+    int count_ = 0;
+    std::function<juce::String(int)> nameFor_;
+    std::function<bool(int)> usedFor_;
+    int selected_ = 0;
+    juce::ListBox list_;
+};
+
 class AlgTile : public juce::Button {
 public:
     AlgTile(int index, std::function<void(int)> onSelect)
@@ -456,10 +534,11 @@ public:
         editor_.setFont(p1::ui::uiFont(14.0f));
         editor_.setColour(juce::TextEditor::textColourId,
                           p1::ui::colour(p1::tokens::green));
-        editor_.setInputRestrictions(24);
+        editor_.setInputRestrictions(
+            15, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 _-.");
         editor_.onReturnKey = [] {};
         addAndMakeVisible(editor_);
-        note_.setText("max 24 characters.", juce::dontSendNotification);
+        note_.setText("max 15 characters.", juce::dontSendNotification);
         note_.setFont(p1::ui::uiFont(12.0f));
         note_.setColour(juce::Label::textColourId,
                         p1::ui::colour(p1::tokens::dim));
@@ -683,6 +762,9 @@ void PluginEditor::showPartMenu()
     menu.addItem(2, "copy part");
     menu.addItem(3, "paste part");
     menu.addItem(4, "init part");
+    menu.addSeparator();
+    menu.addItem(5, "save part...");
+    menu.addItem(6, "load part...");
     menu.showMenuAsync(
         juce::PopupMenu::Options().withTargetComponent(toolbar_.get()),
         [this](int result) {
@@ -694,6 +776,10 @@ void PluginEditor::showPartMenu()
                 pastePart(activePart_);
             else if (result == 4)
                 initPart(activePart_);
+            else if (result == 5)
+                showPartBrowser(true);
+            else if (result == 6)
+                showPartBrowser(false);
         });
 }
 
@@ -751,6 +837,253 @@ void PluginEditor::togglePartMute(int part, bool muted)
         const int restore = mutedLevel_[static_cast<size_t>(part)];
         p1::ui::setParam(*this, id, restore > 0 ? restore : 99);
     }
+}
+
+std::vector<int32_t> PluginEditor::currentPartParams(int part)
+{
+    part = juce::jlimit(0, kP1PartCount - 1, part);
+    std::vector<int32_t> values(static_cast<std::size_t>(kP1PartParamCount), 0);
+    for (int i = 0; i < kP1PartParamCount; ++i) {
+        const auto& spec =
+            kP1ParamSpecs[static_cast<std::size_t>(part * kP1PartParamCount + i)];
+        if (auto* value = state().getRawParameterValue(spec.id))
+            values[static_cast<std::size_t>(i)] =
+                static_cast<int32_t>(std::lround(value->load()));
+    }
+    return values;
+}
+
+void PluginEditor::applyPartParams(int part, const std::vector<int32_t>& params)
+{
+    part = juce::jlimit(0, kP1PartCount - 1, part);
+    const int count = juce::jmin(kP1PartParamCount, static_cast<int>(params.size()));
+    for (int i = 0; i < count; ++i) {
+        const auto& spec =
+            kP1ParamSpecs[static_cast<std::size_t>(part * kP1PartParamCount + i)];
+        if (auto* parameter = state().getParameter(spec.id)) {
+            parameter->setValueNotifyingHost(
+                parameter->convertTo0to1(static_cast<float>(
+                    params[static_cast<std::size_t>(i)])));
+        }
+    }
+}
+
+int PluginEditor::currentRouting(int field, int part)
+{
+    const int id = kP1RoutingBase + field * kP1PartCount + juce::jlimit(0, 1, part);
+    if (id < 0 || id >= kP1ParamCount)
+        return 0;
+    if (auto* value = state().getRawParameterValue(
+            kP1ParamSpecs[static_cast<std::size_t>(id)].id))
+        return static_cast<int>(std::lround(value->load()));
+    return 0;
+}
+
+void PluginEditor::applyRouting(int field, int part, int value)
+{
+    const int id = kP1RoutingBase + field * kP1PartCount + juce::jlimit(0, 1, part);
+    if (id < 0 || id >= kP1ParamCount)
+        return;
+    if (auto* parameter = state().getParameter(
+            kP1ParamSpecs[static_cast<std::size_t>(id)].id))
+        parameter->setValueNotifyingHost(
+            parameter->convertTo0to1(static_cast<float>(value)));
+}
+
+void PluginEditor::savePartToSlot(int slot)
+{
+    auto& store = processor_.presets();
+    if (!store.savePart(slot, processor_.getPartName(activePart_).toStdString(),
+                        currentPartParams(activePart_)))
+        return;
+    store.setPartSource(activePart_, slot);
+}
+
+void PluginEditor::loadPartFromSlot(int slot)
+{
+    auto& store = processor_.presets();
+    std::string name;
+    std::vector<int32_t> params;
+    if (!store.loadPart(slot, name, params))
+        return;
+    applyPartParams(activePart_, params);
+    processor_.setPartName(activePart_, juce::String(name));
+    store.setPartSource(activePart_, slot);
+    refreshNames();
+}
+
+void PluginEditor::savePatchToSlot(int slot)
+{
+    auto& store = processor_.presets();
+    std::vector<uint8_t> partSlots(static_cast<std::size_t>(kP1PartCount), 0xFF);
+    std::vector<int32_t> level(static_cast<std::size_t>(kP1PartCount), 99);
+    std::vector<int32_t> delay(static_cast<std::size_t>(kP1PartCount), 0);
+    std::vector<int32_t> channel(static_cast<std::size_t>(kP1PartCount), 0);
+    std::vector<int32_t> low(static_cast<std::size_t>(kP1PartCount), 0);
+    std::vector<int32_t> high(static_cast<std::size_t>(kP1PartCount), 127);
+    for (int part = 0; part < kP1PartCount; ++part) {
+        int source = store.partSource(part);
+        if (source < 0 || !store.partUsed(source)) {
+            source = store.findFreePartSlot();
+            if (source < 0)
+                return;
+            if (!store.savePart(source,
+                                processor_.getPartName(part).toStdString(),
+                                currentPartParams(part)))
+                return;
+            store.setPartSource(part, source);
+        }
+        partSlots[static_cast<std::size_t>(part)] =
+            static_cast<uint8_t>(source);
+        channel[static_cast<std::size_t>(part)] = currentRouting(0, part);
+        low[static_cast<std::size_t>(part)] = currentRouting(1, part);
+        high[static_cast<std::size_t>(part)] = currentRouting(2, part);
+        level[static_cast<std::size_t>(part)] = currentRouting(3, part);
+        delay[static_cast<std::size_t>(part)] = currentRouting(4, part);
+    }
+    if (!store.saveMulti(slot, processor_.getPatchName().toStdString(), partSlots,
+                         level, delay, channel, low, high))
+        return;
+    store.setCurrentMulti(slot);
+}
+
+void PluginEditor::loadPatchFromSlot(int slot)
+{
+    auto& store = processor_.presets();
+    p1::PresetStore::Multi multi;
+    if (!store.loadMulti(slot, multi))
+        return;
+    processor_.setPatchName(juce::String(multi.name));
+    for (int part = 0; part < kP1PartCount; ++part) {
+        const int sourceSlot =
+            multi.partSlot[static_cast<std::size_t>(part)] <
+                    p1::PresetStore::kPartSlots
+                ? multi.partSlot[static_cast<std::size_t>(part)]
+                : -1;
+        store.setPartSource(part, sourceSlot);
+        if (sourceSlot >= 0) {
+            std::string name;
+            std::vector<int32_t> params;
+            if (store.loadPart(sourceSlot, name, params)) {
+                applyPartParams(part, params);
+                processor_.setPartName(part, juce::String(name));
+            }
+        }
+        applyRouting(0, part, multi.channel[static_cast<std::size_t>(part)]);
+        applyRouting(1, part, multi.low[static_cast<std::size_t>(part)]);
+        applyRouting(2, part, multi.high[static_cast<std::size_t>(part)]);
+        applyRouting(3, part, multi.level[static_cast<std::size_t>(part)]);
+        applyRouting(4, part, multi.delay[static_cast<std::size_t>(part)]);
+    }
+    store.setCurrentMulti(slot);
+    refreshNames();
+}
+
+void PluginEditor::showConfirm(const juce::String& message,
+                               std::function<void()> onConfirm)
+{
+    auto body = std::make_unique<juce::Label>();
+    body->setText(message, juce::dontSendNotification);
+    body->setFont(uiFont(tokens::textDialogBody));
+    body->setColour(juce::Label::textColourId, colour(tokens::text));
+    body->setJustificationType(juce::Justification::centred);
+    dialog_ = std::make_unique<p1::ui::P1Dialog>(
+        "confirm save", std::move(body), 360, 160,
+        juce::StringArray{"cancel", "save"},
+        [this, onConfirm = std::move(onConfirm)](int button) {
+            if (button == 1)
+                onConfirm();
+            closeDialog();
+        },
+        [this] { closeDialog(); });
+    canvas_.addAndMakeVisible(*dialog_);
+    dialog_->setBounds(0, 0, kWidth, kHeight);
+    dialog_->toFront(true);
+}
+
+void PluginEditor::showPatchBrowser()
+{
+    auto& store = processor_.presets();
+    auto body = std::make_unique<SlotListBody>(
+        p1::PresetStore::kMultiSlots,
+        [this](int slot) {
+            return juce::String(processor_.presets().multiName(slot));
+        },
+        [this](int slot) { return processor_.presets().multiUsed(slot); },
+        store.currentMulti());
+    auto* bodyPtr = body.get();
+    dialog_ = std::make_unique<p1::ui::P1Dialog>(
+        "patches", std::move(body), 420, 500,
+        juce::StringArray{"cancel", "save", "load"},
+        [this, bodyPtr](int button) {
+            if (button == 1) {
+                const int slot = bodyPtr->selected();
+                const bool used = processor_.presets().multiUsed(slot);
+                closeDialog();
+                if (used) {
+                    showConfirm(
+                        "overwrite patch slot " +
+                            juce::String(slot + 1).paddedLeft('0', 2) + "?",
+                        [this, slot] { savePatchToSlot(slot); });
+                } else {
+                    savePatchToSlot(slot);
+                }
+            } else if (button == 2) {
+                loadPatchFromSlot(bodyPtr->selected());
+                closeDialog();
+            } else {
+                closeDialog();
+            }
+        },
+        [this] { closeDialog(); });
+    canvas_.addAndMakeVisible(*dialog_);
+    dialog_->setBounds(0, 0, kWidth, kHeight);
+    dialog_->toFront(true);
+}
+
+void PluginEditor::showPartBrowser(bool saveMode)
+{
+    auto& store = processor_.presets();
+    auto body = std::make_unique<SlotListBody>(
+        p1::PresetStore::kPartSlots,
+        [this](int slot) {
+            return juce::String(processor_.presets().partName(slot));
+        },
+        [this](int slot) { return processor_.presets().partUsed(slot); },
+        store.partSource(activePart_));
+    auto* bodyPtr = body.get();
+    const juce::String title =
+        "part " + juce::String(activePart_ + 1) + " slots";
+    const juce::StringArray buttons =
+        saveMode ? juce::StringArray{"cancel", "save"}
+                 : juce::StringArray{"cancel", "load"};
+    dialog_ = std::make_unique<p1::ui::P1Dialog>(
+        title, std::move(body), 420, 500, buttons,
+        [this, bodyPtr, saveMode](int button) {
+            if (button == 1) {
+                const int slot = bodyPtr->selected();
+                const bool used = processor_.presets().partUsed(slot);
+                closeDialog();
+                if (saveMode) {
+                    if (used) {
+                        showConfirm(
+                            "overwrite part slot " +
+                                juce::String(slot + 1).paddedLeft('0', 2) + "?",
+                            [this, slot] { savePartToSlot(slot); });
+                    } else {
+                        savePartToSlot(slot);
+                    }
+                } else {
+                    loadPartFromSlot(slot);
+                }
+            } else {
+                closeDialog();
+            }
+        },
+        [this] { closeDialog(); });
+    canvas_.addAndMakeVisible(*dialog_);
+    dialog_->setBounds(0, 0, kWidth, kHeight);
+    dialog_->toFront(true);
 }
 
 void PluginEditor::closeDialog()

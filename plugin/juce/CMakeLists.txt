@@ -9,22 +9,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(JUCE)
 
-find_package(Python3 3.8 REQUIRED COMPONENTS Interpreter)
-
-set(P1_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
-set(P1_PARAMS_HEADER "${P1_GENERATED_DIR}/Params.h")
 set(P1_TOKENS_HEADER "${P1_GENERATED_DIR}/UiTokens.h")
-
-add_custom_command(
-    OUTPUT "${P1_PARAMS_HEADER}"
-    COMMAND "${CMAKE_COMMAND}" -E make_directory "${P1_GENERATED_DIR}"
-    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../tools/gen_params.py"
-            "${UMETATE_SYNTH_GEN}/params.json" "${P1_PARAMS_HEADER}"
-    DEPENDS "${UMETATE_SYNTH_GEN}/params.json"
-            "${CMAKE_CURRENT_SOURCE_DIR}/../tools/gen_params.py"
-    VERBATIM
-)
-add_custom_target(p1_params DEPENDS "${P1_PARAMS_HEADER}")
 
 add_custom_command(
     OUTPUT "${P1_TOKENS_HEADER}"

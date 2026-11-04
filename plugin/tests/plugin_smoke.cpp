@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <cstring>
 #include <set>
+#include <vector>
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
@@ -120,6 +121,35 @@ int main()
     processor.setStateInformation(state.getData(), static_cast<int>(state.getSize()));
     check(algorithm != nullptr && std::lround(algorithm->load()) == 4,
           "the state restores every parameter");
+
+    {
+        const std::vector<int32_t> params(
+            static_cast<std::size_t>(kP1PartParamCount), 7);
+        processor.presets().savePart(3, "smoke", params);
+        processor.presets().saveMulti(
+            2, "smoke multi", std::vector<uint8_t>{3, 3},
+            std::vector<int32_t>{99, 99}, std::vector<int32_t>{0, 0},
+            std::vector<int32_t>{0, 1}, std::vector<int32_t>{0, 0},
+            std::vector<int32_t>{127, 127});
+        processor.presets().setCurrentMulti(2);
+        processor.presets().setPartSource(0, 3);
+        processor.getStateInformation(state);
+        processor.presets().savePart(
+            3, "changed", std::vector<int32_t>(
+                              static_cast<std::size_t>(kP1PartParamCount), 1));
+        processor.presets().setCurrentMulti(-1);
+        processor.presets().setPartSource(0, -1);
+        processor.setStateInformation(state.getData(),
+                                      static_cast<int>(state.getSize()));
+        check(processor.presets().partName(3) == "smoke",
+              "the state restores the part bank");
+        check(processor.presets().multiUsed(2) &&
+                  processor.presets().multiName(2) == "smoke multi",
+              "the state restores the multi bank");
+        check(processor.presets().currentMulti() == 2 &&
+                  processor.presets().partSource(0) == 3,
+              "the state restores the current patch and part source");
+    }
 
     TypePFm1AudioProcessor automated;
     automated.setRateAndBufferSizeDetails(44100.0, kFrames);

@@ -3784,3 +3784,33 @@ plugin CTest suite has `engine_parity`, `plugin_smoke` and
 `plugin_editor_snapshot`, all green. The feature contract is
 `plugin/feature-contract-editor.md`. Physical device acceptance remains blocked.
 Milestone 4 adds the patch and part banks.
+
+### 13.21 In-plugin preset banks (2026-11-04)
+
+Milestone 4 is done. The plugin has 64 multi slots and 128 part slots. The banks
+reuse the firmware `presets.c` record functions, compiled for the host with stub
+flash services. The part record is 557 bytes, the multi record is 63 bytes, empty
+slots are `0xFF`, and a corrupt record is skipped. The plugin never calls the
+device flash bank functions.
+
+The plugin state version is 2. It stores the part bank and multi bank as base64
+properties and restores the current multi slot and the part source slots. A part
+record stores the 134 per-part timbre parameters in manifest order. A multi
+record stores two part-slot references plus the channel, low, high, level and
+delay routing.
+
+The patch button opens the 64-slot browser with save and load. The part menu
+opens the 128-slot browser in save or load mode. Saving into a used slot opens a
+confirmation dialog before overwriting. A multi save uses the saved part source
+slots and puts a part with no source into a free part slot first. Names are
+limited to the device record size of 15 characters.
+
+`preset_smoke` saves and loads part and multi records through the device C
+functions and checks the record sizes, empty marker, names, parameters, routing
+and name limit. `plugin_smoke` restores both banks and the current slots from the
+plugin state. `plugin_editor_snapshot` saves and loads a part and a multi through
+the editor and checks the parameter and patch name round trip. The CTest suite
+has `engine_parity`, `preset_smoke`, `plugin_smoke` and
+`plugin_editor_snapshot`, all green. The feature contract is
+`plugin/feature-contract-presets.md`. Device SysEx import and export and physical
+device acceptance remain blocked.

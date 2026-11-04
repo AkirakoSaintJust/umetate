@@ -13,7 +13,7 @@ namespace {
 
 constexpr double kCoreRate = 44100.0;
 constexpr int kControlBlock = 32;
-constexpr int kStateVersion = 1;
+constexpr int kStateVersion = 2;
 constexpr float kIntToFloat = 1.0f / 32768.0f;
 
 bool isEngineMessage(const juce::MidiMessage& message)
@@ -267,6 +267,21 @@ void TypePFm1AudioProcessor::getStateInformation(juce::MemoryBlock& destData)
     state.setProperty("part2Name", partNames_[1], nullptr);
     state.setProperty("uiActivePart", uiActivePart_, nullptr);
     state.setProperty("uiPage", uiPage_, nullptr);
+    state.setProperty("currentMulti", presets_.currentMulti(), nullptr);
+    for (int part = 0; part < kP1PartCount; ++part) {
+        state.setProperty("partSource" + juce::String(part),
+                          presets_.partSource(part), nullptr);
+    }
+    const auto partBank = presets_.packPartBank();
+    const auto multiBank = presets_.packMultiBank();
+    state.setProperty(
+        "partBank",
+        juce::MemoryBlock(partBank.data(), partBank.size()).toBase64Encoding(),
+        nullptr);
+    state.setProperty(
+        "multiBank",
+        juce::MemoryBlock(multiBank.data(), multiBank.size()).toBase64Encoding(),
+        nullptr);
     if (auto xml = state.createXml())
         copyXmlToBinary(*xml, destData);
 }
@@ -284,6 +299,22 @@ void TypePFm1AudioProcessor::setStateInformation(const void* data, int sizeInByt
     partNames_[1] = state.getProperty("part2Name", "init").toString();
     uiActivePart_ = juce::jlimit(0, 1, static_cast<int>(state.getProperty("uiActivePart", 0)));
     uiPage_ = juce::jlimit(0, 2, static_cast<int>(state.getProperty("uiPage", 0)));
+    presets_.setCurrentMulti(static_cast<int>(state.getProperty("currentMulti", -1)));
+    for (int part = 0; part < kP1PartCount; ++part) {
+        presets_.setPartSource(
+            part, static_cast<int>(
+                      state.getProperty("partSource" + juce::String(part), -1)));
+    }
+    juce::MemoryBlock partBank;
+    partBank.fromBase64Encoding(state.getProperty("partBank", "").toString());
+    if (partBank.getSize() > 0)
+        presets_.loadPartBank(static_cast<const uint8_t*>(partBank.getData()),
+                              partBank.getSize());
+    juce::MemoryBlock multiBank;
+    multiBank.fromBase64Encoding(state.getProperty("multiBank", "").toString());
+    if (multiBank.getSize() > 0)
+        presets_.loadMultiBank(static_cast<const uint8_t*>(multiBank.getData()),
+                               multiBank.getSize());
     apvts_.replaceState(state);
     paramsDirty_.store(true, std::memory_order_relaxed);
 }
