@@ -118,6 +118,18 @@ target_compile_definitions(p1_smoke PRIVATE ${P1_JUCE_DEFINITIONS})
 add_dependencies(p1_smoke p1_params p1_tokens)
 add_test(NAME plugin_smoke COMMAND p1_smoke)
 
+juce_add_console_app(p1_stability PRODUCT_NAME "p1_stability")
+target_sources(p1_stability PRIVATE PluginProcessor.cpp ../tests/plugin_stability.cpp)
+target_link_libraries(p1_stability PRIVATE
+    p1_editor
+    juce::juce_audio_utils
+    juce::juce_recommended_config_flags
+    juce::juce_recommended_warning_flags
+)
+target_compile_definitions(p1_stability PRIVATE ${P1_JUCE_DEFINITIONS})
+add_dependencies(p1_stability p1_params p1_tokens)
+add_test(NAME plugin_stability COMMAND p1_stability)
+
 juce_add_console_app(p1_editor_snapshot PRODUCT_NAME "p1_editor_snapshot")
 target_sources(p1_editor_snapshot PRIVATE PluginProcessor.cpp
                                         ../tests/editor_snapshot.cpp)

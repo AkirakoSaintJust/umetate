@@ -3,6 +3,9 @@
 The panel is the real M-VAVE FM-1 surface. Here is what every control does, where
 every page is, and how to save.
 
+I kept the live page flat on purpose. The four knobs always do something you can
+hear, and the deeper operator work stays behind EDIT.
+
 ## The controls
 
 - **27 keys** play notes, F3 to G5.

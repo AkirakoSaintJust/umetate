@@ -184,7 +184,9 @@ output to the host rate. Do not resample the input or change the core rate.
 - Fonts: DotGothic16 and Zen Dots under the SIL Open Font License. Include the
   licence text with the binaries.
 - Brand font: not bundled until the licence is verified.
-- JUCE: use the GPLv3 path, and record the JUCE version in the build manifest.
+- JUCE: use the AGPLv3 path or a commercial JUCE licence, and record the JUCE
+  version in the build manifest. JUCE 8 is not GPLv3. The umetate source stays
+  GPL-3.0-only and GPLv3 section 13 permits the combined binary.
 
 ## Open items
 

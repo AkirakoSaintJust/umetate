@@ -1,14 +1,14 @@
 # Type P.fm1 plugin plan
 
-Status: Milestone 6 done, 2026-11-04. The JUCE VST3, CLAP and standalone host
-build on Linux and Windows, render audio, accept MIDI and save state. The
+Status: Milestones 0 to 6 done, 2026-11-04. The JUCE VST3, CLAP and standalone
+host build on Linux and Windows, render audio, accept MIDI and save state. The
 designed editor, the 64 multi and 128 part banks and the 32-tap output rate
 bridge are in. The VST3 and CLAP artefacts pass their validators on both
 platforms. REAPER renders the Windows VST3 and CLAP builds byte-identically.
 Renoise loads the Windows VST3 and renders a one-note project. The Windows DAW
 matrix is done. The Docker image adds Ardour and Carla, and the `linux_daws`
-CTest covers the Linux DAW matrix. The macOS build and the AU target remain
-open.
+CTest covers the Linux DAW matrix. Milestone 7, the generator and CLI wiring
+plus the publish path, is open. The macOS build and the AU target remain open.
 
 This is the plan for the optional JUCE build path in umetate: a reusable plugin
 host plus a generated `type-p-fm1` project. The visual language is in
@@ -31,14 +31,16 @@ In scope:
 - The three-page editor from the mockup.
 - Device-compatible preset banks.
 - 44.1 kHz engine core with output-only resampling to the host rate.
-- GPL-3.0-only, matching umetate.
+- GPL-3.0-only source, matching umetate. The distributed binary also carries
+  JUCE 8's AGPL-3.0-only terms for the JUCE part.
 
 Out of scope for the first release:
 
 - Audio input, sidechain, or an effect version.
 - Device flashing or firmware updates from the plugin.
 - A sample-accurate automation claim beyond the engine's 32-sample control block.
-- Bundling the Digital Desolation Plus brand font until its licence is confirmed.
+- Bundling the Digital Desolation Plus brand font. The wordmark uses Arial Black
+  when the system has it, with a bold sans fallback.
 
 ## 2. Decisions
 
@@ -52,7 +54,7 @@ Out of scope for the first release:
 | P6 | 44.1 kHz core, resample the output only | The note table, LFO rates, delays and control block are locked to 44.1 kHz. |
 | P7 | 1240 logical pixels wide, uniform scale, fixed height | The editor does not reflow. The host can scale the whole canvas. |
 | P8 | VST3 first, CLAP second, AU later | VST3 is native to JUCE. CLAP needs an extra wrapper. |
-| P9 | GPL-3.0-only and OFL fonts | The repository and JUCE GPL path are compatible. |
+| P9 | GPL-3.0-only source and OFL fonts | The source stays GPL-3.0-only. JUCE 8 is AGPL-3.0-only or commercial, so a distributed plugin binary carries the AGPL terms for JUCE. |
 | P10 | Optional host-native build | The Docker firmware gate stays unchanged. The plugin build is separate. |
 | P11 | Device-compatible preset banks | 64 multi patches and 128 single-part slots, using the existing record format. |
 | P12 | Active part is UI state, not a DSP parameter | It chooses which part the editor shows. Both parts stay addressable by automation. |
@@ -367,8 +369,11 @@ Plugin work adds a new evidence layer. It does not replace the firmware layers.
    headless VST3 and CLAP renders.
 9. **Performance.** 20 voices at 44.1 and 96 kHz, 32 to 1024 frame blocks. Record
    the real-time factor and the worst block.
-10. **Licensing.** GPL-3.0-only, JUCE GPL path, OFL font files and notices, no
-    brand font in the binary.
+10. **Licensing.** GPL-3.0-only source, JUCE 8 AGPL-3.0-only or commercial for
+    the binary, OFL font files and notices, no brand font in the binary.
+11. **Stability.** Every parameter at both ends of its range, a full polyphony
+    burst, a deterministic MIDI storm, zero-frame and mono blocks, rate changes,
+    and truncated or bit-flipped state stay finite and do not crash.
 
 ## 13. Milestones
 
@@ -381,6 +386,7 @@ Plugin work adds a new evidence layer. It does not replace the firmware layers.
 | 4 | Presets and banks | done |
 | 5 | Rate bridge | done |
 | 6 | CLAP and platform matrix | Linux and Windows DAW matrices done, macOS open |
+| 6b | Stability sweep | done |
 | 7 | Generator and CLI | `plugin-generate`, `plugin-build`, `plugin-check`, template and docs |
 
 Milestone 0 is firmware work and can start before any JUCE dependency is added.
@@ -444,6 +450,14 @@ not crash and the wrapper gives the plugin no way to report the rejection.
 tests skipped on both platforms. The VST3 checks cover 44.1, 48, 96 and 192 kHz
 and blocks from 32 to 1024.
 
+Milestone 6b is done. `plugin_stability` drives every manifest parameter to its
+minimum and maximum, holds 256 notes at once, runs a deterministic 9600-event
+MIDI storm, sends a zero-frame block and a mono block, walks the sample rate from
+44.1 to 192 kHz and back, fuzzes the state with 200 truncated and bit-flipped
+blobs, and checks the voice tail decays. Every sample stays finite and the
+reported latency matches each rate. The test passes in 0.14 seconds in the Linux
+container. It is a host-side test, not a device or DAW substitute.
+
 REAPER 7.84 loads the Windows VST3 and CLAP builds. A one-note project renders
 88200 frames at 44100 Hz from each format, and the two WAV files are byte
 identical. The VST3 bundle was installed in
@@ -497,6 +511,27 @@ On Windows the same paths use backslashes and the VST3 bundle contains
 `Contents\x86_64-win`. The editor snapshots are under
 `build/plugin-juce/juce/snapshots`. The `plugin_editor_snapshot` CTest uses
 `xvfb-run` when it is available.
+
+`plugin_stability` is the edge-case sweep. It sets every manifest parameter to
+both ends of its range, fires 256 simultaneous notes, runs a deterministic
+9600-event MIDI storm, sends a zero-frame block and a mono block, walks the
+sample rate from 44.1 to 192 kHz and back, fuzzes the state with truncated and
+bit-flipped blobs, and checks the voice tail decays. It needs no device and no
+DAW:
+
+```sh
+ctest --test-dir build/plugin-juce -R plugin_stability --output-on-failure
+```
+
+To stage release bundles, run `umetate publish --plugins --vendor-deps
+build/plugin-juce/_deps`. The publish tree carries the plugin source, the exact
+dependency pins in `DEPENDENCIES.md`, and the zipped VST3 and CLAP builds under
+`plugins/<platform>/`.
+
+Build outputs stay in the git-ignored `build/` tree. They are not committed to
+this repo and they are not copied to a folder outside it. The publish output is
+the release staging area, and the source archive and binaries should travel in
+the same GitHub release.
 
 Validator commands on Linux, with the plugin paths from the build tree:
 
@@ -565,7 +600,7 @@ Docker gate. The generated `firmware/gen` must exist before CMake configures.
 | Parameter map misses a control | Coverage test fails | Fix the map, not the test |
 | Device preset round trip breaks | Byte mismatch | Use the C record functions, never a C++ copy |
 | Name limit surprises users | More than 15 characters typed | Show the limit in the rename dialog, keep device compatibility |
-| Font licence blocks release | Brand font unclear | Ship the Arial Black fallback until cleared |
+| Brand font creeps into the binary | The wordmark looks different | Keep the Arial Black fallback and never bundle Digital Desolation Plus |
 
 ## 15. Open questions
 

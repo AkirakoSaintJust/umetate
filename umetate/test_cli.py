@@ -785,6 +785,63 @@ def _emu_package_preference() -> None:
         )
 
 
+def _publish_includes_plugin_source() -> None:
+    from . import publish
+
+    framework_paths = publish._FRAMEWORK_PATHS  # pyright: ignore[reportPrivateUsage]
+    assert "plugin" in framework_paths, "publish omits the plugin source"
+    assert "design" in framework_paths, "publish omits design/tokens.json"
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        build = root / "build"
+        vst3 = (
+            build
+            / "juce"
+            / "type_p_fm1_artefacts"
+            / "Release"
+            / "VST3"
+            / "Type P.fm1.vst3"
+        )
+        (vst3 / "Contents" / "x86_64-linux").mkdir(parents=True)
+        (vst3 / "Contents" / "x86_64-linux" / "Type P.fm1.so").write_bytes(b"vst3")
+        clap = build / "juce" / "type_p_fm1_artefacts" / "Release" / "CLAP"
+        clap.mkdir(parents=True)
+        (clap / "Type P.fm1.clap").write_bytes(b"clap")
+
+        out = root / "out"
+        out.mkdir()
+        stage_plugins = publish._stage_plugins  # pyright: ignore[reportPrivateUsage]
+        write_dependencies = publish._write_dependencies  # pyright: ignore[reportPrivateUsage]
+        readme_template = publish._README  # pyright: ignore[reportPrivateUsage]
+        plugins_section = publish._PLUGINS_SECTION  # pyright: ignore[reportPrivateUsage]
+        source_section = publish._PLUGIN_SOURCE_SECTION  # pyright: ignore[reportPrivateUsage]
+
+        staged = stage_plugins(out, build, "linux-x86_64")
+        assert len(staged) == 2, staged
+        assert (out / "plugins" / "linux-x86_64" / staged[0]).is_file()
+        readme = (out / "plugins" / "README.md").read_text(encoding="utf-8")
+        assert "AGPL-3.0-only" in readme, "plugin readme omits the JUCE licence"
+
+        write_dependencies(out, vendored=True)
+        deps = (out / "DEPENDENCIES.md").read_text(encoding="utf-8")
+        assert "8.0.9" in deps and "7adee3a" in deps, "dependency pins are missing"
+        assert "vendor/deps" in deps, "vendored source note is missing"
+
+        plain = readme_template.format(
+            title="X", repo_url="u", fwsc="x.fwsc", plugins="", plugin_source=""
+        )
+        assert "plugins/README.md" not in plain, "no-plugin README has a dead link"
+        with_plugins = readme_template.format(
+            title="X",
+            repo_url="u",
+            fwsc="x.fwsc",
+            plugins=plugins_section,
+            plugin_source=source_section,
+        )
+        assert "## Plugins" in with_plugins and "AGPL" not in with_plugins
+
+
 def main() -> int:
     tests: _Tests = [
         ("no import side effects", _no_import_side_effects),
@@ -815,6 +872,10 @@ def main() -> int:
         ("umetate budget measures the polyphony scaling", _budget_measures),
         ("umetate budget compiles the patch's tables", _budget_measures_tabled),
         ("build --synth composes the dogfood firmware", _synth_build_composes),
+        (
+            "publish carries the plugin source + bundles",
+            _publish_includes_plugin_source,
+        ),
     ]
     failures = 0
     for name, test in tests:

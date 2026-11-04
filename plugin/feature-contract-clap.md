@@ -137,7 +137,8 @@
   range and clamping it to the manifest maximum in `syncParams`.
 - The three state reproducibility tests pass after `setStateInformation`
   requests a parameter rescan.
-- The Windows build passes all five CTests with MSVC 19.51.
+- The Windows build passes the five CTests that existed at the time with MSVC
+  19.51. The stability sweep is Linux-only so far.
 - `pluginval` passes in GUI mode with the editor open and in headless mode with
   GUI tests skipped on both platforms.
 - REAPER 7.84 renders the Windows VST3 and CLAP builds to byte-identical WAV
@@ -154,7 +155,7 @@
   Carla renders the VST3 and CLAP builds to 132300 frames at 44100 Hz, 24-bit
   stereo, peak 0.609467.
 - The fresh `umetate-host-build:dawtest` image configures with JUCE and CLAP
-  enabled and passes all 6 CTests, with `linux_daws` at 24.92 seconds.
+  enabled and passes all 7 CTests, with `linux_daws` at 24.40 seconds.
 - `plugin_smoke` now proves a full 313-parameter state round trip, not only one
   parameter.
 - The remaining warning is in the wrapper state loader, not in the processor.

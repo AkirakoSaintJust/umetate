@@ -26,14 +26,33 @@ These are the whole skill. Read them before writing a word.
    Describe what the knob does and what the sound does. Do not mention nodes, macros,
    buffers, or the generator. If the code has a "phasor" and a "tl" stage, the
    manual says "pitch" and "level".
-3. **Most human, not most likely.** When two wordings are both correct, pick the one
-   a careful human would write, not the one a language model is most likely to
-   produce. See the writing craft below.
+3. **The author's voice, not the model's.** When two wordings are both correct,
+   pick the one the author would write. The reference samples are
+   `examples/type-p-fm1/publish-readme.md` and the root `README.md`. The full
+   profile is in `references/voice.md`. See the writing craft below.
 4. **No information loss.** Humanising is allowed to cut, sharpen, and reorder, but
    not to drop a fact. Compare every edited paragraph to the original and put back
    anything that went missing.
 5. **No em dashes, no semi-colons.** Full stop. Rewrite around them.
 6. **Radical rewrites are fine.** The goal is prose quality, not minimal diffs.
+
+## The voice
+
+Read `references/voice.md` before the first paragraph. It defines three
+registers:
+
+- **Front door:** the README, release notes, and manual preface. The author is
+  present, in first person, with a specific story, a concrete comparison, and a
+  plain statement of what the instrument is not.
+- **Manual:** the manual, panel reference, MIDI reference, and install guide.
+  Warm technical prose. Address the reader as "you", use first person in section
+  intros and design asides, and keep procedures neutral.
+- **Reference:** the patch sheet and byte-level tables. Terse and exact.
+
+The samples use British spelling in prose, contractions, and dry humour. They do
+not use em dashes, semicolons, marketing adjectives, or three-item padding. Copy
+the habits, not the catchphrases. One personal aside per page is enough.
+
 
 ## The document set
 
@@ -165,6 +184,7 @@ SysEx checksum is a broken page.
 Checklist for the final pass:
 
 - [ ] Every fact from the source is present or deliberately scoped out with a reason.
+- [ ] The page uses the right register from `references/voice.md`.
 - [ ] No em dash anywhere. No semi-colon anywhere.
 - [ ] Every parameter, control, and command is named exactly as the panel names it.
 - [ ] The current state only. Release notes excepted, no "now uses", "was added",

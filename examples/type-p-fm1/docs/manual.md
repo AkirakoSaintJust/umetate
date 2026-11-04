@@ -1,10 +1,17 @@
 # Type P.fm1 user manual
 
-Type P.fm1 is a four-operator FM synthesizer in the tradition of the Yamaha DX
-family. Four oscillators, called operators, can frequency-modulate each other in
-one of eight routings. That routing is the algorithm. The operators play through
-two filters and a wavefolder, with a pitch envelope, a vibrato, and per-operator
-tremolo.
+Type P.fm1 is a four-operator phase-modulation synthesizer in the tradition of
+the Yamaha DX family. Yamaha called it FM, and the name stuck. Four oscillators,
+called operators, can frequency-modulate each other in one of eight routings.
+That routing is the algorithm. The operators play through two filters and a
+wavefolder, with a pitch envelope, a vibrato, and per-operator tremolo.
+
+Type P.fm1 began as a patch idea I kept returning to: a two-part, four-operator
+Yamaha-style synth with feedback on every operator and a pile of waveforms, but
+not an emulation of any one machine. The two parts are there so you can build one
+big timbre out of partials, or split the keyboard and send each part its own
+sequence. I aimed for a ten-voice, eight-operator instrument that stays quick to
+edit, not a menu with three million algorithms.
 
 ## How the voice is built
 

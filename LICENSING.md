@@ -4,6 +4,14 @@ umetate is **GPL-3.0-only** for project code, documentation, and skills. Third-p
 terms are preserved. RIB is a source-owned fork of Dinghy/Felucca. Dinghy is
 lineage, not the product boundary.
 
+The firmware and the CLI are GPL-3.0-only. The VST3, CLAP and standalone plugin
+binaries also link **JUCE 8.0.9**, which is dual-licensed under **AGPL-3.0-only**
+or a commercial JUCE licence. A distributed plugin binary is therefore conveyed
+under the AGPL-3.0-only terms for the JUCE part. The umetate source in the same
+binary keeps its GPL-3.0-only terms, and GPLv3 section 13 permits the combination.
+Anyone who cannot accept the AGPL terms needs a commercial JUCE licence before
+shipping the plugin.
+
 ## Dependencies and derivations by licence
 
 | Material | Version | Licence |
@@ -33,6 +41,37 @@ lineage, not the product boundary.
 | KISS FFT (`vendor/kiss_fft/`) | Mark Borgerding | BSD-3-Clause |
 | JieLi AC79 SDK math (`vendor/jieli/math.h`, `fftvec_math_drv.h`, `flfft_core_pi32v2.c`) | JieLi | Apache-2.0 |
 | JieLi AC79 SDK assets (uboot.boot, cfg_tool.bin, eq_cfg_hw.bin) | JieLi | Apache-2.0 |
+| JUCE (plugin binary) | 8.0.9 | AGPL-3.0-only or commercial |
+| VST3 SDK (bundled by JUCE) | 3.7.x as shipped in JUCE 8.0.9 | GPL-3.0-only or Steinberg VST3 licence |
+| CLAP headers (plugin binary) | 1.2.7 | MIT |
+| clap-juce-extensions | 7adee3a1bd4684d4caa5601100e364abccff4b4d | MIT |
+| DotGothic16 font (plugin editor) | Google Fonts | SIL OFL 1.1 |
+| Zen Dots font (plugin editor) | Google Fonts | SIL OFL 1.1 |
+| Ardour (test host only, not distributed) | 8.12 | GPL-2.0-or-later |
+| Carla (test host only, not distributed) | 2.6.0-alpha1 | GPL-2.0-or-later |
+| JACK (test host only, not distributed) | 1.9.22 | LGPL-2.1-or-later |
+
+## Plugin source and binaries
+
+The plugin source lives in `plugin/` and is GPL-3.0-only. The build pins JUCE
+8.0.9 and `clap-juce-extensions` commit
+`7adee3a1bd4684d4caa5601100e364abccff4b4d` in `plugin/juce/CMakeLists.txt` and
+fetches both with CMake `FetchContent`. CLAP 1.2.7 is a submodule of the
+extension at that commit. The VST3 SDK is the copy bundled with JUCE 8.0.9.
+
+A published plugin binary must travel with its corresponding source. The
+`umetate publish` tool always includes `framework/plugin/` and `framework/design/`
+in the published tree, and writes `DEPENDENCIES.md` with the exact upstream
+commits. The build fetch instructions are in `framework/plugin/README.md`. If the
+AGPL source must be self-contained, pass `--vendor-deps` with a directory that
+holds the fetched `_deps` sources, or point the build at local copies with
+`-DFETCHCONTENT_SOURCE_DIR_JUCE=...` and
+`-DFETCHCONTENT_SOURCE_DIR_CLAP-JUCE-EXTENSIONS=...`. When `--plugins` stages a
+binary, the publish output also carries the AGPL, MIT CLAP, MIT wrapper and OFL
+texts from `third-party-licenses/`.
+
+The brand font is not bundled and the wordmark falls back to Arial Black when the
+system has it. Only the two OFL fonts above travel in the plugin binary.
 
 ## Non-redistribution
 

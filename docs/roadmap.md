@@ -1455,20 +1455,35 @@ hedging and promotion). `SKILL.md` is the whole skill, no generated references.
 `umetate publish <synth_dir>` assembles a distributable firmware repo in
 `publish/<name>/` from a built project: the user docs (`examples/<name>/docs/`,
 written with the documentation skill), the `.fwsc` firmware artifact, and the
-browser web app (`web/`, the GitHub Pages payload), plus a generated README and a
-CHANGELOG copied from the release notes. It is the repeatable loop: edit, build,
-`umetate web-build`, `umetate publish`, bump the release notes, push. The
-`publish/` tree is git-ignored here, it is its own repo pushed to a remote GitHub
-repo with Pages serving `web/`. The README links to the Pages URL and to the
-manual, panel, MIDI and SysEx, and patch-sheet docs.
+browser web app (served from the repo root, the GitHub Pages payload), plus the
+project README, a CHANGELOG copied from the release notes, and the licence files.
+It is the repeatable loop: edit, build, `umetate web-build`, `umetate publish`,
+bump the release notes, push. The `publish/` tree is git-ignored here, it is its
+own repo pushed to a remote GitHub repo with Pages serving the root. The README
+links to the Pages URL and to the manual, panel, MIDI and SysEx, and patch-sheet
+docs.
+
+The framework snapshot now includes `framework/plugin/` and `framework/design/`,
+so the optional VST3 and CLAP port is part of the corresponding source. The
+publish output always carries `DEPENDENCIES.md`, which pins JUCE 8.0.9 and the
+`clap-juce-extensions` commit and names their licences. `--plugins` zips the
+built VST3 and CLAP artefacts into `plugins/<platform>/` and writes a short
+install and licence note. `--vendor-deps DIR` copies the fetched dependency
+sources into `vendor/deps/` for a self-contained AGPL source archive. A
+hand-written `publish-readme.md` wins over the generated template, so the
+author's front door is preserved verbatim.
+
+Build artefacts stay in the git-ignored `build/` tree. They are never committed
+to this repo or hand-copied to a folder outside it. The publish output is the
+release staging area, and the source archive and binaries should travel in the
+same GitHub release.
 
 The worked example ships these user docs in `examples/type-p-fm1/docs/`: the manual
 (sound and parameters), the panel reference (controls, pages, save), the MIDI and
 SysEx reference, the printable patch sheet, and the release notes. They are
-synchronic, written from the instrument's point of view, and follow the no
-em-dash and no semi-colon rule. The web app is served from the repo root (the
-emulator page + worklet are source files in `firmware/web_emu/`, `firmware.wasm`
-is the built artifact), and the first publish is live at
+synchronic and follow the voice profile in
+`skills/umetate-documentation/references/voice.md`, including the no em-dash and
+no semi-colon rule. The first publish is live at
 https://akirakosaintjust.github.io/type-p-fm1/ (repo `AkirakoSaintJust/type-p-fm1`).
 
 ---
@@ -3657,7 +3672,7 @@ states and the structural frame keep their outlines.
 The optional JUCE ports in §13.13 item 3 now have a design language and a working
 method. The next step is the plugin plan: reusable host, generated project, the
 full parameter manifest, the 44.1 kHz core with output-only resampling, and the
-GPLv3 and font licence checks.
+AGPLv3/commercial JUCE and font licence checks.
 
 ### 13.17 JUCE plugin plan (2026-11-03)
 
@@ -3905,6 +3920,45 @@ with an empty project, adds each plugin through the OSC control API, sends a
 MIDI note and records the plugin outputs with `jack_rec`. The Ardour render is
 88200 frames at 44100 Hz, 24-bit stereo, peak 0.609467 and RMS 0.196450. The
 Carla VST3 and CLAP renders are 132300 frames at 44100 Hz, 24-bit stereo, peak
-0.609467. A fresh image passes all six CTests, with `linux_daws` at 24.92
+0.609467. A fresh image passes all seven CTests, with `linux_daws` at 24.40
 seconds. The Linux DAW matrix is now automated alongside the Windows REAPER and
 Renoise matrix. The macOS build and AU remain open.
+
+### 13.25 Plugin release readiness (2026-11-04)
+
+The licensing audit found a real error. JUCE 8.0.9 is dual-licensed under
+**AGPL-3.0-only** or a commercial JUCE licence, not GPLv3. The plugin source stays
+GPL-3.0-only and GPLv3 section 13 permits the combined binary, but a distributed
+plugin binary carries the AGPL terms for the JUCE part. `LICENSING.md` now
+records JUCE, the VST3 SDK, CLAP 1.2.7, `clap-juce-extensions`, the two OFL fonts,
+and the test hosts Ardour, Carla and JACK. `plugin/README.md` and
+`design/juce.md` no longer say "JUCE GPL path". A commercial JUCE licence is the
+only way to ship the binary without the AGPL obligation.
+
+`umetate publish` now includes `framework/plugin/` and `framework/design/` in the
+source snapshot, so the plugin source travels with the firmware source. The
+output always carries `DEPENDENCIES.md` with the exact pins and licences.
+`--plugins` zips the built VST3 and CLAP artefacts into `plugins/<platform>/`
+and writes an install and licence note. `--vendor-deps DIR` copies the fetched
+JUCE and wrapper sources into `vendor/deps/` for a self-contained AGPL source
+archive. Build artefacts stay in the git-ignored `build/` tree and are never
+committed to this repo or hand-copied outside it.
+
+`plugin_stability` is the new edge-case CTest. It drives all 313 parameters to
+both ends of their ranges, holds 256 notes, runs a deterministic 9600-event MIDI
+storm, sends a zero-frame block and a mono block, walks 44.1, 48, 96, 192 and
+44.1 kHz, fuzzes the state with 200 truncated and bit-flipped blobs, and checks
+the voice tail decays. Every sample stays finite and the latency matches each
+rate. The test passes in 0.14 seconds in the Linux container.
+
+The documentation voice now has an explicit profile in
+`skills/umetate-documentation/references/voice.md`, derived from the hand-written
+`examples/type-p-fm1/publish-readme.md` and `README.md`, with the three registers
+(front door, manual, reference), the British spelling and punctuation rules, the
+AI tells to avoid, and the synth-manual research notes. The documentation skill
+and the Type P.fm1 manual intro use it.
+
+Still open: Milestone 7 (`plugin-generate`, `plugin-build`, `plugin-check`), the
+macOS build and AU, the physical device pass, signed installers, and a vendored
+JUCE source archive in every plugin release. The root `README.md` still omits the
+`plugin/` and `publish` components and needs a hand-written update.

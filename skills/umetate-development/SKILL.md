@@ -385,6 +385,16 @@ Record each layer in `templates/evidence-matrix.md` and validate with
 `umetate evidence --strict`. The emulator is a model (1.92× optimistic), a target
 package is not physical timing, a host test is not device acceptance.
 
+### 7b. Ports and plugins
+
+When the synth is stable enough to port to VST3, CLAP, or AU, follow
+`references/plugin-port.md`. The order is instance-safe state, a host-free engine
+harness, the host skeleton, the editor, presets, rate adaptation, formats, then
+packaging. The core stays bit-exact at its native rate. Every manifest parameter
+is generated, not typed. Every milestone gets a feature contract and a measured
+evidence artefact. Check the host framework licence at the pinned version before
+the first release, not after the binaries exist.
+
 ### 8. Recovery and handoff
 
 Before any write, confirm the exact board/revision, current firmware, package
