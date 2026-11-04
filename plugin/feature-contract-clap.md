@@ -101,12 +101,14 @@
   passes at 44.1, 48, 96 and 192 kHz with block sizes from 32 to 1024.
 - **DAW vector:** REAPER 7.84 loads the Windows VST3 and CLAP builds. A one-note
   project per format renders 88200 frames at 44100 Hz, and the two WAV files are
-  byte identical. Renoise 3.5.4 is installed but only scans VST3 from
-  `C:\Program Files\Common Files\VST3`, which the current account cannot write.
+  byte identical. The VST3 bundle was installed in
+  `C:\Program Files\Common Files\VST3`, where Renoise 3.5.4 scans. Renoise loaded
+  `P1Onken: Type P.fm1` and rendered a one-note project to 39200 frames at 44100
+  Hz, 24-bit stereo, peak 0.225197 and RMS 0.105559.
 - **Physical timing/device check:** blocked, no hardware.
 - **Platform matrix:** Linux x86-64 and Windows x86-64 are built and validated.
-  macOS is not built here. The full two-DAW matrix is blocked by the Renoise
-  VST3 path permission and by the missing macOS host. AU remains later.
+  The Windows DAW matrix is done with REAPER and Renoise. Linux has no DAW pass
+  yet. macOS is not built here. AU remains later.
 - **Tolerance/metric:** zero validator failures. The one warning is documented.
 - **Evidence artifact:** the `clap-validator` terminal summary, the `pluginval`
   `SUCCESS` line, the REAPER WAV hashes, and the plugin CTest output.
@@ -128,6 +130,10 @@
   files. Each render is 88200 frames at 44100 Hz, 24-bit stereo, peak 0.609467,
   RMS 0.14412, SHA-256
   `d595f204fe537e74eb512e94a5fcdb0bb1c38b08b3f955d21019b486ae4b47a2`.
+- Renoise 3.5.4 loads the installed Windows VST3 and renders a one-note project
+  to 39200 frames at 44100 Hz, 24-bit stereo, peak 0.225197, RMS 0.105559,
+  SHA-256
+  `3fae1844eb0096a9344f46dfefb6b981908ba7238f774a1844425919092cdb87`.
 - `plugin_smoke` now proves a full 313-parameter state round trip, not only one
   parameter.
 - The remaining warning is in the wrapper state loader, not in the processor.
@@ -139,9 +145,9 @@
   returning a real load result.
 - **Safe experiment and stop criterion:** load a saved state in a second CLAP
   instance and compare all 313 values. Stop if any value differs.
-- **Windows host path limit:** Renoise only scans VST3 from
-  `C:\Program Files\Common Files\VST3`. Use an elevated install there, or use a
-  host that scans the build tree, before calling the second DAW pass.
+- **Windows install location:** Renoise only scans VST3 from
+  `C:\Program Files\Common Files\VST3`. The release installer needs elevation
+  there. The manual DAW pass installed the bundle there.
 - **Smaller alternative:** ship VST3 only and keep CLAP behind `P1_BUILD_CLAP`.
   The current default builds both.
 - **Rollback:** remove the `FetchContent` block and the

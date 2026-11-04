@@ -3877,8 +3877,9 @@ proves a full 313-parameter state round trip.
 
 REAPER 7.84 loads the Windows VST3 and CLAP builds. A one-note project per
 format renders 88200 frames at 44100 Hz, and the two WAV files are byte
-identical. Renoise 3.5.4 is installed on the Windows host but only scans VST3
-from `C:\Program Files\Common Files\VST3`, which the current account cannot
-write. That is a host path limit, not a plugin load failure. The macOS build and
-the full two-DAW matrix remain open. The feature contract is
-`plugin/feature-contract-clap.md`.
+identical. The VST3 bundle was installed in
+`C:\Program Files\Common Files\VST3`, where Renoise 3.5.4 scans. Renoise loaded
+`P1Onken: Type P.fm1` and rendered a one-note project to 39200 frames at 44100
+Hz, 24-bit stereo, peak 0.225197 and RMS 0.105559. The Windows DAW matrix now has
+REAPER and Renoise. The macOS build, the Linux DAW matrix and AU remain open. The
+feature contract is `plugin/feature-contract-clap.md`.

@@ -4,8 +4,10 @@ Status: Milestone 6 done, 2026-11-04. The JUCE VST3, CLAP and standalone host
 build on Linux and Windows, render audio, accept MIDI and save state. The
 designed editor, the 64 multi and 128 part banks and the 32-tap output rate
 bridge are in. The VST3 and CLAP artefacts pass their validators on both
-platforms. REAPER renders the Windows VST3 and CLAP builds byte-identically. The
-macOS build and the full two-DAW matrix remain open.
+platforms. REAPER renders the Windows VST3 and CLAP builds byte-identically.
+Renoise loads the Windows VST3 and renders a one-note project. The Windows DAW
+matrix is done. The macOS build, the Linux DAW matrix and the AU target remain
+open.
 
 This is the plan for the optional JUCE build path in umetate: a reusable plugin
 host plus a generated `type-p-fm1` project. The visual language is in
@@ -371,7 +373,7 @@ Plugin work adds a new evidence layer. It does not replace the firmware layers.
 | 3 | Editor | done |
 | 4 | Presets and banks | done |
 | 5 | Rate bridge | done |
-| 6 | CLAP and platform matrix | plugin and validators done, DAW matrix blocked |
+| 6 | CLAP and platform matrix | Windows DAW matrix done, Linux and macOS open |
 | 7 | Generator and CLI | `plugin-generate`, `plugin-build`, `plugin-check`, template and docs |
 
 Milestone 0 is firmware work and can start before any JUCE dependency is added.
@@ -437,9 +439,11 @@ and blocks from 32 to 1024.
 
 REAPER 7.84 loads the Windows VST3 and CLAP builds. A one-note project renders
 88200 frames at 44100 Hz from each format, and the two WAV files are byte
-identical. Renoise 3.5.4 is installed but only scans VST3 from
-`C:\Program Files\Common Files\VST3`, which this account cannot write. The macOS
-build and the full two-DAW matrix remain open.
+identical. The VST3 bundle was installed in
+`C:\Program Files\Common Files\VST3`, where Renoise 3.5.4 scans. Renoise loaded
+`P1Onken: Type P.fm1` and rendered a one-note project to 39200 frames at 44100
+Hz, 24-bit stereo, peak 0.225197 and RMS 0.105559. The Windows DAW matrix now has
+REAPER and Renoise. The macOS build, the Linux DAW matrix and AU remain open.
 
 Host bridge build:
 
@@ -506,15 +510,15 @@ Platform matrix:
 | Platform | VST3 | CLAP | Standalone | Evidence |
 | --- | --- | --- | --- | --- |
 | Linux x86-64 | built, pluginval pass | built, clap-validator pass | built | Linux container, 2026-11-04 |
-| Windows x86-64 | built, pluginval pass, REAPER render | built, clap-validator pass, REAPER render | built | Windows host, MSVC 19.51, 2026-11-04 |
+| Windows x86-64 | built, pluginval pass, REAPER and Renoise render | built, clap-validator pass, REAPER render | built | Windows host, MSVC 19.51, 2026-11-04 |
 | macOS arm64 and x86-64 | not built | not built | not built | no macOS runner |
 
 The Windows VST3 and CLAP builds render equivalent one-note REAPER projects to
-byte-identical WAV files. Renoise 3.5.4 is installed on the Windows host but
-only scans VST3 from `C:\Program Files\Common Files\VST3`, which the current
-account cannot write. That is a host path limit, not a plugin load failure. The
-macOS rows are not claims of support. They need a native build, `pluginval` and
-two DAWs per platform before they move to pass. AU remains a later macOS target.
+byte-identical WAV files. REAPER 7.84 and Renoise 3.5.4 both load the Windows
+VST3 build and render it. The Windows DAW matrix is done. The Linux row has no
+DAW pass yet. The macOS rows are not claims of support. They need a native
+build, `pluginval` and two DAWs per platform before they move to pass. AU
+remains a later macOS target.
 
 The bridge build is host-native and optional. It is separate from the firmware
 Docker gate. The generated `firmware/gen` must exist before CMake configures.
