@@ -205,12 +205,12 @@ int main()
         TypePFm1AudioProcessor restored;
         for (int i = 0; i < kP1ParamCount; ++i) {
             const auto& spec = kP1ParamSpecs[static_cast<std::size_t>(i)];
-            auto* parameter = source.parameters().getParameter(spec.id);
-            if (parameter == nullptr)
+            auto* sourceParameter = source.parameters().getParameter(spec.id);
+            if (sourceParameter == nullptr)
                 continue;
             const int middle = spec.min + (spec.max - spec.min) * 2 / 3;
-            parameter->setValueNotifyingHost(
-                parameter->convertTo0to1(static_cast<float>(middle)));
+            sourceParameter->setValueNotifyingHost(
+                sourceParameter->convertTo0to1(static_cast<float>(middle)));
         }
         juce::MemoryBlock fullState;
         source.getStateInformation(fullState);

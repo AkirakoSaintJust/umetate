@@ -3843,9 +3843,9 @@ acceptance remains blocked.
 
 ### 13.23 CLAP target and platform matrix (2026-11-04)
 
-Milestone 6 is done for the Linux build. `plugin/juce` now creates a CLAP target
-next to VST3 and standalone. `P1_BUILD_CLAP` defaults to ON inside the
-`P1_BUILD_JUCE` path. The wrapper is `clap-juce-extensions` pinned to the MIT
+Milestone 6 is done for the Linux and Windows builds. `plugin/juce` now creates a
+CLAP target next to VST3 and standalone. `P1_BUILD_CLAP` defaults to ON inside
+the `P1_BUILD_JUCE` path. The wrapper is `clap-juce-extensions` pinned to the MIT
 commit `7adee3a1bd4684d4caa5601100e364abccff4b4d`, because tag `0.26.0` uses the
 old Linux message thread header that JUCE 8 removed. The CLAP plugin id is
 `com.p1onken.typepfm1`.
@@ -3856,16 +3856,29 @@ JUCE rejects a zero-range `AudioParameterInt` and a single-item
 it back to 0. State load now calls `updateHostDisplay` with `programChanged`, so
 the CLAP wrapper sends a parameter value rescan after the restored values change.
 
-`clap-validator` 0.4.1 runs 44 tests and reports 33 passed, 0 failed, 1 warning
-and 10 skipped. The warning is `state-invalid-random`. The wrapper returns
-success for random bytes, while the processor rejects the XML and changes
-nothing. The plugin does not crash and the wrapper API gives the plugin no way
-to report the rejection. `pluginval` 1.0.4 passes at strictness level 5 both with
-the editor open and with GUI tests skipped. The same build passes 44.1, 48, 96
-and 192 kHz with block sizes from 32 to 1024. `plugin_smoke` now also proves a
-full 313-parameter state round trip.
+The Windows build needed two portability fixes in the shared C. MSVC does not
+understand the firmware's GCC `__attribute__` spelling, so
+`plugin/engine/msvc_compat.h` maps it to nothing for the plugin build while the
+firmware keeps the real attributes. `fm1_ipc.h` also copied a volatile command
+struct with a cast that GCC accepts and MSVC rejects. The pop now copies the four
+fields one by one. The Windows build uses MSVC 19.51 from Visual Studio 18 Build
+Tools with CMake 4.3 and Ninja. JUCE 8 rejects MinGW, so the MSYS2 gcc setup is
+not a supported Windows path.
 
-The Linux x86-64 build is the evidence for this milestone. Windows and macOS are
-not built in this container. They need a native build, `pluginval` and two DAWs
-per platform before they count as pass. AU remains a later macOS target. The
-feature contract is `plugin/feature-contract-clap.md`.
+`clap-validator` 0.4.1 runs 44 tests and reports 33 passed, 0 failed, 1 warning
+and 10 skipped on Linux. On Windows it reports 32 passed, 0 failed, 1 warning and
+11 skipped. The warning is `state-invalid-random`. The wrapper returns success
+for random bytes, while the processor rejects the XML and changes nothing. The
+plugin does not crash and the wrapper API gives the plugin no way to report the
+rejection. `pluginval` 1.0.4 passes at strictness level 5 both with the editor
+open and with GUI tests skipped on both platforms. The same build passes 44.1,
+48, 96 and 192 kHz with block sizes from 32 to 1024. `plugin_smoke` now also
+proves a full 313-parameter state round trip.
+
+REAPER 7.84 loads the Windows VST3 and CLAP builds. A one-note project per
+format renders 88200 frames at 44100 Hz, and the two WAV files are byte
+identical. Renoise 3.5.4 is installed on the Windows host but only scans VST3
+from `C:\Program Files\Common Files\VST3`, which the current account cannot
+write. That is a host path limit, not a plugin load failure. The macOS build and
+the full two-DAW matrix remain open. The feature contract is
+`plugin/feature-contract-clap.md`.

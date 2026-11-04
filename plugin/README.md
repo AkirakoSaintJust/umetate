@@ -1,10 +1,11 @@
 # Type P.fm1 plugin plan
 
 Status: Milestone 6 done, 2026-11-04. The JUCE VST3, CLAP and standalone host
-build, render audio, accept MIDI and save state. The designed editor, the 64
-multi and 128 part banks and the 32-tap output rate bridge are in. The VST3 and
-CLAP artefacts pass their validators on Linux. The Windows and macOS builds and
-the two-DAW-per-platform matrix remain untested.
+build on Linux and Windows, render audio, accept MIDI and save state. The
+designed editor, the 64 multi and 128 part banks and the 32-tap output rate
+bridge are in. The VST3 and CLAP artefacts pass their validators on both
+platforms. REAPER renders the Windows VST3 and CLAP builds byte-identically. The
+macOS build and the full two-DAW matrix remain open.
 
 This is the plan for the optional JUCE build path in umetate: a reusable plugin
 host plus a generated `type-p-fm1` project. The visual language is in
@@ -318,7 +319,10 @@ Toolchain:
 - CLAP through `clap-juce-extensions` pinned to the MIT-licensed main commit
   `7adee3a1bd4684d4caa5601100e364abccff4b4d`. The `0.26.0` tag predates the JUCE 8
   Linux message thread path.
-- Windows: MSVC 2022 or clang-cl, VST3 SDK from JUCE.
+- Windows: MSVC 2022 or newer. JUCE 8 rejects MinGW, so the MSYS2 gcc path is
+  not a supported Windows build. `plugin/engine/msvc_compat.h` maps the firmware
+  GCC attributes away for MSVC and `firmware/hal/fm1_ipc.h` uses a portable field
+  copy instead of a volatile struct cast.
 - macOS: Xcode command line tools, universal binary if the build host allows it.
 - Linux: ALSA and X11 development packages, plus the usual JUCE dependencies.
 
@@ -419,17 +423,23 @@ sizes from 32 to 1024. The 20 kHz image rejection is -110 dB at 48 kHz and
 -25.4 dB at 96 and 192 kHz. That is the limit of the 32-tap kernel. A longer
 kernel is the next quality step if a stricter budget is set.
 
-Milestone 6 is done for the Linux build. The JUCE project now creates a CLAP
-target next to VST3 and standalone. `P1_BUILD_CLAP` defaults to ON inside the
-`P1_BUILD_JUCE` path and fetches `clap-juce-extensions` at the pinned MIT commit.
-The CLAP plugin ID is `com.p1onken.typepfm1`. `clap-validator` reports 33 passed,
-0 failed, 1 warning and 10 skipped. The warning is the wrapper returning success
-for random state bytes even though the processor rejects them. It does not crash
-and the wrapper gives the plugin no way to report the rejection. `pluginval`
-passes strictness level 5 both with the editor open and with GUI tests skipped.
-The VST3 checks cover 44.1, 48, 96 and 192 kHz and blocks from 32 to 1024. The
-Windows and macOS builds and the two-DAW-per-platform matrix are not available
-in this environment.
+Milestone 6 is done for the Linux and Windows builds. The JUCE project creates a
+CLAP target next to VST3 and standalone. `P1_BUILD_CLAP` defaults to ON inside
+the `P1_BUILD_JUCE` path and fetches `clap-juce-extensions` at the pinned MIT
+commit. The CLAP plugin ID is `com.p1onken.typepfm1`. `clap-validator` reports 33
+passed, 0 failed, 1 warning and 10 skipped on Linux. On Windows it reports 32
+passed, 0 failed, 1 warning and 11 skipped. The warning is the wrapper returning
+success for random state bytes even though the processor rejects them. It does
+not crash and the wrapper gives the plugin no way to report the rejection.
+`pluginval` passes strictness level 5 both with the editor open and with GUI
+tests skipped on both platforms. The VST3 checks cover 44.1, 48, 96 and 192 kHz
+and blocks from 32 to 1024.
+
+REAPER 7.84 loads the Windows VST3 and CLAP builds. A one-note project renders
+88200 frames at 44100 Hz from each format, and the two WAV files are byte
+identical. Renoise 3.5.4 is installed but only scans VST3 from
+`C:\Program Files\Common Files\VST3`, which this account cannot write. The macOS
+build and the full two-DAW matrix remain open.
 
 Host bridge build:
 
@@ -448,12 +458,24 @@ cmake --build build/plugin-juce
 ctest --test-dir build/plugin-juce --output-on-failure
 ```
 
+On Windows, run this from a Developer Command Prompt or after
+`vcvars64.bat`, with Ninja and CMake from the Build Tools on `PATH`:
+
+```bat
+cmake -S plugin -B build\plugin-juce -G Ninja -DCMAKE_BUILD_TYPE=Release ^
+  -DP1_BUILD_JUCE=ON -DP1_BUILD_CLAP=ON
+cmake --build build\plugin-juce --parallel 8
+ctest --test-dir build\plugin-juce --output-on-failure
+```
+
 `P1_BUILD_CLAP` defaults to ON when `P1_BUILD_JUCE` is ON. The CLAP wrapper is
 fetched at the pinned commit. The artifacts are under
 `build/plugin-juce/juce/type_p_fm1_artefacts/Release/VST3`,
 `build/plugin-juce/juce/type_p_fm1_artefacts/Release/CLAP` and `Standalone`.
-The editor snapshots are under `build/plugin-juce/juce/snapshots`. The
-`plugin_editor_snapshot` CTest uses `xvfb-run` when it is available.
+On Windows the same paths use backslashes and the VST3 bundle contains
+`Contents\x86_64-win`. The editor snapshots are under
+`build/plugin-juce/juce/snapshots`. The `plugin_editor_snapshot` CTest uses
+`xvfb-run` when it is available.
 
 Validator commands on Linux, with the plugin paths from the build tree:
 
@@ -465,6 +487,16 @@ xvfb-run -a pluginval --validate \
   --strictness-level 5
 ```
 
+On Windows the same checks run without Xvfb:
+
+```powershell
+clap-validator.exe validate --only-failed `
+  "build\plugin-juce\juce\type_p_fm1_artefacts\Release\CLAP\Type P.fm1.clap"
+pluginval.exe --validate `
+  "build\plugin-juce\juce\type_p_fm1_artefacts\Release\VST3\Type P.fm1.vst3" `
+  --strictness-level 5
+```
+
 On Linux, install `pkg-config`, `libasound2-dev`, the X11, Xrandr, Xcursor,
 Xinerama, Xcomposite and Xrender headers, freetype and fontconfig, and the
 OpenGL headers. JUCE 8.0.9 is fetched at configure time.
@@ -473,11 +505,14 @@ Platform matrix:
 
 | Platform | VST3 | CLAP | Standalone | Evidence |
 | --- | --- | --- | --- | --- |
-| Linux x86-64 | built, pluginval pass | built, clap-validator pass | built | this container, 2026-11-04 |
-| Windows x86-64 | not built | not built | not built | no Windows runner |
+| Linux x86-64 | built, pluginval pass | built, clap-validator pass | built | Linux container, 2026-11-04 |
+| Windows x86-64 | built, pluginval pass, REAPER render | built, clap-validator pass, REAPER render | built | Windows host, MSVC 19.51, 2026-11-04 |
 | macOS arm64 and x86-64 | not built | not built | not built | no macOS runner |
 
-The Linux artefact is the release evidence for this milestone. The Windows and
+The Windows VST3 and CLAP builds render equivalent one-note REAPER projects to
+byte-identical WAV files. Renoise 3.5.4 is installed on the Windows host but
+only scans VST3 from `C:\Program Files\Common Files\VST3`, which the current
+account cannot write. That is a host path limit, not a plugin load failure. The
 macOS rows are not claims of support. They need a native build, `pluginval` and
 two DAWs per platform before they move to pass. AU remains a later macOS target.
 
@@ -492,6 +527,7 @@ Docker gate. The generated `firmware/gen` must exist before CMake configures.
 | Two instances still share state | A second instance changes the first | Treat as a Milestone 0 failure |
 | JUCE fetch is unavailable | No network in the build environment | Support `JUCE_DIR` and a pinned local archive |
 | CLAP wrapper rots | The extension lags JUCE | Keep VST3 as the primary target, CLAP behind a flag |
+| Firmware C stops compiling on MSVC | GCC attributes or volatile casts reach the plugin build | Keep `msvc_compat.h` and the Windows CTest target green |
 | CLAP state load reports success on invalid bytes | `clap-validator` warning | Document it, keep the processor rejection, do not fake a valid state |
 | Rate bridge colors the sound | THD or alias above the budget | Raise the tap count or change the filter, never change the core rate |
 | Parameter map misses a control | Coverage test fails | Fix the map, not the test |

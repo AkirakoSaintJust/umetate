@@ -101,7 +101,14 @@ static inline uint32_t dsp_cmd_pop(dsp_cmd *out)
     if (tail == dsp_cmd_head)
         return 0;                                               /* empty */
     FM1_CSYNC();                                                /* acquire */
-    *out = (dsp_cmd)dsp_cmd_buf[tail & (UMETATE_DSP_CMD_CAP - 1u)];
+    {
+        const volatile dsp_cmd *slot =
+            &dsp_cmd_buf[tail & (UMETATE_DSP_CMD_CAP - 1u)];
+        out->kind = slot->kind;
+        out->ch = slot->ch;
+        out->note = slot->note;
+        out->vel = slot->vel;
+    }
     dsp_cmd_tail = tail + 1u;
     return 1u;
 }

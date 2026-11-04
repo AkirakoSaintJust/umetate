@@ -527,7 +527,7 @@ void P1Envelope::paint(juce::Graphics& g)
     const auto area = getLocalBounds().toFloat().reduced(2.0f, 3.0f);
     if (area.isEmpty())
         return;
-    const double mid = zeroLine_ ? area.getCentreY() : area.getBottom();
+    const float mid = zeroLine_ ? area.getCentreY() : area.getBottom();
     if (zeroLine_) {
         g.setColour(colour(tokens::lineStrong));
         g.drawLine(area.getX(), mid, area.getRight(), mid, 1.0f);

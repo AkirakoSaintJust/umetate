@@ -6,7 +6,7 @@
 - **Brief section:** `plugin/README.md` sections 1, 12 and 13, and
   `docs/roadmap.md` 13.23.
 - **Owner / date:** P1Onken, 2026-11-04.
-- **Disposition:** accepted for the Linux build. Windows and macOS remain
+- **Disposition:** accepted for the Linux and Windows builds. macOS remains
   untested.
 
 ## Player outcome
@@ -31,7 +31,11 @@
   the `P1_BUILD_JUCE` path. The dependency is pinned to
   `7adee3a1bd4684d4caa5601100e364abccff4b4d` because tag `0.26.0` includes the
   old `juce_audio_plugin_client/utility/juce_LinuxMessageThread.h` path that
-  JUCE 8 removed.
+  JUCE 8 removed. The Windows build uses MSVC and adds
+  `plugin/engine/msvc_compat.h` to map the firmware GCC attributes to nothing.
+  `firmware/hal/fm1_ipc.h` now copies a volatile command struct field by field,
+  which GCC and MSVC both accept. JUCE 8 rejects MinGW, so MSYS2 gcc is not a
+  supported Windows path.
 - **Persistence/version impact:** none. The state version stays 2. CLAP state
   save and load call the existing `getStateInformation` and
   `setStateInformation`.
@@ -66,8 +70,10 @@
 ## Files and interfaces
 
 - **Files:** `plugin/juce/CMakeLists.txt`, `plugin/juce/PluginProcessor.cpp`,
-  `plugin/tests/plugin_smoke.cpp`, `plugin/feature-contract-clap.md`,
-  `plugin/README.md` and `docs/roadmap.md`.
+  `plugin/engine/msvc_compat.h`, `plugin/CMakeLists.txt`,
+  `firmware/hal/fm1_ipc.h`, `plugin/tests/plugin_smoke.cpp`,
+  `plugin/feature-contract-clap.md`, `plugin/README.md` and
+  `docs/roadmap.md`.
 - **Public contract/header:** no processor API change. `P1_BUILD_CLAP` is the
   new build option. The CLAP binary exports the JUCE wrapper entry points.
 - **State owner and publication rule:** the processor owns the engine, the
@@ -84,33 +90,44 @@
   checks every parameter. The five CTest targets stay green.
 - **Browser vector:** unchanged, `deep-check --all` stays green.
 - **Target package check:** unchanged.
-- **CLAP vector:** `clap-validator` 0.4.1 runs 44 tests. The result is 33 passed,
-  0 failed, 1 warning and 10 skipped. The warning is
-  `state-invalid-random`, because the wrapper returns success for random bytes
-  that the processor rejects. The warning is upstream wrapper behaviour and the
-  plugin does not crash.
+- **CLAP vector:** `clap-validator` 0.4.1 runs 44 tests on Linux. The result is
+  33 passed, 0 failed, 1 warning and 10 skipped. On Windows it is 32 passed, 0
+  failed, 1 warning and 11 skipped. The warning is `state-invalid-random`,
+  because the wrapper returns success for random bytes that the processor
+  rejects. The warning is upstream wrapper behaviour and the plugin does not
+  crash.
 - **VST3 vector:** `pluginval` 1.0.4 at strictness level 5 passes both with the
-  editor open and with GUI tests skipped. The same build passes at 44.1, 48, 96
-  and 192 kHz with block sizes from 32 to 1024.
+  editor open and with GUI tests skipped on Linux and Windows. The same build
+  passes at 44.1, 48, 96 and 192 kHz with block sizes from 32 to 1024.
+- **DAW vector:** REAPER 7.84 loads the Windows VST3 and CLAP builds. A one-note
+  project per format renders 88200 frames at 44100 Hz, and the two WAV files are
+  byte identical. Renoise 3.5.4 is installed but only scans VST3 from
+  `C:\Program Files\Common Files\VST3`, which the current account cannot write.
 - **Physical timing/device check:** blocked, no hardware.
-- **Platform matrix:** Linux x86-64 is built and validated. Windows and macOS
-  are not built in this container. They need a native build, `pluginval` and
-  two DAWs per platform before they count as pass. AU remains later.
+- **Platform matrix:** Linux x86-64 and Windows x86-64 are built and validated.
+  macOS is not built here. The full two-DAW matrix is blocked by the Renoise
+  VST3 path permission and by the missing macOS host. AU remains later.
 - **Tolerance/metric:** zero validator failures. The one warning is documented.
 - **Evidence artifact:** the `clap-validator` terminal summary, the `pluginval`
-  `SUCCESS` line, and the plugin CTest output.
+  `SUCCESS` line, the REAPER WAV hashes, and the plugin CTest output.
 
 ## Result (2026-11-04)
 
 - The CLAP target configures and builds with JUCE 8.0.9 and the pinned
-  `clap-juce-extensions` commit. CLAP 1.2.7 is linked.
-- `clap-validator` moved from 21 passed and 12 failed to 33 passed and 0 failed.
+  `clap-juce-extensions` commit. CLAP 1.2.7 is linked on Linux and Windows.
+- `clap-validator` moved from 21 passed and 12 failed to 33 passed and 0 failed
+  on Linux. The Windows result is 32 passed and 0 failed.
 - The parameter default failure was fixed by giving `fold_type` a 0..1 APVTS
   range and clamping it to the manifest maximum in `syncParams`.
 - The three state reproducibility tests pass after `setStateInformation`
   requests a parameter rescan.
+- The Windows build passes all five CTests with MSVC 19.51.
 - `pluginval` passes in GUI mode with the editor open and in headless mode with
-  GUI tests skipped.
+  GUI tests skipped on both platforms.
+- REAPER 7.84 renders the Windows VST3 and CLAP builds to byte-identical WAV
+  files. Each render is 88200 frames at 44100 Hz, 24-bit stereo, peak 0.609467,
+  RMS 0.14412, SHA-256
+  `d595f204fe537e74eb512e94a5fcdb0bb1c38b08b3f955d21019b486ae4b47a2`.
 - `plugin_smoke` now proves a full 313-parameter state round trip, not only one
   parameter.
 - The remaining warning is in the wrapper state loader, not in the processor.
@@ -122,6 +139,9 @@
   returning a real load result.
 - **Safe experiment and stop criterion:** load a saved state in a second CLAP
   instance and compare all 313 values. Stop if any value differs.
+- **Windows host path limit:** Renoise only scans VST3 from
+  `C:\Program Files\Common Files\VST3`. Use an elevated install there, or use a
+  host that scans the build tree, before calling the second DAW pass.
 - **Smaller alternative:** ship VST3 only and keep CLAP behind `P1_BUILD_CLAP`.
   The current default builds both.
 - **Rollback:** remove the `FetchContent` block and the

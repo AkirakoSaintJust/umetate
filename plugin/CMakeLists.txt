@@ -62,6 +62,11 @@ target_compile_definitions(p1_engine PRIVATE
     "UMETATE_STATE_PTR=${UMETATE_STATE_PTR}"
 )
 
+if(MSVC)
+    target_compile_options(p1_engine PRIVATE
+        "/FI${CMAKE_CURRENT_SOURCE_DIR}/engine/msvc_compat.h")
+endif()
+
 add_executable(engine_parity tests/engine_parity.cpp)
 target_link_libraries(engine_parity PRIVATE p1_engine)
 add_test(NAME engine_parity COMMAND engine_parity)
