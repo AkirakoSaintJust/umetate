@@ -1012,6 +1012,34 @@ def _publish_release_manifest() -> None:
         assert len(manifest["artifacts"]) == 2
 
 
+def _publish_vendor_copy() -> None:
+    """Vendored deps keep the source and drop .git and build trees."""
+    from . import publish
+
+    with tempfile.TemporaryDirectory() as tmp:
+        src = Path(tmp) / "_deps"
+        (src / "juce-src" / "modules").mkdir(parents=True)
+        (src / "juce-src" / "modules" / "juce.cpp").write_text("x", encoding="utf-8")
+        (src / "juce-src" / ".git").mkdir()
+        (src / "juce-src" / ".git" / "config").write_text("x", encoding="utf-8")
+        (src / "juce-build").mkdir()
+        (src / "juce-build" / "CMakeCache.txt").write_text("x", encoding="utf-8")
+        (src / "juce-subbuild").mkdir()
+        (src / "juce-subbuild" / "build.ninja").write_text("x", encoding="utf-8")
+        (src / "clap-juce-extensions-src").mkdir()
+        (src / "clap-juce-extensions-src" / "clap.cpp").write_text(
+            "x", encoding="utf-8"
+        )
+
+        dest = Path(tmp) / "vendor" / "deps"
+        publish._copy_vendor(src, dest)  # pyright: ignore[reportPrivateUsage]
+        assert (dest / "juce-src" / "modules" / "juce.cpp").is_file()
+        assert (dest / "clap-juce-extensions-src" / "clap.cpp").is_file()
+        assert not (dest / "juce-src" / ".git").exists()
+        assert not (dest / "juce-build").exists()
+        assert not (dest / "juce-subbuild").exists()
+
+
 def main() -> int:
     tests: _Tests = [
         ("no import side effects", _no_import_side_effects),
@@ -1050,6 +1078,7 @@ def main() -> int:
             "publish writes the release page, checksums + manifest",
             _publish_release_manifest,
         ),
+        ("publish copies only the vendored source", _publish_vendor_copy),
         (
             "plugin-generate renders the project and catches drift",
             _plugin_generate_roundtrip,

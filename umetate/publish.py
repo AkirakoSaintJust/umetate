@@ -645,6 +645,17 @@ def _remove_tree(path: Path) -> None:
     shutil.rmtree(path)
 
 
+def _copy_vendor(src: Path, dest: Path) -> None:
+    """Copy the fetched dependency source, without git histories or build trees."""
+    if dest.exists():
+        _remove_tree(dest)
+    shutil.copytree(
+        src,
+        dest,
+        ignore=shutil.ignore_patterns(".git", "*-build", "*-subbuild"),
+    )
+
+
 def _write_dependencies(out: Path, vendored: bool) -> None:
     text = _DEPENDENCIES
     if vendored:
@@ -738,14 +749,7 @@ def main(argv: list[str] | None = None) -> int:
     vendored = False
     if args.vendor_deps:
         if args.vendor_deps.is_dir():
-            dest = out / "vendor" / "deps"
-            if dest.exists():
-                _remove_tree(dest)
-            shutil.copytree(
-                args.vendor_deps,
-                dest,
-                ignore=shutil.ignore_patterns(".git"),
-            )
+            _copy_vendor(args.vendor_deps, out / "vendor" / "deps")
             vendored = True
         else:
             missing.append(f"vendor deps (no {args.vendor_deps})")
