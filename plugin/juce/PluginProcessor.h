@@ -11,6 +11,7 @@
 
 #include "Engine.hpp"
 #include "MidiBridge.hpp"
+#include "P1Product.h"
 #include "Params.h"
 #include "PresetStore.hpp"
 #include "RateBridge.hpp"
@@ -42,7 +43,7 @@ public:
     juce::AudioProcessorEditor* createEditor() override;
     bool hasEditor() const override { return true; }
 
-    const juce::String getName() const override { return "Type P.fm1"; }
+    const juce::String getName() const override { return P1_PRODUCT_NAME; }
     bool acceptsMidi() const override { return true; }
     bool producesMidi() const override { return false; }
     bool isMidiEffect() const override { return false; }

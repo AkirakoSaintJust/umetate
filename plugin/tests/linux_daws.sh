@@ -354,7 +354,10 @@ carla_record() {
 
     wav="$WORK/carla-$tag.wav"
     rm -f "$wav"
-    jack_rec -f "$wav" -d 3 -b 24 \
+    # The dummy JACK backend reports overruns on a loaded host even when the
+    # audio is intact. A larger disk buffer keeps the take instead of writing
+    # a silent WAV.
+    jack_rec -f "$wav" -d 3 -b 24 -B 65536 \
         'Carla:Type P.fm1:output_1' 'Carla:Type P.fm1:output_2' \
         >"$WORK/jackrec-$tag.log" 2>&1 &
     record_pid=$!

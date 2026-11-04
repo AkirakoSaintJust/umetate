@@ -29,6 +29,15 @@ COMMANDS: dict[str, tuple[str, str]] = {
     "lib": ("list the shipped nodes + templates", "lib"),
     "preset": ("export/import the preset bank as SysEx", "preset"),
     "publish": ("assemble a distributable firmware repo", "publish"),
+    "plugin-generate": (
+        "render a synth project's plugin sources",
+        "plugin_cli:generate_main",
+    ),
+    "plugin-build": ("build and test a plugin project", "plugin_cli:build_main"),
+    "plugin-check": (
+        "check generated plugin sources and tests",
+        "plugin_cli:check_main",
+    ),
     "budget": ("measure the polyphony budget", "budget"),
     "theme": ("check/generate a WCAG-verified palette", "theme"),
     "tokens": ("check UI tokens + hard-coded values", "tokens"),

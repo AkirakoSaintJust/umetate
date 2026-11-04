@@ -3960,10 +3960,9 @@ punctuation rules, the AI tells to avoid, and the synth-manual research notes. I
 is now calibrated against the author's corpus (§13.30). The documentation skill and
 the Type P.fm1 manual intro use it.
 
-Still open: Milestone 7 (`plugin-generate`, `plugin-build`, `plugin-check`), the
-macOS build and AU, the physical device pass, signed installers, and a vendored
-JUCE source archive in every plugin release. The root `README.md` still omits the
-`plugin/` and `publish` components and needs a hand-written update.
+Still open: the macOS build and AU, the physical device pass, signed installers,
+and a vendored JUCE source archive in every plugin release. The Milestone 7
+commands and the root README plugin and publish sections are in §13.31.
 
 ### 13.26 Interface design method and dossier (2026-11-04)
 
@@ -4140,3 +4139,55 @@ browser", "The screen is the same 240 by 240 panel you see on the device", and a
 still wins and is copied verbatim. The Type P.fm1 manual and panel reference now
 use varied headings instead of a "The X" chain, and the manual level section says
 the level shapes the timbre as well as the volume.
+
+### 13.31 Generated plugin projects (2026-11-04)
+
+Milestone 7 of the plugin plan is implemented. The firmware generator and the
+plugin generator share `umetate/_synthgen.py`, so `umetate build --synth` and
+`umetate plugin-generate` render the same files from one `patch.json`,
+`panel.json`, and `app.c`. `build.py` delegates to `generate_project` and
+`write_project`. The generation step has no side effects: it returns a
+filename-to-text map, and only `write_project` touches the disk.
+
+The plugin host no longer names the Type P.fm1 C symbols. The bridge includes
+`P1Synth.h`, which the CMake configure writes from `plugin/tools/P1Synth.h.in`
+using `P1_SYNTH_CNAME`. `P1Product.h` carries the product name and the APVTS state
+tree id. The JUCE target, its artefact paths, the CLAP id, and the Linux DAW test
+all use `P1_PLUGIN_TARGET` and `P1_PRODUCT_NAME`.
+
+`umetate plugin-generate` writes `build/plugin/<cname>/`: `gen/` with the rendered
+C and JSON, `P1Project.cmake` with the synth name and identity, a thin
+`CMakeLists.txt` from `templates/plugin/`, and a README. `--check` compares the
+tree without writing. `plugin-build` renders the same files, configures
+`<out>/build`, builds, and runs ctest. `plugin-check` verifies the generated files
+and runs ctest in the existing build tree. The identity comes from
+`examples/type-p-fm1/plugin.json`: product `Type P.fm1`, bundle
+`com.p1onken.typepfm1`, manufacturer `P1on`, code `Tpf1`. The four-character codes
+are validated, and quotes, backslashes, and control characters are rejected
+because the generated C header would not compile.
+
+A plain `cmake -S plugin` build keeps the checked-in Type P.fm1 defaults, so the
+existing validator and DAW evidence does not depend on the generated project. The
+generated project overrides the synth path, name, target, bundle id, codes, and
+state tree id from `P1Project.cmake`. Its `gen/` comes first on the include path,
+and the tracked `firmware/gen/math_tables.h` follows it for the fixed math
+tables. `publish` copies `plugin.json` into `src/` and finds plugin artefacts
+under `build/plugin-juce` or `build/plugin/*/build`. The artefact search ignores
+`_deps`, the Linux DAW test's isolated HOME, and hidden folders, so it does not
+stage the test copies.
+
+`plugin/tests` still assumes the Type P.fm1 page set and 313 parameters. The
+generator is generic for the synth name, product name, bundle id, and codes. A
+different synth needs its own editor pages, host tests, and a company-name
+override, the same limit the plan records for the editor. The new
+`umetate.test_cli` cases cover the generate/check round trip, the identity
+override, the four-character rule, and the quote rejection.
+
+Verified in the Linux container: the plain `build/plugin-juce` tree and the
+generated `build/plugin/type_p_fm1/build` tree each passed all eight CTest cases,
+including `linux_daws`. `plugin-generate --check` and `plugin-check` both report
+the generated tree current, and the Python gate passes. The `linux_daws` test
+needed a larger `jack_rec` disk buffer on the loaded host. With `-B 65536`,
+Ardour and both Carla renders pass, and the VST3 and CLAP renders peak at
+0.609467. `plugin-build` now defaults to four parallel jobs. An unbounded 16-way
+compile wedged the Docker VM during the first generated-project build.

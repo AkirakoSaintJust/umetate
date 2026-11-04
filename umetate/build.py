@@ -76,36 +76,17 @@ def _synth_main(args: argparse.Namespace) -> int:
     (roadmap §6.11.4, F7): generate the engine/panel/CC/layout files into
     `firmware/gen/`, host-build the composition and run the project's script, then
     hand the target build to the toolchain (blocked without it)."""
-    import json
-
-    from ._ir import GenError, to_c_identifier
-    from ._panel import generate_panel
-    from ._schema import as_panel, as_patch
-    from .generate import (
-        generate,
-        generate_cc_header,
-        generate_dsp_header,
-        generate_glue,
-        generate_params,
-        generate_synth_header,
-        generate_sysex_layout,
-        generate_tables,
-        param_ids,
-        param_meta,
-    )
+    from ._ir import GenError
+    from ._synthgen import generate_project, write_project
 
     synth = args.synth.resolve()
     try:
-        patch = as_patch(json.loads((synth / "patch.json").read_text(encoding="utf-8")))
-        panel = as_panel(json.loads((synth / "panel.json").read_text(encoding="utf-8")))
-        app_c = (synth / "app.c").read_text(encoding="utf-8")
-    except (OSError, json.JSONDecodeError, ValueError) as exc:
-        print(
-            f"build --synth: cannot read the project in {synth}: {exc}", file=sys.stderr
-        )
+        project = generate_project(synth)
+    except GenError as exc:
+        print(f"build --synth: {exc}", file=sys.stderr)
         return 1
 
-    model = patch.get("model", 0)
+    model = project.patch.get("model", 0)
     if not 0 <= model <= 0x7F:
         print(
             f"build --synth: the patch's model byte must be 0..127 (got {model!r})",
@@ -113,33 +94,10 @@ def _synth_main(args: argparse.Namespace) -> int:
         )
         return 1
 
+    name = project.name
     gen_dir = Path(os.environ.get("UMETATE_GEN", str(_ROOT / "firmware" / "gen")))
-    gen_dir.mkdir(parents=True, exist_ok=True)
-    try:
-        name = to_c_identifier(patch["name"])
-        tables_h, tables_c = generate_tables(patch)
-        ids = param_ids(patch)
-        meta = param_meta(patch)
-        outputs: dict[str, str] = {
-            f"{name}_dsp.c": generate(patch),
-            "dsp.h": generate_dsp_header(patch),
-            "glue.h": generate_glue(patch),
-            "tables.h": tables_h,
-            "tables.c": tables_c,
-            "panel.h": generate_panel(panel, ids, meta),
-            "cc_map.h": generate_cc_header(patch),
-            "synth_layout.h": generate_synth_header(patch),
-            "params.json": json.dumps(generate_params(patch), indent=2) + "\n",
-            "sysex-layout.json": json.dumps(generate_sysex_layout(patch), indent=2)
-            + "\n",
-            "app.c": app_c,
-        }
-    except GenError as exc:
-        print(f"build --synth: {exc}", file=sys.stderr)
-        return 1
-    for filename, content in outputs.items():
-        (gen_dir / filename).write_text(content, encoding="utf-8")
-        print(f"gen      {gen_dir / filename}")
+    for path in write_project(project, gen_dir):
+        print(f"gen      {path}")
 
     # the host leg: compile the composition (the framework + the app + the engine)
     # and run the project's script — WAV + screen shots prove it works on a computer.

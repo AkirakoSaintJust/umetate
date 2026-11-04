@@ -94,7 +94,7 @@ TypePFm1AudioProcessor::TypePFm1AudioProcessor()
     : AudioProcessor(BusesProperties().withOutput(
           "Output", juce::AudioChannelSet::stereo(), true)),
       midi_(engine_),
-      apvts_(*this, nullptr, "type_p_fm1", createLayout())
+      apvts_(*this, nullptr, P1_STATE_TREE_ID, createLayout())
 {
     lastParams_.fill(std::numeric_limits<int32_t>::min());
     for (int i = 0; i < kP1ParamCount; ++i)

@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <memory>
 
-#include "dsp.h"
+#include "P1Synth.h"
 
 namespace p1 {
 
@@ -29,10 +29,10 @@ public:
     bool quiet();
     const int32_t* tap(uint32_t channel);
 
-    type_p_fm1_state* state();
+    P1_STATE* state();
 
 private:
-    std::unique_ptr<type_p_fm1_state> state_;
+    std::unique_ptr<P1_STATE> state_;
 };
 
 } // namespace p1

@@ -73,12 +73,12 @@ target_link_libraries(p1_editor PUBLIC
 target_compile_definitions(p1_editor PUBLIC ${P1_JUCE_DEFINITIONS})
 add_dependencies(p1_editor p1_params p1_tokens)
 
-juce_add_plugin(type_p_fm1
+juce_add_plugin(${P1_PLUGIN_TARGET}
     COMPANY_NAME "P1Onken"
-    BUNDLE_ID "com.p1onken.typepfm1"
-    PLUGIN_MANUFACTURER_CODE P1on
-    PLUGIN_CODE Tpf1
-    PRODUCT_NAME "Type P.fm1"
+    BUNDLE_ID "${P1_BUNDLE_ID}"
+    PLUGIN_MANUFACTURER_CODE ${P1_MANUFACTURER_CODE}
+    PLUGIN_CODE ${P1_PLUGIN_CODE}
+    PRODUCT_NAME "${P1_PRODUCT_NAME}"
     FORMATS VST3 Standalone
     IS_SYNTH TRUE
     NEEDS_MIDI_INPUT TRUE
@@ -87,23 +87,23 @@ juce_add_plugin(type_p_fm1
     COPY_PLUGIN_AFTER_BUILD FALSE
 )
 
-target_sources(type_p_fm1 PRIVATE PluginProcessor.cpp)
-target_link_libraries(type_p_fm1 PRIVATE
+target_sources(${P1_PLUGIN_TARGET} PRIVATE PluginProcessor.cpp)
+target_link_libraries(${P1_PLUGIN_TARGET} PRIVATE
     p1_editor
     juce::juce_audio_utils
     juce::juce_recommended_config_flags
     juce::juce_recommended_warning_flags
 )
-target_compile_definitions(type_p_fm1 PRIVATE ${P1_JUCE_DEFINITIONS})
-add_dependencies(type_p_fm1 p1_params p1_tokens)
+target_compile_definitions(${P1_PLUGIN_TARGET} PRIVATE ${P1_JUCE_DEFINITIONS})
+add_dependencies(${P1_PLUGIN_TARGET} p1_params p1_tokens)
 
 if(P1_BUILD_CLAP)
     clap_juce_extensions_plugin(
-        TARGET type_p_fm1
-        CLAP_ID "com.p1onken.typepfm1"
+        TARGET ${P1_PLUGIN_TARGET}
+        CLAP_ID "${P1_BUNDLE_ID}"
         CLAP_FEATURES instrument
     )
-    target_compile_definitions(type_p_fm1_CLAP PRIVATE ${P1_JUCE_DEFINITIONS})
+    target_compile_definitions(${P1_PLUGIN_TARGET}_CLAP PRIVATE ${P1_JUCE_DEFINITIONS})
 endif()
 
 juce_add_console_app(p1_smoke PRODUCT_NAME "p1_smoke")
@@ -172,14 +172,16 @@ find_program(ARDOUR8_EXPORT ardour8-export)
 find_program(CARLA_JACK_SINGLE carla-jack-single HINTS /opt/carla/bin)
 find_program(JACK_REC jack_rec)
 if(UNIX AND NOT APPLE AND XVFB_RUN AND ARDOUR8_EXPORT AND CARLA_JACK_SINGLE AND JACK_REC)
+    set(P1_ARTEFACTS
+        "${CMAKE_CURRENT_BINARY_DIR}/${P1_PLUGIN_TARGET}_artefacts/$<CONFIG>")
     set(P1_LINUX_DAWS_CLAP)
     if(P1_BUILD_CLAP)
         set(P1_LINUX_DAWS_CLAP
-            "${CMAKE_CURRENT_BINARY_DIR}/type_p_fm1_artefacts/$<CONFIG>/CLAP/Type P.fm1.clap")
+            "${P1_ARTEFACTS}/CLAP/${P1_PRODUCT_NAME}.clap")
     endif()
     add_test(NAME linux_daws
              COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/../tests/linux_daws.sh"
-                     "${CMAKE_CURRENT_BINARY_DIR}/type_p_fm1_artefacts/$<CONFIG>/VST3/Type P.fm1.vst3"
+                     "${P1_ARTEFACTS}/VST3/${P1_PRODUCT_NAME}.vst3"
                      "${CMAKE_CURRENT_BINARY_DIR}/linux-daws"
                      ${P1_LINUX_DAWS_CLAP})
     set_tests_properties(linux_daws PROPERTIES TIMEOUT 300)

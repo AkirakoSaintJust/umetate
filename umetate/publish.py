@@ -47,6 +47,7 @@ _SRC_FILES = (
     "patch.json",
     "panel.json",
     "app.c",
+    "plugin.json",
     "host-script.txt",
     "synth-brief.md",
     "dsp-algorithm.md",
@@ -341,6 +342,16 @@ def _zip_artifact(source: Path, destination: Path) -> None:
         archive.write(source, arcname=source.name)
 
 
+def _is_plugin_artifact(build_dir: Path, path: Path) -> bool:
+    """Is this path a real artefact, not a test copy or a hidden folder?"""
+    relative = path.relative_to(build_dir)
+    return (
+        "_deps" not in relative.parts
+        and "linux-daws" not in relative.parts
+        and not any(part.startswith(".") for part in relative.parts)
+    )
+
+
 def _find_plugin_artifacts(build_dir: Path) -> tuple[list[Path], list[Path]]:
     """Return the VST3 bundles and CLAP binaries under a JUCE build tree."""
     if not build_dir.is_dir():
@@ -348,17 +359,47 @@ def _find_plugin_artifacts(build_dir: Path) -> tuple[list[Path], list[Path]]:
     vst3 = sorted(
         path
         for path in build_dir.rglob("*.vst3")
-        if path.is_dir() and "_deps" not in path.parts
+        if path.is_dir() and _is_plugin_artifact(build_dir, path)
     )
     clap = sorted(
         path
         for path in build_dir.rglob("*.clap")
-        if path.is_file() and "_deps" not in path.parts
+        if path.is_file() and _is_plugin_artifact(build_dir, path)
     )
     return vst3, clap
 
 
-def _stage_plugins(out: Path, build_dir: Path, platform: str) -> list[str]:
+def _default_plugin_build() -> Path:
+    """The first build tree with a plugin artefact, preferring the plain build."""
+    candidates = [
+        _ROOT / "build" / "plugin-juce",
+        *sorted((_ROOT / "build" / "plugin").glob("*/build")),
+    ]
+    for candidate in candidates:
+        vst3, clap = _find_plugin_artifacts(candidate)
+        if vst3 or clap:
+            return candidate
+    return candidates[0]
+
+
+def _project_title(synth_dir: Path, name: str) -> str:
+    """The plugin's display name from `plugin.json`, else the project name."""
+    path = synth_dir / "plugin.json"
+    if path.is_file():
+        try:
+            raw = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return name
+        if isinstance(raw, dict):
+            product = raw.get("product_name")
+            if isinstance(product, str) and product:
+                return product
+    return name
+
+
+def _stage_plugins(
+    out: Path, build_dir: Path, platform: str, product_name: str = "Type P.fm1"
+) -> list[str]:
     """Zip the built VST3 and CLAP artefacts into `out/plugins/<platform>/`."""
     vst3, clap = _find_plugin_artifacts(build_dir)
     if not vst3 and not clap:
@@ -388,7 +429,9 @@ def _stage_plugins(out: Path, build_dir: Path, platform: str) -> list[str]:
         "  `~/.vst3/`, on Windows `C:\\Program Files\\Common Files\\VST3`.",
         "- **CLAP:** unzip the archive into your CLAP folder. On Linux that is",
         "  `~/.clap/`, on Windows `C:\\Program Files\\Common Files\\CLAP`.",
-        "- Rescan plugins in your DAW. The plugin name is `P1Onken: Type P.fm1`.",
+        "- Rescan plugins in your DAW. The plugin name is `P1Onken: "
+        + product_name
+        + "`.",
         "",
         "## Licence",
         "",
@@ -439,7 +482,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--out", type=Path, help="output dir (default: publish/<name>)")
     parser.add_argument(
-        "--title", help="the display name for the README (default: Type P.fm1)"
+        "--title", help="the display name for the README (default: plugin.json)"
     )
     parser.add_argument(
         "--repo-url",
@@ -454,8 +497,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--plugin-build",
         type=Path,
-        default=_ROOT / "build" / "plugin-juce",
-        help="a JUCE build tree (default: build/plugin-juce)",
+        help="a JUCE build tree (default: the first one with artefacts)",
     )
     parser.add_argument(
         "--plugin-platform",
@@ -475,19 +517,20 @@ def main(argv: list[str] | None = None) -> int:
     name = _name_of(synth_dir)
     cname = to_c_identifier(name)
     out = args.out or _PUBLISH / name
-    title = args.title or "Type P.fm1"
+    title = args.title or _project_title(synth_dir, name)
 
     out.mkdir(parents=True, exist_ok=True)
     missing = _gather(synth_dir, name, cname, out)
     bundled = _snapshot_framework(out, cname)
 
     platform = args.plugin_platform or _platform_tag()
+    plugin_build = args.plugin_build or _default_plugin_build()
     staged: list[str] = []
     if args.plugins:
-        staged = _stage_plugins(out, args.plugin_build, platform)
+        staged = _stage_plugins(out, plugin_build, platform, title)
         if not staged:
             missing.append(
-                f"plugins (no VST3 or CLAP under {args.plugin_build}; "
+                f"plugins (no VST3 or CLAP under {plugin_build}; "
                 "build the JUCE targets first)"
             )
         else:

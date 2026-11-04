@@ -7,8 +7,8 @@
 
 #include "Engine.hpp"
 #include "MidiBridge.hpp"
+#include "P1Synth.h"
 #include "cc_map.h"
-#include "dsp.h"
 #include "synth_midi.h"
 
 namespace {
@@ -105,18 +105,18 @@ void test_engine_render()
     int32_t mine[512] = {};
     int32_t firmware[512] = {};
 
-    type_p_fm1_dsp_reset();
+    P1_LEGACY_RESET();
     engine.reset();
-    type_p_fm1_dsp_note_on(60, 100);
+    P1_LEGACY_NOTE_ON(60, 100);
     engine.noteOn(60, 100);
 
-    type_p_fm1_dsp_render(firmware, 256);
+    P1_LEGACY_RENDER(firmware, 256);
     engine.render(mine, 256);
     check(same(mine, firmware, 512), "engine render matches the legacy firmware render");
 
-    type_p_fm1_dsp_note_off(60);
+    P1_LEGACY_NOTE_OFF(60);
     engine.noteOff(60);
-    type_p_fm1_dsp_render(firmware, 256);
+    P1_LEGACY_RENDER(firmware, 256);
     engine.render(mine, 256);
     check(same(mine, firmware, 512), "release render matches the legacy firmware render");
 }
@@ -184,7 +184,7 @@ void test_midi_parity()
         synth_midi_poll(&ref);
         bridge.feed(m.status, m.data1, m.data2);
 
-        uint32_t n = type_p_fm1_dsp_param_count();
+        uint32_t n = P1_PARAM_COUNT();
         for (uint32_t id = 0; id < n; ++id) {
             if (engine.getParam(id) != reference.getParam(id)) {
                 check(false, "MIDI parameter state matches after every message");

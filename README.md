@@ -57,6 +57,19 @@ The 44.1 kHz engine core stays bit-exact and the sample rate is adapted at the
 output boundary, so the device render stays the reference.
 
 ```sh
+umetate plugin-generate --synth examples/type-p-fm1
+umetate plugin-build --synth examples/type-p-fm1
+umetate plugin-check --synth examples/type-p-fm1
+```
+
+`plugin-generate` renders the synth's `patch.json`, `panel.json`, and `app.c`
+into `build/plugin/<cname>/`, including `gen/` and a `P1Project.cmake` with the
+plugin identity from `plugin.json`. `plugin-build` configures and builds that
+project and runs ctest. `plugin-check` verifies the generated files and reruns
+the tests. A plain checkout still builds the checked-in Type P.fm1 defaults
+directly:
+
+```sh
 cmake -S plugin -B build/plugin-juce -DP1_BUILD_JUCE=ON -DP1_BUILD_CLAP=ON
 cmake --build build/plugin-juce
 ctest --test-dir build/plugin-juce --output-on-failure

@@ -67,6 +67,9 @@ screen with the dot grid and guides. The casebook and research links are in
 python -m umetate.cli deep-check --all          # the full gate
 python -m umetate.cli tokens                    # design tokens + hard-coded UI values
 python -m umetate.cli build --synth examples/type-p-fm1
+python -m umetate.cli plugin-generate --synth examples/type-p-fm1
+python -m umetate.cli plugin-build --synth examples/type-p-fm1
+python -m umetate.cli plugin-check --synth examples/type-p-fm1
 python -m umetate.cli publish --plugins --vendor-deps build/plugin-juce/_deps
 cmake -S plugin -B build/plugin-juce -DP1_BUILD_JUCE=ON -DP1_BUILD_CLAP=ON
 cmake --build build/plugin-juce

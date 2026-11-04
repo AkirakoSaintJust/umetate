@@ -1,14 +1,15 @@
 # Type P.fm1 plugin plan
 
-Status: Milestones 0 to 6 done, 2026-11-04. The JUCE VST3, CLAP and standalone
+Status: Milestones 0 to 7 done, 2026-11-04. The JUCE VST3, CLAP and standalone
 host build on Linux and Windows, render audio, accept MIDI and save state. The
 designed editor, the 64 multi and 128 part banks and the 32-tap output rate
 bridge are in. The VST3 and CLAP artefacts pass their validators on both
 platforms. REAPER renders the Windows VST3 and CLAP builds byte-identically.
 Renoise loads the Windows VST3 and renders a one-note project. The Windows DAW
 matrix is done. The Docker image adds Ardour and Carla, and the `linux_daws`
-CTest covers the Linux DAW matrix. Milestone 7, the generator and CLI wiring
-plus the publish path, is open. The macOS build and the AU target remain open.
+CTest covers the Linux DAW matrix. Milestone 7 adds the generator, the three
+`umetate plugin-*` commands, and the project template. The macOS build and the
+AU target remain open.
 
 This is the plan for the optional JUCE build path in umetate: a reusable plugin
 host plus a generated `type-p-fm1` project. The visual language is in
@@ -298,8 +299,9 @@ current multi slot, part source slots
 
 ## 11. Build and toolchain
 
-The plugin build is optional and host-native. It does not run in the firmware
-Docker image and does not change `deep-check --all`.
+The plugin build is optional and host-native. `deep-check --all` does not build
+JUCE, so a plugin change needs the explicit plugin commands below. The Linux
+container is the pinned host for the Linux plugin build and its CTest suite.
 
 Repository shape:
 
@@ -307,14 +309,19 @@ Repository shape:
 plugin/
   CMakeLists.txt
   README.md              this plan
-  cmake/                 JUCE fetch, warnings, packaging
-  host/                  reusable C++/JUCE code
-  ui/                    tokens, LookAndFeel, components
-  engine/                the engine bridge and rate bridge
+  feature-contract-*.md  the milestone contracts
+  engine/                the engine bridge, MIDI bridge, rate bridge
+  juce/                  the JUCE target, editor pages, bundled fonts
   preset/                record wrappers
-  type-p-fm1/            generated project
-  tests/                 C++ tests and validation scripts
+  tools/                 parameter/token generators + alias header templates
+  tests/                 C++ tests, snapshots and validation scripts
+  ui/                    tokens, LookAndFeel, components
 ```
+
+A generated project is written to `build/plugin/<cname>/`, not into this tree.
+It holds the synth's rendered C under `gen/`, a `P1Project.cmake` with the
+identity, a thin `CMakeLists.txt`, and a README. `plugin/` keeps the checked-in
+Type P.fm1 defaults for a plain `cmake -S plugin` build.
 
 Toolchain:
 
@@ -335,14 +342,27 @@ Toolchain:
   JACK and its OSC API, and renders both VST3 and CLAP. The `linux_daws` CTest
   drives both.
 
-CLI, later phase:
+CLI:
 
-- `umetate plugin-generate --synth examples/type-p-fm1 --out build/plugin/type-p-fm1`
+- `umetate plugin-generate --synth examples/type-p-fm1`
 - `umetate plugin-build --synth examples/type-p-fm1`
-- `umetate plugin-check`
+- `umetate plugin-check --synth examples/type-p-fm1`
 
-The first prototype may live as a plain CMake project under `plugin/`. The CLI
-wraps it once the host is stable.
+`plugin-generate` renders `build/plugin/<cname>/` and `--check` compares that
+tree without writing. `plugin-build` renders the same files, configures
+`<out>/build`, builds, and runs ctest. `plugin-check` verifies the generated
+files and runs ctest in the existing build tree. The plugin identity comes from
+`plugin.json` in the synth project. `--product-name`, `--bundle-id`,
+`--manufacturer-code`, and `--plugin-code` override it for a one-off build.
+
+The generated project includes its own `P1Project.cmake` before it adds `plugin/`
+as a subdirectory, so `P1_SYNTH_GEN`, `P1_SYNTH_CNAME`, `P1_PRODUCT_NAME`,
+`P1_PLUGIN_TARGET`, `P1_BUNDLE_ID`, `P1_MANUFACTURER_CODE`, `P1_PLUGIN_CODE`, and
+`P1_STATE_TREE_ID` come from the synth, not from the checked-in defaults. The
+engine and the editor talk to `P1Synth.h` and `P1Product.h`, which are generated
+at configure time from `plugin/tools/*.in`. The rendered C lives in the project's
+`gen/`. The fixed `firmware/gen/math_tables.h` stays in the source tree and is
+included after the project's `gen/`.
 
 ## 12. Verification ladder
 
@@ -387,7 +407,7 @@ Plugin work adds a new evidence layer. It does not replace the firmware layers.
 | 5 | Rate bridge | done |
 | 6 | CLAP and platform matrix | Linux and Windows DAW matrices done, macOS open |
 | 6b | Stability sweep | done |
-| 7 | Generator and CLI | `plugin-generate`, `plugin-build`, `plugin-check`, template and docs |
+| 7 | Generator and CLI | done |
 
 Milestone 0 is firmware work and can start before any JUCE dependency is added.
 
@@ -476,7 +496,24 @@ RMS 0.196450. The Carla VST3 and CLAP renders are 132300 frames at 44100 Hz,
 24-bit stereo, peak 0.609467. The Linux DAW matrix is now automated. The macOS
 build and AU remain open.
 
-Host bridge build:
+Milestone 7 is done. `umetate/_synthgen.py` is the single generation step behind
+`umetate build --synth` and `umetate plugin-generate`, so the firmware and the
+plugin render the same C from one `patch.json`, `panel.json`, and `app.c`. The
+fixed `type_p_fm1_*` calls in the bridge are gone. `plugin/tools/P1Synth.h.in`
+maps `P1_STATE`, `P1_RESET`, `P1_SET_PARAM`, and the rest to the synth's
+generated names, and `P1Product.h.in` carries the product name and the APVTS
+state tree id. `plugin-build` renders, configures, builds, and runs ctest.
+`plugin-check` verifies the generated tree and runs ctest in the existing build
+tree. The Python tests cover the generate/check round trip and the identity
+validation. `publish` copies `plugin.json` into `src/` and stages only the real
+artefacts, not the Linux DAW test's isolated copies. The plain
+`cmake -S plugin` build keeps the checked-in Type P.fm1 defaults, so the
+existing validator and DAW evidence does not depend on the generated project.
+The generated project built in `build/plugin/type_p_fm1/build` and passed the
+same eight CTest cases as the plain tree. `plugin-build` defaults to four jobs
+because an unbounded compile can exhaust a small Docker VM.
+
+Plain checkout, bridge only:
 
 ```sh
 umetate build --synth examples/type-p-fm1   # regenerate firmware/gen first
@@ -484,6 +521,19 @@ cmake -S plugin -B build/plugin
 cmake --build build/plugin
 ctest --test-dir build/plugin --output-on-failure
 ```
+
+Generated project, JUCE VST3, CLAP and standalone build:
+
+```sh
+umetate plugin-build --synth examples/type-p-fm1
+```
+
+That writes `build/plugin/type_p_fm1/` and builds in
+`build/plugin/type_p_fm1/build`. `umetate plugin-check` re-verifies the generated
+files and reruns ctest. Pass `--deps-dir <juce build>/_deps` to `plugin-build` to
+reuse an existing JUCE and CLAP checkout instead of fetching them again. `--jobs`
+defaults to 4. Raise it on a large host, and lower it if the Docker VM runs out
+of memory.
 
 JUCE VST3, CLAP and standalone build:
 
@@ -504,14 +554,15 @@ ctest --test-dir build\plugin-juce --output-on-failure
 ```
 
 `P1_BUILD_CLAP` defaults to ON when `P1_BUILD_JUCE` is ON. The CLAP wrapper is
-fetched at the pinned commit. The artifacts are under
+fetched at the pinned commit. In a plain checkout the artifacts are under
 `build/plugin-juce/juce/type_p_fm1_artefacts/Release/VST3`,
-`build/plugin-juce/juce/type_p_fm1_artefacts/Release/CLAP` and `Standalone`.
-On Windows the same paths use backslashes and the VST3 bundle contains
-`Contents\x86_64-win`. The editor snapshots are under
-`build/plugin-juce/juce/snapshots`. The `plugin_editor_snapshot` CTest uses
-`xvfb-run` when it is available. `plugin_editor_snapshot_diff` compares the PNGs
-with the committed Linux golden set.
+`build/plugin-juce/juce/type_p_fm1_artefacts/Release/CLAP` and `Standalone`. A
+generated project puts them under `<out>/build/p1plugin/juce/` with the same
+`type_p_fm1_artefacts` leaf. On Windows the same paths use backslashes and the
+VST3 bundle contains `Contents\x86_64-win`. The editor snapshots are under the
+build tree's `juce/snapshots`. The `plugin_editor_snapshot` CTest uses `xvfb-run`
+when it is available. `plugin_editor_snapshot_diff` compares the PNGs with the
+committed Linux golden set.
 
 `plugin_stability` is the edge-case sweep. It sets every manifest parameter to
 both ends of its range, fires 256 simultaneous notes, runs a deterministic
