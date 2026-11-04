@@ -4323,3 +4323,29 @@ page.
 Tests: `umetate.test_cli` writes the form, parses a multi-line question, reports
 the gaps, reports all answered, refuses an overwrite without `--force`, and
 overwrites with `--force`.
+
+### 13.36 Synth-specific design interviews (2026-11-05)
+
+The first interview form was written around Type P.fm1. That was wrong for a
+framework that any FM-1 or JUCE synth can use. The form is now generated from the
+project.
+
+`umetate interview --write` reads `patch.json`, `panel.json`, `synth-brief.md`,
+and `plugin.json`. It fills a generic core with the project's name, part and voice
+count, parameter count, voice and global node types, panel pages, and the brief's
+synthesis method, references, feel, non-goals, controls, and output stage. The
+questions use the synth's own vocabulary. A subtractive synth gets questions about
+its oscillators and filter, a wavetable synth gets questions about its tables and
+morph, a granular synth gets questions about its grains. The generic core still
+works when the project has no patch or brief yet.
+
+The template is the generic core. The generated form adds the project-specific
+questions. The protocol now has a synthesis-family branch section (FM,
+subtractive, wavetable, additive, sample and granular, physical modelling, noise
+and drums, hybrid) and a worked Type P.fm1 example, so the Type P.fm1 form remains
+a guideline without becoming the template.
+
+The tests cover a generic project (the form must not mention Type P.fm1, Yamaha,
+or a template placeholder) and the Type P.fm1 project (the form must mention Type
+P.fm1, fm_op x4, DX7, and the panel pages). The `--write`, `--next`, and `--check`
+round trip still passes.

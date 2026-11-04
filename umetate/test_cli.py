@@ -1071,12 +1071,15 @@ def _interview_roundtrip() -> None:
         form = synth / "design-interview.md"
         assert form.is_file(), "interview --write did not create the form"
         text = form.read_text(encoding="utf-8")
+        assert "Type P.fm1" not in text, "the generic form leaked a Type P.fm1 name"
+        assert "Yamaha" not in text, "the generic form leaked an FM-specific term"
+        assert "{{" not in text, "a template placeholder was left in the form"
         questions = interview.parse_questions(text)
         assert len(questions) >= 20, len(questions)
         assert not any(question.answered for question in questions)
         assert any(
-            "Which Yamaha models or chips" in question.prompt
-            and "from each?" in question.prompt
+            "Which instruments, chips, or algorithms" in question.prompt
+            and "take from each?" in question.prompt
             for question in questions
         ), "a multi-line question was truncated"
 
@@ -1110,6 +1113,19 @@ def _interview_roundtrip() -> None:
             rc = interview.main(["--synth", str(synth), "--write", "--force"])
         assert rc == 0, buf.getvalue()
         assert "answered" not in form.read_text(encoding="utf-8")
+
+
+def _interview_project_specific() -> None:
+    """The generated form uses the project's own architecture and brief."""
+    from . import interview
+
+    root = Path(__file__).resolve().parents[1]
+    form = interview.generate_form(root / "examples" / "type-p-fm1")
+    assert "Type P.fm1" in form
+    assert "fm_op x4" in form, "the voice zone nodes are missing"
+    assert "DX7" in form, "the brief references are missing"
+    assert "ALGORITHM" in form, "the panel pages are missing"
+    assert "{{" not in form, "a template placeholder was left in the form"
 
 
 def main() -> int:
@@ -1152,6 +1168,10 @@ def main() -> int:
         ),
         ("publish copies only the vendored source", _publish_vendor_copy),
         ("the design interview form round-trips", _interview_roundtrip),
+        (
+            "the design interview reads the project",
+            _interview_project_specific,
+        ),
         (
             "plugin-generate renders the project and catches drift",
             _plugin_generate_roundtrip,

@@ -59,11 +59,12 @@ it back to a spec sheet. `humanizer-context.md` carries the same rules for the
 humanizer skill.
 
 Before a manual preface or design note, run the design interview. `umetate
-interview --synth <project> --write` writes the form. Ask the questions in
-`skills/umetate-documentation/references/design-interview.md` one topic at a time.
-Ask for a specific patch, model, bug, or constraint, not a philosophy statement.
-Keep the raw notes private. Write the public design note from them, in the author's
-voice.
+interview --synth <project> --write` generates the form from the project's
+`patch.json`, `panel.json`, `synth-brief.md`, and `plugin.json`. It does not assume
+FM. Ask the questions in `skills/umetate-documentation/references/design-interview.md`
+one topic at a time. Ask for a specific patch, model, bug, or constraint, not a
+philosophy statement. Keep the raw notes private. Write the public design note from
+them, in the author's voice.
 
 ## UI work
 

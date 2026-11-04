@@ -96,12 +96,14 @@ front door. Without one, `publish` writes a README from its template.
 
 ## Write the docs
 
-`umetate interview --synth examples/type-p-fm1 --write` writes the design interview
-form. The documentation skill uses the answers to write the manual preface:
-personal history, the synthesis lineage, the design decisions, the trade-offs, and
-the first patch. The raw notes stay in the project and out of the release.
-`umetate interview --next 3` prints the next gaps, and `--check` lists every open
-question.
+`umetate interview --synth examples/type-p-fm1 --write` generates a synth-specific
+design interview form from the project's `patch.json`, `panel.json`, and
+`synth-brief.md`. The questions use the synth's own architecture and words, not a
+fixed FM template. The documentation skill uses the answers to write the manual
+preface: personal history, the synthesis lineage, the design decisions, the
+trade-offs, and the first patch. The raw notes stay in the project and out of the
+release. `umetate interview --next 3` prints the next gaps, and `--check` lists
+every open question.
 
 ## Continuous integration
 

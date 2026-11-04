@@ -82,10 +82,14 @@ The manual preface and any design note come from the author. A point-blank "what
 your design philosophy?" produces nothing. Run the interview before you write the
 preface.
 
-`umetate interview --synth <dir> --write` puts the question form in
-`<dir>/design-interview.md`. Conduct the interview in conversation, one topic at a
-time. `--next 3` prints the next gaps. `--check` lists every gap. The full protocol
-is in `references/design-interview.md`, and the form is
+`umetate interview --synth <dir> --write` generates the form from the project's
+`patch.json`, `panel.json`, `synth-brief.md`, and `plugin.json`, and writes it to
+`<dir>/design-interview.md`. The questions use the synth's own architecture and
+the brief's words. It does not assume FM or Type P.fm1. Read the generated form,
+add or remove questions from the brief, then conduct the interview one topic at a
+time. If the brief is missing, the generic core still works. `--next 3` prints the
+next gaps. `--check` lists every gap. The full protocol is in
+`references/design-interview.md`, and the generic core is
 `templates/design-interview.md`.
 
 Ask for:

@@ -7,9 +7,15 @@ interview is how the personal experience, the design motivation, and the lineage
 get out. A point-blank "what is your design philosophy?" produces a press release.
 A specific question about the first patch produces a paragraph.
 
-The form is `templates/design-interview.md`. `umetate interview --write` copies it
-into the project. `--next 3` prints the next gaps. `--check` lists every gap. The
-questions are the source of truth. This file is the how-to.
+The form is generated from the project. `umetate interview --write` reads
+`patch.json`, `panel.json`, `synth-brief.md`, and `plugin.json`, then renders the
+generic core in `templates/design-interview.md` with the synth's own terms. It
+does not assume FM, operators, or Type P.fm1. `--next 3` prints the next gaps.
+`--check` lists every gap.
+
+The generated form is a starting point. Read it, add or remove questions from the
+brief, and ask one topic at a time. The template is the generic core. The
+project's `design-interview.md` is the form you fill in.
 
 ## The role
 
@@ -36,53 +42,69 @@ not volunteer.
    concrete thing or leave the gap.
 10. Ask permission before publishing personal details.
 
-## The question ladder
+## What the generator reads
 
-The form has nine sections. The order is a guide, not a script.
+- `synth-brief.md` is the richest source. The generator reads the `- **Key:**`
+  bullets: the working name, who plays it, what it should feel like, the reference
+  sounds, the non-goals, the synthesis method, the oscillators or operators, the
+  filters, the modulation, the output stage, the controls, and the polyphony.
+- `patch.json` gives the name, the part count, the voice count, the parameter
+  count, the voice and global node types, the tables, and the taps.
+- `panel.json` gives the contexts, the pages, the home page, and the page titles.
+- `plugin.json` gives the product name.
+
+The generator adds questions from the voice and global node types and the panel
+pages. If the brief calls the synth subtractive or wavetable, the questions use
+the brief's words, not an FM template. If the brief is missing, the generic core
+still works.
+
+## The generic ladder
+
+The generated form has nine sections. The order is a guide, not a script.
 
 ### The first sound
 
-- What was the first patch or sound that made you want to build this synth?
-- What did the synths you were using fail to do?
+- What was the first patch or sound that made you want to build the synth?
+- What did the instruments you were using fail to do?
 - What was the first version, and what did it get wrong?
 
-Follow-ups: "What did it sound like?" "Which synth were you using?" "What did you
-try first?" "What made you keep going?"
+Follow-ups: "What did it sound like?" "Which instrument were you using?" "What
+did you try first?" "What made you keep going?"
 
 ### The lineage
 
-- Which Yamaha models or chips are in the DNA, and what did you take from each?
-- What did you learn from ymfm and Dexed, and what did you deliberately not copy?
-- Why phase modulation rather than frequency modulation, and what does that change
-  in the DSP or the sound?
+- Which instruments, chips, or algorithms are in its DNA, and what did you take
+  from each?
+- Why this synthesis method rather than the obvious alternative?
+- The brief's references and synthesis method, when the brief has them.
 
-Follow-ups: "Which waveform?" "What did the OPL3 do that the DX7 did not?" "What
-did you reject?" "What did the emulator get wrong?"
+Follow-ups: "Which model?" "Which record or patch?" "What did the reference get
+wrong?" "What did you reject?"
 
 ### The architecture
 
-- Why two parts of four operators, not one part of six or eight?
-- Why feedback on every operator?
-- Why these eight algorithms, and what did you leave out?
+- Walk me through the voice architecture from the key to the output.
+- Why this voice count and this part count?
+- What did you try first, and why did it not survive?
+- The generated questions from the voice node types.
 
-Follow-ups: "What did the DX21/DX7 comparison teach you?" "What did the voice
-budget allow?" "What did the panel make easy or hard?"
+Follow-ups: "What does each stage do?" "What did the voice budget allow?" "What
+did the panel make easy or hard?"
 
 ### The output chain
 
-- Why two filters and a wavefolder, and why no delay, reverb, or chorus?
-- What does the wavefolder do that the filters cannot, and where did the idea come
-  from?
+- What is the output chain, and why does it end where it ends?
+- What did you cut from the output stage, and why?
+- The generated questions from the global node types.
 
-Follow-ups: "What patch made the wavefolder worth it?" "What did you try before
+Follow-ups: "What patch made the last stage worth it?" "What did you try before
 it?" "What did you cut to make room?"
 
 ### The interface
 
-- Why the 240 by 240 panel and the M-VAVE surface, and what did the interface force
-  you to simplify?
-- Why the envelope graphs, copy and paste, and the page layout?
+- Why this panel and these controls?
 - What did you cut from the UI, and what is still awkward?
+- The generated questions from the panel pages and the brief's control surface.
 
 Follow-ups: "What did you have to move off the home page?" "What did the screen
 width rule out?" "What did you copy from hardware you like?"
@@ -92,50 +114,84 @@ width rule out?" "What did you copy from hardware you like?"
 - What did you cut from the original design, and why?
 - What broke during development, and what was the worst bug?
 - What is still missing or unsatisfying, and what would you change tomorrow?
+- The generated questions from the brief's non-goals and polyphony.
 
 Follow-ups: "What did the first version do badly?" "What did you think was a good
-idea and was not?" "What is the next thing if the FM1 had more power?"
+idea and was not?" "What is the next thing if the hardware had more power?"
 
 ### The sound
 
 - What is your favourite patch you made with it, and what does it do?
 - What do you listen for when you tweak a patch?
 - What is the first patch a new user should make?
+- The generated questions from the brief's "what should it feel like" and "who
+  plays it".
 
 Follow-ups: "What settings?" "What does it do at the high end?" "What is the
 recipe?" "What do you reach for first?"
 
 ### The person and the name
 
-- What does "sound design gal" mean for how you work?
-- Where does the Type P.fm1 name come from, and what is the maritime and
-  industrial theme about?
+- What does your workflow look like when you use it?
+- Where does the name come from?
 - What should a player understand before they touch it?
 
-Follow-ups: "What do you sequence with?" "What is the live context?" "What is the
-P1Onken name about?" "What do you want them to hear first?"
+Follow-ups: "What do you sequence with?" "What is the live context?" "What is
+the name about?" "What do you want them to hear first?"
 
 ### The interview itself
 
 - What did I not ask that I should have?
+
+## Synthesis-family branches
+
+Use these when the generated form is thin, or when the brief names a family the
+generator did not turn into a question. Ask only the branch the synth actually
+uses.
+
+**FM and phase modulation.** Why PM rather than FM? How many operators, and why?
+Why these ratios, waveforms, and algorithms? What does feedback make possible?
+Which waveforms are band-limited, and how? What did you take from the Yamaha
+chips or the emulators?
+
+**Subtractive.** Which oscillators, and why those shapes? What filter slope and
+resonance? Does it self-oscillate? What does the drive do? Which envelopes and
+LFOs, and why those destinations? What did you do about aliasing?
+
+**Wavetable.** Where do the tables come from, and what is the size? How does the
+morph work? What interpolation, and what does it cost? What did you do about
+aliasing? Why tables rather than a waveform list?
+
+**Additive.** How many partials? How are they controlled on this panel? What is
+the phase relationship, and does it matter? How do you keep the edit manageable?
+
+**Sample and granular.** What is the source, and how long is it? How do grains,
+pitch, and time interact? What window and density? What does the memory budget
+allow? What does the panel expose, and what is fixed?
+
+**Physical modelling.** What is the exciter, and what is the resonator? What
+material or geometry are you modelling? How does damping work? What did you have
+to simplify to fit the voice budget?
+
+**Noise and drums.** What are the noise sources? How do you shape the transient?
+What filters and pitch envelopes? What makes the kit coherent?
+
+**Hybrid.** Which parts use which family, and why? What does the split buy you?
+What is shared, and what is per-part?
 
 ## Lineage and DSP specifics
 
 The author may know more about the lineage and the algorithms than the manual
 shows. Ask for it directly, but always through a concrete comparison.
 
-- Which chips and models, and what did each contribute?
-- What did ymfm and Dexed implement, and what did you do differently?
-- PM vs FM: what changes in the operator, the feedback, the envelopes, or the
-  aliasing?
-- The operator order and feedback behaviour in the Yamaha chips: what did you
-  keep?
-- The OPL3 and TX81z/D11/V50 waveforms: which ones, and why?
-- The band-limited pulse, square, and saw: what did you do about aliasing?
-- The rate-level envelopes: what does that shape make easier on this panel?
-- Key and velocity scaling: what did you simplify from the DX7?
-- The voice budget and the dual-core split: what did the hardware force?
-- The filters and wavefolder: what did you try before them?
+- Which instruments, chips, or algorithms, and what did each contribute?
+- Which synthesis method, and why this one rather than the obvious alternative?
+- What did the references implement, and what did you do differently?
+- The oscillator, operator, or source model: why this one?
+- The filter or effect model: why this one, and what slope or topology?
+- The modulation: why these sources and destinations?
+- The voice budget and the hardware: what did the compile or the panel force?
+- The aliasing and quality tradeoff: what did you measure, and what did you accept?
 
 ## Recording
 
@@ -153,7 +209,8 @@ The design note is not the transcript. It is the author's voice, edited.
 
 - Open with the first sound or the constraint, not the feature list.
 - Use the lineage to explain a choice, not to show off. "I took the feedback order
-  from the Yamaha chips" is better than a history of FM.
+  from the Yamaha chips" is better than a history of FM. Replace the model with
+  the author's actual reference, whatever family it is.
 - Keep three to seven concrete decisions, each with the tradeoff. The hand
   rewrite's seven-item list is the shape.
 - Include one failure, one limit, and one patch recipe.
@@ -176,20 +233,29 @@ Stop when the answers can support:
 That is enough for a manual preface. The interview can be longer than the public
 note. The public note is the edit.
 
-## Worked example
+## Worked example: Type P.fm1
 
-The hand rewrite's preface answers these prompts. The answers are edited into the
-design note, not pasted as a Q&A.
+This is what a generated form looks like for one project, and how the answers
+became prose. It is an example, not the template.
 
-- "What did the synths you were using fail to do?" becomes "I'm a hardcore fan of
-  phase modulation synths, so for the longest time I've kept thinking about things
-  I wanted to change on the Yamahas ... That's where Type P.fm1 comes from."
-- "What is the lineage, and what did you reject?" becomes "It's not an emulation
-  of any one Yamaha chip in particular ... but it **is** a DX-style synth, and it
-  **does** take cues from ... ymfm and Dexed."
-- "Why two parts of four operators?" becomes "It's two 4-operator parts because
-  that's where I believe the sweet spot lies. There's this massive jump in
-  complexity between editing a DX21 from the panel vs editing a DX7 ..."
+The generator read the Type P.fm1 brief and patch. It produced questions like:
+
+- "What did the instruments you were using fail to do?" The answer became "I'm a
+  hardcore fan of phase modulation synths, so for the longest time I've kept
+  thinking about things I wanted to change on the Yamahas ... That's where Type
+  P.fm1 comes from."
+- "The brief describes the synthesis method as 4-operator phase-modulation FM,
+  per-operator self-feedback, 12 waveforms per operator ... Why this method?"
+  The answer became "It's not an emulation of any one Yamaha chip in particular
+  ... but it **is** a DX-style synth, and it **does** take cues from ... ymfm and
+  Dexed."
+- "The voice zone uses fm_op x4, delay1 x4, algo, route ... Why this chain?" The
+  answer became "It's two 4-operator parts because that's where I believe the
+  sweet spot lies. There's this massive jump in complexity between editing a DX21
+  from the panel vs editing a DX7 ..."
+- "The panel has these pages: ALGORITHM, ENVELOPE, FILTER ... Why these pages?"
+  The answer became the workflow paragraph: "I'm more of a sound design gal, I
+  fully sequence my music and I prefer trackers to little boxes ..."
 
 The concrete names, models, and numbers stay. The interviewer's questions do not.
 The author's asides stay. The order is the order of the argument, not the order of
