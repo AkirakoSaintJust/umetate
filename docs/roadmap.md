@@ -3952,12 +3952,13 @@ storm, sends a zero-frame block and a mono block, walks 44.1, 48, 96, 192 and
 the voice tail decays. Every sample stays finite and the latency matches each
 rate. The test passes in 0.14 seconds in the Linux container.
 
-The documentation voice now has an explicit profile in
-`skills/umetate-documentation/references/voice.md`, derived from the hand-written
-`examples/type-p-fm1/publish-readme.md` and `README.md`, with the three registers
-(front door, manual, reference), the British spelling and punctuation rules, the
-AI tells to avoid, and the synth-manual research notes. The documentation skill
-and the Type P.fm1 manual intro use it.
+The documentation voice has an explicit profile in
+`skills/umetate-documentation/references/voice.md`, first derived from the
+hand-written `examples/type-p-fm1/publish-readme.md` and `README.md`, with the
+three registers (front door, manual, reference), the British spelling and
+punctuation rules, the AI tells to avoid, and the synth-manual research notes. It
+is now calibrated against the author's corpus (§13.30). The documentation skill and
+the Type P.fm1 manual intro use it.
 
 Still open: Milestone 7 (`plugin-generate`, `plugin-build`, `plugin-check`), the
 macOS build and AU, the physical device pass, signed installers, and a vendored
@@ -4116,3 +4117,26 @@ The mockup is a design tool, not the firmware renderer. The web emulator is stil
 the parity check. The mockup is a projection of `panel.json`, so a layout change
 is a change to the spec, not a second implementation. It is linked from the
 development skill, the control-map template, the design README, and `AGENTS.md`.
+
+### 13.30 Voice profile from the author's corpus (2026-11-04)
+
+The documentation voice profile is now measured against a 9,015-word corpus of the
+author's own reviews, forum posts, and notes. The corpus has 457 sentences, a
+median sentence of 16 words, a 90th percentile of 39, zero em dashes, and one
+semicolon. It uses "I" 151 times and "we" 10 times. Those figures are the
+calibration in `skills/umetate-documentation/references/voice.md`.
+
+The profile now covers the sentence (long setup and short landing, comma
+parataxis, bracketed asides, hedges on facts and not on judgments), the paragraph
+(claim, detail, qualification, verdict), the page (open with the thing, one
+digression, varied headings), and the anti-patterns. Negative parallelism,
+heading chains, false dichotomies, and marketing hooks are hard bans. A short
+excerpt set with notes is in
+`skills/umetate-documentation/references/voice-samples.md`.
+
+The generated `publish` README was rewritten in the same voice: "Try it in the
+browser", "The screen is the same 240 by 240 panel you see on the device", and a
+"Manual" heading instead of "The manual". The hand-written `publish-readme.md`
+still wins and is copied verbatim. The Type P.fm1 manual and panel reference now
+use varied headings instead of a "The X" chain, and the manual level section says
+the level shapes the timbre as well as the volume.

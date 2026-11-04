@@ -45,9 +45,11 @@ The Type P.fm1 evidence is in `plugin/feature-contract-*.md`.
 
 Generated user docs follow `skills/umetate-documentation/references/voice.md`.
 The reference samples are `examples/type-p-fm1/publish-readme.md` and
-`README.md`. Use the front-door, manual, or reference register as the page
-requires. No em dashes. No semicolons. British spelling in prose. No marketing
-adjectives. One concrete example per major section.
+`README.md`. The corpus-derived rhythm samples are in
+`skills/umetate-documentation/references/voice-samples.md`. Use the front-door,
+manual, or reference register as the page requires. No em dashes. No semicolons.
+British spelling in prose. No marketing adjectives. No negative parallelism. No
+heading chains. No false dichotomies. One concrete example per major section.
 
 ## UI work
 

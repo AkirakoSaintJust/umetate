@@ -94,18 +94,18 @@ _GENERATED_FILES = (
 
 _README = """# {title}
 
-{title} is a synthesizer for the M-VAVE FM-1, built with umetate. It runs the
-same engine on the device and in your browser, so you can try a patch before you
-flash anything.
+{title} is a synthesizer for the M-VAVE FM-1, built with umetate. The same engine
+runs on the device and in the browser. You can try a patch before you flash
+anything.
 
-## Try it online
+## Try it in the browser
 
-The web app needs no device and no toolchain. Open the page, drag a knob, and
-play the keys with your keyboard or mouse.
+The web app needs no device and no toolchain. Open the page, drag a knob, and play
+the keys with your keyboard or mouse.
 
 [{repo_url}]({repo_url})
 
-The screen shows what the real device shows.
+The screen is the same 240 by 240 panel you see on the device.
 
 ## Install on the FM-1
 
@@ -119,14 +119,14 @@ The screen shows what the real device shows.
    `umetate flash` checks the package identity and model before it writes. Read
    the umetate documentation for the recovery notes before your first flash.
 
-## The manual
+## Manual
 
 - [User manual](docs/manual.md), the sound and every parameter.
 - [Panel reference](docs/panel.md), the controls, the pages, and how to save.
 - [MIDI and SysEx](docs/midi-and-sysex.md), the CC map and the SysEx format.
 - [Patch sheet](docs/patch-sheet.md), a printable form for writing patches down.
 
-## Releases
+## Release notes
 
 [CHANGELOG.md](CHANGELOG.md) lists what changed in each version.
 {plugins}

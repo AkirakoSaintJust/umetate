@@ -1,7 +1,7 @@
 ---
 name: umetate-documentation
-description: Write thorough, readable, human documentation for end users of a synthesizer built on umetate. Covers the user manual, panel reference, MIDI and SysEx reference, patch sheet, installation guide, and release notes. Rewrites are synchronic (current state, not history), written from the instrument's point of view, and humanised so they read like a careful human wrote them. Never uses em dashes or semi-colons, never loses information.
-version: 1.0.0
+description: Write thorough, readable, human documentation for end users of a synthesizer built on umetate. Covers the user manual, panel reference, MIDI and SysEx reference, patch sheet, installation guide, and release notes. Rewrites are synchronic (current state, not history), written from the instrument's point of view, and measured against the author's own corpus so they read like a person wrote them. Never uses em dashes or semi-colons, never loses information, and bans negative parallelism, heading chains, false dichotomies, and marketing hooks.
+version: 1.1.0
 license: GPL-3.0-only
 compatibility: OpenCode and Agent Skills-compatible loaders
 allowed-tools: read, grep, glob, edit, write, shell, websearch, webfetch
@@ -49,6 +49,13 @@ registers:
   intros and design asides, and keep procedures neutral.
 - **Reference:** the patch sheet and byte-level tables. Terse and exact.
 
+Then read `references/voice-samples.md`. It is a short set of excerpts from the
+author's own reviews, forum posts, and notes, with a note on what each one teaches.
+The full corpus is 9,015 words. `voice.md` is measured against it: median sentence
+16 words, 90th percentile 39, zero em dashes, one semicolon, "I" 151 times, "we" 10
+times. The corpus is the calibration for the front door. The manual is the same
+voice with the procedure in front.
+
 The samples use British spelling in prose, contractions, and dry humour. They do
 not use em dashes, semicolons, marketing adjectives, or three-item padding. Copy
 the habits, not the catchphrases. One personal aside per page is enough.
@@ -91,7 +98,7 @@ For every parameter, answer three questions in plain words:
 
 Example of the shape, from an FM level parameter: "Operator level. This sets how
 loud operator 1 is inside the voice. At 99 it rings clearly, at 50 it is about 12
-decibels quieter, at 0 it is silent." Two sentences, concrete, no theory.
+decibels quieter, at 0 it is silent." Three sentences, concrete, no theory.
 
 Name the operators and the parts the way the panel names them. If the panel says
 OP1 through OP4, the manual says OP1 through OP4. Do not invent new names.
@@ -135,11 +142,23 @@ for the person updating: what changed, what they will notice, and whether a save
 patch still loads. Keep each entry to a few lines. This is the one place a
 "changed from X to Y" sentence is correct, because it is a changelog by definition.
 
+## Publishing
+
+`umetate publish` copies the project's `docs/*.md` into the release and renames
+`docs/release-notes.md` to `CHANGELOG.md`. The generated README is a fallback. If
+the project has a hand-written `publish-readme.md`, publish copies it verbatim and
+never overwrites it. Write that file by hand in the front-door register. The
+generated template is there for a project that does not have one yet.
+
+The four docs the generated README links to are `docs/manual.md`, `docs/panel.md`,
+`docs/midi-and-sysex.md`, and `docs/patch-sheet.md`. Keep those names. If the
+project has more docs, link them from the README and the manual index.
+
 ## The writing craft
 
 This is the humanisation part, the anti-slop part. Apply it to every page. It is a
-distillation of the humanizer skill's pattern catalogue, aimed at technical prose,
-plus what good hardware manuals already do.
+distillation of the author's corpus and the usual AI-tell catalogue, aimed at
+technical prose, plus what good hardware manuals already do.
 
 **Address the reader as "you".** "Turn the knob" beats "the user turns the knob".
 Put the player in the room.
@@ -152,7 +171,8 @@ there is no person, and that is fine, the instrument is the thing the reader own
 brighter". Give a number where there is a number. A sentence that could describe
 any synthesizer describes none.
 
-**One point per sentence.** When a sentence has three clauses, it is two sentences.
+**One main point per sentence.** When a sentence has three unrelated clauses, it is
+two sentences. When the clauses belong to one thought, a longer sentence is fine.
 Let a short sentence land next to a long one. Vary the length on purpose.
 
 **Plain words over jargon.** The exact term stays where the panel uses it. Do not
@@ -170,6 +190,30 @@ abstract nouns in a row is a tell.
 
 **No promotion.** "Seamless", "robust", "state of the art", "unleash" have no place
 next to a knob. Say what it does, let the player decide if it is good.
+
+**State it directly.** A fact is a fact, an analysis is an analysis, an assertion is
+an assertion. Do not dress an assertion as a question, a fact as a maybe, or a
+contrast as a revelation. "The filter is 12 dB per octave and does not self-oscillate"
+is the whole sentence. It does not need a setup.
+
+**No negative parallelism.** "It's not just a synth, it's a way of thinking", "not X,
+it's Y", "less X than Y", "X isn't about Y, it's about Z" are hooks. They invent a
+contrast so the sentence sounds deeper. Say what the thing is. If the contrast is
+real, state both sides plainly. `references/voice.md` has the full rule.
+
+**No heading chains.** Do not write "The Engine", "The Filter", "The Envelope:
+Shaping Your Sound" for every section. Vary the grammar, use the reader's words, and
+do not make a section for every noun. One "The X" heading is fine. A chain is a
+generated outline.
+
+**No false dichotomies.** Do not invent a strawman to make the instrument look
+different. "Most synths make you menu-dive. This one doesn't" only works if you can
+name the synths and the difference is real. If the instrument is a four-operator FM
+synth, say that. It does not need an enemy.
+
+**No marketing hooks.** No "Imagine", "What if", "Meet", "Say hello", "Unlock",
+"Dive into", "Whether you're a beginner or a seasoned producer", "The result?",
+"But here's the thing", "Let's break it down". Start with the content.
 
 **Read it back as speech.** If you cannot imagine a patient teacher saying the
 sentence out loud, rewrite it.
@@ -190,6 +234,11 @@ Checklist for the final pass:
 - [ ] The current state only. Release notes excepted, no "now uses", "was added",
       "previously".
 - [ ] A reader who has never seen the code can follow it.
+- [ ] No negative parallelism ("not just X, but Y", "not X, it's Y", "less X than Y").
+- [ ] No heading chain ("The X", "The Y", "The Z: ...").
+- [ ] No false dichotomy and no invented contrast.
+- [ ] No marketing hook.
+- [ ] The first sentence says the thing, not "In this section".
 
 ## Credits and licences
 

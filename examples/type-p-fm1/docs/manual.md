@@ -27,7 +27,7 @@ A voice is four operators plus an output path.
 Two parts play at once, so you can layer two timbres or split the keyboard.
 Twenty voices are shared between the parts.
 
-## The algorithm
+## Choosing an algorithm
 
 The algorithm knob, 0 to 7, rewires the four operators. Lower numbers are
 stacked, one operator modulating the next. Higher numbers are more parallel, more
@@ -36,7 +36,7 @@ four operator settings sound different on each one.
 
 The screen shows the algorithm number and a small map of the routing.
 
-## The operators
+## Operator settings
 
 Each operator has these settings. In the operator editor, `SELECT` steps through
 the pages and `SEL` moves between operators 1 to 4.
@@ -52,7 +52,7 @@ inharmonic.
 
 How loud the operator is inside the voice. 99 is full, 50 is about 12 decibels
 quieter, 0 is silent. For a modulator, the level is the modulation depth, so this
-is where the timbre is shaped, not just the volume.
+is where the timbre is shaped as well as the volume.
 
 ### Feedback
 
@@ -87,7 +87,7 @@ A per-operator amplitude LFO. Rate sets the speed, depth sets the amount.
 Turns the operator off entirely. Muting a modulator silences the carrier it
 drives. Muting a carrier removes that carrier from the mix.
 
-## The voice modes
+## Poly, mono, and unison
 
 - **Mode** is poly or mono. Mono plays one note at a time.
 - **Unison count** stacks that many detuned copies of the note in mono.
@@ -97,7 +97,7 @@ drives. Muting a carrier removes that carrier from the mix.
   time.
 - **Note priority** picks which note wins when more than one is held in mono.
 
-## The output chain
+## Filters and wavefolder
 
 Two filters and a wavefolder, in series, then the output.
 
@@ -109,7 +109,7 @@ Two filters and a wavefolder, in series, then the output.
 - **Wavefolder** folds the signal back on itself past a threshold. Amount sets
   how much of the folded signal is mixed in. At zero it is off.
 
-## The global modulation
+## Vibrato and pitch envelope
 
 - **Pitch LFO** is a vibrato. Rate sets the speed, depth sets the amount.
 - **Pitch envelope** bends the pitch of the whole voice over the course of a

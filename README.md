@@ -50,6 +50,35 @@ umetate web-serve                       # serve it, then open the printed URL
 `umetate web-build` defaults to `examples/type-p-fm1` when no patch is given. The
 host and WASM outputs are checked byte-for-byte by `umetate deep-check --web`.
 
+## Plugins
+
+The same engine builds as a VST3 and a CLAP plugin. The source is in `plugin/`.
+The 44.1 kHz engine core stays bit-exact and the sample rate is adapted at the
+output boundary, so the device render stays the reference.
+
+```sh
+cmake -S plugin -B build/plugin-juce -DP1_BUILD_JUCE=ON -DP1_BUILD_CLAP=ON
+cmake --build build/plugin-juce
+ctest --test-dir build/plugin-juce --output-on-failure
+```
+
+Type P.fm1 passes `pluginval` at strictness 5 and the CLAP validator on Linux and
+Windows, and renders in REAPER on Windows. The macOS build, the AU target, and the
+macOS DAW matrix are still open. The evidence is in `plugin/`.
+
+## Ship a project
+
+`umetate publish` stages a release: the user docs, the `.fwsc` firmware, the
+framework source, the plugin bundles, the third-party licences, and optionally the
+vendored dependency source. Build artefacts stay in the ignored `build/` tree.
+
+```sh
+umetate publish --plugins --vendor-deps build/plugin-juce/_deps
+```
+
+A hand-written `publish-readme.md` in the project is copied verbatim as the release
+front door. Without one, `publish` writes a README from its template.
+
 ## First commands
 
 ```sh
@@ -67,6 +96,8 @@ umetate emu --check --mhz 240              # boot it in the emulator, hold a cho
 umetate/       the CLI (Python)
 firmware/      RIB starter firmware (hardware layer + reference engine)
 modules/       the module library: nodes/ (DSP primitives) + macros/ (subgraphs)
+plugin/        the JUCE VST3/CLAP target and its tests
+design/        design tokens, the plugin mockup, the firmware screen mockup
 build/web/     the WASM web app output (`web-build` → standalone dsp.wasm + page)
 skills/        the three installable skills
 templates/     fillable forms + the four schemas
