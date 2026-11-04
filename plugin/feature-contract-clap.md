@@ -3,8 +3,8 @@
 ## Identity
 
 - **Feature:** Milestone 6, the CLAP target and the platform matrix.
-- **Brief section:** `plugin/README.md` sections 1, 12 and 13, and
-  `docs/roadmap.md` 13.23.
+- **Brief section:** `plugin/README.md` sections 1, 11, 12 and 13, and
+  `docs/roadmap.md` 13.23 and 13.24.
 - **Owner / date:** P1Onken, 2026-11-04.
 - **Disposition:** accepted for the Linux and Windows builds. macOS remains
   untested.
@@ -36,6 +36,10 @@
   `firmware/hal/fm1_ipc.h` now copies a volatile command struct field by field,
   which GCC and MSVC both accept. JUCE 8 rejects MinGW, so MSYS2 gcc is not a
   supported Windows path.
+- **DAW test environment:** `docker/Dockerfile` installs Ardour 8.12 and Xvfb
+  and extracts Zrythm 2.0.0-alpha.7 from the pinned AppImage. The
+  `linux_daws` CTest runs `plugin/tests/linux_daws.sh` when Ardour, Zrythm and
+  `xvfb-run` are present.
 - **Persistence/version impact:** none. The state version stays 2. CLAP state
   save and load call the existing `getStateInformation` and
   `setStateInformation`.
@@ -71,9 +75,9 @@
 
 - **Files:** `plugin/juce/CMakeLists.txt`, `plugin/juce/PluginProcessor.cpp`,
   `plugin/engine/msvc_compat.h`, `plugin/CMakeLists.txt`,
-  `firmware/hal/fm1_ipc.h`, `plugin/tests/plugin_smoke.cpp`,
-  `plugin/feature-contract-clap.md`, `plugin/README.md` and
-  `docs/roadmap.md`.
+  `plugin/tests/linux_daws.sh`, `docker/Dockerfile`, `firmware/hal/fm1_ipc.h`,
+  `plugin/tests/plugin_smoke.cpp`, `plugin/feature-contract-clap.md`,
+  `plugin/README.md` and `docs/roadmap.md`.
 - **Public contract/header:** no processor API change. `P1_BUILD_CLAP` is the
   new build option. The CLAP binary exports the JUCE wrapper entry points.
 - **State owner and publication rule:** the processor owns the engine, the
@@ -87,7 +91,8 @@
 
 - **Host vector(s):** `plugin_smoke` sets every manifest parameter to a
   deterministic value, saves the state, loads it into a second processor and
-  checks every parameter. The five CTest targets stay green.
+  checks every parameter. The CTest suite stays green, including `linux_daws`
+  on Linux.
 - **Browser vector:** unchanged, `deep-check --all` stays green.
 - **Target package check:** unchanged.
 - **CLAP vector:** `clap-validator` 0.4.1 runs 44 tests on Linux. The result is
@@ -104,14 +109,19 @@
   byte identical. The VST3 bundle was installed in
   `C:\Program Files\Common Files\VST3`, where Renoise 3.5.4 scans. Renoise loaded
   `P1Onken: Type P.fm1` and rendered a one-note project to 39200 frames at 44100
-  Hz, 24-bit stereo, peak 0.225197 and RMS 0.105559.
+  Hz, 24-bit stereo, peak 0.225197 and RMS 0.105559. On Linux the `linux_daws`
+  CTest gives Ardour 8.12 and Zrythm 2.0.0-alpha.7 an isolated `$HOME`, copies the
+  VST3 and CLAP there, and leaves the host plugin folders alone. Ardour renders
+  a one-note session to 88200 frames at 44100 Hz, 24-bit stereo, peak 0.609467
+  and RMS 0.196450. Zrythm records `Type P.fm1` as both VST3 and CLAP.
 - **Physical timing/device check:** blocked, no hardware.
 - **Platform matrix:** Linux x86-64 and Windows x86-64 are built and validated.
-  The Windows DAW matrix is done with REAPER and Renoise. Linux has no DAW pass
-  yet. macOS is not built here. AU remains later.
+  The Windows DAW matrix is REAPER and Renoise. The Linux DAW matrix is Ardour
+  and Zrythm. macOS is not built here. AU remains later.
 - **Tolerance/metric:** zero validator failures. The one warning is documented.
 - **Evidence artifact:** the `clap-validator` terminal summary, the `pluginval`
-  `SUCCESS` line, the REAPER WAV hashes, and the plugin CTest output.
+  `SUCCESS` line, the REAPER WAV hashes, the Ardour render summary, the Zrythm
+  plugin cache, and the plugin CTest output.
 
 ## Result (2026-11-04)
 
@@ -134,6 +144,10 @@
   to 39200 frames at 44100 Hz, 24-bit stereo, peak 0.225197, RMS 0.105559,
   SHA-256
   `3fae1844eb0096a9344f46dfefb6b981908ba7238f774a1844425919092cdb87`.
+- The Docker image carries Ardour 8.12 and Zrythm 2.0.0-alpha.7. The
+  `linux_daws` CTest passes in about 6.8 seconds. Ardour renders a one-note
+  session to 88200 frames at 44100 Hz, 24-bit stereo, peak 0.609467 and RMS
+  0.196450. Zrythm records `Type P.fm1` as both VST3 and CLAP.
 - `plugin_smoke` now proves a full 313-parameter state round trip, not only one
   parameter.
 - The remaining warning is in the wrapper state loader, not in the processor.
@@ -148,6 +162,8 @@
 - **Windows install location:** Renoise only scans VST3 from
   `C:\Program Files\Common Files\VST3`. The release installer needs elevation
   there. The manual DAW pass installed the bundle there.
+- **Zrythm AppImage drift:** the Dockerfile pins both the release and its
+  SHA-256. Bump the two together and rerun `linux_daws`.
 - **Smaller alternative:** ship VST3 only and keep CLAP behind `P1_BUILD_CLAP`.
   The current default builds both.
 - **Rollback:** remove the `FetchContent` block and the

@@ -6,7 +6,8 @@ designed editor, the 64 multi and 128 part banks and the 32-tap output rate
 bridge are in. The VST3 and CLAP artefacts pass their validators on both
 platforms. REAPER renders the Windows VST3 and CLAP builds byte-identically.
 Renoise loads the Windows VST3 and renders a one-note project. The Windows DAW
-matrix is done. The macOS build, the Linux DAW matrix and the AU target remain
+matrix is done. The Docker image adds Ardour and Zrythm, and the `linux_daws`
+CTest covers the Linux DAW matrix. The macOS build and the AU target remain
 open.
 
 This is the plan for the optional JUCE build path in umetate: a reusable plugin
@@ -327,6 +328,9 @@ Toolchain:
   copy instead of a volatile struct cast.
 - macOS: Xcode command line tools, universal binary if the build host allows it.
 - Linux: ALSA and X11 development packages, plus the usual JUCE dependencies.
+- Linux DAWs: the Docker image carries Ardour 8.12 and Zrythm 2.0.0-alpha.7.
+  Ardour renders a session with `ardour8-export`. Zrythm scans VST3 and CLAP.
+  The `linux_daws` CTest drives both.
 
 CLI, later phase:
 
@@ -357,7 +361,9 @@ Plugin work adds a new evidence layer. It does not replace the firmware layers.
 7. **GUI.** A snapshot of each page and dialog at 1x. Manual keyboard, scroll,
    rename and mute checks on each platform.
 8. **Plugin validation.** `pluginval` for VST3 and `clap-validator` for CLAP at
-   several strictness levels. Load in at least two DAWs per platform.
+   several strictness levels. Load in at least two DAWs per platform. On Linux
+   the `linux_daws` CTest uses Ardour for a headless render and Zrythm for a
+   VST3 and CLAP scan.
 9. **Performance.** 20 voices at 44.1 and 96 kHz, 32 to 1024 frame blocks. Record
    the real-time factor and the worst block.
 10. **Licensing.** GPL-3.0-only, JUCE GPL path, OFL font files and notices, no
@@ -373,7 +379,7 @@ Plugin work adds a new evidence layer. It does not replace the firmware layers.
 | 3 | Editor | done |
 | 4 | Presets and banks | done |
 | 5 | Rate bridge | done |
-| 6 | CLAP and platform matrix | Windows DAW matrix done, Linux and macOS open |
+| 6 | CLAP and platform matrix | Linux and Windows DAW matrices done, macOS open |
 | 7 | Generator and CLI | `plugin-generate`, `plugin-build`, `plugin-check`, template and docs |
 
 Milestone 0 is firmware work and can start before any JUCE dependency is added.
@@ -443,7 +449,14 @@ identical. The VST3 bundle was installed in
 `C:\Program Files\Common Files\VST3`, where Renoise 3.5.4 scans. Renoise loaded
 `P1Onken: Type P.fm1` and rendered a one-note project to 39200 frames at 44100
 Hz, 24-bit stereo, peak 0.225197 and RMS 0.105559. The Windows DAW matrix now has
-REAPER and Renoise. The macOS build, the Linux DAW matrix and AU remain open.
+REAPER and Renoise.
+
+The Docker image carries Ardour 8.12 and Zrythm 2.0.0-alpha.7. The `linux_daws`
+CTest copies the VST3 and CLAP to an isolated `$HOME`, scans them with Ardour's
+VST3 scanner, builds a one-note Ardour session and exports it headlessly. The
+render is 88200 frames at 44100 Hz, 24-bit stereo, peak 0.609467 and RMS
+0.196450. Zrythm scans the same build and records `Type P.fm1` as both VST3 and
+CLAP. The Linux DAW matrix is now automated. The macOS build and AU remain open.
 
 Host bridge build:
 
@@ -505,18 +518,24 @@ On Linux, install `pkg-config`, `libasound2-dev`, the X11, Xrandr, Xcursor,
 Xinerama, Xcomposite and Xrender headers, freetype and fontconfig, and the
 OpenGL headers. JUCE 8.0.9 is fetched at configure time.
 
+The Docker image already carries those packages plus Ardour, Xvfb and Zrythm.
+Build it with `docker/build.sh`. `ctest` then runs `linux_daws` automatically
+when `ardour8-export` and `zrythm` are on `PATH`. The test keeps its own `$HOME`
+under the build tree and does not touch the host plugin folders.
+
 Platform matrix:
 
 | Platform | VST3 | CLAP | Standalone | Evidence |
 | --- | --- | --- | --- | --- |
-| Linux x86-64 | built, pluginval pass | built, clap-validator pass | built | Linux container, 2026-11-04 |
+| Linux x86-64 | built, pluginval pass, Ardour render, Zrythm scan | built, clap-validator pass, Zrythm scan | built | Linux container, 2026-11-04 |
 | Windows x86-64 | built, pluginval pass, REAPER and Renoise render | built, clap-validator pass, REAPER render | built | Windows host, MSVC 19.51, 2026-11-04 |
 | macOS arm64 and x86-64 | not built | not built | not built | no macOS runner |
 
 The Windows VST3 and CLAP builds render equivalent one-note REAPER projects to
 byte-identical WAV files. REAPER 7.84 and Renoise 3.5.4 both load the Windows
-VST3 build and render it. The Windows DAW matrix is done. The Linux row has no
-DAW pass yet. The macOS rows are not claims of support. They need a native
+VST3 build and render it. The `linux_daws` CTest renders the Linux VST3 in
+Ardour 8.12 and scans both Linux formats in Zrythm 2.0.0-alpha.7. Both DAW
+matrices are done. The macOS rows are not claims of support. They need a native
 build, `pluginval` and two DAWs per platform before they move to pass. AU
 remains a later macOS target.
 

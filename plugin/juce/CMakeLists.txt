@@ -140,3 +140,19 @@ else()
              COMMAND "$<TARGET_FILE:p1_editor_snapshot>"
                      "${CMAKE_CURRENT_BINARY_DIR}/snapshots")
 endif()
+
+find_program(ARDOUR8_EXPORT ardour8-export)
+find_program(ZRYTHM zrythm)
+if(UNIX AND NOT APPLE AND XVFB_RUN AND ARDOUR8_EXPORT AND ZRYTHM)
+    set(P1_LINUX_DAWS_CLAP)
+    if(P1_BUILD_CLAP)
+        set(P1_LINUX_DAWS_CLAP
+            "${CMAKE_CURRENT_BINARY_DIR}/type_p_fm1_artefacts/$<CONFIG>/CLAP/Type P.fm1.clap")
+    endif()
+    add_test(NAME linux_daws
+             COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/../tests/linux_daws.sh"
+                     "${CMAKE_CURRENT_BINARY_DIR}/type_p_fm1_artefacts/$<CONFIG>/VST3/Type P.fm1.vst3"
+                     "${CMAKE_CURRENT_BINARY_DIR}/linux-daws"
+                     ${P1_LINUX_DAWS_CLAP})
+    set_tests_properties(linux_daws PROPERTIES TIMEOUT 300)
+endif()

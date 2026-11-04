@@ -3881,5 +3881,26 @@ identical. The VST3 bundle was installed in
 `C:\Program Files\Common Files\VST3`, where Renoise 3.5.4 scans. Renoise loaded
 `P1Onken: Type P.fm1` and rendered a one-note project to 39200 frames at 44100
 Hz, 24-bit stereo, peak 0.225197 and RMS 0.105559. The Windows DAW matrix now has
-REAPER and Renoise. The macOS build, the Linux DAW matrix and AU remain open. The
-feature contract is `plugin/feature-contract-clap.md`.
+REAPER and Renoise. The macOS build and AU remain open. The feature contract is
+`plugin/feature-contract-clap.md`.
+
+### 13.24 Linux DAW acceptance (2026-11-04)
+
+The Docker image now carries Ardour 8.12 and Zrythm 2.0.0-alpha.7. Ardour is in
+Debian trixie. Zrythm is a pinned AppImage extracted into `/opt/zrythm`, because
+Debian does not package it. The image also adds Xvfb, xauth, the Qt xcb
+cursor, icccm, keysyms and xkb libraries, and the OpenGL and EGL runtime
+libraries.
+
+`plugin/tests/linux_daws.sh` runs as the `linux_daws` CTest when Ardour, Zrythm
+and `xvfb-run` are present. It gives both DAWs an isolated `$HOME`, copies the
+VST3 and CLAP into `$HOME/.vst3` and `$HOME/.clap`, and leaves the host plugin
+folders alone. Ardour's VST3 scanner builds the cache, then `ardour8-lua` creates
+a MIDI track with the Type P.fm1 instrument. A one-note SMF and a matching MIDI
+region are added to the session, and `ardour8-export` renders it headlessly.
+
+The Ardour render is 88200 frames at 44100 Hz, 24-bit stereo, peak 0.609467 and
+RMS 0.196450. Zrythm scans the same build and records `Type P.fm1` as both VST3
+and CLAP in `known_plugins.xml`. The test passes in 6.8 seconds. The Linux DAW
+matrix is now automated alongside the Windows REAPER and Renoise matrix. The
+macOS build and AU remain open.
