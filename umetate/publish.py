@@ -71,9 +71,10 @@ _FRAMEWORK_PATHS = (
     "design",
     "firmware",
     "plugin",
+    "skills",
+    "templates",
     "umetate",
     "modules",
-    "templates/scaffold",
 )
 
 # the generated-from-patch files in `firmware/gen/` (gitignored, so `git archive`

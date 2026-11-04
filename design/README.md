@@ -293,7 +293,9 @@ graph cannot clip or touch the caption.
 ## Working method
 
 The process lessons from building this mockup are in `agent-workflow.md`. Read it
-before changing the interface.
+before changing the interface. The transferable method and the design reference
+dossier are in `skills/umetate-development/references/ui-design.md` and
+`ui-dossier.md`.
 
 ## Open items
 

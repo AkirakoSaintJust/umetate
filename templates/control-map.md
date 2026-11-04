@@ -4,6 +4,12 @@
 > rejected options. One control map per project. The voice architecture and
 > parameter manifest (in `synth-brief.md`) are upstream of this: bind only
 > parameters that exist there.
+>
+> **Do not author the panel until every section below is filled.** The ten-item
+> minimum bar is in `skills/umetate-development/SKILL.md` §2. The reasoning and
+> the design-language reference are in
+> `skills/umetate-development/references/ui-design.md`. The casebook is
+> `ui-dossier.md`.
 
 ## 1. Surface inventory
 
@@ -62,6 +68,35 @@
 | Page | Widgets | Update rule |
 | --- | --- | --- |
 
+### 5a. Always-visible header
+
+- **Fields shown on every page** (part, operator, mute state, algorithm, menu,
+  page N/M, and anything else that must never hide):
+- **Where each field sits** (the header must not reflow between pages):
+
+### 5b. Parameter specification
+
+One row per editable parameter. The range, unit, and curve are the same ones the
+stepper and the display use. A value is clamped to this range, so the display and
+the value never disagree.
+
+| Param | Display form | User range | Unit | Step / curve | Default | Owner page |
+| --- | --- | --- | --- | --- | --- | --- |
+
+### 5c. INIT PATCH and INIT PART
+
+- **INIT PATCH, exact values** (every parameter, not "same as ..."):
+- **INIT PART, exact values:**
+- **What stays from the previous patch, if anything:**
+
+### 5d. Screen rules
+
+- **Redraw model and rate:**
+- **Work kept out of the audio callback:**
+- **Page or menu change clear:**
+- **Held notes during redraw:**
+- **Failure or boot screen:**
+
 ## 6. LED / pad feedback
 
 | State | LED / pad | Meaning |
@@ -83,7 +118,20 @@
 - **Per-control meaning across contexts** (the same knob/button in every context):
 - **Unresolved / ambiguous bindings** (none is the goal):
 
+## 8a. Design language
+
+- **Colour roles** (one meaning per colour, no decorative hue):
+- **Type** (families, sizes, case, where each is used):
+- **Grid and metrics** (padding, gaps, control cells, fixed frame):
+- **State language** (active, muted, selected, focus, hover, disabled):
+- **Signal language** (scope, spectrum, envelopes, level fills, routing):
+- **Copy rules** (case, labels, value formats, name limits):
+- **Token source** (the one file the web, plugin, and firmware generate from):
+
 ## 9. Acceptance
 
+- **The ten-item gate is filled** (SKILL.md §2, no item left as "TBD"):
 - **Host UI tests (scripted keys/knobs/screen captures):**
 - **Device checks (held notes during redraw, visible failure state):**
+- **The mockup and the generated theme agree** (same tokens, same layout):
+- **A stranger can make a sound and find save without help:**

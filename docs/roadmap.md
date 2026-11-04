@@ -890,7 +890,7 @@ strengthening below.
 | L7 | Nodes added reactively (`gain`, `cmul`, `csum`, `algo`, `mute`, `pitch_env`). | Review the node/macro library against the full-synth target for completeness. |
 | L8 | The UI was **underspecified**, button meanings, page contents, and per-param semantics were decided during implementation, so the first emulator pass was "buggy, incomplete, cryptic" and a whole navigation/control map had to be re-derived *after* code existed. | **The UI interview must be written before the panel is coded** (control-map.md + synth-brief §3 as a *checked gate*, not a note): every button's meaning, every page's contents, the always-visible header, the shortcuts/chords, and each param's display form, all in one place. §3.1–3.5 + §2.1a/2.1b below are that spec now, a change to the panel must change them in the same commit. |
 | L9 | A per-param *display scale* was missing, the panel showed raw integers (cutoff `8000`, ratio `65536`, mute `0/1`), and a relative encoder moved ±1 raw (thousands of detents across a 0..65535 range). | The `params:` `display` form + the curve-driven stepping (linear = a fraction of the range, log = multiplicative, clamped), `ui_param_disp[]` (§12.6). |
-| L10 | The *development skill* did not force a UI spec deep enough, it asked for a "context stack + pages + bindings", but not the **button-by-button meaning, page-by-page contents, the always-visible header, the modifier chords, the per-param display form, or the exact INIT-patch defaults**, so those were invented during code. | **Revamp the dev skill's GUI interview** so its *minimum bar* is the exact 10-item checklist below (button map · page map · header · param placement · per-param display + stepping · widget layout · preset browser · exact INIT PATCH/PART defaults · screen rules), the type-p-fm1 restructure is the worked example. **Open**, not yet written back into `skills/umetate-development/SKILL.md`/templates. |
+| L10 | The *development skill* did not force a UI spec deep enough, it asked for a "context stack + pages + bindings", but not the **button-by-button meaning, page-by-page contents, the always-visible header, the modifier chords, the per-param display form, or the exact INIT-patch defaults**, so those were invented during code. | **Done.** `skills/umetate-development/SKILL.md` §2 now carries the ten-item written gate and refuses a panel until it is filled. `templates/control-map.md` adds the header, parameter spec, INIT defaults, screen rules and design language. The method is `references/ui-design.md`, the casebook is `references/ui-dossier.md`. |
 | L11 | A knob could slide *below* its display's minimum, RATIO read "0.50" while the internal value had gone below it, so scrolling back up showed nothing until the value re-entered the range (and an on/off could read "on" from a *negative* value), the range/unit/step resolution hadn't been settled up front. | The **user-facing range + clamp + unit + resolution is part of the param spec**, `params:` `min`/`max` + `display` are the clamp the stepper *and* the display both honour (a value never sits outside its range, and the display never disagrees with it), a *mute* reads inverted (`onoff_inv`: 0 = not muted = "on"), the GUI interview must settle each param's range, unit, and detent resolution before authoring the panel. |
 
 **The GUI interview's minimum bar (L10, exact).** The development skill's GUI
@@ -967,9 +967,10 @@ is the worked example of the depth, the skill generalizes it to any synth.
 
 The GUI interview is *done* only when items 1–10 are all written in the brief.
 L8's gate (§3.1–3.5 + §2.1a/2.1b) is that written spec, re-checked on every panel
-change. **Open:** rewrite `skills/umetate-development/SKILL.md` and the
-`templates/control-map.md` prompt to *require* items 1–10 and refuse to author the
-panel until each is filled in, this list is that rewrite's spec.
+change. **Done:** `skills/umetate-development/SKILL.md` §2 and
+`templates/control-map.md` now require items 1–10 and refuse to author the panel
+until each is filled in. The method and the design dossier are
+`skills/umetate-development/references/ui-design.md` and `ui-dossier.md`.
 
 #### 6.11.3 Locked decisions
 
@@ -3962,3 +3963,54 @@ Still open: Milestone 7 (`plugin-generate`, `plugin-build`, `plugin-check`), the
 macOS build and AU, the physical device pass, signed installers, and a vendored
 JUCE source archive in every plugin release. The root `README.md` still omits the
 `plugin/` and `publish` components and needs a hand-written update.
+
+### 13.26 Interface design method and dossier (2026-11-04)
+
+The plugin UI process was the strongest part of the port, so it is now written
+down as a reusable method. The method is
+`skills/umetate-development/references/ui-design.md`. The casebook and research
+links are `skills/umetate-development/references/ui-dossier.md`.
+
+The core lesson is that the interface was designed before it was written. The
+firmware UI was underspecified on the first pass (L8), and the first emulator
+build was buggy, incomplete, and cryptic. The fix was a written control map, a
+written brief, and a signed-off mockup before the panel code. The plugin editor
+repeated the working version: design language first, clickable mockup, extracted
+tokens, then the JUCE implementation. The editor is a projection of
+`design/tokens.json`, not a second design.
+
+The ten-item written gate is now in `SKILL.md` §2 and
+`templates/control-map.md`: surface inventory, button map, menu and page map,
+always-visible header, parameter placement, per-parameter display form and range,
+widget layout, preset browser and save chooser, exact INIT defaults, and screen
+rules. `templates/control-map.md` adds the header, parameter spec, INIT defaults,
+screen rules, and design language sections. L10 is closed.
+
+The transferable design language is role-based colour with one meaning per
+colour, controls outlined and content surfaces not, square flat shapes, a fixed
+canvas scaled as one image, a two-family type scale, generated tokens shared by
+the web, the plugin and the firmware, an explicit state language, a signal
+language, and copy that earns its place. The exact hex values and fonts stay in
+`design/README.md`. The principles are general.
+
+The dossier covers hardware and firmware references (TR-808, Pērkons, Digitakt,
+Digitone, Octatrack, Dirtywave M8, Polyend Tracker, Blackbox, Deluge, OP-1,
+Rings, Tides, Braids, Clouds, Moog One, Hydrasynth, Peak, MicroFreak, Prophet-6,
+0-Coast, Microcosm, opsix, Reface DX), DAW plugin references (FabFilter Pro-Q,
+iZotope Ozone, Valhalla, u-he Diva and Zebra, Serum, Vital, Pigments, Phase
+Plant, Ableton and Bitwig stock devices, Soundtoys), and the theory (Norman,
+Nielsen, Rams, Fitts, Hick, Miller, Jakob, Gestalt, WCAG, Tufte, Refactoring UI,
+Raskin, the 2004 synth UI review, dadamachines, Gillet, and the Gliss manual).
+
+The firmware-specific lessons are the page-slot model, the silkscreen as law, no
+skeuomorphic knobs on a 240 by 240 screen, popups that own control, one knob with
+no more than two functions, inferring settings from the patch, visiting the
+sweet spots, WYSIWYG state, recognition over recall, and not letting the screen
+steal the listening. The plugin-specific lessons are the fixed canvas and uniform
+scale, HiDPI, host automation, snapshot tests, keyboard and focus, resizable but
+not reflowable, no modal traps, and contrast and target-size accessibility.
+
+Still open: a usability test with players who did not design the panel, a
+snapshot-diff gate for UI regressions, a token linter that catches hard-coded
+values, and a firmware theme check that every token the panel uses is generated
+from `theme.json`.

@@ -49,6 +49,15 @@ The reference samples are `examples/type-p-fm1/publish-readme.md` and
 requires. No em dashes. No semicolons. British spelling in prose. No marketing
 adjectives. One concrete example per major section.
 
+## UI work
+
+Before a panel, screen, editor, or web UI change, read
+`skills/umetate-development/references/ui-design.md` and the ten-item gate in
+`skills/umetate-development/SKILL.md` section 2. The interface is designed before
+it is written: control map, tokens, and a signed-off mockup first. The casebook
+and research links are in `ui-dossier.md`. The Type P.fm1 language is
+`design/README.md`.
+
 ## Commands
 
 ```sh

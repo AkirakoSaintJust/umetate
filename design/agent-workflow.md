@@ -3,13 +3,19 @@
 The process that produced the Type P.fm1 interface. Use it for any future web or
 JUCE interface work in this repository. The design language is in `README.md`.
 
+The general method, the firmware and plugin mapping, and the design reference
+dossier live in the development skill:
+`skills/umetate-development/references/ui-design.md` and
+`ui-dossier.md`. The ten-item written gate is in
+`skills/umetate-development/SKILL.md` section 2.
+
 ## When to use
 
 Use this workflow when the task is visual or interaction design: a new page, a
 component, a restyle, a font change, a layout change, or a plugin editor.
 
 Do not start with production code. Start with a clickable mockup and make it
-right in a browser first.
+right in a browser first. The interface is designed before it is written.
 
 ## The loop
 

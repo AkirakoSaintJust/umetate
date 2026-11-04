@@ -1,7 +1,7 @@
 ---
 name: umetate-development
-description: Design, plan, build, and safely validate a custom M-VAVE FM-1 or SMK-37 synthesizer on the umetate framework. Before any code, a gated interview fully specifies the synth design + voice architecture, the GUI design + control flow, and the implementation plan, and checks them for consistency. Code is then mechanical translation. Never write the device without an explicit, gated request.
-version: 1.1.0
+description: Design, plan, build, and safely validate a custom M-VAVE FM-1 or SMK-37 synthesizer on the umetate framework. Before any code, a gated interview fully specifies the synth design + voice architecture, the GUI design + control flow (with a written ten-item UI gate and a design reference dossier), and the implementation plan, and checks them for consistency. Code is then mechanical translation. Never write the device without an explicit, gated request.
+version: 1.2.0
 license: GPL-3.0-only
 compatibility: OpenCode and Agent Skills-compatible loaders
 allowed-tools: read, grep, glob, edit, shell, websearch, webfetch
@@ -198,9 +198,32 @@ screen. LED/pad feedback, and the full control flow.
     global page that owns the shared control, so the user learns one set of pages
     and understands the other.
 
+**The written gate.** A control map is not specified until it pins all ten of
+these. Do not author the panel until every one is filled in. The full reasoning,
+the plugin and firmware mapping, and the review loop are in
+`references/ui-design.md`. The casebook is `references/ui-dossier.md`.
+
+1. Surface inventory, with kinds and printed labels.
+2. Button map, including every multi-tap and hold chord and what it replaces.
+3. Menu and page map, in order, with the exact page contents.
+4. The always-visible header fields.
+5. Parameter placement, one owner per parameter.
+6. Per-parameter display form, range, unit, and stepping curve.
+7. Widget layout, including the empty space.
+8. Preset browser and save chooser, with the destructive confirmation.
+9. Exact INIT PATCH and INIT PART defaults.
+10. Screen rules: redraw model and rate, no display work in the audio callback,
+    full clear on page change, held notes still playable.
+
+The UI is an instrument panel, not a settings form. The design language that
+worked is role-based colour (one meaning per colour), controls outlined and
+content surfaces not, a fixed canvas scaled as one image, generated tokens shared
+by the web, the plugin, and the firmware, an explicit state language, and copy
+that earns its place. Do not add a widget to fill a hole.
+
 **Exit:** every control is mapped to a param or action, or explicitly marked
 unmapped, every binding target is a param from the manifest, the control flow is
-complete and user-confirmed.
+complete and user-confirmed, and all ten items above are written.
 
 ### 3. Implementation plan
 
