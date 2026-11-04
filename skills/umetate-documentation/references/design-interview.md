@@ -104,7 +104,8 @@ it?" "What did you cut to make room?"
 
 - Why this panel and these controls?
 - What did you cut from the UI, and what is still awkward?
-- The generated questions from the panel pages and the brief's control surface.
+- The generated questions from the panel contexts, the home page, and the brief's
+  control surface.
 
 Follow-ups: "What did you have to move off the home page?" "What did the screen
 width rule out?" "What did you copy from hardware you like?"
@@ -253,9 +254,10 @@ The generator read the Type P.fm1 brief and patch. It produced questions like:
   answer became "It's two 4-operator parts because that's where I believe the
   sweet spot lies. There's this massive jump in complexity between editing a DX21
   from the panel vs editing a DX7 ..."
-- "The panel has these pages: ALGORITHM, ENVELOPE, FILTER ... Why these pages?"
-  The answer became the workflow paragraph: "I'm more of a sound design gal, I
-  fully sequence my music and I prefer trackers to little boxes ..."
+- "The panel has these contexts: home, edit, env, lfo, fx, glo. The home page shows
+  ALGORITHM, A-ENVS, SCOPES ... Why these?" The answer became the workflow
+  paragraph: "I'm more of a sound design gal, I fully sequence my music and I
+  prefer trackers to little boxes ..."
 
 The concrete names, models, and numbers stay. The interviewer's questions do not.
 The author's asides stay. The order is the order of the argument, not the order of

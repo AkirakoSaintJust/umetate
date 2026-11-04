@@ -56,6 +56,7 @@ class ProjectFacts:
     params: int
     voice_nodes: tuple[str, ...]
     global_nodes: tuple[str, ...]
+    contexts: tuple[str, ...]
     pages: tuple[str, ...]
     home_pages: tuple[str, ...]
     tables: tuple[str, ...]
@@ -138,6 +139,17 @@ def _clip(value: str, limit: int = 240) -> str:
     return text[:limit].rsplit(" ", 1)[0] + "..."
 
 
+def _sentence(value: str, limit: int = 240) -> str:
+    text = _clip(value, limit).rstrip(" .;:!?")
+    return text + "." if text else ""
+
+
+def _short_list(values: tuple[str, ...], limit: int = 10) -> str:
+    if len(values) <= limit:
+        return ", ".join(values)
+    return ", ".join(values[:limit]) + f", and {len(values) - limit} more"
+
+
 def _counts(nodes: tuple[str, ...]) -> str:
     order: list[str] = []
     counts: dict[str, int] = {}
@@ -168,16 +180,20 @@ def _page_title(page: dict[str, object]) -> str:
     return "page"
 
 
-def _panel_pages(panel: dict[str, object]) -> tuple[tuple[str, ...], tuple[str, ...]]:
+def _panel_pages(
+    panel: dict[str, object],
+) -> tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
     contexts = panel.get("contexts")
     if not isinstance(contexts, dict):
-        return (), ()
+        return (), (), ()
+    names: list[str] = []
     pages: list[str] = []
     home_pages: list[str] = []
     home = panel.get("home")
     for context_name, context in cast(dict[str, object], contexts).items():
         if not isinstance(context, dict):
             continue
+        names.append(context_name)
         raw_pages = context.get("pages")
         if not isinstance(raw_pages, list):
             continue
@@ -190,8 +206,8 @@ def _panel_pages(panel: dict[str, object]) -> tuple[tuple[str, ...], tuple[str, 
             if title not in pages:
                 pages.append(title)
         if context_name == home:
-            home_pages = titles
-    return tuple(pages), tuple(home_pages)
+            home_pages = list(dict.fromkeys(titles))
+    return tuple(names), tuple(pages), tuple(home_pages)
 
 
 def load_facts(synth: Path) -> ProjectFacts:
@@ -255,7 +271,7 @@ def load_facts(synth: Path) -> ProjectFacts:
         else ()
     )
 
-    pages, home_pages = _panel_pages(panel)
+    contexts, pages, home_pages = _panel_pages(panel)
     return ProjectFacts(
         name=name,
         patch_name=patch_name,
@@ -264,6 +280,7 @@ def load_facts(synth: Path) -> ProjectFacts:
         params=param_count,
         voice_nodes=voice_nodes,
         global_nodes=global_nodes,
+        contexts=contexts,
         pages=pages,
         home_pages=home_pages,
         tables=table_names,
@@ -277,10 +294,10 @@ def _plural(count: int, noun: str) -> str:
 
 
 def _summary(facts: ProjectFacts) -> str:
-    bits: list[str] = []
-    bits.append(f"The project is **{facts.name}**")
+    head = f"The project is **{facts.name}**"
     if facts.patch_name and facts.patch_name != facts.name:
-        bits[-1] += f" (patch `{facts.patch_name}`)"
+        head += f" (patch `{facts.patch_name}`)"
+    bits: list[str] = [head + "."]
     counts: list[str] = []
     if facts.parts > 1:
         counts.append(_plural(facts.parts, "part"))
@@ -295,10 +312,15 @@ def _summary(facts: ProjectFacts) -> str:
     if facts.global_nodes:
         bits.append("The global zone uses " + _counts(facts.global_nodes) + ".")
     if facts.pages:
-        bits.append("The panel has these pages: " + ", ".join(facts.pages) + ".")
+        bits.append(
+            f"The panel has {_plural(len(facts.contexts), 'context')} and "
+            f"{_plural(len(facts.pages), 'page')}."
+        )
+    if facts.home_pages:
+        bits.append("The home page shows " + _short_list(facts.home_pages, 8) + ".")
     synthesis = _item(facts.brief, "synthesis method")
     if synthesis:
-        bits.append("The brief says the synthesis method is " + _clip(synthesis) + ".")
+        bits.append("The brief says the synthesis method is " + _sentence(synthesis))
     if len(bits) == 1:
         bits.append(
             "No patch.json, panel.json, or synth-brief.md yet. The form uses the "
@@ -331,12 +353,12 @@ def _extras(facts: ProjectFacts) -> dict[str, str]:
     lineage: list[str] = []
     if references:
         lineage.append(
-            f"The brief lists these references: {_clip(references)}. "
+            f"The brief lists these references: {_sentence(references)} "
             "What did you take from each?"
         )
     if synthesis:
         lineage.append(
-            f"The brief describes the synthesis method as: {_clip(synthesis)}. "
+            f"The brief describes the synthesis method as: {_sentence(synthesis)} "
             "Why this method?"
         )
     if facts.voice_nodes:
@@ -381,44 +403,46 @@ def _extras(facts: ProjectFacts) -> dict[str, str]:
         )
     if effects:
         output.append(
-            f"The brief describes the output stage as: {_clip(effects)}. "
+            f"The brief describes the output stage as: {_sentence(effects)} "
             "Why this choice?"
         )
 
     interface: list[str] = []
-    if facts.pages:
+    if facts.contexts:
         interface.append(
-            f"The panel has these pages: {', '.join(facts.pages)}. Why these pages?"
+            "The panel has these contexts: " + ", ".join(facts.contexts) + ". "
+            "Why these?"
         )
     if facts.home_pages:
         interface.append(
-            "The home page shows " + ", ".join(facts.home_pages) + ". Why these first?"
+            "The home page shows " + _short_list(facts.home_pages, 8) + ". "
+            "Why these first?"
         )
     if controls:
         interface.append(
-            f"The brief describes the control surface as: {_clip(controls)}. "
+            f"The brief describes the control surface as: {_sentence(controls)} "
             "Why this layout?"
         )
 
     tradeoff: list[str] = []
     if non_goals:
-        tradeoff.append(f"The brief's non-goals are: {_clip(non_goals)}. Why those?")
+        tradeoff.append(f"The brief's non-goals are: {_sentence(non_goals)} Why those?")
     polyphony = _item(brief, "polyphony")
     if polyphony:
         tradeoff.append(
-            f"The brief sets the polyphony at {_clip(polyphony)}. "
+            f"The brief sets the polyphony at {_sentence(polyphony)} "
             "What did that budget force?"
         )
 
     sound: list[str] = []
     if feel:
         sound.append(
-            f"The brief says it should feel: {_clip(feel)}. "
+            f"The brief says it should feel: {_sentence(feel)} "
             "What did you do to make it feel that way?"
         )
     if who:
         sound.append(
-            f"The brief says it is for: {_clip(who)}. "
+            f"The brief says it is for: {_sentence(who)} "
             "What should that player hear first?"
         )
 
