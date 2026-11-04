@@ -1,8 +1,10 @@
 # Type P.fm1 plugin plan
 
-Status: Milestone 5 done, 2026-11-04. The JUCE VST3 and standalone host build,
-render audio, accept MIDI and save state. The designed editor, the 64 multi and
-128 part banks and the 32-tap output rate bridge are in.
+Status: Milestone 6 done, 2026-11-04. The JUCE VST3, CLAP and standalone host
+build, render audio, accept MIDI and save state. The designed editor, the 64
+multi and 128 part banks and the 32-tap output rate bridge are in. The VST3 and
+CLAP artefacts pass their validators on Linux. The Windows and macOS builds and
+the two-DAW-per-platform matrix remain untested.
 
 This is the plan for the optional JUCE build path in umetate: a reusable plugin
 host plus a generated `type-p-fm1` project. The visual language is in
@@ -18,7 +20,8 @@ desktop editor.
 In scope:
 
 - VST3 and standalone on Windows, macOS and Linux.
-- CLAP through a pinned wrapper after VST3 is stable.
+- CLAP through a pinned `clap-juce-extensions` wrapper on the same three
+  platforms.
 - AU on macOS as a later addition.
 - All parameters in the generated manifest.
 - The three-page editor from the mockup.
@@ -312,8 +315,9 @@ Toolchain:
 - CMake 3.22 or newer, C++20.
 - JUCE 8 pinned by tag and commit, fetched with `FetchContent` or supplied with
   `JUCE_DIR` for offline builds.
-- CLAP through a pinned `clap-juce-extensions` wrapper. Confirm its licence in
-  the build manifest.
+- CLAP through `clap-juce-extensions` pinned to the MIT-licensed main commit
+  `7adee3a1bd4684d4caa5601100e364abccff4b4d`. The `0.26.0` tag predates the JUCE 8
+  Linux message thread path.
 - Windows: MSVC 2022 or clang-cl, VST3 SDK from JUCE.
 - macOS: Xcode command line tools, universal binary if the build host allows it.
 - Linux: ALSA and X11 development packages, plus the usual JUCE dependencies.
@@ -363,7 +367,7 @@ Plugin work adds a new evidence layer. It does not replace the firmware layers.
 | 3 | Editor | done |
 | 4 | Presets and banks | done |
 | 5 | Rate bridge | done |
-| 6 | CLAP and platform matrix | clap-validator, pluginval, two DAWs per platform |
+| 6 | CLAP and platform matrix | plugin and validators done, DAW matrix blocked |
 | 7 | Generator and CLI | `plugin-generate`, `plugin-build`, `plugin-check`, template and docs |
 
 Milestone 0 is firmware work and can start before any JUCE dependency is added.
@@ -415,6 +419,18 @@ sizes from 32 to 1024. The 20 kHz image rejection is -110 dB at 48 kHz and
 -25.4 dB at 96 and 192 kHz. That is the limit of the 32-tap kernel. A longer
 kernel is the next quality step if a stricter budget is set.
 
+Milestone 6 is done for the Linux build. The JUCE project now creates a CLAP
+target next to VST3 and standalone. `P1_BUILD_CLAP` defaults to ON inside the
+`P1_BUILD_JUCE` path and fetches `clap-juce-extensions` at the pinned MIT commit.
+The CLAP plugin ID is `com.p1onken.typepfm1`. `clap-validator` reports 33 passed,
+0 failed, 1 warning and 10 skipped. The warning is the wrapper returning success
+for random state bytes even though the processor rejects them. It does not crash
+and the wrapper gives the plugin no way to report the rejection. `pluginval`
+passes strictness level 5 both with the editor open and with GUI tests skipped.
+The VST3 checks cover 44.1, 48, 96 and 192 kHz and blocks from 32 to 1024. The
+Windows and macOS builds and the two-DAW-per-platform matrix are not available
+in this environment.
+
 Host bridge build:
 
 ```sh
@@ -424,21 +440,46 @@ cmake --build build/plugin
 ctest --test-dir build/plugin --output-on-failure
 ```
 
-JUCE VST3 and standalone build:
+JUCE VST3, CLAP and standalone build:
 
 ```sh
-cmake -S plugin -B build/plugin-juce -DP1_BUILD_JUCE=ON
+cmake -S plugin -B build/plugin-juce -DP1_BUILD_JUCE=ON -DP1_BUILD_CLAP=ON
 cmake --build build/plugin-juce
 ctest --test-dir build/plugin-juce --output-on-failure
 ```
 
-The artifacts are under
-`build/plugin-juce/juce/type_p_fm1_artefacts/Release/VST3` and `Standalone`.
+`P1_BUILD_CLAP` defaults to ON when `P1_BUILD_JUCE` is ON. The CLAP wrapper is
+fetched at the pinned commit. The artifacts are under
+`build/plugin-juce/juce/type_p_fm1_artefacts/Release/VST3`,
+`build/plugin-juce/juce/type_p_fm1_artefacts/Release/CLAP` and `Standalone`.
 The editor snapshots are under `build/plugin-juce/juce/snapshots`. The
 `plugin_editor_snapshot` CTest uses `xvfb-run` when it is available.
+
+Validator commands on Linux, with the plugin paths from the build tree:
+
+```sh
+xvfb-run -a clap-validator validate --only-failed \
+  "build/plugin-juce/juce/type_p_fm1_artefacts/Release/CLAP/Type P.fm1.clap"
+xvfb-run -a pluginval --validate \
+  "build/plugin-juce/juce/type_p_fm1_artefacts/Release/VST3/Type P.fm1.vst3" \
+  --strictness-level 5
+```
+
 On Linux, install `pkg-config`, `libasound2-dev`, the X11, Xrandr, Xcursor,
 Xinerama, Xcomposite and Xrender headers, freetype and fontconfig, and the
 OpenGL headers. JUCE 8.0.9 is fetched at configure time.
+
+Platform matrix:
+
+| Platform | VST3 | CLAP | Standalone | Evidence |
+| --- | --- | --- | --- | --- |
+| Linux x86-64 | built, pluginval pass | built, clap-validator pass | built | this container, 2026-11-04 |
+| Windows x86-64 | not built | not built | not built | no Windows runner |
+| macOS arm64 and x86-64 | not built | not built | not built | no macOS runner |
+
+The Linux artefact is the release evidence for this milestone. The Windows and
+macOS rows are not claims of support. They need a native build, `pluginval` and
+two DAWs per platform before they move to pass. AU remains a later macOS target.
 
 The bridge build is host-native and optional. It is separate from the firmware
 Docker gate. The generated `firmware/gen` must exist before CMake configures.
@@ -451,6 +492,7 @@ Docker gate. The generated `firmware/gen` must exist before CMake configures.
 | Two instances still share state | A second instance changes the first | Treat as a Milestone 0 failure |
 | JUCE fetch is unavailable | No network in the build environment | Support `JUCE_DIR` and a pinned local archive |
 | CLAP wrapper rots | The extension lags JUCE | Keep VST3 as the primary target, CLAP behind a flag |
+| CLAP state load reports success on invalid bytes | `clap-validator` warning | Document it, keep the processor rejection, do not fake a valid state |
 | Rate bridge colors the sound | THD or alias above the budget | Raise the tap count or change the filter, never change the core rate |
 | Parameter map misses a control | Coverage test fails | Fix the map, not the test |
 | Device preset round trip breaks | Byte mismatch | Use the C record functions, never a C++ copy |
@@ -459,7 +501,8 @@ Docker gate. The generated `firmware/gen` must exist before CMake configures.
 
 ## 15. Open questions
 
-- Is CLAP a first-release target or a fast follow? The plan assumes VST3 first.
+- CLAP is part of the first build on Linux. VST3 remains the primary target and
+  CLAP stays behind `P1_BUILD_CLAP`.
 - Is AU required on macOS in the first release?
 - Does the first release need device preset import and export, or only the
   in-plugin banks?

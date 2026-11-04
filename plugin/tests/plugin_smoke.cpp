@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* Milestone 2: the JUCE processor smoke and state test, no DAW needed. */
+/* Milestone 2 to 6: the JUCE processor smoke, state and parameter test, no DAW
+ * needed. */
 #include <array>
 #include <cmath>
 #include <cstdint>
@@ -198,6 +199,33 @@ int main()
         sounding = sounding || sample > 0.0f || sample < 0.0f;
     }
     check(finite && sounding, "the 48 kHz placeholder path renders audio");
+
+    {
+        TypePFm1AudioProcessor source;
+        TypePFm1AudioProcessor restored;
+        for (int i = 0; i < kP1ParamCount; ++i) {
+            const auto& spec = kP1ParamSpecs[static_cast<std::size_t>(i)];
+            auto* parameter = source.parameters().getParameter(spec.id);
+            if (parameter == nullptr)
+                continue;
+            const int middle = spec.min + (spec.max - spec.min) * 2 / 3;
+            parameter->setValueNotifyingHost(
+                parameter->convertTo0to1(static_cast<float>(middle)));
+        }
+        juce::MemoryBlock fullState;
+        source.getStateInformation(fullState);
+        restored.setStateInformation(fullState.getData(),
+                                     static_cast<int>(fullState.getSize()));
+        bool allRestored = true;
+        for (const auto& spec : kP1ParamSpecs) {
+            auto* actual =
+                restored.parameters().getRawParameterValue(spec.id);
+            const int middle = spec.min + (spec.max - spec.min) * 2 / 3;
+            allRestored = allRestored && actual != nullptr &&
+                          std::lround(actual->load()) == middle;
+        }
+        check(allRestored, "the state restores every manifest parameter");
+    }
 
     processor.releaseResources();
     std::printf("plugin: %s\n", failures ? "FAILED" : "passed");

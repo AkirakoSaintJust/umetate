@@ -107,8 +107,11 @@ TypePFm1AudioProcessor::createLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
     for (const auto& spec : kP1ParamSpecs) {
+        const int low = spec.min;
+        const int high = spec.max > spec.min ? spec.max : spec.min + 1;
+        const int def = juce::jlimit(low, high, spec.def);
         layout.add(std::make_unique<juce::AudioParameterInt>(
-            juce::ParameterID{spec.id, 1}, spec.name, spec.min, spec.max, spec.def));
+            juce::ParameterID{spec.id, 1}, spec.name, low, high, def));
     }
     return layout;
 }
@@ -152,12 +155,16 @@ void TypePFm1AudioProcessor::syncParams()
         if (value == nullptr)
             continue;
         const auto next = static_cast<int32_t>(std::lround(value->load()));
-        if (next != lastParams_[static_cast<std::size_t>(i)]) {
+        const int32_t clamped = juce::jlimit(
+            static_cast<int32_t>(kP1ParamSpecs[static_cast<std::size_t>(i)].min),
+            static_cast<int32_t>(kP1ParamSpecs[static_cast<std::size_t>(i)].max),
+            next);
+        if (clamped != lastParams_[static_cast<std::size_t>(i)]) {
             engine_.setParam(
                 static_cast<uint32_t>(
                     kP1ParamSpecs[static_cast<std::size_t>(i)].engineId),
-                next);
-            lastParams_[static_cast<std::size_t>(i)] = next;
+                clamped);
+            lastParams_[static_cast<std::size_t>(i)] = clamped;
         }
     }
 }
@@ -321,6 +328,7 @@ void TypePFm1AudioProcessor::setStateInformation(const void* data, int sizeInByt
                                multiBank.getSize());
     apvts_.replaceState(state);
     paramsDirty_.store(true, std::memory_order_relaxed);
+    updateHostDisplay(juce::AudioProcessor::ChangeDetails().withProgramChanged(true));
 }
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()

@@ -3840,3 +3840,32 @@ and checks 17 samples at 48 kHz. The plugin CTest suite has `engine_parity`,
 `rate_bridge`, `preset_smoke`, `plugin_smoke` and `plugin_editor_snapshot`, all
 green. The feature contract is `plugin/feature-contract-rate.md`. Physical device
 acceptance remains blocked.
+
+### 13.23 CLAP target and platform matrix (2026-11-04)
+
+Milestone 6 is done for the Linux build. `plugin/juce` now creates a CLAP target
+next to VST3 and standalone. `P1_BUILD_CLAP` defaults to ON inside the
+`P1_BUILD_JUCE` path. The wrapper is `clap-juce-extensions` pinned to the MIT
+commit `7adee3a1bd4684d4caa5601100e364abccff4b4d`, because tag `0.26.0` uses the
+old Linux message thread header that JUCE 8 removed. The CLAP plugin id is
+`com.p1onken.typepfm1`.
+
+Two processor fixes were needed. `fold_type` has a manifest range of 0 to 0 and
+JUCE rejects a zero-range `AudioParameterInt` and a single-item
+`AudioParameterChoice`. The APVTS now exposes it as 0..1 and `syncParams` clamps
+it back to 0. State load now calls `updateHostDisplay` with `programChanged`, so
+the CLAP wrapper sends a parameter value rescan after the restored values change.
+
+`clap-validator` 0.4.1 runs 44 tests and reports 33 passed, 0 failed, 1 warning
+and 10 skipped. The warning is `state-invalid-random`. The wrapper returns
+success for random bytes, while the processor rejects the XML and changes
+nothing. The plugin does not crash and the wrapper API gives the plugin no way
+to report the rejection. `pluginval` 1.0.4 passes at strictness level 5 both with
+the editor open and with GUI tests skipped. The same build passes 44.1, 48, 96
+and 192 kHz with block sizes from 32 to 1024. `plugin_smoke` now also proves a
+full 313-parameter state round trip.
+
+The Linux x86-64 build is the evidence for this milestone. Windows and macOS are
+not built in this container. They need a native build, `pluginval` and two DAWs
+per platform before they count as pass. AU remains a later macOS target. The
+feature contract is `plugin/feature-contract-clap.md`.

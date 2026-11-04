@@ -9,6 +9,17 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(JUCE)
 
+option(P1_BUILD_CLAP "Build the CLAP target" ON)
+if(P1_BUILD_CLAP)
+    FetchContent_Declare(
+        clap-juce-extensions
+        GIT_REPOSITORY https://github.com/free-audio/clap-juce-extensions.git
+        GIT_TAG 7adee3a1bd4684d4caa5601100e364abccff4b4d
+        GIT_SUBMODULES "clap-libs/clap" "clap-libs/clap-helpers"
+    )
+    FetchContent_MakeAvailable(clap-juce-extensions)
+endif()
+
 set(P1_TOKENS_HEADER "${P1_GENERATED_DIR}/UiTokens.h")
 
 add_custom_command(
@@ -85,6 +96,15 @@ target_link_libraries(type_p_fm1 PRIVATE
 )
 target_compile_definitions(type_p_fm1 PRIVATE ${P1_JUCE_DEFINITIONS})
 add_dependencies(type_p_fm1 p1_params p1_tokens)
+
+if(P1_BUILD_CLAP)
+    clap_juce_extensions_plugin(
+        TARGET type_p_fm1
+        CLAP_ID "com.p1onken.typepfm1"
+        CLAP_FEATURES instrument
+    )
+    target_compile_definitions(type_p_fm1_CLAP PRIVATE ${P1_JUCE_DEFINITIONS})
+endif()
 
 juce_add_console_app(p1_smoke PRODUCT_NAME "p1_smoke")
 target_sources(p1_smoke PRIVATE PluginProcessor.cpp ../tests/plugin_smoke.cpp)
