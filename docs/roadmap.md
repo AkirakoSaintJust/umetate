@@ -4207,12 +4207,13 @@ archives stay under `plugins/<platform>/`. The corresponding source is `src/`,
 `framework/`, and `vendor/deps/` when `--vendor-deps` is used, so the engine
 source and the JUCE obligations travel in the same repo.
 
-The vendor copy replaces `vendor/deps/` on each run and skips `.git`. The first
-rerun failed on the read-only git pack files left by the previous copy. The
-release page mentions `vendor/deps/` only when the directory exists, and the
-AGPL paragraph only when the manifest contains a plugin archive. The handwritten
-Type P.fm1 README is still copied verbatim. It gained a short Downloads section
-that links to `RELEASES.md`, `plugins/`, and `plugins/README.md`.
+The vendor copy replaces `vendor/deps/` on each run and skips `.git`, the
+`*-build` trees, and the `*-subbuild` caches. The first rerun failed on the
+read-only git pack files left by the previous copy. The release page mentions
+`vendor/deps/` only when the directory exists, and the AGPL paragraph only when
+the manifest contains a plugin archive. The handwritten Type P.fm1 README is
+still copied verbatim. It gained a short Downloads section that links to
+`RELEASES.md`, `plugins/`, and `plugins/README.md`.
 
 Verified with `publish --plugins --vendor-deps build/plugin-juce/_deps`:
 `RELEASES.md` lists the 612216 byte firmware and the two Linux plugin archives,
