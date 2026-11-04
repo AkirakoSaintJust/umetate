@@ -20,7 +20,7 @@ RUN apt-get update && apt-get upgrade -y \
 # is upgraded past the flagged CVEs (CVE-2024-6345, CVE-2025-47273). pyright is the
 # second type-checker (its "partially unknown" diagnostics catch what mypy can't).
 RUN pip3 install --no-cache-dir --break-system-packages \
-        setuptools pillow==13.0.0 jsonschema==4.26.0 pyliblo3==0.16.3 \
+        setuptools pillow==13.0.0 jsonschema==4.26.0 \
         ruff==0.17.2 mypy==2.4.0 pyright==1.1.414
 
 # Emscripten (version pinned in env.lock). Its bundled node/npm (not the apt ones)
@@ -47,6 +47,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libxcomposite-dev libxrender-dev libxfixes-dev libgl1-mesa-dev \
         libxkbcommon-dev \
     && rm -rf /var/lib/apt/lists/*
+
+# The Carla acceptance test drives the plugin through Carla's OSC API. Install
+# this after liblo-dev and pkg-config so the binding can build.
+RUN pip3 install --no-cache-dir --break-system-packages pyliblo3==0.16.3
 
 ARG CARLA_COMMIT=97a9e0740baf6df2df942495c02532a624c44682
 RUN git init /tmp/carla-src \
