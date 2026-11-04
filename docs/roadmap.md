@@ -4042,3 +4042,45 @@ palette move did not change the output. `test_tokens` is part of
 Still open: a usability test with players who did not design the panel. That is
 out of scope for the single-developer and small-team workflow, so a team can run
 its own when it wants one.
+
+### 13.28 Design theory dossier (2026-11-04)
+
+The UI dossier now carries the general design theory behind the craft. The new
+sources are Design Trampoline (composition, Gestalt, colour, typography, grid),
+Typelab (type basics, aesthetic web type, technical web type), Practical
+Typography, Web Style Guide chapters 7 to 9 (interface design, graphic design,
+typography), Inclusive Design Principles, Frank Chimero's The Shape of Design,
+and the Design Systems Collective article on practical CSS theming.
+
+The lessons that changed the method:
+
+- **A composition centre, not a grid of equal boxes.** One element carries the
+  most visual weight. Colour, scale, shape, brightness, direction, rotation, and
+  negative space are the tools. The rest of the page supports it.
+- **Gestalt is the grouping engine.** Proximity, similarity, figure-ground,
+  closure, common fate, uniform connectedness, and good continuation do the work
+  before a border does. The space between two elements is a third element.
+- **Colour is a role system.** A small set of hues with one job each, value and
+  saturation for shades, contrast checked on the actual pair, and meaning never
+  carried by colour alone.
+- **Type is a small system.** Two families, a real scale, 14 to 16 pixel screen
+  body in a dense interface, 45 to 90 character prose lines, 120 to 145 percent
+  leading, left-aligned prose, all caps sparingly, and real quotes and dashes.
+- **The grid is an aid, not a guarantee.** Define the module, columns, gutters,
+  margins, and baseline, repeat the same modules across pages, and break the
+  grid deliberately for the composition centre.
+- **Token architecture has three layers.** Primitive values, semantic roles, and
+  theme scopes. Components use roles. A theme swaps roles, not component rules.
+  This avoids the build-order fight and the `!important` patches described in the
+  CSS theming article.
+- **Inclusive design is a review lens.** Comparable experience, situation,
+  consistency, control, choice, prioritised content, and added value.
+- **Wayfinding is the interface's map.** Orientation, route decisions, mental
+  mapping, closure, no dead ends, and stable landmarks.
+- **Design is for other people.** The Shape of Design is a reminder that the
+  instrument is a gift to the player, not a portfolio piece.
+
+`ui-design.md` now has sections for composition, Gestalt, colour, type, grid,
+token architecture, inclusive design, wayfinding, and design as a practice. The
+dossier has the source summaries and the full link list. The existing token gate
+already enforces the three-layer architecture for the plugin and firmware.

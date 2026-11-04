@@ -246,15 +246,88 @@ per mode, and the manual shipped in more than one format. The lesson is that the
 documentation is a design review. If you cannot explain a feature, fix the
 feature.
 
+**Design Trampoline, composition and Gestalt.** The composition module gives the
+practical tools for a composition centre: colour, scale, shape, brightness,
+direction, rotation, and position. The design principles module covers
+proximity, similarity, figure-ground, symmetry, closure, common fate, uniform
+connectedness, and good continuation. The lesson is that grouping is a
+perceptual fact, not a styling choice. Use it to make the signal path legible
+before you add a border.
+
+**Design Trampoline, colour and type.** The colour module separates RGB from
+CMYK, warm from cool, and the colour wheel from the cultural meaning of a hue.
+It repeats Itten and Albers: colour is relative, rules are a starting point, and
+readability beats prettiness. The typography module classifies serif, sans,
+script, display, and monospace, then covers weight, width, tilt, sizing, kerning,
+tracking, line length, leading, alignment, and case. The lesson is that a small
+type system with clear roles beats a large collection of fonts.
+
+**Design Trampoline, grid.** The grid module defines the module, row, column,
+gutter, margin, baseline grid, manuscript grid, column grid, and modular grid.
+It quotes Josef Müller-Brockmann: the grid is an aid, not a guarantee. The lesson
+is to use the grid to make the layout repeatable, then break it deliberately for
+the composition centre.
+
+**Typelab, web typography.** The three modules cover typefaces and anatomy,
+web-specific type, and the technical side of embedding fonts. The practical
+rules are a 14 to 16 pixel body on screen, a 50 to 80 character line, 120 to 145
+percent leading, left alignment for prose, a real fallback stack, and no more
+than two typefaces. The technical module adds the licence and performance side:
+self-hosting is distribution, so the licence must allow it.
+
+**Practical Typography.** The key rules are 15 to 25 pixels for web body text, 120
+to 145 percent line spacing, 45 to 90 characters per line, a professional font,
+curly quotes, minimal bold and italic, no underlining, all caps for less than one
+line, one space between sentences, real small caps, letterspacing for caps, and
+kerning on. The lesson is that most of the improvement comes from four choices:
+size, spacing, line length, and font.
+
+**Web Style Guide, interface design.** Chapter 7 covers wayfinding: orientation,
+route decisions, mental mapping, and closure. It also covers no dead ends,
+direct access, simplicity, consistency, feedback, the 80/20 rule, design
+patterns, keyboard and touch interaction, and the danger of hover-only menus.
+The lesson is that an interface is a place. The player needs a map, landmarks,
+and a way home.
+
+**Web Style Guide, graphic design and typography.** Chapter 8 covers composition,
+visual hierarchy, negative space, contrast, Gestalt, grid systems, and pattern
+libraries. Chapter 9 covers semantic structure, neutral space, display type,
+alignment, line length, leading, scalable text, emphasis, typefaces, and
+letterspacing. The lesson is that contrast and white space do the work. Every
+element should have a reason to be there.
+
+**Inclusive Design Principles.** Seven principles: provide comparable
+experience, consider situation, be consistent, give control, offer choice,
+prioritise content, and add value. The lesson for an instrument is that a
+keyboard player, a screen reader user, a touch user, and a player in a dim room
+should all be able to reach the same musical result.
+
+**Frank Chimero, The Shape of Design.** Design is movement. It is imagining a
+future and working toward it for other people. It is not decoration, and it is
+not only problem-solving. The lesson is to design for the player's music, not
+for the designer's portfolio.
+
+**Practical CSS Theming Strategies.** The article compares CSS variables with
+Sass theme maps and shows why a theme class that fights a component class depends
+on build order and ends in `!important`. The resilient pattern is to separate
+the component's shape and type from the theme's colour, then let a theme scope
+override semantic tokens. This is the same pattern as `tokens.json` and the
+firmware palette: primitives, semantic roles, and a theme scope.
+
 ## A reading order
 
 1. Don Norman, for the vocabulary.
 2. Jakob Nielsen, for the review method.
 3. Dieter Rams, for restraint.
 4. Refactoring UI, for the visual craft.
-5. Émilie Gillet, for the instrument design principles.
-6. dadamachines, for the hardware UX analysis.
-7. The manual and the panel of every instrument you study.
+5. Design Trampoline, for composition, Gestalt, colour, type, and grid.
+6. Practical Typography and Typelab, for the type rules.
+7. Web Style Guide, for interface design, graphic design, and typography.
+8. Inclusive Design Principles, for the access review.
+9. Frank Chimero, for why the work is for someone else.
+10. Émilie Gillet, for the instrument design principles.
+11. dadamachines, for the hardware UX analysis.
+12. The manual and the panel of every instrument you study.
 
 ## Links
 
@@ -271,6 +344,21 @@ feature.
 - WCAG non-text contrast: <https://www.w3.org/WAI/WCAG21/Understanding/non-text-contrast.html>
 - Tufte, chartjunk: <https://www.edwardtufte.com/notebook/chartjunk/>
 - Refactoring UI: <https://refactoringui.com/>
+- Design Trampoline, basics of composition: <https://designforweb.org/vis/chapter2-design-principles/designTrampoline-by-AnnaRiazhskikh/module/basics-of-composition/index.html>
+- Design Trampoline, design principles: <https://designforweb.org/vis/chapter2-design-principles/designTrampoline-by-AnnaRiazhskikh/module/design-principles/index.html>
+- Design Trampoline, colour: <https://designforweb.org/vis/chapter2-design-principles/designTrampoline-by-AnnaRiazhskikh/module/colour/index.html>
+- Design Trampoline, typography: <https://designforweb.org/vis/chapter2-design-principles/designTrampoline-by-AnnaRiazhskikh/module/typography/index.html>
+- Design Trampoline, grid: <https://designforweb.org/vis/chapter2-design-principles/designTrampoline-by-AnnaRiazhskikh/module/grid/index.html>
+- Typelab, basics: <https://designforweb.org/vis/chapter3-typography/typelab-by-HannahBoom/module1-basics.html>
+- Typelab, aesthetic web typography: <https://designforweb.org/vis/chapter3-typography/typelab-by-HannahBoom/module2-aesthetic.html>
+- Typelab, technical web typography: <https://designforweb.org/vis/chapter3-typography/typelab-by-HannahBoom/module3-technical.html>
+- Practical Typography, key rules: <https://practicaltypography.com/summary-of-key-rules.html>
+- Web Style Guide, interface design: <https://webstyleguide.com/7-interface-design.html>
+- Web Style Guide, graphic design: <https://webstyleguide.com/8-graphic-design.html>
+- Web Style Guide, typography: <https://webstyleguide.com/9-typography.html>
+- Inclusive Design Principles: <https://inclusivedesignprinciples.info/>
+- The Shape of Design: <https://shapeofdesignbook.com/chapters/00-introduction/>
+- Practical CSS Theming Strategies: <https://www.designsystemscollective.com/practical-css-theming-strategies-37c3700a0d83>
 - Designing Sound, humane interface design: <https://designingsound.org/2018/02/28/humane-interface-design-for-synthesis/>
 - Synth UI heuristic review (2004): <https://oro.open.ac.uk/90139/1/2004_20.pdf>
 - dadamachines UX guidelines: <https://dadamachines.github.io/ctag-tbd/uxguidelines.html>

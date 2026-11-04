@@ -151,6 +151,176 @@ These are the visual craft rules that apply to any panel or editor page.
   automation. A firmware panel follows the device's silkscreen and control
   kinds. Familiarity is cheaper than novelty.
 
+## Composition and visual weight
+
+A page needs one composition centre, the element the eye lands on first. It is
+not necessarily the geometric centre. It is the element with the most visual
+weight, and it should be the thing the player needs first.
+
+Weight comes from contrast, not decoration. Use one or two of these at a time:
+
+- Colour: a complementary hue, or a much brighter or darker value.
+- Scale: a clearly larger or smaller element.
+- Shape or texture: a solid form among outlines, or the reverse.
+- Brightness and saturation: a vivid element among muted ones.
+- Direction and rotation: an element that breaks the flow.
+- Position and negative space: an element set apart from the group.
+
+Balance the page around that centre. Symmetry gives calm and order. Asymmetry
+gives movement and tension. Rhythm comes from repeated spacing and repeated
+shapes, not from repeated decoration. The player should feel where to look
+before they read a label.
+
+## Gestalt grouping
+
+The eye groups before it reads. Use the principles deliberately:
+
+- **Proximity:** related controls sit closer to each other than to unrelated
+  ones. The space around a group must be larger than the space inside it.
+- **Similarity:** the same kind of control looks the same. Similarity in colour
+  is stronger than similarity in size, which is stronger than similarity in
+  shape.
+- **Figure and ground:** the control must separate cleanly from the surface. A
+  stable figure-ground relationship is easier to read than an ambiguous one.
+- **Closure:** the eye completes a shape. You can omit a border or a line if the
+  form still reads, which reduces noise.
+- **Common fate:** things that move or change together are seen as related. Use
+  motion for feedback, not for decoration.
+- **Uniform connectedness:** a line, frame, or shared region groups elements more
+  strongly than proximity or similarity. Use it when the grouping must be
+  unmistakable.
+- **Good continuation:** align elements along a line or a curve. The eye follows
+  the path of least resistance.
+- **1 + 1 = 3:** the space between two elements becomes a third visual element.
+  When elements are too close, the gap starts to read as a shape.
+
+## Colour
+
+Colour is a role system, not a palette of pretty values.
+
+- Pick a small set of hues and give each one a job. A hue that means two things
+  is a bug.
+- Use value and saturation for shades. Do not add a new hue to make a variant.
+- Warm colours advance and cool colours recede. Use the temperature deliberately.
+- Contrast is a readability requirement. Check the actual text and background
+  pair, not the swatch in isolation.
+- Colour is cultural and subjective. A colour that reads as warning in one
+  context may read as celebration in another. The label and the shape must carry
+  the meaning too.
+- Readability and accessibility beat prettiness. A beautiful palette that fails
+  contrast is a failed palette.
+- Do not rely on colour alone. Pair it with a label, an icon, a shape, or a
+  position.
+
+## Type
+
+Typography is the interface's voice. It should disappear into the reading
+experience, not compete with it.
+
+- Use no more than two type families. One for body or controls, one for display
+  or headings. A third family needs a job that the first two cannot do.
+- Build a small type scale and stick to it. Size is relative. A one-pixel change
+  at 12 pixels is visible, the same change at 72 pixels is not.
+- Body text on screen is comfortable at about 14 to 16 pixels in a dense
+  interface, and 15 to 25 pixels for long reading. A synth panel can go smaller
+  for labels, but the value and the label still need space.
+- Line length for prose is about 45 to 90 characters. In a panel, a label is
+  short by design. A paragraph in a manual should not run the full width of a
+  wide window.
+- Line spacing is about 120 to 145 percent of the type size. A dense panel can
+  use tighter leading for labels, but not for sentences.
+- Left-align prose. Justified text on the web creates rivers without good
+  hyphenation. Centred text is for short captions, not for paragraphs.
+- Use all caps sparingly, and add letterspacing when you do. All caps is a
+  rectangle of even shapes, which is hard to scan.
+- Use real small caps, real curly quotes, and the proper dash. Do not fake them
+  with scale or multiple hyphens.
+- Use bold and italic as little as possible, and not together. One emphasis
+  parameter at a time is enough.
+- Use a professional typeface with a real fallback stack. A distinctive display
+  face is fine for the wordmark. It is not fine for a parameter label.
+
+## Grid
+
+A grid is an aid, not a guarantee. It gives the page a repeatable structure and
+saves decisions. It does not make the composition good on its own.
+
+- Define the module, the columns, the rows, the gutters, and the margins. Use a
+  small set of spacing values that are multiples of the base unit.
+- Choose the grid that fits the content. A manuscript grid for prose, a column
+  grid for lists and cards, a modular grid for a dense panel.
+- A baseline grid aligns text across columns. It matters most when two columns
+  sit side by side.
+- Keep the same module and the same spacing across pages. Repetition is what
+  makes the interface feel like one instrument.
+- Break the grid deliberately, not accidentally. A single element can leave the
+  grid to become the composition centre. Two elements leaving it in different
+  directions is noise.
+
+## Token architecture
+
+A design system needs one source and two layers.
+
+- **Primitive tokens** are raw values: `#ff2e7e`, `16`, `10`. They are not used
+  directly by components.
+- **Semantic tokens** are roles: `pink` is identity, `green` is signal, `text`
+  is body text, `lineStrong` is a control border. Components use the semantic
+  token, never the raw value.
+- **Theme scopes** override semantic tokens, not component rules. A dark theme,
+  a firmware palette, or a high-contrast mode swaps the semantic values in one
+  place. It does not rewrite every button.
+- **One projection per platform.** Generate the CSS variables, the JUCE header,
+  and the firmware theme from the same source. A value typed twice will drift.
+- **Avoid the specificity fight.** Do not stack theme classes and component
+  classes and then patch the build order with `!important`. Separate the
+  component's shape and type from the theme's colour. The theme supplies the
+  colour, the component supplies the rest.
+- **Name by role, not by appearance.** `text-muted` survives a palette change.
+  `grey-500` does not.
+
+## Inclusive design
+
+The Inclusive Design Principles are a good review lens for an instrument:
+
+- **Provide comparable experience.** A keyboard player, a screen reader user,
+  and a touch user should be able to reach the same result with comparable
+  effort.
+- **Consider situation.** A dim stage, bright daylight, a small laptop screen,
+  and a noisy room all change what works. Contrast and target size matter.
+- **Be consistent.** Use familiar conventions, the same words, and the same
+  layout across pages.
+- **Give control.** Do not trap the user in a modal, an animation, or a zoom
+  level. Let them stop, undo, and leave.
+- **Offer choice.** Where a task has more than one natural route, allow it. A
+  list and a grid, a knob and a typed value, a mouse and a keyboard.
+- **Prioritise content.** Put the musical controls first. Progressively reveal
+  the advanced settings.
+- **Add value.** A feature should make the instrument easier to play, not just
+  longer to learn.
+
+## Wayfinding
+
+A player who arrives on a page should know where they are, what they can do,
+and how to get back.
+
+- **Orientation:** show the active part, operator, page, mode, and mute state.
+- **Route decisions:** make the next action visible. Do not hide it behind a
+  chord the player has to remember.
+- **Mental map:** use the same page order and the same control positions across
+  modes. A player should be able to predict where a control lives.
+- **Closure:** confirm that an action happened. A save, a load, a mute, and a
+  page change all need a visible result.
+- **No dead ends:** every page has a way home and a way back.
+- **Landmarks:** the header, the tabs, the active part, and the algorithm are
+  landmarks. Keep them stable.
+
+## Design as a practice
+
+Frank Chimero's *The Shape of Design* is a reminder that design is not
+decoration. It is imagining a future and working toward it for other people. A
+panel is a gift to the player, not a display of the designer's taste. The
+instrument should help them make the sound they hear in their head.
+
 ## Firmware UI
 
 The physical panel and the 240 by 240 screen are one interface. The screen does
