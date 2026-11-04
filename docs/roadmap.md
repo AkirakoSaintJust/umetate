@@ -3814,3 +3814,29 @@ has `engine_parity`, `preset_smoke`, `plugin_smoke` and
 `plugin_editor_snapshot`, all green. The feature contract is
 `plugin/feature-contract-presets.md`. Device SysEx import and export and physical
 device acceptance remain blocked.
+
+### 13.22 Output rate bridge (2026-11-04)
+
+Milestone 5 is done. The temporary linear rate bridge is replaced by a 32-tap
+Kaiser-windowed sinc polyphase resampler with 1024 phases and Kaiser beta 8.6.
+The cutoff is the lower of the core and host Nyquist, so the bridge anti-aliases
+when the host rate is below 44.1 kHz. The core never changes rate and input is
+never resampled.
+
+At 44.1 kHz the bridge is bypassed and the core output is bit-exact, with zero
+reported latency. At other rates the filter group delay is 15.5 core samples. The
+reported host latency is 17 samples at 48 kHz, 34 at 96 kHz and 67 at 192 kHz.
+
+`rate_bridge_test` drives a synthetic core sine through the bridge at 48, 96 and
+192 kHz. The 1 kHz and 10 kHz gains are flat within 0.01 dB. The 20 kHz gain is
+-0.45 dB. The 20 kHz image rejection is -110 dB at 48 kHz and -25.4 dB at 96 and
+192 kHz. THD for the 20 kHz tone is about -25 dB. Blocks of 32, 64, 128, 256,
+512 and 1024 frames all render finite, non-silent audio. The 96 and 192 kHz
+near-Nyquist result is the expected limit of the 32-tap kernel. A longer kernel
+is the next quality step if a stricter budget is set.
+
+`plugin_smoke` keeps the 44.1 kHz render bit-exact, checks zero latency at 44.1
+and checks 17 samples at 48 kHz. The plugin CTest suite has `engine_parity`,
+`rate_bridge`, `preset_smoke`, `plugin_smoke` and `plugin_editor_snapshot`, all
+green. The feature contract is `plugin/feature-contract-rate.md`. Physical device
+acceptance remains blocked.

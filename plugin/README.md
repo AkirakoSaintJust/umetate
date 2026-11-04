@@ -1,9 +1,8 @@
 # Type P.fm1 plugin plan
 
-Status: Milestone 4 done, 2026-11-04. The JUCE VST3 and standalone host build,
-render audio, accept MIDI and save state. The designed three-page editor is in,
-with the token-driven look, visualisers, dialogs and the fixed 1240 by 985 scale.
-The in-plugin 64 multi and 128 part banks round-trip through the device records.
+Status: Milestone 5 done, 2026-11-04. The JUCE VST3 and standalone host build,
+render audio, accept MIDI and save state. The designed editor, the 64 multi and
+128 part banks and the 32-tap output rate bridge are in.
 
 This is the plan for the optional JUCE build path in umetate: a reusable plugin
 host plus a generated `type-p-fm1` project. The visual language is in
@@ -188,18 +187,23 @@ Rules:
 
 - The core always runs at 44.1 kHz.
 - The host may run at 44.1, 48, 88.2, 96, 176.4 or 192 kHz.
-- At 44.1 kHz the bridge is bypassed and the output is bit-exact with the firmware
-  host render.
-- At other rates, a 32-tap Kaiser-windowed sinc polyphase resampler converts the
-  output. It anti-aliases on downsampling and reports its group delay as plugin
-  latency. The core is never resampled on input.
-- The resampler ratio is rational. The bridge consumes 44.1 kHz frames and
-  produces host frames. It handles any host block size.
+- At 44.1 kHz the bridge is bypassed and the output is bit-exact with the
+  firmware host render.
+- At other rates a 32-tap Kaiser-windowed sinc polyphase resampler converts the
+  output. It uses 1024 phases, Kaiser beta 8.6 and a cutoff at the lower of the
+  core and host Nyquist. The core is never resampled on input.
+- The bridge consumes 44.1 kHz frames and produces host frames. It handles block
+  sizes from 32 to 1024 frames.
 - The editor and the visualisers always run on the 44.1 kHz timeline.
-- Latency: report the resampler delay. The 32-sample control block is part of the
-  instrument and is not compensated.
-- Test at every supported rate: THD, alias rejection, passband ripple, latency,
-  and no dropouts at 32, 64, 128, 256, 512 and 1024 frames.
+- The filter group delay is 15.5 core samples. The reported host latency is 17
+  samples at 48 kHz, 34 at 96 kHz and 67 at 192 kHz. At 44.1 kHz the bypass
+  reports zero.
+- The 32-sample control block is part of the instrument and is not compensated.
+- Measured with a 20 kHz core tone: the 20 kHz gain is -0.45 dB. The image
+  rejection is -110 dB at 48 kHz and -25.4 dB at 96 and 192 kHz. THD is about
+  -25 dB. The 1 kHz and 10 kHz gains are flat. The near-Nyquist 96 and 192 kHz
+  result is the expected limit of the 32-tap kernel. Raising the tap count is
+  the next quality step if a stricter budget is set.
 
 ## 8. MIDI
 
@@ -358,7 +362,7 @@ Plugin work adds a new evidence layer. It does not replace the firmware layers.
 | 2 | JUCE host skeleton | done |
 | 3 | Editor | done |
 | 4 | Presets and banks | done |
-| 5 | Rate bridge | bypass exact, 48/96/192 measured, latency reported |
+| 5 | Rate bridge | done |
 | 6 | CLAP and platform matrix | clap-validator, pluginval, two DAWs per platform |
 | 7 | Generator and CLI | `plugin-generate`, `plugin-build`, `plugin-check`, template and docs |
 
@@ -374,8 +378,8 @@ JUCE 8.0.9. The processor exposes the 313 manifest parameters through the APVTS,
 applies automation at the 32-sample control block, feeds MIDI through
 `synth_midi_feed`, renders the 44.1 kHz core bit-exactly, and saves and restores
 the parameter state. The generic JUCE editor was the Milestone 2 placeholder.
-The 48 kHz path uses the temporary linear RateBridge, so it renders audio but is
-not yet release quality. The `plugin_smoke` CTest checks the parameter count,
+The 48 kHz path used the temporary linear RateBridge at that point, so it
+rendered audio but was not release quality. The `plugin_smoke` CTest checks the parameter count,
 unique ids, contiguous engine ids, bit-exact 44.1 kHz output, an automation
 write at the 32-sample control block, a MIDI offset at its control block and a
 state round trip. `engine_parity` remains green.
@@ -402,6 +406,14 @@ uses the saved part source slots and puts a part with no source into a free slot
 first. `preset_smoke` proves the device record round trip. `plugin_smoke` proves
 the bank state round trip. `plugin_editor_snapshot` saves and loads a part and a
 multi through the editor.
+
+Milestone 5 is done. The temporary linear rate bridge is replaced by the 32-tap
+polyphase resampler. The 44.1 kHz path is still bypassed and bit-exact, with zero
+reported latency. At 48, 96 and 192 kHz the bridge reports 17, 34 and 67 host
+samples. `rate_bridge_test` measures the passband, images, THD, latency and block
+sizes from 32 to 1024. The 20 kHz image rejection is -110 dB at 48 kHz and
+-25.4 dB at 96 and 192 kHz. That is the limit of the 32-tap kernel. A longer
+kernel is the next quality step if a stricter budget is set.
 
 Host bridge build:
 

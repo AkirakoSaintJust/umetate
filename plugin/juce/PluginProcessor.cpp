@@ -120,8 +120,12 @@ void TypePFm1AudioProcessor::prepareToPlay(double sampleRate, int samplesPerBloc
     midi_.reset();
     rateBridge_.reset();
     directBuffer_.assign(static_cast<std::size_t>(kControlBlock) * 2u, 0);
-    if (std::abs(sampleRate - kCoreRate) > 0.5)
+    if (std::abs(sampleRate - kCoreRate) > 0.5) {
         rateBridge_.prepare(sampleRate, samplesPerBlock);
+        setLatencySamples(rateBridge_.latencySamples());
+    } else {
+        setLatencySamples(0);
+    }
     lastParams_.fill(std::numeric_limits<int32_t>::min());
     paramsDirty_.store(false, std::memory_order_relaxed);
     syncParams();

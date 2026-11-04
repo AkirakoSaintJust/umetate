@@ -66,6 +66,10 @@ add_executable(engine_parity tests/engine_parity.cpp)
 target_link_libraries(engine_parity PRIVATE p1_engine)
 add_test(NAME engine_parity COMMAND engine_parity)
 
+add_executable(rate_bridge_test tests/rate_bridge_test.cpp)
+target_link_libraries(rate_bridge_test PRIVATE p1_engine)
+add_test(NAME rate_bridge COMMAND rate_bridge_test)
+
 add_executable(preset_smoke tests/preset_smoke.cpp)
 target_link_libraries(preset_smoke PRIVATE p1_engine)
 target_include_directories(preset_smoke PRIVATE "${P1_GENERATED_DIR}")

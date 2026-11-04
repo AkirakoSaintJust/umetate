@@ -91,6 +91,8 @@ int main()
 
     processor.setRateAndBufferSizeDetails(44100.0, kFrames);
     processor.prepareToPlay(44100.0, kFrames);
+    check(processor.getLatencySamples() == 0,
+          "44.1 kHz bypass reports zero latency");
 
     juce::AudioBuffer<float> block(2, kFrames);
     juce::MidiBuffer midi;
@@ -181,6 +183,8 @@ int main()
 
     processor.setRateAndBufferSizeDetails(48000.0, kFrames);
     processor.prepareToPlay(48000.0, kFrames);
+    check(processor.getLatencySamples() == 17,
+          "48 kHz rate bridge reports its latency");
     juce::AudioBuffer<float> hostBlock(2, kFrames);
     juce::MidiBuffer hostMidi;
     hostMidi.addEvent(
