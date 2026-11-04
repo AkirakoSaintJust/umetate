@@ -46,7 +46,8 @@ juce::Font displayFont(float height)
 
 juce::Font brandFont(float height)
 {
-    auto font = juce::Font(juce::FontOptions("Arial Black", height, juce::Font::bold));
+    auto font = juce::Font(
+        juce::FontOptions(tokens::fontBrandFallback, height, juce::Font::bold));
     if (textWidth(font, "TYPE P") < 1.0f) {
         font = juce::Font(juce::FontOptions(juce::Font::getDefaultSansSerifFontName(),
                                             height, juce::Font::bold));

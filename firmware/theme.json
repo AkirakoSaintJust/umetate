@@ -8,6 +8,21 @@
     "accent": "#ff2e7e",
     "success": "#00ff2a",
     "warning": "#ffaa00",
-    "error": "#ff0000"
+    "error": "#ff0000",
+    "selected": "#7ec8ff",
+    "popup_background": "#1e1e1e",
+    "popup_text": "#ffffff",
+    "crash_background": "#a00000",
+    "logo_accent": "#b48cff",
+    "key": "#d2d2d2",
+    "key_off": "#5a5a5a"
+  },
+  "palettes": {
+    "DEFAULT": ["#2e5333", "#ff3c3c", "#5aff5a", "#c780ff", "#ff4d94"],
+    "AMBER": ["#3c1a00", "#6e3200", "#b26218", "#e17808", "#ffa628"],
+    "CYAN": ["#001e32", "#003e60", "#267da9", "#38acde", "#8cdeff"],
+    "RED": ["#340808", "#64120e", "#bd544c", "#e24030", "#ff705c"],
+    "MONO": ["#282828", "#505050", "#828282", "#bababa", "#e2e2e2"],
+    "DX": ["#102e2e", "#1a5a5c", "#289698", "#38d2d4", "#42f5f5"]
   }
 }

@@ -14,6 +14,7 @@ from typing import TypedDict, cast
 
 class _TokenFile(TypedDict):
     colour: dict[str, str]
+    font: dict[str, str]
     size: dict[str, int]
     space: dict[str, int]
     control: dict[str, object]
@@ -76,6 +77,13 @@ def main() -> int:
     for border_name, border_value in data["border"].items():
         if isinstance(border_value, int):
             lines.append(f"inline constexpr int {border_name} = {border_value};")
+
+    lines += ["", "// font families"]
+    for font_name, font_value in data["font"].items():
+        token = font_name[0].upper() + font_name[1:]
+        lines.append(
+            f"inline constexpr const char* font{token} = {json.dumps(font_value)};"
+        )
 
     lines += ["", "} // namespace p1::tokens", ""]
     target.write_text("\n".join(lines), encoding="utf-8")

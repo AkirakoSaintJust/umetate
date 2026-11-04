@@ -1,0 +1,55 @@
+{
+  "images": {
+    "editor-algorithm.png": {
+      "height": 985,
+      "sha256": "f26a59f3c550e3890785611eb752f8fa70281e0a809490810f22b0e0b37d2b0d",
+      "width": 1240
+    },
+    "editor-confirm.png": {
+      "height": 985,
+      "sha256": "0f29d600ca5a866e3348c0b75b5987410723d3f1a1abd6e43f41024a98b4fc0b",
+      "width": 1240
+    },
+    "editor-fxmod.png": {
+      "height": 985,
+      "sha256": "a9170ac6918e3b87e583f66f2aaf2b959521d6702c01559b255de04205711072",
+      "width": 1240
+    },
+    "editor-half.png": {
+      "height": 493,
+      "sha256": "4bf49930955b689482026269f0235636715c86effddf5feb3a0a85af598fda75",
+      "width": 620
+    },
+    "editor-operators.png": {
+      "height": 985,
+      "sha256": "dabc7a779c09026711ae134c2cac15f1efbbf58f39ef9b6dad8dc2df2c1b230c",
+      "width": 1240
+    },
+    "editor-part2.png": {
+      "height": 985,
+      "sha256": "70d3e2e1920c1f89f36552ce718805d8001223a21d46a9f130224812ac401ec4",
+      "width": 1240
+    },
+    "editor-parts.png": {
+      "height": 985,
+      "sha256": "bd0b9db699c0e5e3a1362451e634235dbd052272439837327e21a4a3be477e8c",
+      "width": 1240
+    },
+    "editor-patch.png": {
+      "height": 985,
+      "sha256": "7f199f39913493fe51fd42dc718139b52d753ea35a59340b6c633c5f692eeaa5",
+      "width": 1240
+    },
+    "editor-patches.png": {
+      "height": 985,
+      "sha256": "b3d6792f2282c55c758bdfaccd7e62adc8f72aae263621d8735f6f5a7324bc88",
+      "width": 1240
+    },
+    "editor-rename.png": {
+      "height": 985,
+      "sha256": "4c76cbb6b106d708723f4c2f61b3e3d0608d913bde9b268edb601d515258aede",
+      "width": 1240
+    }
+  },
+  "platform": "linux-x86_64"
+}

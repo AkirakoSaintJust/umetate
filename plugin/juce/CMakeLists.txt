@@ -153,6 +153,21 @@ else()
                      "${CMAKE_CURRENT_BINARY_DIR}/snapshots")
 endif()
 
+# The golden set is pinned to the Linux container because font rasterisation
+# differs on other hosts. On Windows the snapshot binary still writes images,
+# but the gate is not registered.
+if(UNIX AND NOT APPLE)
+    add_test(NAME plugin_editor_snapshot_diff
+             COMMAND ${Python3_EXECUTABLE}
+                     "${CMAKE_CURRENT_SOURCE_DIR}/../tools/snapshot_check.py"
+                     --actual "${CMAKE_CURRENT_BINARY_DIR}/snapshots"
+                     --golden "${CMAKE_CURRENT_SOURCE_DIR}/../tests/snapshots/linux-x86_64"
+                     --diff "${CMAKE_CURRENT_BINARY_DIR}/snapshot-diff")
+    set_tests_properties(plugin_editor_snapshot_diff PROPERTIES
+                         DEPENDS plugin_editor_snapshot
+                         TIMEOUT 120)
+endif()
+
 find_program(ARDOUR8_EXPORT ardour8-export)
 find_program(CARLA_JACK_SINGLE carla-jack-single HINTS /opt/carla/bin)
 find_program(JACK_REC jack_rec)

@@ -3921,7 +3921,7 @@ with an empty project, adds each plugin through the OSC control API, sends a
 MIDI note and records the plugin outputs with `jack_rec`. The Ardour render is
 88200 frames at 44100 Hz, 24-bit stereo, peak 0.609467 and RMS 0.196450. The
 Carla VST3 and CLAP renders are 132300 frames at 44100 Hz, 24-bit stereo, peak
-0.609467. A fresh image passes all seven CTests, with `linux_daws` at 24.40
+0.609467. A fresh image passes all eight CTests, with `linux_daws` at 24.23
 seconds. The Linux DAW matrix is now automated alongside the Windows REAPER and
 Renoise matrix. The macOS build and AU remain open.
 
@@ -4010,7 +4010,35 @@ steal the listening. The plugin-specific lessons are the fixed canvas and unifor
 scale, HiDPI, host automation, snapshot tests, keyboard and focus, resizable but
 not reflowable, no modal traps, and contrast and target-size accessibility.
 
-Still open: a usability test with players who did not design the panel, a
-snapshot-diff gate for UI regressions, a token linter that catches hard-coded
-values, and a firmware theme check that every token the panel uses is generated
-from `theme.json`.
+### 13.27 Snapshot gate, token linter and firmware theme (2026-11-04)
+
+`plugin_editor_snapshot_diff` is the visual regression gate. The ten editor
+snapshots are committed under `plugin/tests/snapshots/linux-x86_64`, with a
+`manifest.json` of sizes and SHA-256 hashes. The test fails on a missing, extra,
+or changed image. It runs only in the Linux container because font rasterisation
+differs on other hosts. When a UI change is intended, the diff overlays land in
+`build/plugin-juce/juce/snapshot-diff`, and the change is accepted deliberately
+with `python3 plugin/tools/snapshot_check.py --update`. The new PNGs, the
+manifest and the code go in one commit. The workflow is written in
+`plugin/tests/snapshots/README.md`.
+
+`umetate tokens` is the token gate. It checks `design/tokens.css` against
+`design/tokens.json` (94 tokens in each), runs `gen_tokens.py` and checks that
+every colour, font, size and space token is in the generated `UiTokens.h`, checks
+that `firmware/gen/theme.h` matches `firmware/theme.json`, and scans the plugin
+and firmware sources for raw colour literals, raw font families, raw `RGB()`
+calls, and undefined `THEME_*` macros.
+
+The firmware theme is now one source. `firmware/theme.json` holds the semantic
+colours, the six five-step palettes, and the chrome colours (selected, popup
+background and text, crash background, logo accent, key and key-off). `theme.h`
+generates the `THEME_*` macros and the `THEME_PALETTES` table, and is written with
+`umetate theme write firmware/theme.json firmware/gen/theme.h`. `gfx.c`,
+`rib_app.c` and `platform.c` use the generated tokens, and `gfx.c` has no colour
+literals. The target build still passes and the package is 612216 bytes, so the
+palette move did not change the output. `test_tokens` is part of
+`deep-check --python`.
+
+Still open: a usability test with players who did not design the panel. That is
+out of scope for the single-developer and small-team workflow, so a team can run
+its own when it wants one.

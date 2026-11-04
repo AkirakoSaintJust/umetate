@@ -22,35 +22,23 @@ static uint16_t cv_px[CV_MAX] __attribute__((section(".pool")));
 static uint32_t cv_w, cv_h;
 static int32_t cv_oy;            /* y offset for graph drawing */
 
-#define RGB(r, g, b) ((uint16_t)((((r) >> 3) << 11) | (((g) >> 2) << 5) | ((b) >> 3)))
-#define C_BLACK 0x0000u
+#define C_BLACK THEME_BACKGROUND
 #define C_WHITE THEME_ACCENT            /* accent: what is being touched / where we are */
-#define C_SEL   RGB(126, 200, 255)      /* the header's selected part/operator (light blue) */
+#define C_SEL   THEME_SELECTED          /* the header's selected part/operator (light blue) */
 #define C_TEXT  THEME_TEXT              /* the base text: param names (white) */
 #define C_OK    THEME_SUCCESS           /* status: ok / saved / playing */
 #define C_WARN  THEME_WARNING           /* status: muted / dirty / caution */
 #define C_ERR   THEME_ERROR             /* status: error / halted */
-#define C_POPUP_BG  RGB(30, 30, 30)     /* the popup container: near-black grey (#1E1E1E) */
-#define C_POPUP_TXT RGB(255, 255, 255)  /* the popup base text: pure white */
+#define C_POPUP_BG  THEME_POPUP_BACKGROUND /* the popup container: near-black grey */
+#define C_POPUP_TXT THEME_POPUP_TEXT    /* the popup base text: pure white */
 /* The screen is five steps, plus the accent (pink) and the header's selected
  * part/operator (light blue). Palettes are picked in the HOME-hold menu (COLOR).
  * DEFAULT: white base text (param names), bright-green page descriptions, hot-pink
  * values + the ALG readout, purple graphs, hot-pink accent (the cursor/active
  * element), light-blue selected part/operator, red muted operators/parts; the
- * rest are five steps of one colour. */
-typedef struct {
-    const char *name;
-    uint16_t c[5];
-} palette_t;
-static const palette_t PALETTES[] = {
-    {"DEFAULT", {RGB(46, 83, 51), RGB(255, 60, 60), RGB(90, 255, 90), RGB(199, 128, 255), RGB(255, 77, 148)}},
-    {"AMBER", {RGB(60, 26, 0), RGB(110, 50, 0), RGB(178, 98, 24), RGB(225, 120, 8), RGB(255, 166, 40)}},
-    {"CYAN", {RGB(0, 30, 50), RGB(0, 62, 96), RGB(38, 125, 169), RGB(56, 172, 222), RGB(140, 222, 255)}},
-    {"RED", {RGB(52, 8, 8), RGB(100, 18, 14), RGB(189, 84, 76), RGB(226, 64, 48), RGB(255, 112, 92)}},
-    {"MONO", {RGB(40, 40, 40), RGB(80, 80, 80), RGB(130, 130, 130), RGB(186, 186, 186), RGB(226, 226, 226)}},
-    {"DX", {RGB(16, 46, 46), RGB(26, 90, 92), RGB(40, 150, 152), RGB(56, 210, 212), RGB(66, 245, 245)}},   /* sloopDX: cyan */
-};
-#define NPALETTES (sizeof(PALETTES) / sizeof(PALETTES[0]))
+ * rest are five steps of one colour. The steps are generated from
+ * firmware/theme.json, so the panel and the theme cannot drift. */
+#define NPALETTES THEME_PALETTE_COUNT
 static uint16_t pal[5];
 #define C_LINE pal[0]                /* 1 rules, separators */
 #define C_DIM pal[1]                 /* 2 inactive, empty steps, units */
@@ -62,7 +50,7 @@ static void palette_set(uint32_t i)
 {
     uint32_t k;
     for (k = 0; k < 5u; k++)
-        pal[k] = PALETTES[i % NPALETTES].c[k];
+        pal[k] = THEME_PALETTES[i % NPALETTES][k];
 }
 
 static inline uint16_t swap16(uint32_t c) { return (uint16_t)(((c >> 8) & 0xFFu) | ((c & 0xFFu) << 8)); }

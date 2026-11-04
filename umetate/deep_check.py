@@ -143,6 +143,7 @@ _PYTHON_STEPS: tuple[tuple[str, list[str]], ...] = (
     ("test_web", ["python3", "-m", "umetate.test_web"]),
     ("test_cli", ["python3", "-m", "umetate.test_cli"]),
     ("test_theme", ["python3", "-m", "umetate.test_theme"]),
+    ("test_tokens", ["python3", "-m", "umetate.test_tokens"]),
     ("test_perf", ["python3", "-m", "umetate.test_perf"]),
 )
 

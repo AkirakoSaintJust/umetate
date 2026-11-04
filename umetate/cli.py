@@ -31,6 +31,7 @@ COMMANDS: dict[str, tuple[str, str]] = {
     "publish": ("assemble a distributable firmware repo", "publish"),
     "budget": ("measure the polyphony budget", "budget"),
     "theme": ("check/generate a WCAG-verified palette", "theme"),
+    "tokens": ("check UI tokens + hard-coded values", "tokens"),
     "lint": ("the C standing checks", "lint"),
     "fmt": ("clang-format the repo", "fmt"),
     "web-build": ("emscripten -> the FM-1 firmware emulator", "web:build_main"),

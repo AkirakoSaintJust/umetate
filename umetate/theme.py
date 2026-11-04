@@ -20,7 +20,8 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from typing import TypedDict
+from pathlib import Path
+from typing import NotRequired, TypedDict
 
 # role -> the minimum contrast against `background` (WCAG 2.1 AA).
 _ROLE_MIN = {
@@ -36,10 +37,11 @@ _FOREGROUND = tuple(_ROLE_MIN)  # the roles checked against background
 
 
 class Theme(TypedDict):
-    """A palette: `{name, colors: {role: "#RRGGBB"}}`."""
+    """A palette: `{name, colors: {role: "#RRGGBB"}, palettes?: {name: [...]}}`."""
 
     name: str
     colors: dict[str, str]
+    palettes: NotRequired[dict[str, list[str]]]
 
 
 RGB = tuple[int, int, int]
@@ -66,32 +68,31 @@ def rgb_to_rgb565(c: RGB) -> int:
     return ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3)
 
 
-_EMIT_ROLES = (
-    "background",
-    "surface",
-    "text",
-    "muted",
-    "accent",
-    "success",
-    "warning",
-    "error",
-)
-
-
 def emit_c(theme: Theme) -> str:
-    """A C header of the role colours as RGB565 `#define`s (for gfx.c)."""
+    """A C header of the colour roles and palettes as RGB565 `#define`s."""
     colors = theme["colors"]
     lines = [
-        "/* GENERATED — do not edit. Source: firmware/theme.json "
-        "(umetate theme emit firmware/theme.json). */",
+        "/* GENERATED - do not edit. Source: firmware/theme.json "
+        "(umetate theme write firmware/theme.json firmware/gen/theme.h). */",
         "#pragma once",
     ]
-    for role in _EMIT_ROLES:
-        if role not in colors:
-            continue
-        value = rgb_to_rgb565(hex_to_rgb(colors[role]))
+    for role, value in colors.items():
+        rgb565 = rgb_to_rgb565(hex_to_rgb(value))
         macro = "THEME_" + role.upper()
-        lines.append(f"#define {macro} 0x{value:04X}u")
+        lines.append(f"#define {macro} 0x{rgb565:04X}u")
+    palettes = theme.get("palettes", {})
+    if palettes:
+        lines.append("")
+        lines.append(f"#define THEME_PALETTE_COUNT {len(palettes)}")
+        lines.append("static const uint16_t THEME_PALETTES[THEME_PALETTE_COUNT][5] = {")
+        for name, steps in palettes.items():
+            if len(steps) != 5:
+                raise ValueError(f"palette {name!r} needs 5 colours")
+            values = ", ".join(
+                f"0x{rgb_to_rgb565(hex_to_rgb(step)):04X}u" for step in steps
+            )
+            lines.append(f"    {{ {values} }}, /* {name} */")
+        lines.append("};")
     return "\n".join(lines) + "\n"
 
 
@@ -188,11 +189,14 @@ def _print_report(theme: Theme) -> None:
         print(f"  {line}")
 
 
-def _read_theme(path: str) -> Theme:
-    """Read a theme.json (`{name, colors}`) from `path`."""
+def read_theme(path: str) -> Theme:
+    """Read a theme.json (`{name, colors, palettes?}`) from `path`."""
     with open(path, encoding="utf-8") as f:
         raw = json.load(f)
-    return {"name": raw.get("name", "palette"), "colors": raw["colors"]}
+    theme: Theme = {"name": raw.get("name", "palette"), "colors": raw["colors"]}
+    if "palettes" in raw:
+        theme["palettes"] = raw["palettes"]
+    return theme
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -207,11 +211,16 @@ def main(argv: list[str] | None = None) -> int:
     )
     emit_p = sub.add_parser("emit", help="emit a C header (RGB565) from a theme.json")
     emit_p.add_argument("palette", help="a theme.json (`{name, colors}`)")
+    write_p = sub.add_parser("write", help="write the C header into the repo")
+    write_p.add_argument("palette", help="a theme.json (`{name, colors}`)")
+    write_p.add_argument(
+        "output", help="the header to write, e.g. firmware/gen/theme.h"
+    )
     args = parser.parse_args(argv)
 
     if args.action == "check":
         try:
-            theme = _read_theme(args.palette)
+            theme = read_theme(args.palette)
         except (OSError, json.JSONDecodeError) as exc:
             print(f"theme: cannot read {args.palette!r}: {exc}", file=sys.stderr)
             return 1
@@ -220,11 +229,23 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.action == "emit":
         try:
-            theme = _read_theme(args.palette)
+            theme = read_theme(args.palette)
         except (OSError, json.JSONDecodeError) as exc:
             print(f"theme: cannot read {args.palette!r}: {exc}", file=sys.stderr)
             return 1
         print(emit_c(theme), end="")
+        return 0
+
+    if args.action == "write":
+        try:
+            theme = read_theme(args.palette)
+        except (OSError, json.JSONDecodeError) as exc:
+            print(f"theme: cannot read {args.palette!r}: {exc}", file=sys.stderr)
+            return 1
+        output = Path(args.output)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_bytes(emit_c(theme).encode("utf-8"))
+        print(f"theme: wrote {output}")
         return 0
 
     theme = generate(args.hue)

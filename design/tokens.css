@@ -24,6 +24,7 @@
   --p1-font-ui: "DotGothic16", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", "Cascadia Mono", ui-monospace, monospace;
   --p1-font-display: "Zen Dots", "DotGothic16", "Hiragino Kaku Gothic ProN", "Yu Gothic", ui-monospace, monospace;
   --p1-font-brand: "Digital Desolation Plus", "Arial Black", Impact, sans-serif;
+  --p1-font-brand-fallback: "Arial Black";
 
   /* type */
   --p1-text-base: 16px;
@@ -91,12 +92,15 @@
   --p1-penv-knob-cell: 52px;
   --p1-penv-knob-dial: 38px;
   --p1-kv-knob-cell: 64px;
+  --p1-kv-knob-dial: 42px;
   --p1-mute-tile-width: 36px;
   --p1-mute-tile-height: 22px;
   --p1-legend-square: 15px;
   --p1-level-track-height: 14px;
   --p1-toggle-width: 26px;
   --p1-toggle-height: 12px;
+  --p1-scroller-max-patch: 260px;
+  --p1-scroller-max-part: 240px;
 
   /* borders and shape */
   --p1-border-width: 1px;

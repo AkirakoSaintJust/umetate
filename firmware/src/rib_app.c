@@ -54,9 +54,9 @@ static int quiet(void)
 }
 
 /* ---- the screen: the keyboard is drawn directly (the instrument; the UI kit renders the panel's widgets) */
-#define C_ACC RGB(180, 140, 255)                /* lilac, as the logo */
-#define C_KEY RGB(210, 210, 210)
-#define C_OFF RGB(90, 90, 90)
+#define C_ACC THEME_LOGO_ACCENT                 /* lilac, as the logo */
+#define C_KEY THEME_KEY
+#define C_OFF THEME_KEY_OFF
 #define KEY0 53u                                /* key 0 = F3 */
 static int black(uint32_t note) { return (0x54Au >> (note % 12u)) & 1u; }
 

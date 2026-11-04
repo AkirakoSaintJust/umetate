@@ -155,7 +155,7 @@
   Carla renders the VST3 and CLAP builds to 132300 frames at 44100 Hz, 24-bit
   stereo, peak 0.609467.
 - The fresh `umetate-host-build:dawtest` image configures with JUCE and CLAP
-  enabled and passes all 7 CTests, with `linux_daws` at 24.40 seconds.
+  enabled and passes all 8 CTests, with `linux_daws` at 24.23 seconds.
 - `plugin_smoke` now proves a full 313-parameter state round trip, not only one
   parameter.
 - The remaining warning is in the wrapper state loader, not in the processor.

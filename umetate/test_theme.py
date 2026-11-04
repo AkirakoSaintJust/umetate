@@ -17,35 +17,12 @@ from .theme import (
     generate,
     hex_to_rgb,
     luminance,
+    read_theme,
     rgb_to_hex,
     rgb_to_rgb565,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-
-# the shipped gfx.c PALETTES (8-bit source), step 2 = C_GRAY (page descriptions,
-# bright green), 3 = C_AMB (graphs, purple), 4 = C_HI (values, hot pink). Mirrors
-# firmware/src/gfx.c — keep in sync.
-_SHIPPED: dict[str, list[tuple[int, int, int]]] = {
-    "DEFAULT": [
-        (46, 83, 51),
-        (255, 60, 60),
-        (90, 255, 90),
-        (199, 128, 255),
-        (255, 77, 148),
-    ],
-    "AMBER": [(60, 26, 0), (110, 50, 0), (178, 98, 24), (225, 120, 8), (255, 166, 40)],
-    "CYAN": [(0, 30, 50), (0, 62, 96), (38, 125, 169), (56, 172, 222), (140, 222, 255)],
-    "RED": [(52, 8, 8), (100, 18, 14), (189, 84, 76), (226, 64, 48), (255, 112, 92)],
-    "MONO": [
-        (40, 40, 40),
-        (80, 80, 80),
-        (130, 130, 130),
-        (186, 186, 186),
-        (226, 226, 226),
-    ],
-    "DX": [(16, 46, 46), (26, 90, 92), (40, 150, 152), (56, 210, 212), (66, 245, 245)],
-}
 
 _BLACK = (0, 0, 0)
 
@@ -82,9 +59,15 @@ def main() -> int:
     else:
         print("ok: check flags a low-contrast text")
 
-    # 4. the shipped gfx.c palettes: labels (step 2) and values (step 4) >= 4.5:1,
+    # 4. the shipped palettes: labels (step 2) and values (step 4) >= 4.5:1,
     #    secondary (step 3) >= 3:1 against black (the 1.4.3/1.4.11 floors).
-    for name, steps in _SHIPPED.items():
+    raw = json.loads((ROOT / "firmware" / "theme.json").read_text(encoding="utf-8"))
+    colors = raw["colors"]
+    palettes = {
+        name: [hex_to_rgb(step) for step in steps]
+        for name, steps in raw.get("palettes", {}).items()
+    }
+    for name, steps in palettes.items():
         label = contrast(steps[2], _BLACK)
         amb = contrast(steps[3], _BLACK)
         hi = contrast(steps[4], _BLACK)
@@ -94,17 +77,17 @@ def main() -> int:
         else:
             print(f"ok: {name} palette meets contrast ({label:.2f}/{amb:.2f}/{hi:.2f})")
 
-    # 4b. the popup roles (gfx.c): #1E1E1E container, #FFFFFF text, C_AMB selected,
-    #     C_HI highlights. The text must read (4.5:1) and both accents stay visible
-    #     (3:1) on the container in every palette.
-    popup_bg = (30, 30, 30)
-    text_contrast = contrast((255, 255, 255), popup_bg)
+    # 4b. the popup roles: the container and text come from theme.json. The text
+    #     must read (4.5:1) and both accents stay visible (3:1) in every palette.
+    popup_bg = hex_to_rgb(colors["popup_background"])
+    popup_text = hex_to_rgb(colors["popup_text"])
+    text_contrast = contrast(popup_text, popup_bg)
     if text_contrast < 4.5:
         print(f"FAIL: popup text contrast {text_contrast:.2f}")
         failures += 1
     else:
         print(f"ok: popup text contrast {text_contrast:.2f}")
-    for name, steps in _SHIPPED.items():
+    for name, steps in palettes.items():
         sel = contrast(steps[3], popup_bg)
         hi = contrast(steps[4], popup_bg)
         if sel < 3.0 or hi < 3.0:
@@ -124,11 +107,14 @@ def main() -> int:
         failures += 1
     else:
         print("ok: cyan -> RGB565 0x07FF")
-    raw = json.loads((ROOT / "firmware" / "theme.json").read_text(encoding="utf-8"))
-    emitted = emit_c({"name": raw["name"], "colors": raw["colors"]})
+    theme = read_theme(str(ROOT / "firmware" / "theme.json"))
+    emitted = emit_c(theme)
     checked = (ROOT / "firmware" / "gen" / "theme.h").read_text(encoding="utf-8")
     if emitted != checked:
-        print("FAIL: firmware/gen/theme.h is stale (run `umetate theme emit`)")
+        print(
+            "FAIL: firmware/gen/theme.h is stale "
+            "(run `umetate theme write firmware/theme.json firmware/gen/theme.h`)"
+        )
         failures += 1
     else:
         print("ok: firmware/gen/theme.h is in sync with theme.json")

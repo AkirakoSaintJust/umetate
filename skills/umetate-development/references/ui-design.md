@@ -224,6 +224,8 @@ state language.
 Before you call a UI done, run this:
 
 - A 1x screenshot of every page and every dialog, current with the code.
+- The snapshot diff gate is green, or the change was reviewed and accepted with
+  `snapshot_check.py --update` in the same commit.
 - A zoomed check of the dense areas, the labels, and the value fields.
 - Every control clicked or typed once, including cancel and the destructive path.
 - The fixed height measured across every page.
@@ -234,6 +236,8 @@ Before you call a UI done, run this:
   parameter is reachable.
 - A plugin check that every control maps to a host parameter, and every host
   parameter is reachable.
+- `umetate tokens` is clean: one token source, generated headers current, no raw
+  colours or font families in the UI source.
 - A fresh reader test: can they make a sound and find the save without help?
 
 ## Definition of done
@@ -242,6 +246,7 @@ Before you call a UI done, run this:
 - The tokens are in sync and the generated headers are current.
 - The mockup and the implementation show the same layout, type, and state.
 - Every interactive control has been exercised.
-- Every page has a current snapshot.
+- Every page has a current snapshot, and the snapshot diff is green or the change
+  was accepted deliberately.
 - The roadmap has one line for the milestone.
 - The design docs and the skill references still describe what was built.

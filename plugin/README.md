@@ -510,7 +510,8 @@ fetched at the pinned commit. The artifacts are under
 On Windows the same paths use backslashes and the VST3 bundle contains
 `Contents\x86_64-win`. The editor snapshots are under
 `build/plugin-juce/juce/snapshots`. The `plugin_editor_snapshot` CTest uses
-`xvfb-run` when it is available.
+`xvfb-run` when it is available. `plugin_editor_snapshot_diff` compares the PNGs
+with the committed Linux golden set.
 
 `plugin_stability` is the edge-case sweep. It sets every manifest parameter to
 both ends of its range, fires 256 simultaneous notes, runs a deterministic
@@ -521,6 +522,35 @@ DAW:
 
 ```sh
 ctest --test-dir build/plugin-juce -R plugin_stability --output-on-failure
+```
+
+`plugin_editor_snapshot_diff` is the visual gate. It compares the ten editor
+PNGs with `plugin/tests/snapshots/linux-x86_64` and fails on a missing, extra,
+or changed image. The gate runs only in the Linux container because font
+rasterisation differs on other hosts. When the UI is supposed to change, review
+the diff overlays under `build/plugin-juce/juce/snapshot-diff`, then accept the
+change deliberately:
+
+```sh
+python3 plugin/tools/snapshot_check.py --update \
+  --actual build/plugin-juce/juce/snapshots \
+  --golden plugin/tests/snapshots/linux-x86_64
+```
+
+Commit the new golden PNGs, `manifest.json`, and the code in the same commit.
+
+`umetate tokens` is the token gate. It checks `design/tokens.css` against
+`design/tokens.json`, runs `gen_tokens.py` and checks that every colour, font,
+size and space token is in the generated `UiTokens.h`, checks that
+`firmware/gen/theme.h` matches `firmware/theme.json`, and scans the plugin and
+firmware sources for raw colours, raw font families, raw `RGB()` calls, and
+undefined `THEME_*` macros. The firmware palettes and chrome colours are now in
+`firmware/theme.json`, so `gfx.c` has no colour literals. After editing
+`firmware/theme.json`, regenerate the header with
+`umetate theme write firmware/theme.json firmware/gen/theme.h`.
+
+```sh
+umetate tokens
 ```
 
 To stage release bundles, run `umetate publish --plugins --vendor-deps

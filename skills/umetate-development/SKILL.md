@@ -221,9 +221,18 @@ content surfaces not, a fixed canvas scaled as one image, generated tokens share
 by the web, the plugin, and the firmware, an explicit state language, and copy
 that earns its place. Do not add a widget to fill a hole.
 
+After the panel or editor, run the token gate. `umetate tokens` checks the token
+sources, the generated headers, and the UI sources for raw colours and fonts. A
+plugin editor also runs the snapshot diff. When the UI is meant to change,
+review the diff and accept it deliberately with
+`plugin/tools/snapshot_check.py --update`, then commit the golden images with
+the code. A snapshot that changed without an accepted update is a regression,
+not a refresh.
+
 **Exit:** every control is mapped to a param or action, or explicitly marked
 unmapped, every binding target is a param from the manifest, the control flow is
-complete and user-confirmed, and all ten items above are written.
+complete and user-confirmed, all ten items above are written, and
+`umetate tokens` is clean.
 
 ### 3. Implementation plan
 

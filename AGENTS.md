@@ -62,12 +62,18 @@ and research links are in `ui-dossier.md`. The Type P.fm1 language is
 
 ```sh
 python -m umetate.cli deep-check --all          # the full gate
+python -m umetate.cli tokens                    # design tokens + hard-coded UI values
 python -m umetate.cli build --synth examples/type-p-fm1
 python -m umetate.cli publish --plugins --vendor-deps build/plugin-juce/_deps
 cmake -S plugin -B build/plugin-juce -DP1_BUILD_JUCE=ON -DP1_BUILD_CLAP=ON
 cmake --build build/plugin-juce
 ctest --test-dir build/plugin-juce --output-on-failure
 ```
+
+When the UI is meant to change, review the snapshot diff, then accept it with
+`python3 plugin/tools/snapshot_check.py --update --actual <build>/juce/snapshots
+--golden plugin/tests/snapshots/linux-x86_64`. Commit the golden images with the
+code.
 
 The Docker image is the pinned Linux host. See `docker/README.md` and
 `umetate/runner.py`. JACK needs `--shm-size=512m`.
