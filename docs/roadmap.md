@@ -4191,3 +4191,31 @@ needed a larger `jack_rec` disk buffer on the loaded host. With `-B 65536`,
 Ardour and both Carla renders pass, and the VST3 and CLAP renders peak at
 0.609467. `plugin-build` now defaults to four parallel jobs. An unbounded 16-way
 compile wedged the Docker VM during the first generated-project build.
+
+### 13.32 Release page and checksums for publish (2026-11-04)
+
+`umetate publish` now writes `RELEASES.md`, `SHA256SUMS`, and `release.json` next
+to the firmware and the plugin archives. The page lists every download with its
+platform, format, size, and SHA-256. The JSON manifest carries the product,
+version, source commit, date, and the same artifact list. The version comes from
+the newest `## x.y.z` heading in the project's `docs/release-notes.md`. The
+checksum file uses the `sha256sum -c` format.
+
+The firmware was already copied into the published repo. The release files make
+it a first-class download instead of a file named only in the README. The plugin
+archives stay under `plugins/<platform>/`. The corresponding source is `src/`,
+`framework/`, and `vendor/deps/` when `--vendor-deps` is used, so the engine
+source and the JUCE obligations travel in the same repo.
+
+The vendor copy replaces `vendor/deps/` on each run and skips `.git`. The first
+rerun failed on the read-only git pack files left by the previous copy. The
+release page mentions `vendor/deps/` only when the directory exists, and the
+AGPL paragraph only when the manifest contains a plugin archive. The handwritten
+Type P.fm1 README is still copied verbatim. It gained a short Downloads section
+that links to `RELEASES.md`, `plugins/`, and `plugins/README.md`.
+
+Verified with `publish --plugins --vendor-deps build/plugin-juce/_deps`:
+`RELEASES.md` lists the 612216 byte firmware and the two Linux plugin archives,
+`release.json` has all three entries, and `sha256sum -c SHA256SUMS` passes. The
+published `framework/` tree comes from the committed source, so the release
+manifest names the commit that carries the publish code.

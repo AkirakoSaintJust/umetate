@@ -70,7 +70,7 @@ python -m umetate.cli build --synth examples/type-p-fm1
 python -m umetate.cli plugin-generate --synth examples/type-p-fm1
 python -m umetate.cli plugin-build --synth examples/type-p-fm1
 python -m umetate.cli plugin-check --synth examples/type-p-fm1
-python -m umetate.cli publish --plugins --vendor-deps build/plugin-juce/_deps
+python -m umetate.cli publish --plugins --vendor-deps build/plugin-juce/_deps  # + RELEASES.md, SHA256SUMS, release.json
 cmake -S plugin -B build/plugin-juce -DP1_BUILD_JUCE=ON -DP1_BUILD_CLAP=ON
 cmake --build build/plugin-juce
 ctest --test-dir build/plugin-juce --output-on-failure

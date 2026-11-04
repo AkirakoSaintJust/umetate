@@ -506,12 +506,13 @@ state tree id. `plugin-build` renders, configures, builds, and runs ctest.
 `plugin-check` verifies the generated tree and runs ctest in the existing build
 tree. The Python tests cover the generate/check round trip and the identity
 validation. `publish` copies `plugin.json` into `src/` and stages only the real
-artefacts, not the Linux DAW test's isolated copies. The plain
-`cmake -S plugin` build keeps the checked-in Type P.fm1 defaults, so the
-existing validator and DAW evidence does not depend on the generated project.
-The generated project built in `build/plugin/type_p_fm1/build` and passed the
-same eight CTest cases as the plain tree. `plugin-build` defaults to four jobs
-because an unbounded compile can exhaust a small Docker VM.
+artefacts, not the Linux DAW test's isolated copies. It also writes `RELEASES.md`,
+`SHA256SUMS`, and `release.json`, which cover the firmware and the plugin
+archives. The plain `cmake -S plugin` build keeps the checked-in Type P.fm1
+defaults, so the existing validator and DAW evidence does not depend on the
+generated project. The generated project built in `build/plugin/type_p_fm1/build`
+and passed the same eight CTest cases as the plain tree. `plugin-build` defaults
+to four jobs because an unbounded compile can exhaust a small Docker VM.
 
 Plain checkout, bridge only:
 

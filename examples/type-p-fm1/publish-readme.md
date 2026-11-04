@@ -39,10 +39,13 @@ Phase on, industrial punks!
 - [MIDI and SysEx](docs/midi-and-sysex.md)
 - [Patch sheet](docs/patch-sheet.md)
 
+## Downloads
+
+[`RELEASES.md`](RELEASES.md) lists the firmware, the plugin archives, the checksums, and the source locations. The optional VST3 and CLAP builds are in [`plugins/`](plugins/), with install steps in [`plugins/README.md`](plugins/README.md). They use the same engine and the same patch banks as the firmware.
+
 ## Releases
 
-[CHANGELOG.md](CHANGELOG.md)
-
+[CHANGELOG.md](CHANGELOG.md) lists what changed.
 
 ## Licence
 

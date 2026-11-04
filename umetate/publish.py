@@ -12,15 +12,22 @@ bump the release notes, push.
 from __future__ import annotations
 
 import argparse
+import contextlib
+import hashlib
 import io
 import json
+import os
 import platform as _platform
+import re
 import shutil
+import stat
 import subprocess
 import sys
 import tarfile
 import zipfile
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import TypedDict
 
 from ._ir import to_c_identifier
 
@@ -30,6 +37,21 @@ _FW_BUILD = _ROOT / "firmware" / "build"
 _WEB_BUILD = _ROOT / "build" / "web"
 _EMU_DIR = _ROOT / "firmware" / "web_emu"
 _PUBLISH = _ROOT / "publish"
+
+_RELEASE_FILE = "RELEASES.md"
+_CHECKSUM_FILE = "SHA256SUMS"
+_MANIFEST_FILE = "release.json"
+
+
+class ReleaseArtifact(TypedDict):
+    """One downloadable artifact in the release manifest."""
+
+    path: str
+    platform: str
+    format: str
+    size: int
+    sha256: str
+
 
 # the served web app: the emulator page + worklet are source files in
 # `firmware/web_emu/`; `firmware.wasm` is the compiled artifact in `build/web/`.
@@ -130,6 +152,11 @@ The screen is the same 240 by 240 panel you see on the device.
 ## Release notes
 
 [CHANGELOG.md](CHANGELOG.md) lists what changed in each version.
+
+## Downloads
+
+[`RELEASES.md`](RELEASES.md) lists the firmware and plugin downloads, their
+checksums, and the source locations.
 {plugins}
 ## Licence
 
@@ -452,6 +479,172 @@ def _stage_plugins(
     return staged
 
 
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _version_of(synth_dir: Path) -> str:
+    """The newest `## x.y.z` heading in the release notes."""
+    notes = synth_dir / "docs" / "release-notes.md"
+    try:
+        text = notes.read_text(encoding="utf-8")
+    except OSError:
+        return "unreleased"
+    match = re.search(r"^##\s+v?([0-9]+\.[0-9]+\.[0-9]+)\s*$", text, re.MULTILINE)
+    return match.group(1) if match else "unreleased"
+
+
+def _source_commit() -> str:
+    """The short commit the published source came from, when git is available."""
+    try:
+        proc = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=_ROOT,
+            capture_output=True,
+            text=True,
+        )
+    except OSError:
+        return "unknown"
+    if proc.returncode != 0:
+        return "unknown"
+    return proc.stdout.strip() or "unknown"
+
+
+def _release_artifacts(out: Path, name: str) -> list[ReleaseArtifact]:
+    """The firmware and every staged plugin archive, with sizes and hashes."""
+    artifacts: list[ReleaseArtifact] = []
+    firmware = out / f"{name}.fwsc"
+    if firmware.is_file():
+        artifacts.append(
+            {
+                "path": firmware.name,
+                "platform": "M-VAVE FM-1",
+                "format": "firmware",
+                "size": firmware.stat().st_size,
+                "sha256": _sha256(firmware),
+            }
+        )
+    for path in sorted((out / "plugins").glob("*/*.zip")):
+        upper = path.name.upper()
+        fmt = "VST3" if "VST3" in upper else "CLAP" if "CLAP" in upper else "plugin"
+        artifacts.append(
+            {
+                "path": path.relative_to(out).as_posix(),
+                "platform": path.parent.name,
+                "format": fmt,
+                "size": path.stat().st_size,
+                "sha256": _sha256(path),
+            }
+        )
+    return artifacts
+
+
+def _human_size(size: int) -> str:
+    if size >= 1024 * 1024:
+        return f"{size / (1024 * 1024):.1f} MB"
+    if size >= 1024:
+        return f"{size / 1024:.1f} kB"
+    return f"{size} B"
+
+
+def _write_release(
+    out: Path,
+    title: str,
+    version: str,
+    commit: str,
+    artifacts: list[ReleaseArtifact],
+    released: str | None = None,
+) -> None:
+    """Write `RELEASES.md`, `SHA256SUMS`, and `release.json` for the downloads."""
+    released = released or datetime.now(UTC).strftime("%Y-%m-%d")
+    lines = [
+        f"# {title} {version}",
+        "",
+        f"Released {released} from umetate `{commit}`.",
+        "",
+        "## Downloads",
+        "",
+        "| File | Platform | Format | Size | SHA-256 |",
+        "| --- | --- | --- | --- | --- |",
+    ]
+    sums: list[str] = []
+    for artifact in artifacts:
+        path = artifact["path"]
+        digest = artifact["sha256"]
+        lines.append(
+            f"| [`{Path(path).name}`]({path}) | {artifact['platform']} | "
+            f"{artifact['format']} | {_human_size(artifact['size'])} | `{digest}` |"
+        )
+        sums.append(f"{digest}  {path}")
+    lines += [
+        "",
+        "The firmware is the device image. Flash it with `umetate flash`.",
+    ]
+    has_plugins = any(artifact["format"] != "firmware" for artifact in artifacts)
+    if has_plugins:
+        lines += [
+            "The plugin archives are optional and use the same engine as the firmware",
+            "and the web app.",
+        ]
+    lines += [
+        "",
+        "## Sources",
+        "",
+        "- `src/` is the project: the patch, the panel, the app glue, and the plugin",
+        "  identity.",
+        "- `framework/` is the complete umetate source, including the generator, the",
+        "  plugin, and the tests.",
+    ]
+    if (out / "vendor" / "deps").is_dir():
+        lines.append("- `vendor/deps/` carries the fetched plugin dependency source.")
+    lines += [
+        "- `LICENSING.md`, `DEPENDENCIES.md`, and `third-party-licenses/` carry the",
+        "  notices and the exact upstream pins.",
+        "",
+        "## Licence",
+        "",
+        "The firmware and the umetate source are GPL-3.0-only.",
+    ]
+    if has_plugins:
+        lines += [
+            "The plugin archives link JUCE 8, which is AGPL-3.0-only or commercial,",
+            "so the plugin archives are conveyed under the AGPL-3.0-only terms for",
+            "the JUCE part.",
+        ]
+    lines += [
+        "See `LICENSING.md`.",
+        "",
+        f"`{_CHECKSUM_FILE}` lists every download. Verify with",
+        f"`sha256sum -c {_CHECKSUM_FILE}`.",
+        "",
+    ]
+    (out / _RELEASE_FILE).write_text("\n".join(lines), encoding="utf-8")
+    (out / _CHECKSUM_FILE).write_text("\n".join(sums) + "\n", encoding="utf-8")
+    manifest = {
+        "product": title,
+        "version": version,
+        "commit": commit,
+        "date": released,
+        "artifacts": artifacts,
+    }
+    (out / _MANIFEST_FILE).write_text(
+        json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
+    )
+
+
+def _remove_tree(path: Path) -> None:
+    """Remove a tree even when the copied files are read-only."""
+    for root, dirs, files in os.walk(path):
+        for name in dirs + files:
+            with contextlib.suppress(OSError):
+                (Path(root) / name).chmod(stat.S_IWRITE | stat.S_IREAD | stat.S_IEXEC)
+    shutil.rmtree(path)
+
+
 def _write_dependencies(out: Path, vendored: bool) -> None:
     text = _DEPENDENCIES
     if vendored:
@@ -545,8 +738,13 @@ def main(argv: list[str] | None = None) -> int:
     vendored = False
     if args.vendor_deps:
         if args.vendor_deps.is_dir():
+            dest = out / "vendor" / "deps"
+            if dest.exists():
+                _remove_tree(dest)
             shutil.copytree(
-                args.vendor_deps, out / "vendor" / "deps", dirs_exist_ok=True
+                args.vendor_deps,
+                dest,
+                ignore=shutil.ignore_patterns(".git"),
             )
             vendored = True
         else:
@@ -568,10 +766,19 @@ def main(argv: list[str] | None = None) -> int:
         )
         (out / "README.md").write_text(readme, encoding="utf-8")
 
+    _write_release(
+        out,
+        title,
+        _version_of(synth_dir),
+        _source_commit(),
+        _release_artifacts(out, name),
+    )
+
     print(f"publish: {out}")
     print(
-        "  README.md, CHANGELOG.md, LICENSE, LICENSING.md, DEPENDENCIES.md, "
-        "src/, docs/, framework/, the web app (root), and " + f"{name}.fwsc"
+        "  RELEASES.md, SHA256SUMS, release.json, README.md, CHANGELOG.md, "
+        "LICENSE, LICENSING.md, DEPENDENCIES.md, src/, docs/, framework/, the "
+        "web app (root), and " + f"{name}.fwsc"
     )
     if staged:
         print(f"  plugins/{platform}/: " + ", ".join(staged))

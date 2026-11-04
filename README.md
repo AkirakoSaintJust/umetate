@@ -83,7 +83,9 @@ macOS DAW matrix are still open. The evidence is in `plugin/`.
 
 `umetate publish` stages a release: the user docs, the `.fwsc` firmware, the
 framework source, the plugin bundles, the third-party licences, and optionally the
-vendored dependency source. Build artefacts stay in the ignored `build/` tree.
+vendored dependency source. It writes `RELEASES.md`, `SHA256SUMS`, and
+`release.json` so the firmware and plugin downloads carry checksums and source
+links. Build artefacts stay in the ignored `build/` tree.
 
 ```sh
 umetate publish --plugins --vendor-deps build/plugin-juce/_deps

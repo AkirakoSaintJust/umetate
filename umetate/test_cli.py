@@ -959,6 +959,59 @@ def _plugin_identity_rules() -> None:
             raise AssertionError("a quoted product name must be rejected")
 
 
+def _publish_release_manifest() -> None:
+    """The release page, checksums, and manifest cover the firmware and plugins."""
+    from . import publish
+
+    with tempfile.TemporaryDirectory() as tmp:
+        out = Path(tmp) / "release"
+        out.mkdir()
+        (out / "type-p-fm1.fwsc").write_bytes(b"fw")
+        plugin = out / "plugins" / "linux-x86_64" / "Type-P.fm1-VST3-linux-x86_64.zip"
+        plugin.parent.mkdir(parents=True)
+        plugin.write_bytes(b"vst3")
+        (out / "vendor" / "deps").mkdir(parents=True)
+
+        synth = Path(tmp) / "synth"
+        (synth / "docs").mkdir(parents=True)
+        (synth / "docs" / "release-notes.md").write_text(
+            "# Notes\n\n## 1.2.3\n\n- x\n", encoding="utf-8"
+        )
+        version = publish._version_of(synth)  # pyright: ignore[reportPrivateUsage]
+        assert version == "1.2.3", version
+
+        artifacts = publish._release_artifacts(  # pyright: ignore[reportPrivateUsage]
+            out, "type-p-fm1"
+        )
+        assert [artifact["format"] for artifact in artifacts] == [
+            "firmware",
+            "VST3",
+        ], artifacts
+        publish._write_release(  # pyright: ignore[reportPrivateUsage]
+            out,
+            "Type P.fm1",
+            version,
+            "abc1234",
+            artifacts,
+            released="2026-11-04",
+        )
+
+        sums = (out / "SHA256SUMS").read_text(encoding="utf-8").splitlines()
+        assert len(sums) == 2, sums
+        assert all(len(line.split()[0]) == 64 for line in sums), sums
+
+        page = (out / "RELEASES.md").read_text(encoding="utf-8")
+        assert "# Type P.fm1 1.2.3" in page
+        assert "abc1234" in page
+        assert "type-p-fm1.fwsc" in page and "Type-P.fm1-VST3" in page
+        assert "src/" in page and "framework/" in page and "vendor/deps/" in page
+
+        manifest = json.loads((out / "release.json").read_text(encoding="utf-8"))
+        assert manifest["version"] == "1.2.3"
+        assert manifest["commit"] == "abc1234"
+        assert len(manifest["artifacts"]) == 2
+
+
 def main() -> int:
     tests: _Tests = [
         ("no import side effects", _no_import_side_effects),
@@ -992,6 +1045,10 @@ def main() -> int:
         (
             "publish carries the plugin source + bundles",
             _publish_includes_plugin_source,
+        ),
+        (
+            "publish writes the release page, checksums + manifest",
+            _publish_release_manifest,
         ),
         (
             "plugin-generate renders the project and catches drift",
