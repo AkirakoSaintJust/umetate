@@ -472,8 +472,9 @@ def _stage_plugins(
         "## Builds",
         "",
     ]
-    for name in staged:
-        lines.append(f"- `{platform}/{name}`")
+    for path in sorted((out / "plugins").glob("*/*.zip")):
+        relative = path.relative_to(out / "plugins").as_posix()
+        lines.append(f"- `{relative}`")
     lines.append("")
     (out / "plugins" / "README.md").write_text("\n".join(lines), encoding="utf-8")
     return staged
@@ -564,7 +565,7 @@ def _write_release(
     lines = [
         f"# {title} {version}",
         "",
-        f"Released {released} from umetate `{commit}`.",
+        f"Released {released} from source `{commit}`.",
         "",
         "## Downloads",
         "",

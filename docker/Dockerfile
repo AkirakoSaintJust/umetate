@@ -20,7 +20,7 @@ RUN apt-get update && apt-get upgrade -y \
 # is upgraded past the flagged CVEs (CVE-2024-6345, CVE-2025-47273). pyright is the
 # second type-checker (its "partially unknown" diagnostics catch what mypy can't).
 RUN pip3 install --no-cache-dir --break-system-packages \
-        setuptools pillow==13.0.0 jsonschema==4.26.0 \
+        setuptools pillow==13.0.0 jsonschema==4.26.0 pyliblo3==0.16.3 \
         ruff==0.17.2 mypy==2.4.0 pyright==1.1.414
 
 # Emscripten (version pinned in env.lock). Its bundled node/npm (not the apt ones)

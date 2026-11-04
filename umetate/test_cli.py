@@ -845,6 +845,23 @@ def _publish_includes_plugin_source() -> None:
         readme = (out / "plugins" / "README.md").read_text(encoding="utf-8")
         assert "AGPL-3.0-only" in readme, "plugin readme omits the JUCE licence"
 
+        win_build = root / "build-win"
+        win_vst3 = (
+            win_build
+            / "juce"
+            / "type_p_fm1_artefacts"
+            / "Release"
+            / "VST3"
+            / "Type P.fm1.vst3"
+        )
+        (win_vst3 / "Contents" / "x86_64-win").mkdir(parents=True)
+        (win_vst3 / "Contents" / "x86_64-win" / "Type P.fm1.vst3").write_bytes(b"vst3")
+        staged_win = stage_plugins(out, win_build, "windows-x86_64")
+        assert len(staged_win) == 1, staged_win
+        readme = (out / "plugins" / "README.md").read_text(encoding="utf-8")
+        assert "linux-x86_64/Type-P.fm1-VST3-linux-x86_64.zip" in readme
+        assert "windows-x86_64/Type-P.fm1-VST3-windows-x86_64.zip" in readme
+
         write_dependencies(out, vendored=True)
         deps = (out / "DEPENDENCIES.md").read_text(encoding="utf-8")
         assert "8.0.9" in deps and "7adee3a" in deps, "dependency pins are missing"

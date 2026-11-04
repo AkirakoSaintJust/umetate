@@ -4220,3 +4220,31 @@ Verified with `publish --plugins --vendor-deps build/plugin-juce/_deps`:
 `release.json` has all three entries, and `sha256sum -c SHA256SUMS` passes. The
 published `framework/` tree comes from the committed source, so the release
 manifest names the commit that carries the publish code.
+
+### 13.33 CI and tagged release workflows (2026-11-04)
+
+The framework repo has `.github/workflows/ci.yml`. It builds the pinned host
+image with the GitHub Actions cache, runs
+`deep_check --python --skill --links` inside it, and builds the plugin on Linux
+in the same image. Windows builds with the installed MSVC and the Visual Studio
+generator. macOS is reported with `continue-on-error` because the macOS build
+and the AU target are still open. The Linux job runs the full CTest suite,
+including `linux_daws`. The image now installs `pyliblo3==0.16.3`, which the
+Carla test imports.
+
+The published `type-p-fm1` repo has `.github/workflows/release.yml`. A `v*` tag
+or a manual dispatch builds VST3 and CLAP for Linux and Windows from
+`framework/plugin`, runs the host tests, zips the artefacts into
+`plugins/<platform>/`, rebuilds `RELEASES.md`, `SHA256SUMS`, and `release.json`
+with the included `publish` helpers, commits the rebuilt archives to `main`, and
+creates a GitHub Release with the firmware, plugin archives, manifests, and a
+source tarball. The firmware is the committed `.fwsc`, so the release workflow
+avoids the vendor toolchain. A manual dispatch can replace it with `fwsc_url`.
+The tag must match the newest `## x.y.z` in `docs/release-notes.md`.
+
+The release jobs skip the Linux DAW test and the editor snapshot. The
+pinned-image CI job keeps those. `actionlint` accepts both workflows. The release
+assembly was exercised locally on the published repo: `_stage_plugins` zipped
+the VST3 and CLAP, `_write_release` wrote the three files, and `sha256sum -c`
+passed. `_stage_plugins` now lists every platform in `plugins/README.md`, not
+only the last one staged.

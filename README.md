@@ -94,6 +94,19 @@ umetate publish --plugins --vendor-deps build/plugin-juce/_deps
 A hand-written `publish-readme.md` in the project is copied verbatim as the release
 front door. Without one, `publish` writes a README from its template.
 
+## Continuous integration
+
+`.github/workflows/ci.yml` runs the Python gate and the plugin build on Linux and
+Windows. macOS is reported without blocking while the macOS build and the AU
+target remain open. The workflow runs on pushes to `main` and on pull requests.
+
+The published `type-p-fm1` repository has its own release workflow. A `v*` tag
+builds the VST3 and CLAP archives for Linux and Windows from the bundled
+`framework/plugin` source, updates `plugins/`, `RELEASES.md`, `SHA256SUMS`, and
+`release.json`, and attaches the firmware, plugin archives, manifests, and a
+source archive to a GitHub Release. The firmware is the committed `.fwsc`, so
+that workflow does not need the JieLi toolchain.
+
 ## First commands
 
 ```sh
@@ -119,6 +132,7 @@ templates/     fillable forms + the four schemas
 docker/        the pinned build container
 docs/          roadmap (status), platform-facts, tutorial, dsp-study
 examples/      worked examples
+.github/       CI workflows
 ```
 
 ## Status
