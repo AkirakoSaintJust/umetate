@@ -290,6 +290,42 @@ graph cannot clip or touch the caption.
 - HiDPI: draw in logical units and scale the whole editor uniformly. Do not scale
   individual strokes or font sizes.
 
+## Firmware screen mockup
+
+`design/firmware-mockup.html` is the 240 by 240 screen mockup for firmware UI
+work. It reads a project's `panel.json` and `firmware/theme.json` and draws the
+header, page title, widgets, values, and legend on a 240 by 240 screen. The dot
+grid, 16 pixel row guides, and 120 pixel column guide are design overlays.
+
+It is a design tool, not the firmware renderer. The web emulator is still the
+parity check. The mockup is a projection of `panel.json`, so a layout change is
+a change to the spec, not a second implementation.
+
+Run it from the repository root:
+
+```sh
+python -m http.server 8000
+```
+
+Then open
+`http://localhost:8000/design/firmware-mockup.html?panel=examples/type-p-fm1/panel.json`.
+
+The useful query parameters are `panel`, `theme`, `context`, `page`, and
+`scale`. The page also accepts a `panel.json` through the file picker when it is
+opened without a server. Controls switch the context, page, active part and
+operator, mutes, algorithm and palette. Clicking a parameter row cycles its
+value. The PNG button exports the screen without the overlays.
+
+The first pass duplicated the page title because the generated panel consumes
+the first `subheader` as the page title and shifts the widget rows up by one.
+The mockup now does the same. That is exactly the kind of mismatch the tool is
+for.
+
+The mockup uses the bundled OFL DotGothic16 as a pixel stand-in. The firmware
+uses the generated font from `gen_font.py`, so the exact glyphs and widths come
+from the web emulator, not the mockup. The mockup is for layout, hierarchy,
+labels, and state.
+
 ## Working method
 
 The process lessons from building this mockup are in `agent-workflow.md`. Read it

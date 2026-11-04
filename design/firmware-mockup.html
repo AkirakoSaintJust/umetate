@@ -1,0 +1,1065 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>umetate firmware screen mockup</title>
+<style>
+  @font-face {
+    font-family: "P1 Pixel";
+    src: url("../plugin/juce/resources/fonts/DotGothic16-Regular.ttf") format("truetype");
+    font-display: swap;
+  }
+
+  :root {
+    color-scheme: dark;
+    --shell-bg: #080a09;
+    --shell-panel: #111512;
+    --shell-line: #23302a;
+    --shell-text: #d8e2dc;
+    --shell-dim: #7f9188;
+    --shell-hi: #ff2e7e;
+    --scale: 3;
+    --dot: 8;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--shell-bg);
+    color: var(--shell-text);
+    font: 13px/1.45 "P1 Pixel", ui-monospace, monospace;
+  }
+
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    align-items: center;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--shell-line);
+    background: #0b0f0d;
+  }
+
+  header h1 {
+    margin: 0;
+    font-size: 15px;
+    letter-spacing: .04em;
+    color: var(--shell-hi);
+  }
+
+  header .meta {
+    color: var(--shell-dim);
+  }
+
+  main {
+    display: grid;
+    grid-template-columns: minmax(320px, 1fr) 340px;
+    gap: 22px;
+    padding: 22px;
+    align-items: start;
+  }
+
+  @media (max-width: 900px) {
+    main { grid-template-columns: 1fr; }
+  }
+
+  .stage {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .screen-wrap {
+    position: relative;
+    width: calc(240px * var(--scale));
+    height: calc(240px * var(--scale));
+    max-width: 100%;
+    background: #000;
+    border: 1px solid #2e3a34;
+    box-shadow: 0 0 0 8px #0b0f0d, 0 18px 40px rgba(0, 0, 0, .45);
+    overflow: hidden;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .overlay.grid {
+    background-image: radial-gradient(
+      circle,
+      rgba(220, 255, 235, .30) 0,
+      rgba(220, 255, 235, .30) calc(var(--scale) * .55px),
+      transparent calc(var(--scale) * .85px),
+      transparent 100%
+    );
+    background-size: calc(var(--dot) * var(--scale)) calc(var(--dot) * var(--scale));
+    opacity: .55;
+  }
+
+  .overlay.rows {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      rgba(255, 46, 126, .18) 0,
+      rgba(255, 46, 126, .18) 1px,
+      transparent 1px,
+      transparent calc(16px * var(--scale))
+    );
+  }
+
+  .overlay.cols {
+    background-image: repeating-linear-gradient(
+      to right,
+      rgba(61, 255, 158, .20) 0,
+      rgba(61, 255, 158, .20) 1px,
+      transparent 1px,
+      transparent calc(120px * var(--scale))
+    );
+  }
+
+  .screen-meta {
+    display: flex;
+    gap: 16px;
+    color: var(--shell-dim);
+  }
+
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  .card {
+    border: 1px solid var(--shell-line);
+    background: var(--shell-panel);
+    padding: 12px;
+  }
+
+  .card h2 {
+    margin: 0 0 8px;
+    font-size: 12px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--shell-dim);
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  button, select, input[type="number"] {
+    font: inherit;
+    color: var(--shell-text);
+    background: #0d1210;
+    border: 1px solid var(--shell-line);
+    padding: 4px 8px;
+    cursor: pointer;
+  }
+
+  button:hover, select:hover {
+    border-color: var(--shell-hi);
+    color: #fff;
+  }
+
+  button.active {
+    border-color: var(--shell-hi);
+    color: var(--shell-hi);
+  }
+
+  button.tiny {
+    padding: 2px 6px;
+    font-size: 11px;
+  }
+
+  label.toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--shell-dim);
+    cursor: pointer;
+  }
+
+  input[type="checkbox"] { accent-color: var(--shell-hi); }
+
+  input[type="range"] { width: 100%; accent-color: var(--shell-hi); }
+
+  input[type="file"] { width: 100%; color: var(--shell-dim); }
+
+  .pages {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+    gap: 5px;
+  }
+
+  .hint {
+    color: var(--shell-dim);
+    font-size: 11px;
+  }
+
+  .error {
+    color: #ff8f8f;
+    border: 1px solid #5a2424;
+    background: #1c0c0c;
+    padding: 8px;
+    font-size: 11px;
+    white-space: pre-wrap;
+  }
+
+  .legend-swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border: 1px solid currentColor;
+    vertical-align: -1px;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>umetate // firmware screen mockup</h1>
+  <span class="meta" id="panel-name">loading...</span>
+  <span class="meta" id="context-label"></span>
+</header>
+
+<main>
+  <section class="stage">
+    <div class="screen-wrap" id="screen-wrap">
+      <canvas id="screen" width="240" height="240" aria-label="240 by 240 firmware screen mockup"></canvas>
+      <div class="overlay grid" id="grid-overlay"></div>
+      <div class="overlay rows" id="row-overlay"></div>
+      <div class="overlay cols" id="col-overlay"></div>
+    </div>
+    <div class="screen-meta">
+      <span>240 × 240</span>
+      <span id="zoom-label">3×</span>
+      <span>row 16 px</span>
+      <span>column 120 px</span>
+    </div>
+    <div class="hint">
+      Click a parameter row to cycle its value. Arrow keys change page.
+      The dot grid and guides are design overlays, not part of the screen.
+    </div>
+  </section>
+
+  <aside class="sidebar">
+    <div class="card">
+      <h2>Project</h2>
+      <div class="row">
+        <input type="file" id="panel-file" accept=".json,application/json">
+        <button id="reload" class="tiny">reload</button>
+      </div>
+      <div class="hint" id="load-hint">
+        Open this page through a local server to load panel.json and theme.json
+        automatically. The file picker works without a server.
+      </div>
+      <div id="error" class="error" hidden></div>
+    </div>
+
+    <div class="card">
+      <h2>Context</h2>
+      <div class="row" id="contexts"></div>
+      <h2 style="margin-top:12px">Page</h2>
+      <div class="pages" id="pages"></div>
+      <div class="row" style="margin-top:8px">
+        <button id="prev-page" class="tiny">prev</button>
+        <button id="next-page" class="tiny">next</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>State</h2>
+      <div class="row" id="parts"></div>
+      <div class="row" id="ops" style="margin-top:6px"></div>
+      <h2 style="margin-top:12px">Mutes</h2>
+      <div class="row" id="mutes"></div>
+      <label class="hint" for="alg">algorithm <span id="alg-value">4</span></label>
+      <input type="range" id="alg" min="0" max="7" step="1" value="4">
+      <div class="row" style="margin-top:8px">
+        <button id="randomize" class="tiny">randomize values</button>
+        <button id="clear-values" class="tiny">reset values</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Design overlays</h2>
+      <div class="row">
+        <label class="toggle"><input type="checkbox" id="show-grid" checked> dot grid</label>
+        <label class="toggle"><input type="checkbox" id="show-rows" checked> rows</label>
+        <label class="toggle"><input type="checkbox" id="show-cols" checked> columns</label>
+        <label class="toggle"><input type="checkbox" id="show-legend" checked> legend</label>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <label class="hint" for="dot">grid</label>
+        <select id="dot">
+          <option value="4">4 px</option>
+          <option value="8" selected>8 px</option>
+          <option value="16">16 px</option>
+        </select>
+        <label class="hint" for="scale">scale</label>
+        <select id="scale">
+          <option value="2">2×</option>
+          <option value="3" selected>3×</option>
+          <option value="4">4×</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Theme</h2>
+      <div class="row">
+        <select id="palette"></select>
+        <button id="download" class="tiny">download PNG</button>
+      </div>
+      <div class="hint" id="theme-note">loaded from firmware/theme.json</div>
+    </div>
+  </aside>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  const ROW = 16;
+  const COL = 120;
+  const W = 240;
+  const H = 240;
+
+  const DEFAULT_THEME = {
+    colors: {
+      background: "#000000",
+      text: "#e8e8e8",
+      muted: "#5ca666",
+      accent: "#ff2e7e",
+      success: "#00ff2a",
+      warning: "#ffaa00",
+      error: "#ff0000",
+      selected: "#7ec8ff",
+      popup_background: "#1e1e1e",
+      popup_text: "#ffffff"
+    },
+    palettes: {
+      DEFAULT: ["#2e5333", "#ff3c3c", "#5aff5a", "#c780ff", "#ff4d94"]
+    }
+  };
+
+  const DEMO = {
+    name: "demo",
+    home: "home",
+    parts: 2,
+    operators: ["op1", "op2", "op3", "op4"],
+    legend: "~SEL~ ops  ~ENC~ page\n~SAVE~ save  ~HOME~ home",
+    contexts: {
+      home: {
+        pages: [
+          {
+            id: "algo",
+            widgets: [
+              { type: "subheader", row: 2, text: "ALGORITHM" },
+              { type: "algo", row: 3, span: 10, param: "algorithm" }
+            ]
+          },
+          {
+            id: "params",
+            widgets: [
+              { type: "subheader", row: 2, text: "OPERATOR", partop: true },
+              { type: "param_row", row: 3, text: "RATIO", param: "op1_ratio.p0" },
+              { type: "param_row", row: 4, text: "LEVEL", param: "op1_level.p0" },
+              { type: "param_row", row: 5, text: "FEEDBACK", param: "op1_fb.p0" },
+              { type: "scope", row: 7, span: 4, channel: 0 }
+            ]
+          }
+        ]
+      },
+      edit: {
+        pages: [
+          {
+            id: "env",
+            widgets: [
+              { type: "subheader", row: 2, text: "ENVELOPE", active: true },
+              { type: "envelope", row: 3, span: 6, params: ["r1", "r2", "r3", "r4", "l1", "l2", "l3"] }
+            ]
+          }
+        ]
+      }
+    }
+  };
+
+  const state = {
+    panel: null,
+    theme: DEFAULT_THEME,
+    context: null,
+    page: 0,
+    part: 0,
+    op: 0,
+    alg: 4,
+    palette: "DEFAULT",
+    values: new Map(),
+    mutes: {},
+    scale: 3,
+    dot: 8,
+    showGrid: true,
+    showRows: true,
+    showCols: true,
+    showLegend: true,
+    error: ""
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const canvas = $("screen");
+  const ctx = canvas.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
+
+  const hash = (s) => {
+    let h = 2166136261;
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  };
+
+  const palette = () => {
+    const p = state.theme.palettes || DEFAULT_THEME.palettes;
+    return p[state.palette] || p.DEFAULT || DEFAULT_THEME.palettes.DEFAULT;
+  };
+
+  const color = () => {
+    const c = Object.assign({}, DEFAULT_THEME.colors, state.theme.colors || {});
+    const p = palette();
+    return {
+      bg: c.background,
+      text: c.text,
+      line: p[0],
+      dim: p[1],
+      gray: p[2],
+      amb: p[3],
+      hi: p[4],
+      accent: c.accent,
+      selected: c.selected,
+      ok: c.success,
+      warn: c.warning,
+      err: c.error,
+      popup: c.popup_background,
+      popupText: c.popup_text
+    };
+  };
+
+  const currentContext = () => state.panel.contexts[state.context] || { pages: [] };
+  const currentPage = () => (currentContext().pages || [])[state.page] || { widgets: [] };
+  const pageWidgets = () => {
+    const widgets = (currentPage().widgets || []).slice();
+    const hasTitle = widgets.length > 0 && widgets[0].type === "subheader";
+    return widgets
+      .filter((w) => w.type !== "subheader")
+      .map((w) => hasTitle ? Object.assign({}, w, { row: (w.row || 0) - 1 }) : w);
+  };
+
+  const pageLabel = () => {
+    const pages = currentContext().pages || [];
+    return `${state.context.toUpperCase()} ${state.page + 1}/${pages.length || 1}`;
+  };
+
+  const valueFor = (param) => {
+    if (!param) return "";
+    if (state.values.has(param)) return state.values.get(param);
+    if (param === "algorithm") return String(state.alg);
+    const p = param.toLowerCase();
+    if (p.includes("ratio") || p.includes("inc")) return "1.00";
+    if (p.includes("detune")) return "+0.0";
+    if (p.includes("wave")) return "sine";
+    if (p.includes("cutoff")) return "8.0k";
+    if (p.includes("res")) return "20";
+    if (p.includes("r1") || p.includes("r2") || p.includes("r3") || p.includes("r4")) return String(24 + (hash(p) % 80));
+    if (p.includes("l1") || p.includes("l2") || p.includes("l3")) return String(40 + (hash(p) % 60));
+    if (p.includes("level") || p.includes(".tl")) return String(30 + (hash(p) % 70));
+    if (p.includes("on") || p.includes("mute")) return (hash(p) & 1) ? "on" : "off";
+    if (p.includes("semi")) return String(-24 + (hash(p) % 49));
+    if (p.includes("pct") || p.includes("amount") || p.includes("depth")) return String(hash(p) % 101) + "%";
+    return String(16 + (hash(p) % 84));
+  };
+
+  const nextValue = (param) => {
+    const p = param.toLowerCase();
+    let options;
+    if (p.includes("ratio")) options = ["0.50", "1.00", "2.00", "3.00"];
+    else if (p.includes("wave")) options = ["sine", "tri", "saw", "square"];
+    else if (p.includes("cutoff")) options = ["200", "1.0k", "4.0k", "8.0k", "16k"];
+    else if (p.includes("on") || p.includes("mute")) options = ["off", "on"];
+    else if (p.includes("amount") || p.includes("depth")) options = ["0%", "25%", "50%", "75%", "100%"];
+    else options = ["0", "16", "32", "48", "64", "80", "99"];
+    const current = valueFor(param);
+    const i = options.indexOf(current);
+    state.values.set(param, options[(i + 1) % options.length]);
+  };
+
+  const setScale = (s) => {
+    state.scale = s;
+    document.documentElement.style.setProperty("--scale", s);
+    $("zoom-label").textContent = `${s}×`;
+  };
+
+  const setOverlays = () => {
+    $("grid-overlay").style.display = state.showGrid ? "block" : "none";
+    $("row-overlay").style.display = state.showRows ? "block" : "none";
+    $("col-overlay").style.display = state.showCols ? "block" : "none";
+    document.documentElement.style.setProperty("--dot", state.dot);
+  };
+
+  const text = (s, x, y, fill, size = 16, align = "left") => {
+    ctx.save();
+    ctx.fillStyle = fill;
+    ctx.font = `${size}px "P1 Pixel", ui-monospace, monospace`;
+    ctx.textBaseline = "top";
+    ctx.textAlign = align;
+    ctx.fillText(String(s), x, y);
+    ctx.restore();
+  };
+
+  const measure = (s, size = 16) => {
+    ctx.save();
+    ctx.font = `${size}px "P1 Pixel", ui-monospace, monospace`;
+    const w = ctx.measureText(String(s)).width;
+    ctx.restore();
+    return w;
+  };
+
+  const line = (x1, y1, x2, y2, stroke, width = 1) => {
+    ctx.save();
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+    ctx.restore();
+  };
+
+  const rect = (x, y, w, h, fill, stroke) => {
+    ctx.save();
+    if (fill) {
+      ctx.fillStyle = fill;
+      ctx.fillRect(x, y, w, h);
+    }
+    if (stroke) {
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + 0.5, y + 0.5, Math.max(0, w - 1), Math.max(0, h - 1));
+    }
+    ctx.restore();
+  };
+
+  const prefixFor = (w) => {
+    if (!w) return "";
+    if (w.plain) return "";
+    if (w.partop) return `PART ${state.part + 1} OP`;
+    if (w.plural) return w.part ? "PART" : "OP";
+    if (w.part) return `PART ${state.part + 1}`;
+    return `OP ${state.op + 1}`;
+  };
+
+  const header = () => {
+    const c = color();
+    const p = state.panel;
+    let x = 1;
+    const size = 16;
+    const gap = 3;
+
+    for (let i = 0; i < (p.parts || 1); i++) {
+      const label = `P${i + 1}`;
+      const muted = Boolean(state.mutes[`p${i + 1}`]);
+      text(label, x, 0, muted ? c.dim : (i === state.part ? c.selected : c.text), size);
+      x += measure(label, size) + gap;
+    }
+
+    text("op", x, 0, c.text, size);
+    x += measure("op", size) + gap;
+    const ops = p.operators || ["op1", "op2", "op3", "op4"];
+    for (let i = 0; i < ops.length && i < 4; i++) {
+      const label = String(i + 1);
+      const muted = Boolean(state.mutes[`op${i + 1}`]);
+      text(label, x, 0, muted ? c.dim : (i === state.op ? c.selected : c.text), size);
+      x += measure(label, size) + gap;
+    }
+
+    const alg = `ALG${state.alg}`;
+    if (x + measure(alg, size) + 4 < W) {
+      text(alg, x, 0, c.hi, size);
+      x += measure(alg, size) + 4;
+    }
+    const page = pageLabel();
+    if (x + measure(page, 12) < W) text(page, x, 0, c.amb, 12);
+
+    const sub = (currentPage().widgets || []).find((w) => w.type === "subheader");
+    const desc = sub ? sub.text : (currentPage().id || "").toUpperCase();
+    const pre = sub ? prefixFor(sub) : "";
+    text((pre ? pre + " " : "") + desc, 1, ROW, c.gray, 16);  };
+
+  const drawParamRow = (w, x, y, wd, ht) => {
+    const c = color();
+    const label = w.text || w.label || w.param || "param";
+    const param = w.param || (w.params && w.params[0]) || "";
+    text(label, x + 1, y + 1, c.text, 16);
+    const val = valueFor(param);
+    text(val, x + wd - 1, y + 1, c.hi, 16, "right");
+    line(x, y + ht - 1, x + wd, y + ht - 1, c.line || c.dim, 1);
+  };
+
+  const drawEnvelope = (w, x, y, wd, ht, stroke) => {
+    const c = color();
+    rect(x + 1, y + 1, wd - 2, ht - 2, "rgba(0,0,0,.22)", c.dim);
+    const pad = 8;
+    const gx = x + pad;
+    const gy = y + pad;
+    const gw = wd - pad * 2;
+    const gh = ht - pad * 2;
+    for (let i = 1; i < 4; i++) line(gx + (gw * i) / 4, gy, gx + (gw * i) / 4, gy + gh, "rgba(255,255,255,.10)");
+    for (let i = 1; i < 2; i++) line(gx, gy + gh / 2, gx + gw, gy + gh / 2, "rgba(255,255,255,.10)");
+    const pts = [0, 0.78, 0.45, 0.62, 0.22, 0.74, 0.12];
+    ctx.save();
+    ctx.strokeStyle = stroke || c.amb;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    pts.forEach((v, i) => {
+      const px = gx + (gw * i) / (pts.length - 1);
+      const py = gy + gh - v * gh;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    });
+    ctx.stroke();
+    ctx.restore();
+  };
+
+  const drawScope = (w, x, y, wd, ht) => {
+    const c = color();
+    rect(x + 1, y + 1, wd - 2, ht - 2, "rgba(0,0,0,.22)", c.dim);
+    const mid = y + ht / 2;
+    ctx.save();
+    ctx.strokeStyle = c.ok;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let i = 0; i < wd - 4; i++) {
+      const v = Math.sin(i * 0.16 + (w.channel || 0)) * 0.32 + Math.sin(i * 0.07) * 0.18;
+      const py = mid + v * (ht * 0.42);
+      if (i === 0) ctx.moveTo(x + 2 + i, py);
+      else ctx.lineTo(x + 2 + i, py);
+    }
+    ctx.stroke();
+    ctx.restore();
+  };
+
+  const drawSpectro = (w, x, y, wd, ht) => {
+    const c = color();
+    rect(x + 1, y + 1, wd - 2, ht - 2, "rgba(0,0,0,.22)", c.dim);
+    const bars = Math.max(8, Math.floor((wd - 4) / 4));
+    const bw = (wd - 4) / bars;
+    for (let i = 0; i < bars; i++) {
+      const v = 0.18 + Math.abs(Math.sin(i * 0.7 + (w.channel || 0))) * 0.72;
+      const bh = (ht - 4) * v;
+      rect(x + 2 + i * bw, y + ht - 2 - bh, Math.max(1, bw - 1), bh, i % 5 === 0 ? c.amb : c.hi);
+    }
+  };
+
+  const drawAlgo = (w, x, y, wd, ht) => {
+    const c = color();
+    rect(x + 1, y + 1, wd - 2, ht - 2, "rgba(0,0,0,.22)", c.dim);
+    const n = state.alg;
+    const carriers = [[0], [0, 1], [0, 2], [0, 1, 2], [0, 1, 3], [0, 2, 3], [0, 1, 2, 3], [0, 1, 2, 3]][n] || [0];
+    const bw = 26;
+    const bh = 18;
+    const gap = 10;
+    const startX = x + 12;
+    const startY = y + 20;
+    const pos = [
+      [startX, startY + 58],
+      [startX + bw + gap, startY + 58],
+      [startX, startY + 22],
+      [startX + bw + gap, startY + 22]
+    ];
+    // simple routing lines: modulators feed the next lower row
+    for (let i = 2; i < 4; i++) {
+      line(pos[i][0] + bw / 2, pos[i][1] + bh, pos[i - 2][0] + bw / 2, pos[i - 2][1], c.dim, 1);
+    }
+    for (let i = 0; i < 4; i++) {
+      const carrier = carriers.includes(i);
+      rect(pos[i][0], pos[i][1], bw, bh, carrier ? c.hi : "transparent", carrier ? c.hi : c.text);
+      text(`OP${i + 1}`, pos[i][0] + bw / 2, pos[i][1] + 2, carrier ? c.bg : c.text, 10, "center");
+    }
+    text(`ALG ${n}`, x + wd - 4, y + 4, c.hi, 12, "right");
+  };
+
+  const drawLabel = (w, x, y, wd) => {
+    const c = color();
+    text(w.text || "", x + 1, y, c.gray, 16);
+  };
+
+  const drawName = (w, x, y, wd) => {
+    const c = color();
+    text(w.text || "name", x + 1, y, c.text, 16);
+    text("init patch", x + wd - 1, y, c.hi, 16, "right");
+  };
+
+  const drawCustom = (w, x, y, wd, ht) => {
+    const c = color();
+    text(w.text || "custom", x + 1, y, c.amb, 16);
+  };
+
+  const drawWidget = (w) => {
+    const x = 0;
+    const y = (w.row || 0) * ROW;
+    const wd = W;
+    const ht = (w.span || 1) * ROW;
+    switch (w.type) {
+      case "subheader": break;   /* the page title is drawn by header() */
+      case "param_row": drawParamRow(w, x, y, wd, ht); break;
+      case "label": drawLabel(w, x, y, wd); break;
+      case "name": drawName(w, x, y, wd); break;
+      case "algo": drawAlgo(w, x, y, wd, ht); break;
+      case "envelope": drawEnvelope(w, x, y, wd, ht, color().amb); break;
+      case "genv": drawEnvelope(w, x, y, wd, ht, color().ok); break;
+      case "scope": drawScope(w, x, y, wd, ht); break;
+      case "spectro": drawSpectro(w, x, y, wd, ht); break;
+      case "custom": drawCustom(w, x, y, wd, ht); break;
+      default: text(w.text || w.type, x + 1, y, color().dim, 14); break;
+    }
+  };
+
+  const drawLegend = () => {
+    if (!state.showLegend || !state.panel.legend) return;
+    const page = currentPage();
+    const lastRow = Math.max(...pageWidgets().map((w) => (w.row || 0) + (w.span || 1)), 0);
+    if (lastRow >= 12) return;
+    const c = color();
+    const lines = String(state.panel.legend).split(/\n|\\n/).slice(0, 3);
+    let y = H - lines.length * 14;
+    for (const raw of lines) {
+      let x = 2;
+      let hot = false;
+      for (const part of raw.split("~")) {
+        if (part) {
+          text(part, x, y, hot ? c.hi : c.dim, 11);
+          x += measure(part, 11);
+        }
+        hot = !hot;
+      }
+      y += 14;
+    }
+  };
+
+  const render = () => {
+    const c = color();
+    ctx.fillStyle = c.bg;
+    ctx.fillRect(0, 0, W, H);
+    if (!state.panel) return;
+    header();
+    for (const w of pageWidgets()) drawWidget(w);
+    drawLegend();
+    $("context-label").textContent = pageLabel();
+    $("panel-name").textContent = `${state.panel.name || "panel"} // ${state.theme.name || "theme"}`;
+  };
+
+  const showError = (message) => {
+    state.error = message;
+    const el = $("error");
+    el.hidden = !message;
+    el.textContent = message;
+  };
+
+  const buildControls = () => {
+    const p = state.panel;
+    const contexts = Object.keys(p.contexts || {});
+    if (!contexts.includes(state.context)) state.context = p.home && p.contexts[p.home] ? p.home : contexts[0];
+    state.page = Math.min(state.page, (currentContext().pages || []).length - 1);
+    if (state.page < 0) state.page = 0;
+
+    $("contexts").innerHTML = "";
+    for (const key of contexts) {
+      const b = document.createElement("button");
+      b.textContent = key;
+      b.className = key === state.context ? "active" : "";
+      b.onclick = () => {
+        state.context = key;
+        state.page = 0;
+        buildControls();
+        render();
+      };
+      $("contexts").append(b);
+    }
+
+    $("pages").innerHTML = "";
+    (currentContext().pages || []).forEach((page, i) => {
+      const b = document.createElement("button");
+      b.textContent = `${i + 1} ${page.id}`;
+      b.className = i === state.page ? "active" : "";
+      b.onclick = () => {
+        state.page = i;
+        buildControls();
+        render();
+      };
+      $("pages").append(b);
+    });
+
+    $("parts").innerHTML = "";
+    for (let i = 0; i < (p.parts || 1); i++) {
+      const b = document.createElement("button");
+      b.textContent = `part ${i + 1}`;
+      b.className = i === state.part ? "active" : "";
+      b.onclick = () => {
+        state.part = i;
+        buildControls();
+        render();
+      };
+      $("parts").append(b);
+    }
+
+    $("ops").innerHTML = "";
+    const ops = p.operators || [];
+    for (let i = 0; i < ops.length; i++) {
+      const b = document.createElement("button");
+      b.textContent = `op ${i + 1}`;
+      b.className = i === state.op ? "active" : "";
+      b.onclick = () => {
+        state.op = i;
+        buildControls();
+        render();
+      };
+      $("ops").append(b);
+    }
+
+    $("mutes").innerHTML = "";
+    for (let i = 0; i < (p.parts || 1); i++) {
+      const b = document.createElement("button");
+      b.textContent = `P${i + 1} mute`;
+      b.className = state.mutes[`p${i + 1}`] ? "active" : "";
+      b.onclick = () => {
+        state.mutes[`p${i + 1}`] = !state.mutes[`p${i + 1}`];
+        buildControls();
+        render();
+      };
+      $("mutes").append(b);
+    }
+    for (let i = 0; i < ops.length; i++) {
+      const b = document.createElement("button");
+      b.textContent = `op${i + 1} mute`;
+      b.className = state.mutes[`op${i + 1}`] ? "active" : "";
+      b.onclick = () => {
+        state.mutes[`op${i + 1}`] = !state.mutes[`op${i + 1}`];
+        buildControls();
+        render();
+      };
+      $("mutes").append(b);
+    }
+
+    const palettes = Object.keys(state.theme.palettes || DEFAULT_THEME.palettes);
+    if (!palettes.includes(state.palette)) state.palette = palettes[0];
+    $("palette").innerHTML = palettes.map((name) => `<option value="${name}"${name === state.palette ? " selected" : ""}>${name}</option>`).join("");
+  };
+
+  const connectControls = () => {
+    $("prev-page").onclick = () => {
+      const pages = currentContext().pages || [];
+      if (!pages.length) return;
+      state.page = (state.page - 1 + pages.length) % pages.length;
+      buildControls();
+      render();
+    };
+    $("next-page").onclick = () => {
+      const pages = currentContext().pages || [];
+      if (!pages.length) return;
+      state.page = (state.page + 1) % pages.length;
+      buildControls();
+      render();
+    };
+    $("alg").oninput = (e) => {
+      state.alg = Number(e.target.value);
+      $("alg-value").textContent = state.alg;
+      render();
+    };
+    $("palette").onchange = (e) => {
+      state.palette = e.target.value;
+      render();
+    };
+    $("show-grid").onchange = (e) => { state.showGrid = e.target.checked; setOverlays(); };
+    $("show-rows").onchange = (e) => { state.showRows = e.target.checked; setOverlays(); };
+    $("show-cols").onchange = (e) => { state.showCols = e.target.checked; setOverlays(); };
+    $("show-legend").onchange = (e) => { state.showLegend = e.target.checked; render(); };
+    $("dot").onchange = (e) => { state.dot = Number(e.target.value); setOverlays(); };
+    $("scale").onchange = (e) => { setScale(Number(e.target.value)); };
+    $("randomize").onclick = () => {
+      for (const w of pageWidgets()) {
+        const param = w.param || (w.params && w.params[0]);
+        if (param) nextValue(param);
+      }
+      render();
+    };
+    $("clear-values").onclick = () => {
+      state.values.clear();
+      render();
+    };
+    $("download").onclick = () => {
+      const a = document.createElement("a");
+      a.download = `${state.panel.name || "screen"}-${state.context}-${state.page + 1}.png`;
+      a.href = canvas.toDataURL("image/png");
+      a.click();
+    };
+    $("reload").onclick = () => boot(true);
+
+    $("panel-file").onchange = async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      try {
+        state.panel = JSON.parse(await file.text());
+        state.context = null;
+        state.page = 0;
+        state.values.clear();
+        showError("");
+        buildControls();
+        render();
+      } catch (err) {
+        showError("could not read that panel.json:\n" + err.message);
+      }
+    };
+
+    canvas.onclick = (e) => {
+      if (!state.panel) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * W;
+      const y = ((e.clientY - rect.top) / rect.height) * H;
+      const row = Math.floor(y / ROW);
+      const hit = pageWidgets().find((w) => {
+        const top = (w.row || 0);
+        const span = w.span || 1;
+        return row >= top && row < top + span && w.type === "param_row";
+      });
+      if (hit) {
+        const param = hit.param || (hit.params && hit.params[0]);
+        if (param) {
+          nextValue(param);
+          render();
+        }
+      }
+    };
+
+    window.onkeydown = (e) => {
+      if (!state.panel) return;
+      const pages = currentContext().pages || [];
+      if (!pages.length) return;
+      if (e.key === "ArrowRight") {
+        state.page = (state.page + 1) % pages.length;
+        buildControls(); render();
+      } else if (e.key === "ArrowLeft") {
+        state.page = (state.page - 1 + pages.length) % pages.length;
+        buildControls(); render();
+      } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        const keys = Object.keys(state.panel.contexts || {});
+        const i = keys.indexOf(state.context);
+        const next = e.key === "ArrowDown" ? (i + 1) % keys.length : (i - 1 + keys.length) % keys.length;
+        state.context = keys[next];
+        state.page = 0;
+        buildControls(); render();
+      }
+    };
+  };
+
+  const resolveAsset = (value, fallback) => {
+    const raw = value || fallback;
+    const rootDirs = ["examples/", "firmware/", "design/", "plugin/"];
+    if (raw.startsWith("/") || raw.startsWith("http://") || raw.startsWith("https://")) return raw;
+    if (rootDirs.some((dir) => raw.startsWith(dir))) return "/" + raw;
+    return new URL(raw, location.href).href;
+  };
+
+  const loadPanel = async () => {
+    const params = new URLSearchParams(location.search);
+    const requested = params.get("panel");
+    const candidates = [];
+    if (requested) candidates.push(resolveAsset(requested, requested));
+    candidates.push(
+      "../examples/type-p-fm1/panel.json",
+      "../../src/panel.json",
+      "/src/panel.json"
+    );
+    let lastError = "";
+    for (const url of candidates) {
+      try {
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+        state.panel = await res.json();
+        showError("");
+        return;
+      } catch (err) {
+        lastError = `${url}: ${err.message}`;
+      }
+    }
+    state.panel = DEMO;
+    showError(
+      "could not load a panel.json\n" +
+      "Open this page through a local server (python -m http.server 8000) " +
+      "or use the file picker. Showing the demo panel.\n\n" + lastError
+    );
+  };
+
+  const loadTheme = async () => {
+    const params = new URLSearchParams(location.search);
+    const requested = params.get("theme");
+    const candidates = [];
+    if (requested) candidates.push(resolveAsset(requested, requested));
+    candidates.push("../firmware/theme.json", "../../firmware/theme.json");
+    for (const url of candidates) {
+      try {
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+        state.theme = await res.json();
+        $("theme-note").textContent = `loaded from ${url}`;
+        return;
+      } catch (err) {
+        /* try the next candidate */
+      }
+    }
+    state.theme = DEFAULT_THEME;
+    $("theme-note").textContent = "using the built-in fallback theme";
+  };
+
+  const boot = async (reload = false) => {
+    const params = new URLSearchParams(location.search);
+    if (reload || !state.panel) {
+      await Promise.all([loadPanel(), loadTheme()]);
+    }
+    if (state.panel) {
+      const wantedContext = params.get("context");
+      if (wantedContext && state.panel.contexts[wantedContext]) {
+        state.context = wantedContext;
+      }
+      const wantedPage = Number(params.get("page") || "1") - 1;
+      if (Number.isFinite(wantedPage)) state.page = Math.max(0, wantedPage);
+    }
+    const scale = Number(params.get("scale") || 3);
+    setScale([2, 3, 4].includes(scale) ? scale : 3);
+    setOverlays();
+    buildControls();
+    render();
+  };
+
+  connectControls();
+  boot();
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => render());
+  }
+})();
+</script>
+</body>
+</html>

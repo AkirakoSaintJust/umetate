@@ -131,6 +131,7 @@ the value never disagree.
 ## 9. Acceptance
 
 - **The ten-item gate is filled** (SKILL.md §2, no item left as "TBD"):
+- **Screen mockup** (file + URL, every page reviewed at 3x):
 - **Host UI tests (scripted keys/knobs/screen captures):**
 - **Device checks (held notes during redraw, visible failure state):**
 - **The mockup and the generated theme agree** (same tokens, same layout):

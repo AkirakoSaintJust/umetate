@@ -4084,3 +4084,29 @@ The lessons that changed the method:
 token architecture, inclusive design, wayfinding, and design as a practice. The
 dossier has the source summaries and the full link list. The existing token gate
 already enforces the three-layer architecture for the plugin and firmware.
+
+### 13.29 Firmware screen mockup (2026-11-04)
+
+`design/firmware-mockup.html` is the firmware equivalent of the plugin HTML
+mockup. It renders a project's `panel.json` and `firmware/theme.json` on a 240 by
+240 screen. The screen is a 15 by 15 grid of 16 pixel rows and two 120 pixel
+columns, as the firmware draws it. The dot grid, row guides, and column guide are
+design overlays and are not part of the PNG.
+
+The mockup reads the same spec as the firmware: the header with the active part,
+operators, algorithm, context and page, the page title, the widget rows, the
+footer legend, the part and operator mutes, and the six palettes. It supports
+`panel`, `theme`, `context`, `page` and `scale` query parameters, a `panel.json`
+file picker for use without a server, value cycling by clicking a row, and a PNG
+export. It is served with `python -m http.server 8000` from the repo root.
+
+The first pass caught a real fidelity issue. The generated panel consumes the
+first `subheader` as the page title and shifts the remaining widget rows up by
+one. The mockup initially drew the subheader twice and left a gap. It now follows
+the generator. This is the kind of mistake the screen mockup exists to catch
+before the C code.
+
+The mockup is a design tool, not the firmware renderer. The web emulator is still
+the parity check. The mockup is a projection of `panel.json`, so a layout change
+is a change to the spec, not a second implementation. It is linked from the
+development skill, the control-map template, the design README, and `AGENTS.md`.

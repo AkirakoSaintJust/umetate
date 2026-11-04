@@ -326,6 +326,13 @@ instrument should help them make the sound they hear in their head.
 The physical panel and the 240 by 240 screen are one interface. The screen does
 not get to be a settings form for an app.
 
+The firmware mockup gate is `design/firmware-mockup.html`. It renders a project's
+`panel.json` on the 240 by 240 screen with the 16 pixel row grid, the 120 pixel
+column, the header, the page title, the widgets, and the legend. The dot grid and
+guides are design overlays, not part of the screen. Use it before the panel code,
+inspect every page at 3x, and fix the labels and rows in `panel.json` first. The
+mockup is a projection of the spec. The web emulator is the parity check.
+
 - **The silkscreen is law.** A printed label fixes a control's meaning. Do not
   reassign a labelled control. If the panel says `MASTER`, it is volume.
 - **Know the control kind.** A smooth pot is not a detented encoder. A dedicated

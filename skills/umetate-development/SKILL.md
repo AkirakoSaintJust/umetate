@@ -221,6 +221,13 @@ content surfaces not, a fixed canvas scaled as one image, generated tokens share
 by the web, the plugin, and the firmware, an explicit state language, and copy
 that earns its place. Do not add a widget to fill a hole.
 
+For a firmware screen, mock it up before the panel code. `design/firmware-mockup.html`
+renders a `panel.json` on a 240 by 240 screen with the 16 pixel row grid, the
+120 pixel column, the header, the page title, the widgets, and the legend. The
+dot grid and guides are overlays. Review every page at 3x and fix the spec
+first. The mockup is a projection of `panel.json`. The web emulator is the
+parity check.
+
 After the panel or editor, run the token gate. `umetate tokens` checks the token
 sources, the generated headers, and the UI sources for raw colours and fonts. A
 plugin editor also runs the snapshot diff. When the UI is meant to change,
