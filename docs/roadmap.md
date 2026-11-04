@@ -4248,3 +4248,43 @@ assembly was exercised locally on the published repo: `_stage_plugins` zipped
 the VST3 and CLAP, `_write_release` wrote the three files, and `sha256sum -c`
 passed. `_stage_plugins` now lists every platform in `plugins/README.md`, not
 only the last one staged.
+
+### 13.34 Manual voice calibration from the hand rewrite (2026-11-04)
+
+The author hand-rewrote `examples/type-p-fm1/docs/manual.md` after the first
+release. The rewrite is now the source of truth and the manual calibration.
+
+The first manual was 971 words: about 82 sentences, mean 11.3, median 10, standard
+deviation 6.4, 2 first-person pronouns, 1 contraction, 2 brackets, no exclamation
+marks. The hand rewrite is 1,899 words: about 119 sentences, mean 15.6, median 13,
+standard deviation 12.1, 22 first-person pronouns, 33 contraction-like apostrophe
+forms, 7 brackets, 4 exclamation marks. The longest sentence is 66 words. The
+rewrite is much closer to the author's 9,015-word corpus (median 16) than the first
+release was.
+
+The diff adds a design-note preface (history, the seven things the author wanted,
+the constraint, the use case), concrete patch tips (feedback recipes, ratio
+ranges), the Yamaha chip-order explanation, the Taco Bell aside, light UK slang
+("innit", "kinda", "gal", "whatever"), and a final instruction instead of the old
+"whole of FM in one knob" aphorism. It keeps the section structure and the no em
+dash, no semicolon rules.
+
+The skills changed:
+- `references/voice.md` now records the manual calibration, the contractions, the
+  asides per section, the slang and self-description rules, and the over-editing
+  warning.
+- `references/voice-samples.md` starts with nine annotated excerpts from the hand
+  rewrite.
+- `SKILL.md` adds the design-note preface, the contractions, the tips, the "fix
+  grammar, not voice" rule, and the no-invented-facts rule.
+- `humanizer-context.md` is auto-loaded by the humanizer skill. It carries the
+  project voice, the calibration, the preserve and fix lists, and the before and
+  after examples.
+- The humanizer skill in `.agents/` gains the `umetate` voice profile and false
+  positive guardrails for contrast bold, UK tags, calibrated hedges, self-contained
+  manual sections, instrument-as-actor, and concrete tip lists. That directory is
+  git-ignored, so those edits are local. The tracked context file is the durable
+  part.
+
+The published manual was copied back into `examples/type-p-fm1/docs/manual.md`, so
+the next `umetate publish` does not replace the rewrite with the old version.

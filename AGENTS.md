@@ -51,6 +51,11 @@ manual, or reference register as the page requires. No em dashes. No semicolons.
 British spelling in prose. No marketing adjectives. No negative parallelism. No
 heading chains. No false dichotomies. One concrete example per major section.
 
+The hand-rewritten `examples/type-p-fm1/docs/manual.md` is the manual calibration.
+Keep its contractions, asides, light UK slang, and self-description. Do not flatten
+it back to a spec sheet. `humanizer-context.md` carries the same rules for the
+humanizer skill.
+
 ## UI work
 
 Before a panel, screen, editor, or web UI change, read

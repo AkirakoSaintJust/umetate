@@ -7,8 +7,99 @@ or a manual intro, then read `voice.md` for the rules.
 The full corpus is not checked in. It is the author's personal film and music
 writing, not part of the framework. The excerpts are enough to hear the rhythm.
 
-The published docs are a restrained version of this. No film opinions, no swearing,
-one digression per page. The sentence is the same.
+The published manual is a restrained version of this. No film opinions, no
+swearing. The hand rewrite keeps the digressions, the slang, and the jokes. The
+sentence is the same.
+
+## The hand rewrite
+
+These are from the author's hand rewrite of the Type P.fm1 manual. They are the
+target for manual voice. The first release was flatter. Read these before a manual
+page.
+
+### The design note
+
+> I'm a hardcore fan of phase modulation synths, so for the longest time I've kept
+> thinking about things I wanted to change on the Yamahas (and Yamaha emulators)
+> I've been using over the years. That's where Type P.fm1 comes from.
+
+First person, a specific history, a long setup. The next paragraph can start with
+"Originally" and carry the constraint. The preface is front-door register, not a
+spec sheet.
+
+### The list is content
+
+> 4. envelope graphs are essential, especially if you've got rate-level envelopes,
+> because they help massively with the sheer amount of params, and provide an easy
+> overview of what the patch is like at a given moment.
+
+The list is the author's seven design observations. It is content, not rule-of-three
+padding. The sentence is long and comma-heavy but reads as one thought. A manual can
+carry it.
+
+### The exclamation cluster
+
+> 6. velocity and key scaling are cool but they've got to live in their little
+> corner because there are just so! many! params!
+
+The three exclamation marks are deliberate. They are in the design note, not a
+procedure. Keep the cluster. Do not spray it through the page.
+
+### The factual contrast
+
+> It's not an emulation of any one Yamaha chip in particular, and the DSP was
+> implemented from scratch, but it **is** a DX-style synth, and it **does** take
+> cues from the way Yamaha emulators are implemented, particularly ymfm and Dexed.
+
+Both sides are real. The bold `is` and `does` are deliberate contrast, not random
+inline bold. This is not the "not just X, it's Y" hook.
+
+### The concrete sound, then the aside
+
+> Whole-number ratios sound clear, odd ratios sound metallic/reedy, and non-integer
+> ratios sound clangy and inharmonic, which can be industrial noise or struck-type
+> sounds like marimbas, vibraphones, weird glassy pads, and the Taco Bell bell (I've
+> never been to a Taco Bell but being terminally online has taught me Americans find
+> this really funny.)
+
+The aside names the sound and is one sentence. Keep it. The sentence is a run-on; a
+manual edit can split it after "inharmonic" without losing the voice. Do not cut the
+Taco Bell aside to make the page neutral.
+
+### The mechanism
+
+> All operators have feedback, but traditionally it shows up the most on carriers
+> and on the top operator of a stack. That's because of the way Yamaha chips work:
+> the operators were always computed in the same order and the one with feedback
+> was always the first one.
+
+"That's because" is the teaching voice, not filler. The history explains why the
+panel behaves the way it does. Keep it.
+
+### The design aside
+
+> Personally I find it sounds nice when a patch swells up, goes past the threshold
+> for a bit, then comes back under again (that's why I added it).
+
+One aside, one design reason. It earns its place. This is the model for a personal
+note in a parameter section.
+
+### The self-description
+
+> I'm more of a sound design gal, I fully sequence my music and I prefer trackers to
+> little boxes for sequences/composition/arrangement, but it should work for those
+> users as well.
+
+Keep "gal". Do not neutralise it. The sentence tells the reader who the author is,
+how they work, and who the synth is for.
+
+### End on an instruction
+
+> Try looking at the operator oscilloscopes to check out how the cascading phase
+> modulation progressively warps each waveform!
+
+The earlier draft ended on "the whole of FM in one knob". The author replaced the
+aphorism with a concrete next action. Do that.
 
 ## Long setup, short landing
 

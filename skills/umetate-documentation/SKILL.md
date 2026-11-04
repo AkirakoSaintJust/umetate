@@ -1,7 +1,7 @@
 ---
 name: umetate-documentation
-description: Write thorough, readable, human documentation for end users of a synthesizer built on umetate. Covers the user manual, panel reference, MIDI and SysEx reference, patch sheet, installation guide, and release notes. Rewrites are synchronic (current state, not history), written from the instrument's point of view, and measured against the author's own corpus so they read like a person wrote them. Never uses em dashes or semi-colons, never loses information, and bans negative parallelism, heading chains, false dichotomies, and marketing hooks.
-version: 1.1.0
+description: Write thorough, readable, human documentation for end users of a synthesizer built on umetate. Covers the user manual, panel reference, MIDI and SysEx reference, patch sheet, installation guide, and release notes. Rewrites are synchronic (current state, not history), written from the instrument's point of view, and measured against the author's own corpus and hand-rewritten manual so they read like a person wrote them. Never uses em dashes or semi-colons, never loses information, and bans negative parallelism, heading chains, false dichotomies, and marketing hooks. Preserves the author's contractions, asides, light UK slang, and self-description.
+version: 1.2.0
 license: GPL-3.0-only
 compatibility: OpenCode and Agent Skills-compatible loaders
 allowed-tools: read, grep, glob, edit, write, shell, websearch, webfetch
@@ -30,11 +30,17 @@ These are the whole skill. Read them before writing a word.
    pick the one the author would write. The reference samples are
    `examples/type-p-fm1/publish-readme.md` and the root `README.md`. The full
    profile is in `references/voice.md`. See the writing craft below.
-4. **No information loss.** Humanising is allowed to cut, sharpen, and reorder, but
-   not to drop a fact. Compare every edited paragraph to the original and put back
-   anything that went missing.
+4. **No information loss and no invention.** Humanising is allowed to cut, sharpen,
+   and reorder, but not to drop a fact. It is also not allowed to invent a fact. The
+   author can add their own knowledge; the model cannot. Compare every edited
+   paragraph to the original and put back anything that went missing.
 5. **No em dashes, no semi-colons.** Full stop. Rewrite around them.
-6. **Radical rewrites are fine.** The goal is prose quality, not minimal diffs.
+6. **Radical rewrites are fine.** The goal is prose quality, not minimal diffs. A
+   clean page that sounds like a spec sheet is not a success.
+
+The hand rewrite is the calibration for rule 3. It doubled the first-person count and
+the contractions. A rewrite that removes the author's slang, asides, and contractions
+has gone too far, even if the prose is cleaner.
 
 ## The voice
 
@@ -51,14 +57,23 @@ registers:
 
 Then read `references/voice-samples.md`. It is a short set of excerpts from the
 author's own reviews, forum posts, and notes, with a note on what each one teaches.
-The full corpus is 9,015 words. `voice.md` is measured against it: median sentence
-16 words, 90th percentile 39, zero em dashes, one semicolon, "I" 151 times, "we" 10
-times. The corpus is the calibration for the front door. The manual is the same
-voice with the procedure in front.
+The first section is the hand rewrite of the Type P.fm1 manual. The full corpus is
+9,015 words. `voice.md` is measured against it: median sentence 16 words, 90th
+percentile 39, zero em dashes, one semicolon, "I" 151 times, "we" 10 times. The
+corpus is the calibration for the front door. The manual is the same voice with the
+procedure in front.
 
-The samples use British spelling in prose, contractions, and dry humour. They do
-not use em dashes, semicolons, marketing adjectives, or three-item padding. Copy
-the habits, not the catchphrases. One personal aside per page is enough.
+The hand rewrite is the manual calibration: 1,899 words, mean sentence 15.6, median
+13, standard deviation 12.1, 22 first-person pronouns, 33 contractions, 7 brackets,
+4 exclamation marks. The first release was 971 words, mean 11.3, median 10, standard
+deviation 6.4, 2 first-person pronouns, 1 contraction. The rewrite is the target.
+
+The samples use British spelling in prose, except "synthesizer", contractions, dry
+humour, and light UK slang. The hand rewrite uses "innit", "kinda", "gal", and
+"whatever" in the preface and tips. The samples do not use em dashes, semicolons,
+marketing adjectives, or three-item padding. Copy the habits, not the catchphrases.
+One or two personal asides in the preface, one per section in the body. Never in a
+step.
 
 
 ## The document set
@@ -83,6 +98,12 @@ Open with the sound, not the spec. Tell the player what kind of instrument this 
 and what it is good at. Then walk the signal, from the keys to the output, in the
 order a player thinks about it.
 
+The manual can open with a design note, not a spec sheet. The design note is in the
+front-door register: the history, the constraint, the things the author wanted to
+change, and a short numbered list. The hand rewrite has seven. Then hand over to the
+manual register. The preface can run to several paragraphs and 150-word paragraphs.
+The parameter sections stay 40 to 120 words.
+
 Fetch real manuals as style and content references before you write. Good anchors:
 the Yamaha DX7 owner's manual and the Reface DX, the Korg opsix and Volca FM, the
 Roland System-8 or JU-06, the Sonicware Liven series, and the Mutable Instruments
@@ -96,12 +117,27 @@ For every parameter, answer three questions in plain words:
 2. What you hear when you change it.
 3. What the ends of the range sound like.
 
+Write the explanatory prose with contractions. The hand rewrite has 33 in 1,899
+words. The first release had 1, and it read like a contract. Use "you" for the
+player, "I" for the author's choices, and "it" for the instrument. One or two "I"
+per section is fine. The preface can carry more.
+
 Example of the shape, from an FM level parameter: "Operator level. This sets how
 loud operator 1 is inside the voice. At 99 it rings clearly, at 50 it is about 12
 decibels quieter, at 0 it is silent." Three sentences, concrete, no theory.
 
 Name the operators and the parts the way the panel names them. If the panel says
 OP1 through OP4, the manual says OP1 through OP4. Do not invent new names.
+
+A tip is allowed when it gives a setting and a sound: "a sine operator taking no
+modulation will kinda become a reverse sawtooth at about 25%-35%." Label it "Tip:"
+if the section is dense. Three concrete tips are content, not padding. End the
+manual with a patch recipe or an instruction, not an aphorism.
+
+The hand rewrite keeps "innit", "kinda", "gal", and "whatever". Keep them in the
+preface and one-line tips. Never in a procedure, a warning, or a reference table.
+Keep the author's self-description ("I'm more of a sound design gal"). Do not change
+"gal" to "guy" or "person".
 
 ## The panel reference
 
@@ -160,6 +196,10 @@ This is the humanisation part, the anti-slop part. Apply it to every page. It is
 distillation of the author's corpus and the usual AI-tell catalogue, aimed at
 technical prose, plus what good hardware manuals already do.
 
+**Do not flatten the voice.** The biggest failure mode is a manual that reads like a
+spec sheet. The first release did. The hand rewrite has 22 first-person pronouns and
+33 contractions. If your draft has 2 and 1, you have over-edited.
+
 **Address the reader as "you".** "Turn the knob" beats "the user turns the knob".
 Put the player in the room.
 
@@ -173,10 +213,15 @@ any synthesizer describes none.
 
 **One main point per sentence.** When a sentence has three unrelated clauses, it is
 two sentences. When the clauses belong to one thought, a longer sentence is fine.
-Let a short sentence land next to a long one. Vary the length on purpose.
+Let a short sentence land next to a long one. Vary the length on purpose. The hand
+rewrite has a 66-word sentence. A long sentence is fine when the clauses belong
+together. Split it when the reader has to backtrack.
 
 **Plain words over jargon.** The exact term stays where the panel uses it. Do not
 invent synonyms for "operator" or "algorithm". Everything else gets the plain word.
+Keep the author's deliberate vagueness: "OPwhatever", "or whatever", "aka". Pair
+"OPwhatever" with "DX" so a reader can infer the family. Do not replace it with a
+precise model list the author did not write.
 
 **Kill the filler.** Delete "in order to", "it is worth noting", "in the context
 of", "utilize". Delete the summary sentence that restates the heading. Delete the
@@ -186,7 +231,8 @@ opening that promises what is coming. Start with the content.
 two qualifiers are slop. This is an instrument manual, not a research paper.
 
 **No rule of three padding.** List the real items, two or four is fine. Three
-abstract nouns in a row is a tell.
+abstract nouns in a row is a tell. A 7-item design list is content. Three concrete
+tips are content. The ban is on three abstract nouns doing the work of one fact.
 
 **No promotion.** "Seamless", "robust", "state of the art", "unleash" have no place
 next to a knob. Say what it does, let the player decide if it is good.
@@ -199,7 +245,10 @@ is the whole sentence. It does not need a setup.
 **No negative parallelism.** "It's not just a synth, it's a way of thinking", "not X,
 it's Y", "less X than Y", "X isn't about Y, it's about Z" are hooks. They invent a
 contrast so the sentence sounds deeper. Say what the thing is. If the contrast is
-real, state both sides plainly. `references/voice.md` has the full rule.
+real, state both sides plainly. `references/voice.md` has the full rule. A factual
+contrast is allowed: "It's not an emulation of any one Yamaha chip in particular, but
+it **is** a DX-style synth" names both sides and prevents a false expectation. The
+ban is on the theatrical "not just X, it's Y" hook.
 
 **No heading chains.** Do not write "The Engine", "The Filter", "The Envelope:
 Shaping Your Sound" for every section. Vary the grammar, use the reader's words, and
@@ -215,6 +264,15 @@ synth, say that. It does not need an enemy.
 "Dive into", "Whether you're a beginner or a seasoned producer", "The result?",
 "But here's the thing", "Let's break it down". Start with the content.
 
+**Fix grammar, not voice.** "both parts's algorithms" becomes "both parts'
+algorithms". A comma splice can stay if it reads as one thought. Do not replace
+"kinda" with "somewhat", "gal" with "person", or "innit" with "right?" unless the
+author asks. Do not turn "2x4-op" into "two-by-four-operator" in every mention.
+
+**No invented facts.** A humanising pass may not add a model, a date, a number, or a
+quote. The hand rewrite's DX21/DX7 comparison, Chowning, ymfm, Dexed, and Yamaha
+chip order are the author's knowledge. The model does not get to add its own.
+
 **Read it back as speech.** If you cannot imagine a patient teacher saying the
 sentence out loud, rewrite it.
 
@@ -228,16 +286,23 @@ SysEx checksum is a broken page.
 Checklist for the final pass:
 
 - [ ] Every fact from the source is present or deliberately scoped out with a reason.
+- [ ] No fact was invented. The model added no model, date, number, or quote.
 - [ ] The page uses the right register from `references/voice.md`.
 - [ ] No em dash anywhere. No semi-colon anywhere.
 - [ ] Every parameter, control, and command is named exactly as the panel names it.
 - [ ] The current state only. Release notes excepted, no "now uses", "was added",
       "previously".
 - [ ] A reader who has never seen the code can follow it.
+- [ ] The explanatory prose has contractions. The hand rewrite has 33 in 1,899
+      words.
+- [ ] The author's slang, asides, and self-description survive.
+- [ ] The manual is not flatter than the corpus. The median is roughly 13 to 16
+      words and the variance is visible.
 - [ ] No negative parallelism ("not just X, but Y", "not X, it's Y", "less X than Y").
 - [ ] No heading chain ("The X", "The Y", "The Z: ...").
 - [ ] No false dichotomy and no invented contrast.
 - [ ] No marketing hook.
+- [ ] The closing is an instruction or a verdict, not an aphorism.
 - [ ] The first sentence says the thing, not "In this section".
 
 ## Credits and licences
