@@ -32,6 +32,7 @@ COMMANDS: dict[str, tuple[str, str]] = {
     "budget": ("measure the polyphony budget", "budget"),
     "theme": ("check/generate a WCAG-verified palette", "theme"),
     "tokens": ("check UI tokens + hard-coded values", "tokens"),
+    "font-atlas": ("rebuild the mockup's firmware font", "font_atlas"),
     "lint": ("the C standing checks", "lint"),
     "fmt": ("clang-format the repo", "fmt"),
     "web-build": ("emscripten -> the FM-1 firmware emulator", "web:build_main"),

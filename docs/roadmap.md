@@ -4100,6 +4100,12 @@ footer legend, the part and operator mutes, and the six palettes. It supports
 file picker for use without a server, value cycling by clicking a row, and a PNG
 export. It is served with `python -m http.server 8000` from the repo root.
 
+The mockup draws the firmware's own 4-bit bitmap font. `umetate font_atlas`
+converts `firmware/gen/felucca_font.h` into `design/firmware-font.json`, and the
+mockup fills the pixels at the same 16 pixel height and 8 pixel advance as the
+device. The text is a hard render of the real glyphs, not a lookalike. The atlas
+is checked in and `test_font_atlas` fails when it drifts from the header.
+
 The first pass caught a real fidelity issue. The generated panel consumes the
 first `subheader` as the page title and shifts the remaining widget rows up by
 one. The mockup initially drew the subheader twice and left a gap. It now follows

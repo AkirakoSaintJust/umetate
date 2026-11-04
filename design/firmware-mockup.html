@@ -402,6 +402,7 @@
   const state = {
     panel: null,
     theme: DEFAULT_THEME,
+    font: null,
     context: null,
     page: 0,
     part: 0,
@@ -520,7 +521,66 @@
     document.documentElement.style.setProperty("--dot", state.dot);
   };
 
+  const face = (name) => {
+    if (!state.font || !state.font.faces) return null;
+    const data = state.font.faces[name];
+    if (!data) return null;
+    if (!data._bytes) {
+      data._bytes = Uint8Array.from(atob(data.data), (c) => c.charCodeAt(0));
+    }
+    return data;
+  };
+
+  const glyphIndex = (f, code) => {
+    if (code < f.first || code > f.last) code = 63;   /* "?" */
+    return code - f.first;
+  };
+
+  const bitmapMeasure = (s, name) => {
+    const f = face(name);
+    if (!f) return 0;
+    let width = 0;
+    for (const ch of String(s)) {
+      width += f.adv[glyphIndex(f, ch.codePointAt(0))];
+    }
+    return width;
+  };
+
+  const drawBitmap = (s, x, y, fill, name) => {
+    const f = face(name);
+    if (!f) return false;
+    ctx.save();
+    ctx.fillStyle = fill;
+    let pen = x;
+    for (const ch of String(s)) {
+      const gi = glyphIndex(f, ch.codePointAt(0));
+      const w = f.bw[gi];
+      const bpr = (w + 1) >> 1;
+      const off = f.off[gi];
+      for (let gy = 0; gy < f.height; gy++) {
+        for (let gx = 0; gx < w; gx++) {
+          const byte = f._bytes[off + gy * bpr + (gx >> 1)];
+          const alpha = (gx & 1) ? (byte & 15) : (byte >> 4);
+          if (!alpha) continue;
+          ctx.globalAlpha = alpha / 15;
+          ctx.fillRect(pen - f.pad + gx, y + gy, 1, 1);
+        }
+      }
+      pen += f.adv[gi];
+    }
+    ctx.globalAlpha = 1;
+    ctx.restore();
+    return true;
+  };
+
   const text = (s, x, y, fill, size = 16, align = "left") => {
+    const name = size >= 24 ? "L" : "S";
+    if (state.font) {
+      const width = bitmapMeasure(s, name);
+      const drawX = align === "right" ? x - width : align === "center" ? x - width / 2 : x;
+      drawBitmap(s, Math.round(drawX), Math.round(y), fill, name);
+      return;
+    }
     ctx.save();
     ctx.fillStyle = fill;
     ctx.font = `${size}px "P1 Pixel", ui-monospace, monospace`;
@@ -531,6 +591,8 @@
   };
 
   const measure = (s, size = 16) => {
+    const name = size >= 24 ? "L" : "S";
+    if (state.font) return bitmapMeasure(s, name);
     ctx.save();
     ctx.font = `${size}px "P1 Pixel", ui-monospace, monospace`;
     const w = ctx.measureText(String(s)).width;
@@ -674,32 +736,47 @@
     }
   };
 
+  const ALGO_MOD = [
+    [0, 1, 2, 4], [0, 0, 3, 4], [0, 0, 2, 5], [0, 1, 1, 6],
+    [0, 1, 0, 4], [0, 1, 1, 1], [0, 1, 0, 0], [0, 0, 0, 0]
+  ];
+  const ALGO_CAR = [8, 8, 8, 8, 10, 14, 14, 15];
+  const ALGO_X = [
+    [30, 90, 150, 210], [44, 172, 108, 108], [44, 172, 108, 108], [108, 44, 172, 108],
+    [44, 44, 172, 172], [108, 44, 108, 172], [44, 44, 108, 172], [210, 150, 90, 30]
+  ];
+  const ALGO_Y = [
+    [10, 10, 10, 10], [10, 10, 46, 82], [46, 10, 46, 82], [10, 46, 46, 82],
+    [10, 46, 10, 46], [10, 46, 46, 46], [10, 46, 46, 46], [10, 10, 10, 10]
+  ];
+
   const drawAlgo = (w, x, y, wd, ht) => {
     const c = color();
-    rect(x + 1, y + 1, wd - 2, ht - 2, "rgba(0,0,0,.22)", c.dim);
-    const n = state.alg;
-    const carriers = [[0], [0, 1], [0, 2], [0, 1, 2], [0, 1, 3], [0, 2, 3], [0, 1, 2, 3], [0, 1, 2, 3]][n] || [0];
-    const bw = 26;
-    const bh = 18;
-    const gap = 10;
-    const startX = x + 12;
-    const startY = y + 20;
-    const pos = [
-      [startX, startY + 58],
-      [startX + bw + gap, startY + 58],
-      [startX, startY + 22],
-      [startX + bw + gap, startY + 22]
-    ];
-    // simple routing lines: modulators feed the next lower row
-    for (let i = 2; i < 4; i++) {
-      line(pos[i][0] + bw / 2, pos[i][1] + bh, pos[i - 2][0] + bw / 2, pos[i - 2][1], c.dim, 1);
+    const n = Math.max(0, Math.min(7, state.alg));
+    const car = ALGO_CAR[n];
+    for (let i = 0; i < 4; i++) {
+      for (let j = 0; j < 4; j++) {
+        if (ALGO_MOD[n][i] & (1 << j)) {
+          line(x + ALGO_X[n][j], y + ALGO_Y[n][j], x + ALGO_X[n][i], y + ALGO_Y[n][i], c.amb, 1);
+        }
+      }
     }
     for (let i = 0; i < 4; i++) {
-      const carrier = carriers.includes(i);
-      rect(pos[i][0], pos[i][1], bw, bh, carrier ? c.hi : "transparent", carrier ? c.hi : c.text);
-      text(`OP${i + 1}`, pos[i][0] + bw / 2, pos[i][1] + 2, carrier ? c.bg : c.text, 10, "center");
+      if (car & (1 << i)) {
+        const cx = x + ALGO_X[n][i];
+        const cy = y + ALGO_Y[n][i] + 7;
+        line(cx, cy, cx, cy + 8, c.amb, 1);
+        line(cx - 3, cy + 5, cx, cy + 8, c.amb, 1);
+        line(cx + 3, cy + 5, cx, cy + 8, c.amb, 1);
+      }
     }
-    text(`ALG ${n}`, x + wd - 4, y + 4, c.hi, 12, "right");
+    for (let i = 0; i < 4; i++) {
+      const carrier = Boolean(car & (1 << i));
+      const bx = x + ALGO_X[n][i] - 20;
+      const by = y + ALGO_Y[n][i] - 7;
+      rect(bx, by, 40, 14, carrier ? c.hi : c.text);
+      text(String(i + 1), bx + 15, by, c.bg, 16);
+    }
   };
 
   const drawLabel = (w, x, y, wd) => {
@@ -745,18 +822,18 @@
     if (lastRow >= 12) return;
     const c = color();
     const lines = String(state.panel.legend).split(/\n|\\n/).slice(0, 3);
-    let y = H - lines.length * 14;
+    let y = H - lines.length * ROW;
     for (const raw of lines) {
       let x = 2;
       let hot = false;
       for (const part of raw.split("~")) {
         if (part) {
-          text(part, x, y, hot ? c.hi : c.dim, 11);
-          x += measure(part, 11);
+          text(part, x, y, hot ? c.hi : c.dim, 16);
+          x += measure(part, 16);
         }
         hot = !hot;
       }
-      y += 14;
+      y += ROW;
     }
   };
 
@@ -1034,10 +1111,25 @@
     $("theme-note").textContent = "using the built-in fallback theme";
   };
 
+  const loadFont = async () => {
+    const candidates = ["firmware-font.json", "../design/firmware-font.json"];
+    for (const url of candidates) {
+      try {
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+        state.font = await res.json();
+        return;
+      } catch (err) {
+        /* try the next candidate */
+      }
+    }
+    state.font = null;
+  };
+
   const boot = async (reload = false) => {
     const params = new URLSearchParams(location.search);
     if (reload || !state.panel) {
-      await Promise.all([loadPanel(), loadTheme()]);
+      await Promise.all([loadPanel(), loadTheme(), loadFont()]);
     }
     if (state.panel) {
       const wantedContext = params.get("context");

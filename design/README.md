@@ -321,10 +321,16 @@ the first `subheader` as the page title and shifts the widget rows up by one.
 The mockup now does the same. That is exactly the kind of mismatch the tool is
 for.
 
-The mockup uses the bundled OFL DotGothic16 as a pixel stand-in. The firmware
-uses the generated font from `gen_font.py`, so the exact glyphs and widths come
-from the web emulator, not the mockup. The mockup is for layout, hierarchy,
-labels, and state.
+The mockup loads `design/firmware-font.json`, the firmware's own 4-bit bitmap
+font built from `firmware/gen/felucca_font.h`. The glyphs and advances are the
+firmware's, not a lookalike. If the atlas is missing, the mockup falls back to
+the bundled DotGothic16. Regenerate the atlas after a font change with:
+
+```sh
+python -m umetate.font_atlas write
+```
+
+`umetate test_font_atlas` fails when the atlas is stale.
 
 ## Working method
 
