@@ -397,9 +397,11 @@ _NOTICE_FILES = (
 
 
 def _notices(licence_root: Path | None) -> list[Path]:
-    """The notice files, looked up beside the published tree first and then in
-    the framework checkout (the framework build has no release root yet)."""
-    roots = [root for root in (licence_root, _ROOT) if root is not None]
+    """The notice files, looked up beside the published tree, in the working
+    directory (the release repo root), and in the framework checkout. The
+    release workflow stages archives into `dist/`, so the working directory is
+    where `third-party-licenses/` lives."""
+    roots = [root for root in (licence_root, Path.cwd(), _ROOT) if root is not None]
     found: dict[str, Path] = {}
     for name in _NOTICE_DOCS:
         for root in roots:
