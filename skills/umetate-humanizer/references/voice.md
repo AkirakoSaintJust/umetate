@@ -1,8 +1,9 @@
-# umetate voice context
+# umetate voice data
 
-This file is auto-loaded by the humanizer skill. It overrides the generic defaults
-for umetate prose. Read it before rewriting a manual, a README, release notes, a
-panel section, or a guide or study.
+This is the project voice data for `skills/umetate-humanizer/SKILL.md`.
+
+Read it before rewriting a manual, a README, release notes, a panel section, or a
+guide or study.
 
 The runtime method is `skills/umetate-humanizer/SKILL.md`. That file carries the
 negation test, the connectivity pass, the aphorism ban, the "A, not B" ban, the
@@ -258,4 +259,4 @@ casual wrapper.
 These specifics apply to the author's own docs, including guides and studies about
 other instruments. If you are rewriting someone else's text for a different author,
 ignore the project-specific slang, the "gal" self-description, and the synth
-references. The generic 55 patterns still apply.
+references. The patterns in `ai-tells.md` still apply.

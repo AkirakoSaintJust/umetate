@@ -56,9 +56,9 @@ heading chains. No false dichotomies. One concrete example per major section.
 The hand-written preface and sound-design part of
 `examples/type-p-fm1/docs/manual.md` is the manual calibration. The panel section
 follows the same register. Keep its contractions, asides, light UK slang, and
-self-description. Do not flatten it back to a spec sheet. The runtime humanizer
-skill is `skills/umetate-humanizer/`, and `humanizer-context.md` is the project
-voice data it loads.
+self-description. Do not flatten it back to a spec sheet. The humanizer skill is
+`skills/umetate-humanizer/`. Its `references/voice.md` carries the project voice
+data.
 
 The K5/K5000 guide rewrite is the guide/study calibration. Plain category openings,
 explanatory long sentences, "whilst", "sort of", "and so on", "probably", and a

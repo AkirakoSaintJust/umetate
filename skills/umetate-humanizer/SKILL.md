@@ -241,8 +241,17 @@ Useful flags:
 - `--ignore-code`: mask fenced code blocks before detection and editing.
 - `--ignore-quotes`: mask block quotes and quoted samples.
 
-Load `humanizer-context.md` from the project root if it exists. It is the
-project-specific voice data and overrides the generic defaults.
+Read `references/voice.md` for the full project voice data: the preservation list,
+the fixes, the hard bans, and the before and after samples.
+
+## References
+
+- `references/voice.md`: the full project voice data, preservation list, fixes,
+  hard bans, and before and after samples.
+- `references/ai-tells.md`: the reviewed pattern reference, false positives, detect
+  report, and edit safety.
+- `references/always-on.md`: short standing-instruction blocks for `AGENTS.md`,
+  system prompts, and umetate docs.
 
 ## AI-tell checklist
 
@@ -266,6 +275,9 @@ project-specific voice data and overrides the generic defaults.
 | Em dash or semicolon | Rewrite around it. |
 | Uniform sentence length | Let a short sentence land next to a long one. |
 | Dropped qualifier | Put the documented fact back. |
+
+The reviewed pattern reference is `references/ai-tells.md`. It adds the deeper
+trigger lists, the false positives, the detect report, and the edit safety rules.
 
 ## Before and after
 
