@@ -413,6 +413,7 @@ def build_app(synth_dir: Path, out: Path) -> int:
     out.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(_EMU_DIR / "index.html", out / "index.html")
     shutil.copyfile(_EMU_DIR / "worklet.js", out / "worklet.js")
+    shutil.copyfile(_EMU_DIR / "favicon.svg", out / "favicon.svg")
     shutil.copyfile(_TOKENS_CSS, out / "tokens.css")
     fonts = out / "fonts"
     fonts.mkdir(exist_ok=True)

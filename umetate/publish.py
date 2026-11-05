@@ -62,6 +62,7 @@ _WEB_SOURCES = (
     (_WEB_BUILD, "firmware.wasm"),
 )
 _WEB_ASSETS = (
+    (_EMU_DIR / "favicon.svg", "favicon.svg"),
     (_ROOT / "design" / "tokens.css", "tokens.css"),
     (
         _ROOT / "plugin" / "juce" / "resources" / "fonts" / "DotGothic16-Regular.ttf",
