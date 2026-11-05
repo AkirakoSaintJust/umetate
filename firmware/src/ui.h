@@ -222,6 +222,11 @@ void ui_save_mode_move(int32_t delta);           /* cycle the mode (wrap) */
 void ui_save_mode_commit(void);                  /* keep the mode, close */
 void ui_save_mode_cancel(void);                  /* back to the save chooser, close */
 
+uint8_t ui_confirm_open(void);                   /* 1 = the yes/no popup is showing */
+void ui_confirm_begin(const char *text);         /* open, asking `text` */
+void ui_confirm_commit(void);                    /* close after SAVE */
+void ui_confirm_cancel(void);                    /* close after HOME or idle */
+
 /* ---- the "which single part" chooser (before a part load/save/init) ---- */
 uint8_t ui_part_chooser_open(void);              /* 1 = the chooser is showing */
 void ui_part_chooser_begin(uint8_t part, const char *title);  /* open, pre-selecting `part`; `title` = an extra first line (0 = none) */

@@ -27,6 +27,16 @@
     "home": {
       "pages": [
         {
+          "id": "perform",
+          "widgets": [
+            { "type": "subheader", "row": 2, "text": "PERFORMANCE", "plain": true },
+            { "type": "param_row", "row": 3, "param": "cutoff", "text": "CUTOFF" },
+            { "type": "param_row", "row": 4, "param": "res", "text": "RES" },
+            { "type": "param_row", "row": 5, "param": "fold", "text": "FOLD" },
+            { "type": "param_row", "row": 6, "param": "op1_feedback", "text": "OP1 FB" }
+          ]
+        },
+        {
           "id": "algo",
           "widgets": [
             { "type": "subheader", "row": 2, "text": "ALGORITHM", "part": true },
@@ -37,13 +47,13 @@
           "id": "env",
           "widgets": [
             { "type": "subheader", "row": 2, "text": "A-ENVS", "partop": true },
-            { "type": "envelope", "row": 3, "span": 2,
+            { "type": "envelope", "row": 3, "span": 2, "op": 0,
               "params": ["op1.eg.r1", "op1.eg.r2", "op1.eg.r3", "op1.eg.r4", "op1.eg.l1", "op1.eg.l2", "op1.eg.l3"] },
-            { "type": "envelope", "row": 5, "span": 2,
+            { "type": "envelope", "row": 5, "span": 2, "op": 1,
               "params": ["op2.eg.r1", "op2.eg.r2", "op2.eg.r3", "op2.eg.r4", "op2.eg.l1", "op2.eg.l2", "op2.eg.l3"] },
-            { "type": "envelope", "row": 7, "span": 2,
+            { "type": "envelope", "row": 7, "span": 2, "op": 2,
               "params": ["op3.eg.r1", "op3.eg.r2", "op3.eg.r3", "op3.eg.r4", "op3.eg.l1", "op3.eg.l2", "op3.eg.l3"] },
-            { "type": "envelope", "row": 9, "span": 2,
+            { "type": "envelope", "row": 9, "span": 2, "op": 3,
               "params": ["op4.eg.r1", "op4.eg.r2", "op4.eg.r3", "op4.eg.r4", "op4.eg.l1", "op4.eg.l2", "op4.eg.l3"] }
           ]
         },
@@ -402,8 +412,7 @@
             { "type": "param_row", "row": 3, "param": "mode", "part": true, "text": "MODE" },
             { "type": "param_row", "row": 4, "param": "note_priority", "part": true, "text": "PRIORITY" },
             { "type": "param_row", "row": 5, "param": "legato", "part": true, "text": "LEGATO" },
-            { "type": "param_row", "row": 6, "param": "portamento", "part": true, "text": "PORTA" },
-            { "type": "param_row", "row": 7, "param": "detune", "part": true, "text": "TUNE" }
+            { "type": "param_row", "row": 6, "param": "portamento", "part": true, "text": "PORTA" }
           ]
         },
         {
@@ -411,7 +420,8 @@
           "widgets": [
             { "type": "subheader", "row": 2, "text": "MONO STACK", "part": true },
             { "type": "param_row", "row": 3, "param": "unison_count", "part": true, "text": "VOICES" },
-            { "type": "param_row", "row": 4, "param": "unison_detune", "part": true, "text": "DETUNE" }
+            { "type": "param_row", "row": 4, "param": "unison_detune", "part": true, "text": "DETUNE" },
+            { "type": "param_row", "row": 5, "param": "detune", "part": true, "text": "TUNE" }
           ]
         },
         {

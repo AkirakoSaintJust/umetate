@@ -70,7 +70,7 @@ The pyright gate is green now. I'd take the rest in this order.
 
 | # | Work | Done when | Status |
 | --- | --- | --- | --- |
-| 1 | Refresh the Type P.fm1 source snapshot | The release `framework/` source matches the current docs and CLI, or the notes explain why the older snapshot is intentional. | optional |
+| 1 | Cut the Type P.fm1 1.0.2 firmware | The release has the panel fixes and the matching manual, and the checksums pass. | open |
 | 2 | Windows VST3/CLAP archives | The release workflow builds them, `RELEASES.md` lists them, and the checksums pass. | open |
 | 3 | macOS build and AU | A macOS host builds the VST3/AU, the validators pass, and the CI job stops being `continue-on-error`. | blocked |
 | 4 | Signed installers | The platform installers are signed and the release page links them. | open |
@@ -157,6 +157,7 @@ One table for the pieces I need to find quickly.
 **P8-7, Signed installers.**, **open**, no signing identity.
 **P8-8, Vendored JUCE archive.**, **open**, the release should carry the source archive and notice.
 **P8-9, Usability test.**, **open**, optional, a player who did not design the panel.
+**P8-10, Panel fixes.**, **done**, the PERFORMANCE page, TUNE on MONO STACK, per-operator A-ENVS graphs, and the INIT PATCH confirmation are in.
 
 ## 8. Evidence and definition of done
 
@@ -171,10 +172,9 @@ One table for the pieces I need to find quickly.
 
 ## 9. Risks and open questions
 
-- **Release source snapshot.** The 1.0.1 binaries came from `31ecc64`. The release
-  docs are synced at `e40d0cb`, but the `framework/` source snapshot still matches
-  the 1.0.1 binaries. Refresh it only if the release should include the later CLI
-  and source.
+- **Release source snapshot.** The 1.0.1 binaries came from `31ecc64` and do not
+  include the panel fixes. The release docs at `e40d0cb` describe the 1.0.1 panel.
+  Cut 1.0.2 when you want the fixes in the release.
 - **Plugin editor scope.** The editor pages and host tests are built around Type
   P.fm1. A different synth needs its own pages, tests, and company override.
 - **Platforms.** macOS/AU and the Windows plugin release are open. Linux is

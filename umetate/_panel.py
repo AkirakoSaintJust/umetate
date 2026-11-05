@@ -396,7 +396,10 @@ def generate_panel(
         span = w.get("span", 1)
         if w["type"] == "envelope":
             typ = "UI_ENVELOPE"
-            param = "0"  # unused; the runtime reads the env group
+            op = w.get("op")
+            param = (
+                str(op) if isinstance(op, int) and 0 <= op <= 7 else "0xFFFF"
+            )  # a fixed operator, or the selected operator
         elif w["type"] == "genv":
             typ = "UI_GENV"
             param = str(

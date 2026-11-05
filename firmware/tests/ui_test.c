@@ -267,6 +267,21 @@ int main(void)
               "the name editor rejects a slot outside the range");
     }
 
+    /* the confirmation popup (INIT PATCH: SAVE=yes HOME=no) */
+    {
+        ui_confirm_begin("INIT PATCH?");
+        CHECK(ui_confirm_open() == 1, "confirm popup opens");
+        CHECK(ui_popup_active() == 1, "confirm popup is modal");
+        ui_confirm_cancel();
+        CHECK(ui_confirm_open() == 0, "confirm popup cancels");
+        ui_confirm_begin("INIT PATCH?");
+        ui_popup_cancel_all();
+        CHECK(ui_confirm_open() == 0, "idle close cancels the confirm popup");
+        ui_confirm_begin("INIT PATCH?");
+        ui_confirm_commit();
+        CHECK(ui_confirm_open() == 0, "confirm popup commits");
+    }
+
     /* the save chooser (kind toggle + slot wrap + commit/cancel) */
     {
         ui_save_begin(0u, 5u, 3u);

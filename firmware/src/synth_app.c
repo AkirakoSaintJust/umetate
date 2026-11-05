@@ -242,6 +242,19 @@ uint8_t synth_app_step(synth_app_ctx *ctx)
     uint32_t rel, b;
     int32_t k1, k2;
 
+    if (ui_confirm_open()) {
+        /* the yes/no popup: SAVE = do it, HOME = cancel */
+        b = fm1_input_edges(&rel);
+        if (b & (1u << BTN_SAVE)) {
+            ui_confirm_commit();
+            ui_act_init_patch();
+        }
+        if (b & (1u << BTN_HOME))
+            ui_confirm_cancel();
+        if (b)
+            synth_app_input(ctx);
+        return 1u;
+    }
     if (ui_name_editing() != 0xFFu) {
         /* the name editor: KNOB1 = char, KNOB2 = cursor, SEL = backspace,
            SAVE = ok, HOME = cancel; the keys + page are inert while open. */

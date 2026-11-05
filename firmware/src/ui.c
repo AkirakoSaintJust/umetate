@@ -76,6 +76,8 @@ static uint8_t ui_save_mode_on, ui_save_mode_which;  /* step 2: the multi-patch 
 static uint8_t ui_part_sel_on, ui_part_sel_which;  /* the "which single part" chooser */
 static const char *ui_part_title;                  /* the chooser's extra first line (0 = none) */
 static uint8_t ui_copy_on, ui_copy_which, ui_copy_targets;  /* the page-copy chooser */
+static uint8_t ui_confirm_on;                    /* the yes/no popup */
+static const char *ui_confirm_text;              /* the question it asks */
 
 static const ui_context *ui_ctx(void) { return &ui_t->ctx[ui_stack[ui_sp]]; }
 static const ui_page *ui_cur_page(void) { return &ui_ctx()->pages[ui_pagei[ui_sp]]; }
@@ -825,12 +827,13 @@ static void ui_env_curve(uint32_t wd, uint32_t ht, const uint16_t *p)
 static void ui_draw_envelope(const ui_widget *w)
 {
     uint32_t x, y, wd, ht;
+    uint32_t op = w->param < ui_t->n_op ? (uint32_t)w->param : (uint32_t)ui_selected_op;
     ui_region(w, &x, &y, &wd, &ht);
-    if (!ui_t->env || ui_selected_op >= ui_t->n_op)
+    if (!ui_t->env || op >= ui_t->n_op)
         return;
     cv_begin(wd, ht, C_BLACK);
     ui_env_curve(wd, ht, &ui_t->env[((uint32_t)ui_selected_part * ui_t->n_op
-                                     + (uint32_t)ui_selected_op) * 7u]);
+                                     + op) * 7u]);
     cv_blit(x, y);
 }
 
@@ -1266,8 +1269,9 @@ static int32_t ui_widget_value(const ui_widget *w, uint32_t slot)
     case UI_GRID: return ui_cursor;
     case UI_ENVELOPE: {                             /* redraw when any of the 7 change */
         int32_t sum = 0;
-        uint32_t i, p0 = ((uint32_t)ui_selected_part * ui_t->n_op + (uint32_t)ui_selected_op) * 7u;
-        if (ui_t->env && ui_selected_op < ui_t->n_op)
+        uint32_t op = w->param < ui_t->n_op ? (uint32_t)w->param : (uint32_t)ui_selected_op;
+        uint32_t i, p0 = ((uint32_t)ui_selected_part * ui_t->n_op + op) * 7u;
+        if (ui_t->env && op < ui_t->n_op)
             for (i = 0; i < 7; i++) {
                 uint16_t p = ui_t->env[p0 + i];
                 if (p < ui_t->n_params) sum += ui_param_v[p];
@@ -1419,7 +1423,8 @@ void ui_popup_hide(void)
  * drained so a twist during the popup doesn't fire once it closes). */
 uint8_t ui_popup_active(void)
 {
-    return ui_name_on || ui_save_on || ui_save_mode_on || ui_part_sel_on || ui_copy_on;
+    return ui_name_on || ui_save_on || ui_save_mode_on || ui_part_sel_on || ui_copy_on
+        || ui_confirm_on;
 }
 
 /* ---- the name strings + the name editor ---- */
@@ -1553,6 +1558,37 @@ static void ui_draw_name_editor(void)
     }
     cv_text(6, 3 * UI_ROW_H, &FONT_S, "K1=char K2=cursor SEL=del", C_POPUP_TXT);
     cv_text(6, 4 * UI_ROW_H, &FONT_S, "SAVE=ok HOME=cancel", C_POPUP_TXT);
+    cv_blit(0, 4 * UI_ROW_H);
+}
+
+/* ---- the confirmation popup (SEL+SAVE outside GLO: INIT PATCH) ---- */
+
+uint8_t ui_confirm_open(void) { return ui_confirm_on; }
+
+void ui_confirm_begin(const char *text)
+{
+    ui_confirm_text = text ? text : "CONFIRM?";
+    if (!ui_confirm_on)
+        ui_reset_page();
+    ui_confirm_on = 1;
+}
+
+void ui_confirm_commit(void)
+{
+    if (ui_confirm_on) {
+        ui_confirm_on = 0;
+        ui_reset_page();
+    }
+}
+
+void ui_confirm_cancel(void) { ui_confirm_commit(); }
+
+static void ui_draw_confirm(void)
+{
+    cv_begin(240u, 5u * UI_ROW_H, C_POPUP_BG);
+    cv_text(6, 2, &FONT_S, "CONFIRM", C_POPUP_TXT);
+    cv_text(6, UI_ROW_H, &FONT_S, ui_confirm_text, C_AMB);
+    cv_text(6, 3 * UI_ROW_H, &FONT_S, "SAVE=yes HOME=no", C_POPUP_TXT);
     cv_blit(0, 4 * UI_ROW_H);
 }
 
@@ -1902,6 +1938,7 @@ void ui_popup_cancel_all(void)
     if (ui_save_mode_on) ui_save_mode_cancel();
     if (ui_part_sel_on) ui_part_chooser_cancel();
     if (ui_copy_on) ui_copy_cancel();
+    if (ui_confirm_on) ui_confirm_cancel();
 }
 
 /* the copy chooser pop-up: a title, the target rows (2 parts or 8 part+op), and
@@ -2032,6 +2069,8 @@ void ui_redraw(uint32_t now_ms)
         ui_draw_part_chooser();
     if (ui_copy_on)
         ui_draw_copy();
+    if (ui_confirm_on)
+        ui_draw_confirm();
 }
 
 /* the safe-failure screen: drawn independently, never through the widget engine */

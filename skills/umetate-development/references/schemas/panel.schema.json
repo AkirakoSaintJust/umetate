@@ -68,6 +68,7 @@
         "span": { "type": "integer", "minimum": 1 },
         "param": { "type": "string", "description": "param path, e.g. filter.cutoff" },
         "params": { "type": "array", "items": { "type": "string" }, "description": "the envelope widget's 7 param paths (r1..r4, l1..l3)" },
+        "op": { "type": "integer", "minimum": 0, "maximum": 7, "description": "the fixed operator for an envelope graph; omit for the selected operator" },
         "text": { "type": "string" },
         "unit": { "type": "string" },
         "fmt": { "type": "string", "description": "printf format for the value" },

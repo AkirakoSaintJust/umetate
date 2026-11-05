@@ -66,13 +66,16 @@
 
 ### `home`
 
-Display and performance context. Eight pages, no page-knob assignments. The
+Display and performance context. Nine pages. It opens on `PERFORMANCE`, the live
+page with cutoff, resonance, wavefolder amount, and operator 1 feedback. The other
+eight pages are displays, and the four page knobs have no assignments there. The
 `ALGORITHM` encoder edits the active part's algorithm and shows the graph popup.
 
 | Page | Contents |
 | --- | --- |
+| PERFORMANCE | Cutoff, resonance, wavefolder amount, operator 1 feedback. |
 | ALGORITHM | Algorithm graph and routing string. Carriers pink, modulators white. |
-| A-ENVS | Four envelope graph cells. The current firmware draws the selected operator in all four. |
+| A-ENVS | Four envelope graphs, one per operator of the active part. |
 | SCOPES | Four operator scopes for the active part. |
 | SPECTROS | Four operator spectrograms for the active part. |
 | SCOPES | Two larger part-mix scopes. |
@@ -141,8 +144,8 @@ Setup and global context. Ten pages.
 | MIDI CH | P1 CH | P2 CH | | | Part channels |
 | KEY SCALING | BREAKPOINT | KEY SENS ON | | | Targets in EDIT/FX/ENV |
 | VEL SENS | VEL SENS ON | | | | Targets in EDIT/FX/ENV |
-| VOICE MODE | MODE | PRIORITY | LEGATO | PORTA | TUNE is the fifth row, unassigned |
-| MONO STACK | VOICES | DETUNE | | | |
+| VOICE MODE | MODE | PRIORITY | LEGATO | PORTA | The part voice mode |
+| MONO STACK | VOICES | DETUNE | TUNE | | The mono stack and part tune |
 | NAMES | PART 1 NAME | PART 2 NAME | MULTI-PATCH NAME | | Opens the name editor |
 | BACKUP / LOAD | | | | | Host-side SysEx, model byte 64 |
 | VERSION + CREDITS | | | | | Firmware and typeface credit |
@@ -157,8 +160,9 @@ Setup and global context. Ten pages.
 - **Load:** `PRESETS` opens the multi-patch browser outside GLO and the
   single-part browser in GLO. The popup shows the slot and name. Two seconds of
   idle applies it. A single-part load opens the part chooser first.
-- **Init:** `SEL+SAVE` outside GLO initialises the whole patch, mutes part 2, and
-  resets the names. In GLO it opens the part chooser to initialise one part.
+- **Init:** `SEL+SAVE` outside GLO opens a confirmation popup. SAVE resets the
+  whole patch, mutes part 2, and resets the names. HOME cancels. In GLO it opens
+  the part chooser to initialise one part.
 - **Copy:** `SEL+EDIT` on a page with copyable params. Part pages copy to another
   part. Operator pages copy to another part and operator. `KNOB1` picks the
   target, `SAVE` applies, `HOME` cancels.
@@ -191,14 +195,9 @@ Setup and global context. Ten pages.
 
 ## 9. Known gaps
 
-- `home` is a display context. The four page knobs have no assignments there. The
-  old panel reference claimed a live cutoff/resonance/wavefolder/feedback page.
-  That page is not in `panel.json`.
-- `VOICE MODE` shows `TUNE` as a fifth row. The four page knobs stop at `PORTA`.
-- `A-ENVS` declares four graph cells, but the firmware draws the selected
-  operator's envelope in all four. The intended view is one graph per operator.
-- `SEL+SAVE` outside GLO initialises the whole patch immediately. There is no
-  confirmation popup before it resets both parts.
+None after the panel fixes. The live page, the TUNE assignment, the per-operator
+envelope graphs, and the INIT PATCH confirmation all match `panel.json` and the
+app handlers.
 
 ## 10. Acceptance
 

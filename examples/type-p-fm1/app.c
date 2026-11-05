@@ -298,9 +298,9 @@ static void app_step(void)
             if (scl) {
                 if (ui_top() == GLO_CTX) {
                     app.pending_part = 3u;             /* init a single part */
-                    ui_part_chooser_begin(ui_part(), "INIT PATCH");
+                    ui_part_chooser_begin(ui_part(), "INIT PART");
                 } else
-                    ui_act_init_patch();
+                    ui_confirm_begin("INIT PATCH?");
             } else {
                 ui_handle(UI_SRC_BTN_SAVE, -1);
             }

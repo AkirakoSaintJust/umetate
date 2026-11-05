@@ -92,7 +92,7 @@ A per-operator amplitude LFO. Rate sets the speed, depth sets the amount.
 
 ### Mute
 
-Turns the operator off entirely. Muting a modulator silences the carrier it
+Turns the operator off entirely. Muting a modulator cuts phase modulation to the operator it
 drives. Muting a carrier removes that carrier from the mix. That's useful if you're focusing on a particular operator stack or want to check what a certain operator adds to your patch.
 
 ## Poly, mono, and unison
@@ -197,14 +197,16 @@ three seconds of no input without committing. Press `SAVE` to commit.
 
 ### HOME
 
-The home context is the display and performance view. It has eight pages. The four
-page knobs have no assignments on any of them. The `ALGORITHM` encoder and the
-keys are the live controls.
+The home context has nine pages. It opens on `PERFORMANCE`, the live page. The
+four page knobs there are cutoff, resonance, wavefolder amount, and operator 1
+feedback. The other eight pages are displays, and the knobs have no assignments
+there. The `ALGORITHM` encoder and the keys stay live everywhere.
 
 | Page | What it shows |
 | --- | --- |
+| PERFORMANCE | The four live knobs: cutoff, resonance, wavefolder amount, and operator 1 feedback. |
 | ALGORITHM | The current algorithm as four operator blocks and a routing string. Carriers are pink, modulators white. Turn `ALGORITHM` to change it. |
-| A-ENVS | Four amplitude-envelope graph cells. In the current firmware all four draw the selected operator's envelope, so use `SEL` to step through the operators and compare them. |
+| A-ENVS | Four amplitude-envelope graphs, one per operator of the active part. |
 | SCOPES | Four oscilloscope traces, one per operator of the active part. |
 | SPECTROS | Four spectrograms, one per operator of the active part. |
 | SCOPES | The two part mixes, one larger scope per part. |
@@ -302,8 +304,8 @@ the voice mode, the mono stack, the backup page, and the credits.
 | MIDI CH | P1 CH | P2 CH | | | The MIDI channel for each part. |
 | KEY SCALING | BREAKPOINT | KEY SENS ON | | | The global key-follow breakpoint and switch. The targets are in EDIT, FX, and ENV. |
 | VEL SENS | VEL SENS ON | | | | The global velocity-follow switch. The targets are in EDIT, FX, and ENV. |
-| VOICE MODE | MODE | PRIORITY | LEGATO | PORTA | The part voice mode. TUNE is shown below PORTA but has no page-knob assignment in this panel. |
-| MONO STACK | VOICES | DETUNE | | | The mono stack count and detune. |
+| VOICE MODE | MODE | PRIORITY | LEGATO | PORTA | The part voice mode. |
+| MONO STACK | VOICES | DETUNE | TUNE | | The mono stack count, detune, and part tune. |
 | NAMES | PART 1 NAME | PART 2 NAME | MULTI-PATCH NAME | | Open the name editor with the matching knob. |
 | BACKUP / LOAD | | | | | Host-side SysEx backup, `umetate preset export/import`, model byte 64. No MIDI channel is needed. |
 | VERSION + CREDITS | | | | | The firmware version, the product name, and the typeface credit. |
@@ -312,8 +314,8 @@ the voice mode, the mono stack, the backup page, and the credits.
 per-target amounts live in `EDIT` for operator level and feedback, in `FX` for the
 filter cutoffs and the F-ENV rate, and in `ENV` for the A-ENV and P-ENV rates.
 
-`VOICE MODE` has five rows. The four page knobs reach MODE, PRIORITY, LEGATO, and
-PORTA. TUNE is visible, but this panel does not assign it to a page knob.
+`VOICE MODE` has four rows. `MONO STACK` has three: VOICES, DETUNE, and TUNE. The
+fourth knob on `MONO STACK` does nothing.
 
 The `NAMES` page opens the name editor from the matching knob. The editor uses
 `K1` for the character, `K2` for the cursor, `SEL` to delete, `SAVE` to accept, and
@@ -404,7 +406,7 @@ cover. The ranges are the ones the panel shows.
 | PRIORITY | last, highest, lowest | Which note wins when several are held in mono. |
 | LEGATO | on/off | Holds the envelope across overlapping mono notes. |
 | PORTA | 0 to 5000 ms | The one-octave glide time. 0 is off. |
-| TUNE | -100 to +100 cents | The part tune. It is shown on `VOICE MODE` but has no page-knob assignment in this panel. |
+| TUNE | -100 to +100 cents | The part tune. It is on `MONO STACK`. |
 | VOICES | 1 to 8 | The mono stack size. |
 | DETUNE | 0 to 200 cents | The spread between the stacked copies. |
 
@@ -434,10 +436,10 @@ The actual bank write waits until the engine is quiet, so a save never clicks.
 name. Scroll with the encoder, then stop for about two seconds to apply. A
 single-part load opens the `WHICH SINGLE PART` chooser first.
 
-`SEL` + `SAVE` outside `GLO` initialises the whole patch. Both parts go to their
-init values, part 2 is muted, and the names reset to `INIT PART` and `INIT MULTI`.
-Save first if you want to keep the current patch. In `GLO`, `SEL` + `SAVE` opens
-the part chooser so you can initialise one part.
+`SEL` + `SAVE` outside `GLO` opens a confirmation popup. `SAVE` resets the whole
+patch, `HOME` cancels. After the reset, both parts go to their init values, part 2
+is muted, and the names reset to `INIT PART` and `INIT MULTI`. In `GLO`, `SEL` +
+`SAVE` opens the part chooser so you can initialise one part.
 
 `SEL` + `EDIT` copies the current page. On a part-level page the chooser lists the
 two parts. On an operator page it lists the eight part and operator targets.
@@ -463,7 +465,7 @@ editors.
 
 | Context | Pages | What it is |
 | --- | --- | --- |
-| HOME | 8 | Algorithm graph, envelope graphs, scopes, spectros, post-FX displays. |
+| HOME | 9 | Performance knobs, algorithm graph, envelope graphs, scopes, spectros, post-FX displays. |
 | EDIT | 4 | Operator oscillator, detunes, key follow, velocity sensitivity. |
 | ENV | 6 | A-ENV, P-ENV, envelope key follow, envelope velocity sensitivity. |
 | LFO | 2 | A-LFO and P-LFO. |
