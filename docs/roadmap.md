@@ -13,7 +13,7 @@ still show up in code comments.
 | Item | State |
 | --- | --- |
 | Framework | `main` was at `9375ffe` before this rewrite, tracking `origin/main`. Version `0.0.0`. Baseline tag `umetate-baseline-2026-10-27`. |
-| Type P.fm1 release | `1.0.1`, 2026-11-04, built from framework `31ecc64`. Release repo `publish/type-p-fm1` at `3d384ac`. It includes the UC25HQ80 flash fix. |
+| Type P.fm1 release | `1.0.1`, 2026-11-04, built from framework `31ecc64`. Release repo `publish/type-p-fm1` at `e40d0cb`. The 1.0.1 binaries are unchanged and the docs are newer. It includes the UC25HQ80 flash fix. |
 | Release artefacts | Firmware `type-p-fm1.fwsc` (612,216 B), Linux VST3 and CLAP. macOS/AU and Windows plugin archives aren't in the release yet. |
 | Engine | 44.1 kHz, integer-first, bit-exact. 20 voices, 2 parts, 4-op FM, 8 algorithms, 12 waveforms, two filters, a wavefolder, and key and velocity follow. |
 | Target evidence | Source, host, browser/WASM parity, target package, emulator, and Linux DAW pass. Physical device timing and acceptance are `blocked`. |
@@ -171,8 +171,10 @@ One table for the pieces I need to find quickly.
 
 ## 9. Risks and open questions
 
-- **Release drift.** 1.0.1 came from `31ecc64`. The framework now has the design
-  interview and the docs voice work. Republish, or record the snapshot.
+- **Release source snapshot.** The 1.0.1 binaries came from `31ecc64`. The release
+  docs are synced at `e40d0cb`, but the `framework/` source snapshot still matches
+  the 1.0.1 binaries. Refresh it only if the release should include the later CLI
+  and source.
 - **Plugin editor scope.** The editor pages and host tests are built around Type
   P.fm1. A different synth needs its own pages, tests, and company override.
 - **Platforms.** macOS/AU and the Windows plugin release are open. Linux is
