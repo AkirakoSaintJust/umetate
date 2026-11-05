@@ -1,7 +1,7 @@
 ---
 name: umetate-documentation
 description: Write thorough, readable, human documentation for end users of a synthesizer built on umetate. Covers the user manual, panel reference, MIDI and SysEx reference, patch sheet, installation guide, release notes, and technical guides or instrument studies. Includes a journalist-style design interview for the manual preface and design note. Rewrites are measured against the author's own corpus, hand-rewritten manual, and hand-rewritten guide so they read like a person wrote them. Never uses em dashes or semi-colons, never loses information, and bans negative parallelism, heading chains, false dichotomies, and marketing hooks. Preserves the author's contractions, asides, light UK slang, explanatory long sentences, joined clauses, and self-description.
-version: 1.4.2
+version: 1.4.3
 license: GPL-3.0-only
 compatibility: OpenCode and Agent Skills-compatible loaders
 allowed-tools: read, grep, glob, edit, write, shell, websearch, webfetch
@@ -312,7 +312,10 @@ an attached qualification when the contrast is real. Keep factual limits ("you
 can't add inharmonic partials") and scope contrasts ("purely explanatory rather
 than factory schematics"). A negation earns its place only when it carries a causal
 link, a factual comparison, a counterintuitive explanation, a real limit, or a
-correction of a misconception. If it carries none of those, cut it. "It's not just a
+correction of a misconception. If it carries none of those, cut it. A conversational
+correction can keep the negative: "that doesn't mean one is necessarily better than
+the other, they've just got different personalities." The negation carries a
+correction, so it earns its place. "It's not just a
 synth, it's a way of thinking", "not X, it's Y", "less X than Y", "X isn't about Y,
 it's about Z" are hooks. They invent a contrast so the sentence sounds deeper. Say
 what the thing is. If the contrast is real, state both sides plainly.
@@ -403,7 +406,10 @@ Checklist for the final pass:
 - [ ] No negative parallelism ("not just X, but Y", "not X, it's Y", "less X than Y").
 - [ ] No needless "It's a X, not a Y" or "It's not an X" setup. The positive comes
       first.
+- [ ] A conversational correction can keep the negative when it corrects an
+      inference or names missing evidence.
 - [ ] Factual limits and real scope contrasts stay.
+- [ ] A concrete detail can end a paragraph without a summary verdict.
 - [ ] No heading chain ("The X", "The Y", "The Z: ...").
 - [ ] No false dichotomy and no invented contrast.
 - [ ] No marketing hook.

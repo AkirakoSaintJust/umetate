@@ -72,6 +72,8 @@ self-reference. Do not add "I" to compensate for a flat draft.
   surprise marker, not P41.
 - **Factual "rather than just" contrasts.** "A complete voice path, rather than
   just the oscillator" names both sides. It is not the P9 hook.
+- **A spoken correction.** "That is just a tour-rig claim, though, with no album
+  credits to back it up." The negation carries a limit, and the aside stays.
 - **A slash in a scope label.** "anecdotal/historical records" is a category label,
   not prose punctuation.
 
@@ -96,6 +98,21 @@ misconception. If it carries none of those, cut it.
 The before and after table is in
 `skills/umetate-documentation/references/voice-samples.md` under "Replacing the
 negation".
+
+## Conversational correction
+
+A correction can keep the negative. The author wrote "But that doesn't mean one is
+necessarily better than the other! They've just got different personalities." and
+"That is just a tour-rig claim, though, with no album credits to back it up." The
+negation carries a correction or a limit, so it stays. "Just", "though", and "more
+of a" scale the claim. Do not turn it into a label contrast.
+
+A concrete detail can end a paragraph. The author cut "That is the K5 in its
+natural habitat: a professional tool under deadline." after the Jan Hammer detail.
+A closing verdict that restates the paragraph is filler.
+
+Anecdotal asides use "anecdotally, though" and "I'd really like to". One per
+section at most.
 
 ## Connectivity
 

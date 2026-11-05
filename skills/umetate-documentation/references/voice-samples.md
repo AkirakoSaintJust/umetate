@@ -112,6 +112,48 @@ The test: a negation earns its place only when it carries a causal link, a factu
 comparison, an explanation of something potentially counterintuitive, a real
 limit, or a correction of a misconception. If it carries none of those, cut it.
 
+### The conversational correction
+
+> But that doesn't mean one is necessarily better than the other! They've just got
+> different personalities.
+>
+> That is just a tour-rig claim, though, with no album credits to back it up.
+>
+> They do sound similar, but there's no recorded session credit to verify it.
+
+The author keeps the negative when it corrects a real inference or names missing
+evidence. "Just", "though", and "more of a" scale the claim without turning it into
+a label contrast. The third example replaces the label with the evidence: the
+sounds are similar, but there is no session credit. The earlier "That is a
+difference in personality, not a ranking" was correct but stiffer. The spoken
+correction is the voice.
+
+### The anecdotal aside
+
+> Anecdotally, though, *Revolutions* is known to be made out of D50 presets mostly,
+> so I'd really like to give it a closer listen and track the possible K5 sounds.
+
+"Anecdotally, though" marks the lower confidence. "I'd really like to" is a genuine
+intention, not a marketing hook. One aside per section at most.
+
+### Cut the summary verdict
+
+> When ideas did not come, he would stop watching the screen and experiment until a
+> new sound appeared.
+
+The author cut the old ending, "That is the K5 in its natural habitat: a
+professional tool under deadline." A concrete detail can land without a closing
+verdict that restates it.
+
+### The causal recommendation
+
+> Its restrictions are instructive, so it is the synth to learn additive synthesis
+> on.
+
+The old version had two short verdicts: "It is the instrument to learn on. Its
+restrictions are the lesson." The author joined the cause and the consequence with
+"so", so the recommendation explains itself.
+
 ### The one loss
 
 > Harmonic 64 is missing for some quirky reason.

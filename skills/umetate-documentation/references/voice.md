@@ -206,6 +206,8 @@ clause:
   reason."
 - Use a colon for a list: "The groups are: all harmonics, odd, even..."
 - Use a parenthesis for a source pointer: "(see sources at the end)."
+- Let a recommendation explain itself: "Its restrictions are instructive, so it is
+  the synth to learn additive synthesis on."
 
 These are the habits to copy.
 
@@ -362,7 +364,8 @@ to", "rather than just", "for some reason", "just starting points, mind", "haven
 finished yet", "only when", "in the end", "by the way", "as an aside", "for a
 change", "worth a listen", "worth a punt", "that's it basically", "I guess", "I
 wonder", "it turns out", "as in", "more X than Y", "one of the most X", "orders of
-magnitude". Use them when they fit. Do not sprinkle them.
+magnitude", "anecdotally", "though", "just a", "more of a", "I'd really like to".
+Use them when they fit. Do not sprinkle them.
 
 **Colons introduce the real list or the real explanation.** "It's done in three
 ways: a CGI sequence ..., a subtle slow-motion shot ..., and a big fat nether being
@@ -438,6 +441,10 @@ it bites." "If you only want clean tones, leave the wavefolder at 0." Not "Now i
 your turn to explore." Prefer the instruction. The hand rewrite ends with "Try
 looking at the operator oscilloscopes ...", not a line about the whole of FM.
 
+Sometimes the concrete detail is the ending. The author cut "That is the K5 in its
+natural habitat: a professional tool under deadline." after the Jan Hammer detail.
+A closing verdict that restates the paragraph is filler.
+
 **Procedures are neutral.** A step is "Turn the encoder to 50." The voice lives in
 the intro and the notes, not in the step. Do not write "Now we'll turn the encoder,
 and you'll hear the magic happen." Neutral means no jokes, not no contractions. The
@@ -503,6 +510,12 @@ The test: a negation earns its place only when it carries one of these:
 - a correction of a specific misconception.
 
 If it carries none of those, cut it. It is a debate move with no information.
+
+A conversational correction can keep the negative. "But that doesn't mean one is
+necessarily better than the other! They've just got different personalities." The
+negation carries a correction, and "just" scales it. "That is just a tour-rig
+claim, though, with no album credits to back it up" does the same with a limit.
+The target is the theatrical label contrast, not every negative sentence.
 
 The tell: "It's not just a synth, it's a way of thinking." "This isn't about
 features, it's about feel." "Less a manual, more a conversation." "Not X. Y." "X
@@ -585,6 +598,13 @@ If the heading is "Patch storage", the first sentence should say something new:
 "Each patch is 64 bytes and stores the four operator levels, the algorithm, and the
 name." Not "Patch storage is an important part of the instrument." The heading has
 already told the reader the topic. The sentence has to tell them the thing.
+
+### Verdicts that restate the paragraph
+
+A concrete detail can end the paragraph. The author cut "That is the K5 in its
+natural habitat: a professional tool under deadline." after the Jan Hammer detail.
+The detail already carried the point. A closing verdict that restates the paragraph
+is filler, even when it sounds good.
 
 ### Hedging stacks
 
