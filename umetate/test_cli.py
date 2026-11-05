@@ -793,7 +793,9 @@ def _publish_includes_plugin_source() -> None:
     assert "design" in framework_paths, "publish omits design/tokens.json"
     assert "skills" in framework_paths, "publish omits the design/skill references"
     assert "templates" in framework_paths, "publish omits the control-map template"
-    assert "plugin.json" in publish._SRC_FILES, "publish omits the plugin identity"
+    assert (
+        "plugin.json" in publish._SRC_FILES  # pyright: ignore[reportPrivateUsage]
+    ), "publish omits the plugin identity"
 
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)

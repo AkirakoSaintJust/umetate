@@ -115,8 +115,9 @@ def _brief_items(text: str) -> dict[str, str]:
         line = raw.rstrip()
         match = re.match(r"^\s*-\s+\*\*([^*]+):\*\*\s*(.*)$", line)
         if match:
-            current = match.group(1).strip()
-            items[current] = match.group(2).strip()
+            key = match.group(1).strip()
+            current = key
+            items[key] = match.group(2).strip()
         elif current and line.startswith((" ", "\t")) and line.strip():
             items[current] = f"{items[current]} {line.strip()}"
         elif line.startswith("#") or line.startswith("- "):
@@ -166,13 +167,14 @@ def _counts(nodes: tuple[str, ...]) -> str:
 def _page_title(page: dict[str, object]) -> str:
     widgets = page.get("widgets")
     if isinstance(widgets, list):
-        for widget in widgets:
+        for widget in cast(list[object], widgets):
             if not isinstance(widget, dict):
                 continue
-            if widget.get("type") == "subheader" and isinstance(
-                widget.get("text"), str
+            widget_map = cast(dict[str, object], widget)
+            if widget_map.get("type") == "subheader" and isinstance(
+                widget_map.get("text"), str
             ):
-                return cast(str, widget["text"])
+                return cast(str, widget_map["text"])
     for key in ("title", "id"):
         value = page.get(key)
         if isinstance(value, str) and value:
@@ -193,12 +195,13 @@ def _panel_pages(
     for context_name, context in cast(dict[str, object], contexts).items():
         if not isinstance(context, dict):
             continue
+        context_map = cast(dict[str, object], context)
         names.append(context_name)
-        raw_pages = context.get("pages")
+        raw_pages = context_map.get("pages")
         if not isinstance(raw_pages, list):
             continue
         titles: list[str] = []
-        for page in raw_pages:
+        for page in cast(list[object], raw_pages):
             if not isinstance(page, dict):
                 continue
             title = _page_title(cast(dict[str, object], page))
@@ -241,7 +244,9 @@ def load_facts(synth: Path) -> ProjectFacts:
     voices = voices if isinstance(voices, int) and voices > 0 else 0
 
     params = patch.get("params")
-    param_count = len(params) if isinstance(params, dict) else 0
+    param_count = (
+        len(cast(dict[str, object], params)) if isinstance(params, dict) else 0
+    )
 
     def node_types(zone: object) -> tuple[str, ...]:
         if not isinstance(zone, dict):
@@ -250,9 +255,12 @@ def load_facts(synth: Path) -> ProjectFacts:
         if not isinstance(nodes, list):
             return ()
         types: list[str] = []
-        for node in nodes:
-            if isinstance(node, dict) and isinstance(node.get("type"), str):
-                types.append(cast(str, node["type"]))
+        for node in cast(list[object], nodes):
+            if not isinstance(node, dict):
+                continue
+            node_map = cast(dict[str, object], node)
+            if isinstance(node_map.get("type"), str):
+                types.append(cast(str, node_map["type"]))
         return tuple(types)
 
     voice_nodes = node_types(patch.get("voice"))
@@ -266,7 +274,7 @@ def load_facts(synth: Path) -> ProjectFacts:
     )
     taps = patch.get("taps")
     tap_names = (
-        tuple(item for item in taps if isinstance(item, str))
+        tuple(item for item in cast(list[object], taps) if isinstance(item, str))
         if isinstance(taps, list)
         else ()
     )

@@ -27,7 +27,7 @@ import tarfile
 import zipfile
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TypedDict
+from typing import TypedDict, cast
 
 from ._ir import to_c_identifier
 
@@ -418,7 +418,7 @@ def _project_title(synth_dir: Path, name: str) -> str:
         except (OSError, json.JSONDecodeError):
             return name
         if isinstance(raw, dict):
-            product = raw.get("product_name")
+            product = cast(dict[str, object], raw).get("product_name")
             if isinstance(product, str) and product:
                 return product
     return name
