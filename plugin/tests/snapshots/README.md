@@ -7,7 +7,7 @@ It fails when an image is missing, extra, or different.
 The gate runs only in the Linux container. Font rasterisation differs on other
 hosts, so a Windows run is a manual review until a Windows golden set exists.
 
-## When the UI is supposed to change
+## Intended UI changes
 
 1. Build and run the snapshot test. The new PNGs are in the build tree under
    `juce/snapshots` (or `juce/snapshots` under your CMake build directory).
@@ -28,7 +28,7 @@ hosts, so a Windows run is a manual review until a Windows golden set exists.
 Do not accept a snapshot change you cannot explain. A red pixel in the diff is a
 question, not an error.
 
-## When the UI is not supposed to change
+## Unintended UI changes
 
 Run the CTest. If it fails, inspect the diff. A failure means the editor changed
 without the design being updated, or a dependency changed the rendering. Fix the
@@ -40,7 +40,7 @@ Add the render to `plugin/tests/editor_snapshot.cpp`, run the test, review the
 new image, and update the golden set. The manifest records the image size and
 SHA-256.
 
-## Why the golden images are committed
+## Committed goldens
 
 The gate needs a baseline that travels with the code. A hash alone would tell you
 that something changed, not what changed. The PNGs are small (about 560 KB for

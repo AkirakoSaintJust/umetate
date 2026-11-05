@@ -133,13 +133,13 @@ A synthesizer project ships these user-facing documents. Each one has a job.
 
 | Document | Job |
 | --- | --- |
-| README | The front door. What it is, one sentence. The web app link. How to install. |
+| README | The front door. A one-sentence description. The web app link. Install steps. |
 | User manual | Architecture, sound design, and the panel walkthrough, from the player's chair. |
 | Guide or instrument study | A historical or technical guide to an existing instrument or lineage. The reader may not own the hardware. |
 | MIDI and SysEx reference | The CC map, the note routing, the SysEx message format. |
 | Patch sheet | A blank form a user can print and write a patch on. |
-| Installation | How to flash the firmware and how to run the web app. |
-| Release notes | What changed in each version, for the person updating. |
+| Installation | Flashing the firmware and running the web app. |
+| Release notes | The changes in each version, for the person updating. |
 
 The manual, including the panel section, is the most read page. Spend the most care
 there. `docs/panel.md` is a short redirect for old links.
@@ -170,9 +170,9 @@ their prose or their brand voice. Consult, do not derive.
 
 For every parameter, answer three questions in plain words:
 
-1. What it does.
-2. What you hear when you change it.
-3. What the ends of the range sound like.
+1. State the function.
+2. Describe the sound when you change it.
+3. Describe the ends of the range.
 
 Write the explanatory prose with contractions. The hand rewrite has 33 in 1,899
 words. The first release had 1, and it read like a contract. Use "you" for the
@@ -351,6 +351,11 @@ specification. Drop the article, lead with the noun or the verb, or write the li
 as prose. "CLI. It checks the environment." reads better than "The CLI. It checks
 the environment." repeated down the page.
 
+**No wh-word headings or labels.** "What to reach for first", "How to move" and
+"What it does" are questions the reader did not ask. Use a noun phrase or an
+imperative: "Get started!", "Navigation", "Functionality". The rule covers
+headings, table column headers, and checklist labels.
+
 **No product self-description.** A "what this is" section in a manual or an app's
 help rail explains the product to someone already using it. Put the proof in the
 README or the release notes. Use the page for the next action, the controls, or a
@@ -431,6 +436,7 @@ Checklist for the final pass:
 - [ ] No documented qualifier was lost to a casual phrase.
 - [ ] No negative parallelism ("not just X, but Y", "not X, it's Y", "less X than Y").
 - [ ] No `The... The...` list. Drop the article or lead with the noun or verb.
+- [ ] No wh-word heading or table label. Use a noun phrase or an imperative.
 - [ ] No what-this-is section in an app or a manual.
 - [ ] No needless "It's a X, not a Y" or "It's not an X" setup. The positive comes
       first.

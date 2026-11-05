@@ -190,6 +190,32 @@ After:
 
 The facts are the same. The drumbeat is gone.
 
+## Wh-word headings
+
+A heading made from a wh-clause is a question the reader did not ask. "What to
+reach for first", "How to move", "What it does" and "Where they sit" read like a
+generated outline or a help centre. They also make the writer sound unsure of the
+noun.
+
+Use a noun phrase for a topic and an imperative for an action. "What to reach for
+first" becomes "Get started!". "How to move" becomes "Navigation". "What it does"
+becomes "Functionality". The table header and the heading follow the same rule.
+
+Before:
+
+> What to reach for first
+> How to move
+> | Parameter | Range | What it does |
+
+After:
+
+> Get started!
+> Navigation
+> | Parameter | Range | Functionality |
+
+The same rule applies to table column headers, checklist labels, and section
+titles. A question can stay in body prose when the reader is actually asking it.
+
 ## Connectivity
 
 A guide joins a fact to its cause, condition, or specification. The model draft

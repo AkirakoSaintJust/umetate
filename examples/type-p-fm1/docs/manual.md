@@ -163,7 +163,7 @@ Everything else is a page you open with a context button.
 - **SAVE** opens the save chooser. With SEL it initialises the patch or a part.
 - **ARP, SEQ, PLAY, REC** mute operators 1 to 4. With SEL they mute parts.
 
-### How to move
+### Navigation
 
 Press a context button to open that context at its first page. Press the same
 button again to move to the next page. `SELECT` also pages forward and back. The
@@ -202,7 +202,7 @@ four page knobs there are cutoff, resonance, wavefolder amount, and operator 1
 feedback. The other eight pages are displays, and the knobs have no assignments
 there. The `ALGORITHM` encoder and the keys stay live everywhere.
 
-| Page | What it shows |
+| Page | Contents |
 | --- | --- |
 | PERFORMANCE | The four live knobs: cutoff, resonance, wavefolder amount, and operator 1 feedback. |
 | ALGORITHM | The current algorithm as four operator blocks and a routing string. Carriers are pink, modulators white. Turn `ALGORITHM` to change it. |
@@ -333,7 +333,7 @@ cover. The ranges are the ones the panel shows.
 
 #### Operator
 
-| Parameter | Range | What it does |
+| Parameter | Range | Functionality |
 | --- | --- | --- |
 | RATIO | 0.50 to 16.00 | The operator's pitch as a multiple of the note. 1.00 is unison, 2.00 an octave up, 0.50 an octave down. Whole-number ratios sound clear, odd ratios reedy, and non-integer ratios clangy. |
 | LEVEL | 0 to 99 | The operator's output level. 99 is full, 50 is about 12 dB down, and 0 is silent. On a modulator this is the modulation depth. |
@@ -354,7 +354,7 @@ cover. The ranges are the ones the panel shows.
 
 #### Pitch envelope and pitch LFO
 
-| Parameter | Range | What it does |
+| Parameter | Range | Functionality |
 | --- | --- | --- |
 | P-ENV ON | on/off | Turns the part pitch envelope on. |
 | P-ENV RATE 1 to 4 | 0 to 99 | The four pitch-envelope rates. Higher is faster. |
@@ -367,7 +367,7 @@ cover. The ranges are the ones the panel shows.
 
 #### Filter and wavefolder
 
-| Parameter | Range | What it does |
+| Parameter | Range | Functionality |
 | --- | --- | --- |
 | FILTER ON | on/off | Bypasses or enables filter 1. |
 | CUTOFF | frequency | Where filter 1 starts to remove. Turn it down to darken the sound and up to open it. |
@@ -393,7 +393,7 @@ cover. The ranges are the ones the panel shows.
 
 #### Global
 
-| Parameter | Range | What it does |
+| Parameter | Range | Functionality |
 | --- | --- | --- |
 | PART 1/2 LEVEL | 0 to 99 | The part's output level. 99 is full, 50 is about 12 dB down, and 0 is silent. |
 | PART 1/2 DELAY | 0 to 1000 ms | Delays that part against the other. |
@@ -463,7 +463,7 @@ editors.
 
 ### Quick reference
 
-| Context | Pages | What it is |
+| Context | Pages | Functionality |
 | --- | --- | --- |
 | HOME | 9 | Performance knobs, algorithm graph, envelope graphs, scopes, spectros, post-FX displays. |
 | EDIT | 4 | Operator oscillator, detunes, key follow, velocity sensitivity. |
@@ -474,7 +474,7 @@ editors.
 
 With the map in hand, the next section is a first patch to try.
 
-## What to reach for first
+## Get started!
 
 Start on algorithm 7, the additive one. Set the four ratios to 1.00, 2.00, 3.00,
 and 4.00, all carriers. You get a drawbar-organ stack. Lower operator 2 a little

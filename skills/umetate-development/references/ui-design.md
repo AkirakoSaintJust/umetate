@@ -19,7 +19,7 @@ The plugin editor followed the same rule. The design language was fixed first,
 the mockup was made clickable, the tokens were extracted, and only then was the
 JUCE editor built. The editor is a projection of the tokens, not a new design.
 
-## What "determined" means
+## The meaning of "determined"
 
 A UI is not specified until all of these are written and checkable. This is the
 minimum bar. Do not author the panel or the editor until each one is filled in.
@@ -313,6 +313,9 @@ and how to get back.
   action or a real limit.
 - **No article drumbeats.** A list where every item starts with `The` reads like a
   specification. Lead with the noun or the verb, or write the list as prose.
+- **No wh-word headings.** Use a noun or an imperative. `Navigation` and
+  `Get started!` say what the section does. `How to move` asks a question the
+  player did not ask.
 - **Closure:** confirm that an action happened. A save, a load, a mute, and a
   page change all need a visible result.
 - **No dead ends:** every page has a way home and a way back.
@@ -426,11 +429,11 @@ Before you call a UI done, run this:
 
 ## Definition of done
 
-- The control map is complete to the ten-item bar.
-- The tokens are in sync and the generated headers are current.
-- The mockup and the implementation show the same layout, type, and state.
+- Control map is complete to the ten-item bar.
+- Tokens are in sync and the generated headers are current.
+- Mockup and implementation show the same layout, type, and state.
 - Every interactive control has been exercised.
 - Every page has a current snapshot, and the snapshot diff is green or the change
   was accepted deliberately.
-- The roadmap has one line for the milestone.
-- The design docs and the skill references still describe what was built.
+- Roadmap has one line for the milestone.
+- Design docs and skill references still describe what was built.

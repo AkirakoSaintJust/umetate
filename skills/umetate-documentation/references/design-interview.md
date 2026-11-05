@@ -1,6 +1,6 @@
 # Design interview
 
-## What this is
+## Purpose
 
 The manual preface and any design note come from the author, not the model. The
 interview is how the personal experience, the design motivation, and the lineage
@@ -42,7 +42,7 @@ not volunteer.
    concrete thing or leave the gap.
 10. Ask permission before publishing personal details.
 
-## What the generator reads
+## Generator inputs
 
 - `synth-brief.md` is the richest source. The generator reads the `- **Key:**`
   bullets: the working name, who plays it, what it should feel like, the reference
@@ -188,11 +188,11 @@ shows. Ask for it directly, but always through a concrete comparison.
 - Which instruments, chips, or algorithms, and what did each contribute?
 - Which synthesis method, and why this one rather than the obvious alternative?
 - What did the references implement, and what did you do differently?
-- The oscillator, operator, or source model: why this one?
-- The filter or effect model: why this one, and what slope or topology?
-- The modulation: why these sources and destinations?
-- The voice budget and the hardware: what did the compile or the panel force?
-- The aliasing and quality tradeoff: what did you measure, and what did you accept?
+- Oscillator, operator, or source model: why this one?
+- Filter or effect model: why this one, and what slope or topology?
+- Modulation: why these sources and destinations?
+- Voice budget and hardware: what did the compile or the panel force?
+- Aliasing and quality tradeoff: what did you measure, and what did you accept?
 
 ## Recording
 
@@ -220,7 +220,7 @@ The design note is not the transcript. It is the author's voice, edited.
   sheet.
 - Do not invent a fact. If the interview did not answer it, leave it out.
 
-## When to stop
+## Stopping point
 
 Stop when the answers can support:
 

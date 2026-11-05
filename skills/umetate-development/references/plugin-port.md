@@ -50,7 +50,7 @@ invariant that is hardest to fix later.
 
 Each rung is a test, not a promise. Write it before the code.
 
-| Rung | What it proves |
+| Rung | Evidence |
 | --- | --- |
 | Engine parity | The plugin engine matches the firmware render, sample for sample. |
 | Instance isolation | Two instances do not share state. |

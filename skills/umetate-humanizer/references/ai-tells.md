@@ -2,9 +2,9 @@
 
 This is the reviewed detection reference for the umetate humanizer. The original
 generic catalog had 55 patterns. This reference keeps the ones that matter for this
-voice, adds the product self-description and article-drumbeat tells, and folds the
-rest into the main checklist. A pattern is a signal, not a verdict. Read `voice.md`
-and the skill before you change a sentence.
+voice, adds the product self-description, article-drumbeat and wh-word heading
+tells, and folds the rest into the main checklist. A pattern is a signal, not a
+verdict. Read `voice.md` and the skill before you change a sentence.
 
 ## The patterns that matter
 
@@ -46,6 +46,7 @@ and the skill before you change a sentence.
 | P55 | Leftover hedge debris: "To some extent, arguably, definitely" | Pick one hedge or commit. |
 | P56 | Product self-description: a `what this is` section that restates the visible product and its specs | Cut the section. Use the space for the next action, the controls, or a real limit. |
 | P57 | Article drumbeat: a list where every item starts with `The` | Drop the article, lead with the noun or the verb, or write the list as prose. |
+| P58 | Wh-word nominal heading or label: `What to reach for first`, `How to move`, `What it does` | Use a noun phrase or an imperative: `Get started`, `Navigation`, `Functionality`. |
 
 The patterns the original catalog had that are not listed here are covered by the
 main checklist, or they are generic detector noise that does not fit this voice.
@@ -74,6 +75,8 @@ three-item list is how humans write too.
 - **A table or parameter list can repeat a label.** That is a reference format. The
   tell is prose bullets where every item opens with `The` and the article adds
   nothing.
+- **A real question in body prose is not a heading.** "What does the filter do?"
+  can be a sentence. The tell is a heading or table label built from a wh-clause.
 - **The instrument can be the actor.** "The filter removes" is correct in a manual.
 - **Concrete triads and tip lists are content.** Three real settings are not
   padding.

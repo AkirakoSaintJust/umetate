@@ -9,7 +9,7 @@ dossier live in the development skill:
 `ui-dossier.md`. The ten-item written gate is in
 `skills/umetate-development/SKILL.md` section 2.
 
-## When to use
+## Use cases
 
 Use this workflow when the task is visual or interaction design: a new page, a
 component, a restyle, a font change, a layout change, or a plugin editor.
@@ -83,12 +83,12 @@ These are the mistakes that cost time while building the mockup.
 
 ## Definition of done
 
-- The mockup is committed and the tokens are in sync.
+- Mockup and tokens are committed and in sync.
 - Every interactive control has been clicked in a browser.
-- The screenshots of every page and every dialog are current.
-- The fixed height is measured, not assumed.
-- The roadmap has one line for the milestone.
-- The JUCE and web mapping documents still describe what the mockup shows.
+- Screenshots of every page and dialog are current.
+- Fixed height is measured, not assumed.
+- Roadmap has one line for the milestone.
+- JUCE and web mapping documents still describe the mockup.
 
 ## Handoff to implementation
 

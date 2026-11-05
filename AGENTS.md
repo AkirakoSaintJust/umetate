@@ -52,7 +52,8 @@ The reference samples are `examples/type-p-fm1/publish-readme.md` and
 manual, or reference register as the page requires. No em dashes. No semicolons.
 British spelling in prose. No marketing adjectives. No negative parallelism. No
 heading chains. No false dichotomies. No lists where every item starts with `The`,
-so drop the article or lead with the noun or verb. No `what this is` sections. One
+so drop the article or lead with the noun or verb. No wh-word headings or table
+labels, so use a noun phrase or an imperative. No `what this is` sections. One
 concrete example per major section.
 
 The hand-written preface and sound-design part of

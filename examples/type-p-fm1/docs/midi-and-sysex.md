@@ -35,7 +35,7 @@ F0 00 21 1D <model> <cmd> <ver> <payload> <crc-lo> <crc-hi> F7
 
 The firmware answers five commands.
 
-| Command | What it does |
+| Command | Function |
 | --- | --- |
 | `0x01` | Identity request. The reply names the firmware. |
 | `0x02` | Parameter dump. Reads or writes the live parameters. |

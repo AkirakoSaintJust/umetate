@@ -27,7 +27,7 @@ glue `app.c` onto the frozen `rib.c` framework (`umetate build --synth`).
 
 ## 2. Files
 
-| File | What it holds |
+| File | Contents |
 | --- | --- |
 | `patch.json` | the declarative synth (voice/global zones, the `routing` table, `parts: 2`, the `model` byte, the `cc:` list, 56 exposed params → 194 set_param ids) |
 | `panel.json` | the UI (`home` + `op` + `fx` + `glo` contexts) |

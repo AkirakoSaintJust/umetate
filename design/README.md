@@ -282,6 +282,8 @@ graph cannot clip or touch the caption.
   space for the next action, the controls, or a real limit.
 - No `The... The...` lists. Drop the article, lead with the noun or the verb, or
   write the list as prose.
+- No wh-word headings or table labels. Use a noun phrase or an imperative:
+  `Get started!`, `Navigation`, `Functionality`.
 - Do not add descriptions of the obvious.
 
 ## Platform mapping

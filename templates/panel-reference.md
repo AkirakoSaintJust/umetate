@@ -13,22 +13,22 @@ default job, and any global behaviour. Include the keys, the volume control, the
 dedicated encoders, the page encoders, the context buttons, and the transport
 buttons.>
 
-- **<control>** <what it does>.
-- **<control>** <what it does>.
+- **<control>** <function>.
+- **<control>** <function>.
 
-### How to move
+### Navigation
 
 <Explain the navigation model before the page tables. A fresh reader must be able
 to reach every page without guessing.>
 
 - Press a context button to open that context. Press the same button again to
   advance to its next page. The page encoder moves forward and back. Pages wrap.
-- <How HOME works.>
+- <HOME behaviour.>
 - <The page-knob rule: the four page encoders edit the parameter rows from top to
   bottom. If a page has fewer than four rows, the extra encoders do nothing.
   Display pages have no assignments.>
-- <The header and footer. What stays visible, and what the legend says.>
-- <Popup behaviour: modal, idle auto-close, what commits.>
+- <The header and footer. The fields that stay visible, and the legend text.>
+- <Popup behaviour: modal, idle auto-close, the commit action.>
 
 | Gesture | Action |
 | --- | --- |
@@ -36,12 +36,12 @@ to reach every page without guessing.>
 
 ### <Context name>
 
-<What this context is for. How many pages it has. Which pages are part-level and
-which follow the selected part or operator.>
+<The context's job. Its page count. Which pages are part-level and which follow
+the selected part or operator.>
 
 | Page | KNOB 1 | KNOB 2 | KNOB 3 | KNOB 4 | Screen |
 | --- | --- | --- | --- | --- | --- |
-| <page title> | <param> | <param> | <param> | <param> | <display widget and what it shows> |
+| <page title> | <param> | <param> | <param> | <param> | <display widget and its contents> |
 
 <Notes for pages with fewer than four parameters, duplicate page titles, or
 unusual behaviour.>
@@ -49,14 +49,14 @@ unusual behaviour.>
 ### Parameter reference
 
 <One table per context or per page. The page tables above say where a parameter
-lives. This section says what it means. Give every parameter its range or units,
-what it does, and what you hear when you turn it. Do not list the label twice and
+lives. This section defines it. Give every parameter its range or units, its
+function, and the sound you hear when you turn it. Do not list the label twice and
 call that a description. The sound-design chapters can explain the main parameters
 in depth. This is the quick lookup for every page row.>
 
-| Parameter | Range | What it does |
+| Parameter | Range | Functionality |
 | --- | --- | --- |
-| <name> | <range or units> | <what it does and what you hear> |
+| <name> | <range or units> | <function and sound> |
 
 ### Saving and loading
 
@@ -71,6 +71,6 @@ behaviour.>
 
 ### Quick reference
 
-| Context | Pages | What it is |
+| Context | Pages | Functionality |
 | --- | --- | --- |
 | <context> | <n> | <one line> |

@@ -114,7 +114,7 @@ These are the rules I don't want to lose.
 
 One table for the pieces I need to find quickly.
 
-| Component | What it is | Where | State |
+| Component | Role | Location | State |
 | --- | --- | --- | --- |
 | CLI | `umetate` commands | `umetate/` | done (host/browser/target) |
 | Development skill | design and build loop | `skills/umetate-development/` | done |

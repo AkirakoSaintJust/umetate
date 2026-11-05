@@ -1,6 +1,6 @@
 # The umetate voice
 
-## What this file is
+## Purpose
 
 The voice is the author's, not the model's. This file is the profile. The evidence
 is four things:
@@ -55,7 +55,7 @@ The first 170 lines of the full draft sit at 2,100 words in 147 sentences: a
 13.8-word mean, a 12-word median, an 11.0-word standard deviation. The opening is
 more connected than the rest. The gap is the thing to close.
 
-## Who is talking
+## The narrator
 
 A builder and a player, writing to another builder or player. Not a brand, not a
 support desk, not a teacher who is worried about being liked.
@@ -171,7 +171,7 @@ the value.
 The patch sheet, the CC table, the SysEx byte layout, the parameter index. Terse
 and exact. No asides, no jokes, no first person. A reader is copying bytes.
 
-## How a sentence moves
+## Sentence movement
 
 The corpus has 457 sentences in 9,015 words. The median is 16 words. The 90th
 percentile is 39. The longest is 120. There are 62 sentences of five words or
@@ -278,7 +278,7 @@ healthy mix of subject-first and conjunction-first. Do not start every sentence 
 the same subject. Do not start every paragraph with a signpost. The hand rewrite
 uses "So" more, often as a real transition. One or two per page is enough.
 
-## How a paragraph lands
+## Paragraph movement
 
 The corpus has four common shapes. Use them.
 
@@ -384,6 +384,12 @@ spec sheet. The corpus uses lists of concrete items and labels, not full sentenc
 with the same article. Drop the article, lead with the noun or the verb, or write
 the list as prose.
 
+**No wh-word headings or labels.** "What to reach for first", "How to move" and
+"What it does" are questions the reader did not ask. They make a page read like a
+generated outline or a help centre. Use a noun phrase or an imperative: "Get
+started!", "Navigation", "Functionality". The rule covers headings, table column
+headers, and checklist labels.
+
 **No product self-description.** A "what this is" section in an app or a manual
 explains the product to someone already using it. Put the proof in the README or
 the release notes. Use the page for the next action, the controls, or a real limit.
@@ -409,7 +415,7 @@ purpose clause. Suggest the short form only when it does not flatten the rhythm.
 `**Cutoff**` and the other UI labels. The hand rewrite also bolds `**is**` and
 `**does**` in one factual contrast. That is allowed. Do not bold whole sentences.
 
-## How a page is built
+## Page structure
 
 **Open with the thing.** The first sentence says what it is, who it is for, or what
 it does. "Type P.fm1 is a four-operator FM synthesizer for the M-VAVE FM-1." Not
@@ -460,7 +466,7 @@ and you'll hear the magic happen." Neutral means no jokes, not no contractions. 
 prose around the step can say "you've got four operators". The step itself stays
 plain.
 
-## What not to write
+## Prohibited patterns
 
 These are the patterns that make a page sound generated. Some are AI tells. Some
 are just bad manual habits. All of them are banned.
@@ -745,6 +751,7 @@ your own.
 - [ ] No heading chain. The headings are varied and specific, not "The X", "The Y",
       "The Z: ...".
 - [ ] No `The... The...` list. Drop the article or lead with the noun or verb.
+- [ ] No wh-word heading or table label. Use a noun phrase or an imperative.
 - [ ] No what-this-is section in an app or a manual.
 - [ ] No false dichotomy. No strawman.
 - [ ] No marketing hook. No rule-of-three padding.
@@ -771,7 +778,7 @@ your own.
 - [ ] Read it aloud. If it sounds like a press release or a generated outline,
       rewrite it.
 
-## Where the rules come from
+## Rule sources
 
 The corpus statistics in this file come from the author's own writing: 9,015 words,
 457 sentences, 52 paragraphs, no em dashes, one semicolon, 47 open brackets, "I" 151

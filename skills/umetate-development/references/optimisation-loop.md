@@ -83,7 +83,7 @@ Do not re-learn these.
   `[rN++=4]` auto-increment. The stock firmware's compiler does. That is a real
   gap, but the register file is the hard ceiling above it.
 
-## What worked, in order of leverage
+## Effective changes, in order of leverage
 
 1. **Loop structure.** The voice-outer swap: hoist `bus[]=0` out of the sample loop,
    put the voice loop outside the sample loop, so the per-voice block constants and
@@ -95,7 +95,7 @@ Do not re-learn these.
 3. **Cheaper constant ops.** The phasor `(int64_t)fm * 65536` became
    `(uint32_t)fm << 16`, a plain shift.
 
-## What was rejected, and why (do not re-attempt)
+## Rejected changes (do not re-attempt)
 
 - **Async ping-pong.** Measured, no ISR benefit. The split already runs both voice
   halves in parallel, so there was no wait to remove.

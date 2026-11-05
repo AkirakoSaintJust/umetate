@@ -8,10 +8,10 @@ Newest first.
 - Moves TUNE to MONO STACK, so the part tune is reachable from a page knob.
 - Draws one amplitude envelope per operator on the HOME A-ENVS page.
 - Adds a confirmation popup before INIT PATCH.
-- The manual now includes the full panel walkthrough, the parameter reference, and the save, load, init, and copy flows.
-- The browser app draws the 240 by 240 screen at 1:1 on a wide desktop and uses the plugin interface language, with self-hosted Zen Dots and DotGothic16.
-- The help panel has a single `controls` section for the key map, the knobs, the buttons, and the shortcuts, plus `links`. It drops the `what this is` section, and the links open the manual, release notes, and source on GitHub.
-- The wordmark is `type P.fm1` in Zen Dots. `type` is lowercase, `P` is uppercase, `.fm1` is lowercase, and the dot is pink. The browser app and the plugin use the same mark.
+- Manual: the full panel walkthrough, the parameter reference, and the save, load, init, and copy flows.
+- Browser app: draws the 240 by 240 screen at 1:1 on a wide desktop and uses the plugin interface language, with self-hosted Zen Dots and DotGothic16.
+- Help panel: a single `controls` section for the key map, the knobs, the buttons, and the shortcuts, plus `links`. It drops the `what this is` section, and the links open the manual, release notes, and source on GitHub.
+- Wordmark: `type P.fm1` in Zen Dots. `type` is lowercase, `P` is uppercase, `.fm1` is lowercase, and the dot is pink. The browser app and the plugin use the same mark.
 
 ## 1.0.1
 

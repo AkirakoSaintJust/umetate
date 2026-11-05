@@ -16,7 +16,7 @@ The method has four jobs: keep the facts, choose the right register, join the
 clauses, and cut the lines that sound like a poster. Everything else follows from
 those.
 
-## What good sounds like
+## The target voice
 
 A builder and a player, writing to another builder or player. First person, normal
 contractions, dry asides, technical exactness, light UK slang. Long setup and short
@@ -146,7 +146,7 @@ A concrete detail can end a paragraph. The author cut "That is the K5 in its
 natural habitat: a professional tool under deadline." after the Jan Hammer detail.
 A closing verdict that restates the paragraph is filler.
 
-## What to preserve
+## Preserve
 
 - **Self-description.** "I'm more of a sound design gal." Keep "gal".
 - **Light UK slang and internet asides.** "innit", "kinda", "gal", "whatever",
@@ -177,7 +177,7 @@ A closing verdict that restates the paragraph is filler.
 - **A slash in a scope label.** "anecdotal/historical records" is a category label.
 - **A parenthetical source pointer.** "(see sources at the end)."
 
-## What to cut
+## Cut
 
 - **Marketing adjectives.** "seamless", "robust", "state of the art", "unleash",
   "vibrant", "cutting-edge", "world-class".
@@ -195,6 +195,8 @@ A closing verdict that restates the paragraph is filler.
   replace it with the next action, the controls, or a real limit.
 - **"The... The..." lists.** A list where every item starts with the same article.
   Drop the article, lead with the noun or verb, or write the list as prose.
+- **Wh-word headings and labels.** "What to reach for first", "How to move",
+  "What it does". Use a noun phrase or an imperative.
 - **Heading chains.** "The Engine", "The Filter", "The Envelope: Shaping Your
   Sound" for every section.
 - **False dichotomies.** "Most synths make you menu-dive. This one doesn't."
@@ -272,6 +274,7 @@ the fixes, the hard bans, and the before and after samples.
 | Meta-commentary | State the fact and let it stand. |
 | Product self-description | Cut the section. Use the space for the next action, the controls, or a real limit. |
 | "The... The..." list | Drop the article, lead with the noun or verb, or write prose. |
+| Wh-word heading or table label | Use a noun phrase or an imperative. |
 | Heading chain | Vary the grammar and use the reader's words. |
 | False dichotomy | Name the real difference or cut the contrast. |
 | Rule-of-three padding | List the real items. Two or four is fine. |
@@ -366,7 +369,8 @@ becomes:
 - No aphorism and no summary verdict.
 - No "A, not B" adversative.
 - No negative parallelism, heading chain, false dichotomy, or marketing hook.
-- No product self-description section and no `The... The...` list.
+- No product self-description section, no `The... The...` list, and no wh-word heading
+  or table label.
 - Read it aloud. If it sounds like a press release, rewrite it.
 
 ## Score
@@ -374,7 +378,7 @@ becomes:
 Use the score as a signal, not a verdict. A model grading its own output inflates
 the result.
 
-| Range | What it means |
+| Range | Meaning |
 | --- | --- |
 | 0-20 | Reads like the author. |
 | 21-40 | A few flat or generic lines. |
