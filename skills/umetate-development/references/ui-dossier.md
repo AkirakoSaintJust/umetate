@@ -30,7 +30,7 @@ a small instrument can be deep when every control has a stable meaning. The
 caution is documentation. A hidden interaction needs a card, a manual, or a
 cheat sheet.
 
-### Page-based screens: one page, one job
+### Page-based screens
 
 **Elektron Digitakt II and Digitone.** A row of encoders under the screen, one
 page per function, and consistent navigation. The screen labels the encoders, so

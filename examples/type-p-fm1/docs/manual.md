@@ -206,11 +206,11 @@ there. The `ALGORITHM` encoder and the keys stay live everywhere.
 | --- | --- |
 | PERFORMANCE | The four live knobs: cutoff, resonance, wavefolder amount, and operator 1 feedback. |
 | ALGORITHM | The current algorithm as four operator blocks and a routing string. Carriers are pink, modulators white. Turn `ALGORITHM` to change it. |
-| A-ENVS | Four amplitude-envelope graphs, one per operator of the active part. |
-| SCOPES | Four oscilloscope traces, one per operator of the active part. |
-| SPECTROS | Four spectrograms, one per operator of the active part. |
-| SCOPES | The two part mixes, one larger scope per part. |
-| SPECTROS | The two part mixes, one larger spectrogram per part. |
+| A-ENVS | An amplitude-envelope graph for each operator of the active part. |
+| SCOPES | An oscilloscope trace for each operator of the active part. |
+| SPECTROS | A spectrogram for each operator of the active part. |
+| SCOPES | A larger scope for each part mix. |
+| SPECTROS | A larger spectrogram for each part mix. |
 | POST-FX MULTI-PATCH SCOPE | The final mixed output after both filters and the wavefolder. |
 | POST-FX MULTI-PATCH SPECTRO | The final mix as a spectrogram. |
 

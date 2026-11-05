@@ -2,9 +2,10 @@
 
 This is the reviewed detection reference for the umetate humanizer. The original
 generic catalog had 55 patterns. This reference keeps the ones that matter for this
-voice, adds the product self-description, article-drumbeat, wh-word heading and
-storage-value tells, and folds the rest into the main checklist. A pattern is a
-signal, not a verdict. Read `voice.md` and the skill before you change a sentence.
+voice, adds the product self-description, article-drumbeat, wh-word heading,
+counted-couplet and storage-value tells, and folds the rest into the main
+checklist. A pattern is a signal, not a verdict. Read `voice.md` and the skill
+before you change a sentence.
 
 ## The patterns that matter
 
@@ -48,6 +49,7 @@ signal, not a verdict. Read `voice.md` and the skill before you change a sentenc
 | P57 | Article drumbeat: a list where every item starts with `The` | Drop the article, lead with the noun or the verb, or write the list as prose. |
 | P58 | Wh-word nominal heading or label: `What to reach for first`, `How to move`, `What it does` | Use a noun phrase or an imperative: `Get started`, `Navigation`, `Functionality`. |
 | P59 | Storage-value leakage: a user document gives the raw `65536` or `32767` instead of the on-screen value | Give the panel value and range: `ratio 0.50..16.00`, `feedback 0..100%`. |
+| P60 | Counted-couplet heading, caption, or table description: `One page, one job`, `Two sources, one filter`, `One phase, many amplitudes` | Use a noun phrase or an imperative. Put the count in the body where it can be explained. |
 
 The patterns the original catalog had that are not listed here are covered by the
 main checklist, or they are generic detector noise that does not fit this voice.

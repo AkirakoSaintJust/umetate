@@ -17,7 +17,7 @@
 
 | # | Milestone | Player-visible outcome | Contract | Evidence | Status |
 | --- | --- | --- | --- | --- | --- |
-| 1 | First audible slice | one note, one envelope, one control | | host | |
+| 1 | First audible slice | a note, an envelope and a control | | host | |
 | 2 | Voice and filter | polyphony and tone control | | host/browser | |
 | 3 | Panel and display | playable controls and feedback | | target | |
 | 4 | MIDI and persistence | external notes and recall | | target/device | |

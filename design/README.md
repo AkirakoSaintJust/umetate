@@ -284,6 +284,9 @@ graph cannot clip or touch the caption.
   write the list as prose.
 - No wh-word headings or table labels. Use a noun phrase or an imperative:
   `Get started!`, `Navigation`, `Functionality`.
+- No counted-couplet headings, captions, or table descriptions. `One page, one
+  job`, `Two sources, one filter` and `One phase, many amplitudes` sell a shape
+  instead of naming the section. Use a noun phrase and put the count in the body.
 - Use the panel value, not the storage value. `ratio (0.50..16.00)`, not `65536`.
   `feedback (0..100%)`, not `0..32767`.
 - Do not add descriptions of the obvious.

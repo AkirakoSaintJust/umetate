@@ -360,6 +360,12 @@ the environment." repeated down the page.
 imperative: "Get started!", "Navigation", "Functionality". The rule covers
 headings, table column headers, and checklist labels.
 
+**No counted couplets.** A heading, caption, or table description built as two
+counts reads like a slogan: "One page, one job", "Two sources, one filter", "One
+phase, many amplitudes". It sells a shape instead of naming the section. Use a noun
+phrase or an imperative, and put the count in the body where it can be explained.
+The rule covers headings, captions, and table descriptions, not prose.
+
 **No raw storage values.** A user document describes the value on the screen, not
 the number in the firmware. "Ratio is written 65536" and "feedback runs 0 to
 32767" tell the reader about a representation they cannot see. Write the panel
@@ -447,6 +453,8 @@ Checklist for the final pass:
 - [ ] No negative parallelism ("not just X, but Y", "not X, it's Y", "less X than Y").
 - [ ] No `The... The...` list. Drop the article or lead with the noun or verb.
 - [ ] No wh-word heading or table label. Use a noun phrase or an imperative.
+- [ ] No counted-couplet heading, caption, or table description. Name the section
+      and put the count in the body.
 - [ ] No raw storage value. Show the panel value and range.
 - [ ] No what-this-is section in an app or a manual.
 - [ ] No needless "It's a X, not a Y" or "It's not an X" setup. The positive comes

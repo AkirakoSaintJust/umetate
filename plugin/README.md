@@ -45,7 +45,7 @@ Out of scope for the first release:
 
 | # | Decision | Reason |
 | --- | --- | --- |
-| P1 | Reuse the generated DSP | One engine, one sound. No C++ reimplementation of the voice graph. |
+| P1 | Reuse the generated DSP | The firmware engine and the plugin share the same DSP. No C++ reimplementation of the voice graph. |
 | P2 | Add instance-safe engine state before the plugin | The generated DSP currently has 332 file-scope statics. Two plugin instances in one process would share them. |
 | P3 | Expose every manifest parameter | The host owns automation and state. The UI may hide some behind target selectors. |
 | P4 | Apply parameter changes at the 32-sample control block | Matches the device control rate. Sample-accurate automation is a later refinement. |

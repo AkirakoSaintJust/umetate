@@ -197,6 +197,10 @@ A closing verdict that restates the paragraph is filler.
   Drop the article, lead with the noun or verb, or write the list as prose.
 - **Wh-word headings and labels.** "What to reach for first", "How to move",
   "What it does". Use a noun phrase or an imperative.
+- **Counted couplets.** A heading, caption, or table description built as two
+  counts: "One page, one job", "Two sources, one filter", "One phase, many
+  amplitudes". It sells a shape instead of naming the section. Use a noun phrase
+  or an imperative, and put the count in the body.
 - **Storage-value leakage.** A user document gives the raw firmware value
   (`65536`, `32767`) instead of the on-screen value. Show the panel range next to
   the name.
@@ -278,6 +282,7 @@ the fixes, the hard bans, and the before and after samples.
 | Product self-description | Cut the section. Use the space for the next action, the controls, or a real limit. |
 | "The... The..." list | Drop the article, lead with the noun or verb, or write prose. |
 | Wh-word heading or table label | Use a noun phrase or an imperative. |
+| Counted-couplet heading, caption, or table description | Name the section and put the count in the body. |
 | Storage-value leakage | Show the panel value and range, not the raw number. |
 | Heading chain | Vary the grammar and use the reader's words. |
 | False dichotomy | Name the real difference or cut the contrast. |
@@ -373,8 +378,8 @@ becomes:
 - No aphorism and no summary verdict.
 - No "A, not B" adversative.
 - No negative parallelism, heading chain, false dichotomy, or marketing hook.
-- No product self-description section, no `The... The...` list, and no wh-word heading
-  or table label.
+- No product self-description section, no `The... The...` list, no wh-word heading
+  or table label, and no counted-couplet heading, caption, or table description.
 - No raw storage value in a user document. Show the panel value and range.
 - Read it aloud. If it sounds like a press release, rewrite it.
 

@@ -75,7 +75,7 @@ eight pages are displays, and the four page knobs have no assignments there. The
 | --- | --- |
 | PERFORMANCE | Cutoff, resonance, wavefolder amount, operator 1 feedback. |
 | ALGORITHM | Algorithm graph and routing string. Carriers pink, modulators white. |
-| A-ENVS | Four envelope graphs, one per operator of the active part. |
+| A-ENVS | An envelope graph for each operator of the active part. |
 | SCOPES | Four operator scopes for the active part. |
 | SPECTROS | Four operator spectrograms for the active part. |
 | SCOPES | Two larger part-mix scopes. |

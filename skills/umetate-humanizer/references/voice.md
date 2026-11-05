@@ -216,6 +216,35 @@ After:
 The same rule applies to table column headers, checklist labels, and section
 titles. A question can stay in body prose when the reader is actually asking it.
 
+## Counted couplets
+
+A heading, caption, or table description built as two counts reads like a slogan.
+"One page, one job", "Two sources, one filter", "Four operators, eight algorithms"
+and "One phase, many amplitudes" sell a shape instead of naming the section. The
+counts sound balanced, so the line feels finished before it says anything.
+
+Use a noun phrase or an imperative, and put the count in the body where it can be
+explained. "One page, one job" becomes "Page-based screens", then the paragraph
+says how many jobs each page carries. "One phase, many amplitudes" becomes "The
+shared phase accumulator", then the paragraph explains why one phase drives every
+partial.
+
+Before:
+
+> ## One page, one job
+> ## One phase, many amplitudes
+> | A-ENVS | Four envelope graphs, one per operator. |
+
+After:
+
+> ## Page-based screens
+> ## The shared phase accumulator
+> | A-ENVS | An amplitude-envelope graph for each operator of the active part. |
+
+The rule covers headings, captions, and table descriptions. A counted pair in body
+prose can be a real comparison: "One source is enough for a sine, two give you the
+Low/High split." Keep it when the numbers do work.
+
 ## Storage values
 
 A user document describes the value on the screen, not the number in the firmware.

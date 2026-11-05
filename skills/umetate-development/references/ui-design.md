@@ -316,6 +316,9 @@ and how to get back.
 - **No wh-word headings.** Use a noun or an imperative. `Navigation` and
   `Get started!` say what the section does. `How to move` asks a question the
   player did not ask.
+- **No counted-couplet headings or table descriptions.** `One page, one job` and
+  `Two sources, one filter` sell a shape instead of naming the section. Use a
+  noun phrase and put the count in the body.
 - **Closure:** confirm that an action happened. A save, a load, a mute, and a
   page change all need a visible result.
 - **No dead ends:** every page has a way home and a way back.
