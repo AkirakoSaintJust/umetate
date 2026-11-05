@@ -136,8 +136,8 @@ Two filters and a wavefolder, in series, then the output.
 
 ## The panel
 
-The first part of this manual is about the sound. This part is about finding your
-way around the instrument. The panel is the real M-VAVE FM-1 surface: 27 keys, a
+The first part of this manual was about the sound. This part is about finding your
+way around the instrument. The M-VAVE FM-1's control panel has 27 keys, a
 volume pot, three left encoders, four page encoders, the transport buttons, and a
 240 by 240 screen. The keys and the `ALGORITHM` encoder are always available.
 Everything else is a page you open with a context button.
