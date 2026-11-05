@@ -199,4 +199,4 @@ starts with MML text is an OPMDRV music file.
 - 8BitDev, [YM2151 Programming](https://7800.8bitdev.org/index.php/YM2151_Programming).
 - Oykenkyu, [YM2151 register map](https://oykenkyu.blogspot.com/2022/05/ym2151.html).
 - VGM tooling, [OPM decoding notes](https://github.com/vgmtool/vgm2pre/issues/2).
-- Otomata Labs, [`opmfile.h`](https://codigo.otomatalabs.net/otomatalabs/new-horizons/src/branch/master/utils/vgm2opm/opmfile.h).
+- Otomata Labs, [`opmfile.h`](https://codigo.otomatalabs.net/otomatalabs/new-horizons/src/commit/5a8385ad3d442600a87d827638c401470764174b/utils/vgm2opm/opmfile.h).
