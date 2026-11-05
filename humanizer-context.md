@@ -1,20 +1,23 @@
 # umetate voice context
 
 This file is auto-loaded by the humanizer skill. It overrides the generic defaults
-for umetate prose. Read it before rewriting a manual, a README, release notes, or a
-panel reference.
+for umetate prose. Read it before rewriting a manual, a README, release notes, a
+panel reference, or a guide or study.
 
 The hand-written manual is `examples/type-p-fm1/docs/manual.md`. The author rewrote
 it after the first release. That rewrite is the target, not the earlier, flatter
-version.
+version. The K5/K5000 guide rewrite in `doc-test/` is the guide calibration. It is
+not committed, but the excerpts in `skills/umetate-documentation/references/voice-samples.md`
+are.
 
 ## The voice in one paragraph
 
 A builder and a player talking to another builder or player. First person, normal
 contractions, dry asides, technical exactness, light UK slang. Long setup and short
 landing. The instrument can be the actor. The manual can open with a design note in
-the front-door register, then settle into the reference voice. Do not flatten it
-into a spec sheet.
+the front-door register, then settle into the reference voice. A guide or study can
+open with the plain category and a causal link, then carry longer explanatory
+sentences. Do not flatten either one into a spec sheet.
 
 ## Calibration
 
@@ -26,6 +29,12 @@ The hand rewrite is 1,899 words: mean sentence 15.6, median 13, standard deviati
 The longest sentence is 66 words. The shortest fragment is one word.
 
 If a rewrite produces numbers near the first set, it has over-edited.
+
+The guide first 70 lines moved from 689 words in 58 sentences (mean 11.6, median
+9.5, standard deviation 8.5, longest 52) to 733 words in 41 sentences (mean 17.4,
+median 14, standard deviation 16.7, longest 80). The first-person count stayed at
+three. The change is explanatory sentence length and connective looseness, not
+self-reference. Do not add "I" to compensate for a flat draft.
 
 ## Preserve these
 
@@ -48,17 +57,37 @@ If a rewrite produces numbers near the first set, it has over-edited.
   in a manual, not P44 false agency.
 - **Concrete triads and tip lists.** Three real settings are content, not P10 or
   P15.
+- **The plain category opening.** "The K5 and K5000 are two additive synths from
+  Kawai. Additive synths are rare, so they're an interesting case study." A plain
+  category and a reason to care beat a balanced thesis.
+- **The causal guess.** "The K5's shortcomings probably were part of what motivated
+  the K5000's design." "Probably" is the right hedge for an inference.
+- **The explanatory long sentence.** The guide rewrite has an 80-word sentence.
+  Keep it if it reads as one thought.
+- **"In order to", "whilst", "has got", "sort of", "and so on", "a bunch of",
+  "probably", "(!)"**. These are voice in explanatory prose. "(!)" is a genuine
+  surprise marker, not P41.
+- **Factual "rather than just" contrasts.** "A complete voice path, rather than
+  just the oscillator" names both sides. It is not the P9 hook.
+- **A slash in a scope label.** "anecdotal/historical records" is a category label,
+  not prose punctuation.
 
 ## Fix these
 
 - **Possessive grammar.** "both parts's algorithms" becomes "both parts'
   algorithms".
-- **Comma splices only when the reader has to backtrack.** A 66-word sentence can
-  stay if it reads as one thought.
+- **Comma splices only when the reader has to backtrack.** A 66-word or 80-word
+  sentence can stay if it reads as one thought.
 - **Repeated "so" and "kinda" only when they crowd a paragraph.** Do not ban them
   outright.
 - **Hyphenation.** "phase-modulation synthesizer" is a compound modifier. "phase
   modulation" is the noun. Both are correct.
+- **The two guide errors.** "the even harmonics over from the odd ones" becomes
+  "take over from". "more of an specialised tool" becomes "more of a specialised
+  tool".
+- **The dropped qualifier.** "Harmonic 64 is missing for some quirky reason" is fine
+  as a phrase, but it loses "documented". Keep the fact: "for some quirky reason.
+  It's a documented quirk, not a mistake in your patch."
 
 ## Hard bans
 
@@ -95,8 +124,55 @@ Hand rewrite:
 
 The instruction is stronger than the aphorism. Prefer it.
 
+### The guide opening
+
+Model draft:
+
+> The K5 and K5000 are the two Kawai instruments that take additive synthesis
+> seriously. They are not the same idea at two sizes. The K5 is a spectral
+> instrument you learn by doing. The K5000 is a spectral instrument you compose
+> with.
+
+Author rewrite:
+
+> The K5 and K5000 are two additive synths from Kawai. Additive synths are rare, so
+> they're an interesting case study. They came out at different times and the K5's
+> shortcomings probably were part of what motivated the K5000's design.
+
+The author cut the balanced thesis and the paired metaphors. The plain category and
+the causal guess are the target.
+
+### The factual contrast
+
+Model draft:
+
+> The K5000 is a different architecture, not a K5 with a bigger harmonic count.
+
+Author rewrite:
+
+> They came out at different times and the K5's shortcomings probably were part of
+> what motivated the K5000's design.
+
+The author preferred the causal and historical link over the neat contrast. Use a
+contrast only when both sides are the point.
+
+### The dropped qualifier
+
+Model draft:
+
+> Harmonic 64 is missing. That is a documented quirk of the K5, not a mistake in
+> your patch.
+
+Author rewrite:
+
+> Harmonic 64 is missing for some quirky reason.
+
+The casual phrase is fine. The loss of "documented" is not. Keep the fact and the
+casual wrapper.
+
 ## Scope
 
-These specifics apply to umetate. If you are rewriting something else, ignore the
-slang, the "gal" self-description, and the synth references. The generic 55 patterns
-still apply.
+These specifics apply to the author's own docs, including guides and studies about
+other instruments. If you are rewriting someone else's text for a different author,
+ignore the project-specific slang, the "gal" self-description, and the synth
+references. The generic 55 patterns still apply.

@@ -58,6 +58,11 @@ Keep its contractions, asides, light UK slang, and self-description. Do not flat
 it back to a spec sheet. `humanizer-context.md` carries the same rules for the
 humanizer skill.
 
+The K5/K5000 guide rewrite is the guide/study calibration. Plain category openings,
+explanatory long sentences, "whilst", "sort of", "and so on", "probably", and a
+parenthetical "(!)" are voice. Do not tighten a guide into a thesis, and do not add
+"I" to compensate for a flat draft.
+
 Before a manual preface or design note, run the design interview. `umetate
 interview --synth <project> --write` generates the form from the project's
 `patch.json`, `panel.json`, `synth-brief.md`, and `plugin.json`. It does not assume

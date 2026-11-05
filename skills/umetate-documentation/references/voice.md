@@ -37,6 +37,20 @@ words. The shortest fragment is one word.
 The rewrite is the calibration. A manual with a 10-word median and almost no
 contractions has been over-edited.
 
+## Guide calibration
+
+The K5/K5000 guide was written in two passes. The first 70 lines of the model draft
+were 689 words: 58 sentences, an 11.6-word mean, a 9.5-word median, an 8.5-word
+standard deviation, and a 52-word maximum. The author's rewrite was 733 words: 41
+sentences, a 17.4-word mean, a 14-word median, a 16.7-word standard deviation, and
+an 80-word maximum. The first-person count stayed at three. The contraction count
+went from six to eight.
+
+The rewrite is the calibration for a guide or study. It did not add more "I". It
+added longer explanatory sentences, "whilst", "sort of", "and so on", "probably",
+and a parenthetical "(!)". A humanising pass that produces the first set of numbers
+has flattened the guide.
+
 ## Who is talking
 
 A builder and a player, writing to another builder or player. Not a brand, not a
@@ -65,9 +79,11 @@ The person is:
 
 The reader is a musician with the instrument in front of them, or a builder with a
 terminal open. Assume they are smart and busy. Do not explain the obvious. Do not
-sell them the thing they already downloaded.
+sell them the thing they already downloaded. A guide or study may be for readers
+who do not own the instrument. State the audience: "players and sound designers" is
+enough.
 
-## Three registers
+## Four registers
 
 Use the register that fits the page. Do not use the front-door register for a
 procedure.
@@ -123,6 +139,29 @@ installation guide. This is the author explaining the instrument at the bench.
 - Tables and step lists stay neutral. Neutral means no jokes, not no contractions.
   The voice lives in the prose around them.
 
+### Guide or study
+
+A document about an existing instrument, a lineage, or a design question. The
+reader may not own the hardware. History is allowed, and the analysis is part of
+the value.
+
+- Open with the plain category and why it matters: "The K5 and K5000 are two
+  additive synths from Kawai. Additive synths are rare, so they're an interesting
+  case study."
+- A causal or historical link is better than a neat contrast: "They came out at
+  different times and the K5's shortcomings probably were part of what motivated
+  the K5000's design." "Probably" is the right hedge when the evidence is
+  inferential.
+- Define a term once when the audience may be new: "Each of these sines is called a
+  harmonic."
+- Long explanatory sentences are normal. The guide rewrite has an 80-word sentence
+  and a 16.7-word standard deviation.
+- State the scope and the status of the diagrams: "it isn't a technical manual, so
+  the diagrams are purely explanatory rather than factory schematics."
+- The audience can be players and sound designers, not only owners.
+- Use the product's own names in headings. "Twin Mode and Full Mode" beats "Two
+  sources, two modes".
+
 ### Reference
 
 The patch sheet, the CC table, the SysEx byte layout, the parameter index. Terse
@@ -143,6 +182,12 @@ was the problem.
 The manual does not need to match the corpus's 120-word maximum. It does need the
 contrast: a 60-word sentence can sit next to a four-word verdict. A manual where
 every sentence is 10 to 15 words has been flattened.
+
+The guide rewrite has a 17.4-word mean, a 14-word median, a 16.7-word standard
+deviation, and an 80-word maximum. The first-person count is the same as the model
+draft. The change is explanatory length and connective looseness, not
+self-reference. Do not split the 80-word sentence just because it is long. Split it
+only when the reader has to backtrack.
 
 These are the habits to copy.
 
@@ -272,13 +317,17 @@ software. "Programme" is a plan or a broadcast.
 **Contractions are normal.** it's, don't, doesn't, you've, I'm, won't. The docs are
 not a contract. Use them in manual prose, not in step lists or reference tables.
 The hand rewrite has 33 in 1,899 words. The old manual had 1. The old one was
-wrong.
+wrong. The guide rewrite has 8 in its first 70 lines. That is enough. Do not force
+one into every sentence.
 
 **Conversational intensifiers, used sparingly.** actually, really, pretty, quite, a
-bit, kind of, sort of, just, simply, basically, roughly. The corpus uses "a bit" 14
-times and "kind of" 12 times in 9,000 words. The hand rewrite uses "kinda" 4 times
-and "so" 15 times in 1,899 words. That is the upper end. A few per page, not one
-per sentence. The model will want more. Do not let it.
+bit, kind of, sort of, just, simply, basically, roughly, probably, a bunch of, and
+so on. The corpus uses "a bit" 14 times and "kind of" 12 times in 9,000 words. The
+hand rewrite uses "kinda" 4 times and "so" 15 times in 1,899 words. That is the
+upper end. A few per page, not one per sentence. The model will want more. Do not
+let it. "Sort of" and "probably" are calibrated hedges. "And so on" and "a bunch
+of" are generalisers. They are voice when the list is illustrative. Do not strip
+them all.
 
 **Plain verdicts.** good, bad, fine, okay, boring, interesting, unremarkable,
 remarkable, astonishing, terrible. The corpus is not afraid of a plain verdict. The
@@ -290,10 +339,11 @@ once, then use them. Do not invent synonyms.
 
 **Collocations that sound like the author.** "the whole point", "the whole thing",
 "the thing is", "the problem is", "the good thing is", "that's because", "I've got
-to say", "as weird as they are", "or whatever", "in the end", "by the way",
-"as an aside", "for a change", "worth a listen", "worth a punt", "that's it
-basically", "I guess", "I wonder", "it turns out", "as in", "more X than Y", "one of
-the most X", "orders of magnitude". Use them when they fit. Do not sprinkle them.
+to say", "as weird as they are", "or whatever", "came out", "has got", "in order
+to", "rather than just", "for some reason", "in the end", "by the way", "as an
+aside", "for a change", "worth a listen", "worth a punt", "that's it basically",
+"I guess", "I wonder", "it turns out", "as in", "more X than Y", "one of the most
+X", "orders of magnitude". Use them when they fit. Do not sprinkle them.
 
 **Colons introduce the real list or the real explanation.** "It's done in three
 ways: a CGI sequence ..., a subtle slow-motion shot ..., and a big fat nether being
@@ -302,8 +352,10 @@ you are about to say, not to decorate a heading.
 
 **Slashes are for alternatives and units, not for prose.** The corpus uses them
 for "eros/thanatos", "and/or", and technical lists. In docs, write "or" unless you
-mean a file path or a unit. The author uses "2x4-op" and "two-part x four-operator"
-as shorthand. Keep it after the first mention.
+mean a file path, a unit, or a scope label. The author uses "2x4-op" and "two-part
+x four-operator" as shorthand. Keep it after the first mention. A slash in a scope
+or category label is fine: "anecdotal/historical records". Do not expand every
+slash.
 
 **No em dash. No semicolon.** The corpus has zero em dashes and one semicolon in
 9,015 words. Use a full stop, a comma, a colon, or brackets. This is not a stylistic
@@ -313,6 +365,13 @@ preference. It is the strongest punctuation evidence in the corpus.
 for genuine enthusiasm. The design note can use an exclamation cluster for emphasis
 ("so! many! params!"). A tip can end with one. A step never does. Do not spray them.
 The hand rewrite uses four, mostly in one cluster.
+
+**A parenthetical "(!)" is a genuine surprise marker.** "one envelope per harmonic
+(!)" is the author drawing attention to the scale of the feature. Use it once or
+twice, never in a step.
+
+**"In order to" is usually "To".** The author used it in the guide to set up a
+purpose clause. Suggest the short form only when it does not flatten the rhythm.
 
 **Bold is for panel labels and the occasional contrast.** The manual bolds
 `**Cutoff**` and the other UI labels. The hand rewrite also bolds `**is**` and
@@ -326,7 +385,9 @@ it does. "Type P.fm1 is a four-operator FM synthesizer for the M-VAVE FM-1." Not
 "Imagine a synth that ...". The reader is already here. The hand rewrite opens with
 "a two-part x four-operator phase-modulation synthesizer in the tradition of the
 Yamaha DX/OPwhatever family". The plain noun is there, and the in-joke is next to
-it. Keep the plain noun.
+it. Keep the plain noun. A guide can open with a plain category and a reason to
+care: "two additive synths from Kawai. Additive synths are rare, so they're an
+interesting case study." Do not replace that with a pair of metaphors.
 
 **Give the short version first if the page is long.** Two sentences or a short
 paragraph at the top, then the detail. The corpus does this with "Short version:"
@@ -367,6 +428,18 @@ plain.
 These are the patterns that make a page sound generated. Some are AI tells. Some
 are just bad manual habits. All of them are banned.
 
+### The thesis opening
+
+The model draft of the K5/K5000 guide opened "The K5 and K5000 are the two Kawai
+instruments that take additive synthesis seriously... The K5 is a spectral
+instrument you learn by doing. The K5000 is a spectral instrument you compose
+with." The author replaced it with "The K5 and K5000 are two additive synths from
+Kawai. Additive synths are rare, so they're an interesting case study."
+
+The plain category and the reason to care are the target. Do not replace them with
+a pair of metaphors or a balanced thesis. A guide can open with a fact and a
+"because". It does not need a manifesto.
+
 ### Negative parallelism
 
 The tell: "It's not just a synth, it's a way of thinking." "This isn't about
@@ -386,6 +459,10 @@ self-oscillate." Not "It's not a screaming acid filter, it's a gentle tone shape
 A factual contrast is allowed. "It's not an emulation of any one Yamaha chip in
 particular, but it **is** a DX-style synth" names both sides and prevents a false
 expectation. The ban is on the theatrical "not just X, it's Y" hook.
+
+"Each source is a complete voice path, rather than just the oscillator" is the
+same kind of factual contrast. It names both sides. Do not rewrite it into a
+positive-only sentence that loses the comparison.
 
 "Not only X, but also Y" is allowed when both halves are real and the second half is
 not a supposed revelation. It is not allowed as a hook.
@@ -504,12 +581,34 @@ comma splice into three tidy sentences if it reads as one thought. Do not replac
 "kinda" with "somewhat" unless the sentence needs the formality. Do not change
 "gal" to "person".
 
+### Over-polishing
+
+The K5/K5000 guide rewrite kept the same three first-person tokens and added
+explanatory clauses, "whilst", "sort of", "and so on", "probably", a parenthetical
+"(!)", and an 80-word sentence. A clean, symmetrical draft can be less human than a
+rougher one. Do not split every clause, cut every generaliser, or restore the
+thesis.
+
+The rewrite also shows where not to stop. "The even harmonics over from the odd
+ones" is missing "take". "More of an specialised tool" should be "more of a
+specialised tool". Fix those. Keep the rhythm.
+
+### The dropped qualifier
+
+A casual phrase can replace a precise one. It must not drop the fact. "Harmonic 64
+is missing for some quirky reason" is fine as a phrase, but it loses the documented
+quirk. Keep the fact and the casual wrapper: "for some quirky reason. It's a
+documented quirk, not a mistake in your patch."
+
 ### No invented facts
 
 A humanising pass may not invent a model name, a date, a number, or a quote. The
 hand rewrite adds Chowning, the DX21/DX7 comparison, ymfm, Dexed, the OPL3 and
 TX81z/D11/V50 waveforms, and the Yamaha chip order. Those are the author's
-knowledge. The model does not get to add its own.
+knowledge. The model does not get to add its own. The guide rewrite adds a
+definition of a harmonic, a comparison to PM sidebands, and a causal "probably"
+about the K5 and K5000. Those are also the author's. Keep them, but do not invent
+your own.
 
 ## The final pass
 
@@ -539,6 +638,12 @@ knowledge. The model does not get to add its own.
 - [ ] The closing is an instruction or a verdict, not an aphorism.
 - [ ] The manual is not flatter than the corpus. The median is roughly 13 to 16
       words and the variance is visible.
+- [ ] The opening is a plain category and a reason to care, not a polished thesis.
+- [ ] The audience is stated. It does not assume the reader owns the hardware.
+- [ ] The scope and the status of the diagrams are stated.
+- [ ] The guide's long sentences, generalisers, and parenthetical asides survive.
+- [ ] No documented qualifier was lost to a casual phrase.
+- [ ] The register is guide or study when the page is about an existing instrument.
 - [ ] No invented facts.
 - [ ] Read it aloud. If it sounds like a press release or a generated outline,
       rewrite it.

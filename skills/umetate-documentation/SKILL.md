@@ -1,7 +1,7 @@
 ---
 name: umetate-documentation
-description: Write thorough, readable, human documentation for end users of a synthesizer built on umetate. Covers the user manual, panel reference, MIDI and SysEx reference, patch sheet, installation guide, and release notes. Includes a journalist-style design interview for the manual preface and design note. Rewrites are synchronic (current state, not history), written from the instrument's point of view, and measured against the author's own corpus and hand-rewritten manual so they read like a person wrote them. Never uses em dashes or semi-colons, never loses information, and bans negative parallelism, heading chains, false dichotomies, and marketing hooks. Preserves the author's contractions, asides, light UK slang, and self-description.
-version: 1.3.0
+description: Write thorough, readable, human documentation for end users of a synthesizer built on umetate. Covers the user manual, panel reference, MIDI and SysEx reference, patch sheet, installation guide, release notes, and technical guides or instrument studies. Includes a journalist-style design interview for the manual preface and design note. Rewrites are measured against the author's own corpus, hand-rewritten manual, and hand-rewritten guide so they read like a person wrote them. Never uses em dashes or semi-colons, never loses information, and bans negative parallelism, heading chains, false dichotomies, and marketing hooks. Preserves the author's contractions, asides, light UK slang, explanatory long sentences, and self-description.
+version: 1.4.0
 license: GPL-3.0-only
 compatibility: OpenCode and Agent Skills-compatible loaders
 allowed-tools: read, grep, glob, edit, write, shell, websearch, webfetch
@@ -21,7 +21,8 @@ These are the whole skill. Read them before writing a word.
 1. **Synchronic, not historical.** Describe the instrument as it is right now.
    Do not narrate how it got here. Release notes are the one exception, they are a
    version history by nature. Every other page says "here is how it works", never
-   "we changed X to Y".
+   "we changed X to Y". A guide or study of an existing instrument is the other
+   exception. There, the history and lineage are the subject.
 2. **From the instrument, not the code.** The reader sees a knob and hears a sound.
    Describe what the knob does and what the sound does. Do not mention nodes, macros,
    buffers, or the generator. If the code has a "phasor" and a "tl" stage, the
@@ -44,7 +45,7 @@ has gone too far, even if the prose is cleaner.
 
 ## The voice
 
-Read `references/voice.md` before the first paragraph. It defines three
+Read `references/voice.md` before the first paragraph. It defines four
 registers:
 
 - **Front door:** the README, release notes, and manual preface. The author is
@@ -53,20 +54,31 @@ registers:
 - **Manual:** the manual, panel reference, MIDI reference, and install guide.
   Warm technical prose. Address the reader as "you", use first person in section
   intros and design asides, and keep procedures neutral.
+- **Guide or study:** a document about an existing instrument, a lineage, or a
+  design question. The reader may not own the hardware. History is allowed. It
+  opens with the plain category, uses definitions and causal links, and can carry
+  longer explanatory sentences than a manual.
 - **Reference:** the patch sheet and byte-level tables. Terse and exact.
 
 Then read `references/voice-samples.md`. It is a short set of excerpts from the
 author's own reviews, forum posts, and notes, with a note on what each one teaches.
-The first section is the hand rewrite of the Type P.fm1 manual. The full corpus is
-9,015 words. `voice.md` is measured against it: median sentence 16 words, 90th
-percentile 39, zero em dashes, one semicolon, "I" 151 times, "we" 10 times. The
-corpus is the calibration for the front door. The manual is the same voice with the
-procedure in front.
+The first sections are the guide rewrite and the hand rewrite of the Type P.fm1
+manual. The full corpus is 9,015 words. `voice.md` is measured against it: median
+sentence 16 words, 90th percentile 39, zero em dashes, one semicolon, "I" 151
+times, "we" 10 times. The corpus is the calibration for the front door. The manual
+is the same voice with the procedure in front.
 
 The hand rewrite is the manual calibration: 1,899 words, mean sentence 15.6, median
 13, standard deviation 12.1, 22 first-person pronouns, 33 contractions, 7 brackets,
 4 exclamation marks. The first release was 971 words, mean 11.3, median 10, standard
 deviation 6.4, 2 first-person pronouns, 1 contraction. The rewrite is the target.
+
+The guide rewrite is the guide calibration. Its first 70 lines moved from 689
+words in 58 sentences (mean 11.6, median 9.5, standard deviation 8.5, longest 52)
+to 733 words in 41 sentences (mean 17.4, median 14, standard deviation 16.7,
+longest 80). The first-person count stayed at three. The change is explanatory
+sentence length and connective looseness, not self-reference. Do not add "I" to
+compensate for a flat draft.
 
 The samples use British spelling in prose, except "synthesizer", contractions, dry
 humour, and light UK slang. The hand rewrite uses "innit", "kinda", "gal", and
@@ -116,6 +128,7 @@ A synthesizer project ships these user-facing documents. Each one has a job.
 | --- | --- |
 | README | The front door. What it is, one sentence. The web app link. How to install. |
 | User manual | Architecture and sound design, from the player's chair. |
+| Guide or instrument study | A historical or technical guide to an existing instrument or lineage. The reader may not own the hardware. |
 | Panel reference | Every control, menu, key combination, and how to save. |
 | MIDI and SysEx reference | The CC map, the note routing, the SysEx message format. |
 | Patch sheet | A blank form a user can print and write a patch on. |
@@ -129,6 +142,10 @@ The manual and the panel reference are the two most read. Spend the most care th
 Open with the sound, not the spec. Tell the player what kind of instrument this is
 and what it is good at. Then walk the signal, from the keys to the output, in the
 order a player thinks about it.
+
+A guide or study may be for readers who do not own the instrument. State the
+audience. The K5/K5000 guide says "for players and sound designers". The guide
+register is in `references/voice.md`.
 
 The manual can open with a design note, not a spec sheet. The design note is in the
 front-door register: the history, the constraint, the things the author wanted to
@@ -231,7 +248,10 @@ technical prose, plus what good hardware manuals already do.
 
 **Do not flatten the voice.** The biggest failure mode is a manual that reads like a
 spec sheet. The first release did. The hand rewrite has 22 first-person pronouns and
-33 contractions. If your draft has 2 and 1, you have over-edited.
+33 contractions. If your draft has 2 and 1, you have over-edited. The guide rewrite
+kept the same three first-person tokens as the draft and changed the sentence
+structure instead. Do not add "I" to compensate for a flat draft. Add explanatory
+clauses, connectives, and a longer sentence where the thought needs it.
 
 **Address the reader as "you".** "Turn the knob" beats "the user turns the knob".
 Put the player in the room.
@@ -247,7 +267,8 @@ any synthesizer describes none.
 **One main point per sentence.** When a sentence has three unrelated clauses, it is
 two sentences. When the clauses belong to one thought, a longer sentence is fine.
 Let a short sentence land next to a long one. Vary the length on purpose. The hand
-rewrite has a 66-word sentence. A long sentence is fine when the clauses belong
+rewrite has a 66-word sentence. The guide rewrite has an 80-word sentence and a
+16.7-word standard deviation. A long sentence is fine when the clauses belong
 together. Split it when the reader has to backtrack.
 
 **Plain words over jargon.** The exact term stays where the panel uses it. Do not
@@ -258,10 +279,14 @@ precise model list the author did not write.
 
 **Kill the filler.** Delete "in order to", "it is worth noting", "in the context
 of", "utilize". Delete the summary sentence that restates the heading. Delete the
-opening that promises what is coming. Start with the content.
+opening that promises what is coming. Start with the content. "In order to" is
+usually "To", but the author sometimes uses it to set up a purpose clause. Suggest
+the short form only when it does not flatten the rhythm.
 
 **No hedging stacks.** Commit to what you know. One genuine uncertainty is fine,
-two qualifiers are slop. This is an instrument manual, not a research paper.
+two qualifiers are slop. This is an instrument manual, not a research paper. "Sort
+of" and "probably" are calibrated hedges in the guide. "And so on" and "a bunch of"
+are generalisers. Keep the ones that are doing work.
 
 **No rule of three padding.** List the real items, two or four is fine. Three
 abstract nouns in a row is a tell. A 7-item design list is content. Three concrete
@@ -280,8 +305,9 @@ it's Y", "less X than Y", "X isn't about Y, it's about Z" are hooks. They invent
 contrast so the sentence sounds deeper. Say what the thing is. If the contrast is
 real, state both sides plainly. `references/voice.md` has the full rule. A factual
 contrast is allowed: "It's not an emulation of any one Yamaha chip in particular, but
-it **is** a DX-style synth" names both sides and prevents a false expectation. The
-ban is on the theatrical "not just X, it's Y" hook.
+it **is** a DX-style synth" names both sides and prevents a false expectation.
+"Each source is a complete voice path, rather than just the oscillator" is the same
+kind of factual contrast. The ban is on the theatrical "not just X, it's Y" hook.
 
 **No heading chains.** Do not write "The Engine", "The Filter", "The Envelope:
 Shaping Your Sound" for every section. Vary the grammar, use the reader's words, and
@@ -297,14 +323,33 @@ synth, say that. It does not need an enemy.
 "Dive into", "Whether you're a beginner or a seasoned producer", "The result?",
 "But here's the thing", "Let's break it down". Start with the content.
 
+**Open with the plain category.** A guide can start with a fact and a reason to
+care, not a balanced thesis. The K5/K5000 guide opens "The K5 and K5000 are two
+additive synths from Kawai. Additive synths are rare, so they're an interesting
+case study." The model draft's "The K5 is a spectral instrument you learn by doing.
+The K5000 is a spectral instrument you compose with" was cut. Plain category first.
+
+**State the audience and the scope.** "This guide is for players and sound
+designers" and "it isn't a technical manual, so the diagrams are purely explanatory
+rather than factory schematics." The reader may not own the hardware. Say so early.
+
+**Do not drop the qualifier.** A casual phrase can replace a precise one, but it
+must not lose the fact. "Harmonic 64 is missing for some quirky reason" is fine, but
+it drops "documented". Keep the fact and the casual wrapper.
+
 **Fix grammar, not voice.** "both parts's algorithms" becomes "both parts'
 algorithms". A comma splice can stay if it reads as one thought. Do not replace
 "kinda" with "somewhat", "gal" with "person", or "innit" with "right?" unless the
 author asks. Do not turn "2x4-op" into "two-by-four-operator" in every mention.
+"the even harmonics over from the odd ones" becomes "the even harmonics take over
+from the odd ones". "more of an specialised tool" becomes "more of a specialised
+tool".
 
 **No invented facts.** A humanising pass may not add a model, a date, a number, or a
 quote. The hand rewrite's DX21/DX7 comparison, Chowning, ymfm, Dexed, and Yamaha
-chip order are the author's knowledge. The model does not get to add its own.
+chip order are the author's knowledge. The model does not get to add its own. The
+guide rewrite's definition of a harmonic, its comparison to PM sidebands, and its
+"probably" about the K5/K5000 are also the author's. Keep them.
 
 **Read it back as speech.** If you cannot imagine a patient teacher saying the
 sentence out loud, rewrite it.
@@ -323,8 +368,8 @@ Checklist for the final pass:
 - [ ] The page uses the right register from `references/voice.md`.
 - [ ] No em dash anywhere. No semi-colon anywhere.
 - [ ] Every parameter, control, and command is named exactly as the panel names it.
-- [ ] The current state only. Release notes excepted, no "now uses", "was added",
-      "previously".
+- [ ] The current state only for a manual. Release notes and guides or studies
+      excepted, no "now uses", "was added", "previously".
 - [ ] A reader who has never seen the code can follow it.
 - [ ] The explanatory prose has contractions. The hand rewrite has 33 in 1,899
       words.
@@ -333,6 +378,12 @@ Checklist for the final pass:
       words and the variance is visible.
 - [ ] The preface has at least one concrete design decision, one lineage reference,
       one failure or limit, and one first-patch recipe from the interview.
+- [ ] A guide or study uses the guide register. The opening is a plain category and
+      a reason to care, not a polished thesis.
+- [ ] The audience is stated. It does not assume the reader owns the hardware.
+- [ ] The scope and the status of the diagrams are stated.
+- [ ] The guide's long sentences, generalisers, and parenthetical asides survive.
+- [ ] No documented qualifier was lost to a casual phrase.
 - [ ] No negative parallelism ("not just X, but Y", "not X, it's Y", "less X than Y").
 - [ ] No heading chain ("The X", "The Y", "The Z: ...").
 - [ ] No false dichotomy and no invented contrast.

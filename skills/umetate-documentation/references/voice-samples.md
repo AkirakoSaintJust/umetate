@@ -1,8 +1,8 @@
 # Voice samples
 
 These are short excerpts from the author's own writing: reviews, forum posts, and
-notes. They are here for rhythm, not for content. Read them before a front-door page
-or a manual intro, then read `voice.md` for the rules.
+notes. They are here for rhythm, not for content. Read them before a front-door
+page, a manual intro, or a guide or study, then read `voice.md` for the rules.
 
 The full corpus is not checked in. It is the author's personal film and music
 writing, not part of the framework. The excerpts are enough to hear the rhythm.
@@ -10,6 +10,80 @@ writing, not part of the framework. The excerpts are enough to hear the rhythm.
 The published manual is a restrained version of this. No film opinions, no
 swearing. The hand rewrite keeps the digressions, the slang, and the jokes. The
 sentence is the same.
+
+## The guide rewrite
+
+These are from the author's rewrite of the first 70 lines of the K5/K5000 guide.
+They are the target for a guide or study, not a manual page.
+
+### The plain category opening
+
+> The K5 and K5000 are two additive synths from Kawai. Additive synths are rare, so
+> they're an interesting case study.
+>
+> They came out at different times and the K5's shortcomings probably were part of
+> what motivated the K5000's design.
+
+The model draft opened with a balanced thesis. The author cut it for a plain
+category, a reason to care, and a causal guess. "Probably" is the right hedge. The
+plain version is the target.
+
+### Define the term
+
+> A periodic musical sound is a stack of sine waves at multiples of a fundamental.
+> Each of these sines is called a harmonic, and the fundamental determines the
+> sound's "pitch".
+
+The guide can explain a term the audience may not know. Do not assume the reader
+already knows what a harmonic is.
+
+### The long explanatory sentence
+
+> The upper harmonics can be strong at the attack and vanish in the sustain, and
+> then the fundamental can fade in late whilst the even harmonics over from the odd
+> ones, or a group of high partials can pulse while the fundamental stays still,
+> and so on.
+
+The author wrote one long sentence where the model wrote four short ones. Keep the
+long sentence. Fix "over from" to "take over from". Keep "whilst" and "and so on".
+
+### The parenthetical surprise
+
+> ... whilst the K5000 has got one envelope per harmonic (!)
+
+"Has got" and the parenthetical "(!)" are voice. They are not P41 or P14.
+
+### The factual contrast
+
+> A K5 Single patch has two sources, containing a complete voice path, rather than
+> just the oscillator.
+
+"Rather than just" is a factual contrast. It names both sides. Do not rewrite it
+into a positive-only sentence.
+
+### Scope and audience
+
+> This guide is for players and sound designers. ... it isn't a technical manual,
+> so the diagrams are purely explanatory rather than factory schematics.
+
+The scope and the audience are stated early. The slash in "anecdotal/historical
+records" is a category label, not prose punctuation.
+
+### The one loss
+
+> Harmonic 64 is missing for some quirky reason.
+
+The casual phrase is fine, but it drops "documented". Keep the fact: "Harmonic 64
+is missing for some quirky reason. It's a documented quirk, not a mistake in your
+patch."
+
+### The numbers
+
+The first 70 lines moved from 689 words in 58 sentences (mean 11.6, median 9.5,
+standard deviation 8.5, longest 52) to 733 words in 41 sentences (mean 17.4,
+median 14, standard deviation 16.7, longest 80). The first-person count stayed at
+three. The change is sentence structure and explanatory connectives, not
+self-reference.
 
 ## The hand rewrite
 

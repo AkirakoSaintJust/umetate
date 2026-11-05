@@ -4349,3 +4349,48 @@ The tests cover a generic project (the form must not mention Type P.fm1, Yamaha,
 or a template placeholder) and the Type P.fm1 project (the form must mention Type
 P.fm1, fm_op x4, DX7, and the panel pages). The `--write`, `--next`, and `--check`
 round trip still passes.
+
+### 13.37 Guide register from the K5/K5000 rewrite (2026-11-05)
+
+The author rewrote the first 70 lines of the K5/K5000 guide. The diff is the guide
+calibration.
+
+The model draft first 70 lines were 689 words in 58 sentences: mean 11.6, median
+9.5, standard deviation 8.5, longest 52, 3 first-person tokens, 6 contractions, no
+brackets. The author's rewrite was 733 words in 41 sentences: mean 17.4, median 14,
+standard deviation 16.7, longest 80, 3 first-person tokens, 8 contractions, 3
+brackets, one parenthetical "(!)". The first-person count did not change. The
+change is explanatory sentence length and connective looseness.
+
+The rewrite replaced the balanced thesis ("The K5 is a spectral instrument you
+learn by doing. The K5000 is a spectral instrument you compose with.") with a plain
+category and a causal guess ("two additive synths from Kawai ... the K5's
+shortcomings probably were part of what motivated the K5000's design."). It added a
+definition of a harmonic, an explanation of inharmonic partials and PM sidebands,
+"whilst", "sort of", "and so on", "probably", "in order to", "has got", and "(!)".
+It kept the same three first-person tokens.
+
+The skills changed:
+- `voice.md` has a guide calibration, a fourth guide/study register, the guide
+  sentence metrics, the plain category opening, the thesis-opening ban, the
+  over-polishing warning, and the dropped-qualifier rule.
+- `voice-samples.md` has a guide rewrite section with the plain opening, the
+  definition, the long sentence, the parenthetical "(!)", the factual contrast,
+  the scope and audience, and the one information loss.
+- `SKILL.md` 1.4.0 adds the guide/study document type, the synchronic exception,
+  the audience and scope rules, the "in order to" nuance, the generaliser nuance,
+  the factual "rather than just" example, the two grammar fixes, and the guide
+  checklist.
+- `humanizer-context.md` adds the guide calibration, the preserve list ("whilst",
+  "sort of", "and so on", "probably", "(!)", "rather than just", slash labels), the
+  fix list, and the before and after.
+- `.agents/skills/humanizer/SKILL.md` adds the guide profile, the false positives,
+  and the "do not equate human with more first-person" rule. That directory is
+  git-ignored, so those edits are local.
+
+The one loss: "Harmonic 64 is missing for some quirky reason" drops the documented
+fact. The rule is to keep the fact and the casual wrapper.
+
+The K5/K5000 guide itself is in `doc-test/`, which is git-ignored. The first 70
+lines are the author's. The rest is the model draft. The next pass should align the
+rest with the guide register.
