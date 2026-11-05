@@ -59,16 +59,19 @@ The plugin source lives in `plugin/` and is GPL-3.0-only. The build pins JUCE
 fetches both with CMake `FetchContent`. CLAP 1.2.7 is a submodule of the
 extension at that commit. The VST3 SDK is the copy bundled with JUCE 8.0.9.
 
-A published plugin binary must travel with its corresponding source. The
-`umetate publish` tool always includes `framework/plugin/` and `framework/design/`
-in the published tree, and writes `DEPENDENCIES.md` with the exact upstream
-commits. The build fetch instructions are in `framework/plugin/README.md`. If the
-AGPL source must be self-contained, pass `--vendor-deps` with a directory that
-holds the fetched `_deps` sources, or point the build at local copies with
-`-DFETCHCONTENT_SOURCE_DIR_JUCE=...` and
+A published plugin binary must travel with its corresponding source. Each plugin
+archive also carries its notices in a `licences/` folder: the AGPL text for JUCE,
+the MIT texts for CLAP and the wrapper, the OFL texts for the two embedded fonts,
+and the project's GPL-3.0 text. The `umetate publish` tool always includes
+`framework/plugin/` and `framework/design/` in the published tree, and writes
+`DEPENDENCIES.md` with the exact upstream commits. The build fetch instructions
+are in `framework/plugin/README.md`. If the AGPL source must be self-contained,
+pass `--vendor-deps` with a directory that holds the fetched `_deps` sources, or
+point the build at local copies with `-DFETCHCONTENT_SOURCE_DIR_JUCE=...` and
 `-DFETCHCONTENT_SOURCE_DIR_CLAP-JUCE-EXTENSIONS=...`. When `--plugins` stages a
 binary, the publish output also carries the AGPL, MIT CLAP, MIT wrapper and OFL
-texts from `third-party-licenses/`.
+texts from `third-party-licenses/`. The release source archive includes
+`vendor/deps/`, so the AGPL corresponding source travels in the same release.
 
 The brand font is not bundled and the wordmark falls back to Arial Black when the
 system has it. Only the two OFL fonts above travel in the plugin binary.
@@ -84,3 +87,14 @@ source** we compile (kiss_fft under BSD-3, and `fftvec_math_drv.h` +
 `flfft_core_pi32v2.c` under Apache-2.0) is vendored under `firmware/vendor/` with
 its licences. M-VAVE stock firmware and assets are **not redistributed**. Record
 the exact toolchain/SDK commit and asset hashes in `env.lock`.
+
+## Credits
+
+VOPMex is the OPM emulator used as the reference for the comparison in
+`docs/opm-to-type-p-fm1.md`. It is by osoumen, a fork of the original VOPM by sam.
+The comparison measured its rendered output. VOPMex is not part of this
+repository, the build, or any release, and none of its source is redistributed or
+compiled into the instrument.
+
+The FM-1 emulator used for the target timing checks is joakimeriksson's fm1-emu.
+It is a development tool, not a release artefact.

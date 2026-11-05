@@ -296,3 +296,10 @@ no per-voice pan. A conversion can preserve the operator graph, the ratio
 relationships, the level curve, the modulation index, and the feedback depth, but
 the spectrum will not be identical. That is expected. The two chips share a family
 resemblance, but they are different designs.
+
+## Credits
+
+VOPMex is by osoumen, a fork of the original VOPM by sam. The comparison measured
+its rendered output. VOPMex is not part of this repository or the instrument, and
+none of its source is redistributed. The licence audit is in
+[LICENSING.md](../LICENSING.md).

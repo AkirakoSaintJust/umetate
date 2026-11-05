@@ -382,7 +382,45 @@ def _safe_name(name: str) -> str:
     return "".join(keep).strip("-") or "plugin"
 
 
-def _zip_artifact(source: Path, destination: Path) -> None:
+# The notices that must travel with a plugin binary: the AGPL terms for JUCE,
+# the MIT terms for CLAP and the wrapper, the OFL terms for the two embedded
+# fonts, and the project's own GPL-3.0 text. They are copied into a `licences/`
+# folder inside each plugin archive so a single download carries its notices.
+_NOTICE_DOCS = ("LICENSE", "LICENSING.md")
+_NOTICE_FILES = (
+    "AGPL-3.0.txt",
+    "MIT-CLAP.txt",
+    "MIT-clap-juce-extensions.txt",
+    "OFL-DotGothic16.txt",
+    "OFL-ZenDots.txt",
+)
+
+
+def _notices(licence_root: Path | None) -> list[Path]:
+    """The notice files, looked up beside the published tree first and then in
+    the framework checkout (the framework build has no release root yet)."""
+    roots = [root for root in (licence_root, _ROOT) if root is not None]
+    found: dict[str, Path] = {}
+    for name in _NOTICE_DOCS:
+        for root in roots:
+            path = root / name
+            if path.is_file():
+                found.setdefault(path.name, path)
+                break
+    for root in roots:
+        notices = root / "third-party-licenses"
+        if notices.is_dir():
+            for name in _NOTICE_FILES:
+                path = notices / name
+                if path.is_file():
+                    found.setdefault(path.name, path)
+            break
+    return [found[name] for name in sorted(found)]
+
+
+def _zip_artifact(
+    source: Path, destination: Path, licence_root: Path | None = None
+) -> None:
     if source.is_dir():
         shutil.make_archive(
             str(destination.with_suffix("")),
@@ -390,9 +428,12 @@ def _zip_artifact(source: Path, destination: Path) -> None:
             root_dir=source.parent,
             base_dir=source.name,
         )
-        return
-    with zipfile.ZipFile(destination, "w", zipfile.ZIP_DEFLATED) as archive:
-        archive.write(source, arcname=source.name)
+    else:
+        with zipfile.ZipFile(destination, "w", zipfile.ZIP_DEFLATED) as archive:
+            archive.write(source, arcname=source.name)
+    with zipfile.ZipFile(destination, "a", zipfile.ZIP_DEFLATED) as archive:
+        for path in _notices(licence_root):
+            archive.write(path, arcname=f"licences/{path.name}")
 
 
 def _is_plugin_artifact(build_dir: Path, path: Path) -> bool:
@@ -463,11 +504,11 @@ def _stage_plugins(
     staged: list[str] = []
     for source in vst3:
         name = f"{_safe_name(source.stem)}-VST3-{platform}.zip"
-        _zip_artifact(source, target / name)
+        _zip_artifact(source, target / name, out)
         staged.append(name)
     for source in clap:
         name = f"{_safe_name(source.stem)}-CLAP-{platform}.zip"
-        _zip_artifact(source, target / name)
+        _zip_artifact(source, target / name, out)
         staged.append(name)
 
     lines = [
@@ -492,7 +533,8 @@ def _stage_plugins(
         "AGPL-3.0-only or commercial, so the binary is conveyed under the",
         "AGPL-3.0-only terms for the JUCE part. The corresponding source is in",
         "`../framework/plugin/` and `../framework/design/`, with the exact upstream",
-        "pins and build steps in `../DEPENDENCIES.md`. The licence texts are in",
+        "pins and build steps in `../DEPENDENCIES.md`. The licence texts travel",
+        "inside this archive in `licences/`, and a copy is in",
         "`../third-party-licenses/`.",
         "",
         "## Builds",
@@ -707,7 +749,9 @@ def _write_dependencies(out: Path, vendored: bool) -> None:
         text += """
 ## Vendored sources
 
-The fetched sources are copied into `vendor/deps/`. Build against them with:
+The fetched sources are copied into `vendor/deps/`. The release source archive
+carries that tree, so the AGPL corresponding source travels with the binary.
+Build against the vendored copy with:
 
 ```sh
 cmake -S framework/plugin -B build/plugin -DP1_BUILD_JUCE=ON -DP1_BUILD_CLAP=ON \\
