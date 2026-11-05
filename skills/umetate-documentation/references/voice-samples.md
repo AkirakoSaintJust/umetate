@@ -69,6 +69,26 @@ into a positive-only sentence.
 The scope and the audience are stated early. The slash in "anecdotal/historical
 records" is a category label, not prose punctuation.
 
+### Replacing the negation
+
+The author removed nearly every "It's a X, not a Y" and "It's not an X" setup.
+The replacements are the lesson.
+
+| Draft | Rewrite |
+| --- | --- |
+| They are not the same idea at two sizes. | Cut. They came out at different times and the K5's shortcomings probably motivated the K5000. |
+| The K5000 isn't a K5 with a bigger harmonic count. It's a different architecture. | Cut. The causal link replaces the contrast. |
+| The interesting part is not the list. It is... | The interesting part for sound design is... |
+| They aren't arbitrary-partial resynthesizers. | You can't add inharmonic partials... |
+| The useful question is not how many harmonics... It is... | The K5 provides four envelopes, whilst the K5000 has one per harmonic. |
+| a complete voice path, not a single oscillator | a complete voice path, rather than just the oscillator |
+| a documented quirk, not a mistake in your patch | for some quirky reason (but keep "documented") |
+| a specialised resource, not an automatic upgrade | more of a specialised tool than an automatic upgrade |
+
+The author did not remove factual limits ("you can't add...", "it isn't a
+universal system") or a scope contrast ("purely explanatory rather than factory
+schematics"). The target is the needless label negation, not every "not".
+
 ### The one loss
 
 > Harmonic 64 is missing for some quirky reason.

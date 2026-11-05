@@ -63,6 +63,9 @@ explanatory long sentences, "whilst", "sort of", "and so on", "probably", and a
 parenthetical "(!)" are voice. Do not tighten a guide into a thesis, and do not add
 "I" to compensate for a flat draft.
 
+Do not introduce a thing by saying what it is not. Start with the positive, the
+cause, or the constraint. Keep factual limits and real scope contrasts.
+
 Before a manual preface or design note, run the design interview. `umetate
 interview --synth <project> --write` generates the form from the project's
 `patch.json`, `panel.json`, `synth-brief.md`, and `plugin.json`. It does not assume
