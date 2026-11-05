@@ -275,7 +275,7 @@ inline bold. This is not the "not just X, it's Y" hook.
 > never been to a Taco Bell but being terminally online has taught me Americans find
 > this really funny.)
 
-The aside names the sound and is one sentence. Keep it. The sentence is a run-on; a
+The aside names the sound and is one sentence. Keep it. The sentence is a run-on. A
 manual edit can split it after "inharmonic" without losing the voice. Do not cut the
 Taco Bell aside to make the page neutral.
 

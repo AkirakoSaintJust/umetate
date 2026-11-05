@@ -1,15 +1,14 @@
 # Type P.fm1 plugin plan
 
-Status: Milestones 0 to 7 done, 2026-11-04. The JUCE VST3, CLAP and standalone
-host build on Linux and Windows, render audio, accept MIDI and save state. The
-designed editor, the 64 multi and 128 part banks and the 32-tap output rate
-bridge are in. The VST3 and CLAP artefacts pass their validators on both
-platforms. REAPER renders the Windows VST3 and CLAP builds byte-identically.
-Renoise loads the Windows VST3 and renders a one-note project. The Windows DAW
-matrix is done. The Docker image adds Ardour and Carla, and the `linux_daws`
-CTest covers the Linux DAW matrix. Milestone 7 adds the generator, the three
-`umetate plugin-*` commands, and the project template. The macOS build and the
-AU target remain open.
+Status: milestones 0 to 7 are done, as of 2026-11-04. The JUCE VST3, CLAP and
+standalone builds compile on Linux and Windows, render audio, accept MIDI and save
+state. The editor, the 64 multi and 128 part banks, and the 32-tap output rate
+bridge are in. The VST3 and CLAP artefacts pass their validators on both platforms.
+REAPER renders the Windows VST3 and CLAP builds byte-identically, and Renoise loads
+the Windows VST3 and renders a one-note project, so the Windows DAW matrix is done.
+The Docker image adds Ardour and Carla, and the `linux_daws` CTest covers the Linux
+DAW matrix. Milestone 7 adds the generator, the three `umetate plugin-*` commands,
+and the project template. The macOS build and the AU target remain open.
 
 This is the plan for the optional JUCE build path in umetate: a reusable plugin
 host plus a generated `type-p-fm1` project. The visual language is in
@@ -19,8 +18,7 @@ parameter manifest is `firmware/gen/params.json`.
 ## 1. Scope
 
 Build a real DAW plugin from the same generated DSP that runs on the FM-1. The
-plugin is not a rewrite and not a sample pack. It is the firmware engine behind a
-desktop editor.
+plugin is that engine behind a desktop editor.
 
 In scope:
 

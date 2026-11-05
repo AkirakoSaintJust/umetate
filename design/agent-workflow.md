@@ -14,8 +14,8 @@ dossier live in the development skill:
 Use this workflow when the task is visual or interaction design: a new page, a
 component, a restyle, a font change, a layout change, or a plugin editor.
 
-Do not start with production code. Start with a clickable mockup and make it
-right in a browser first. The interface is designed before it is written.
+Start with a clickable mockup and make it right in a browser first. Do not start
+with production code. The interface is designed before it is written.
 
 ## The loop
 

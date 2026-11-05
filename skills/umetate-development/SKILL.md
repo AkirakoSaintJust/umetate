@@ -178,8 +178,8 @@ screen. LED/pad feedback, and the full control flow.
     parameter. Distinguish dedicated knobs from page-slot knobs.
   - **Respect the silkscreen.** A control's printed label fixes its meaning, the
     firmware must mean what it says. Don't reassign a labelled control.
-  - **Keys are a menu surface.** A keybed is not just notes, use keys as
-    shortcuts (operator select, mute) so a few controls reach every parameter.
+  - **Keys are a menu surface.** Use the keybed for shortcuts too (operator select,
+    mute), so a few controls reach every parameter.
   - **Prefer the page-slot model.** A small fixed set of encoders whose meaning
     changes per page, with the labels shown on screen (the screen says what the
     knobs do). This beats deep menus for a few knobs + a 240×240 screen.

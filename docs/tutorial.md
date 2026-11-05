@@ -66,7 +66,7 @@ the **development loop** takes each design through a small implementation, tests
 verifies the result, and commits the change. [`docs/roadmap.md`](roadmap.md)
 §6.12–§6.13 defines both, and this tutorial puts them into practice.
 
-The framework is composed of the following components, although it's got one single entry point (`umetate`):
+The framework has one entry point, `umetate`, and these pieces behind it:
 
 1. **CLI**, `quick-check`, `setup`, `build`, `emu`, `deep-check`, `inspect`,
    `flash`, `debrick`, `scaffold`, `lib`, `lint`, `fmt`, `web-build`, `web-serve`,
@@ -224,8 +224,10 @@ reason it is unused. The voice count and architecture must also fit the resource
 limits, with CPU0 `.data`/`.bss` ≤ 96 KiB, CPU1 `.cpu1_bss` ≤ 16 KiB,
 `.dsp_text` ≤ 32 KiB, `.pool` ≤ 336 KiB, and XIP ≤ 568 KiB.
 
-DON'T rush it! The brief, control map, and plan are
-what the rest of the work gets checked against, and if you don't know exactly what you're coding, you're going to have to do a lot of backtracking and might end up giving up or shipping a load of slop. Write and/or it all down on paper if you need.
+DON'T rush it! The brief, control map and plan are what the rest of the work gets
+checked against. If you don't know exactly what you're coding, you'll have to do a
+lot of backtracking, and you might end up giving up or shipping a load of slop.
+Write it all down on paper if that helps.
 
 **Checkpoint:** the brief + control map + plan are complete, mutually consistent,
 and confirmed. No code yet.

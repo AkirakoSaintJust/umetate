@@ -1,6 +1,6 @@
 # JUCE mapping
 
-How the p1onken interface language becomes a JUCE editor. The visual reference is
+This maps the p1onken interface language to a JUCE editor. The visual reference is
 `mockups/type-p-fm1-plugin.html`, the source values are `tokens.json`, and the
 product rules are in `README.md`.
 

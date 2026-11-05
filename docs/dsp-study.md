@@ -1,6 +1,8 @@
 # DSP implementation study
 
-See `docs/roadmap.md` §12.5.
+This is the implementation study behind `docs/roadmap.md` §12.5. It compares the
+component interfaces and the DSP kernels the generator uses, with the trade-offs
+that shaped them.
 
 ---
 

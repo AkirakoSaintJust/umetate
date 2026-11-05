@@ -17,7 +17,7 @@ panel was authored. The full lesson is L8 and L10 in `docs/roadmap.md`.
 
 The plugin editor followed the same rule. The design language was fixed first,
 the mockup was made clickable, the tokens were extracted, and only then was the
-JUCE editor built. The editor is a projection of the tokens, not a new design.
+JUCE editor built. The editor projects the tokens. It is not a new design.
 
 ## The meaning of "determined"
 
@@ -196,7 +196,7 @@ The eye groups before it reads. Use the principles deliberately:
 
 ## Colour
 
-Colour is a role system, not a palette of pretty values.
+Colour is a role system.
 
 - Pick a small set of hues and give each one a job. A hue that means two things
   is a bug.
@@ -242,8 +242,8 @@ experience, not compete with it.
 
 ## Grid
 
-A grid is an aid, not a guarantee. It gives the page a repeatable structure and
-saves decisions. It does not make the composition good on its own.
+A grid gives the page a repeatable structure and saves decisions. It is an aid,
+not a guarantee. It does not make the composition good on its own.
 
 - Define the module, the columns, the rows, the gutters, and the margins. Use a
   small set of spacing values that are multiples of the base unit.

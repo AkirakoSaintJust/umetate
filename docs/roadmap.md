@@ -23,7 +23,7 @@ still show up in code comments.
 
 The framework has moved past `31ecc64` with the design interview, the voice profile,
 and the docs rewrite. The 1.0.1 binaries haven't changed. The release docs are
-synced on `main`; a new release is only needed when the binaries change.
+synced on `main`. A new release is only needed when the binaries change.
 
 ## 2. Settled decisions
 
@@ -157,7 +157,7 @@ One table for the pieces I need to find quickly.
 **P8-8, Vendored JUCE archive.**, **open**, the release should carry the source archive and notice.
 **P8-9, Usability test.**, **open**, optional, a player who did not design the panel.
 **P8-10, Panel fixes.**, **done**, the PERFORMANCE page, TUNE on MONO STACK, per-operator A-ENVS graphs, and the INIT PATCH confirmation are in.
-**P8-11, Humanizer skill.**, **done**, the voice method and the project voice data are folded into `skills/umetate-humanizer/`; the local `.agents` copy is removed.
+**P8-11, Humanizer skill.**, **done**, the voice method and the project voice data are folded into `skills/umetate-humanizer/`. The local `.agents` copy is removed.
 **P8-12, Web app interface.**, **done**, the browser app uses the plugin interface language, self-hosted OFL fonts, the design tokens, the 240 by 240 screen at 1:1 on a wide desktop, and a help panel with a single `controls` section and `links`. The `what this is` section is gone.
 **P8-13, Wordmark.**, **done**, the wordmark is `type P.fm1` in Zen Dots across the web app, the mockup, and the plugin. The brand font is unused.
 

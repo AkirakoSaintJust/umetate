@@ -48,8 +48,8 @@ two-row operator envelopes.
 
 Rules:
 
-- Pink is not a success colour. It is identity and primary emphasis.
-- Green is not decoration. It means signal or an active path.
+- Pink is identity and primary emphasis. It is not a success colour.
+- Green means signal or an active path. It is not decoration.
 - Purple marks the selected or the modulating thing. Filter envelope and pitch
   LFO curves are green. Amplitude and pitch envelope curves are purple.
 - Retire `panel2`, `green2`, `select` and `yellow` from new code. They were

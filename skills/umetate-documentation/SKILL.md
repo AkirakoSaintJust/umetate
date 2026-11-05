@@ -33,7 +33,7 @@ These are the whole skill. Read them before writing a word.
    profile is in `references/voice.md`. See the writing craft below.
 4. **No information loss and no invention.** Humanising is allowed to cut, sharpen,
    and reorder, but not to drop a fact. It is also not allowed to invent a fact. The
-   author can add their own knowledge; the model cannot. Compare every edited
+   author can add their own knowledge. The model cannot. Compare every edited
    paragraph to the original and put back anything that went missing.
 5. **No em dashes, no semi-colons.** Full stop. Rewrite around them.
 6. **Radical rewrites are fine.** The goal is prose quality, not minimal diffs. A
