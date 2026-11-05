@@ -2,9 +2,8 @@
 
 An `.opm` patch bank is a plain-text file that VOPM and VOPMex read as a bank of
 YM2151 voices. The file has no structural header, no length field, and no checksum.
-Each voice starts with an `@` line and carries five parameter lines, and the parser
-reads the blocks in file order. The `@` number names the slot, so you can reorder a
-bank in a text editor as long as the slots stay unique.
+Each voice starts with an `@` line and carries five parameter lines. The parser reads
+the blocks in file order, and the `@` number names the slot.
 
 Two other formats use the same extension. This page covers the text patch bank that
 VOPM and VOPMex import. The other formats are at the end. The companion page,
