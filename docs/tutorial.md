@@ -19,7 +19,7 @@ installation begins at stage 10.
 | 2 | Safety before hardware (hard-brick risk, backup limits, recovery) | informed consent + a backup plan | docs | no |
 | 3 | Verify the environment (`umetate quick-check`) | a green/blocked report | host | no |
 | 4 | Build untouched RIB, host tests, browser lab | first sound in the browser | host/browser | no |
-| 5 | The firmware contract (`app_audio`, `app_main`, `platform_poll`, HAL) | a correct app skeleton | source | no |
+| 5 | Firmware contract (`app_audio`, `app_main`, `platform_poll`, HAL) | a correct app skeleton | source | no |
 | 6 | Design the instrument (brief, feature contracts, load profile) | a bounded design | docs | no |
 | 7 | Author the synth (nodes/macros/patches, or hand-written `dsp.c`) | a working voice | host | no |
 | 8 | Controls, MIDI, screen, storage | a playable instrument | host/browser | no |
@@ -60,13 +60,13 @@ Dinghy/Felucca, and the framework sits on top: you describe the synth with nodes
 macros, and patches, describe its UI with a panel and contexts, then let the
 generator compile them and the parameter table into the `<synth>_dsp_*` interface.
 
-The architecture has two parts, and I've kept both visible through the stages. The
+The architecture has two parts, which I've kept visible through the stages. The
 **composition model** turns nodes into macros, patches, panels, and firmware, whilst
 the **development loop** takes each design through a small implementation, tests it,
 verifies the result, and commits the change. [`docs/roadmap.md`](roadmap.md)
 §6.12–§6.13 defines both, and this tutorial puts them into practice.
 
-Seven components, one entry point (`umetate`):
+The framework is composed of the following components, although it's got one single entry point (`umetate`):
 
 1. **CLI**, `quick-check`, `setup`, `build`, `emu`, `deep-check`, `inspect`,
    `flash`, `debrick`, `scaffold`, `lib`, `lint`, `fmt`, `web-build`, `web-serve`,
@@ -92,11 +92,12 @@ identify both a recovery route and a rollback image. The FM-1 has no documented
 full-flash backup, so rollback means a verified stock `.fwsc` and a recovery
 route that applies to the failure.
 
-This is the stage I'd read twice.
+I implore you to read this stage carefully. Take notes if it helps.
 
-Read the recovery taxonomy in [`docs/platform-facts.md`](platform-facts.md) §4 and
+Read the recovery taxonomy at [`docs/platform-facts.md`](platform-facts.md) §4 and
 the device-write gates in the [safety skill](../skills/umetate-safety/SKILL.md).
-A build, test, or edit never permits a hardware write: every `flash` or `debrick`
+
+A build, test, or edit never authorises a hardware write by itself: every `flash` or `debrick`
 requires an explicit request, a recorded identity, a verified package, a named
 rollback, and a named recovery route.
 
@@ -119,8 +120,8 @@ umetate setup --dry-run     # see exactly what would be installed, nothing writt
 `quick-check` reports each evidence layer, and a missing toolchain shows as
 `blocked` rather than `fail`. When you're ready to build for the target, run
 `umetate setup` and approve installation of the JieLi toolchain and SDK into the
-volume. Setup also installs Rust and the `fm1-emu` emulator, and `--no-emulator`
-skips the emulator.
+volume. Setup also installs Rust and the `fm1-emu` emulator. `--no-emulator`
+skips the emulator if you want.
 
 **Checkpoint:** `quick-check` shows `source`/`host` as `pass` and `target`/`device`
 as `blocked` (or `pass` for target after `setup`).
@@ -160,7 +161,7 @@ model, and CRC.
 package builds with the SDK asset hashes verified. A package does not prove
 device acceptance.
 
-## 5. The firmware contract
+## 5. Firmware contract
 
 The framework (`firmware/src/rib.c`) provides the platform and the synth services,
 and your app supplies the glue (see [`firmware/README.md`](../firmware/README.md)
@@ -223,8 +224,8 @@ reason it is unused. The voice count and architecture must also fit the resource
 limits, with CPU0 `.data`/`.bss` ≤ 96 KiB, CPU1 `.cpu1_bss` ≤ 16 KiB,
 `.dsp_text` ≤ 32 KiB, `.pool` ≤ 336 KiB, and XIP ≤ 568 KiB.
 
-This is the stage I'd resist rushing, since the brief, control map, and plan are
-what the rest of the work gets checked against.
+DON'T rush it! The brief, control map, and plan are
+what the rest of the work gets checked against, and if you don't know exactly what you're coding, you're going to have to do a lot of backtracking and might end up giving up or shipping a load of slop. Write and/or it all down on paper if you need.
 
 **Checkpoint:** the brief + control map + plan are complete, mutually consistent,
 and confirmed. No code yet.
@@ -269,7 +270,7 @@ hand. Here is what each part means. The schemas are the authority:
 
 **`patch.json` is the instrument.** Top level:
 
-- `name` is the machine name, lowercase with no spaces, and hyphens and dots
+- `name` is the machine name, lowercase with no spaces. Hyphens and dots
   become underscores in the generated C names, so `type-p-fm1` becomes
   `type_p_fm1_*`.
 - `voices` is the voice count.
