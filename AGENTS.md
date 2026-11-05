@@ -65,7 +65,9 @@ data.
 
 The K5/K5000 guide rewrite is the guide/study calibration. Plain category openings,
 explanatory long sentences, "whilst", "sort of", "and so on", "probably", and a
-parenthetical "(!)" are voice. Do not tighten a guide into a thesis, and do not add
+parenthetical "(!)" are voice. The software reconstruction section is the
+technical-guide calibration: mechanism first, exact numbers, and the reason
+attached. Do not tighten a guide into a thesis, and do not add
 "I" to compensate for a flat draft. Join a fact to its cause, condition, or
 specification. A relative clause, "with" and a colon, and "only when" carry the
 guide's rhythm. A page of short declaratives has lost it even when every fact is

@@ -15,7 +15,7 @@ installation begins at stage 10.
 
 | § | Stage | Outcome | Evidence layer | Hardware |
 | --- | --- | --- | --- | --- |
-| 1 | What umetate is. RIB as the runtime, the framework on top | correct mental model | docs | no |
+| 1 | Umetate and RIB. RIB as the runtime, the framework on top | correct mental model | docs | no |
 | 2 | Safety before hardware (hard-brick risk, backup limits, recovery) | informed consent + a backup plan | docs | no |
 | 3 | Verify the environment (`umetate quick-check`) | a green/blocked report | host | no |
 | 4 | Build untouched RIB, host tests, browser lab | first sound in the browser | host/browser | no |

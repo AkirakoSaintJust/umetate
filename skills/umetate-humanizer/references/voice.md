@@ -308,6 +308,21 @@ Author rewrite:
 The author cut the balanced thesis and the paired metaphors. The plain category and
 the causal guess are the target.
 
+### The technical guide
+
+> A Kawai-style harmonic source does not need 64 or 128 independent oscillators.
+> The partials share one fundamental, so one phase accumulator can drive them all.
+> For a note with fundamental f0, the kth partial is at k times f0, and its phase
+> is k times the fundamental phase. The engine keeps one phase trajectory and a
+> set of amplitude trajectories. That is the central computational simplification,
+> and it is why these instruments could produce so many partials on the hardware
+> they had.
+
+The paragraph gives the constraint, the mechanism and the reason. The numbers are
+exact, the metaphor is absent, and the engineering vocabulary stays in the
+sentence. This is the register for a software reconstruction: explain the machine
+to a reader who will build it.
+
 ### The factual contrast
 
 Model draft:

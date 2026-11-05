@@ -55,6 +55,11 @@ The first 170 lines of the full draft sit at 2,100 words in 147 sentences: a
 13.8-word mean, a 12-word median, an 11.0-word standard deviation. The opening is
 more connected than the rest. The gap is the thing to close.
 
+The software reconstruction adds a technical-guide register to the same document:
+mechanism first, exact numbers, and the reason attached. "A Kawai-style harmonic
+source does not need 64 or 128 independent oscillators" is the shape. Use it for
+engineering prose that still has to read like the author.
+
 ## The narrator
 
 A builder and a player, writing to another builder or player. Not a brand, not a
