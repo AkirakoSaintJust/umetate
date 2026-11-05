@@ -13,7 +13,7 @@ still show up in code comments.
 | Item | State |
 | --- | --- |
 | Framework | `main` was at `9375ffe` before this rewrite, tracking `origin/main`. Version `0.0.0`. Baseline tag `umetate-baseline-2026-10-27`. |
-| Type P.fm1 release | `1.0.1`, 2026-11-04, built from framework `31ecc64`. Release repo `publish/type-p-fm1` at `e40d0cb`. The 1.0.1 binaries are unchanged and the docs are newer. It includes the UC25HQ80 flash fix. |
+| Type P.fm1 release | `1.0.2`, 2026-11-05, built from framework `2e31ca6`. Release repo `publish/type-p-fm1` at `7bbda37`. It includes the panel fixes and the merged manual, plus the 1.0.1 UC25HQ80 flash fix. |
 | Release artefacts | Firmware `type-p-fm1.fwsc` (612,216 B), Linux VST3 and CLAP. macOS/AU and Windows plugin archives aren't in the release yet. |
 | Engine | 44.1 kHz, integer-first, bit-exact. 20 voices, 2 parts, 4-op FM, 8 algorithms, 12 waveforms, two filters, a wavefolder, and key and velocity follow. |
 | Target evidence | Source, host, browser/WASM parity, target package, emulator, and Linux DAW pass. Physical device timing and acceptance are `blocked`. |
@@ -70,13 +70,12 @@ The pyright gate is green now. I'd take the rest in this order.
 
 | # | Work | Done when | Status |
 | --- | --- | --- | --- |
-| 1 | Cut the Type P.fm1 1.0.2 firmware | The release has the panel fixes and the matching manual, and the checksums pass. | open |
-| 2 | Windows VST3/CLAP archives | The release workflow builds them, `RELEASES.md` lists them, and the checksums pass. | open |
-| 3 | macOS build and AU | A macOS host builds the VST3/AU, the validators pass, and the CI job stops being `continue-on-error`. | blocked |
-| 4 | Signed installers | The platform installers are signed and the release page links them. | open |
-| 5 | Vendored JUCE source archive | Every plugin release carries the source archive and the AGPL notice. | open |
-| 6 | Usability test | A player who did not design the panel can make a sound and find save without help. | optional |
-| 7 | Performance follow-up | Hand-asm or SIMD is measured, bit-exact, and justified by a target need. | deferred |
+| 1 | Windows VST3/CLAP archives | The release workflow builds them, `RELEASES.md` lists them, and the checksums pass. | open |
+| 2 | macOS build and AU | A macOS host builds the VST3/AU, the validators pass, and the CI job stops being `continue-on-error`. | blocked |
+| 3 | Signed installers | The platform installers are signed and the release page links them. | open |
+| 4 | Vendored JUCE source archive | Every plugin release carries the source archive and the AGPL notice. | open |
+| 5 | Usability test | A player who did not design the panel can make a sound and find save without help. | optional |
+| 6 | Performance follow-up | Hand-asm or SIMD is measured, bit-exact, and justified by a target need. | deferred |
 
 ## 4. Blocked
 
@@ -148,7 +147,7 @@ One table for the pieces I need to find quickly.
 ### Phase 7, Release and provenance (P7), **done (Linux), blocked (device)**
 **P7-1, Baseline tag and provenance.**, **done**, `provenance/` and the baseline tag are in.
 ### Phase 8, Post-release (P8), **done (Linux/docs), open (macOS/AU/Windows)**
-**P8-1, Type P.fm1 1.0.1.**, **done (Linux)**, the firmware and Linux VST3/CLAP are published. macOS/AU and Windows archives are open.
+**P8-1, Type P.fm1 1.0.2.**, **done (Linux)**, the firmware and Linux VST3/CLAP are published. macOS/AU and Windows archives are open.
 **P8-2, Documentation voice pass.**, **done**, tutorial, DSP study, Type P.fm1 docs, templates, and the voice profile are current.
 **P8-3, Pyright gate.**, **done**, the 14 errors in `interview.py`, `publish.py`, and `test_cli.py` are fixed.
 **P8-4, Windows plugin archives.**, **open**, the release workflow needs a Windows build and signed archives.
@@ -172,9 +171,8 @@ One table for the pieces I need to find quickly.
 
 ## 9. Risks and open questions
 
-- **Release source snapshot.** The 1.0.1 binaries came from `31ecc64` and do not
-  include the panel fixes. The release docs at `e40d0cb` describe the 1.0.1 panel.
-  Cut 1.0.2 when you want the fixes in the release.
+- **Release source.** 1.0.2 and the release source snapshot both come from
+  `2e31ca6`. The release docs and binaries match.
 - **Plugin editor scope.** The editor pages and host tests are built around Type
   P.fm1. A different synth needs its own pages, tests, and company override.
 - **Platforms.** macOS/AU and the Windows plugin release are open. Linux is
