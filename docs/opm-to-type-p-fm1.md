@@ -24,8 +24,9 @@ the operators are sine. The filters and wavefolder are off. The OPM side uses th
 same four operators, with `SLOT` 120 so all four key on.
 
 The comparison looks at the fundamental, the first sixteen harmonics relative to the
-fundamental, the spectral centroid, and the odd-to-even harmonic ratio. Absolute
-output level is ignored because the two engines have different output gains.
+fundamental, the harmonic centroid of those sixteen partials, and the odd-to-even
+harmonic ratio. Absolute output level is ignored because the two engines have
+different output gains.
 
 ## Mapping at a glance
 
@@ -122,7 +123,7 @@ modulator against the spectrum or by ear.
 
 OPM feedback is the `FL` field on M1, with 0 to 7. Type P.fm1 has
 `op1_feedback.p0` from 0 to 32767. The two scales are not the same. With a two-
-operator patch and feedback on the modulator, OPM `FL` 7 produced a spectral centroid
+operator patch and feedback on the modulator, OPM `FL` 7 produced a harmonic centroid
 of 1099 Hz. Type P.fm1 at 100% feedback produced 389 Hz with the mapped modulator
 level, and 761 Hz with the modulator raised to 99. OPM stays brighter in both cases.
 
