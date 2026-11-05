@@ -152,7 +152,7 @@ build/web/     the browser app output (`web-build` → the page + `firmware.wasm
 skills/        the four skills: development, safety, documentation, humanizer
 templates/     fillable forms + the four schemas
 docker/        the pinned build container
-docs/          roadmap (status), platform-facts, tutorial, dsp-study, opm-file-format
+docs/          roadmap (status), platform-facts, tutorial, dsp-study, opm-file-format, opm-to-type-p-fm1
 examples/      worked examples
 .github/       CI workflows
 ```
