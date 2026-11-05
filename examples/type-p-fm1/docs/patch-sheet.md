@@ -59,6 +59,6 @@ Notes: __________________________________________________
        __________________________________________________
 ```
 
-Ratio 1.00 is unison. Write the value the panel shows. Ratio runs 0.50 to 16.00,
-levels and rates run 0 to 99, and feedback, wavefolder amount and depth run 0 to
+Ratio 1.00 is the unmodified base note frequency.
+Ratio runs 0.50 to 16.00, levels and rates run 0 to 99, and feedback, wavefolder amount and depth run from 0 to
 100%. Detune and unison detune are in cents.
