@@ -2,9 +2,9 @@
 
 This is the reviewed detection reference for the umetate humanizer. The original
 generic catalog had 55 patterns. This reference keeps the ones that matter for this
-voice, adds the product self-description, article-drumbeat and wh-word heading
-tells, and folds the rest into the main checklist. A pattern is a signal, not a
-verdict. Read `voice.md` and the skill before you change a sentence.
+voice, adds the product self-description, article-drumbeat, wh-word heading and
+storage-value tells, and folds the rest into the main checklist. A pattern is a
+signal, not a verdict. Read `voice.md` and the skill before you change a sentence.
 
 ## The patterns that matter
 
@@ -47,6 +47,7 @@ verdict. Read `voice.md` and the skill before you change a sentence.
 | P56 | Product self-description: a `what this is` section that restates the visible product and its specs | Cut the section. Use the space for the next action, the controls, or a real limit. |
 | P57 | Article drumbeat: a list where every item starts with `The` | Drop the article, lead with the noun or the verb, or write the list as prose. |
 | P58 | Wh-word nominal heading or label: `What to reach for first`, `How to move`, `What it does` | Use a noun phrase or an imperative: `Get started`, `Navigation`, `Functionality`. |
+| P59 | Storage-value leakage: a user document gives the raw `65536` or `32767` instead of the on-screen value | Give the panel value and range: `ratio 0.50..16.00`, `feedback 0..100%`. |
 
 The patterns the original catalog had that are not listed here are covered by the
 main checklist, or they are generic detector noise that does not fit this voice.
@@ -77,6 +78,9 @@ three-item list is how humans write too.
   nothing.
 - **A real question in body prose is not a heading.** "What does the filter do?"
   can be a sentence. The tell is a heading or table label built from a wh-clause.
+- **A raw value is fine in a developer reference.** A SysEx table or a firmware
+  contract needs the stored value. The tell is a user document or a patch sheet
+  that gives the storage number where the panel shows a ratio or a percentage.
 - **The instrument can be the actor.** "The filter removes" is correct in a manual.
 - **Concrete triads and tip lists are content.** Three real settings are not
   padding.

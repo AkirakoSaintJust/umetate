@@ -197,6 +197,9 @@ A closing verdict that restates the paragraph is filler.
   Drop the article, lead with the noun or verb, or write the list as prose.
 - **Wh-word headings and labels.** "What to reach for first", "How to move",
   "What it does". Use a noun phrase or an imperative.
+- **Storage-value leakage.** A user document gives the raw firmware value
+  (`65536`, `32767`) instead of the on-screen value. Show the panel range next to
+  the name.
 - **Heading chains.** "The Engine", "The Filter", "The Envelope: Shaping Your
   Sound" for every section.
 - **False dichotomies.** "Most synths make you menu-dive. This one doesn't."
@@ -275,6 +278,7 @@ the fixes, the hard bans, and the before and after samples.
 | Product self-description | Cut the section. Use the space for the next action, the controls, or a real limit. |
 | "The... The..." list | Drop the article, lead with the noun or verb, or write prose. |
 | Wh-word heading or table label | Use a noun phrase or an imperative. |
+| Storage-value leakage | Show the panel value and range, not the raw number. |
 | Heading chain | Vary the grammar and use the reader's words. |
 | False dichotomy | Name the real difference or cut the contrast. |
 | Rule-of-three padding | List the real items. Two or four is fine. |
@@ -371,6 +375,7 @@ becomes:
 - No negative parallelism, heading chain, false dichotomy, or marketing hook.
 - No product self-description section, no `The... The...` list, and no wh-word heading
   or table label.
+- No raw storage value in a user document. Show the panel value and range.
 - Read it aloud. If it sounds like a press release, rewrite it.
 
 ## Score

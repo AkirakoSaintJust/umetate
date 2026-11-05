@@ -395,6 +395,12 @@ generated outline or a help centre. Use a noun phrase or an imperative: "Get
 started!", "Navigation", "Functionality". The rule covers headings, table column
 headers, and checklist labels.
 
+**No raw storage values.** A user document describes the value on the screen, not
+the number in the firmware. "Ratio is written 65536" and "feedback runs 0 to
+32767" tell the reader about a representation they cannot see. Write the panel
+range: "ratio 0.50 to 16.00", "feedback 0 to 100%". A patch sheet is a panel form,
+not a memory dump.
+
 **No product self-description.** A "what this is" section in an app or a manual
 explains the product to someone already using it. Put the proof in the README or
 the release notes. Use the page for the next action, the controls, or a real limit.
@@ -757,6 +763,7 @@ your own.
       "The Z: ...".
 - [ ] No `The... The...` list. Drop the article or lead with the noun or verb.
 - [ ] No wh-word heading or table label. Use a noun phrase or an imperative.
+- [ ] No raw storage value. Show the panel value and range.
 - [ ] No what-this-is section in an app or a manual.
 - [ ] No false dichotomy. No strawman.
 - [ ] No marketing hook. No rule-of-three padding.

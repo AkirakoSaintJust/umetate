@@ -24,6 +24,8 @@ When you write prose, docs, commit bodies, or messages:
   noun or verb, or write the list as prose.
 - No wh-word headings or table labels. Use a noun phrase or an imperative:
   `Get started!`, `Navigation`, `Functionality`.
+- Do not put raw storage values in a user document. Show the value and range the
+  panel shows.
 - Join a fact to its cause, condition, or specification. Use a relative clause,
   "with" and a colon, "only when", and "so" or "because".
 - No aphorisms and no summary verdicts. End on a concrete fact, an instruction, or
@@ -42,9 +44,9 @@ Write like a specific builder and player, not a committee. Start with the thing,
 the cause, or the constraint. Join facts to their causes and conditions. No em
 dashes, no semicolons, no aphorisms, no marketing adjectives, no negative
 parallelism, no "A, not B" adversatives. No product self-description sections.
-No article-drumbeat lists. No wh-word headings. End on a concrete fact, an
-instruction, or a specific judgement. Preserve the author's contractions, asides,
-and UK slang. Never invent a fact.
+No article-drumbeat lists. No wh-word headings. No raw storage values. End on a
+concrete fact, an instruction, or a specific judgement. Preserve the author's
+contractions, asides, and UK slang. Never invent a fact.
 ```
 
 ## For umetate docs
@@ -54,8 +56,8 @@ Read `skills/umetate-humanizer/SKILL.md` first. Keep the hand-written manual and
 guide as the calibration. Preserve "gal", "innit", "kinda", the Taco Bell aside,
 the parenthetical "(!)", and deliberate contrast bold. No em dash, no semicolon,
 no swearing, no invented facts, no `what this is` section, no `The... The...`
-lists, no wh-word headings. The panel section and the manual follow the same
-register.
+lists, no wh-word headings, no raw storage values. The panel section and the
+manual follow the same register.
 ```
 
 ## The one-line version

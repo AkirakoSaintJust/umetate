@@ -141,6 +141,10 @@ A synthesizer project ships these user-facing documents. Each one has a job.
 | Installation | Flashing the firmware and running the web app. |
 | Release notes | The changes in each version, for the person updating. |
 
+The patch sheet uses the panel values and ranges. Ratio is 0.50 to 16.00, levels
+and rates are 0 to 99, and feedback and amounts are 0 to 100%. Do not write 65536
+or 32767.
+
 The manual, including the panel section, is the most read page. Spend the most care
 there. `docs/panel.md` is a short redirect for old links.
 
@@ -356,6 +360,12 @@ the environment." repeated down the page.
 imperative: "Get started!", "Navigation", "Functionality". The rule covers
 headings, table column headers, and checklist labels.
 
+**No raw storage values.** A user document describes the value on the screen, not
+the number in the firmware. "Ratio is written 65536" and "feedback runs 0 to
+32767" tell the reader about a representation they cannot see. Write the panel
+range: "ratio 0.50 to 16.00", "feedback 0 to 100%". A patch sheet is a panel form,
+not a memory dump.
+
 **No product self-description.** A "what this is" section in a manual or an app's
 help rail explains the product to someone already using it. Put the proof in the
 README or the release notes. Use the page for the next action, the controls, or a
@@ -437,6 +447,7 @@ Checklist for the final pass:
 - [ ] No negative parallelism ("not just X, but Y", "not X, it's Y", "less X than Y").
 - [ ] No `The... The...` list. Drop the article or lead with the noun or verb.
 - [ ] No wh-word heading or table label. Use a noun phrase or an imperative.
+- [ ] No raw storage value. Show the panel value and range.
 - [ ] No what-this-is section in an app or a manual.
 - [ ] No needless "It's a X, not a Y" or "It's not an X" setup. The positive comes
       first.

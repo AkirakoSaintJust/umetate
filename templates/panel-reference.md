@@ -50,9 +50,10 @@ unusual behaviour.>
 
 <One table per context or per page. The page tables above say where a parameter
 lives. This section defines it. Give every parameter its range or units, its
-function, and the sound you hear when you turn it. Do not list the label twice and
-call that a description. The sound-design chapters can explain the main parameters
-in depth. This is the quick lookup for every page row.>
+function, and the sound you hear when you turn it. Use the panel value and range,
+not the storage value. Do not list the label twice and call that a description.
+The sound-design chapters can explain the main parameters in depth. This is the
+quick lookup for every page row.>
 
 | Parameter | Range | Functionality |
 | --- | --- | --- |

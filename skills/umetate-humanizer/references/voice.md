@@ -216,6 +216,21 @@ After:
 The same rule applies to table column headers, checklist labels, and section
 titles. A question can stay in body prose when the reader is actually asking it.
 
+## Storage values
+
+A user document describes the value on the screen, not the number in the firmware.
+"Ratio is written 65536" and "feedback runs 0 to 32767" tell the reader about a
+representation they cannot see. Write the range the panel shows: "ratio 0.50 to
+16.00", "feedback 0 to 100%". A patch sheet is a panel form, not a memory dump.
+
+Before:
+
+> A ratio of 1.00 is written 65536 in the panel's raw value. Feedback runs 0 to 32767.
+
+After:
+
+> ratio (0.50..16.00), feedback (0..100%).
+
 ## Connectivity
 
 A guide joins a fact to its cause, condition, or specification. The model draft
