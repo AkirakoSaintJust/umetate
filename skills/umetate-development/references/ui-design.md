@@ -311,6 +311,8 @@ and how to get back.
 - **No self-description.** Do not spend the page explaining what the instrument
   is. The title, panel, and controls already say it. Use the words for the next
   action or a real limit.
+- **No article drumbeats.** A list where every item starts with `The` reads like a
+  specification. Lead with the noun or the verb, or write the list as prose.
 - **Closure:** confirm that an action happened. A save, a load, a mute, and a
   page change all need a visible result.
 - **No dead ends:** every page has a way home and a way back.

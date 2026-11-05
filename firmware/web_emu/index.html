@@ -60,7 +60,7 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 2rem;
-    align-items: start;
+    align-items: stretch;
   }
   .stage > * { min-width: 0; }
   .device-column { max-width: 1000px; }
@@ -182,7 +182,7 @@
   #mute[aria-pressed="true"] { background: transparent; color: var(--p1-pink, #ff2e7e); border-color: var(--p1-pink, #ff2e7e); }
   #mute[aria-pressed="true"]:hover { color: var(--p1-pink-bright, #ff4d94); border-color: var(--p1-pink-bright, #ff4d94); }
 
-  .guide { display: flex; flex-direction: column; gap: 1.4rem; }
+  .guide { display: flex; flex-direction: column; justify-content: space-between; gap: 1.4rem; }
   .guide section { border-top: 1px solid var(--p1-line, #1c1c1c); padding-top: .8rem; }
   .guide h2 {
     margin: 0;
@@ -274,15 +274,9 @@
 
   <aside class="guide">
     <section>
-      <h2>play it</h2>
-      <p>press <strong>switch on</strong>, then play the keys. the computer keyboard plays the same notes: white keys <kbd>q</kbd> to <kbd>i</kbd> and <kbd>a</kbd> to <kbd>k</kbd>, black keys <kbd>1</kbd> to <kbd>0</kbd> and <kbd>-</kbd>.</p>
-    </section>
-    <section>
-      <h2>panel controls</h2>
-      <p>on a knob, the arrow keys turn it. <kbd>page up</kbd> and <kbd>page down</kbd> turn it faster. on a button or key, hold <kbd>space</kbd> or <kbd>enter</kbd> to press it. <kbd>shift</kbd> + <kbd>space</kbd> latches a button.</p>
-    </section>
-    <section>
-      <h2>shortcuts</h2>
+      <h2>controls</h2>
+      <p>on the computer keyboard, white keys <kbd>q</kbd> to <kbd>i</kbd> and <kbd>a</kbd> to <kbd>k</kbd>, black keys <kbd>1</kbd> to <kbd>0</kbd> and <kbd>-</kbd>.</p>
+      <p>on a knob, the arrow keys turn it, and <kbd>page up</kbd> and <kbd>page down</kbd> turn it faster. on a button or key, hold <kbd>space</kbd> or <kbd>enter</kbd> to press it, and <kbd>shift</kbd> + <kbd>space</kbd> latches a button.</p>
       <dl class="shortcuts">
         <dt><kbd>space</kbd></dt><dd>play</dd>
         <dt><kbd>enter</kbd></dt><dd>rec</dd>

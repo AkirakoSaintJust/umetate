@@ -9,31 +9,31 @@ Boat), a source-owned starter derived from Dinghy/Felucca.
 **Author:** P1Onken · **Licence:** GPL-3.0-only · **Status authority:**
 [`docs/roadmap.md`](docs/roadmap.md).
 
-## The pieces
+## Components
 
-- **The CLI.** Everything starts at `umetate`. It checks the environment, sets up
+- **CLI.** Everything starts at `umetate`. It checks the environment, sets up
   the toolchain, builds and emulates, inspects, flashes and recovers, scaffolds
   nodes, macros and patches, lints and formats, runs the web lab, and reports
   evidence and status. The commands are `quick-check`, `setup`, `build`, `emu`,
   `deep-check`, `inspect`, `flash`, `debrick`, `scaffold node|macro|patch`,
   `interview`, `lib`, `lint`, `fmt`, `web-build`, `web-serve`, `evidence`, `status`,
   `version`, and `help`.
-- **The development skill.** It guides the design-to-build workflow with the offline
+- **Development skill.** It guides the design-to-build workflow with the offline
   references.
-- **The safety skill.** It holds the threat model, the attack surfaces, and the gates
+- **Safety skill.** It holds the threat model, the attack surfaces, and the gates
   for writing to a device.
-- **The documentation skill.** It writes the user manual, the panel section, the MIDI
+- **Documentation skill.** It writes the user manual, the panel section, the MIDI
   and SysEx reference, the patch sheet, the install guide, and the release notes for
   a finished project. Its voice method is the humanizer skill in
   `skills/umetate-humanizer/`.
-- **The Docker image and volume.** The build host is a pinned Linux container. The
+- **Docker image and volume.** The build host is a pinned Linux container. The
   JieLi toolchain lives in a Docker volume at `/opt/jieli`, separate from the
   repository for the vendor terms, mounted read-only for every build and test, and
   read-write only for `umetate setup`, the one command that installs the toolchain
   and SDK.
 - **RIB.** The starter firmware is dual-core by default, with optional FPU support,
   SMK-37 support, hardware-accelerated DSP, and the `app_audio`/`app_main` contract.
-- **The tutorial.** [`docs/tutorial.md`](docs/tutorial.md) is the guided path from
+- **Tutorial.** [`docs/tutorial.md`](docs/tutorial.md) is the guided path from
   the environment check through device validation.
 
 This file is the start guide, with the first commands and the repository map.

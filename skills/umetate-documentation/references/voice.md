@@ -379,6 +379,15 @@ x four-operator" as shorthand. Keep it after the first mention. A slash in a sco
 or category label is fine: "anecdotal/historical records". Do not expand every
 slash.
 
+**No article drumbeats.** A list where every item starts with "The" reads like a
+spec sheet. The corpus uses lists of concrete items and labels, not full sentences
+with the same article. Drop the article, lead with the noun or the verb, or write
+the list as prose.
+
+**No product self-description.** A "what this is" section in an app or a manual
+explains the product to someone already using it. Put the proof in the README or
+the release notes. Use the page for the next action, the controls, or a real limit.
+
 **No em dash. No semicolon.** The corpus has zero em dashes and one semicolon in
 9,015 words. Use a full stop, a comma, a colon, or brackets. This is not a stylistic
 preference. It is the strongest punctuation evidence in the corpus.
@@ -735,6 +744,8 @@ your own.
       than Y", "X isn't about Y, it's about Z".
 - [ ] No heading chain. The headings are varied and specific, not "The X", "The Y",
       "The Z: ...".
+- [ ] No `The... The...` list. Drop the article or lead with the noun or verb.
+- [ ] No what-this-is section in an app or a manual.
 - [ ] No false dichotomy. No strawman.
 - [ ] No marketing hook. No rule-of-three padding.
 - [ ] No summary that restates the heading.

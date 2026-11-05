@@ -193,6 +193,8 @@ A closing verdict that restates the paragraph is filler.
 - **Product self-description.** A standalone "what this is" section in the
   product's own interface. The reader is already looking at the thing. Cut it or
   replace it with the next action, the controls, or a real limit.
+- **"The... The..." lists.** A list where every item starts with the same article.
+  Drop the article, lead with the noun or verb, or write the list as prose.
 - **Heading chains.** "The Engine", "The Filter", "The Envelope: Shaping Your
   Sound" for every section.
 - **False dichotomies.** "Most synths make you menu-dive. This one doesn't."
@@ -269,6 +271,7 @@ the fixes, the hard bans, and the before and after samples.
 | Aphorism | Replace with the concrete reason, instruction, or specific judgement. |
 | Meta-commentary | State the fact and let it stand. |
 | Product self-description | Cut the section. Use the space for the next action, the controls, or a real limit. |
+| "The... The..." list | Drop the article, lead with the noun or verb, or write prose. |
 | Heading chain | Vary the grammar and use the reader's words. |
 | False dichotomy | Name the real difference or cut the contrast. |
 | Rule-of-three padding | List the real items. Two or four is fine. |
@@ -363,6 +366,7 @@ becomes:
 - No aphorism and no summary verdict.
 - No "A, not B" adversative.
 - No negative parallelism, heading chain, false dichotomy, or marketing hook.
+- No product self-description section and no `The... The...` list.
 - Read it aloud. If it sounds like a press release, rewrite it.
 
 ## Score

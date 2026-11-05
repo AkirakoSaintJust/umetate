@@ -280,6 +280,8 @@ graph cannot clip or touch the caption.
   round-trips with the device.
 - No `what this is` section. The page and the device show the product. Use the
   space for the next action, the controls, or a real limit.
+- No `The... The...` lists. Drop the article, lead with the noun or the verb, or
+  write the list as prose.
 - Do not add descriptions of the obvious.
 
 ## Platform mapping

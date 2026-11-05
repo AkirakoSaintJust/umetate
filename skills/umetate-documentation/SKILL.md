@@ -346,6 +346,16 @@ Shaping Your Sound" for every section. Vary the grammar, use the reader's words,
 do not make a section for every noun. One "The X" heading is fine. A chain is a
 generated outline.
 
+**No article drumbeats.** A list where every item starts with "The" reads like a
+specification. Drop the article, lead with the noun or the verb, or write the list
+as prose. "CLI. It checks the environment." reads better than "The CLI. It checks
+the environment." repeated down the page.
+
+**No product self-description.** A "what this is" section in a manual or an app's
+help rail explains the product to someone already using it. Put the proof in the
+README or the release notes. Use the page for the next action, the controls, or a
+real limit.
+
 **No false dichotomies.** Do not invent a strawman to make the instrument look
 different. "Most synths make you menu-dive. This one doesn't" only works if you can
 name the synths and the difference is real. If the instrument is a four-operator FM
@@ -420,6 +430,8 @@ Checklist for the final pass:
       and "so" or "because" for a cause.
 - [ ] No documented qualifier was lost to a casual phrase.
 - [ ] No negative parallelism ("not just X, but Y", "not X, it's Y", "less X than Y").
+- [ ] No `The... The...` list. Drop the article or lead with the noun or verb.
+- [ ] No what-this-is section in an app or a manual.
 - [ ] No needless "It's a X, not a Y" or "It's not an X" setup. The positive comes
       first.
 - [ ] A conversational correction can keep the negative when it corrects an

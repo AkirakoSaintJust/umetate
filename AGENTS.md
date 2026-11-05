@@ -51,7 +51,9 @@ The reference samples are `examples/type-p-fm1/publish-readme.md` and
 `skills/umetate-documentation/references/voice-samples.md`. Use the front-door,
 manual, or reference register as the page requires. No em dashes. No semicolons.
 British spelling in prose. No marketing adjectives. No negative parallelism. No
-heading chains. No false dichotomies. One concrete example per major section.
+heading chains. No false dichotomies. No lists where every item starts with `The`,
+so drop the article or lead with the noun or verb. No `what this is` sections. One
+concrete example per major section.
 
 The hand-written preface and sound-design part of
 `examples/type-p-fm1/docs/manual.md` is the manual calibration. The panel section

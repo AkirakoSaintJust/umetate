@@ -164,6 +164,32 @@ If a fact is genuinely needed at that point, make it a limit: "This needs a
 browser with WebAudio and a current graphics driver." A limit helps the reader
 decide. A product description does not.
 
+## List drumbeats
+
+A list where every item starts with "The" reads like a spec sheet. The repeated
+article turns the items into a drumbeat: "The CLI. The development skill. The
+safety skill." The reader stops hearing the jobs and starts hearing the grammar.
+
+Drop the article and lead with the noun or the verb. "CLI. Everything starts at
+`umetate`." "Development skill. It guides the workflow." If the items are really
+sentences, write the paragraph instead of the list. A list earns its place when
+the items are short, parallel, and easy to scan. A list of full sentences with the
+same article is prose in disguise.
+
+Before:
+
+> - The CLI. It checks the environment.
+> - The development skill. It guides the workflow.
+> - The safety skill. It holds the gates.
+
+After:
+
+> - CLI. It checks the environment.
+> - Development skill. It guides the workflow.
+> - Safety skill. It holds the gates.
+
+The facts are the same. The drumbeat is gone.
+
 ## Connectivity
 
 A guide joins a fact to its cause, condition, or specification. The model draft
