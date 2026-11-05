@@ -33,10 +33,10 @@ different output gains.
 | OPM | Type P.fm1 | How close |
 | --- | --- | --- |
 | `M1`, `C1`, `M2`, `C2` | `O1`, `O2`, `O3`, `O4` | direct |
-| `CON` 0 to 7 | `algorithm.p0` 0 to 7 | direct for 0, 1, 2, 4, 5, 6, 7, approximate for 3 |
+| `CON` 0 to 7 | `algorithm.p0` 0 to 7 | direct for 0, 1, 2, 4, 5, 6, 7, and 3 uses algorithm 2 with a remap |
 | `MUL` 0 to 15 | `opN_ratio.p0` | direct |
 | `TL` 0 to 127 | `opN_level.p0` 0 to 99 | measured curve for carriers, modulator level needs tuning |
-| `FL` 0 to 7 | `op1_feedback.p0` 0 to 32767 | approximate, OPM is brighter |
+| `FL` 0 to 7 | `op1_feedback.p0`, or `op2_feedback.p0` for algorithm 3 | approximate, OPM is brighter |
 | `AR` | `attack.p0` or `opN.eg.r1.p0` | approximate |
 | `D1R` | `opN.eg.r2.p0` | approximate |
 | `D1L` | `opN.eg.l2.p0` | approximate |
@@ -53,26 +53,30 @@ different output gains.
 
 ## Operator order and algorithms
 
-The useful coincidence is that the operator order lines up. OPM's `M1` becomes Type
-P.fm1's `O1`, `C1` becomes `O2`, `M2` becomes `O3`, and `C2` becomes `O4`. The
-algorithm numbers also line up for most of the eight connections:
+The operator order lines up for algorithms 0, 1, 2, 4, 5, 6, and 7. OPM's `M1`
+becomes Type P.fm1's `O1`, `C1` becomes `O2`, `M2` becomes `O3`, and `C2` becomes
+`O4`. Algorithm 3 uses a different assignment, covered below. The algorithm numbers
+also line up in most cases:
 
 | OPM `CON` | OPM routing | Type P.fm1 routing | Match |
 | --- | --- | --- | --- |
 | 0 | M1 to C1 to M2 to C2 | O1 to O2 to O3 to O4 | exact |
 | 1 | (M1 + C1) to M2 to C2 | (O1 + O2) to O3 to O4 | exact |
 | 2 | C1 to M2, M1 and M2 to C2 | (O1 + (O2 to O3)) to O4 | exact |
-| 3 | M1 to C1, M2 to C2 | O1 to O2, O1 to O3, (O2 + O3) to O4 | approximate |
+| 3 | M1 to C1, C1 and M2 to C2 | algorithm 2 with M2=O1, M1=O2, C1=O3, C2=O4, feedback on O2 | exact with remap |
 | 4 | (M1 to C1) + (M2 to C2) | (O1 to O2) + (O3 to O4) | exact |
 | 5 | M1 to M2, M1 to C1, M1 to C2 | O1 to O2, O1 to O3, O1 to O4 | exact |
 | 6 | M1 to C1, M2 and C2 direct | O1 to O2, O2 + O3 + O4 | exact |
 | 7 | all four parallel | all four parallel | exact |
 
-Algorithm 3 is the one that does not fit. OPM sends M1 to C1 and M2 to C2. Type
-P.fm1's algorithm 3 sends O1 to O2, O1 to O3, and then sums O2 and O3 into O4, so it
-adds an M1-to-M2 path that OPM does not have. A conversion will sound close, but the
-extra path brightens the result. If you need the OPM topology exactly, use another
-host or accept the difference.
+Algorithm 3 is the one that needs a different operator assignment. OPM sends M1 to
+C1 and then C1 and M2 into C2. Type P.fm1's algorithm 2 is
+`O1 + (O2 to O3) to O4`, so set `M2` to `O1`, `M1` to `O2`, `C1` to `O3`, and `C2` to
+`O4`. Then O2 (M1) modulates O3 (C1), and O1 (M2) plus O3 (C1) modulate O4 (C2). OPM
+puts the feedback on M1, which is O2 in this layout, so set `op2_feedback.p0` rather
+than the usual `op1_feedback.p0`. That reproduces the OPM 3 graph. Type P.fm1's own
+algorithm 3 adds an M1-to-M2 path that OPM does not have, so leave it for patches
+that want the extra modulation.
 
 The file order and the chip order are a separate trap. The `.opm` file lists M1, C1,
 M2, C2, while the chip registers are laid out M1, M2, C1, C2. The OPM page covers the
@@ -83,12 +87,18 @@ logical operators.
 
 `MUL` maps straight to the Type P.fm1 ratio. The Type P.fm1 ratio is Q16, with 65536
 for 1.0, so `MUL` 0 becomes 32768 for 0.5, `MUL` 1 becomes 65536, and `MUL` 15
-becomes 983040. `DT2` has four coarse steps with nominal offsets of 0, 600, 781, and
-950 cents, so the simplest conversion folds it into the ratio:
+becomes 983040. `DT2` is not a cents offset. Its four steps multiply the operator
+frequency by 1, √2, π/2, and √3, so the combined ratio is:
 
 ```text
-ratio = (0.5 if MUL == 0 else MUL) * 2^(DT2_cents / 1200)
+dt2 = [1, sqrt(2), pi/2, sqrt(3)][DT2]
+ratio = (0.5 if MUL == 0 else MUL) * dt2
 ```
+
+The nominal cent values 0, 600, 781, and 950 are the same ratios in cents. With
+`MUL`, the four series are `MUL`, `MUL*√2`, `MUL*π/2`, and `MUL*√3`, so `MUL` 0 gives
+0.5, √2/2, π/4, and √3/2. Those inharmonic steps are why `DT2` is useful for bells,
+metal, and gong-like timbres.
 
 `DT1` is a fine detune with a key-dependent table, so start with 0 and add a few
 cents of Type P.fm1 detune only if the patch needs it.
@@ -122,10 +132,12 @@ against the spectrum or by ear.
 ## Feedback
 
 OPM feedback is the `FL` field on M1, with 0 to 7. Type P.fm1 has
-`op1_feedback.p0` from 0 to 32767. The two scales are not the same. With a two-
-operator patch and feedback on the modulator, OPM `FL` 7 produced a harmonic centroid
-of 1099 Hz. Type P.fm1 at 100% feedback produced 389 Hz with the mapped modulator
-level, and 761 Hz with the modulator raised to 99. OPM stays brighter in both cases.
+`op1_feedback.p0` from 0 to 32767, and the other operators have their own feedback
+controls. For OPM algorithm 3, M1 is `O2` in the remapped layout, so use
+`op2_feedback.p0` there. The two scales are not the same. With a two-operator patch
+and feedback on the modulator, OPM `FL` 7 produced a harmonic centroid of 1099 Hz.
+Type P.fm1 at 100% feedback produced 389 Hz with the mapped modulator level, and
+761 Hz with the modulator raised to 99. OPM stays brighter in both cases.
 
 The harmonic balance also changes. OPM was odd-heavy in the test, with an odd-to-even
 ratio of +8.1 dB. Type P.fm1 at the bright setting was even-heavy, at -4.2 dB. Start
@@ -143,7 +155,9 @@ A measured pluck with `AR` 31, `D1R` 10, `D1L` 8, `D2R` 4, and `RR` 8 fell from
 40, `r3` 20, `l2` 70, and `l3` 40, fell from -16.3 dB to -19.4 dB over the same
 time. The Type P.fm1 envelope sustained more, so adjust `r2`, `r3`, `l2`, and `l3`,
 or shorten the note. OPM rates are also key-scaled, which Type P.fm1 models with the
-envelope key-follow controls rather than the rate number itself.
+envelope key-follow controls rather than the rate number itself. The broader
+sound-design assessment is in
+[Type P.fm1 envelope design](type-p-fm1-envelope-design.md).
 
 ## LFO and noise
 
@@ -174,6 +188,7 @@ the modulator levels to 99.
 | --- | --- | --- | --- |
 | Additive algorithm 7 | 454 Hz | 408 Hz | close |
 | Serial algorithm 0 | 1849 Hz | 970 Hz nominal, 1489 Hz bright | topology matches, OPM is brighter |
+| Algorithm 3 remap | 2458 Hz | 904 Hz nominal | graph matches, OPM is much brighter |
 | Parallel algorithm 4 | 1950 Hz | 652 Hz nominal, 734 Hz bright | topology matches, OPM is much brighter |
 | Feedback, `FL` 7 | 1099 Hz | 389 Hz at level 51, 761 Hz at level 99 | OPM is brighter, harmonic balance differs |
 | Envelope pluck | -24.9 to -37.0 dB | -16.3 to -19.4 dB | OPM decays more |
@@ -182,6 +197,29 @@ The additive case is the closest because there is no modulation index to match. 
 serial and parallel cases show the real limit: the operator graph maps, but the OPM
 modulation index is hotter than Type P.fm1 can reach at the same nominal level.
 
+## Brightness and scaling
+
+The serial and parallel tests had `FL` 0, so feedback is not the cause of the
+brightness gap. The OPM core is brighter before feedback is involved. The difference
+comes from the modulator level and the phase-modulation index scale.
+
+Type P.fm1's generated router already doubles the modulator path, about 6 dB
+relative to the carrier. I tested a scratch build with the modulator path doubled
+again, for 4x total. It moved the algorithm 4 centroid from 734 Hz to 1117 Hz and
+the algorithm 0 centroid from 1489 Hz down to 1325 Hz. The first got closer, the
+second got farther, so a single global gain does not make the two engines match. The
+harmonic balance moves as the index changes, and the OPM and P1 curves cross in
+different places.
+
+A closer match would need an opt-in per-operator FM depth or an OPM compatibility
+mode with a calibrated index curve, plus a separate feedback gain and curve. Keeping
+the default at 1.0 would preserve the current engine and its bit-exact tests. For
+now, the conversion can only put the modulators at 99 and accept the softer result.
+
+The feedback gap is separate. OPM `FL` 7 is brighter than Type P.fm1 at 100%, and
+the odd-to-even balance differs. A feedback gain above the current 100% or a
+different feedback curve would be needed to close it.
+
 ## Conversion recipe
 
 1. Start from an init patch. Set `level.p1=0` and `op1_mute.p1` through
@@ -189,9 +227,11 @@ modulation index is hotter than Type P.fm1 can reach at the same nominal level.
 2. Set `op1_waveform.p0` through `op4_waveform.p0` to 0. This page assumes sine
    operators only.
 3. Set `filter_on=0`, `filter2_on=0`, `fold_on=0`, and `fold=0`.
-4. Assign OPM `M1`, `C1`, `M2`, `C2` to Type P.fm1 `O1`, `O2`, `O3`, `O4`.
-5. Set `algorithm.p0` from `CON`. Use the table above and expect algorithm 3 to be
-   approximate.
+4. Assign operators. For algorithms 0, 1, 2, 4, 5, 6, and 7 use
+   `M1=O1`, `C1=O2`, `M2=O3`, `C2=O4`. For OPM algorithm 3 use `M2=O1`, `M1=O2`,
+   `C1=O3`, `C2=O4` and put the feedback on `op2_feedback.p0`.
+5. Set `algorithm.p0` from `CON`, but use algorithm 2 for OPM `CON` 3. The remap in
+   the previous step supplies the OPM 3 graph.
 6. Set each ratio from `MUL`, folding `DT2` into the ratio if it is not zero.
 7. Set each carrier level with `99 - 3 * TL`, clamped to 0 to 99. Start modulators
    at the same value and tune them against the spectrum.

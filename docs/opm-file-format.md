@@ -108,13 +108,19 @@ the file order is M1, C1, M2, C2.
 | `KS` | 0 to 3 | `0x80` bits 7 to 6 | Key scaling. |
 | `MUL` | 0 to 15 | `0x40` bits 3 to 0 | Frequency multiplier. 0 means 0.5 times the base. |
 | `DT1` | 0 to 7 | `0x40` bits 6 to 4 | Fine detune. |
-| `DT2` | 0 to 3 | `0xC0` bits 7 to 6 | Coarse detune. |
+| `DT2` | 0 to 3 | `0xC0` bits 7 to 6 | Coarse detune. The four steps multiply the operator frequency by 1, √2, π/2, and √3. |
 | `AME` | 0 or 1 | `0xA0` bit 7 | Amplitude modulation enable for the operator. |
 
 The register bits in the table are offsets from the operator group base, and the
 group bases are below. `AME` is the field that some tables call `AMS-EN`. VOPM and
 VOPMex write 0 or 1, but a table that shows 128 is showing the register bit rather
 than the file value, so treat any nonzero `AME` as enabled.
+
+`DT2` is not a cents offset. The chip multiplies the operator frequency by 1, √2,
+π/2, or √3, so the four steps are deliberately inharmonic. The nominal cent values
+0, 600, 781, and 950 are the same ratios in cents. Combined with `MUL`, the four
+series are `MUL`, `MUL*√2`, `MUL*π/2`, and `MUL*√3`, with `MUL` 0 acting as 0.5. The
+0.5, √2/2, π/4, and √3/2 roots come from that.
 
 ## Register mapping
 
