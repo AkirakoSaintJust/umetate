@@ -364,8 +364,8 @@ becomes:
 - Panel names and parameter names are exact.
 - The prose has contractions, first person in the right places, and a visible
   sentence-length variance.
-- The author's slang, asides, and self-description survive.
-- The clauses are joined where they belong together.
+- Author's slang, asides, and self-description survive.
+- Clauses are joined where they belong together.
 - No aphorism and no summary verdict.
 - No "A, not B" adversative.
 - No negative parallelism, heading chain, false dichotomy, or marketing hook.

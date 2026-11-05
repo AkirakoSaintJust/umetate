@@ -95,8 +95,8 @@
 - `UiTokens.h` is generated from `design/tokens.json` at configure time.
 - DotGothic16 and Zen Dots are bundled as binary resources. The OFL texts are in
   `plugin/juce/resources/fonts`.
-- The three pages use the v1.1 design: patch settings, operators and fx / mod.
-- The header algorithm block opens the eight-tile picker, and the wheel cycles
+- Three pages use the v1.1 design: patch settings, operators and fx / mod.
+- Header algorithm block opens the eight-tile picker, and the wheel cycles
   the active part's algorithm.
 - The output, operator and part visualisers read lock-free scope rings filled by
   the audio thread. The spectros use a 512-point FFT at 30 Hz.

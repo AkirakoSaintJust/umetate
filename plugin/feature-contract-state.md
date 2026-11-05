@@ -88,8 +88,8 @@
 
 ## Result (2026-11-03)
 
-- The generated engine exposes `type_p_fm1_state` and the `_s` API.
-- The legacy API wraps one static instance, so the firmware, the web lab and the
+- Generated engine exposes `type_p_fm1_state` and the `_s` API.
+- Legacy API wraps one static instance, so the firmware, the web lab and the
   existing tests keep their calls.
 - The old and new host renders of the type-p-fm1 script are byte-identical
   (457772 byte WAV, `cmp` clean).
@@ -97,8 +97,8 @@
   isolated over four interleaved blocks.
 - The full generator suite passes, including the sound, algorithm, mode, part,
   tap and ASan checks.
-- The full `umetate deep-check --all` gate passes.
-- The web parity gate passes, host and WASM exact on 512 int32 samples.
+- Full `umetate deep-check --all` gate passes.
+- Web parity gate passes, host and WASM exact on 512 int32 samples.
 - Host A/B with the same compiler and the same workload: the old generator at
   `4ba97fe` renders `render(256)` in 120.7 us and the new one in 115.1 us, about
   5 percent faster. The container perf guard reports 104.5 us against a 400 us

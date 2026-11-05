@@ -138,8 +138,8 @@ Required change:
 
 Exit evidence:
 
-- The device build is byte-identical for a fixed note and patch script.
-- The host DSP test is sample-identical.
+- Device build is byte-identical for a fixed note and patch script.
+- Host DSP test is sample-identical.
 - Two state instances in one process play two different patches at once with no
   cross-talk.
 - State size and instructions per sample stay within the current budget.
@@ -195,8 +195,8 @@ Rules:
 
 ## 7. Audio and rate bridge
 
-- The core always runs at 44.1 kHz.
-- The host may run at 44.1, 48, 88.2, 96, 176.4 or 192 kHz.
+- Core always runs at 44.1 kHz.
+- Host may run at 44.1, 48, 88.2, 96, 176.4 or 192 kHz.
 - At 44.1 kHz the bridge is bypassed and the output is bit-exact with the
   firmware host render.
 - At other rates a 32-tap Kaiser-windowed sinc polyphase resampler converts the
@@ -204,8 +204,8 @@ Rules:
   core and host Nyquist. The core is never resampled on input.
 - The bridge consumes 44.1 kHz frames and produces host frames. It handles block
   sizes from 32 to 1024 frames.
-- The editor and the visualisers always run on the 44.1 kHz timeline.
-- The filter group delay is 15.5 core samples. The reported host latency is 17
+- Editor and visualisers always run on the 44.1 kHz timeline.
+- Filter group delay is 15.5 core samples. The reported host latency is 17
   samples at 48 kHz, 34 at 96 kHz and 67 at 192 kHz. At 44.1 kHz the bypass
   reports zero.
 - The 32-sample control block is part of the instrument and is not compensated.

@@ -30,20 +30,20 @@ invariant that is hardest to fix later.
 
 ## The invariants
 
-- The core rate is bit-exact. Any change that alters it is a regression, not a
+- Core rate is bit-exact. Any change that alters it is a regression, not a
   port.
 - Every parameter in the manifest is exposed. No orphans, no duplicates, no
   hand-written lists. Generate the parameter table from the manifest.
 - State round-trips all parameters and both preset banks. A sample is not enough.
-- The device record functions are the only record format. A C++ copy will drift.
-- The state version moves only when the format changes. Read it when the format
+- Device record functions are the only record format. A C++ copy will drift.
+- State version moves only when the format changes. Read it when the format
   changes.
 - Host automation is read at a fixed control block. Say so in the contract. Do
   not claim sample accuracy the code does not have.
 - MIDI is quantised to the control block. Test the offset behaviour, not only the
   block start.
-- The editor never owns audio state. It reads scope rings and writes parameters.
-- The wordmark is all Zen Dots. Do not bundle the brand font. Ship only the OFL
+- Editor never owns audio state. It reads scope rings and writes parameters.
+- Wordmark is all Zen Dots. Do not bundle the brand font. Ship only the OFL
   fonts whose licence texts travel with them.
 
 ## The evidence ladder
