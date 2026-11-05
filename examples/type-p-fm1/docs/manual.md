@@ -64,7 +64,7 @@ is where the timbre is shaped as well as the volume. Extreme modulation levels g
 ### Feedback
 
 The operator feeds its own output back into its own phase. Zero is the clean waveform. As you
-raise the feedback, the sound roughens, then turns into noise at the top. All operators have feedback, but traditionally it shows up the most on carriers and on the top operator of a stack. That's because of the way Yamaha chips work: the operators were always computed in the same order and the one with feedback was always the first one.
+raise the feedback, the sound roughens, then turns into noise at the top. The depth follows the operator's level, so a quiet operator feeds back less, which keeps a decaying sound from getting harsher as it fades. All operators have feedback, but traditionally it shows up the most on carriers and on the top operator of a stack. That's because of the way Yamaha chips work: the operators were always computed in the same order and the one with feedback was always the first one.
 
 Tip: a sine operator taking no modulation will kinda become a reverse sawtooth at about 25%-35%.
 Tip 2: modulators become more intense when they have feedback, so it's kinda like cranking the level up beyond its limit.

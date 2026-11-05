@@ -53,7 +53,8 @@ evidence.
 - **Architecture.** 20 voices, 2 parts, 4-op FM, 8 algorithms, 12 waveforms, two
   multimode filters, a wavefolder, per-operator feedback, key and velocity follow,
   and per-part algorithm and FM depth. The modulator index matches the OPM's
-  four-cycle full-scale deviation at level 99.
+  four-cycle full-scale deviation at level 99, and the feedback reaches half that
+  at 100%, following the operator's level.
 - **Identity and clock.** The `_990` identities are frozen: `FM-1_990`,
   `SMK-37 Pro_990`, `SMK-37 Elite_990`, `MKE-P37_990`. Artifact names can change.
   The clock offers 240 or 320 MHz only, because 360 and 396 aren't offered.

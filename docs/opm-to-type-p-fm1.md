@@ -23,6 +23,11 @@ The Type P.fm1 side is a single-part patch. Part 2 is muted with `level.p1=0` an
 the operators are sine. The filters and wavefolder are off. The OPM side uses the
 same four operators, with `SLOT` 120 so all four key on.
 
+The renderer reads `filter_on`, `filter2_on`, `fold_on`, `fold`, `level.p1`, the
+four part-2 mutes, and the four waveforms back from the engine after loading each
+case file, and it refuses to render if any of them is not the isolated value. A typo
+in a case cannot quietly leave a filter or the wavefolder in the signal.
+
 The measures are the full-band spectral centroid, the 95 percent roll-off
 frequency, the band energy above 1, 2, 4, and 8 kHz, and the odd-to-even harmonic
 ratio. None of them depends on a detected fundamental, which matters because a deep
@@ -37,7 +42,7 @@ level is ignored because the two engines have different output gains.
 | `CON` 0 to 7 | `algorithm.p0` 0 to 7 | direct for 0, 1, 2, 4, 5, 6, 7, and 3 uses algorithm 2 with a remap |
 | `MUL` 0 to 15 | `opN_ratio.p0` | direct |
 | `TL` 0 to 127 | `opN_level.p0` 0 to 99 | measured for carriers and modulators, matched against VOPMex |
-| `FL` 0 to 7 | `op1_feedback.p0`, or `op2_feedback.p0` for algorithm 3 | approximate, the depth law differs |
+| `FL` 0 to 7 | `op1_feedback.p0`, or `op2_feedback.p0` for algorithm 3 | two cycles at 100%, halved per `FL` step |
 | `AR` | `attack.p0` or `opN.eg.r1.p0` | approximate |
 | `D1R` | `opN.eg.r2.p0` | approximate |
 | `D1L` | `opN.eg.l2.p0` | approximate |
@@ -123,7 +128,7 @@ roughly -30 dB in OPM and silent in Type P.fm1 at level 0. If that quiet tail
 matters, you need a different gain stage or you accept the difference.
 
 Modulators follow the same level curve. Type P.fm1's generated router scales the
-modulator path by 32, and the phasor turns that into phase. A level-99 modulator
+modulator path by 2 and the phasor scales that by 2^20. A level-99 modulator
 reaches four cycles of phase deviation, which is the OPM's full-scale index at
 `TL` 0. A two-operator test at ratio 1:1 confirms the curve: the Type P.fm1
 centroid follows the OPM centroid within about 11 percent from `TL` 0 to `TL` 32,
@@ -143,24 +148,33 @@ OPM feedback is the `FL` field on M1, with 0 to 7. Type P.fm1 has
 controls. For OPM algorithm 3, M1 is `O2` in the remapped layout, so use
 `op2_feedback.p0` there.
 
-OPM's `FL` 7 averages the last two samples and shifts, which gives about two cycles
-of phase deviation at a full-level operator, and the depth follows the operator's
-own level. Type P.fm1 taps the raw oscillator with one sample of delay, so its
-feedback stays the same strength at every operator level and tops out at half a
-cycle. Matching OPM's depth law needs an average of two samples and a tap after the
-level, which is a graph change rather than a gain trim. I tested the tap after the
-level and the two-sample average in scratch builds. The depth then followed the
-level, but the loop landed in a different chaotic regime and the measured spectrum
-was two to four times brighter at the top of the level range.
+Both engines take the feedback from the operator's level-gained output and average
+two samples, so the depth follows the level. OPM's `FL` 7 is two cycles of phase
+deviation at a full-level operator, half a cycle at `TL` 16 and a quarter at
+`TL` 24. Type P.fm1's 100% is the same set of depths. Each OPM `FL` step is 6 dB,
+so halve the Type P.fm1 value per step:
 
-A gain change alone does not fix it. Measured on a single self-feedback operator at
-`FL` 7, the OPM centroid falls from 4343 Hz at `TL` 0 to 1997 Hz at `TL` 16 and
-411 Hz at `TL` 24. Type P.fm1 reads 5287 Hz at every one of those levels. Raising
-the gain does not make the curve track, and lowering it does not either.
+| OPM `FL` | `opN_feedback.p0` |
+| ---: | ---: |
+| 0 | 0 |
+| 1 | 512 |
+| 2 | 1024 |
+| 3 | 2048 |
+| 4 | 4096 |
+| 5 | 8192 |
+| 6 | 16384 |
+| 7 | 32767 |
+
+The measured match is closest at moderate depths. On a single self-feedback
+operator the `TL` 24 and `TL` 32 cases land within a few percent of the OPM
+centroid, and a two-operator patch at half feedback reads 957 Hz against the OPM's
+974 Hz. A full-level operator puts the loop in a chaotic regime in both engines,
+and the spectra differ there, so treat the top of the range as a similar amount of
+noise rather than the same noise.
 
 The harmonic balance differs too. OPM was odd-heavy in the test, at +8.1 dB, while
-Type P.fm1 at the bright setting was even-heavy, at -4.2 dB. Start at 32767 for
-`FL` 7 and tune by ear. The two synths will not match harmonic for harmonic.
+Type P.fm1 was even-heavy, at -4.2 dB. The two synths will not match harmonic for
+harmonic.
 
 ## Envelope
 
@@ -236,17 +250,19 @@ sum, and the router doubled the modulator path, so a level-99 modulator reached 
 quarter of a cycle of phase deviation where the OPM reaches four. That is a 24 dB
 shortfall, and no modulator level could close it.
 
-The router now scales the path by 32. A level-99 modulator reaches four cycles,
-the same as the OPM at `TL` 0, and the level curve does the rest. The feedback path
-bypasses the router, so its depth is unchanged.
+The phasor now scales `fm` by 2^20 and the router by 2. A level-99 modulator
+reaches four cycles, the same as the OPM at `TL` 0, and the level curve does the
+rest. The feedback path bypasses the router and taps the level gain, so it reaches
+half that index.
 
 The sweep above is the evidence. With the old scale the Type P.fm1 pair read
 262 Hz to 524 Hz across `TL` 0 to 32, against the OPM's 494 Hz to 3895 Hz. The
 current build tracks the OPM within about 11 percent over the same span.
 
-The feedback gap is separate and stays open. OPM averages two samples and follows
-the operator level, and Type P.fm1 does neither. Closing it needs a graph change in
-the feedback loop, not a gain constant.
+Feedback no longer adds to the gap. Both engines tap the level-gained output,
+average two samples, and reach two cycles at a full-level operator, so the depth
+law matches. The top of the range is still a chaotic regime and the spectra differ
+there.
 
 ## Conversion recipe
 
@@ -263,7 +279,8 @@ the feedback loop, not a gain constant.
 6. Set each ratio from `MUL`, folding `DT2` into the ratio if it is not zero.
 7. Set every level with `99 - 3 * TL`, clamped to 0 to 99. Carriers and modulators
    use the same formula.
-8. Set `op1_feedback.p0` from `FL`, starting at 32767 for `FL` 7.
+8. Set `op1_feedback.p0` from `FL`: 32767 for `FL` 7, and half for each step down
+   the table above.
 9. Map the envelope rates and levels, then adjust `r2`, `r3`, `l2`, and `l3` until
    the decay sits where you want it.
 10. Play the same note through both patches and compare the first few harmonics.
@@ -272,9 +289,10 @@ the feedback loop, not a gain constant.
 
 ## Remaining differences
 
-The two engines differ in the feedback depth law, the phase relationship between
-carrier and modulator, the level taper at low levels, the envelope timing, and the
-LFO ranges. Type P.fm1 also has no noise generator and no per-voice pan. A
-conversion can preserve the operator graph, the ratio relationships, the level
-curve, and the modulation index, but the spectrum will not be identical. That is
-expected. The two chips share a family resemblance, but they are different designs.
+The two engines differ in the chaotic regime at the top of the feedback range, the
+phase relationship between carrier and modulator, the level taper at low levels,
+the envelope timing, and the LFO ranges. Type P.fm1 also has no noise generator and
+no per-voice pan. A conversion can preserve the operator graph, the ratio
+relationships, the level curve, the modulation index, and the feedback depth, but
+the spectrum will not be identical. That is expected. The two chips share a family
+resemblance, but they are different designs.

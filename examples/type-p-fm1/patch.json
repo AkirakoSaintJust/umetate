@@ -253,10 +253,10 @@
       { "id": "f1_vs", "type": "vel_scale_g", "params": { "amount": 0 } },
       { "id": "f2_vs", "type": "vel_scale_g", "params": { "amount": 0 } },
       { "id": "fenv_vs", "type": "vel_scale_g", "params": { "amount": 0 } },
-      { "id": "lp", "type": "svf", "params": { "f": 8000, "q": 40000, "type": 0, "on": 1, "fenv_depth": 0 } },
+      { "id": "lp", "type": "svf", "params": { "f": 8000, "q": 40000, "type": 0, "on": 0, "fenv_depth": 0 } },
       { "id": "fenv", "type": "dx_env", "params": { "r1": 80, "r2": 60, "r3": 50, "r4": 80, "l1": 99, "l2": 93, "l3": 87 }, "ins": { "gate": "patch_gate", "trigger": "0" } },
-      { "id": "wf", "type": "wavefolder", "params": { "amount": 0, "threshold": 0, "folds": 1, "on": 1, "type": 0 } },
-      { "id": "lp2", "type": "svf", "params": { "f": 8000, "q": 40000, "type": 0, "on": 1, "fenv_depth": 0 } }
+      { "id": "wf", "type": "wavefolder", "params": { "amount": 0, "threshold": 0, "folds": 1, "on": 0, "type": 0 } },
+      { "id": "lp2", "type": "svf", "params": { "f": 8000, "q": 40000, "type": 0, "on": 0, "fenv_depth": 0 } }
     ],
     "wires": [
       { "from": "key_bp.bp", "to": "op1.bp" },

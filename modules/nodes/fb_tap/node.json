@@ -1,0 +1,13 @@
+{
+  "name": "fb_tap",
+  "summary": "Self-feedback tap (audio rate): the level-gained input averaged over this sample and the previous one, so the feedback follows the operator's own level and the two-tap average damps the Nyquist mode. `level` (0..32767) is pushed by the Q15 key-follow `k` and velocity-follow `vk` factors into the block-derived `level_eff`. When `level_eff` is 0 the whole body is skipped, so feedback at 0 costs nothing.",
+  "ins": {
+    "audio": "audio",
+    "k": { "rate": "control", "format": "q15", "default": "0" },
+    "vk": { "rate": "control", "format": "q15", "default": "0" }
+  },
+  "outs": { "audio": "audio" },
+  "params": { "level": "q15" },
+  "state": { "level_eff": "q15", "prev": "int32" },
+  "block_derived": { "level_eff": "fm1_key_apply(${param.level}, fm1_key_add(${in.k}, ${in.vk}), 0, 32767)" }
+}
