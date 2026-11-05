@@ -30,6 +30,9 @@ from .generate import generate, generate_tables
 _ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_PATCH = _ROOT / "examples" / "type-p-fm1" / "patch.json"
 OUT = _ROOT / "build" / "web"
+# the parity harness lives apart from the user-facing page, so `deep-check --web`
+# never overwrites a `web-build` tree that is being served.
+PARITY_OUT = _ROOT / "build" / "web-parity"
 
 # the firmware wasm the emulator exports (tests/web_host.c)
 _EMU_EXPORTS = (

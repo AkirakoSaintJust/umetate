@@ -42,9 +42,11 @@ def _web() -> int:
         print(f"deep-check --web: {exc}", file=sys.stderr)
         return 1
     name = patch["name"].replace("-", "_").replace(".", "_")
-    if web.build(patch, web.OUT, name) != 0:
+    # the parity harness is a different page from the user-facing emulator;
+    # keep it out of `build/web` so a gate run cannot clobber a served app
+    if web.build(patch, web.PARITY_OUT, name) != 0:
         return 1
-    ok, msg = web.check_parity(web.OUT, name)
+    ok, msg = web.check_parity(web.PARITY_OUT, name)
     print(f"deep-check --web parity: {'ok' if ok else 'FAIL'} ({msg})")
     return 0 if ok else 1
 

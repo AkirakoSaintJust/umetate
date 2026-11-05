@@ -179,8 +179,8 @@ The envelope fields map by job: `AR` to `attack` or `opN.eg.r1`, `D1R` to
 `opN.eg.r4`. The rates and curves are different, so the numbers are a starting point.
 
 A measured pluck with `AR` 31, `D1R` 10, `D1L` 8, `D2R` 4, and `RR` 8 fell from
--24.9 dB to -37.0 dB over the first 0.8 s. The first Type P.fm1 setting, with `r2`
-40, `r3` 20, `l2` 70, and `l3` 40, fell from -16.3 dB to -19.4 dB over the same
+-25.4 dB to -36.3 dB over the first 0.8 s. The first Type P.fm1 setting, with `r2`
+40, `r3` 20, `l2` 70, and `l3` 40, fell from -14.9 dB to -21.5 dB over the same
 time. The Type P.fm1 envelope sustained more, so adjust `r2`, `r3`, `l2`, and `l3`,
 or shorten the note. OPM rates are also key-scaled, which Type P.fm1 models with the
 envelope key-follow controls rather than the rate number itself. The broader
@@ -218,8 +218,8 @@ centroid of the steady segment.
 | Serial algorithm 0 | 3604 Hz | 4989 Hz | topology matches, Type P.fm1 richer |
 | Algorithm 3 remap | 3311 Hz | 3359 Hz | graph matches, close |
 | Parallel algorithm 4 | 2635 Hz | 2810 Hz | topology matches, close |
-| Feedback, `FL` 7 | 974 Hz | 5075 Hz | loop differs, Type P.fm1 noisier |
-| Envelope pluck | -24.9 to -37.0 dB | -16.3 to -19.4 dB | OPM decays more |
+| Feedback, `FL` 7 | 974 Hz | 4005 Hz | loop differs, Type P.fm1 noisier |
+| Envelope pluck | -25.4 to -36.3 dB | -14.9 to -21.5 dB | OPM decays more |
 
 The additive case has no modulation index, so it tests the level curve only. The
 serial case is the furthest apart because the index compounds through three stages,
