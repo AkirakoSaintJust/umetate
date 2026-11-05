@@ -541,14 +541,25 @@ def _source_commit() -> str:
     return proc.stdout.strip() or "unknown"
 
 
-def _release_artifacts(out: Path, name: str) -> list[ReleaseArtifact]:
-    """The firmware and every staged plugin archive, with sizes and hashes."""
+def _release_artifacts(
+    out: Path, name: str, *, flat: bool = False
+) -> list[ReleaseArtifact]:
+    """The firmware and every staged plugin archive, with sizes and hashes.
+
+    GitHub Release assets carry a flat name, so `flat=True` drops the
+    `plugins/<platform>/` prefix from the manifest path.
+    """
     artifacts: list[ReleaseArtifact] = []
+
+    def asset_path(path: Path) -> str:
+        relative = path.relative_to(out).as_posix()
+        return Path(relative).name if flat else relative
+
     firmware = out / f"{name}.fwsc"
     if firmware.is_file():
         artifacts.append(
             {
-                "path": firmware.name,
+                "path": asset_path(firmware),
                 "platform": "M-VAVE FM-1",
                 "format": "firmware",
                 "size": firmware.stat().st_size,
@@ -560,7 +571,7 @@ def _release_artifacts(out: Path, name: str) -> list[ReleaseArtifact]:
         fmt = "VST3" if "VST3" in upper else "CLAP" if "CLAP" in upper else "plugin"
         artifacts.append(
             {
-                "path": path.relative_to(out).as_posix(),
+                "path": asset_path(path),
                 "platform": path.parent.name,
                 "format": fmt,
                 "size": path.stat().st_size,
@@ -585,8 +596,13 @@ def _write_release(
     commit: str,
     artifacts: list[ReleaseArtifact],
     released: str | None = None,
+    download_base: str | None = None,
 ) -> None:
-    """Write `RELEASES.md`, `SHA256SUMS`, and `release.json` for the downloads."""
+    """Write `RELEASES.md`, `SHA256SUMS`, and `release.json` for the downloads.
+
+    `download_base` points the page at release assets instead of repository
+    paths, so the manifest works when it is attached to a GitHub Release.
+    """
     released = released or datetime.now(UTC).strftime("%Y-%m-%d")
     lines = [
         f"# {title} {version}",
@@ -602,8 +618,10 @@ def _write_release(
     for artifact in artifacts:
         path = artifact["path"]
         digest = artifact["sha256"]
+        name = Path(path).name
+        target = f"{download_base.rstrip('/')}/{name}" if download_base else path
         lines.append(
-            f"| [`{Path(path).name}`]({path}) | {artifact['platform']} | "
+            f"| [`{name}`]({target}) | {artifact['platform']} | "
             f"{artifact['format']} | {_human_size(artifact['size'])} | `{digest}` |"
         )
         sums.append(f"{digest}  {path}")

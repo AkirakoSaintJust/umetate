@@ -40,7 +40,9 @@ Phase on, industrial punks!
 
 ## Downloads
 
-[`RELEASES.md`](RELEASES.md) lists the firmware, the plugin archives, the checksums, and the source locations. The optional VST3 and CLAP builds are in [`plugins/`](plugins/), with install steps in [`plugins/README.md`](plugins/README.md). They use the same engine and the same patch banks as the firmware.
+Firmware and plugin builds are attached to each [GitHub Release](https://github.com/AkirakoSaintJust/type-p-fm1/releases). The release page lists the firmware image and the VST3 and CLAP archives for Linux x86_64, Linux aarch64, and Windows x86_64, with `SHA256SUMS` for verification.
+
+The firmware is the device image. Flash it with `umetate flash`. The plugin archives use the same engine and the same patch banks as the firmware, and the install steps are in [`plugins/README.md`](plugins/README.md).
 
 ## Releases
 

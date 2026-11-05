@@ -33,7 +33,9 @@ jobs:
             umetate-host-build:latest \
             python3 -m umetate.deep_check --python --skill --links
 
-  plugin-linux:
+  plugin-linux-framework:
+    # Framework test only. Product archives are built and attached to the
+    # release in the type-p-fm1 repository, never here.
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -55,15 +57,9 @@ jobs:
             python3 -m umetate.cli plugin-build \
               --synth examples/type-p-fm1 \
               --out build/plugin/ci-linux --jobs 4
-      - uses: actions/upload-artifact@v4
-        with:
-          name: plugin-linux-x86_64
-          if-no-files-found: error
-          path: |
-            build/plugin/ci-linux/build/p1plugin/juce/type_p_fm1_artefacts/Release/VST3
-            build/plugin/ci-linux/build/p1plugin/juce/type_p_fm1_artefacts/Release/CLAP
 
-  plugin-windows:
+  plugin-windows-framework:
+    # Framework test only. See the Linux job for the release boundary.
     runs-on: windows-2022
     timeout-minutes: 60
     env:
@@ -87,17 +83,10 @@ jobs:
         run: >
           ctest --test-dir build/plugin/ci-windows/build -C Release
           -E "linux_daws|plugin_editor_snapshot" --output-on-failure
-      - uses: actions/upload-artifact@v4
-        with:
-          name: plugin-windows-x86_64
-          if-no-files-found: error
-          path: |
-            build/plugin/ci-windows/build/p1plugin/juce/type_p_fm1_artefacts/Release/VST3
-            build/plugin/ci-windows/build/p1plugin/juce/type_p_fm1_artefacts/Release/CLAP
 
-  plugin-macos:
+  plugin-macos-framework:
     # The macOS build and AU target are still open. This job reports the state
-    # without blocking the Linux and Windows gates.
+    # without blocking the Linux and Windows gates, and it publishes nothing.
     runs-on: macos-14
     timeout-minutes: 60
     continue-on-error: true

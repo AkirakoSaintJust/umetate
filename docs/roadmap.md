@@ -19,7 +19,7 @@ still show up in code comments.
 | Target evidence | Source, host, browser/WASM parity, target package, emulator, and Linux DAW pass. Physical device timing and acceptance are `blocked`. |
 | Gate | The full gate is green. It passed host, web, Python, skill, lib, links, pyright, and memory. |
 | Docs | Tutorial, DSP study, Type P.fm1 docs, templates, and the voice profile are current. The Type P.fm1 manual includes the panel section, written from `panel.json` with every page, parameter, and flow. Docs skill `1.4.6`. The K5/K5000 guide is in the ignored `doc-test/`. |
-| CI | Framework CI covers Linux and Windows, with macOS `continue-on-error`. The release repo workflow builds Linux and Windows VST3/CLAP on a tag. |
+| CI | Framework CI covers Linux and Windows, with macOS `continue-on-error`. The release repo workflow builds Linux x86_64, Linux aarch64, and Windows x86_64 VST3/CLAP from a `v*` tag or a version dispatch, and attaches the archives to a GitHub Release. |
 
 The framework has moved past `31ecc64` with the design interview, the voice profile,
 and the docs rewrite. The 1.0.1 binaries haven't changed. The release docs are

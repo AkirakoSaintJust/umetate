@@ -114,14 +114,18 @@ open question.
 
 `.github/workflows/ci.yml` runs the Python gate and the plugin build on Linux and
 Windows. macOS is reported without blocking while the macOS build and the AU target
-remain open. The workflow runs on pushes to `main` and on pull requests.
+remain open. The workflow runs on pushes to `main` and on pull requests. Its plugin
+jobs are framework tests, so they keep the product build path honest without
+publishing an archive.
 
-The published `type-p-fm1` repository has its own release workflow. A `v*` tag
-builds the VST3 and CLAP archives for Linux and Windows from the bundled
-`framework/plugin` source, updates `plugins/`, `RELEASES.md`, `SHA256SUMS`, and
-`release.json`, and attaches the firmware, plugin archives, manifests, and a source
-archive to a GitHub Release. The firmware is the committed `.fwsc`, so that workflow
-does not need the JieLi toolchain.
+The published `type-p-fm1` repository has its own release workflow. A `v*` tag, or
+a manual run with `1.0.2` or `v1.0.2`, builds the VST3 and CLAP archives for Linux
+x86_64, Linux aarch64, and Windows x86_64 from the bundled `framework/plugin`
+source. The workflow attaches the firmware, the per-platform plugin archives, the
+manifests, and a source archive to a GitHub Release, then records `RELEASES.md`,
+`SHA256SUMS`, and `release.json` on `main`. Build outputs and plugin archives stay
+out of the repository. The firmware is the committed `.fwsc`, so that workflow does
+not need the JieLi toolchain.
 
 ## First commands
 

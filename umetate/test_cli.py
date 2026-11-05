@@ -1030,6 +1030,29 @@ def _publish_release_manifest() -> None:
         assert manifest["commit"] == "abc1234"
         assert len(manifest["artifacts"]) == 2
 
+        flat = publish._release_artifacts(  # pyright: ignore[reportPrivateUsage]
+            out, "type-p-fm1", flat=True
+        )
+        publish._write_release(  # pyright: ignore[reportPrivateUsage]
+            out,
+            "Type P.fm1",
+            version,
+            "abc1234",
+            flat,
+            released="2026-11-04",
+            download_base="https://example.test/releases/download/v1.2.3",
+        )
+        page = (out / "RELEASES.md").read_text(encoding="utf-8")
+        assert (
+            "https://example.test/releases/download/v1.2.3/"
+            "Type-P.fm1-VST3-linux-x86_64.zip"
+        ) in page
+        assert "plugins/linux-x86_64/Type-P.fm1-VST3" not in page
+        flat_sums = (out / "SHA256SUMS").read_text(encoding="utf-8").splitlines()
+        assert any(
+            line.endswith("  Type-P.fm1-VST3-linux-x86_64.zip") for line in flat_sums
+        ), flat_sums
+
 
 def _publish_vendor_copy() -> None:
     """Vendored deps keep the source and drop .git and build trees."""
