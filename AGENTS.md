@@ -79,6 +79,9 @@ clear jobs beat six with vague ones". End on a concrete fact, an instruction, or
 specific judgement. Avoid the "A, not B" adversative. Use "rather than" or a
 separate sentence.
 
+Panel references follow `templates/panel-reference.md`. Write them from
+`panel.json` and the filled control map, with every page and every chord.
+
 Before a manual preface or design note, run the design interview. `umetate
 interview --synth <project> --write` generates the form from the project's
 `patch.json`, `panel.json`, `synth-brief.md`, and `plugin.json`. It does not assume

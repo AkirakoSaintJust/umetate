@@ -18,7 +18,7 @@ still show up in code comments.
 | Engine | 44.1 kHz, integer-first, bit-exact. 20 voices, 2 parts, 4-op FM, 8 algorithms, 12 waveforms, two filters, a wavefolder, and key and velocity follow. |
 | Target evidence | Source, host, browser/WASM parity, target package, emulator, and Linux DAW pass. Physical device timing and acceptance are `blocked`. |
 | Gate | The full gate is green. It passed host, web, Python, skill, lib, links, pyright, and memory. |
-| Docs | Tutorial, DSP study, Type P.fm1 docs, templates, and the voice profile are current. Docs skill `1.4.4`. The K5/K5000 guide is in the ignored `doc-test/`. |
+| Docs | Tutorial, DSP study, Type P.fm1 docs, templates, and the voice profile are current. The Type P.fm1 panel reference is written from `panel.json` with every page and flow. Docs skill `1.4.5`. The K5/K5000 guide is in the ignored `doc-test/`. |
 | CI | Framework CI covers Linux and Windows, with macOS `continue-on-error`. The release repo workflow builds Linux and Windows VST3/CLAP on a tag. |
 
 The framework has moved past `31ecc64` with the design interview, the voice profile,

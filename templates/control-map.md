@@ -5,11 +5,11 @@
 > parameter manifest in `synth-brief.md` are upstream, so bind only parameters that
 > exist there.
 >
-> **Do not author the panel until every section below is filled.** The ten-item
-> minimum bar is in `skills/umetate-development/SKILL.md` §2, the reasoning and
-> design-language reference are in
-> `skills/umetate-development/references/ui-design.md`, and the casebook is
-> `ui-dossier.md`.
+> **Do not author the panel until sections 1 to 8a are filled.** The handoff in
+> §8b is written with the reference. The ten-item minimum bar is in
+> `skills/umetate-development/SKILL.md` §2, the reasoning and design-language
+> reference are in `skills/umetate-development/references/ui-design.md`, and the
+> casebook is `ui-dossier.md`.
 
 ## 1. Surface inventory
 
@@ -26,6 +26,14 @@
 - **Menu depth tolerance:**
 - **Keys as shortcuts** (does the keybed double as a menu surface, operator select, mute?):
 - **What must stay playable during any interaction** (held notes, transport):
+
+### 2.1 Navigation
+
+- **Context buttons:** <list every button that opens a context, and what pressing it again does.>
+- **Page encoder:** <forward/back, wrap, or a fixed page order.>
+- **HOME:** <pop to home, then page through the home context, or another rule.>
+- **Modifier chords:** <every hold/chord, including copy, init, part switch, part mute, and operator mute.>
+- **Page knobs:** <the four page encoders edit the page's parameter rows in order. Say what happens when a page has fewer than four rows, and on display pages.>
 
 ## 3. Contexts (modes) and their bindings
 
@@ -127,6 +135,26 @@ the value never disagree.
 - **Signal language** (scope, spectrum, envelopes, level fills, routing):
 - **Copy rules** (case, labels, value formats, name limits):
 - **Token source** (the one file the web, plugin, and firmware generate from):
+
+## 8b. Panel reference handoff
+
+The user-facing panel reference is written from this map and `panel.json`. It
+must teach a fresh reader how to move, not just list the controls.
+
+- **Surface:** every physical control, its kind, and its global job.
+- **Navigation:** every context button, how pages advance, how HOME works, every
+  modifier chord, and the page-knob rule.
+- **Page inventory:** one row per page with its title, KNOB 1 to 4 assignments,
+  display widgets, and the job of the page. Say when a page has fewer than four
+  parameters or when two pages share a title.
+- **Flows:** save, load, init, copy, and name editing, with the exact buttons,
+  knob assignments, and legends.
+- **Screen:** header fields, footer legend, popup behaviour, and LED feedback.
+- **Quick reference:** one line per context with its page count and job.
+
+Use `templates/panel-reference.md` as the shape. Do not write the reference from
+the design intent. Read the generated page table and the app's popup handlers, then
+describe what the instrument actually does.
 
 ## 9. Acceptance
 

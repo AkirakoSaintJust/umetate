@@ -1,7 +1,7 @@
 ---
 name: umetate-documentation
 description: Write thorough, readable, human documentation for end users of a synthesizer built on umetate. Covers the user manual, panel reference, MIDI and SysEx reference, patch sheet, installation guide, release notes, and technical guides or instrument studies. Includes a journalist-style design interview for the manual preface and design note. Rewrites are measured against the author's own corpus, hand-rewritten manual, and hand-rewritten guide so they read like a person wrote them. Never uses em dashes or semi-colons, never loses information, and bans negative parallelism, heading chains, false dichotomies, and marketing hooks. Preserves the author's contractions, asides, light UK slang, explanatory long sentences, joined clauses, and self-description.
-version: 1.4.4
+version: 1.4.5
 license: GPL-3.0-only
 compatibility: OpenCode and Agent Skills-compatible loaders
 allowed-tools: read, grep, glob, edit, write, shell, websearch, webfetch
@@ -194,10 +194,19 @@ Keep the author's self-description ("I'm more of a sound design gal"). Do not ch
 
 ## The panel reference
 
-A fresh reader must be able to find any function without guessing. For each control
-give its kind (knob, button, key, encoder), what it does on each page, and how to
-reach every page. State the save flow exactly: which buttons, in what order, what
-the screen confirms. Note the key combinations as combos, not as code.
+Write the panel reference from the filled control map and `panel.json`, so the page
+inventory and the button chords match the firmware. `templates/panel-reference.md`
+is the shape.
+
+A fresh reader must be able to move without guessing. Name every context button,
+say what pressing it again does, explain how the page encoder and HOME work, and
+list every modifier chord. Then give every page a row: its title, KNOB 1 to 4
+assignments, display widgets, and the job of the page. State the page-knob rule:
+the four encoders edit the parameter rows in order, the extra encoders do nothing
+on a short page, and display pages have no assignments.
+
+State the save, load, init, copy, and name flows exactly: which buttons, which
+knobs, what the screen confirms, and what auto-closes without committing.
 
 Popups are worth a sentence: they own the controls while open, they close on their
 own after about three seconds of no input, and a cancel does not lose work.

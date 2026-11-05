@@ -202,6 +202,27 @@ The first 170 lines are 2,100 words in 147 sentences: a 13.8-word mean, a 12-wor
 median, an 11.0-word standard deviation. The opening is more connected than the rest
 of the first draft. The connectivity pass is how you close that gap.
 
+## The panel reference
+
+A panel reference teaches movement before it lists controls. The Type P.fm1 page
+opens with the surface, then the navigation rule, then a table per context.
+
+> Press a context button to open that context at its first page. Press the same
+> button again to move to the next page. `SELECT` also pages forward and back. The
+> pages wrap at the ends.
+>
+> `HOME` pops back to the home context. Press `HOME` again to step through the home
+> pages.
+
+Then every page gets a row with its four knob assignments and its display:
+
+| Page | KNOB 1 | KNOB 2 | KNOB 3 | KNOB 4 | Screen |
+| --- | --- | --- | --- | --- | --- |
+| OSCILLATOR | RATIO | LEVEL | FEEDBACK | WAVE | A scope of the selected operator. |
+
+The tables are plain. The voice lives in the navigation prose and the short page
+notes. Do not write a control list and call it a panel reference.
+
 ## The hand rewrite
 
 These are from the author's hand rewrite of the Type P.fm1 manual. They are the
