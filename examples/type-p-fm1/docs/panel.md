@@ -33,7 +33,8 @@ available. Everything else is a page you open with a context button.
 
 Press a context button to open that context at its first page. Press the same
 button again to move to the next page. `SELECT` also pages forward and back. The
-pages wrap at the ends.
+pages wrap at the ends. Every context's pages are in the order shown in its table,
+so pressing the context button again or turning `SELECT` walks them in that order.
 
 `HOME` pops back to the home context. Press `HOME` again to step through the home
 pages.
@@ -187,6 +188,90 @@ restores the old name.
 
 `BACKUP / LOAD` and `VERSION + CREDITS` are read-only pages. The four page knobs do
 nothing there.
+
+## Parameter reference
+
+These are the controls that appear as page rows. The page tables above say where
+they live. The ranges are the ones the panel shows.
+
+### Operator
+
+| Parameter | Range | What it does |
+| --- | --- | --- |
+| RATIO | 0.50 to 16.00 | The operator's pitch as a multiple of the note. 1.00 is unison, 2.00 an octave up, 0.50 an octave down. Whole-number ratios sound clear, odd ratios reedy, and non-integer ratios clangy. |
+| LEVEL | 0 to 99 | The operator's output level. 99 is full, 50 is about 12 dB down, and 0 is silent. On a modulator this is the modulation depth. |
+| FEEDBACK | 0 to 100% | The operator's output fed back into its own phase. 0 is clean, higher values roughen the wave, and the top turns to noise. A sine at 25 to 35% becomes a reverse saw. |
+| WAVE | 0 to 11 | The operator waveform. 0 to 8 are sine-derived and stay clean high up. 9 is pulse, 10 is square, and 11 is saw, all band-limited with mip maps. |
+| OP DETUNE | -50 to +50 cents | A fine offset for one operator. Detuning two operators that would be in unison thickens the sound. Detuning a modulator adds beating. |
+| OP LEVEL KS LO/HI | -100 to +100% | How much the operator level follows the keyboard below and above the breakpoint. Positive pushes the level toward its extreme, and negative pushes the other way. |
+| OP FB KS LO/HI | -100 to +100% | The same key follow for feedback. |
+| OP LEVEL VS | -100 to +100% | How much velocity moves the operator level at maximum velocity. The global `VEL SENS ON` switch must be on. |
+| OP FB VS | -100 to +100% | The same velocity follow for feedback. |
+| A-ENV RATE 1 to 4 | 0 to 99 | The four stage rates. Higher is faster. Rate 1 is attack, 2 and 3 are decay, and 4 is release. |
+| A-ENV LEVEL 1 to 3 | 0 to 99 | The levels the envelope holds after each stage. Level 3 is the sustain. |
+| A-ENV RATE KS LO/HI | -100 to +100% | Key follow for the A-ENV rate. |
+| A-ENV RATE VS | -100 to +100% | Velocity follow for the A-ENV rate. |
+| A-LFO RATE | Hz | The tremolo speed. |
+| A-LFO DEPTH | 0 to 100% | The tremolo amount. |
+| A-LFO WAVE | 0 to 11 | The tremolo waveform. Sine is the usual choice. |
+
+### Pitch envelope and pitch LFO
+
+| Parameter | Range | What it does |
+| --- | --- | --- |
+| P-ENV ON | on/off | Turns the part pitch envelope on. |
+| P-ENV RATE 1 to 4 | 0 to 99 | The four pitch-envelope rates. Higher is faster. |
+| P-ENV LEVEL 1 to 3 | semitone offsets | The pitch offset at each stage, relative to the note. |
+| P-ENV RATE KS LO/HI | -100 to +100% | Key follow for the P-ENV rate. |
+| P-ENV RATE VS | -100 to +100% | Velocity follow for the P-ENV rate. |
+| P-LFO RATE | Hz | The vibrato speed. |
+| P-LFO DEPTH | amount | The vibrato amount. |
+| P-LFO WAVE | 0 to 11 | The vibrato waveform. |
+
+### Filter and wavefolder
+
+| Parameter | Range | What it does |
+| --- | --- | --- |
+| FILTER ON | on/off | Bypasses or enables filter 1. |
+| CUTOFF | frequency | Where filter 1 starts to remove. Turn it down to darken the sound and up to open it. |
+| RES | resonance | The peak at the cutoff. At the top it self-oscillates. |
+| TYPE | LPF, BPF, HPF | The filter response. |
+| F-ENV RATE 1 to 4 | 0 to 99 | The four filter-envelope rates. Higher is faster. |
+| F-ENV LEVEL 1 to 3 | 0 to 99 | The levels the filter envelope holds. Level 3 is the sustain. |
+| F-ENV DEPTH | 0 to 100% | How far the filter envelope moves the cutoff. |
+| F1 CUTOFF KS LO/HI | -100 to +100% | Key follow for filter 1 cutoff. |
+| F-ENV RATE KS LO/HI | -100 to +100% | Key follow for the F-ENV rate. |
+| F1 CUTOFF VS | -100 to +100% | Velocity follow for filter 1 cutoff. |
+| WAVEFOLD ON | on/off | Bypasses or enables the wavefolder. |
+| AMOUNT | 0 to 100% | How much folded signal is mixed in. 0 is off. |
+| THRESH | 0 to 100% | The level where folding starts. A lower threshold folds earlier. |
+| FOLDS | 1 to 8 | The number of fold stages. More folds add harsher harmonics. |
+| FILTER 2 ON | on/off | Bypasses or enables filter 2. |
+| FILTER 2 CUTOFF | frequency | Where filter 2 starts to remove. |
+| FILTER 2 RES | resonance | The peak at filter 2's cutoff. |
+| FILTER 2 TYPE | LPF, BPF, HPF | The filter 2 response. |
+| F2 CUTOFF KS LO/HI | -100 to +100% | Key follow for filter 2 cutoff. |
+| F2 CUTOFF VS | -100 to +100% | Velocity follow for filter 2 cutoff. |
+| F-ENV RATE VS | -100 to +100% | Velocity follow for the F-ENV rate. |
+
+### Global
+
+| Parameter | Range | What it does |
+| --- | --- | --- |
+| PART 1/2 LEVEL | 0 to 99 | The part's output level. 99 is full, 50 is about 12 dB down, and 0 is silent. |
+| PART 1/2 DELAY | 0 to 1000 ms | Delays that part against the other. |
+| P1/P2 LOW/HIGH | note names | The key range for each part. Notes outside it are ignored by that part. |
+| P1/P2 CH | MIDI channel | The channel each part listens to. |
+| BREAKPOINT | note name | The note where key follow is neutral. |
+| KEY SENS ON | on/off | The global key-follow switch. |
+| VEL SENS ON | on/off | The global velocity-follow switch. |
+| MODE | poly, mono | Poly plays all notes. Mono plays one note at a time. |
+| PRIORITY | last, highest, lowest | Which note wins when several are held in mono. |
+| LEGATO | on/off | Holds the envelope across overlapping mono notes. |
+| PORTA | 0 to 5000 ms | The one-octave glide time. 0 is off. |
+| TUNE | -100 to +100 cents | The part tune. It is shown on `VOICE MODE` but has no page-knob assignment in this panel. |
+| VOICES | 1 to 8 | The mono stack size. |
+| DETUNE | 0 to 200 cents | The spread between the stacked copies. |
 
 ## Saving and loading
 

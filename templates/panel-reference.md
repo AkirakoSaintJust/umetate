@@ -43,6 +43,17 @@ which follow the selected part or operator.>
 <Notes for pages with fewer than four parameters, duplicate page titles, or
 unusual behaviour.>
 
+## Parameter reference
+
+<One table per context or per page. The page tables above say where a parameter
+lives. This section says what it means. Give every parameter its range or units,
+what it does, and what you hear when you turn it. Do not list the label twice and
+call that a description.>
+
+| Parameter | Range | What it does |
+| --- | --- | --- |
+| <name> | <range or units> | <what it does and what you hear> |
+
 ## Saving and loading
 
 <The exact save chooser, the single-part and multi-patch paths, the save modes,

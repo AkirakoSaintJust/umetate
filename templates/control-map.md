@@ -147,6 +147,9 @@ must teach a fresh reader how to move, not just list the controls.
 - **Page inventory:** one row per page with its title, KNOB 1 to 4 assignments,
   display widgets, and the job of the page. Say when a page has fewer than four
   parameters or when two pages share a title.
+- **Parameter reference:** every parameter with its range or units and a sentence
+  about what it does and what you hear. The page tables say where it lives. The
+  reference says what it means.
 - **Flows:** save, load, init, copy, and name editing, with the exact buttons,
   knob assignments, and legends.
 - **Screen:** header fields, footer legend, popup behaviour, and LED feedback.
