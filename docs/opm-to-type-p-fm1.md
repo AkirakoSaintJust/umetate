@@ -113,11 +113,11 @@ matters, you need a different gain stage or you accept the difference.
 
 Modulators do not follow the same curve. Type P.fm1's generated router scales the
 modulator path by 2, about 6 dB relative to the carrier, and its phase-modulation index
-changes at a different rate per level step. In a two-operator test at ratio 1:1, OPM
-`TL` 0 through 32 all wanted Type P.fm1 level 99, while `TL` 40 wanted level 80, `TL`
-48 wanted level 30, and `TL` 64 wanted level 5. The spectral distance stayed large
-even at the best match, so treat the carrier formula as a starting point and tune the
-modulator against the spectrum or by ear.
+changes at a different rate per level step. In a two-operator test at ratio 1:1, the
+closest Type P.fm1 level was 99 for OPM `TL` 0 through 32, 80 for `TL` 40, 30 for
+`TL` 48, and 5 for `TL` 64. The spectral distance stayed large even at the best
+match, so treat the carrier formula as a starting point and tune the modulator
+against the spectrum or by ear.
 
 ## Feedback
 
