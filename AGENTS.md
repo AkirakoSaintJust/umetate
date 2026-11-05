@@ -17,8 +17,9 @@ router, not a second manual. The authoritative documents are:
   `firmware/gen/params.json`, never type it by hand.
 - Every milestone gets a feature contract and a measured evidence artefact.
   "Builds" is not "done".
-- Do not commit build artefacts. They stay in the git-ignored `build/` tree.
-  Release bundles are staged by `umetate publish`.
+- Do not commit build artefacts. They stay in the git-ignored `build/` tree. The
+  product repository attaches its binaries to GitHub Releases. `umetate publish`
+  stages the corresponding source and manifests.
 - Do not weaken a test to make a build pass. Fix the code or record the limit.
 - Do not describe a blocked layer as passed. The physical device pass is
   `blocked` until hardware is available.
@@ -122,6 +123,7 @@ python -m umetate.cli plugin-generate --synth examples/type-p-fm1
 python -m umetate.cli plugin-build --synth examples/type-p-fm1
 python -m umetate.cli plugin-check --synth examples/type-p-fm1
 python -m umetate.cli publish --plugins --vendor-deps build/plugin-juce/_deps  # + RELEASES.md, SHA256SUMS, release.json
+gh workflow run release.yml -R AkirakoSaintJust/type-p-fm1 -f version=1.0.2  # build + attach the release
 cmake -S plugin -B build/plugin-juce -DP1_BUILD_JUCE=ON -DP1_BUILD_CLAP=ON
 cmake --build build/plugin-juce
 ctest --test-dir build/plugin-juce --output-on-failure

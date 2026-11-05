@@ -121,11 +121,13 @@ publishing an archive.
 The published `type-p-fm1` repository has its own release workflow. A `v*` tag, or
 a manual run with `1.0.2` or `v1.0.2`, builds the VST3 and CLAP archives for Linux
 x86_64, Linux aarch64, and Windows x86_64 from the bundled `framework/plugin`
-source. The workflow attaches the firmware, the per-platform plugin archives, the
-manifests, and a source archive to a GitHub Release, then records `RELEASES.md`,
-`SHA256SUMS`, and `release.json` on `main`. Build outputs and plugin archives stay
-out of the repository. The firmware is the committed `.fwsc`, so that workflow does
-not need the JieLi toolchain.
+source. A manual run tags the dispatched `main` commit when the tag does not exist,
+and it refuses a version that does not match the newest `CHANGELOG.md` heading. The
+workflow attaches the firmware, the per-platform plugin archives, the manifests,
+and a source archive to a GitHub Release, then records `RELEASES.md`, `SHA256SUMS`,
+and `release.json` on `main`. Build outputs and plugin archives stay out of the
+repository. The firmware is the committed `.fwsc`, so that workflow does not need
+the JieLi toolchain.
 
 ## First commands
 

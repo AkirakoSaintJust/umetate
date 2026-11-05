@@ -13,8 +13,9 @@ still show up in code comments.
 | Item | State |
 | --- | --- |
 | Framework | `main` was at `9375ffe` before this rewrite, tracking `origin/main`. Version `0.0.0`. Baseline tag `umetate-baseline-2026-10-27`. |
-| Type P.fm1 release | `1.0.2`, 2026-11-05, built from framework `2e31ca6`. Release repo `publish/type-p-fm1` at `4f03e4a`. It includes the panel fixes and the merged manual, plus the 1.0.1 UC25HQ80 flash fix. |
-| Release artefacts | Firmware `type-p-fm1.fwsc` (612,216 B), Linux VST3 and CLAP. macOS/AU and Windows plugin archives aren't in the release yet. |
+| Type P.fm1 release | `1.0.2`, 2026-11-05, built from framework `bdf1b9c`. Release repo `publish/type-p-fm1` at tag `v1.0.2` (commit `828dcaa`), with the release manifests recorded at `9fcbe4a`. It includes the panel fixes and the merged manual, plus the 1.0.1 UC25HQ80 flash fix. |
+| Release artefacts | Firmware `type-p-fm1.fwsc` (612,216 B), VST3 and CLAP for Linux x86_64, Linux aarch64, and Windows x86_64, plus a source archive. The GitHub Release assets carry the checksums. macOS/AU remains blocked. |
+| Release evidence | GitHub Actions run `42078369415` built the three platforms, the `v1.0.2` release carries 11 assets, `SHA256SUMS` matched every download, and the ELF and PE headers report `aarch64` and `x86_64` as labelled. |
 | Engine | 44.1 kHz, integer-first, bit-exact. 20 voices, 2 parts, 4-op FM, 8 algorithms, 12 waveforms, two filters, a wavefolder, and key and velocity follow. |
 | Target evidence | Source, host, browser/WASM parity, target package, emulator, and Linux DAW pass. Physical device timing and acceptance are `blocked`. |
 | Gate | The full gate is green. It passed host, web, Python, skill, lib, links, pyright, and memory. |
@@ -22,8 +23,9 @@ still show up in code comments.
 | CI | Framework CI covers Linux and Windows, with macOS `continue-on-error`. The release repo workflow builds Linux x86_64, Linux aarch64, and Windows x86_64 VST3/CLAP from a `v*` tag or a version dispatch, and attaches the archives to a GitHub Release. |
 
 The framework has moved past `31ecc64` with the design interview, the voice profile,
-and the docs rewrite. The 1.0.1 binaries haven't changed. The release docs are
-synced on `main`. A new release is only needed when the binaries change.
+and the docs rewrite. The release workflow now owns the plugin archives, so the
+hashes come from the GitHub build. A new release is only needed when the binaries
+change.
 
 ## 2. Settled decisions
 
@@ -42,8 +44,9 @@ evidence.
   package, rollback, recovery route, and `--device`.
 - **Licensing.** The source is GPL-3.0-only. The plugin binary carries JUCE 8's
   AGPL-3.0-only terms, and the brand font stays out.
-- **Targets.** VST3 comes first, CLAP sits behind a flag, AU comes later. Linux is
-  validated. macOS and the Windows plugin release are still open.
+- **Targets.** VST3 comes first, CLAP sits behind a flag, AU comes later. Linux
+  x86_64, Linux aarch64, and Windows x86_64 are validated release targets. macOS
+  and AU are still open.
 - **Architecture.** 20 voices, 2 parts, 4-op FM, 8 algorithms, 12 waveforms, two
   multimode filters, a wavefolder, per-operator feedback, key and velocity follow,
   and per-part algorithm and FM depth.
@@ -57,12 +60,15 @@ evidence.
   dichotomies, marketing hooks, aphorisms, or "A, not B" adversatives. Join the
   clauses and end on something concrete.
 - **Release.** `umetate publish` writes `RELEASES.md`, `SHA256SUMS`, and
-  `release.json`. Vendor dependencies are copied source-only, and build artefacts
-  stay in `build/`.
+  `release.json`. The product repository builds the archives from a tag or a
+  version dispatch and attaches them to a GitHub Release, separated by system and
+  architecture. Vendor dependencies are copied source-only, and build artefacts
+  stay out of the repository.
 - **Performance.** 45% ISR at 320 MHz with 20 voices, bit-exact. Hand-written asm
   and SIMD are deferred.
 - **Done.** Phases 0-7 are complete for host, browser, target package, emulator,
-  and Linux. The device layer stays blocked.
+  and Linux. The Linux x86_64, Linux aarch64, and Windows x86_64 release builds are
+  done. The device layer stays blocked.
 
 ## 3. Current work
 
@@ -70,10 +76,10 @@ The pyright gate is green now. I'd take the rest in this order.
 
 | # | Work | Done when | Status |
 | --- | --- | --- | --- |
-| 1 | Windows VST3/CLAP archives | The release workflow builds them, `RELEASES.md` lists them, and the checksums pass. | open |
+| 1 | Windows and Linux aarch64 VST3/CLAP archives | The release workflow builds them, `RELEASES.md` lists them, the checksums pass, and the architecture in each archive matches its label. | done |
 | 2 | macOS build and AU | A macOS host builds the VST3/AU, the validators pass, and the CI job stops being `continue-on-error`. | blocked |
 | 3 | Signed installers | The platform installers are signed and the release page links them. | open |
-| 4 | Vendored JUCE source archive | Every plugin release carries the source archive and the AGPL notice. | open |
+| 4 | Vendored JUCE source archive | The source asset carries `framework/plugin`, `vendor/deps`, and the AGPL notice for every plugin release. | open |
 | 5 | Usability test | A player who did not design the panel can make a sound and find save without help. | optional |
 | 6 | Performance follow-up | Hand-asm or SIMD is measured, bit-exact, and justified by a target need. | deferred |
 
@@ -89,8 +95,8 @@ These wait on something I can't supply from here.
 | Hardware FFT/vector parity | A device. |
 | `mask-rom` debrick | The USB_KEY dongle needs a USB solder. |
 | macOS build and AU | A macOS host. |
-| Windows plugin release | A Windows release build and signing path. |
-| Signed installers | Signing identities. |
+| Windows signed binaries | A code-signing certificate. |
+| Signed installers | Signing identities and an installer pipeline. |
 
 ## 5. What not to do
 
