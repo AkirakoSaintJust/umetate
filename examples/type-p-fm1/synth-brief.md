@@ -154,14 +154,14 @@ field → a `ui_param_disp` entry in the generated panel). A relative encoder st
 per the curve (linear = a fraction of the range, log = multiplicative), so each
 knob reaches its whole range in a sane number of turns and clamps at the ends.
 
-(`level` is the Yamaha total-level (0–99, 0.25 dB/step: 99 = max, 50 ≈ −12 dB,
+(`level` is the Yamaha total-level (0–99, 0.75 dB/step: 99 = max, 50 ≈ −37 dB,
 0 = silence) that gates the operator's
 output with −12 dB single-operator headroom (`fm1_level_gain[level] >> 2`), so a
 solo carrier never clips and a four-carrier additive algorithm sums to ~0 dBFS.
 `opN_feedback` is each operator's own self-modulation depth. The DX rates
 (`r1..r4`, `penv_r1..r4`) are 0–99 → a one-pole coefficient via
 `fm1_rate_coeff` (a non-uniform Yamaha-style curve: 99 = instant ≈ 0.73 ms, 0 ≈ 7 s). The DX levels (`l1..l3`) are
-0–99 → Q15 gain via `fm1_level_gain` (0.25 dB/step). `rate` is a Q32 phase
+0–99 → Q15 gain via `fm1_level_gain` (0.75 dB/step). `rate` is a Q32 phase
 increment per sample, `f · 2³² / 44100`, so ~97392 = 1 Hz. `depth` is `depth/32768` in the
 use's units: octaves of vibrato for `pitch_depth` (273 ≈ ±10 cents), fraction of
 full amplitude for `trem_depth` (~16000 ≈ ±50%). `ratio` is the q16 frequency

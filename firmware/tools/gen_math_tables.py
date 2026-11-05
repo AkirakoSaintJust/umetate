@@ -70,13 +70,15 @@ def main() -> None:
         min(65536, max(0, round(65536.0 * 2.0 ** (-((99 - r) ** 0.5) / 0.75))))
         for r in range(100)
     ]
-    # DX total-level -> gain (Q15), 0.25 dB/step: 99 = 32767 (0 dB, maximum), 50 ≈
-    # −12 dB (the perceptual half-loud point), 0 = silence. The gentler slope (was
-    # 0.75 dB/step, which put 50 at −37 dB ≈ inaudible) makes 0..99 a usable audio
-    # taper. The operator output level uses `fm1_level_gain[level] >> 2` for the
-    # −12 dB single-operator headroom (four additive carriers then sum to 0 dBFS).
+    # Yamaha total-level -> gain (Q15), 0.75 dB/step: 99 = 32767 (0 dB, maximum),
+    # 50 ≈ −37 dB, 0 = silence. This is the OPM/OPP scale: the OPM `TL` register is
+    # 0.75 dB per step, and the DX21/DX27/DX100 output level maps to it one step per
+    # level (`TL = 99 - level`). It also makes the modulation index match those
+    # synths: a level-75 modulator reaches π radians, not 4π. The operator output
+    # level uses `fm1_level_gain[level] >> 2` for the −12 dB single-operator
+    # headroom (four additive carriers then sum to 0 dBFS).
     level_gain = [0] + [
-        max(1, min(32767, round(32767.0 * 10.0 ** (-(99 - l) * 0.25 / 20.0))))
+        max(1, min(32767, round(32767.0 * 10.0 ** (-(99 - l) * 0.75 / 20.0))))
         for l in range(1, 100)
     ]
 

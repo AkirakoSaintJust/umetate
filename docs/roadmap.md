@@ -69,8 +69,9 @@ evidence.
   version dispatch and attaches them to a GitHub Release, separated by system and
   architecture. Vendor dependencies are copied source-only, and build artefacts
   stay out of the repository.
-- **Performance.** 45% ISR at 320 MHz with 20 voices, bit-exact. Hand-written asm
-  and SIMD are deferred.
+- **Performance.** 48% ISR at 320 MHz with 20 voices, bit-exact, on the boot
+  patch. Every operator at 100% feedback reads 50%. Hand-written asm and SIMD are
+  deferred.
 - **Done.** Phases 0-7 are complete for host, browser, target package, emulator,
   and Linux. The Linux x86_64, Linux aarch64, and Windows x86_64 release builds are
   done. The device layer stays blocked.

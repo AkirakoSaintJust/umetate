@@ -72,9 +72,9 @@ one-unit step to take over. A decay to a sustain level flattens as it approaches
 that level, which is the shape that makes an electric piano bark and then settle.
 
 The one-unit floor also sets the slowest possible movement. At rate 0 a step of 1
-unit per tick covers 4681 units in 3.4 s, so any move smaller than that runs at
+unit per tick covers 9362 units in 6.8 s, so any move smaller than that runs at
 one unit per tick whatever the exponential would do. One level step at the top of
-the range is about 930 units and takes 0.68 s at rate 0. The floor keeps the
+the range is about 2710 units and takes 2.0 s at rate 0. The floor keeps the
 envelope converging instead of stalling, and it puts a hard lower bound on how
 slowly a small level change can move.
 

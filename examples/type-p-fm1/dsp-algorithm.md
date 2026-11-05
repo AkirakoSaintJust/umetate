@@ -64,7 +64,7 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   | `l3` | level | 0…99 | sustain level |
 
   All block rate, modulatable. The rate is a table-looked one-pole coefficient. The
-  level is a table-looked gain (0.25 dB/step: 99 = max, 50 ≈ −12 dB, 0 = silence),
+  level is a table-looked gain (0.75 dB/step: 99 = max, 50 ≈ −37 dB, 0 = silence),
   so the UI knobs are linear 0–99.
 
 - **Coefficients / precompute:** `fm1_rate_coeff[100]` (Q16) and

@@ -919,9 +919,12 @@ void __NAME___dsp_note_on(uint32_t note, uint32_t velocity);
 void __NAME___dsp_render(int32_t *out, uint32_t frames);
 int __NAME___dsp_set_param(uint32_t id, int32_t value);
 static int32_t out[4096];
-static double rms(uint32_t n) {
+/* Measure the settled half. The level is block-derived, so the first blocks can
+   still carry the previous render's gate setting; the transient is not what this
+   test is about. */
+static double rms(uint32_t from, uint32_t n) {
     long long e = 0;
-    for (uint32_t i = 0; i < n; i++) e += (long long)out[2 * i] * out[2 * i];
+    for (uint32_t i = from; i < from + n; i++) e += (long long)out[2 * i] * out[2 * i];
     return sqrt((double)e / (double)n);
 }
 static double run(uint32_t note, int32_t on) {
@@ -929,7 +932,7 @@ static double run(uint32_t note, int32_t on) {
     __NAME___dsp_set_param(__KEY_ID__, on);
     __NAME___dsp_note_on(note, 100);
     __NAME___dsp_render(out, 2048);
-    return rms(2048);
+    return rms(1024, 1024);
 }
 int main(void) {
     double lo_on = run(24, 1), hi_on = run(96, 1);
@@ -3030,8 +3033,8 @@ def _fundamental(samples: list[int], rate: int = 44100) -> float:
 
 def _level_taper() -> tuple[bool, str]:
     """The operator level taper: 0 = silence, 99 = maximum, 50 = a meaningful
-    middle. Locks the 0.25 dB/step curve (0 = mute, 50 ≈ −12 dB) against the old
-    0.75 dB/step curve where 50 read as ~silence. A flat instant envelope keeps the
+    middle. Locks the 0.75 dB/step Yamaha total-level curve (0 = mute, 50 ≈ −37 dB)
+    against a flatter curve. A flat instant envelope keeps the
     measurement about the level, not the EG."""
 
     def patch(level: int) -> Patch:

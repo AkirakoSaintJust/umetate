@@ -57,9 +57,12 @@ The knob steps through a fixed ladder: multiples of 0.50, 1.00, 1.41, 1.57 and 1
 
 ### Level
 
-How loud the operator is inside the voice. 99 is full, 50 is about 12 decibels
-quieter, 0 is silent. For a modulator, the level is the modulation depth, so this
-is where the timbre is shaped as well as the volume. Extreme modulation levels get noisy, so be careful or take advantage of that.
+How loud the operator is inside the voice. The scale is the Yamaha total-level one:
+0.75 decibels per step, so 99 is full, 50 is about 37 decibels quieter, and 0 is
+silent. For a modulator, the level is the modulation depth, so this is where the
+timbre is shaped as well as the volume. A ratio 1 modulator at 75 gives about half
+a cycle of phase deviation, which is the saw-ish region. Extreme modulation levels
+get noisy, so be careful or take advantage of that.
 
 ### Feedback
 
@@ -340,7 +343,7 @@ cover. The ranges are the ones the panel shows.
 | Parameter | Range | Functionality |
 | --- | --- | --- |
 | RATIO | 0.50 to 16.00 | The operator's pitch as a multiple of the note. 1.00 leaves the operator at the note's base frequency, 2.00 an octave up, 0.50 an octave down. The knob stops on multiples of 0.50, √2, π/2 and √3, with 0.71, 0.79 and 0.87 near the bottom. Whole-number ratios sound clear, odd ratios reedy, and non-integer ratios clangy. |
-| LEVEL | 0 to 99 | The operator's output level. 99 is full, 50 is about 12 dB down, and 0 is silent. On a modulator this is the modulation depth. |
+| LEVEL | 0 to 99 | The operator's output level. 99 is full, 50 is about 37 dB down, and 0 is silent. The scale is the Yamaha total-level one, 0.75 dB per step. On a modulator this is the modulation depth, and 75 is about half a cycle at ratio 1. |
 | FEEDBACK | 0 to 100% | The operator's output fed back into its own phase. 0 is clean, higher values roughen the wave, and the top turns to noise. A sine at 25 to 35% becomes a reverse saw. |
 | WAVE | 0 to 11 | The operator waveform. 0 to 8 are sine-derived and stay clean high up. 9 is pulse, 10 is square, and 11 is saw, all band-limited with mip maps. |
 | OP DETUNE | -50 to +50 cents | A fine offset for one operator. Detuning two operators that would be in unison thickens the sound. Detuning a modulator adds beating. |
@@ -399,7 +402,7 @@ cover. The ranges are the ones the panel shows.
 
 | Parameter | Range | Functionality |
 | --- | --- | --- |
-| PART 1/2 LEVEL | 0 to 99 | The part's output level. 99 is full, 50 is about 12 dB down, and 0 is silent. |
+| PART 1/2 LEVEL | 0 to 99 | The part's output level. 99 is full, 50 is about 37 dB down, and 0 is silent. |
 | PART 1/2 DELAY | 0 to 1000 ms | Delays that part against the other. |
 | P1/P2 LOW/HIGH | note names | The key range for each part. Notes outside it are ignored by that part. |
 | P1/P2 CH | MIDI channel | The channel each part listens to. |

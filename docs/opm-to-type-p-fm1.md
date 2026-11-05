@@ -109,37 +109,33 @@ metal, and gong-like timbres.
 `DT1` is a fine detune with a key-dependent table, so start with 0 and add a few
 cents of Type P.fm1 detune only if the patch needs it.
 
-`TL` is the level control. The measured carrier curve is close to a straight line:
-OPM `TL` loses about 0.75 dB per step, while Type P.fm1 `level` loses about 0.25 dB
-per step. Within the overlap the mapping is:
+`TL` is the level control. Both engines use the Yamaha total-level scale: 0.75 dB
+per step, so the mapping is one OPM `TL` step per Type P.fm1 `level` step:
 
 | OPM `TL` | Type P.fm1 `level` | Attenuation |
 | --- | --- | --- |
 | 0 | 99 | 0 dB |
-| 8 | 75 | -6 dB |
-| 16 | 51 | -12 dB |
-| 24 | 27 | -18 dB |
-| 32 | 3 | -24 dB |
-| 33 and above | 0 | silent |
+| 8 | 91 | -6 dB |
+| 16 | 83 | -12 dB |
+| 24 | 75 | -18 dB |
+| 32 | 67 | -24 dB |
+| 64 | 35 | -48 dB |
+| 99 and above | 0 | silent |
 
-The practical formula is `level = 99 - 3 * TL`, clamped to 0 to 99. Type P.fm1 runs
-out of range above about `TL` 33, where OPM is still audible. A carrier at `TL` 40 is
-roughly -30 dB in OPM and silent in Type P.fm1 at level 0. If that quiet tail
-matters, you need a different gain stage or you accept the difference.
+The practical formula is `level = 99 - TL`, clamped to 0 to 99. Type P.fm1 runs
+out of range above `TL` 99, where OPM still has 21 dB left. A carrier at `TL` 110
+is about -82 dB in OPM and silent in Type P.fm1 at level 0. That tail is below
+the noise floor of most material.
 
 Modulators follow the same level curve. Type P.fm1's generated router scales the
 modulator path by 2 and the phasor scales that by 2^20. A level-99 modulator
 reaches four cycles of phase deviation, which is the OPM's full-scale index at
-`TL` 0. A two-operator test at ratio 1:1 confirms the curve: the Type P.fm1
-centroid follows the OPM centroid within about 11 percent from `TL` 0 to `TL` 32,
-and both engines fall silent as the modulator level runs out. Use the same
-`level = 99 - 3 * TL` formula for modulators and carriers.
-
-The two engines still part company above `TL` 32, where the Type P.fm1 level
-reaches 0 and the OPM level is still audible. OPM's `TL` step is about 0.75 dB and
-the Type P.fm1 step is about 0.25 dB, so the 0 to 99 range covers 24.75 dB against
-the OPM's 96 dB. A very quiet modulator or carrier cannot be reproduced without a
-different gain stage.
+`TL` 0. The index at a level follows the same 0.75 dB step, so the DX21, DX27 and
+DX100 line up too: their output level maps to `TL = 99 - level`, and a level-75
+modulator reaches π radians in both. A two-operator test at ratio 1:1 confirms the
+curve: the Type P.fm1 centroid follows the OPM centroid within about 11 percent
+from `TL` 0 to `TL` 32. Use the same `level = 99 - TL` formula for modulators and
+carriers.
 
 ## Feedback
 
@@ -213,7 +209,7 @@ unmuted in a normal conversion.
 ## Measured cases
 
 The cases below use the same note and the same operator ratios. Type P.fm1 uses
-`level = 99 - 3 * TL` for every operator. The measure is the full-band spectral
+`level = 99 - TL` for every operator. The measure is the full-band spectral
 centroid of the steady segment.
 
 | Case | OPM centroid | Type P.fm1 centroid | Result |
@@ -277,7 +273,7 @@ there.
 5. Set `algorithm.p0` from `CON`, but use algorithm 2 for OPM `CON` 3. The remap in
    the previous step supplies the OPM 3 graph.
 6. Set each ratio from `MUL`, folding `DT2` into the ratio if it is not zero.
-7. Set every level with `99 - 3 * TL`, clamped to 0 to 99. Carriers and modulators
+7. Set every level with `99 - TL`, clamped to 0 to 99. Carriers and modulators
    use the same formula.
 8. Set `op1_feedback.p0` from `FL`: 32767 for `FL` 7, and half for each step down
    the table above.
