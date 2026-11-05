@@ -9,6 +9,8 @@ Newest first.
 - Draws one amplitude envelope per operator on the HOME A-ENVS page.
 - Adds a confirmation popup before INIT PATCH.
 - The manual now includes the full panel walkthrough, the parameter reference, and the save, load, init, and copy flows.
+- The browser app draws the 240 by 240 screen at 1:1 on desktop and uses the plugin interface language, with self-hosted Zen Dots and DotGothic16.
+- The help panel covers playing, the panel controls, and the shortcuts. It links to the manual, release notes, and source on GitHub.
 
 ## 1.0.1
 

@@ -48,6 +48,14 @@ _EMU_EXPORTS = (
     "web_dim_keys",
 )
 _EMU_DIR = _ROOT / "firmware" / "web_emu"
+_TOKENS_CSS = _ROOT / "design" / "tokens.css"
+_FONT_DIR = _ROOT / "plugin" / "juce" / "resources" / "fonts"
+_WEB_FONTS = (
+    "DotGothic16-Regular.ttf",
+    "ZenDots-Regular.ttf",
+    "OFL-DotGothic16.txt",
+    "OFL-ZenDots.txt",
+)
 
 # the §12.1 seam functions the harness calls (exported from dsp.wasm)
 _SEAM_FUNCS = (
@@ -405,6 +413,11 @@ def build_app(synth_dir: Path, out: Path) -> int:
     out.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(_EMU_DIR / "index.html", out / "index.html")
     shutil.copyfile(_EMU_DIR / "worklet.js", out / "worklet.js")
+    shutil.copyfile(_TOKENS_CSS, out / "tokens.css")
+    fonts = out / "fonts"
+    fonts.mkdir(exist_ok=True)
+    for f in _WEB_FONTS:
+        shutil.copyfile(_FONT_DIR / f, fonts / f)
 
     if runner.probe().docker:
         rc = runner.run(_emcc_app_args(name, out, host=False), cwd="/work")

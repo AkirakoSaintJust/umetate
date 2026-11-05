@@ -61,6 +61,25 @@ _WEB_SOURCES = (
     (_EMU_DIR, "worklet.js"),
     (_WEB_BUILD, "firmware.wasm"),
 )
+_WEB_ASSETS = (
+    (_ROOT / "design" / "tokens.css", "tokens.css"),
+    (
+        _ROOT / "plugin" / "juce" / "resources" / "fonts" / "DotGothic16-Regular.ttf",
+        "fonts/DotGothic16-Regular.ttf",
+    ),
+    (
+        _ROOT / "plugin" / "juce" / "resources" / "fonts" / "ZenDots-Regular.ttf",
+        "fonts/ZenDots-Regular.ttf",
+    ),
+    (
+        _ROOT / "plugin" / "juce" / "resources" / "fonts" / "OFL-DotGothic16.txt",
+        "fonts/OFL-DotGothic16.txt",
+    ),
+    (
+        _ROOT / "plugin" / "juce" / "resources" / "fonts" / "OFL-ZenDots.txt",
+        "fonts/OFL-ZenDots.txt",
+    ),
+)
 
 # the corresponding source: the project's declarative synth + app glue + the design
 # specs. (The framework, umetate, is GPL-3.0 source in its own repo, linked in the
@@ -282,6 +301,13 @@ def _gather(synth_dir: Path, name: str, cname: str, out: Path) -> list[str]:
             got += 1
     if got < len(_WEB_SOURCES):
         missing.append("web app (run `umetate web-build` first)")
+    for src, rel in _WEB_ASSETS:
+        if src.is_file():
+            dest = web_out / rel
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dest)
+        else:
+            missing.append(f"web asset (no {src})")
 
     return missing
 

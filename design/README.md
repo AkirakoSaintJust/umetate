@@ -64,8 +64,8 @@ Families:
 | DotGothic16 | all other interface text, values, labels, buttons, notes | SIL Open Font License |
 | Digital Desolation Plus | `TYPE P.` wordmark prefix | unverified, do not bundle until cleared |
 
-The mockup loads both OFL families from Google Fonts after first paint. A
-production web build should self-host them. The JUCE build must bundle the OFL
+The web app self-hosts both OFL families with local fallbacks. The mockup loads
+them from Google Fonts after first paint. The JUCE build must bundle the OFL
 files as binary resources. The current mockup uses `Arial Black` as the `TYPE P.`
 prefix fallback because the brand font licence is not confirmed. The `fm1`
 suffix always uses Zen Dots.
@@ -283,8 +283,9 @@ graph cannot clip or touch the caption.
 
 ## Platform mapping
 
-- Web: use `tokens.css`. The mockup remains the visual reference. A production
-  page should load the OFL fonts non-blocking and keep local fallbacks.
+- Web: use `tokens.css`. The mockup remains the visual reference. The web app
+  self-hosts the OFL fonts with local fallbacks and draws the device at 1:1 on
+  desktop, so the 240 by 240 screen stays pixel-sharp.
 - JUCE: see `juce.md`. Generate `UiTokens` from `tokens.json` rather than typing
   the values again. Bundle the OFL fonts. Keep GPL-3.0-only.
 - HiDPI: draw in logical units and scale the whole editor uniformly. Do not scale

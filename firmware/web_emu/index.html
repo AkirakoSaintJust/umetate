@@ -9,68 +9,313 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>umetate — FM-1 emulator</title>
+<meta name="theme-color" content="#000000">
+<meta name="description" content="the Type P.fm1 firmware in the browser. the same 44.1 kHz engine as the device and the plugin, with the real 240 by 240 screen.">
+<title>TYPE P.fm1 web app</title>
+<link rel="stylesheet" href="tokens.css">
 <style>
-  body { background: #101316; color: #e6e8eb; margin: 0; padding: 16px 16px 40px;
-         font: 400 16px/1.5 system-ui, "Segoe UI", Arial, sans-serif; }
-  main { max-width: 1000px; margin: 0 auto; }
-  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: .4rem 1rem; margin-bottom: .6rem; }
-  h1 { font-size: 1.5rem; margin: 0; }
-  header p { margin: 0; color: #9aa1a9; font-size: .92rem; }
-  .devicebox { overflow-x: auto; }
-  .device { position: relative; width: 100%; min-width: 560px; aspect-ratio: 1000 / 640; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+  @font-face {
+    font-family: "Zen Dots";
+    src: url("fonts/ZenDots-Regular.ttf") format("truetype");
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "DotGothic16";
+    src: url("fonts/DotGothic16-Regular.ttf") format("truetype");
+    font-display: swap;
+  }
+
+  * { box-sizing: border-box; }
+  html { color-scheme: dark; }
+  body {
+    background: var(--p1-bg, #000);
+    color: var(--p1-text, #d2d2d2);
+    margin: 0;
+    padding: 24px 20px 48px;
+    font: 400 16px/1.5 var(--p1-font-ui, "DotGothic16", "Cascadia Mono", ui-monospace, monospace);
+  }
+  main { max-width: 1400px; margin: 0 auto; }
+
+  .masthead { display: flex; flex-direction: column; gap: .25rem; margin: 0 0 1.4rem; }
+  .brandline {
+    margin: 0;
+    color: var(--p1-dim, #7d7d7d);
+    font: 400 12px/1.4 var(--p1-font-ui, "DotGothic16", ui-monospace, monospace);
+    letter-spacing: .02em;
+  }
+  .wordmark {
+    margin: 0;
+    display: flex;
+    align-items: baseline;
+    color: var(--p1-brand-ink, #d6d6d6);
+    font: 400 30px/1 var(--p1-font-display, "Zen Dots", ui-monospace, monospace);
+    letter-spacing: .02em;
+    text-transform: none;
+    text-shadow: 4px 4px 0 var(--p1-brand-shadow, #c2ad00);
+  }
+  .wordmark .prefix {
+    font-family: "Arial Black", Impact, sans-serif;
+    font-weight: 900;
+  }
+  .wordmark .suffix {
+    margin-left: 0;
+    font-family: var(--p1-font-display, "Zen Dots", ui-monospace, monospace);
+    text-transform: lowercase;
+  }
+  .wordmark .dot { color: var(--p1-pink, #ff2e7e); }
+
+  .stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem;
+    align-items: start;
+  }
+  .stage > * { min-width: 0; }
+  .device-column { max-width: 1000px; }
+  .devicebox { overflow-x: auto; padding-bottom: .4rem; min-width: 0; }
+  .device {
+    position: relative;
+    width: 100%;
+    max-width: 1000px;
+    min-width: 700px;
+    aspect-ratio: 1000 / 640;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+  }
   .device svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-  .device canvas { position: absolute; left: 30%; top: 6.875%; width: 23.6%; height: 36.875%; image-rendering: pixelated; background: #000; border-radius: 2px; }
+  .device canvas {
+    position: absolute;
+    left: 30%;
+    top: 6.875%;
+    width: 24%;
+    height: 37.5%;
+    image-rendering: pixelated;
+    background: var(--p1-bg, #000);
+    border-radius: 0;
+  }
   .controls { position: absolute; inset: 0; pointer-events: none; }
-  .hit { position: absolute; touch-action: none; cursor: pointer; border-radius: 12px;
-         pointer-events: auto; margin: 0; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; appearance: none; }
+  .hit {
+    position: absolute;
+    touch-action: none;
+    cursor: pointer;
+    border-radius: 0;
+    pointer-events: auto;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    appearance: none;
+  }
   .hit.knob { cursor: ns-resize; border-radius: 50%; }
-  .hit:focus-visible { outline: 2px solid #f0a043; outline-offset: 2px; }
-  .lit .btnface { fill: #f0a043; }
-  .lit text.btn { fill: #1b1205; }
+  .hit:not(.knob):hover { outline: 1px solid var(--p1-pink, #ff2e7e); outline-offset: 1px; }
+  .hit:focus-visible { outline: 1px solid var(--p1-green, #3dff9e); outline-offset: 3px; }
+  .lit .btnface { fill: var(--p1-pink, #ff2e7e); }
+  .lit text.btn { fill: var(--p1-bg, #000); }
   .keyface { transition: fill .06s; }
-  .lit .keyface.white { fill: #f3b25c; }
-  .lit .keyface.black { fill: #e0902c; }
-  .dim .keyface.white { fill: #f6dcb6; }
-  .dim .keyface.black { fill: #7a5326; }
-  .start { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(10,11,13,.55); border-radius: 4.4% / 6.9%; }
-  .start button { font: 600 1.1rem system-ui; letter-spacing: .03em; padding: .6em 1.4em; border-radius: 999px; border: 0; background: #f0a043; color: #1b1205; cursor: pointer; }
+  .lit .keyface.white { fill: var(--p1-pink, #ff2e7e); }
+  .lit .keyface.black { fill: var(--p1-pink-bright, #ff4d94); }
+  .dim .keyface.white { fill: var(--p1-faint, #4a4a4a); }
+  .dim .keyface.black { fill: var(--p1-bg, #000); }
+  .start {
+    position: absolute;
+    left: 30%;
+    top: 6.875%;
+    width: 24%;
+    height: 37.5%;
+    display: grid;
+    place-items: center;
+    background: var(--p1-bg, #000);
+    border: 1px solid var(--p1-line-strong, #2e2e2e);
+    border-radius: 0;
+  }
+  .start button {
+    font: 400 12px/1 var(--p1-font-ui, "DotGothic16", ui-monospace, monospace);
+    letter-spacing: .04em;
+    padding: .9em 1.7em;
+    border: 0;
+    background: var(--p1-pink, #ff2e7e);
+    color: var(--p1-bg, #000);
+    cursor: pointer;
+    text-transform: lowercase;
+  }
+  .start button:hover { background: var(--p1-pink-bright, #ff4d94); }
   .start[hidden] { display: none; }
-  .bar { display: flex; flex-wrap: wrap; gap: .4rem 1rem; align-items: center; margin-top: .7rem; color: #9aa1a9; font-size: .92rem; }
+
+  .narrow-hint {
+    display: none;
+    margin: .4rem 0 0;
+    color: var(--p1-dim, #7d7d7d);
+    font-size: 13px;
+  }
+  .bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .6rem .8rem;
+    margin-top: .8rem;
+  }
+  .led {
+    width: 8px;
+    height: 8px;
+    background: var(--p1-faint, #4a4a4a);
+    flex: 0 0 auto;
+  }
+  .led.on { background: var(--p1-green, #3dff9e); }
+  #status {
+    font: 400 11px/1.4 var(--p1-font-display, "Zen Dots", ui-monospace, monospace);
+    letter-spacing: .04em;
+    color: var(--p1-dim, #7d7d7d);
+    text-transform: lowercase;
+  }
+  #alert {
+    color: var(--p1-pink-bright, #ff4d94);
+    font: 400 12px/1.4 var(--p1-font-ui, "DotGothic16", ui-monospace, monospace);
+  }
   #alert:empty { display: none; }
-  #alert { color: #ffb4ab; font-weight: 600; }
-  kbd { font: 600 .85em ui-monospace, monospace; background: #1a1d21; border: 1px solid #2d3137; border-radius: 4px; padding: 0 .3em; }
+  #mute {
+    margin-left: auto;
+    background: var(--p1-pink, #ff2e7e);
+    color: var(--p1-bg, #000);
+    border: 1px solid var(--p1-pink, #ff2e7e);
+    border-radius: 0;
+    padding: .35em .9em;
+    font: 400 12px/1.2 var(--p1-font-ui, "DotGothic16", ui-monospace, monospace);
+    cursor: pointer;
+    text-transform: lowercase;
+  }
+  #mute:hover { background: var(--p1-pink-bright, #ff4d94); border-color: var(--p1-pink-bright, #ff4d94); }
+  #mute[aria-pressed="true"] { background: transparent; color: var(--p1-pink, #ff2e7e); border-color: var(--p1-pink, #ff2e7e); }
+  #mute[aria-pressed="true"]:hover { color: var(--p1-pink-bright, #ff4d94); border-color: var(--p1-pink-bright, #ff4d94); }
+
+  .guide { display: flex; flex-direction: column; gap: 1.4rem; }
+  .guide section { border-top: 1px solid var(--p1-line, #1c1c1c); padding-top: .8rem; }
+  .guide h2 {
+    margin: 0;
+    color: var(--p1-dim, #7d7d7d);
+    font: 400 11px/1.4 var(--p1-font-display, "Zen Dots", ui-monospace, monospace);
+    letter-spacing: .06em;
+    text-transform: lowercase;
+  }
+  .guide h2::before { content: "// "; color: var(--p1-faint, #4a4a4a); }
+  .guide p {
+    margin: .5rem 0 0;
+    color: var(--p1-text, #d2d2d2);
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  .guide strong { color: var(--p1-pink, #ff2e7e); font-weight: 400; }
+  .guide .note { color: var(--p1-dim, #7d7d7d); font-size: 13px; }
+  kbd {
+    font: 400 12px/1 var(--p1-font-ui, "DotGothic16", ui-monospace, monospace);
+    background: var(--p1-panel, #070707);
+    border: 1px solid var(--p1-line-strong, #2e2e2e);
+    border-radius: 0;
+    padding: .18em .38em;
+    white-space: nowrap;
+  }
+  .shortcuts {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: .35rem .8rem;
+    margin: .5rem 0 0;
+    font-size: 13px;
+  }
+  .shortcuts dt, .shortcuts dd { margin: 0; }
+  .shortcuts dd { color: var(--p1-dim, #7d7d7d); }
+  .links {
+    list-style: none;
+    padding: 0;
+    margin: .5rem 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem 1rem;
+    font-size: 13px;
+  }
+  a {
+    color: var(--p1-pink, #ff2e7e);
+    text-decoration: none;
+    border-bottom: 1px solid var(--p1-line-strong, #2e2e2e);
+  }
+  a:hover { color: var(--p1-pink-bright, #ff4d94); border-bottom-color: var(--p1-pink, #ff2e7e); }
+  a:focus-visible, button:focus-visible { outline: 1px solid var(--p1-green, #3dff9e); outline-offset: 3px; }
+
+  @media (min-width: 1280px) {
+    .stage { grid-template-columns: minmax(0, 1000px) minmax(18rem, 1fr); gap: 1rem; }
+  }
+  @media (max-width: 1279px) {
+    .guide { max-width: 40rem; }
+  }
+  @media (max-width: 760px) {
+    body { padding: 16px 14px 36px; }
+    .narrow-hint { display: block; }
+  }
 </style>
 </head>
 <body>
 <main>
-<header>
-  <h1>umetate · Type P.fm1</h1>
-  <p>the FM-1 firmware, running in the browser (44.1 kHz)</p>
+<header class="masthead">
+  <p class="brandline">p1onken // パンク派第１音響合成研究班</p>
+  <h1 class="wordmark"><span class="prefix">TYPE P.</span><span class="suffix">fm1</span><span class="dot">.</span></h1>
 </header>
 
-<div class="devicebox">
-<div class="device" id="device" role="group" aria-label="The FM-1">
-  <svg id="panel" viewBox="0 0 1000 640" aria-hidden="true"></svg>
-  <canvas id="screen" width="240" height="240" role="img" aria-label="The FM-1's screen"></canvas>
-  <div class="controls" id="controls" inert></div>
-  <div class="start" id="start"><button id="go" type="button">Switch on</button></div>
-</div>
-</div>
+<div class="stage">
+  <section class="device-column">
+    <div class="devicebox">
+      <div class="device" id="device" role="group" aria-label="the FM-1">
+        <svg id="panel" viewBox="0 0 1000 640" aria-hidden="true"></svg>
+        <canvas id="screen" width="240" height="240" role="img" aria-label="the FM-1 screen"></canvas>
+        <div class="controls" id="controls" inert></div>
+        <div class="start" id="start"><button id="go" type="button">switch on</button></div>
+      </div>
+    </div>
+    <p class="narrow-hint">on a narrow screen, scroll the panel sideways for the rest of the controls.</p>
+    <div class="bar">
+      <span class="led" id="led" aria-hidden="true"></span>
+      <span id="status" role="status">engine off. press switch on.</span>
+      <span id="alert" role="alert"></span>
+      <button id="mute" type="button" aria-pressed="false">mute</button>
+    </div>
+  </section>
 
-<div class="bar">
-  <span id="status" role="status">Off. Sound starts when you switch it on.</span>
-  <span id="alert" role="alert"></span>
-  <button id="mute" type="button" aria-pressed="false">Mute</button>
+  <aside class="guide">
+    <section>
+      <h2>play it</h2>
+      <p>press <strong>switch on</strong>, then play the keys. the computer keyboard plays the same notes: white keys <kbd>q</kbd> to <kbd>i</kbd> and <kbd>a</kbd> to <kbd>k</kbd>, black keys <kbd>1</kbd> to <kbd>0</kbd> and <kbd>-</kbd>.</p>
+    </section>
+    <section>
+      <h2>the panel</h2>
+      <p>on a knob, the arrow keys turn it. <kbd>page up</kbd> and <kbd>page down</kbd> turn it faster. on a button or key, hold <kbd>space</kbd> or <kbd>enter</kbd> to press it. <kbd>shift</kbd> + <kbd>space</kbd> latches a button.</p>
+    </section>
+    <section>
+      <h2>shortcuts</h2>
+      <dl class="shortcuts">
+        <dt><kbd>space</kbd></dt><dd>play</dd>
+        <dt><kbd>enter</kbd></dt><dd>rec</dd>
+        <dt><kbd>shift</kbd></dt><dd>sel</dd>
+        <dt><kbd>esc</kbd></dt><dd>home</dd>
+        <dt><kbd>z</kbd> / <kbd>x</kbd></dt><dd>octave down / up</dd>
+        <dt><kbd>↑</kbd> / <kbd>↓</kbd></dt><dd>select</dd>
+      </dl>
+    </section>
+    <section>
+      <h2>what this is</h2>
+      <p>the FM-1 firmware, compiled to WASM. it runs the same 44.1 kHz engine as the device and the plugin. the screen is the firmware's own 240 by 240 framebuffer.</p>
+    </section>
+    <section>
+      <h2>links</h2>
+      <ul class="links">
+        <li><a href="https://github.com/AkirakoSaintJust/type-p-fm1/blob/main/docs/manual.md" target="_blank" rel="noopener">manual</a></li>
+        <li><a href="https://github.com/AkirakoSaintJust/type-p-fm1/blob/main/docs/midi-and-sysex.md" target="_blank" rel="noopener">midi and sysex</a></li>
+        <li><a href="https://github.com/AkirakoSaintJust/type-p-fm1/blob/main/docs/patch-sheet.md" target="_blank" rel="noopener">patch sheet</a></li>
+        <li><a href="https://github.com/AkirakoSaintJust/type-p-fm1/blob/main/RELEASES.md" target="_blank" rel="noopener">releases</a></li>
+        <li><a href="https://github.com/AkirakoSaintJust/type-p-fm1" target="_blank" rel="noopener">source</a></li>
+      </ul>
+    </section>
+  </aside>
 </div>
-<p style="color:#9aa1a9; font-size:.85rem; line-height:1.55; margin-top:.9rem; max-width:60rem">
-  <kbd>Tab</kbd> moves between the knobs, buttons and keys. On a knob, the arrow keys turn it
-  (<kbd>Page Up</kbd> / <kbd>Page Down</kbd> faster). On a button or key, <kbd>Space</kbd> or
-  <kbd>Enter</kbd> presses it for as long as you hold it; <kbd>Shift</kbd>+<kbd>Space</kbd> keeps
-  a button held down until you press it again.<br>
-  While the FM-1 has focus, shortcuts play it: white keys 1-8 Q-I, 9-16 A-K; black keys 1-11
-  1-0, -; <kbd>Space</kbd> PLAY, <kbd>Enter</kbd> REC, <kbd>Shift</kbd> SEL (held),
-  <kbd>Esc</kbd> HOME, <kbd>Z</kbd> / <kbd>X</kbd> OCT- / OCT+, ↑ ↓ turn SELECT.</p>
 </main>
 
 <script type="module">
@@ -84,7 +329,16 @@ const WHITE = [0, 2, 4, 6, 7, 9, 11, 12, 14, 16, 18, 19, 21, 23, 24, 26];   // n
 const BLACK = [1, 3, 5, 8, 10, 13, 15, 17, 20, 22, 25];                       // the black keys
 const BLACK_AFTER = [0, 1, 2, 4, 5, 7, 8, 9, 11, 12, 14];                     // the white key each black key follows
 
-const BODY = "#3a3d42", TRAY = "#26282c", KEY_W = "#d9dadc", KEY_B = "#c9cacd", KNOB = "#1f2124", BTNC = "#2e3135", LABEL = "#e8e8ea";
+const css = getComputedStyle(document.documentElement);
+const token = (name, fallback) => css.getPropertyValue(name).trim() || fallback;
+const BODY = token("--p1-popup", "#1b1b1b");
+const TRAY = token("--p1-panel", "#070707");
+const KEY_W = token("--p1-dim", "#7d7d7d");
+const KEY_B = token("--p1-panel", "#070707");
+const KNOB = token("--p1-bg", "#000000");
+const BTNC = token("--p1-panel", "#070707");
+const LABEL = token("--p1-text", "#d2d2d2");
+const LINE = token("--p1-line-strong", "#2e2e2e");
 const $ = (id) => document.getElementById(id);
 
 const svg = $("panel");
@@ -94,20 +348,20 @@ function el(tag, attrs, parent = svg) {
   parent.appendChild(e);
   return e;
 }
-function text(parent, x, y, s, size, fill = LABEL, weight = 600) {
-  const t = el("text", { x, y, "text-anchor": "middle", "font-family": "system-ui, sans-serif",
+function text(parent, x, y, s, size, fill = LABEL, weight = 400) {
+  const t = el("text", { x, y, "text-anchor": "middle", "font-family": "\"DotGothic16\", ui-monospace, monospace",
                          "font-size": size, "font-weight": weight, fill, class: "btn", "pointer-events": "none" }, parent);
   t.textContent = s;
   return t;
 }
 
 // ---- the panel (a picture; the controls are hit-areas over it)
-el("rect", { x: 4, y: 4, width: 992, height: 632, rx: 44, fill: BODY });
+el("rect", { x: 4, y: 4, width: 992, height: 632, rx: 0, fill: BODY });
 const knobs = {};
 function knob(x, y, r, label, role) {
   const g = el("g", { class: "ctl knob" });
   el("circle", { cx: x, cy: y, r: r + 5, fill: TRAY }, g);
-  el("circle", { cx: x, cy: y, r, fill: KNOB, stroke: "#44474c", "stroke-width": 2 }, g);
+  el("circle", { cx: x, cy: y, r, fill: KNOB, stroke: LINE, "stroke-width": 2 }, g);
   el("line", { x1: x, y1: y - r + 5, x2: x, y2: y - r + 15, stroke: LABEL, "stroke-width": 3, "stroke-linecap": "round" }, g);
   text(g, x, y - r - 12, label, 15);
   knobs[label] = { g, x, y, angle: 0, role };
@@ -122,16 +376,16 @@ for (let i = 0; i < 4; i++) knob(610 + i * 104, 100, 22, "KNOB" + (i + 1), ENC["
 const buttons = {};
 function button(x, y, w, h, label, bit, two) {
   const g = el("g", { class: "ctl" });
-  el("rect", { x, y, width: w, height: h, rx: 9, fill: BTNC, stroke: "#4a4d52", "stroke-width": 1.5, class: "btnface" }, g);
+  el("rect", { x, y, width: w, height: h, rx: 0, fill: BTNC, stroke: LINE, "stroke-width": 1, class: "btnface" }, g);
   if (two) { text(g, x + w / 2, y + h / 2 - 1, label, 11); text(g, x + w / 2, y + h / 2 + 12, two, 11); }
   else text(g, x + w / 2, y + h / 2 + 5, label, 14);
   buttons[label] = { g, bit };
 }
-el("rect", { x: 58, y: 258, width: 210, height: 58, rx: 14, fill: TRAY });
+el("rect", { x: 58, y: 258, width: 210, height: 58, rx: 0, fill: TRAY });
 button(72, 268, 82, 38, "OCT-", BTN.OCTd);
 button(170, 268, 82, 38, "OCT+", BTN.OCTu);
-el("rect", { x: 300, y: 44, width: 236, height: 236, rx: 26, fill: "#111214" });
-el("rect", { x: 568, y: 160, width: 400, height: 140, rx: 18, fill: TRAY });
+el("rect", { x: 292, y: 36, width: 256, height: 256, rx: 0, fill: KNOB, stroke: LINE, "stroke-width": 2 });
+el("rect", { x: 568, y: 160, width: 400, height: 140, rx: 0, fill: TRAY });
 const ROW1 = [["FX", BTN.FX], ["SEL", BTN.SEL], ["ENV", BTN.ENV], ["LFO", BTN.LFO], ["EDIT", BTN.EDIT], ["GLO", BTN.GLO]];
 const ROW2 = [["HOME", BTN.HOME], ["SAVE", BTN.SAVE], ["ARP", BTN.ARP], ["SEQ", BTN.SEQ], ["PLAY", BTN.PLAY], ["REC", BTN.REC]];
 for (let i = 0; i < 6; i++) {
@@ -141,19 +395,19 @@ for (let i = 0; i < 6; i++) {
 
 const keys = [];
 (function keybed(x0, y0, w, h) {
-  el("rect", { x: x0, y: y0, width: w, height: h, rx: 18, fill: TRAY });
+  el("rect", { x: x0, y: y0, width: w, height: h, rx: 0, fill: TRAY });
   const pitch = (w - 24) / 16, kw = pitch * 0.78;
   for (let i = 0; i < 16; i++) {
     const g = el("g", { class: "ctl" });
-    el("rect", { x: x0 + 12 + i * pitch + (pitch - kw) / 2, y: y0 + h * 0.43, width: kw, height: h * 0.52, rx: kw / 2, fill: KEY_W, class: "keyface white" }, g);
+    el("rect", { x: x0 + 12 + i * pitch + (pitch - kw) / 2, y: y0 + h * 0.06, width: kw, height: h * 0.88, rx: 4, fill: KEY_W, stroke: LINE, "stroke-width": 1, class: "keyface white" }, g);
     keys[WHITE[i]] = { g };
   }
   BLACK_AFTER.forEach((a, k) => {
     const g = el("g", { class: "ctl" });
-    el("rect", { x: x0 + 12 + (a + 1) * pitch - kw / 2, y: y0 + h * 0.06, width: kw, height: h * 0.33, rx: kw / 2, fill: KEY_B, class: "keyface black" }, g);
+    el("rect", { x: x0 + 12 + (a + 1) * pitch - kw / 2, y: y0 + h * 0.06, width: kw, height: h * 0.52, rx: 4, fill: KEY_B, stroke: LINE, "stroke-width": 1, class: "keyface black" }, g);
     keys[BLACK[k]] = { g };
   });
-})(36, 340, 928, 270);
+})(36, 340, 928, 240);
 
 // ---- hit areas (invisible HTML controls over the picture, in reading order)
 const device = $("device"), controls = $("controls");
@@ -351,11 +605,17 @@ function drawLights(b, k, dim) {
 
 // ---- switching on
 let muted = false;
-$("mute").addEventListener("click", () => { muted = !muted; $("mute").setAttribute("aria-pressed", String(muted)); if (gain) gain.gain.value = muted ? 0 : 1; });
+const mute = $("mute");
+mute.addEventListener("click", () => {
+  muted = !muted;
+  mute.setAttribute("aria-pressed", String(muted));
+  mute.textContent = muted ? "unmute" : "mute";
+  if (gain) gain.gain.value = muted ? 0 : 1;
+});
 async function switchOn() {
   const go = $("go");
   go.disabled = true;
-  go.textContent = "Starting...";
+  go.textContent = "starting...";
   $("alert").textContent = "";
   try {
     const ac = new AudioContext({ sampleRate: 44100, latencyHint: "interactive" });
@@ -369,9 +629,15 @@ async function switchOn() {
     node.connect(gain).connect(ac.destination);
     node.port.onmessage = (e) => {
       const m = e.data;
-      if (m.type === "ready") $("status").textContent = "On (44.1 kHz).";
-      else if (m.type === "error") $("alert").textContent = "Could not start: " + m.message;
-      else if (m.type === "frame") { drawScreen(new Uint16Array(m.fb)); drawLights(m.buttons, m.keys, m.dim); }
+      if (m.type === "ready") {
+        $("status").textContent = "engine on, 44.1 kHz.";
+        $("led").classList.add("on");
+      } else if (m.type === "error") {
+        $("alert").textContent = "could not start: " + m.message;
+      } else if (m.type === "frame") {
+        drawScreen(new Uint16Array(m.fb));
+        drawLights(m.buttons, m.keys, m.dim);
+      }
     };
     node.port.postMessage({ type: "load", wasm }, [wasm]);
     await ac.resume();
@@ -379,8 +645,8 @@ async function switchOn() {
     controls.inert = false;
   } catch (err) {
     go.disabled = false;
-    go.textContent = "Switch on";
-    $("alert").textContent = "Could not start: " + (err && err.message || err);
+    go.textContent = "switch on";
+    $("alert").textContent = "could not start: " + (err && err.message || err);
   }
 }
 $("go").addEventListener("click", switchOn);
