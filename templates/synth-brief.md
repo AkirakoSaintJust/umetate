@@ -1,7 +1,7 @@
 # Synth brief
 
-> Copy this file into your project and replace the prompts. Keep one brief as
-> the source of truth. Delete options you reject instead of leaving them as
+> Copy this file into your project and replace the prompts. Keep one brief as the
+> source of truth. Delete the options you reject rather than leaving them as
 > maybe-decisions.
 
 ## 1. Instrument and player
@@ -28,9 +28,9 @@
 
 ### 2.1 Voice architecture (the node/macro graph)
 
-> The graph that `patch.json` will express. A fresh reader must be able to draw
-> it from this section alone. Feedback only via `delay1`/`delayN` (the graph is a
-> DAG).
+> This is the graph that `patch.json` will express, and a fresh reader must be able
+> to draw it from this section alone. Feedback runs only through `delay1` or
+> `delayN`, so the graph stays a DAG.
 
 - **Voice-zone graph** (instance ids, node/macro types, wires, `voice_out`):
 - **Global-zone graph** (single-instance: filter, effects, master):
@@ -40,8 +40,8 @@
 
 ### 2.2 Parameter manifest
 
-> The source of the generated `params.json`. List **every** parameter. The GUI and
-> MIDI map can only expose what is listed here (or marked internal).
+> This is the source of the generated `params.json`, so list **every** parameter.
+> The GUI and MIDI map can only expose what is listed here or marked internal.
 
 | Param (name) | Target `<instance>.<param>` | Min | Max | Default | Curve | Unit | Rate | Modulatable |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -49,7 +49,8 @@
 
 ### 2.3 Tables
 
-> Any wavetable / segments / spectrum / phase-map data (`tables:` → `const` XIP).
+> Any wavetable, segment, spectrum, or phase-map data, expressed as `tables:` and
+> emitted as `const` XIP.
 
 - **Table name → kind, shape/size/points:**
 

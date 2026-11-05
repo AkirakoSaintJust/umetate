@@ -54,6 +54,6 @@ Notes: __________________________________________________
        __________________________________________________
 ```
 
-A ratio of 1.00 is written 65536 in the panel's raw value. Levels and rates are
-0 to 99. Feedback, wavefolder amount, and depth values are 0 to 32767, where the
-middle is half. Detune is cents.
+A ratio of 1.00 is written 65536 in the panel's raw value, whilst levels and rates
+use 0 to 99. Feedback, wavefolder amount, and depth values run 0 to 32767, with
+the middle at half. Detune is in cents.

@@ -1,7 +1,7 @@
 # FM-1 / SMK-37 platform facts
 
-The canonical, evidence-tagged hardware and platform facts used by the roadmap,
-tutorial, and release checklist. This is a reference, not a status file.
+These are the canonical, evidence-tagged hardware and platform facts used by the
+roadmap, the tutorial, and the release checklist. Treat this as a reference:
 [`roadmap.md`](roadmap.md) is the only status authority.
 
 Confidence tags: `vendor` (JieLi AC79 docs), `stock-code` (stock FW/disassembly),

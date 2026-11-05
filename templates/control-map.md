@@ -1,21 +1,21 @@
 # Control map (UI plan)
 
-> Fill this in during the UI interview. It becomes the `panel.json`. Delete
-> rejected options. One control map per project. The voice architecture and
-> parameter manifest (in `synth-brief.md`) are upstream of this: bind only
-> parameters that exist there.
+> Fill this in during the UI interview, and it becomes `panel.json`. Delete the
+> options you reject. One control map per project. The voice architecture and
+> parameter manifest in `synth-brief.md` are upstream, so bind only parameters that
+> exist there.
 >
 > **Do not author the panel until every section below is filled.** The ten-item
-> minimum bar is in `skills/umetate-development/SKILL.md` §2. The reasoning and
-> the design-language reference are in
-> `skills/umetate-development/references/ui-design.md`. The casebook is
+> minimum bar is in `skills/umetate-development/SKILL.md` §2, the reasoning and
+> design-language reference are in
+> `skills/umetate-development/references/ui-design.md`, and the casebook is
 > `ui-dossier.md`.
 
 ## 1. Surface inventory
 
 - **Board / revision:**
 - **Controls and their kinds** (momentary / latch / absolute / relative / pot / pad / fader / wheel / key / MIDI):
-- **Knob kinds** (smooth analog pot = volume vs detented encoder = parameter. Dedicated knob vs page-slot knob):
+- **Knob kinds** (smooth analogue pot = volume vs detented encoder = parameter. Dedicated knob vs page-slot knob):
 - **Silkscreen labels** (the printed name of each control, a fixed constraint the design must respect):
 - **Display / fonts / LEDs available:**
 - **Controls explicitly unmapped (and why):**
@@ -29,12 +29,12 @@
 
 ## 3. Contexts (modes) and their bindings
 
-> A context owns both its view and its control meaning. For **each** context,
-> fill a table like the one below, one row per control/MIDI source that does
-> something here, and a row for every on-enter/on-exit side effect.
+> A context owns both its view and its control meaning. For **each** context, fill
+> a table like the one below with one row per control or MIDI source that does
+> something here, and a row for every on-enter or on-exit side effect.
 >
 > First draw the **menu tree**, every context (menu), its pages, and the *modes*
-> within a page (a page whose widgets change under a hold/shift, or a multi-mode
+> within a page (a page whose widgets change under a hold or shift, or a multi-mode
 > page). A fresh reader must be able to draw the screen for every state from this
 > section alone.
 
@@ -109,8 +109,8 @@ the value never disagree.
 
 ## 8. Control flow (the state machine)
 
-> A fresh reader must trace every control through every context with no
-> ambiguity. Enumerate the transitions explicitly.
+> A fresh reader must be able to trace every control through every context without
+> ambiguity, so enumerate the transitions explicitly.
 
 - **Context transitions:** who pushes/pops what, and to where (`push` / `pop` /
   `pop_home` / `set_page` / `next_page` / `prev_page` / `bank_next` / `bank_prev`):

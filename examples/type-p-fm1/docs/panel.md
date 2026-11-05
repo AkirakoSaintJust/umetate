@@ -1,10 +1,10 @@
 # Type P.fm1 panel reference
 
-The panel is the real M-VAVE FM-1 surface. Here is what every control does, where
-every page is, and how to save.
+The panel is the real M-VAVE FM-1 surface, and this page covers what every control
+does, where every page lives, and how to save.
 
 I kept the live page flat on purpose. The four knobs always do something you can
-hear, and the deeper operator work stays behind EDIT.
+hear, whilst the deeper operator work stays behind EDIT.
 
 ## Controls
 
@@ -20,7 +20,7 @@ hear, and the deeper operator work stays behind EDIT.
 
 ## Four modes
 
-Four modes, switched with the buttons.
+The buttons switch between four modes.
 
 - **HOME** is the performance page. KNOB 1 to 4 are cutoff, resonance, wavefolder
   amount, and operator 1 feedback. The header shows the algorithm.
@@ -49,9 +49,9 @@ The envelope pages also draw the selected operator's envelope as a graph.
 
 ## Saving
 
-Press **SAVE**. A chooser opens for what to save: a single part or the multi
-patch, and which slot. The chooser owns the controls while it is open and closes
-on its own after about three seconds of no input. A save shows a brief
+Press **SAVE**, and a chooser opens for what to save: a single part or the multi
+patch, and which slot. The chooser owns the controls while it is open, and it
+closes on its own after about three seconds of no input. A save shows a brief
 acknowledgement on screen.
 
 There are 128 single-part slots and 64 multi-patch slots. Saving writes only when
@@ -59,12 +59,12 @@ the engine is quiet, so a save never clicks.
 
 ## Loading
 
-The preset browser opens from the **PRESETS** encoder. You can also load and back
-up the whole bank over SysEx, see the MIDI reference.
+The preset browser opens from the **PRESETS** encoder, and you can also load and
+back up the whole bank over SysEx (see the MIDI reference).
 
 ## What the screen shows
 
-The screen is 240 by 240. The header shows the algorithm, the selected operator,
-and the mute state where they apply. The footer shows the page gesture legend when
-there is room. Keys light as they sound, and the selected operator's key glows in
-the editor.
+The screen is 240 by 240, with the algorithm, the selected operator, and the mute
+state in the header where they apply. The footer shows the page gesture legend
+when there is room. Keys light as they sound, and the selected operator's key
+glows in the editor.

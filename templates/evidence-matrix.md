@@ -1,13 +1,13 @@
 # Evidence matrix
 
-> Copy this into the project and attach exact commands/artifacts. A lower layer
-> never proves a higher one. `blocked` and `not-run` are not passes. Validate
-> with `umetate evidence`.
+> Copy this into the project, attach the exact commands and artefacts, and
+> validate it with `umetate evidence`. A lower layer never proves a higher one,
+> and `blocked` or `not-run` is not a pass.
 
 | Layer | Status | Evidence | Notes |
 | --- | --- | --- | --- |
 | Source/static (`source`) | `not-run` | | Compiler, warnings, static checks |
-| Host behavior (`host`) | `not-run` | | Command, vectors, artifacts |
+| Host behaviour (`host`) | `not-run` | | Command, vectors, artefacts |
 | Browser/WASM (`browser`) | `not-run` | | Emscripten/browser versions, tolerance |
 | Target package (`target`) | `not-run` | | Toolchain/SDK hashes, map/report |
 | Emulator (`emulator`) | `not-run` | | fm1-emu run, model layer, not device |

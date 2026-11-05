@@ -1,8 +1,8 @@
 # Project plan
 
 > One living plan per project. Link the brief, feature contracts, load profile,
-> evidence matrix, DSP algorithms, and code structure instead of copying their
-> content. Delete superseded text.
+> evidence matrix, DSP algorithms, and code structure rather than copying their
+> content, and delete superseded text.
 
 ## 1. Snapshot
 

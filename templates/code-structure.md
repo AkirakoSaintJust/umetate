@@ -1,12 +1,12 @@
 # Custom code structure + interface
 
-> The exact granular structure of any code the project must write, beyond the
-> declarative `patch.json`/`panel.json`. When complete, translation is mechanical:
-> every file, signature, and data-layout decision is already made here. Link this
-> from `project-plan.md`. Do not duplicate it there.
+> This is the exact granular structure of any code the project has to write beyond
+> the declarative `patch.json` and `panel.json`. When it is complete, translation
+> is mechanical, because every file, signature, and data-layout decision is already
+> made here. Link it from `project-plan.md` rather than duplicating it there.
 
-> The invariant seam is `<synth>_dsp_*` (`<synth>` from the project name). The
-> generator emits it from a patch, and a hand-written `dsp.c` must match the same
+> The invariant seam is `<synth>_dsp_*`, with `<synth>` from the project name. The
+> generator emits it from a patch, and a hand-written `dsp.c` has to match the same
 > shape (`firmware/README.md` §1, `docs/roadmap.md` §12.1).
 
 ## 1. Files

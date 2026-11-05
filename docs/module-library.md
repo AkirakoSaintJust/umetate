@@ -2,6 +2,8 @@
 
 # Module library
 
+Every shipped node and macro, generated from its manifest. The summary is the contract, and the ports, params, and state are the exact interface.
+
 ## Nodes
 
 | Node | Summary | Ins | Outs | Params | State |

@@ -2,20 +2,21 @@
 
 ## MIDI in
 
-- **Receive channels:** one channel per part. Part 0 listens on channel 1, part 1
-  on channel 2, by default. Both are set by the part routing.
+- **Receive channels:** one channel per part. Part 0 listens on channel 1 and part
+  1 on channel 2 by default, and both are set by the part routing.
 - **Note on and off** carry velocity. Velocity zero is note off.
 - **Sustain** is CC 64.
 - **Panic, all notes off** is CC 123. It hard-cuts every voice.
 - **Pitch bend** bends the whole voice.
 - **Program change** selects a patch.
-- **Continuous controllers** map to parameters. Each exposed parameter gets a CC,
-  assigned in order from a base. The parameter list is the same one the panel
-  edits: algorithm, filter cutoff and resonance, wavefolder, the operator ratios,
-  levels, waveforms, feedback, mutes, and the envelopes, plus the voice modes.
+- **Continuous controllers** map to parameters, with each exposed parameter
+  getting a CC assigned in order from a base. The parameter list is the same one
+  the panel edits: algorithm, filter cutoff and resonance, wavefolder, the operator
+  ratios, levels, waveforms, feedback, mutes, and the envelopes, plus the voice
+  modes.
 
-The CC map is fixed, not user-assignable. The exact CC numbers are in the
-firmware's generated map, in the same order the panel walks the parameters.
+The CC map is fixed rather than user-assignable, and the exact CC numbers are in
+the firmware's generated map, in the same order the panel walks the parameters.
 
 ## SysEx
 
@@ -32,7 +33,7 @@ F0 00 21 1D <model> <cmd> <ver> <payload> <crc-lo> <crc-hi> F7
 - The two CRC bytes are a CRC-16-CCITT over the command through the payload,
   little-endian, checked before anything is parsed.
 
-There are five commands.
+The firmware answers five commands.
 
 | Command | What it does |
 | --- | --- |
@@ -54,5 +55,5 @@ Use any SysEx librarian that can send and receive raw SysEx. Request a parameter
 or part-patch dump and record the reply, then send it back to restore. The bank is
 128 single-part patches and 64 multi patches.
 
-A Type P.fm1 patch is a four-operator FM patch. It is not DX7-compatible, and a
-DX7 sysex file will not load. DX7 is a six-operator format.
+A Type P.fm1 patch is a four-operator FM patch, so a DX7 sysex file will not
+load, because DX7 is a six-operator format.

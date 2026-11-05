@@ -1,7 +1,7 @@
 # Feature contract
 
-> One contract per accepted feature. A feature is not "done" because the code
-> compiles. It is done when the contract and its evidence are satisfied.
+> One contract per accepted feature. Compiling is not the finish line: a feature
+> is done when the contract and its evidence are satisfied.
 
 ## Identity
 
@@ -52,7 +52,7 @@
 - **Target package check:**
 - **Physical timing/device check:**
 - **Tolerance/metric:**
-- **Evidence artifact:**
+- **Evidence artefact:**
 
 ## Risks and fallback
 

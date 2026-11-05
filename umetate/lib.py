@@ -131,6 +131,8 @@ def render_markdown() -> str:
         "<!-- GENERATED - do not edit. Source: modules/nodes/*/node.json + "
         "modules/macros/*/macro.json. Regenerate with `umetate lib generate`. -->\n\n"
         "# Module library\n\n"
+        "Every shipped node and macro, generated from its manifest. The summary is "
+        "the contract, and the ports, params, and state are the exact interface.\n\n"
         "## Nodes\n\n"
         "| Node | Summary | Ins | Outs | Params | State |\n"
         "| --- | --- | --- | --- | --- | --- |\n"
