@@ -284,8 +284,8 @@ graph cannot clip or touch the caption.
 ## Platform mapping
 
 - Web: use `tokens.css`. The mockup remains the visual reference. The web app
-  self-hosts the OFL fonts with local fallbacks and draws the device at 1:1 on
-  desktop, so the 240 by 240 screen stays pixel-sharp.
+  self-hosts the OFL fonts with local fallbacks and draws the device at 1:1 on a
+  wide desktop, so the 240 by 240 screen stays pixel-sharp.
 - JUCE: see `juce.md`. Generate `UiTokens` from `tokens.json` rather than typing
   the values again. Bundle the OFL fonts. Keep GPL-3.0-only.
 - HiDPI: draw in logical units and scale the whole editor uniformly. Do not scale
