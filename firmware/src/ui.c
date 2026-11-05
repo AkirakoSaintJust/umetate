@@ -867,10 +867,10 @@ static uint32_t ui_scope_channel(const ui_widget *w)
 }
 
 /* the oscilloscope: the selected channel's snapshot, downsampled to the widget
- * width, drawn as a line with a mid-line. Time-varying — redraws whenever the
- * snapshot advances (scope_seq), which the ISR bumps every block. The tap is
- * ×4 (the operator's −12 dB total-level headroom) so a full-level operator fills
- * the height. */
+ * width, drawn as a line with a mid-line. Time-varying - redraws whenever the
+ * snapshot advances (scope_seq), which the ISR bumps every block. The knee is
+ * half of a level-99 operator's tap, so a normal patch fills most of the height
+ * and a louder one soft-clips at the edge. */
 /* a scope sample -> the vertical pixel: a quarter-sine soft-clip (the existing
  * fm1_sin_q15 table). `shift` sets the knee — a sample of 2^(shift+8) fills the
  * widget and anything louder saturates at the edge, so the trace clips instead of
@@ -892,9 +892,12 @@ static int32_t ui_scope_y(int32_t s, int32_t ht, uint32_t shift)
 static void ui_draw_scope(const ui_widget *w)
 {
     uint32_t ch = ui_scope_channel(w), x, y, wd, ht, i;
-    /* the part mix (route.car) is ~4x hotter than a single operator: a 2x knee
-     * (shift 6 vs 5) keeps it at half the on-screen height. */
-    uint32_t shift = (w->param & 0x80u) ? 6u : 5u;
+    /* The operator level curve (0.75 dB per step) leaves a normal patch well
+     * below full scale. A 2x lower knee (shift 4 vs the old 5) restores most of
+     * the lost height, and a level-85 carrier still sits at about 0.8 of the
+     * widget instead of pinning at the top. The part mix is ~4x hotter, so its
+     * knee is one step wider. */
+    uint32_t shift = (w->param & 0x80u) ? 5u : 4u;
     int32_t mid, lx, ly;
     ui_region(w, &x, &y, &wd, &ht);
     if (wd < 2u)

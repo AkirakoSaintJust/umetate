@@ -525,6 +525,11 @@ void P1Scope::paint(juce::Graphics& g)
         return;
     juce::Path path;
     const int n = static_cast<int>(samples_.size());
+    /* The operator level is a Yamaha total-level curve, so a normal patch sits
+       well below full scale. A 4x soft-knee gain restores the old trace height
+       and the tanh keeps a loud trace inside the widget instead of squaring off
+       at its top. */
+    const float gain = 4.0f;
     if (n < 2) {
         path.startNewSubPath(area.getX(), area.getCentreY());
         path.lineTo(area.getRight(), area.getCentreY());
@@ -532,7 +537,7 @@ void P1Scope::paint(juce::Graphics& g)
         for (int i = 0; i < n; ++i) {
             const float x = area.getX() + area.getWidth() * i / (n - 1);
             const float y = area.getCentreY() -
-                            juce::jlimit(-1.0f, 1.0f, samples_[static_cast<size_t>(i)]) *
+                            std::tanh(samples_[static_cast<size_t>(i)] * gain) *
                                 area.getHeight() * 0.46f;
             if (i == 0)
                 path.startNewSubPath(x, y);
@@ -575,8 +580,11 @@ void P1Spectro::paint(juce::Graphics& g)
         for (int k = bin; k < juce::jmin(256, bin + 3); ++k)
             magnitude = juce::jmax(magnitude, fftData_[static_cast<size_t>(k)]);
         magnitude = magnitude / 512.0f;
+        /* The same 4x as the scope: the operator level curve leaves normal
+           patches well below full scale, so lift the log argument to keep the
+           bars readable. The clamp keeps a loud spectrum at full height. */
         const float level = juce::jlimit(
-            0.04f, 1.0f, std::log10(1.0f + magnitude * 90.0f));
+            0.04f, 1.0f, std::log10(1.0f + magnitude * 360.0f));
         const float height = level * (getHeight() - 2.0f);
         g.setColour(colour(i % 5 == 0 ? tokens::purple : tokens::pink));
         g.fillRect(i * barWidth + 1.0f, getHeight() - height, barWidth - 2.0f, height);
