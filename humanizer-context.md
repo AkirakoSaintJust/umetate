@@ -4,6 +4,11 @@ This file is auto-loaded by the humanizer skill. It overrides the generic defaul
 for umetate prose. Read it before rewriting a manual, a README, release notes, a
 panel section, or a guide or study.
 
+The runtime method is `skills/umetate-humanizer/SKILL.md`. That file carries the
+negation test, the connectivity pass, the aphorism ban, the "A, not B" ban, the
+registers, and the no-information-loss check. This file is the project-specific
+voice data.
+
 The hand-written manual is `examples/type-p-fm1/docs/manual.md`. The author rewrote
 it after the first release. That rewrite is the target, not the earlier, flatter
 version. The K5/K5000 guide rewrite in `doc-test/` is the guide calibration. It is

@@ -157,6 +157,7 @@ One table for the pieces I need to find quickly.
 **P8-8, Vendored JUCE archive.**, **open**, the release should carry the source archive and notice.
 **P8-9, Usability test.**, **open**, optional, a player who did not design the panel.
 **P8-10, Panel fixes.**, **done**, the PERFORMANCE page, TUNE on MONO STACK, per-operator A-ENVS graphs, and the INIT PATCH confirmation are in.
+**P8-11, Humanizer skill.**, **done**, the voice method is extracted to `skills/umetate-humanizer/`; the local `.agents` skill is a wrapper and keeps the pattern catalog.
 
 ## 8. Evidence and definition of done
 

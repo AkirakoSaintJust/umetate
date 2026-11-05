@@ -262,7 +262,8 @@ project has more docs, link them from the README and the manual index.
 
 This is the humanisation part, the anti-slop part. Apply it to every page. It is a
 distillation of the author's corpus and the usual AI-tell catalogue, aimed at
-technical prose, plus what good hardware manuals already do.
+technical prose, plus what good hardware manuals already do. The same method is
+packaged for prose outside the user docs as `skills/umetate-humanizer/SKILL.md`.
 
 **Do not flatten the voice.** The biggest failure mode is a manual that reads like a
 spec sheet. The first release did. The hand rewrite has 22 first-person pronouns and
