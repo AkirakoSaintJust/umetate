@@ -11,7 +11,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#000000">
 <meta name="description" content="the Type P.fm1 firmware in the browser. the same 44.1 kHz engine as the device and the plugin, with the real 240 by 240 screen.">
-<title>TYPE P.fm1 web app</title>
+<title>type P.fm1 web app</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="tokens.css">
 <style>
@@ -53,15 +53,6 @@
     letter-spacing: .02em;
     text-transform: none;
     text-shadow: 4px 4px 0 var(--p1-brand-shadow, #c2ad00);
-  }
-  .wordmark .prefix {
-    font-family: "Arial Black", Impact, sans-serif;
-    font-weight: 900;
-  }
-  .wordmark .suffix {
-    margin-left: 0;
-    font-family: var(--p1-font-display, "Zen Dots", ui-monospace, monospace);
-    text-transform: lowercase;
   }
   .wordmark .dot { color: var(--p1-pink, #ff2e7e); }
 
@@ -259,7 +250,7 @@
 <main>
 <header class="masthead">
   <p class="brandline">p1onken // パンク派第１音響合成研究班</p>
-  <h1 class="wordmark"><span class="prefix">TYPE P.</span><span class="suffix">fm1</span><span class="dot">.</span></h1>
+  <h1 class="wordmark"><span class="word">type P</span><span class="dot">.</span><span class="suffix">fm1</span></h1>
 </header>
 
 <div class="stage">
@@ -287,7 +278,7 @@
       <p>press <strong>switch on</strong>, then play the keys. the computer keyboard plays the same notes: white keys <kbd>q</kbd> to <kbd>i</kbd> and <kbd>a</kbd> to <kbd>k</kbd>, black keys <kbd>1</kbd> to <kbd>0</kbd> and <kbd>-</kbd>.</p>
     </section>
     <section>
-      <h2>the panel</h2>
+      <h2>panel controls</h2>
       <p>on a knob, the arrow keys turn it. <kbd>page up</kbd> and <kbd>page down</kbd> turn it faster. on a button or key, hold <kbd>space</kbd> or <kbd>enter</kbd> to press it. <kbd>shift</kbd> + <kbd>space</kbd> latches a button.</p>
     </section>
     <section>
@@ -300,10 +291,6 @@
         <dt><kbd>z</kbd> / <kbd>x</kbd></dt><dd>octave down / up</dd>
         <dt><kbd>↑</kbd> / <kbd>↓</kbd></dt><dd>select</dd>
       </dl>
-    </section>
-    <section>
-      <h2>what this is</h2>
-      <p>the FM-1 firmware, compiled to WASM. it runs the same 44.1 kHz engine as the device and the plugin. the screen is the firmware's own 240 by 240 framebuffer.</p>
     </section>
     <section>
       <h2>links</h2>

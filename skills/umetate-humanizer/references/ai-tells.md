@@ -2,8 +2,9 @@
 
 This is the reviewed detection reference for the umetate humanizer. The original
 generic catalog had 55 patterns. This reference keeps the ones that matter for this
-voice and folds the rest into the main checklist. A pattern is a signal, not a
-verdict. Read `voice.md` and the skill before you change a sentence.
+voice, adds the product self-description tell, and folds the rest into the main
+checklist. A pattern is a signal, not a verdict. Read `voice.md` and the skill
+before you change a sentence.
 
 ## The patterns that matter
 
@@ -43,6 +44,7 @@ verdict. Read `voice.md` and the skill before you change a sentence.
 | P53 | Hedged enumeration: "There are several ways... In general, it is a good idea to consider..." | Give the specific change and the result. |
 | P54 | Argument residue: "While some might argue..." | State the claim and the evidence. |
 | P55 | Leftover hedge debris: "To some extent, arguably, definitely" | Pick one hedge or commit. |
+| P56 | Product self-description: a `what this is` section that restates the visible product and its specs | Cut the section. Use the space for the next action, the controls, or a real limit. |
 
 The patterns the original catalog had that are not listed here are covered by the
 main checklist, or they are generic detector noise that does not fit this voice.
@@ -65,6 +67,9 @@ three-item list is how humans write too.
   Do not vary a technical term for elegance.
 - **Reference and manual sections are self-contained.** Do not force a transition
   between parameter sections.
+- **A note next to a control is not a product description.** A line that explains
+  what the control does belongs there. The tell is a standalone `what this is`
+  section that describes the product instead of the task.
 - **The instrument can be the actor.** "The filter removes" is correct in a manual.
 - **Concrete triads and tip lists are content.** Three real settings are not
   padding.

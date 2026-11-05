@@ -158,7 +158,8 @@ One table for the pieces I need to find quickly.
 **P8-9, Usability test.**, **open**, optional, a player who did not design the panel.
 **P8-10, Panel fixes.**, **done**, the PERFORMANCE page, TUNE on MONO STACK, per-operator A-ENVS graphs, and the INIT PATCH confirmation are in.
 **P8-11, Humanizer skill.**, **done**, the voice method and the project voice data are folded into `skills/umetate-humanizer/`; the local `.agents` copy is removed.
-**P8-12, Web app interface.**, **done**, the browser app uses the plugin interface language, self-hosted OFL fonts, the design tokens, the 240 by 240 screen at 1:1 on a wide desktop, a help panel, and rendered doc links.
+**P8-12, Web app interface.**, **done**, the browser app uses the plugin interface language, self-hosted OFL fonts, the design tokens, the 240 by 240 screen at 1:1 on a wide desktop, and a help panel with `play it`, `panel controls`, `shortcuts`, and `links`. The `what this is` section is gone.
+**P8-13, Wordmark.**, **done**, the wordmark is `type P.fm1` in Zen Dots across the web app, the mockup, and the plugin. The brand font is unused.
 
 ## 8. Evidence and definition of done
 

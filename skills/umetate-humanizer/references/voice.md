@@ -134,6 +134,36 @@ slogan is not.
 Do not write "A, not B" as an adversative. Use "rather than", a separate sentence,
 or a "but" clause. The comma-not form is a spec-sheet habit.
 
+## Product self-description
+
+A standalone "what this is" section in the product's own interface is a writer's
+note left on the page. The reader is already looking at the instrument. The
+heading restates the category, and the paragraph offers proof the reader cannot
+use yet: "the firmware, compiled to WASM", "the same 44.1 kHz engine", "the real
+240 by 240 screen". All of it can be true and still be slop, because none of it
+helps the reader play a note.
+
+The tell is the mismatch between the reader's situation and the section's job. A
+person who opens the app wants to make a sound. A "what this is" section answers
+a question the maker is anxious about: is this a real instrument, is it the same
+engine, is the screen real. Put that proof in the README, the release notes, or
+the manual. In the app, spend the words on the next action, the controls, or a
+real limit.
+
+Before:
+
+> What this is
+> The FM-1 firmware, compiled to WASM. It runs the same 44.1 kHz engine as the
+> device and the plugin. The screen is the firmware's own 240 by 240 framebuffer.
+
+After:
+
+> Press switch on, then play the keys.
+
+If a fact is genuinely needed at that point, make it a limit: "This needs a
+browser with WebAudio and a current graphics driver." A limit helps the reader
+decide. A product description does not.
+
 ## Connectivity
 
 A guide joins a fact to its cause, condition, or specification. The model draft

@@ -40,8 +40,8 @@ Out of scope for the first release:
 - Audio input, sidechain, or an effect version.
 - Device flashing or firmware updates from the plugin.
 - A sample-accurate automation claim beyond the engine's 32-sample control block.
-- Bundling the Digital Desolation Plus brand font. The wordmark uses Arial Black
-  when the system has it, with a bold sans fallback.
+- Bundling the Digital Desolation Plus brand font. The wordmark is all Zen Dots,
+  so the brand font is unused and stays out of the binary.
 
 ## 2. Decisions
 
@@ -239,9 +239,8 @@ Milestone 3 implements:
 - `plugin/tools/gen_tokens.py` generates `UiTokens.h` from `design/tokens.json`.
   The JUCE editor reads only that header for colours, type sizes and metrics.
 - `DotGothic16` and `Zen Dots` are bundled with `juce_add_binary_data` under the
-  SIL Open Font License. The brand font is not bundled. The `TYPE P.` prefix uses
-  Arial Black, with a default bold sans fallback on systems that lack it. `fm1`
-  always uses Zen Dots.
+  SIL Open Font License. The wordmark is all Zen Dots (`type P.fm1`), and the
+  brand font is not bundled.
 - The editor canvas is fixed at 1240 by 985 logical pixels and scales uniformly
   to the host window. The host cannot reflow the pages.
 - Pages: patch settings, operators and fx / mod.
@@ -682,7 +681,7 @@ Docker gate. The generated `firmware/gen` must exist before CMake configures.
 | Parameter map misses a control | Coverage test fails | Fix the map, not the test |
 | Device preset round trip breaks | Byte mismatch | Use the C record functions, never a C++ copy |
 | Name limit surprises users | More than 15 characters typed | Show the limit in the rename dialog, keep device compatibility |
-| Brand font creeps into the binary | The wordmark looks different | Keep the Arial Black fallback and never bundle Digital Desolation Plus |
+| Brand font creeps into the binary | The wordmark looks different | Keep the wordmark all Zen Dots and never bundle Digital Desolation Plus |
 
 ## 15. Open questions
 

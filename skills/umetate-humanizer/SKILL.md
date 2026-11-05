@@ -190,6 +190,9 @@ A closing verdict that restates the paragraph is filler.
 - **Negative parallelism.** "not just X, but Y", "not X, it's Y", "less X than Y".
 - **Aphorisms and summary verdicts.**
 - **Meta-commentary.** "This is the detail most online summaries get wrong."
+- **Product self-description.** A standalone "what this is" section in the
+  product's own interface. The reader is already looking at the thing. Cut it or
+  replace it with the next action, the controls, or a real limit.
 - **Heading chains.** "The Engine", "The Filter", "The Envelope: Shaping Your
   Sound" for every section.
 - **False dichotomies.** "Most synths make you menu-dive. This one doesn't."
@@ -265,6 +268,7 @@ the fixes, the hard bans, and the before and after samples.
 | "A, not B" adversative | Use "rather than", a separate sentence, or a "but" clause. |
 | Aphorism | Replace with the concrete reason, instruction, or specific judgement. |
 | Meta-commentary | State the fact and let it stand. |
+| Product self-description | Cut the section. Use the space for the next action, the controls, or a real limit. |
 | Heading chain | Vary the grammar and use the reader's words. |
 | False dichotomy | Name the real difference or cut the contrast. |
 | Rule-of-three padding | List the real items. Two or four is fine. |

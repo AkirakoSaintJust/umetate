@@ -202,15 +202,14 @@ public:
 private:
     void drawWordmark(juce::Graphics& g)
     {
-        const auto brand = p1::ui::brandFont(p1::tokens::textWordmark);
         const auto display = p1::ui::displayFont(p1::tokens::textWordmark);
         const auto ink = p1::ui::colour(p1::tokens::brandInk);
         const auto shadow = p1::ui::colour(p1::tokens::brandShadow);
         const auto pink = p1::ui::colour(p1::tokens::pink);
 
         const float baseY = 42.0f;
-        const float prefixWidth = p1::ui::textWidth(brand, "TYPE P");
-        const float dotWidth = p1::ui::textWidth(brand, ".");
+        const float wordWidth = p1::ui::textWidth(display, "type P");
+        const float dotWidth = p1::ui::textWidth(display, ".");
         const float x = 16.0f;
         auto draw = [&g, baseY](const juce::String& text, const juce::Font& font,
                                 juce::Colour colour, float dx, float dy) {
@@ -221,12 +220,12 @@ private:
                                  p1::ui::textWidth(font, text) + 4.0f, 34.0f),
                        juce::Justification::bottomLeft, false);
         };
-        draw("TYPE P", brand, shadow, x + 4.0f, 4.0f);
-        draw(".", brand, shadow, x + prefixWidth + 4.0f, 4.0f);
-        draw("fm1", display, shadow, x + prefixWidth + dotWidth + 4.0f, 4.0f);
-        draw("TYPE P", brand, ink, x, 0.0f);
-        draw(".", brand, pink, x + prefixWidth, 0.0f);
-        draw("fm1", display, ink, x + prefixWidth + dotWidth, 0.0f);
+        draw("type P", display, shadow, x + 4.0f, 4.0f);
+        draw(".", display, shadow, x + wordWidth + 4.0f, 4.0f);
+        draw("fm1", display, shadow, x + wordWidth + dotWidth + 4.0f, 4.0f);
+        draw("type P", display, ink, x, 0.0f);
+        draw(".", display, pink, x + wordWidth, 0.0f);
+        draw("fm1", display, ink, x + wordWidth + dotWidth, 0.0f);
     }
 
     PluginEditor& editor_;

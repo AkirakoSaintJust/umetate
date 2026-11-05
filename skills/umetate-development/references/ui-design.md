@@ -308,6 +308,9 @@ and how to get back.
   chord the player has to remember.
 - **Mental map:** use the same page order and the same control positions across
   modes. A player should be able to predict where a control lives.
+- **No self-description.** Do not spend the page explaining what the instrument
+  is. The title, panel, and controls already say it. Use the words for the next
+  action or a real limit.
 - **Closure:** confirm that an action happened. A save, a load, a mute, and a
   page change all need a visible result.
 - **No dead ends:** every page has a way home and a way back.

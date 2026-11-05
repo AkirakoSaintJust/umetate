@@ -19,10 +19,11 @@ two-row operator envelopes.
 4. Square corners, flat fills, no gradients, no blur, no glow. The only shadow is
    the solid offset behind the wordmark.
 5. Type is lowercase and pixel-sharp. Headers use Zen Dots, everything else uses
-   DotGothic16. The wordmark and user-entered names keep their case. The `fm1`
-   suffix is lowercase Zen Dots.
+   DotGothic16. The wordmark keeps its mixed case: `type P.fm1`, with a pink dot
+   before `fm1`. User-entered names keep their case.
 6. Every label earns its place. No filler text such as voice counts, operator
-   counts, or descriptions of what the product already is.
+   counts, or a `what this is` section. The page shows the product. Use the words
+   for the next action, the controls, or a real limit.
 7. One algorithm per node, one meaning per colour, one home for every token.
 
 ## Colour
@@ -60,15 +61,14 @@ Families:
 
 | Family | Use | Licence |
 | --- | --- | --- |
-| Zen Dots | section titles, tabs, operator and part names, dialog titles, toolbar labels, status, wordmark suffix | SIL Open Font License |
+| Zen Dots | wordmark, section titles, tabs, operator and part names, dialog titles, toolbar labels, status | SIL Open Font License |
 | DotGothic16 | all other interface text, values, labels, buttons, notes | SIL Open Font License |
-| Digital Desolation Plus | `TYPE P.` wordmark prefix | unverified, do not bundle until cleared |
+| Digital Desolation Plus | reserved, unused | not bundled, not needed |
 
 The web app self-hosts both OFL families with local fallbacks. The mockup loads
 them from Google Fonts after first paint. The JUCE build must bundle the OFL
-files as binary resources. The current mockup uses `Arial Black` as the `TYPE P.`
-prefix fallback because the brand font licence is not confirmed. The `fm1`
-suffix always uses Zen Dots.
+files as binary resources. The wordmark is all Zen Dots. Digital Desolation Plus
+is not used in the interface and stays out of the binary.
 
 Scale:
 
@@ -98,14 +98,14 @@ Scale:
 | status | Zen Dots | 11 | lower |
 | algorithm label | Zen Dots | 10 | lower |
 | algorithm number | Zen Dots | 30 | lower |
-| wordmark prefix | Digital Desolation Plus | 30 | as drawn |
-| wordmark suffix | Zen Dots | 30 | lower |
+| wordmark | Zen Dots | 30 | `type P.fm1` |
 
 Tracking is tight, between 0.01em and 0.06em. Section titles carry a `//` prefix
-in `faint`. The wordmark is `TYPE P.` in the brand font and `fm1` in lowercase
-Zen Dots. It keeps the solid shadow. Zen Dots has one weight, so the suffix uses
-400 at the same 30px em size. The select text at 9px is the one survivor from the
-old scale and should be reviewed when the real control is rebuilt.
+in `faint`. The wordmark is `type P.fm1` in Zen Dots, with `type` lowercase, `P`
+uppercase, `.fm1` lowercase, and a pink dot before `fm1`. It keeps the solid
+shadow. Zen Dots has one weight, so the whole wordmark uses 400 at 30px. The
+select text at 9px is the one survivor from the old scale and should be reviewed
+when the real control is rebuilt.
 
 ## Metrics
 
@@ -161,9 +161,8 @@ Shape:
 ### Header
 
 Brand left, algorithm centre-left, output scope right, patch controls far right.
-The wordmark is `TYPE P.` in the brand font and `fm1` in lowercase Zen Dots,
-with a pink dot. The brand line is
-`p1onken // パンク派第１音響合成研究班` in 12px DotGothic `dim`.
+The wordmark is `type P.fm1` in Zen Dots, with the dot before `fm1` in pink. The
+brand line is `p1onken // パンク派第１音響合成研究班` in 12px DotGothic `dim`.
 
 The algorithm block is a button. It shows a 30px Zen Dots number, a caret, and the
 routing graph. The graph is 240 by 128 in the viewBox, scaled to about 244 by 130.
@@ -279,6 +278,8 @@ graph cannot clip or touch the caption.
 - Part titles are `part n: name`.
 - Names use the device record limit of 15 characters, so a plugin bank
   round-trips with the device.
+- No `what this is` section. The page and the device show the product. Use the
+  space for the next action, the controls, or a real limit.
 - Do not add descriptions of the obvious.
 
 ## Platform mapping
@@ -342,8 +343,8 @@ dossier are in `skills/umetate-development/references/ui-design.md` and
 
 ## Open items
 
-- Confirm the Digital Desolation Plus licence before bundling it. Until then the
-  `TYPE P.` prefix uses Arial Black and the `fm1` suffix uses Zen Dots.
+- Digital Desolation Plus is not used. The wordmark is all Zen Dots, so the brand
+  font licence no longer blocks packaging.
 - Review the 9px select text when the real control is built.
 - The `part settings` page is intentionally sparse at the top and fills with the
   two part visualisers. Do not add filler widgets to fill space.

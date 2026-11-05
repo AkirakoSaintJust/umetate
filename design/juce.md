@@ -54,12 +54,11 @@ glow.
 Bundle DotGothic16 and Zen Dots as binary resources. Both are SIL Open Font
 License. Do not load them from the network in the plugin.
 
-- Zen Dots: section titles, tabs, operator and part names, dialog titles, toolbar
-  labels, status, algorithm number and the lowercase `fm1` wordmark suffix.
+- Zen Dots: the wordmark, section titles, tabs, operator and part names, dialog
+  titles, toolbar labels, status and the algorithm number.
 - DotGothic16: everything else, including values, labels, buttons and notes.
-- Digital Desolation Plus: do not bundle until the licence is confirmed. Use the
-  Arial Black fallback for the `TYPE P.` wordmark prefix in the first build. Draw
-  `fm1` with Zen Dots in both cases.
+- Digital Desolation Plus: not used in the interface and not bundled. The
+  wordmark is all Zen Dots.
 
 JUCE takes a font height in logical pixels. Use the CSS pixel sizes from
 `tokens.json` directly at 1x. Keep the whole editor on one uniform scale factor
@@ -94,8 +93,9 @@ Every page fills the same height:
 
 ## Header
 
-- Draw `TYPE P.` with the brand font and `fm1` with Zen Dots, both at the 30px
-  wordmark size. Keep the solid `brandShadow` offset behind the whole wordmark.
+- Draw `type P.fm1` in Zen Dots at the 30px wordmark size, with `type` lowercase,
+  `P` uppercase, `.fm1` lowercase, and the dot in pink. Keep the solid
+  `brandShadow` offset behind the whole wordmark.
 - The algorithm block is a button. Draw the 30px number, the caret and the 240 by
   128 graph. Centre the graph content in its viewBox so the header and the picker
   tiles share one optical centre.
@@ -190,8 +190,8 @@ output to the host rate. Do not resample the input or change the core rate.
 
 ## Open items
 
-- Confirm the brand font licence. Until then the `TYPE P.` prefix uses Arial
-  Black with a default bold sans fallback.
+- The brand font licence is no longer a blocker. The wordmark is all Zen Dots,
+  and Digital Desolation Plus is not used or bundled.
 - Decide whether AU joins VST3 and CLAP in the first macOS build.
 - Device preset bank import and export through SysEx is a later milestone. The
   in-plugin 64 multi and 128 part banks are in.

@@ -77,8 +77,8 @@ These are the mistakes that cost time while building the mockup.
 - Do scrollers work and show a scrollbar in a normal browser?
 - Do note fields show both the MIDI number and the note name?
 - Does the legal state match the firmware manifest, with no invented controls?
-- Are the OFL fonts bundled or loaded non-blocking, and is the brand font still
-  unlicensed?
+- Are the OFL fonts bundled or loaded non-blocking, is the wordmark all Zen Dots,
+  and is the brand font out of the binary?
 - Does the page read as an instrument, not as a settings form for an app?
 
 ## Definition of done

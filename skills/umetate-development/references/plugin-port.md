@@ -43,8 +43,8 @@ invariant that is hardest to fix later.
 - MIDI is quantised to the control block. Test the offset behaviour, not only the
   block start.
 - The editor never owns audio state. It reads scope rings and writes parameters.
-- The brand font is not bundled. Ship only the OFL fonts whose licence texts
-  travel with them.
+- The wordmark is all Zen Dots. Do not bundle the brand font. Ship only the OFL
+  fonts whose licence texts travel with them.
 
 ## The evidence ladder
 
