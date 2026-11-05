@@ -89,6 +89,10 @@ The author did not remove factual limits ("you can't add...", "it isn't a
 universal system") or a scope contrast ("purely explanatory rather than factory
 schematics"). The target is the needless label negation, not every "not".
 
+The test: a negation earns its place only when it carries a causal link, a factual
+comparison, an explanation of something potentially counterintuitive, a real
+limit, or a correction of a misconception. If it carries none of those, cut it.
+
 ### The one loss
 
 > Harmonic 64 is missing for some quirky reason.

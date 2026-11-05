@@ -466,6 +466,16 @@ universal system" are information. A scope contrast stays: "purely explanatory
 rather than factory schematics." The target is the needless label negation, not
 every "not".
 
+The test: a negation earns its place only when it carries one of these:
+
+- a causal link,
+- a factual comparison,
+- an explanation of something potentially counterintuitive,
+- a real scope or limit,
+- a correction of a specific misconception.
+
+If it carries none of those, cut it. It is a debate move with no information.
+
 The tell: "It's not just a synth, it's a way of thinking." "This isn't about
 features, it's about feel." "Less a manual, more a conversation." "Not X. Y." "X
 isn't about Y, it's about Z." "It doesn't just do X, it does Y."

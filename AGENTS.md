@@ -64,7 +64,10 @@ parenthetical "(!)" are voice. Do not tighten a guide into a thesis, and do not 
 "I" to compensate for a flat draft.
 
 Do not introduce a thing by saying what it is not. Start with the positive, the
-cause, or the constraint. Keep factual limits and real scope contrasts.
+cause, or the constraint. Keep factual limits and real scope contrasts. A negation
+earns its place only when it carries a causal link, a factual comparison, a
+counterintuitive explanation, a real limit, or a correction. If it carries none of
+those, cut it.
 
 Before a manual preface or design note, run the design interview. `umetate
 interview --synth <project> --write` generates the form from the project's

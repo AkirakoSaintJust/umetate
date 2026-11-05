@@ -4421,3 +4421,28 @@ partials", "it isn't a universal system") and scope contrasts ("purely explanato
 rather than factory schematics") stay. The target is the needless label negation.
 The voice profile, the samples, the docs skill, the humanizer context, and the local
 humanizer profile now record the moves.
+
+### 13.39 Negation test and the full K5/K5000 rewrite (2026-11-05)
+
+The negation rule now has a decision test: a negation earns its place only when it
+carries a causal link, a factual comparison, an explanation of something
+potentially counterintuitive, a real limit, or a correction of a misconception. If
+it carries none of those, cut it.
+
+The whole K5/K5000 guide was rewritten around the author's first 70 lines. The
+first 70 lines are the author's, with three fixes: "take over from", "more of a
+specialised tool", and the restored "documented quirk". The rest is in the guide
+register: plain category openings, explanatory long sentences, first person in
+judgements, "whilst", "sort of", "and so on", "probably", "(!)", and factual
+comparisons instead of needless label negations.
+
+The audit: 7,208 words, mean 13.4, median 11, standard deviation 13.1, 17
+first-person tokens, 49 contractions, 27 brackets, 2 exclamation marks, no em
+dash or semicolon. The remaining "not" constructions are factual limits ("you
+can't add inharmonic partials"), comparisons ("a spectral contour rather than a
+low-pass"), corrections ("not a track-level credit"), or counterintuitive
+explanations ("they are not 64 levels sharing one envelope"). The needless label
+negations are gone.
+
+The document is in `doc-test/`, which is git-ignored. The skills, the humanizer
+context, and `AGENTS.md` carry the test.

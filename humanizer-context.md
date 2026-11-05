@@ -86,6 +86,10 @@ the guide. Do not add them back.
   contrasts ("purely explanatory rather than factory schematics").
 - If you remove a negation, keep the fact it carried.
 
+The test: a negation earns its place only when it carries a causal link, a factual
+comparison, a counterintuitive explanation, a real limit, or a correction of a
+misconception. If it carries none of those, cut it.
+
 The before and after table is in
 `skills/umetate-documentation/references/voice-samples.md` under "Replacing the
 negation".

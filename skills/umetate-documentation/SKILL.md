@@ -305,15 +305,17 @@ not. The author removed most "It's a X, not a Y" and "It's not an X" setups from
 guide. Start with the positive, the cause, or the constraint. Use a comparative or
 an attached qualification when the contrast is real. Keep factual limits ("you
 can't add inharmonic partials") and scope contrasts ("purely explanatory rather
-than factory schematics"). "It's not just a synth, it's a way of thinking", "not X,
-it's Y", "less X than Y", "X isn't about Y, it's about Z" are hooks. They invent a
-contrast so the sentence sounds deeper. Say what the thing is. If the contrast is
-real, state both sides plainly. `references/voice.md` has the full rule. A factual
-contrast is the exception, not the default: "It's not an emulation of any one
-Yamaha chip in particular, but it **is** a DX-style synth" names both sides and
-prevents a false expectation. "Each source is a complete voice path, rather than
-just the oscillator" is the same kind of attached qualification. The ban is on the
-theatrical "not just X, it's Y" hook.
+than factory schematics"). A negation earns its place only when it carries a causal
+link, a factual comparison, a counterintuitive explanation, a real limit, or a
+correction of a misconception. If it carries none of those, cut it. "It's not just a
+synth, it's a way of thinking", "not X, it's Y", "less X than Y", "X isn't about Y,
+it's about Z" are hooks. They invent a contrast so the sentence sounds deeper. Say
+what the thing is. If the contrast is real, state both sides plainly.
+`references/voice.md` has the full rule. A factual contrast is the exception, not
+the default: "It's not an emulation of any one Yamaha chip in particular, but it
+**is** a DX-style synth" names both sides and prevents a false expectation. "Each
+source is a complete voice path, rather than just the oscillator" is the same kind
+of attached qualification. The ban is on the theatrical "not just X, it's Y" hook.
 
 **No heading chains.** Do not write "The Engine", "The Filter", "The Envelope:
 Shaping Your Sound" for every section. Vary the grammar, use the reader's words, and
