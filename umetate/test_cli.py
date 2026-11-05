@@ -61,6 +61,13 @@ def _status_parses() -> None:
     assert "Phase 0" in buf.getvalue() and "Phase 2" in buf.getvalue()
 
 
+def _roadmap_line_limit() -> None:
+    from . import deep_check
+
+    rc = deep_check.main(["--roadmap"])
+    assert rc == 0, "docs/roadmap.md is over the 500-line limit"
+
+
 def _quick_check_json() -> None:
     from . import quick_check
 
@@ -1159,6 +1166,7 @@ def main() -> int:
         ("--help lists all commands", _help_lists_all),
         ("version prints __version__", _version_command),
         ("status parses the roadmap", _status_parses),
+        ("the roadmap stays under 500 lines", _roadmap_line_limit),
         ("quick-check --json emits the layer/status shape", _quick_check_json),
         ("lib list shows nodes + templates", _lib_lists),
         ("scaffold patch builds", _scaffold_builds),

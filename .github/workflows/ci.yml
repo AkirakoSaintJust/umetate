@@ -31,7 +31,7 @@ jobs:
           docker run --rm \
             -v "${{ github.workspace }}:/work" -w /work \
             umetate-host-build:latest \
-            python3 -m umetate.deep_check --python --skill --links
+            python3 -m umetate.deep_check --python --skill --links --roadmap
 
   plugin-linux-framework:
     # Framework test only. Product archives are built and attached to the

@@ -8,6 +8,9 @@ what I don't want to reopen. Read §2 before you change code, §3 before you pic
 work, and §5 before you propose a change. §10 maps the old section numbers that
 still show up in code comments.
 
+This file stays at or under 500 lines. `python -m umetate.deep_check --roadmap`
+enforces that, and `AGENTS.md` carries the compaction procedure.
+
 ## 1. Baseline
 
 | Item | State |

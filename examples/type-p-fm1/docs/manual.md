@@ -335,7 +335,7 @@ cover. The ranges are the ones the panel shows.
 
 | Parameter | Range | Functionality |
 | --- | --- | --- |
-| RATIO | 0.50 to 16.00 | The operator's pitch as a multiple of the note. 1.00 is unison, 2.00 an octave up, 0.50 an octave down. Whole-number ratios sound clear, odd ratios reedy, and non-integer ratios clangy. |
+| RATIO | 0.50 to 16.00 | The operator's pitch as a multiple of the note. 1.00 leaves it at the note's base frequency, 2.00 an octave up, 0.50 an octave down. Whole-number ratios sound clear, odd ratios reedy, and non-integer ratios clangy. |
 | LEVEL | 0 to 99 | The operator's output level. 99 is full, 50 is about 12 dB down, and 0 is silent. On a modulator this is the modulation depth. |
 | FEEDBACK | 0 to 100% | The operator's output fed back into its own phase. 0 is clean, higher values roughen the wave, and the top turns to noise. A sine at 25 to 35% becomes a reverse saw. |
 | WAVE | 0 to 11 | The operator waveform. 0 to 8 are sine-derived and stay clean high up. 9 is pulse, 10 is square, and 11 is saw, all band-limited with mip maps. |

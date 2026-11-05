@@ -102,6 +102,17 @@ one topic at a time. Ask for a specific patch, model, bug, or constraint, not a
 philosophy statement. Keep the raw notes private. Write the public design note from
 them, in the author's voice.
 
+## Roadmap
+
+`docs/roadmap.md` is the current dashboard and stays at or under 500 lines.
+`python -m umetate.deep_check --roadmap` enforces the limit. When the dashboard
+grows, compact it with the structure from commit `88f08db`: baseline, settled
+decisions, current work, blocked items, what not to do, project map, status
+ledger, evidence, risks, and the old section-number map. Move the detail into git
+history and name the archive commit in the header. Keep the `umetate status` phase
+and step lines in their format. The 88f08db text is a structural reference. Write
+the compacted prose fresh in the project voice.
+
 ## UI work
 
 Before a panel, screen, editor, or web UI change, read
