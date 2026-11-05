@@ -13,6 +13,7 @@ from __future__ import annotations
 from collections.abc import Iterator, Mapping
 
 from ._ir import GenError, to_c_identifier
+from ._ratio import ratio_detents
 from ._schema import Context, PanelBinding, PanelManifest, Widget
 
 # firmware/src/ui.h UI_PART_MAX: the header mute flags and the name slots are
@@ -230,34 +231,16 @@ _DISPLAY = {
     "porta": "UI_DISP_PORTA",
 }
 
-# The coarse-ratio detents: every integer multiple of these four bases, in Q16
-# (65536 = 1.00). The bases are the panel's decimal values, not their
-# irrational ideals: the raw landmark is rounded *up* so the 2-decimal display
-# shows 0.71/0.78/0.87 rather than the next lower hundredth.
-_RATIO_BASES: tuple[tuple[int, int], ...] = (
-    (1, 2),  # 0.50
-    (71, 100),  # 0.71
-    (78, 100),  # 0.78
-    (87, 100),  # 0.87
-)
-_Q16 = 65536
-_Q15_OCTAVE = 32768
 
-
+# The coarse-ratio detents are shared with the plugin editor. They are every
+# integer multiple of 0.5, 1, sqrt(2), pi/2 and sqrt(3), with sqrt(2)/2, pi/4 and
+# sqrt(3)/2 added in the lower range. See `umetate/_ratio.py`.
 def _ratio_landmarks(lo: int, hi: int) -> list[int]:
     """The sorted Q16 coarse-ratio landmarks in [lo, hi]."""
-    vals: set[int] = set()
-    for num, den in _RATIO_BASES:
-        k = 1
-        while True:
-            # ceil(base*k*65536), so the truncated 2-decimal display is the base.
-            v = (num * k * _Q16 + den - 1) // den
-            if v > hi:
-                break
-            if v >= lo:
-                vals.add(v)
-            k += 1
-    return sorted(vals)
+    return ratio_detents(lo, hi)
+
+
+_Q15_OCTAVE = 32768
 
 
 def _semi_landmarks(lo: int, hi: int) -> list[int]:

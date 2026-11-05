@@ -23,10 +23,11 @@ The Type P.fm1 side is a single-part patch. Part 2 is muted with `level.p1=0` an
 the operators are sine. The filters and wavefolder are off. The OPM side uses the
 same four operators, with `SLOT` 120 so all four key on.
 
-The comparison looks at the fundamental, the first sixteen harmonics relative to the
-fundamental, the harmonic centroid of those sixteen partials, and the odd-to-even
-harmonic ratio. Absolute output level is ignored because the two engines have
-different output gains.
+The measures are the full-band spectral centroid, the 95 percent roll-off
+frequency, the band energy above 1, 2, 4, and 8 kHz, and the odd-to-even harmonic
+ratio. None of them depends on a detected fundamental, which matters because a deep
+modulation index can move the strongest partial away from the note. Absolute output
+level is ignored because the two engines have different output gains.
 
 ## Mapping at a glance
 
@@ -35,8 +36,8 @@ different output gains.
 | `M1`, `C1`, `M2`, `C2` | `O1`, `O2`, `O3`, `O4` | direct |
 | `CON` 0 to 7 | `algorithm.p0` 0 to 7 | direct for 0, 1, 2, 4, 5, 6, 7, and 3 uses algorithm 2 with a remap |
 | `MUL` 0 to 15 | `opN_ratio.p0` | direct |
-| `TL` 0 to 127 | `opN_level.p0` 0 to 99 | measured curve for carriers, modulator level needs tuning |
-| `FL` 0 to 7 | `op1_feedback.p0`, or `op2_feedback.p0` for algorithm 3 | approximate, OPM is brighter |
+| `TL` 0 to 127 | `opN_level.p0` 0 to 99 | measured for carriers and modulators, matched against VOPMex |
+| `FL` 0 to 7 | `op1_feedback.p0`, or `op2_feedback.p0` for algorithm 3 | approximate, the depth law differs |
 | `AR` | `attack.p0` or `opN.eg.r1.p0` | approximate |
 | `D1R` | `opN.eg.r2.p0` | approximate |
 | `D1L` | `opN.eg.l2.p0` | approximate |
@@ -121,28 +122,45 @@ out of range above about `TL` 33, where OPM is still audible. A carrier at `TL` 
 roughly -30 dB in OPM and silent in Type P.fm1 at level 0. If that quiet tail
 matters, you need a different gain stage or you accept the difference.
 
-Modulators do not follow the same curve. Type P.fm1's generated router scales the
-modulator path by 2, about 6 dB relative to the carrier, and its phase-modulation index
-changes at a different rate per level step. In a two-operator test at ratio 1:1, the
-closest Type P.fm1 level was 99 for OPM `TL` 0 through 32, 80 for `TL` 40, 30 for
-`TL` 48, and 5 for `TL` 64. The spectral distance stayed large even at the best
-match, so treat the carrier formula as a starting point and tune the modulator
-against the spectrum or by ear.
+Modulators follow the same level curve. Type P.fm1's generated router scales the
+modulator path by 32, and the phasor turns that into phase. A level-99 modulator
+reaches four cycles of phase deviation, which is the OPM's full-scale index at
+`TL` 0. A two-operator test at ratio 1:1 confirms the curve: the Type P.fm1
+centroid follows the OPM centroid within about 11 percent from `TL` 0 to `TL` 32,
+and both engines fall silent as the modulator level runs out. Use the same
+`level = 99 - 3 * TL` formula for modulators and carriers.
+
+The two engines still part company above `TL` 32, where the Type P.fm1 level
+reaches 0 and the OPM level is still audible. OPM's `TL` step is about 0.75 dB and
+the Type P.fm1 step is about 0.25 dB, so the 0 to 99 range covers 24.75 dB against
+the OPM's 96 dB. A very quiet modulator or carrier cannot be reproduced without a
+different gain stage.
 
 ## Feedback
 
 OPM feedback is the `FL` field on M1, with 0 to 7. Type P.fm1 has
 `op1_feedback.p0` from 0 to 32767, and the other operators have their own feedback
 controls. For OPM algorithm 3, M1 is `O2` in the remapped layout, so use
-`op2_feedback.p0` there. The two scales are not the same. With a two-operator patch
-and feedback on the modulator, OPM `FL` 7 produced a harmonic centroid of 1099 Hz.
-Type P.fm1 at 100% feedback produced 389 Hz with the mapped modulator level, and
-761 Hz with the modulator raised to 99. OPM stays brighter in both cases.
+`op2_feedback.p0` there.
 
-The harmonic balance also changes. OPM was odd-heavy in the test, with an odd-to-even
-ratio of +8.1 dB. Type P.fm1 at the bright setting was even-heavy, at -4.2 dB. Start
-at 32767 for `FL` 7, then raise the modulator level and listen for the point where
-the edge appears. The two synths will not match harmonic for harmonic.
+OPM's `FL` 7 averages the last two samples and shifts, which gives about two cycles
+of phase deviation at a full-level operator, and the depth follows the operator's
+own level. Type P.fm1 taps the raw oscillator with one sample of delay, so its
+feedback stays the same strength at every operator level and tops out at half a
+cycle. Matching OPM's depth law needs an average of two samples and a tap after the
+level, which is a graph change rather than a gain trim. I tested the tap after the
+level and the two-sample average in scratch builds. The depth then followed the
+level, but the loop landed in a different chaotic regime and the measured spectrum
+was two to four times brighter at the top of the level range.
+
+A gain change alone does not fix it. Measured on a single self-feedback operator at
+`FL` 7, the OPM centroid falls from 4343 Hz at `TL` 0 to 1997 Hz at `TL` 16 and
+411 Hz at `TL` 24. Type P.fm1 reads 5287 Hz at every one of those levels. Raising
+the gain does not make the curve track, and lowering it does not either.
+
+The harmonic balance differs too. OPM was odd-heavy in the test, at +8.1 dB, while
+Type P.fm1 at the bright setting was even-heavy, at -4.2 dB. Start at 32767 for
+`FL` 7 and tune by ear. The two synths will not match harmonic for harmonic.
 
 ## Envelope
 
@@ -180,45 +198,55 @@ unmuted in a normal conversion.
 
 ## Measured cases
 
-The cases below use the same note and the same operator ratios. The Type P.fm1
-"nominal" column uses the `level = 99 - 3 * TL` mapping. The "bright" column raises
-the modulator levels to 99.
+The cases below use the same note and the same operator ratios. Type P.fm1 uses
+`level = 99 - 3 * TL` for every operator. The measure is the full-band spectral
+centroid of the steady segment.
 
 | Case | OPM centroid | Type P.fm1 centroid | Result |
 | --- | --- | --- | --- |
-| Additive algorithm 7 | 454 Hz | 408 Hz | close |
-| Serial algorithm 0 | 1849 Hz | 970 Hz nominal, 1489 Hz bright | topology matches, OPM is brighter |
-| Algorithm 3 remap | 2458 Hz | 904 Hz nominal | graph matches, OPM is much brighter |
-| Parallel algorithm 4 | 1950 Hz | 652 Hz nominal, 734 Hz bright | topology matches, OPM is much brighter |
-| Feedback, `FL` 7 | 1099 Hz | 389 Hz at level 51, 761 Hz at level 99 | OPM is brighter, harmonic balance differs |
+| Additive algorithm 7 | 345 Hz | 348 Hz | same |
+| Serial algorithm 0 | 3604 Hz | 4989 Hz | topology matches, Type P.fm1 richer |
+| Algorithm 3 remap | 3311 Hz | 3359 Hz | graph matches, close |
+| Parallel algorithm 4 | 2635 Hz | 2810 Hz | topology matches, close |
+| Feedback, `FL` 7 | 974 Hz | 5075 Hz | loop differs, Type P.fm1 noisier |
 | Envelope pluck | -24.9 to -37.0 dB | -16.3 to -19.4 dB | OPM decays more |
 
-The additive case is the closest because there is no modulation index to match. The
-serial and parallel cases show the real limit: the operator graph maps, but the OPM
-modulation index is hotter than Type P.fm1 can reach at the same nominal level.
+The additive case has no modulation index, so it tests the level curve only. The
+serial case is the furthest apart because the index compounds through three stages,
+and a small difference at each stage adds up. The remapped algorithm 3 and the
+parallel algorithm 4 are within 7 percent.
+
+A two-operator pair at ratio 1:1 isolates the index. The modulator `TL` sweeps from
+0 to 64, and the centroid follows the OPM until the Type P.fm1 level runs out:
+
+| OPM `TL` | OPM centroid | Type P.fm1 centroid |
+| --- | --- | --- |
+| 0 | 3895 Hz | 4262 Hz |
+| 8 | 1947 Hz | 2049 Hz |
+| 16 | 969 Hz | 986 Hz |
+| 24 | 494 Hz | 495 Hz |
+| 32 | 532 Hz | 527 Hz |
+| 40 | 314 Hz | 262 Hz |
 
 ## Brightness and scaling
 
-The serial and parallel tests had `FL` 0, so feedback is not the cause of the
-brightness gap. The OPM core is brighter before feedback is involved. The difference
-comes from the modulator level and the phase-modulation index scale.
+The brightness of the two engines comes from the modulation index, and the index
+scale used to be wrong. The operators carry a -12 dB headroom for the four-carrier
+sum, and the router doubled the modulator path, so a level-99 modulator reached a
+quarter of a cycle of phase deviation where the OPM reaches four. That is a 24 dB
+shortfall, and no modulator level could close it.
 
-Type P.fm1's generated router already doubles the modulator path, about 6 dB
-relative to the carrier. I tested a scratch build with the modulator path doubled
-again, for 4x total. It moved the algorithm 4 centroid from 734 Hz to 1117 Hz and
-the algorithm 0 centroid from 1489 Hz down to 1325 Hz. The first got closer, the
-second got farther, so a single global gain does not make the two engines match. The
-harmonic balance moves as the index changes, and the OPM and P1 curves cross in
-different places.
+The router now scales the path by 32. A level-99 modulator reaches four cycles,
+the same as the OPM at `TL` 0, and the level curve does the rest. The feedback path
+bypasses the router, so its depth is unchanged.
 
-A closer match would need an opt-in per-operator FM depth or an OPM compatibility
-mode with a calibrated index curve, plus a separate feedback gain and curve. Keeping
-the default at 1.0 would preserve the current engine and its bit-exact tests. For
-now, the conversion can only put the modulators at 99 and accept the softer result.
+The sweep above is the evidence. With the old scale the Type P.fm1 pair read
+262 Hz to 524 Hz across `TL` 0 to 32, against the OPM's 494 Hz to 3895 Hz. The
+current build tracks the OPM within about 11 percent over the same span.
 
-The feedback gap is separate. OPM `FL` 7 is brighter than Type P.fm1 at 100%, and
-the odd-to-even balance differs. A feedback gain above the current 100% or a
-different feedback curve would be needed to close it.
+The feedback gap is separate and stays open. OPM averages two samples and follows
+the operator level, and Type P.fm1 does neither. Closing it needs a graph change in
+the feedback loop, not a gain constant.
 
 ## Conversion recipe
 
@@ -233,8 +261,8 @@ different feedback curve would be needed to close it.
 5. Set `algorithm.p0` from `CON`, but use algorithm 2 for OPM `CON` 3. The remap in
    the previous step supplies the OPM 3 graph.
 6. Set each ratio from `MUL`, folding `DT2` into the ratio if it is not zero.
-7. Set each carrier level with `99 - 3 * TL`, clamped to 0 to 99. Start modulators
-   at the same value and tune them against the spectrum.
+7. Set every level with `99 - 3 * TL`, clamped to 0 to 99. Carriers and modulators
+   use the same formula.
 8. Set `op1_feedback.p0` from `FL`, starting at 32767 for `FL` 7.
 9. Map the envelope rates and levels, then adjust `r2`, `r3`, `l2`, and `l3` until
    the decay sits where you want it.
@@ -244,9 +272,9 @@ different feedback curve would be needed to close it.
 
 ## Remaining differences
 
-The two engines differ in the phase-modulation index scale, the phase relationship
-between carrier and modulator, the level taper, the envelope timing, the feedback
-depth, and the LFO ranges. Type P.fm1 also has no noise generator and no per-voice
-pan. A conversion can preserve the operator graph and the ratio relationships, and
-it can get close on the level curve, but the spectrum will not be identical. That is
+The two engines differ in the feedback depth law, the phase relationship between
+carrier and modulator, the level taper at low levels, the envelope timing, and the
+LFO ranges. Type P.fm1 also has no noise generator and no per-voice pan. A
+conversion can preserve the operator graph, the ratio relationships, the level
+curve, and the modulation index, but the spectrum will not be identical. That is
 expected. The two chips share a family resemblance, but they are different designs.

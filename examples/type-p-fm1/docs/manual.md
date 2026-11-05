@@ -53,6 +53,8 @@ the pages and the `SEL` button moves between operators 1 to 4, then wraps around
 The pitch of the operator relative to the note, as a multiplier. 1.00 is the base, unmodified pitch.
 2.00 is an octave up, 4.00 two octaves up, and so on. 0.50 is an octave down. Whole-number ratios sound clear, odd ratios sound metallic/reedy, and non-integer ratios sound clangy and inharmonic, which can be industrial noise or struck-type sounds like marimbas, vibraphones, weird glassy pads, and the Taco Bell bell (I've never been to a Taco Bell but being terminally online has taught me Americans find this really funny.)
 
+The knob steps through a fixed ladder: multiples of 0.50, 1.00, 1.41, 1.57 and 1.73, with 0.71, 0.79 and 0.87 near the bottom. 1.41 is √2, 1.57 is π/2 and 1.73 is √3, so the inharmonic stops line up with the OPM detune table and with the ratios used for bells, metal and gongs. The readout shows two decimals, and typing a value snaps to the nearest stop.
+
 ### Level
 
 How loud the operator is inside the voice. 99 is full, 50 is about 12 decibels
@@ -83,7 +85,9 @@ otherwise be in unison thickens the sound and adds movement. Detuning modulators
 
 Four rates and three levels. Rate 1 is the attack, rate 2 and rate 3 are the two
 decay stages, rate 4 is the release. Level 1, 2, and 3 set where the envelope
-holds after each stage. Higher rates are faster, lower slower. The envelope is per-operator, so
+holds after each stage. Higher rates are faster, lower slower: a full-scale stage runs
+from 0.7 ms at 99 to about 16 s at 0. Each stage eases into its level rather than running
+in a straight line, so a decay covers most of its drop early and settles gently. The envelope is per-operator, so
 a modulator can fade in and out on its own schedule.
 
 ### Tremolo
@@ -335,7 +339,7 @@ cover. The ranges are the ones the panel shows.
 
 | Parameter | Range | Functionality |
 | --- | --- | --- |
-| RATIO | 0.50 to 16.00 | The operator's pitch as a multiple of the note. 1.00 leaves the operator at the note's base frequency, 2.00 an octave up, 0.50 an octave down. Whole-number ratios sound clear, odd ratios reedy, and non-integer ratios clangy. |
+| RATIO | 0.50 to 16.00 | The operator's pitch as a multiple of the note. 1.00 leaves the operator at the note's base frequency, 2.00 an octave up, 0.50 an octave down. The knob stops on multiples of 0.50, √2, π/2 and √3, with 0.71, 0.79 and 0.87 near the bottom. Whole-number ratios sound clear, odd ratios reedy, and non-integer ratios clangy. |
 | LEVEL | 0 to 99 | The operator's output level. 99 is full, 50 is about 12 dB down, and 0 is silent. On a modulator this is the modulation depth. |
 | FEEDBACK | 0 to 100% | The operator's output fed back into its own phase. 0 is clean, higher values roughen the wave, and the top turns to noise. A sine at 25 to 35% becomes a reverse saw. |
 | WAVE | 0 to 11 | The operator waveform. 0 to 8 are sine-derived and stay clean high up. 9 is pulse, 10 is square, and 11 is saw, all band-limited with mip maps. |

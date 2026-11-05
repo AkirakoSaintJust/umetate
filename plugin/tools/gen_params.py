@@ -12,6 +12,8 @@ import sys
 from pathlib import Path
 from typing import TypedDict, cast
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
 
 class ParamDoc(TypedDict):
     """One generated manifest row."""
@@ -57,6 +59,15 @@ def main() -> int:
     raw = cast(object, json.loads(source.read_text(encoding="utf-8")))
     data = cast(ParamsDoc, raw)
     params = data["params"]
+    from umetate._ratio import ratio_detents
+
+    ratio_params = [p for p in params if p["display"] == "ratio"]
+    ratio_detents_values: list[int] = []
+    if ratio_params:
+        ratio_detents_values = ratio_detents(
+            min(p["min"] for p in ratio_params),
+            max(p["max"] for p in ratio_params),
+        )
     names = [str(p["name"]) for p in params]
     part_param_count = sum(name.endswith(".p0") for name in names)
     part_count = len({name[-2:] for name in names if name.endswith((".p0", ".p1"))})
@@ -114,6 +125,16 @@ def main() -> int:
         f"inline constexpr int kP1PartCount = {part_count};",
         f"inline constexpr int kP1RoutingCount = {routing_count};",
         f"inline constexpr int kP1RoutingBase = {routing_base};",
+        "",
+        f"inline constexpr std::array<int32_t, {len(ratio_detents_values)}> "
+        "kP1RatioDetents = {",
+    ]
+    for i in range(0, len(ratio_detents_values), 12):
+        lines.append(
+            "    " + ", ".join(str(v) for v in ratio_detents_values[i : i + 12]) + ","
+        )
+    lines += [
+        "};",
         "",
     ]
     target.write_text("\n".join(lines), encoding="utf-8")

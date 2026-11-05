@@ -25,6 +25,40 @@ juce::String signedNumber(int value)
     return (value > 0 ? "+" : "") + juce::String(value);
 }
 
+int32_t snapRatio(int32_t value)
+{
+    if (kP1RatioDetents.empty())
+        return value;
+    const auto it = std::lower_bound(kP1RatioDetents.begin(),
+                                     kP1RatioDetents.end(), value);
+    if (it == kP1RatioDetents.begin())
+        return *it;
+    if (it == kP1RatioDetents.end())
+        return kP1RatioDetents.back();
+    const auto high = *it;
+    const auto low = *(it - 1);
+    return (value - low) <= (high - value) ? low : high;
+}
+
+/* The detent one step above (dir > 0) or below the current value. An
+   off-detent value moves to the neighbour on that side, so a typed 1.37 then
+   an up-arrow lands on 1.41 rather than 1.50. */
+int32_t stepRatioDetent(int32_t value, int dir)
+{
+    if (kP1RatioDetents.empty())
+        return value;
+    if (dir > 0) {
+        const auto it = std::upper_bound(kP1RatioDetents.begin(),
+                                         kP1RatioDetents.end(), value);
+        return it == kP1RatioDetents.end() ? kP1RatioDetents.back() : *it;
+    }
+    const auto it = std::lower_bound(kP1RatioDetents.begin(),
+                                     kP1RatioDetents.end(), value);
+    if (it == kP1RatioDetents.begin())
+        return *it;
+    return *(it - 1);
+}
+
 juce::String notePair(int note)
 {
     note = juce::jlimit(0, 127, note);
@@ -164,7 +198,13 @@ ParamKnob::ParamKnob(APVTS& state, juce::String paramID, juce::String label,
                                 juce::MathConstants<float>::pi * 2.75f, true);
     slider_.setLookAndFeel(&knobLookAndFeel());
     slider_.setMouseDragSensitivity(220);
-    slider_.onValueChange = [this] { updateValueText(); };
+    slider_.onDetentKey = [this](const juce::KeyPress& key) {
+        return stepRatio(key);
+    };
+    slider_.onValueChange = [this] {
+        snapValue();
+        updateValueText();
+    };
     addAndMakeVisible(slider_);
 
     name_.setText(label, juce::dontSendNotification);
@@ -222,12 +262,48 @@ void ParamKnob::updateValueText()
                        juce::dontSendNotification);
 }
 
+bool ParamKnob::isRatio() const
+{
+    return spec_ != nullptr && juce::String(spec_->display) == "ratio";
+}
+
+void ParamKnob::snapValue()
+{
+    if (!isRatio() || snapping_)
+        return;
+    const auto current = static_cast<int32_t>(std::lround(slider_.getValue()));
+    const auto snapped = snapRatio(current);
+    if (snapped == current)
+        return;
+    const juce::ScopedValueSetter<bool> guard(snapping_, true);
+    slider_.setValue(static_cast<double>(snapped), juce::sendNotificationSync);
+}
+
+bool ParamKnob::stepRatio(const juce::KeyPress& key)
+{
+    if (!isRatio())
+        return false;
+    const int code = key.getKeyCode();
+    int dir = 0;
+    if (code == juce::KeyPress::upKey || code == juce::KeyPress::rightKey)
+        dir = 1;
+    else if (code == juce::KeyPress::downKey || code == juce::KeyPress::leftKey)
+        dir = -1;
+    if (dir == 0)
+        return false;
+    const auto current = static_cast<int32_t>(std::lround(slider_.getValue()));
+    slider_.setValue(static_cast<double>(stepRatioDetent(current, dir)),
+                     juce::sendNotificationSync);
+    return true;
+}
+
 void ParamKnob::commitValue()
 {
     if (spec_ == nullptr)
         return;
     const double value = parseParamValue(*spec_, value_.getText());
     slider_.setValue(value, juce::sendNotificationSync);
+    snapValue();
     updateValueText();
 }
 

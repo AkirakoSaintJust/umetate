@@ -25,6 +25,59 @@ The per-operator controls are:
 The instrument also has a part-level pitch envelope with four rates, three levels,
 key scaling, and velocity. That envelope is shared by the operators in the part.
 
+## Stage lengths and curve shape
+
+The envelope runs at the control rate, 32 frames per tick, so one tick is 0.73 ms
+at 44.1 kHz. A stage moves the gain toward its level target with a one-pole step,
+using the coefficient the rate selects. It ends when the gain is within 8 units of
+the target, about 72 dB below full scale, so the times below run to the envelope's
+own floor rather than to silence in the room.
+
+| Rate | Coefficient | Time constant | Silence to level 99 | Level 99 to silence |
+| ---: | ---: | ---: | ---: | ---: |
+| 99 | 65536 | 0.7 ms | 0.7 ms | 0.7 ms |
+| 96 | 13222 | 3.6 ms | 26.8 ms | 27.6 ms |
+| 90 | 4096 | 11.6 ms | 92.2 ms | 93.6 ms |
+| 80 | 1167 | 40.7 ms | 295.3 ms | 296.1 ms |
+| 70 | 452 | 105.2 ms | 675.6 ms | 676.3 ms |
+| 64 | 277 | 171.7 ms | 1,023.1 ms | 1,023.9 ms |
+| 50 | 102 | 466.2 ms | 2,327.8 ms | 2,328.5 ms |
+| 40 | 54 | 880.6 ms | 3,843.6 ms | 3,844.4 ms |
+| 30 | 30 | 1,585.1 ms | 5,992.2 ms | 5,992.9 ms |
+| 20 | 18 | 2,641.9 ms | 8,641.5 ms | 8,642.2 ms |
+| 10 | 11 | 4,323.1 ms | 12,025.8 ms | 12,026.5 ms |
+| 0 | 7 | 6,793.5 ms | 15,844.7 ms | 15,845.4 ms |
+
+The shortest stage is one tick, 0.73 ms. A rate of 99 moves the whole span in one
+step, so nothing can be quicker. The longest is 15.8 s at rate 0, which is long
+enough for a slow swell on a held note and too long to release a voice in a dense
+chord. The two ends are about 21,800 apart. Attack and decay take the same time
+for the same span, because they use the same coefficient, and the release tracks
+them within a millisecond.
+
+Stage time is not the time constant. A plain one-pole needs about 8 time constants
+to come within 8 units of its target, and the forced one-unit step shortens that
+tail, so a full-scale stage runs for about 8 time constants at the fast end and
+2.3 at the slow end. The 7 s figure beside rate 0 in the table generator is the
+time constant.
+
+The curve is fixed. Each tick moves a constant fraction of the remaining gain, so
+the stage starts quickly and eases into its target. Measured at rate 50, the first
+half of the gain span arrives in 14 percent of the stage time and the first 90
+percent in 46 percent. On a 2.3 s attack, half the gain is in place after a third
+of a second and 90 percent after about a second, so the stage reads faster than
+its length suggests. A release to silence is an exponential decay, which is a
+straight line in decibels until the remaining gain is small enough for the
+one-unit step to take over. A decay to a sustain level flattens as it approaches
+that level, which is the shape that makes an electric piano bark and then settle.
+
+The one-unit floor also sets the slowest possible movement. At rate 0 a step of 1
+unit per tick covers 4681 units in 3.4 s, so any move smaller than that runs at
+one unit per tick whatever the exponential would do. One level step at the top of
+the range is about 930 units and takes 0.68 s at rate 0. The floor keeps the
+envelope converging instead of stalling, and it puts a hard lower bound on how
+slowly a small level change can move.
+
 ## Strengths
 
 The basic FM job is covered. A modulator envelope that falls makes the timbre soften

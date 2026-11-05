@@ -347,7 +347,8 @@ def main() -> int:
 
     # ratio + semi params carry sorted landmark tables, and every emitted table is
     # referenced from DISP_TBL (no orphan tables). The ratio first entries pin the
-    # 0.5 / 0.71 / 0.78 / 0.87 series; the semi ones pin integer-semitone detents.
+    # 0.50, sqrt(2)/2, pi/4, sqrt(3)/2, 1.00 series; the semi ones pin integer
+    # semitone detents.
     lms: PanelManifest = {
         "name": "lms",
         "contexts": {
@@ -372,8 +373,8 @@ def main() -> int:
     }
     lm_src = generate_panel(lms, lm_ids, lm_meta)
     ratio_ok = (
-        "UI_DISP_RATIO, 0, 32768, 1048576, 1, 92, LM_" in lm_src
-        and "32768, 46531, 51119, 57017, 65536" in lm_src
+        "UI_DISP_RATIO, 0, 32768, 1048576, 1, 88, LM_" in lm_src
+        and "32768, 46341, 51472, 56756, 65536" in lm_src
     )
     semi_ok = (
         "UI_DISP_SEMI, 0, -32768, 32767, 1, 25, LM_" in lm_src

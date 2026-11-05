@@ -32,17 +32,35 @@ public:
     void paint(juce::Graphics& g) override;
 
 private:
+    /* Arrow keys step a detented ratio knob to the next detent instead of
+       nudging the raw value, which would snap straight back to where it was. */
+    class KnobSlider : public juce::Slider {
+    public:
+        bool keyPressed(const juce::KeyPress& key) override
+        {
+            if (onDetentKey && onDetentKey(key))
+                return true;
+            return juce::Slider::keyPressed(key);
+        }
+
+        std::function<bool(const juce::KeyPress&)> onDetentKey;
+    };
+
     void updateValueText();
     void commitValue();
+    void snapValue();
+    bool stepRatio(const juce::KeyPress& key);
+    bool isRatio() const;
 
     APVTS& state_;
     juce::String paramID_;
     const P1ParamSpec* spec_ = nullptr;
-    juce::Slider slider_;
+    KnobSlider slider_;
     juce::Label name_;
     juce::Label value_;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> attach_;
     float dialSize_ = 42.0f;
+    bool snapping_ = false;
 };
 
 class P1Button : public juce::Button {
