@@ -2,6 +2,14 @@
 
 Newest first.
 
+## 1.0.2
+
+- Adds a live PERFORMANCE page to HOME with cutoff, resonance, wavefolder amount, and operator 1 feedback.
+- Moves TUNE to MONO STACK, so the part tune is reachable from a page knob.
+- Draws one amplitude envelope per operator on the HOME A-ENVS page.
+- Adds a confirmation popup before INIT PATCH.
+- The manual now includes the full panel walkthrough, the parameter reference, and the save, load, init, and copy flows.
+
 ## 1.0.1
 
 - This release works on units that ship the UC25HQ80 flash chip (JEDEC id
