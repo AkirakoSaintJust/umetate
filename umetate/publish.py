@@ -144,8 +144,7 @@ The screen is the same 240 by 240 panel you see on the device.
 
 ## Manual
 
-- [User manual](docs/manual.md), the sound and every parameter.
-- [Panel reference](docs/panel.md), the controls, the pages, and how to save.
+- [User manual](docs/manual.md), the sound, every parameter, and the panel walkthrough.
 - [MIDI and SysEx](docs/midi-and-sysex.md), the CC map and the SysEx format.
 - [Patch sheet](docs/patch-sheet.md), a printable form for writing patches down.
 

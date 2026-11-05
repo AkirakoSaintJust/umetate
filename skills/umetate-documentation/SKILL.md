@@ -1,7 +1,7 @@
 ---
 name: umetate-documentation
-description: Write thorough, readable, human documentation for end users of a synthesizer built on umetate. Covers the user manual, panel reference, MIDI and SysEx reference, patch sheet, installation guide, release notes, and technical guides or instrument studies. Includes a journalist-style design interview for the manual preface and design note. Rewrites are measured against the author's own corpus, hand-rewritten manual, and hand-rewritten guide so they read like a person wrote them. Never uses em dashes or semi-colons, never loses information, and bans negative parallelism, heading chains, false dichotomies, and marketing hooks. Preserves the author's contractions, asides, light UK slang, explanatory long sentences, joined clauses, and self-description.
-version: 1.4.5
+description: Write thorough, readable, human documentation for end users of a synthesizer built on umetate. Covers the user manual, including the panel walkthrough, the MIDI and SysEx reference, patch sheet, installation guide, release notes, and technical guides or instrument studies. Includes a journalist-style design interview for the manual preface and design note. Rewrites are measured against the author's own corpus, hand-rewritten manual, and hand-rewritten guide so they read like a person wrote them. Never uses em dashes or semi-colons, never loses information, and bans negative parallelism, heading chains, false dichotomies, and marketing hooks. Preserves the author's contractions, asides, light UK slang, explanatory long sentences, joined clauses, and self-description.
+version: 1.4.6
 license: GPL-3.0-only
 compatibility: OpenCode and Agent Skills-compatible loaders
 allowed-tools: read, grep, glob, edit, write, shell, websearch, webfetch
@@ -51,9 +51,9 @@ registers:
 - **Front door:** the README, release notes, and manual preface. The author is
   present, in first person, with a specific story, a concrete comparison, and a
   plain statement of what the instrument is not.
-- **Manual:** the manual, panel reference, MIDI reference, and install guide.
-  Warm technical prose. Address the reader as "you", use first person in section
-  intros and design asides, and keep procedures neutral.
+- **Manual:** the manual, including the panel walkthrough, the MIDI reference, and
+  the install guide. Warm technical prose. Address the reader as "you", use first
+  person in section intros and design asides, and keep procedures neutral.
 - **Guide or study:** a document about an existing instrument, a lineage, or a
   design question. The reader may not own the hardware. History is allowed. It
   opens with the plain category, uses definitions and causal links, and can carry
@@ -72,6 +72,10 @@ The hand rewrite is the manual calibration: 1,899 words, mean sentence 15.6, med
 13, standard deviation 12.1, 22 first-person pronouns, 33 contractions, 7 brackets,
 4 exclamation marks. The first release was 971 words, mean 11.3, median 10, standard
 deviation 6.4, 2 first-person pronouns, 1 contraction. The rewrite is the target.
+
+The current Type P.fm1 manual appends the panel section, so the file is longer than
+the 1,899-word hand rewrite. The hand-written preface and sound-design part remains
+the calibration for the prose. The panel section follows the same register.
 
 The guide rewrite is the guide calibration. Its first 70 lines moved from 689
 words in 58 sentences (mean 11.6, median 9.5, standard deviation 8.5, longest 52)
@@ -130,15 +134,15 @@ A synthesizer project ships these user-facing documents. Each one has a job.
 | Document | Job |
 | --- | --- |
 | README | The front door. What it is, one sentence. The web app link. How to install. |
-| User manual | Architecture and sound design, from the player's chair. |
+| User manual | Architecture, sound design, and the panel walkthrough, from the player's chair. |
 | Guide or instrument study | A historical or technical guide to an existing instrument or lineage. The reader may not own the hardware. |
-| Panel reference | Every control, menu, key combination, and how to save. |
 | MIDI and SysEx reference | The CC map, the note routing, the SysEx message format. |
 | Patch sheet | A blank form a user can print and write a patch on. |
 | Installation | How to flash the firmware and how to run the web app. |
 | Release notes | What changed in each version, for the person updating. |
 
-The manual and the panel reference are the two most read. Spend the most care there.
+The manual, including the panel section, is the most read page. Spend the most care
+there. `docs/panel.md` is a short redirect for old links.
 
 ## The user manual
 
@@ -192,11 +196,12 @@ preface and one-line tips. Never in a procedure, a warning, or a reference table
 Keep the author's self-description ("I'm more of a sound design gal"). Do not change
 "gal" to "guy" or "person".
 
-## The panel reference
+## The panel section
 
-Write the panel reference from the filled control map and `panel.json`, so the page
-inventory and the button chords match the firmware. `templates/panel-reference.md`
-is the shape.
+Write the panel section as part of the user manual, after the sound-design chapters
+and before the first-patch chapter. Read the filled control map and `panel.json`, so
+the page inventory and the button chords match the firmware.
+`templates/panel-reference.md` is the shape.
 
 A fresh reader must be able to move without guessing. Name every context button,
 say what pressing it again does, explain how the page encoder and HOME work, and
@@ -248,8 +253,9 @@ the project has a hand-written `publish-readme.md`, publish copies it verbatim a
 never overwrites it. Write that file by hand in the front-door register. The
 generated template is there for a project that does not have one yet.
 
-The four docs the generated README links to are `docs/manual.md`, `docs/panel.md`,
-`docs/midi-and-sysex.md`, and `docs/patch-sheet.md`. Keep those names. If the
+The three docs the generated README links to are `docs/manual.md`,
+`docs/midi-and-sysex.md`, and `docs/patch-sheet.md`. Keep those names. The manual
+includes the panel section. `docs/panel.md` is a redirect for old links. If the
 project has more docs, link them from the README and the manual index.
 
 ## The writing craft

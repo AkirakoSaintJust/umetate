@@ -2,7 +2,7 @@
 
 This file is auto-loaded by the humanizer skill. It overrides the generic defaults
 for umetate prose. Read it before rewriting a manual, a README, release notes, a
-panel reference, or a guide or study.
+panel section, or a guide or study.
 
 The hand-written manual is `examples/type-p-fm1/docs/manual.md`. The author rewrote
 it after the first release. That rewrite is the target, not the earlier, flatter
@@ -26,7 +26,9 @@ The first manual was 971 words: mean sentence 11.3, median 10, standard deviatio
 
 The hand rewrite is 1,899 words: mean sentence 15.6, median 13, standard deviation
 12.1, 22 first-person pronouns, 33 contractions, 7 brackets, 4 exclamation marks.
-The longest sentence is 66 words. The shortest fragment is one word.
+The longest sentence is 66 words. The shortest fragment is one word. The current
+manual appends the panel section, so the file is longer. The hand-written part
+remains the calibration.
 
 If a rewrite produces numbers near the first set, it has over-edited.
 

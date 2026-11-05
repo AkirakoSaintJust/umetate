@@ -19,9 +19,9 @@ the M-VAVE FM-1 and SMK-37, with help from AI agents. The firmware runs on **RIB
    references.
 3. **Safety skill**, documents the threat model, attack surfaces, and gates for
    writing to a device.
-4. **Documentation skill**, writes the user manual, panel reference, MIDI and
-   SysEx reference, patch sheet, installation guide, and release notes for a
-   finished project.
+4. **Documentation skill**, writes the user manual, including the panel section,
+   the MIDI and SysEx reference, patch sheet, installation guide, and release
+   notes for a finished project.
 5. **Docker image + volume**, a pinned Linux container, the JieLi toolchain lives
    in a Docker volume at `/opt/jieli` (vendor-terms compliance). It is mounted
    **read-only** for every build/test, and **read-write only for `umetate setup`**

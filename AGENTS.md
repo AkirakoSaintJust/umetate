@@ -53,10 +53,11 @@ manual, or reference register as the page requires. No em dashes. No semicolons.
 British spelling in prose. No marketing adjectives. No negative parallelism. No
 heading chains. No false dichotomies. One concrete example per major section.
 
-The hand-rewritten `examples/type-p-fm1/docs/manual.md` is the manual calibration.
-Keep its contractions, asides, light UK slang, and self-description. Do not flatten
-it back to a spec sheet. `humanizer-context.md` carries the same rules for the
-humanizer skill.
+The hand-written preface and sound-design part of
+`examples/type-p-fm1/docs/manual.md` is the manual calibration. The panel section
+follows the same register. Keep its contractions, asides, light UK slang, and
+self-description. Do not flatten it back to a spec sheet. `humanizer-context.md`
+carries the same rules for the humanizer skill.
 
 The K5/K5000 guide rewrite is the guide/study calibration. Plain category openings,
 explanatory long sentences, "whilst", "sort of", "and so on", "probably", and a
@@ -79,8 +80,9 @@ clear jobs beat six with vague ones". End on a concrete fact, an instruction, or
 specific judgement. Avoid the "A, not B" adversative. Use "rather than" or a
 separate sentence.
 
-Panel references follow `templates/panel-reference.md`. Write them from
-`panel.json` and the filled control map, with every page and every chord.
+Panel references are a section of the user manual and follow
+`templates/panel-reference.md`. Write them from `panel.json` and the filled control
+map, with every page, every chord, and every parameter.
 
 Before a manual preface or design note, run the design interview. `umetate
 interview --synth <project> --write` generates the form from the project's

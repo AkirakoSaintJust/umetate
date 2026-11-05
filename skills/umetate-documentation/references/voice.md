@@ -115,8 +115,8 @@ same voice in the manual preface.
 
 ### Manual
 
-The user manual, the panel reference, the MIDI and SysEx reference, the
-installation guide. This is the author explaining the instrument at the bench.
+The user manual, including the panel section, the MIDI and SysEx reference, and
+the installation guide. This is the author explaining the instrument at the bench.
 
 - Address the reader as "you". "Turn the knob" beats "the user turns the knob".
 - Use first person in section intros and design asides: "I put the wavefolder
@@ -766,9 +766,10 @@ The corpus statistics in this file come from the author's own writing: 9,015 wor
 457 sentences, 52 paragraphs, no em dashes, one semicolon, 47 open brackets, "I" 151
 times, "we" 10 times. The samples are in `voice-samples.md`.
 
-The manual calibration comes from the author's hand rewrite of
-`examples/type-p-fm1/docs/manual.md`, 1,899 words against the first release's 971.
-The hand rewrite is the target. The first release is the cautionary example.
+The manual calibration comes from the author's hand-written preface and sound-design
+part of `examples/type-p-fm1/docs/manual.md`, 1,899 words against the first
+release's 971. The panel section is additional and follows the same register. The
+hand rewrite is the target. The first release is the cautionary example.
 
 The manual craft comes from these sources. Consult them for shape, never copy their
 prose.

@@ -136,10 +136,11 @@ the value never disagree.
 - **Copy rules** (case, labels, value formats, name limits):
 - **Token source** (the one file the web, plugin, and firmware generate from):
 
-## 8b. Panel reference handoff
+## 8b. Panel section handoff
 
-The user-facing panel reference is written from this map and `panel.json`. It
-must teach a fresh reader how to move, not just list the controls.
+The user-facing panel section is written from this map and `panel.json`. It goes
+into the user manual after the sound-design chapters and before the first-patch
+chapter. It must teach a fresh reader how to move, not just list the controls.
 
 - **Surface:** every physical control, its kind, and its global job.
 - **Navigation:** every context button, how pages advance, how HOME works, every
@@ -155,8 +156,8 @@ must teach a fresh reader how to move, not just list the controls.
 - **Screen:** header fields, footer legend, popup behaviour, and LED feedback.
 - **Quick reference:** one line per context with its page count and job.
 
-Use `templates/panel-reference.md` as the shape. Do not write the reference from
-the design intent. Read the generated page table and the app's popup handlers, then
+Use `templates/panel-reference.md` as the shape. Do not write the section from the
+design intent. Read the generated page table and the app's popup handlers, then
 describe what the instrument actually does.
 
 ## 9. Acceptance

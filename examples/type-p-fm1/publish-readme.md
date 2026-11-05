@@ -34,8 +34,7 @@ Phase on, industrial punks!
 
 ## Manual
 
-- [User manual](docs/manual.md)
-- [Panel reference](docs/panel.md)
+- [User manual](docs/manual.md), including the panel reference
 - [MIDI and SysEx](docs/midi-and-sysex.md)
 - [Patch sheet](docs/patch-sheet.md)
 

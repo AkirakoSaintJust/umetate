@@ -18,12 +18,12 @@ still show up in code comments.
 | Engine | 44.1 kHz, integer-first, bit-exact. 20 voices, 2 parts, 4-op FM, 8 algorithms, 12 waveforms, two filters, a wavefolder, and key and velocity follow. |
 | Target evidence | Source, host, browser/WASM parity, target package, emulator, and Linux DAW pass. Physical device timing and acceptance are `blocked`. |
 | Gate | The full gate is green. It passed host, web, Python, skill, lib, links, pyright, and memory. |
-| Docs | Tutorial, DSP study, Type P.fm1 docs, templates, and the voice profile are current. The Type P.fm1 panel reference is written from `panel.json` with every page and flow. Docs skill `1.4.5`. The K5/K5000 guide is in the ignored `doc-test/`. |
+| Docs | Tutorial, DSP study, Type P.fm1 docs, templates, and the voice profile are current. The Type P.fm1 manual includes the panel section, written from `panel.json` with every page, parameter, and flow. Docs skill `1.4.6`. The K5/K5000 guide is in the ignored `doc-test/`. |
 | CI | Framework CI covers Linux and Windows, with macOS `continue-on-error`. The release repo workflow builds Linux and Windows VST3/CLAP on a tag. |
 
 The framework has moved past `31ecc64` with the design interview, the voice profile,
-and the docs rewrite. The 1.0.1 binaries haven't changed. If the release should
-carry the later docs and CLI, republish it.
+and the docs rewrite. The 1.0.1 binaries haven't changed. The release docs are
+synced on `main`; a new release is only needed when the binaries change.
 
 ## 2. Settled decisions
 
@@ -70,7 +70,7 @@ The pyright gate is green now. I'd take the rest in this order.
 
 | # | Work | Done when | Status |
 | --- | --- | --- | --- |
-| 1 | Refresh the Type P.fm1 release | The release carries the current docs and CLI, or the notes explain why the older snapshot is intentional. | optional |
+| 1 | Refresh the Type P.fm1 source snapshot | The release `framework/` source matches the current docs and CLI, or the notes explain why the older snapshot is intentional. | optional |
 | 2 | Windows VST3/CLAP archives | The release workflow builds them, `RELEASES.md` lists them, and the checksums pass. | open |
 | 3 | macOS build and AU | A macOS host builds the VST3/AU, the validators pass, and the CI job stops being `continue-on-error`. | blocked |
 | 4 | Signed installers | The platform installers are signed and the release page links them. | open |
