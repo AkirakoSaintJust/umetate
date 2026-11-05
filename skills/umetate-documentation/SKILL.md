@@ -1,7 +1,7 @@
 ---
 name: umetate-documentation
-description: Write thorough, readable, human documentation for end users of a synthesizer built on umetate. Covers the user manual, panel reference, MIDI and SysEx reference, patch sheet, installation guide, release notes, and technical guides or instrument studies. Includes a journalist-style design interview for the manual preface and design note. Rewrites are measured against the author's own corpus, hand-rewritten manual, and hand-rewritten guide so they read like a person wrote them. Never uses em dashes or semi-colons, never loses information, and bans negative parallelism, heading chains, false dichotomies, and marketing hooks. Preserves the author's contractions, asides, light UK slang, explanatory long sentences, and self-description.
-version: 1.4.1
+description: Write thorough, readable, human documentation for end users of a synthesizer built on umetate. Covers the user manual, panel reference, MIDI and SysEx reference, patch sheet, installation guide, release notes, and technical guides or instrument studies. Includes a journalist-style design interview for the manual preface and design note. Rewrites are measured against the author's own corpus, hand-rewritten manual, and hand-rewritten guide so they read like a person wrote them. Never uses em dashes or semi-colons, never loses information, and bans negative parallelism, heading chains, false dichotomies, and marketing hooks. Preserves the author's contractions, asides, light UK slang, explanatory long sentences, joined clauses, and self-description.
+version: 1.4.2
 license: GPL-3.0-only
 compatibility: OpenCode and Agent Skills-compatible loaders
 allowed-tools: read, grep, glob, edit, write, shell, websearch, webfetch
@@ -75,10 +75,13 @@ deviation 6.4, 2 first-person pronouns, 1 contraction. The rewrite is the target
 
 The guide rewrite is the guide calibration. Its first 70 lines moved from 689
 words in 58 sentences (mean 11.6, median 9.5, standard deviation 8.5, longest 52)
-to 733 words in 41 sentences (mean 17.4, median 14, standard deviation 16.7,
+to 737 words in 41 sentences (mean 17.6, median 14, standard deviation 16.7,
 longest 80). The first-person count stayed at three. The change is explanatory
 sentence length and connective looseness, not self-reference. Do not add "I" to
-compensate for a flat draft.
+compensate for a flat draft. The first 170 lines of the full draft sit at 2,110
+words in 148 sentences (mean 13.7, median 12, standard deviation 10.9), so a
+connected opening can still sit above a flatter rest. Join the clauses when you
+revise.
 
 The samples use British spelling in prose, except "synthesizer", contractions, dry
 humour, and light UK slang. The hand rewrite uses "innit", "kinda", "gal", and
@@ -251,7 +254,9 @@ spec sheet. The first release did. The hand rewrite has 22 first-person pronouns
 33 contractions. If your draft has 2 and 1, you have over-edited. The guide rewrite
 kept the same three first-person tokens as the draft and changed the sentence
 structure instead. Do not add "I" to compensate for a flat draft. Add explanatory
-clauses, connectives, and a longer sentence where the thought needs it.
+clauses, connectives, and a longer sentence where the thought needs it. Attach a
+fact with a relative clause, a specification with "with" and a colon, a condition
+with "only when", and a cause with "so" or "because".
 
 **Address the reader as "you".** "Turn the knob" beats "the user turns the knob".
 Put the player in the room.
@@ -391,6 +396,9 @@ Checklist for the final pass:
 - [ ] The audience is stated. It does not assume the reader owns the hardware.
 - [ ] The scope and the status of the diagrams are stated.
 - [ ] The guide's long sentences, generalisers, and parenthetical asides survive.
+- [ ] The clauses are joined where they belong together: a relative clause for a
+      fact, "with" and a colon for a specification, "only when" for a condition,
+      and "so" or "because" for a cause.
 - [ ] No documented qualifier was lost to a casual phrase.
 - [ ] No negative parallelism ("not just X, but Y", "not X, it's Y", "less X than Y").
 - [ ] No needless "It's a X, not a Y" or "It's not an X" setup. The positive comes

@@ -47,6 +47,25 @@ already knows what a harmonic is.
 The author wrote one long sentence where the model wrote four short ones. Keep the
 long sentence. Fix "over from" to "take over from". Keep "whilst" and "and so on".
 
+### The connectivity join
+
+> Each additive source holds 64 harmonics, with two possible settings: Low is 1 to
+> 64, and High is 65 to 128.
+
+The model draft wrote that as three sentences. The author joined the specification
+to its main clause with "with" and a colon. The same move runs through the guide:
+
+| Draft | Rewrite |
+| --- | --- |
+| Harmonic 64 is missing. It is a documented quirk. | Harmonic 64 is missing, which is a documented quirk of the instrument. |
+| Use Full Mode when you have a specific reason. | Use Full Mode only when you have a specific reason. |
+| The groups are all harmonics, odd, even, octave-related and fifth-related. | The groups are: all harmonics, odd, even, octave-related and fifth-related. |
+| Sources are at the end. | (see sources at the end) |
+
+Attach a fact or an explanation with a relative clause. Attach a condition to its
+action with "only when". Use a colon for the list that follows. A guide that states every
+fact as its own sentence has lost the rhythm, even when every sentence is clear.
+
 ### The parenthetical surprise
 
 > ... whilst the K5000 has got one envelope per harmonic (!)
@@ -104,10 +123,14 @@ patch."
 ### The numbers
 
 The first 70 lines moved from 689 words in 58 sentences (mean 11.6, median 9.5,
-standard deviation 8.5, longest 52) to 733 words in 41 sentences (mean 17.4,
+standard deviation 8.5, longest 52) to 737 words in 41 sentences (mean 17.6,
 median 14, standard deviation 16.7, longest 80). The first-person count stayed at
 three. The change is sentence structure and explanatory connectives, not
 self-reference.
+
+The first 170 lines are 2,110 words in 148 sentences: a 13.7-word mean, a 12-word
+median, a 10.9-word standard deviation. The opening is more connected than the rest
+of the first draft. The connectivity pass is how you close that gap.
 
 ## The hand rewrite
 

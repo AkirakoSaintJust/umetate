@@ -31,7 +31,7 @@ The longest sentence is 66 words. The shortest fragment is one word.
 If a rewrite produces numbers near the first set, it has over-edited.
 
 The guide first 70 lines moved from 689 words in 58 sentences (mean 11.6, median
-9.5, standard deviation 8.5, longest 52) to 733 words in 41 sentences (mean 17.4,
+9.5, standard deviation 8.5, longest 52) to 737 words in 41 sentences (mean 17.6,
 median 14, standard deviation 16.7, longest 80). The first-person count stayed at
 three. The change is explanatory sentence length and connective looseness, not
 self-reference. Do not add "I" to compensate for a flat draft.
@@ -64,6 +64,9 @@ self-reference. Do not add "I" to compensate for a flat draft.
   the K5000's design." "Probably" is the right hedge for an inference.
 - **The explanatory long sentence.** The guide rewrite has an 80-word sentence.
   Keep it if it reads as one thought.
+- **The connectivity join.** "Each additive source holds 64 harmonics, with two
+  possible settings: Low is 1 to 64, and High is 65 to 128." A specification
+  attached to its main clause is voice, not a compression trick.
 - **"In order to", "whilst", "has got", "sort of", "and so on", "a bunch of",
   "probably", "(!)"**. These are voice in explanatory prose. "(!)" is a genuine
   surprise marker, not P41.
@@ -93,6 +96,26 @@ misconception. If it carries none of those, cut it.
 The before and after table is in
 `skills/umetate-documentation/references/voice-samples.md` under "Replacing the
 negation".
+
+## Connectivity
+
+A guide joins a fact to its cause, condition, or specification. The model draft
+wrote "Each additive source holds 64 harmonics. Low is 1 to 64. High is 65 to 128."
+The author wrote "Each additive source holds 64 harmonics, with two possible
+settings: Low is 1 to 64, and High is 65 to 128."
+
+- Attach a fact or an explanation with a relative clause: "Harmonic 64 is missing,
+  which is a documented quirk of the instrument."
+- Attach a specification with "with" and a colon.
+- Attach a condition with "only when".
+- Use a colon for a list that follows.
+- Use a parenthesis for a source pointer.
+- Join a cause to its consequence with "so" or "because" when the link is real.
+
+The first 170 lines of the guide average 13.7 words per sentence against 17.6 in
+the first 70, partly because the later sections carry lists and tables. The prose
+still needs the joins. A page of short declaratives has lost the guide register
+even when every fact is right.
 
 ## Fix these
 

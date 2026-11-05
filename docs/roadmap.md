@@ -4357,7 +4357,7 @@ calibration.
 
 The model draft first 70 lines were 689 words in 58 sentences: mean 11.6, median
 9.5, standard deviation 8.5, longest 52, 3 first-person tokens, 6 contractions, no
-brackets. The author's rewrite was 733 words in 41 sentences: mean 17.4, median 14,
+brackets. The author's rewrite was 737 words in 41 sentences: mean 17.6, median 14,
 standard deviation 16.7, longest 80, 3 first-person tokens, 8 contractions, 3
 brackets, one parenthetical "(!)". The first-person count did not change. The
 change is explanatory sentence length and connective looseness.
@@ -4446,3 +4446,23 @@ negations are gone.
 
 The document is in `doc-test/`, which is git-ignored. The skills, the humanizer
 context, and `AGENTS.md` carry the test.
+
+### 13.40 Connectivity pass (2026-11-05)
+
+The author's adjustments to the first 170 lines of the K5/K5000 guide were a
+connectivity pass. The model draft stated each fact as its own sentence. The
+author joined the specification to its main clause with "with" and a colon,
+attached the missing harmonic as a relative clause ("which is a documented quirk"),
+made the condition explicit with "only when", used a colon for the group list, and
+added a parenthetical source pointer.
+
+The rule is now in `voice.md`, `SKILL.md`, `voice-samples.md`,
+`humanizer-context.md`, `AGENTS.md`, and the local humanizer profile. The pass is
+not a compression trick. It preserves the multi-clause explanatory sentence and
+adds the causal and conditional joins that a list of declaratives loses.
+
+The rest of the K5/K5000 guide received the same pass, with the author's first 170
+lines left as written. Before the pass the draft was 7,208 words in 521 sentences:
+mean 13.4, median 11, standard deviation 13.1. After the pass it is 7,313 words in
+394 sentences: mean 18.0, median 14, standard deviation 16.5. The author's first 70
+lines are 17.6, 14, and 16.7. The full guide now has the opening's rhythm.

@@ -61,7 +61,10 @@ humanizer skill.
 The K5/K5000 guide rewrite is the guide/study calibration. Plain category openings,
 explanatory long sentences, "whilst", "sort of", "and so on", "probably", and a
 parenthetical "(!)" are voice. Do not tighten a guide into a thesis, and do not add
-"I" to compensate for a flat draft.
+"I" to compensate for a flat draft. Join a fact to its cause, condition, or
+specification. A relative clause, "with" and a colon, and "only when" carry the
+guide's rhythm. A page of short declaratives has lost it even when every fact is
+right.
 
 Do not introduce a thing by saying what it is not. Start with the positive, the
 cause, or the constraint. Keep factual limits and real scope contrasts. A negation

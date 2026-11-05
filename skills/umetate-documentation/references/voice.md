@@ -41,8 +41,8 @@ contractions has been over-edited.
 
 The K5/K5000 guide was written in two passes. The first 70 lines of the model draft
 were 689 words: 58 sentences, an 11.6-word mean, a 9.5-word median, an 8.5-word
-standard deviation, and a 52-word maximum. The author's rewrite was 733 words: 41
-sentences, a 17.4-word mean, a 14-word median, a 16.7-word standard deviation, and
+standard deviation, and a 52-word maximum. The author's rewrite was 737 words: 41
+sentences, a 17.6-word mean, a 14-word median, a 16.7-word standard deviation, and
 an 80-word maximum. The first-person count stayed at three. The contraction count
 went from six to eight.
 
@@ -50,6 +50,10 @@ The rewrite is the calibration for a guide or study. It did not add more "I". It
 added longer explanatory sentences, "whilst", "sort of", "and so on", "probably",
 and a parenthetical "(!)". A humanising pass that produces the first set of numbers
 has flattened the guide.
+
+The first 170 lines of the full draft sit at 2,110 words in 148 sentences: a
+13.7-word mean, a 12-word median, a 10.9-word standard deviation. The opening is
+more connected than the rest. The gap is the thing to close.
 
 ## Who is talking
 
@@ -183,11 +187,25 @@ The manual does not need to match the corpus's 120-word maximum. It does need th
 contrast: a 60-word sentence can sit next to a four-word verdict. A manual where
 every sentence is 10 to 15 words has been flattened.
 
-The guide rewrite has a 17.4-word mean, a 14-word median, a 16.7-word standard
+The guide rewrite has a 17.6-word mean, a 14-word median, a 16.7-word standard
 deviation, and an 80-word maximum. The first-person count is the same as the model
 draft. The change is explanatory length and connective looseness, not
 self-reference. Do not split the 80-word sentence just because it is long. Split it
 only when the reader has to backtrack.
+
+**Connect the cause to the consequence.** The model draft had "Each additive
+source holds 64 harmonics. Low is 1 to 64. High is 65 to 128." The author wrote
+"Each additive source holds 64 harmonics, with two possible settings: Low is 1 to
+64, and High is 65 to 128." Join a cause, condition, or specification to its main
+clause:
+
+- Attach a fact with a relative clause: "Harmonic 64 is missing, which is a
+  documented quirk of the instrument."
+- Attach a specification with "with" and a colon.
+- Connect a condition with "only when": "Use Full Mode only when you have a
+  reason."
+- Use a colon for a list: "The groups are: all harmonics, odd, even..."
+- Use a parenthesis for a source pointer: "(see sources at the end)."
 
 These are the habits to copy.
 
@@ -340,10 +358,11 @@ once, then use them. Do not invent synonyms.
 **Collocations that sound like the author.** "the whole point", "the whole thing",
 "the thing is", "the problem is", "the good thing is", "that's because", "I've got
 to say", "as weird as they are", "or whatever", "came out", "has got", "in order
-to", "rather than just", "for some reason", "in the end", "by the way", "as an
-aside", "for a change", "worth a listen", "worth a punt", "that's it basically",
-"I guess", "I wonder", "it turns out", "as in", "more X than Y", "one of the most
-X", "orders of magnitude". Use them when they fit. Do not sprinkle them.
+to", "rather than just", "for some reason", "just starting points, mind", "haven't
+finished yet", "only when", "in the end", "by the way", "as an aside", "for a
+change", "worth a listen", "worth a punt", "that's it basically", "I guess", "I
+wonder", "it turns out", "as in", "more X than Y", "one of the most X", "orders of
+magnitude". Use them when they fit. Do not sprinkle them.
 
 **Colons introduce the real list or the real explanation.** "It's done in three
 ways: a CGI sequence ..., a subtle slow-motion shot ..., and a big fat nether being
@@ -363,8 +382,9 @@ preference. It is the strongest punctuation evidence in the corpus.
 
 **No exclamation marks in procedures.** The corpus uses 15 in 9,015 words, mostly
 for genuine enthusiasm. The design note can use an exclamation cluster for emphasis
-("so! many! params!"). A tip can end with one. A step never does. Do not spray them.
-The hand rewrite uses four, mostly in one cluster.
+("so! many! params!"). A tip can end with one. A guide body can use one for genuine
+emphasis: "That can be the point!" A step never does. Do not spray them. The hand
+rewrite uses four, mostly in one cluster.
 
 **A parenthetical "(!)" is a genuine surprise marker.** "one envelope per harmonic
 (!)" is the author drawing attention to the scale of the feature. Use it once or
@@ -409,8 +429,9 @@ is the target. Never in a step.
 filter", "Why the envelope is slow", "Patch storage", "MIDI clock", "What the
 filter does not do". A heading is a signpost, not a template. If a heading can be a
 question the reader is actually asking, use it. If a heading can be a full sentence,
-use it. A plain noun heading like "Voice structure" is fine. Not every heading needs
-a verb or a colon.
+use it. A plain noun heading like "K5 architecture" is better than a spatial
+metaphor like "Inside the K5". A playful heading can stay if the author wrote it:
+"Sixty-fourrrrrr". One is enough. Not every heading needs a verb or a colon.
 
 **End with a verdict or an instruction.** "Start with a sine and add feedback until
 it bites." "If you only want clean tones, leave the wavefolder at 0." Not "Now it's
@@ -440,6 +461,11 @@ The plain category and the reason to care are the target. Do not replace them wi
 a pair of metaphors or a balanced thesis. A guide can open with a fact and a
 "because". It does not need a manifesto.
 
+### Meta-commentary about other summaries
+
+"The detail most online summaries get wrong" is a line about other summaries, not
+about the instrument. The author cut it. State the fact and let it stand.
+
 ### Negation and negative parallelism
 
 Humans rarely introduce a thing by saying what it is not. The author removed most
@@ -450,6 +476,8 @@ The replacement moves:
 
 - Cut the setup and state the positive. "The interesting part is not the list. It
   is..." becomes "The interesting part for sound design is..."
+- Attach the fact with a relative clause. "It's a documented quirk, not a mistake
+  in your patch" becomes "which is a documented quirk of the instrument."
 - Replace the label with the constraint. "They aren't arbitrary-partial
   resynthesizers" becomes "you can't add inharmonic partials..."
 - Replace the contrast with the cause. "The K5000 isn't a K5 with a bigger harmonic
@@ -627,6 +655,11 @@ thesis.
 The rewrite also shows where not to stop. "The even harmonics over from the odd
 ones" is missing "take". "More of an specialised tool" should be "more of a
 specialised tool". Fix those. Keep the rhythm.
+
+Do not split a connected explanation into three sentences. The model draft had
+"Each additive source holds 64 harmonics. Low is 1 to 64. High is 65 to 128." The
+author joined them with "with" and a colon. A connectivity pass is part of the
+voice, not a compression trick.
 
 ### The dropped qualifier
 
