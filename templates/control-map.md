@@ -85,7 +85,7 @@ the value never disagree.
 
 ### 5c. INIT PATCH and INIT PART
 
-- **INIT PATCH, exact values** (every parameter, not "same as ..."):
+- **INIT PATCH, exact values** (every parameter, rather than "same as ..."):
 - **INIT PART, exact values:**
 - **What stays from the previous patch, if anything:**
 

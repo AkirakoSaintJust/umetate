@@ -1,7 +1,7 @@
 ---
 name: umetate-documentation
 description: Write thorough, readable, human documentation for end users of a synthesizer built on umetate. Covers the user manual, panel reference, MIDI and SysEx reference, patch sheet, installation guide, release notes, and technical guides or instrument studies. Includes a journalist-style design interview for the manual preface and design note. Rewrites are measured against the author's own corpus, hand-rewritten manual, and hand-rewritten guide so they read like a person wrote them. Never uses em dashes or semi-colons, never loses information, and bans negative parallelism, heading chains, false dichotomies, and marketing hooks. Preserves the author's contractions, asides, light UK slang, explanatory long sentences, joined clauses, and self-description.
-version: 1.4.3
+version: 1.4.4
 license: GPL-3.0-only
 compatibility: OpenCode and Agent Skills-compatible loaders
 allowed-tools: read, grep, glob, edit, write, shell, websearch, webfetch
@@ -78,8 +78,8 @@ words in 58 sentences (mean 11.6, median 9.5, standard deviation 8.5, longest 52
 to 737 words in 41 sentences (mean 17.6, median 14, standard deviation 16.7,
 longest 80). The first-person count stayed at three. The change is explanatory
 sentence length and connective looseness, not self-reference. Do not add "I" to
-compensate for a flat draft. The first 170 lines of the full draft sit at 2,110
-words in 148 sentences (mean 13.7, median 12, standard deviation 10.9), so a
+compensate for a flat draft. The first 170 lines of the full draft sit at 2,100
+words in 147 sentences (mean 13.8, median 12, standard deviation 11.0), so a
 connected opening can still sit above a flatter rest. Join the clauses when you
 revise.
 
@@ -410,6 +410,10 @@ Checklist for the final pass:
       inference or names missing evidence.
 - [ ] Factual limits and real scope contrasts stay.
 - [ ] A concrete detail can end a paragraph without a summary verdict.
+- [ ] No aphorisms or poster-slogan conclusions. End on a concrete fact, an
+      instruction, or a specific judgement.
+- [ ] No "A, not B" adversative. Use "rather than", a separate sentence, or a "but"
+      clause.
 - [ ] No heading chain ("The X", "The Y", "The Z: ...").
 - [ ] No false dichotomy and no invented contrast.
 - [ ] No marketing hook.

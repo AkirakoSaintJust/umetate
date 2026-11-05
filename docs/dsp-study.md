@@ -84,7 +84,7 @@ narrow-pulse artefact. The 2nd-order form above suppresses aliasing up to roughl
 a 2 kHz fundamental, and third- and fourth-order Lagrange or B-spline corrections
 extend that range, whilst a 2-tap EQ FIR (`b0 + b1·z⁻¹ + b0·z⁻²`) can flatten the
 passband (Välimäki et al.). "Band-limited" therefore describes a family of
-approaches, not one fixed algorithm.
+approaches rather than one fixed algorithm.
 
 The triangle's leaky integrator is `y = (1 − 1/1024)·y + slope·x` with `slope =
 inc/2^16` (note-derived). It is not the single-coefficient `y += k·(x−y)` form,
@@ -220,7 +220,7 @@ To reduce cache misses:
 3. **For morph sets, process voices by table.** Use SoA to render all voices
    against one table before switching, rather than interleaving reads from
    different tables for each voice.
-4. **On the pi32v2, put hot tables in SRAM (`.cpu1_rodata`), not XIP.** The flash
+4. **On the pi32v2, put hot tables in SRAM (`.cpu1_rodata`) rather than XIP.** The flash
    SFC runs at about 80 MHz on a 320 MHz CPU. An uncached XIP read costs roughly
    four times a cache hit, and the D-cache is small. See `docs/roadmap.md`
    §12.2.3.
@@ -299,7 +299,7 @@ envelope can express more shapes.
 
 Run envelopes at **control rate**, once per block or sub-block rather than per
 sample. Precompute the increment or rate, and each tick then takes only one or two
-operations. That is the lesson I'd take from all three forms above.
+operations.
 
 ---
 
@@ -541,7 +541,7 @@ multiply-add, with no resampling or extra aliasing. Apply the window after the m
 to shape each grain's amplitude. The window must stay **aligned to the grain**, so
 it needs the grain's progress value from the phase generator.
 
-### 8.3 The shape: three nodes, not a loop
+### 8.3 The shape: three nodes rather than a loop
 
 The window needs the grain's progress. Putting the phase generator and window in
 one node that loops through an external oscillator would create a graph cycle,

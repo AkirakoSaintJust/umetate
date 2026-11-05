@@ -10,7 +10,7 @@
 | Host behaviour (`host`) | `not-run` | | Command, vectors, artefacts |
 | Browser/WASM (`browser`) | `not-run` | | Emscripten/browser versions, tolerance |
 | Target package (`target`) | `not-run` | | Toolchain/SDK hashes, map/report |
-| Emulator (`emulator`) | `not-run` | | fm1-emu run, model layer, not device |
+| Emulator (`emulator`) | `not-run` | | fm1-emu run, model layer rather than the device |
 | Physical timing (`timing`) | `not-run` | | Board/revision, callback time/headroom |
 | Device acceptance (`device`) | `not-run` | | Controls, display, MIDI, persistence, power cycle |
 | Release provenance (`release`) | `not-run` | | Source/package correspondence, notices |

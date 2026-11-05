@@ -114,6 +114,18 @@ A closing verdict that restates the paragraph is filler.
 Anecdotal asides use "anecdotally, though" and "I'd really like to". One per
 section at most.
 
+## Aphorisms
+
+An aphorism is a short, universal-sounding verdict that could go on a poster. The
+author cuts them. "Its restrictions are the lesson" becomes "The K5's two sources
+and four envelopes are enough to learn how harmonic groups move." "Two sources
+with clear jobs beat six sources with vague ones" becomes "Start with two sources
+and add another only when you can name its job." A specific verdict is fine. A
+slogan is not.
+
+Do not write "A, not B" as an adversative. Use "rather than", a separate sentence,
+or a "but" clause. The comma-not form is a spec-sheet habit.
+
 ## Connectivity
 
 A guide joins a fact to its cause, condition, or specification. The model draft
@@ -129,7 +141,7 @@ settings: Low is 1 to 64, and High is 65 to 128."
 - Use a parenthesis for a source pointer.
 - Join a cause to its consequence with "so" or "because" when the link is real.
 
-The first 170 lines of the guide average 13.7 words per sentence against 17.6 in
+The first 170 lines of the guide average 13.8 words per sentence against 17.6 in
 the first 70, partly because the later sections carry lists and tables. The prose
 still needs the joins. A page of short declaratives has lost the guide register
 even when every fact is right.

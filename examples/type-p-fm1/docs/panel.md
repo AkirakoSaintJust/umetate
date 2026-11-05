@@ -9,7 +9,7 @@ hear, whilst the deeper operator work stays behind EDIT.
 ## Controls
 
 - **27 keys** play notes, F3 to G5.
-- **MASTER** is the volume pot. It is always volume, nothing else.
+- **MASTER** is the volume pot. It is always volume.
 - **SELECT**, **ALGORITHM**, and **PRESETS** are the three left encoders.
 - **KNOB 1 to 4** are the page encoders. Their meaning changes with the page, and
   the screen labels what they do.

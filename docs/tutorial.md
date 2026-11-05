@@ -140,8 +140,8 @@ browser lab in `build/web/` runs the same pure DSP in an AudioWorklet, so you ca
 listen locally. Neither check establishes FM-1 timing, panel ergonomics, DMA
 behaviour, flash safety, or recovery.
 
-I'd get the browser lab making noise before touching any synth code, because a
-baseline you've heard is easier to trust than one you've only built.
+Get the browser lab making noise before you touch synth code. That gives you a
+known-good baseline to compare against.
 
 To produce a target package, which still does not flash anything and needs the
 toolchain from stage 3, run:
@@ -186,9 +186,9 @@ These are the rules I'd keep in mind for the rest of the build.
   the panel, and recovery, whilst CPU1 renders audio. A boot-time probe checks for
   the `0x00200000` core-1 misread, and if it fails, the same firmware renders on
   CPU0, so the fallback does not require a separate build.
-- **FPU:** the hardware supports single precision, not `double`. `--dsp float` is
-  the opt-in path, though it is not yet wired in (P2-4), and integer DSP remains
-  the default.
+- **FPU:** the hardware supports single precision only, so keep `double` out of
+  the DSP. `--dsp float` is the opt-in path, though it is not yet wired in (P2-4),
+  and integer DSP remains the default.
 - **Clock:** the bootloader determines the clock, with the V13 app at 240 MHz, the
   V15 bootloader at 360 MHz, and the V16 bootloader at 320 MHz. The `--clock`
   option offers only **240 or 320 MHz**. RIB reports the measured clock and does
@@ -351,7 +351,7 @@ state. Decide on **multi-timbrality** (`parts:`) and the **MIDI specification**
 (channels, CC-to-parameter mapping, sustain, panic, bend, and program change)
 during the same interview, because both affect the engine and the control map.
 
-The MIDI spec is now framework, not glue. The fixed CC map is the patch's `cc:`
+The MIDI spec is now part of the framework rather than the app glue. The fixed CC map is the patch's `cc:`
 list: the params you declare there get one CC each, ascending from 16 (sustain 64
 and the channel-mode block stay reserved), and a 7-bit CC value is scaled to the
 param's full `[min, max]`. A multitimbral patch's params overflow the CC space, so

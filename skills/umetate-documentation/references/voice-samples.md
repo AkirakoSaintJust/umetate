@@ -154,6 +154,34 @@ The old version had two short verdicts: "It is the instrument to learn on. Its
 restrictions are the lesson." The author joined the cause and the consequence with
 "so", so the recommendation explains itself.
 
+### The aphorism
+
+| Draft | Rewrite |
+| --- | --- |
+| Its restrictions are the lesson. | The K5's two sources and four envelopes are enough to learn how harmonic groups move. |
+| Two sources with clear jobs beat six sources with vague ones. | Start with two sources and add another only when you can name its job. |
+| They are instruments for composing the inside of a sound. | Both reward a player who wants to build a timbre from its partials and shape how they move. |
+| The filter is useful, and it is also a trap. | A filter sweep can make a weak harmonic construction sound exciting for a moment and hide what the K5 is doing. |
+| Hybridisation is musically intelligent. | Additive and PCM cover different jobs. |
+
+An aphorism is a short, universal-sounding verdict that could go on a poster. The
+quasi-aphorism is the same move with a concrete noun, such as "its restrictions
+are the lesson". Replace both with the concrete reason or the instruction. A
+specific verdict is fine. A slogan is not.
+
+### The comma-not adversative
+
+| Draft | Rewrite |
+| --- | --- |
+| single precision, not `double` | single precision only, so keep `double` out of the DSP |
+| whole waveforms, not partials | whole waveforms rather than individual partials |
+| the framework, not the glue | part of the framework rather than the app glue |
+| recomputed at block rate, not per sample | recomputed at block rate rather than per sample |
+
+The comma-not form reads like a spec sheet. Use "rather than", a separate sentence,
+or a "but" clause. Keep it only when the second half is a precise factual limit and
+the sentence would be clumsy without it.
+
 ### The one loss
 
 > Harmonic 64 is missing for some quirky reason.
@@ -170,8 +198,8 @@ median 14, standard deviation 16.7, longest 80). The first-person count stayed a
 three. The change is sentence structure and explanatory connectives, not
 self-reference.
 
-The first 170 lines are 2,110 words in 148 sentences: a 13.7-word mean, a 12-word
-median, a 10.9-word standard deviation. The opening is more connected than the rest
+The first 170 lines are 2,100 words in 147 sentences: a 13.8-word mean, a 12-word
+median, an 11.0-word standard deviation. The opening is more connected than the rest
 of the first draft. The connectivity pass is how you close that gap.
 
 ## The hand rewrite

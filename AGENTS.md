@@ -73,7 +73,11 @@ counterintuitive explanation, a real limit, or a correction. If it carries none 
 those, cut it. A conversational correction can keep the negative when it corrects
 an inference or names missing evidence: "that doesn't mean one is better, they've
 just got different personalities." A concrete detail can end a paragraph without a
-summary verdict.
+summary verdict. No aphorisms. A short, universal-sounding verdict at the end of a
+section is marketing talk: "its restrictions are the lesson", "two sources with
+clear jobs beat six with vague ones". End on a concrete fact, an instruction, or a
+specific judgement. Avoid the "A, not B" adversative. Use "rather than" or a
+separate sentence.
 
 Before a manual preface or design note, run the design interview. `umetate
 interview --synth <project> --write` generates the form from the project's

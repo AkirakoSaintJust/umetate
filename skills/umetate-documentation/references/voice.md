@@ -51,8 +51,8 @@ added longer explanatory sentences, "whilst", "sort of", "and so on", "probably"
 and a parenthetical "(!)". A humanising pass that produces the first set of numbers
 has flattened the guide.
 
-The first 170 lines of the full draft sit at 2,110 words in 148 sentences: a
-13.7-word mean, a 12-word median, a 10.9-word standard deviation. The opening is
+The first 170 lines of the full draft sit at 2,100 words in 147 sentences: a
+13.8-word mean, a 12-word median, an 11.0-word standard deviation. The opening is
 more connected than the rest. The gap is the thing to close.
 
 ## Who is talking
@@ -517,6 +517,12 @@ negation carries a correction, and "just" scales it. "That is just a tour-rig
 claim, though, with no album credits to back it up" does the same with a limit.
 The target is the theatrical label contrast, not every negative sentence.
 
+Do not write "A, not B" as an adversative. "single precision, not double", "whole
+waveforms, not partials", and "the framework, not the glue" read like a spec
+sheet. Use "rather than", a separate sentence, or a "but" clause. Keep the
+comma-not form only when the second half is a precise factual limit and the
+sentence would be clumsy without it, and even then prefer "rather than".
+
 The tell: "It's not just a synth, it's a way of thinking." "This isn't about
 features, it's about feel." "Less a manual, more a conversation." "Not X. Y." "X
 isn't about Y, it's about Z." "It doesn't just do X, it does Y."
@@ -605,6 +611,24 @@ A concrete detail can end the paragraph. The author cut "That is the K5 in its
 natural habitat: a professional tool under deadline." after the Jan Hammer detail.
 The detail already carried the point. A closing verdict that restates the paragraph
 is filler, even when it sounds good.
+
+### Aphorisms
+
+An aphorism is a short, universal-sounding verdict that could go on a poster. It
+flatters the writer and adds no information. The K5/K5000 guide had several: "Its
+restrictions are the lesson." "Two sources with clear jobs beat six sources with
+vague ones." "They are instruments for composing the inside of a sound." "The K5
+teaches you to think spectrally." "The filter is useful, and it is also a trap."
+"Hybridisation is musically intelligent."
+
+The quasi-aphorism is the same move with a concrete noun. "Its restrictions are the
+lesson" sounds like a design principle, but it does not say which restrictions or
+what they teach. Replace it with the concrete reason: "Its two sources and four
+envelopes are enough to learn how harmonic groups move." End on a fact, an
+instruction, or a specific judgement that names the thing.
+
+A specific verdict is allowed: "The K5000W is the least immediate additive
+instrument of the three." A slogan is not: "The K5000 is a way of thinking."
 
 ### Hedging stacks
 

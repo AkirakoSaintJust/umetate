@@ -40,7 +40,7 @@ Pure Data, Dexed/msfa, Nuked, ymfm, SAPF).
 - **Algorithm** (the fixed-point formula, exactly):
 - **Inputs / outputs** (port, rate `event|control|audio`, format `q15|q16|q32|phase`):
 - **Parameters** (name, Q-format, range, default, `sample`/`block` rate, modulatable):
-- **Coefficients / precompute** (recomputed at block rate, not per sample, the formula):
+- **Coefficients / precompute** (recomputed at block rate rather than per sample, the formula):
 - **State** (SoA fields, Q-format):
 - **Edge cases** (div-by-zero guard, clamp/saturate, phase wrap, denormal):
 - **Reference + credit** (source consulted, URL, licence, what was derived vs. merely learned):
