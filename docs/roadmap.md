@@ -150,17 +150,17 @@ One table for the pieces I need to find quickly.
 ### Phase 4, Web lab and emulator (P4), **done**
 ### Phase 5, Skills (P5), **done**
 ### Phase 6, Tutorial and start guide (P6), **done**
-### Phase 7, Release and provenance (P7), **done (Linux), blocked (device)**
+### Phase 7, Release and provenance (P7), **done (Linux and Windows), blocked (device)**
 **P7-1, Baseline tag and provenance.**, **done**, `provenance/` and the baseline tag are in.
-### Phase 8, Post-release (P8), **done (Linux/docs), open (macOS/AU/Windows)**
-**P8-1, Type P.fm1 1.0.2.**, **done (Linux)**, the firmware and Linux VST3/CLAP are published. macOS/AU and Windows archives are open.
+### Phase 8, Post-release (P8), **done (Linux/Windows/docs), open (macOS/AU)**
+**P8-1, Type P.fm1 1.0.2.**, **done (Linux x86_64, Linux aarch64, Windows x86_64)**, the firmware and plugin archives are published on the `v1.0.2` GitHub Release. macOS/AU remains open.
 **P8-2, Documentation voice pass.**, **done**, tutorial, DSP study, Type P.fm1 docs, templates, and the voice profile are current.
 **P8-3, Pyright gate.**, **done**, the 14 errors in `interview.py`, `publish.py`, and `test_cli.py` are fixed.
-**P8-4, Windows plugin archives.**, **open**, the release workflow needs a Windows build and signed archives.
+**P8-4, Windows plugin archives.**, **done**, the release workflow builds the Windows x86_64 VST3 and CLAP archives and attaches them to `v1.0.2`. Signing remains under P8-7.
 **P8-5, macOS build and AU.**, **blocked**, no macOS host.
 **P8-6, Physical device acceptance.**, **blocked**, no hardware.
 **P8-7, Signed installers.**, **open**, no signing identity.
-**P8-8, Vendored JUCE archive.**, **open**, the release should carry the source archive and notice.
+**P8-8, Vendored JUCE archive.**, **open**, the source asset excludes `vendor/deps`, so the vendored JUCE source still needs a release asset or an explicit source offer.
 **P8-9, Usability test.**, **open**, optional, a player who did not design the panel.
 **P8-10, Panel fixes.**, **done**, the PERFORMANCE page, TUNE on MONO STACK, per-operator A-ENVS graphs, and the INIT PATCH confirmation are in.
 **P8-11, Humanizer skill.**, **done**, the voice method and the project voice data are folded into `skills/umetate-humanizer/`. The local `.agents` copy is removed.
@@ -180,12 +180,13 @@ One table for the pieces I need to find quickly.
 
 ## 9. Risks and open questions
 
-- **Release source.** 1.0.2 and the release source snapshot both come from
-  `2e31ca6`. The release docs and binaries match.
+- **Release source.** The 1.0.2 release comes from the product repo tag `v1.0.2`
+  at `828dcaa`, whose `framework/` snapshot came from umetate `bdf1b9c`. The source
+  archive and the binaries match.
 - **Plugin editor scope.** The editor pages and host tests are built around Type
   P.fm1. A different synth needs its own pages, tests, and company override.
-- **Platforms.** macOS/AU and the Windows plugin release are open. Linux is
-  validated.
+- **Platforms.** Linux x86_64, Linux aarch64, and Windows x86_64 are validated.
+  macOS/AU remain open.
 - **Device.** Physical acceptance, timing, FPU parity, clock soak, hardware
   FFT/vector parity, and the mask-ROM route all wait on hardware or a solder.
 - **Deferred performance.** Hand-written asm/VLIW, SIMD for the post path, and
