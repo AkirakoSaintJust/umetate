@@ -72,6 +72,24 @@ self-reference. Do not add "I" to compensate for a flat draft.
 - **A slash in a scope label.** "anecdotal/historical records" is a category label,
   not prose punctuation.
 
+## Negation
+
+The author removed almost every "It's a X, not a Y" and "It's not an X" setup from
+the guide. Do not add them back.
+
+- Cut the setup and state the positive.
+- Replace the label with the constraint.
+- Replace the contrast with the cause.
+- Use a comparative when the contrast is real: "more X than Y".
+- Attach a needed qualification to the positive: "rather than just...".
+- Keep factual limits ("you can't add...", "it isn't a universal system") and scope
+  contrasts ("purely explanatory rather than factory schematics").
+- If you remove a negation, keep the fact it carried.
+
+The before and after table is in
+`skills/umetate-documentation/references/voice-samples.md` under "Replacing the
+negation".
+
 ## Fix these
 
 - **Possessive grammar.** "both parts's algorithms" becomes "both parts'
@@ -95,6 +113,8 @@ self-reference. Do not add "I" to compensate for a flat draft.
 - No swearing.
 - No marketing hooks, negative-parallelism hooks, false dichotomies, or heading
   chains.
+- No needless "It's a X, not a Y" or "It's not an X" setup. Start with the positive.
+  Keep factual limits and real scope contrasts.
 - No invented facts. A rewrite may not add a model, a date, a number, or a quote.
 
 ## Before and after

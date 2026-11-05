@@ -440,7 +440,31 @@ The plain category and the reason to care are the target. Do not replace them wi
 a pair of metaphors or a balanced thesis. A guide can open with a fact and a
 "because". It does not need a manifesto.
 
-### Negative parallelism
+### Negation and negative parallelism
+
+Humans rarely introduce a thing by saying what it is not. The author removed most
+"It's a X, not a Y" and "It's not an X" setups from the K5/K5000 guide. Start with
+the positive, the cause, or the constraint.
+
+The replacement moves:
+
+- Cut the setup and state the positive. "The interesting part is not the list. It
+  is..." becomes "The interesting part for sound design is..."
+- Replace the label with the constraint. "They aren't arbitrary-partial
+  resynthesizers" becomes "you can't add inharmonic partials..."
+- Replace the contrast with the cause. "The K5000 isn't a K5 with a bigger harmonic
+  count" becomes "the K5's shortcomings probably were part of what motivated..."
+- Soften a real contrast to a comparative. "a specialised resource, not an
+  automatic upgrade" becomes "more of a specialised tool than an automatic
+  upgrade."
+- Attach a needed qualification to the positive. "a complete voice path, not a
+  single oscillator" becomes "a complete voice path, rather than just the
+  oscillator."
+
+A factual limit stays. "You can't add inharmonic partials" and "it isn't a
+universal system" are information. A scope contrast stays: "purely explanatory
+rather than factory schematics." The target is the needless label negation, not
+every "not".
 
 The tell: "It's not just a synth, it's a way of thinking." "This isn't about
 features, it's about feel." "Less a manual, more a conversation." "Not X. Y." "X
@@ -456,9 +480,10 @@ or "X isn't about Y, it's about Z", stop. Say what the thing is. If the contrast
 real, state both sides plainly: "The filter is 12 dB per octave. It does not
 self-oscillate." Not "It's not a screaming acid filter, it's a gentle tone shaper."
 
-A factual contrast is allowed. "It's not an emulation of any one Yamaha chip in
-particular, but it **is** a DX-style synth" names both sides and prevents a false
-expectation. The ban is on the theatrical "not just X, it's Y" hook.
+A factual contrast is the exception, not the default. "It's not an emulation of any
+one Yamaha chip in particular, but it **is** a DX-style synth" names both sides and
+prevents a false expectation. The ban is on the theatrical "not just X, it's Y"
+hook.
 
 "Each source is a complete voice path, rather than just the oscillator" is the
 same kind of factual contrast. It names both sides. Do not rewrite it into a

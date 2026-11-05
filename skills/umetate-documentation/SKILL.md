@@ -300,14 +300,20 @@ an assertion. Do not dress an assertion as a question, a fact as a maybe, or a
 contrast as a revelation. "The filter is 12 dB per octave and does not self-oscillate"
 is the whole sentence. It does not need a setup.
 
-**No negative parallelism.** "It's not just a synth, it's a way of thinking", "not X,
+**No negative parallelism.** Humans rarely introduce a thing by saying what it is
+not. The author removed most "It's a X, not a Y" and "It's not an X" setups from the
+guide. Start with the positive, the cause, or the constraint. Use a comparative or
+an attached qualification when the contrast is real. Keep factual limits ("you
+can't add inharmonic partials") and scope contrasts ("purely explanatory rather
+than factory schematics"). "It's not just a synth, it's a way of thinking", "not X,
 it's Y", "less X than Y", "X isn't about Y, it's about Z" are hooks. They invent a
 contrast so the sentence sounds deeper. Say what the thing is. If the contrast is
 real, state both sides plainly. `references/voice.md` has the full rule. A factual
-contrast is allowed: "It's not an emulation of any one Yamaha chip in particular, but
-it **is** a DX-style synth" names both sides and prevents a false expectation.
-"Each source is a complete voice path, rather than just the oscillator" is the same
-kind of factual contrast. The ban is on the theatrical "not just X, it's Y" hook.
+contrast is the exception, not the default: "It's not an emulation of any one
+Yamaha chip in particular, but it **is** a DX-style synth" names both sides and
+prevents a false expectation. "Each source is a complete voice path, rather than
+just the oscillator" is the same kind of attached qualification. The ban is on the
+theatrical "not just X, it's Y" hook.
 
 **No heading chains.** Do not write "The Engine", "The Filter", "The Envelope:
 Shaping Your Sound" for every section. Vary the grammar, use the reader's words, and
@@ -385,6 +391,9 @@ Checklist for the final pass:
 - [ ] The guide's long sentences, generalisers, and parenthetical asides survive.
 - [ ] No documented qualifier was lost to a casual phrase.
 - [ ] No negative parallelism ("not just X, but Y", "not X, it's Y", "less X than Y").
+- [ ] No needless "It's a X, not a Y" or "It's not an X" setup. The positive comes
+      first.
+- [ ] Factual limits and real scope contrasts stay.
 - [ ] No heading chain ("The X", "The Y", "The Z: ...").
 - [ ] No false dichotomy and no invented contrast.
 - [ ] No marketing hook.

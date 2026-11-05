@@ -4394,3 +4394,30 @@ fact. The rule is to keep the fact and the casual wrapper.
 The K5/K5000 guide itself is in `doc-test/`, which is git-ignored. The first 70
 lines are the author's. The rest is the model draft. The next pass should align the
 rest with the guide register.
+
+### 13.38 Negation replacements in the guide rewrite (2026-11-05)
+
+The author removed nearly every "It's a X, not a Y" and "It's not an X" setup from
+the first 70 lines of the K5/K5000 guide. The replacements:
+
+- "They are not the same idea at two sizes" was cut. The causal link replaced it.
+- "The K5000 isn't a K5 with a bigger harmonic count" was cut. The causal link
+  replaced it.
+- "The interesting part is not the list. It is..." became "The interesting part for
+  sound design is..."
+- "They aren't arbitrary-partial resynthesizers" became "you can't add inharmonic
+  partials..."
+- "The useful question is not how many harmonics..." became the direct statement
+  about four envelopes and one per harmonic.
+- "a complete voice path, not a single oscillator" became "a complete voice path,
+  rather than just the oscillator."
+- "a documented quirk, not a mistake" became "for some quirky reason". The fact was
+  lost. Keep "documented".
+- "a specialised resource, not an automatic upgrade" became "more of a specialised
+  tool than an automatic upgrade."
+
+The rule is not "never use not". Factual limits ("you can't add inharmonic
+partials", "it isn't a universal system") and scope contrasts ("purely explanatory
+rather than factory schematics") stay. The target is the needless label negation.
+The voice profile, the samples, the docs skill, the humanizer context, and the local
+humanizer profile now record the moves.
