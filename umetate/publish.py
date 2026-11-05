@@ -875,7 +875,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     if staged:
         print(f"  plugins/{platform}/: " + ", ".join(staged))
-        print("  third-party-licenses/: AGPL, MIT CLAP, MIT wrapper, two OFL fonts")
+        print("  third-party-licenses/: AGPL, MIT CLAP, MIT wrapper, three OFL fonts")
     if missing:
         print("  missing (build first):")
         for m in missing:

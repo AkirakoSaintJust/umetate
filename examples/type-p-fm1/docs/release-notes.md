@@ -2,6 +2,17 @@
 
 Newest first.
 
+## 1.0.3
+
+- Level: the operator level is now the Yamaha total-level scale, 0.75 dB per step. Level 75 on a ratio 1 modulator gives half a cycle of phase deviation, and the level-to-index table matches the OPM and the DX21, DX27, and DX100.
+- Modulators: the phase-modulation scale reaches the OPM's four-cycle full-scale deviation at level 99. A 1:1 pair follows the VOPMex centroid within about 11 percent from `TL` 0 to `TL` 32.
+- Feedback: the self-feedback tap takes the level-gained output, averages two samples, and reaches two cycles at a full-level operator. The depth follows the operator level, so a decaying sound keeps its shape.
+- Ratio knobs: the knob steps through multiples of 0.50, 1, √2, π/2, and √3, with √2/2, π/4, and √3/2 near the bottom. The firmware, web app, and plugin share the ladder, and the plugin's arrow keys step it.
+- Effects: the filters and the wavefolder start bypassed at power-on and in the plugin. Part 2 stays active.
+- Scopes: the plugin and screen scopes are rescaled for the new level curve, with a soft knee so a loud trace stays inside the widget.
+- Docs: the OPM mapping covers the level curve, the feedback depth law, and the measured cases. The envelope note gains the stage lengths and curve shape.
+- Licensing: the plugin archives carry their notices in `licences/`, the source archive includes `vendor/deps/`, the Terminus OFL notice is added, and VOPMex is credited.
+
 ## 1.0.2
 
 - Adds a live PERFORMANCE page to HOME with cutoff, resonance, wavefolder amount, and operator 1 feedback.
