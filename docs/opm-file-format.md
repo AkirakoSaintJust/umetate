@@ -5,8 +5,8 @@ YM2151 voices. The file has no structural header, no length field, and no checks
 Each voice starts with an `@` line and carries five parameter lines. The parser
 reads the blocks in file order. The `@` number names the slot.
 
-The same extension is used by two unrelated formats. This page covers the text
-patch bank that VOPM and VOPMex import. The other formats are described at the end.
+Two other formats use the same extension. This page covers the text patch bank that
+VOPM and VOPMex import. The other formats are described at the end.
 
 ## File shape
 
