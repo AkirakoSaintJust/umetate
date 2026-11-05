@@ -1,13 +1,6 @@
 # DSP implementation study
 
-DSP codebases tend to solve the same problems in a handful of recognisable
-shapes. This study looks at how Mutable Instruments, SuperCollider, Pure Data,
-Dexed (msfa), Nuked, ymfm, and SAPF implement DSP, and what their component
-interfaces have in common. The goal is practical: identify the synthesis
-techniques and component interfaces that fit umetate's node library.
-
-I've kept it as reference material. `docs/roadmap.md` owns project status, and
-this study supports §12.5 of that roadmap.
+See `docs/roadmap.md` §12.5.
 
 ---
 
