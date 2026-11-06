@@ -3,7 +3,7 @@
 umetate is the framework I use to design, build, test, and safely install custom
 firmware on the M-VAVE FM-1 and SMK-37, with AI agents working alongside. It keeps
 the synth project, the generated DSP, the browser build, the plugin, the tests, the
-docs, and the licence trail in one tree. The firmware runs on RIB (Rigid Inflatable
+docs, and the licence trail in one tree so you can keep separate project repos cleanly. The firmware runs on RIB (Rigid Inflatable
 Boat), a source-owned starter derived from Dinghy/Felucca.
 
 **Author:** P1Onken · **Licence:** GPL-3.0-only · **Status authority:**
@@ -11,7 +11,7 @@ Boat), a source-owned starter derived from Dinghy/Felucca.
 
 ## Components
 
-- **CLI.** Everything starts at `umetate`. It checks the environment, sets up
+- **CLI.** `umetate`. It checks the environment, sets up
   the toolchain, builds and emulates, inspects, flashes and recovers, scaffolds
   nodes, macros and patches, lints and formats, runs the web lab, and reports
   evidence and status. The commands are `quick-check`, `setup`, `build`, `emu`,
@@ -25,18 +25,16 @@ Boat), a source-owned starter derived from Dinghy/Felucca.
 - **Documentation skill.** It writes the user manual, the panel section, the MIDI
   and SysEx reference, the patch sheet, the install guide, and the release notes for
   a finished project. Its voice method is the humanizer skill in
-  `skills/umetate-humanizer/`.
+  `skills/umetate-humanizer/`. Hopefully it'll be better than the average (frankly disrespectful to end users) slop blurbs.
 - **Docker image and volume.** The build host is a pinned Linux container. The
   JieLi toolchain lives in a Docker volume at `/opt/jieli`, separate from the
   repository for the vendor terms, mounted read-only for every build and test, and
-  read-write only for `umetate setup`, the one command that installs the toolchain
-  and SDK.
+  read-write only for `umetate setup`, which will installs the toolchain
+  and SDK and set up your whole environment both host-side and Docker-side.
 - **RIB.** The starter firmware is dual-core by default, with optional FPU support,
   SMK-37 support, hardware-accelerated DSP, and the `app_audio`/`app_main` contract.
 - **Tutorial.** [`docs/tutorial.md`](docs/tutorial.md) is the guided path from
   the environment check through device validation.
-
-This file is the start guide, with the first commands and the repository map.
 
 The toolkit targets the FM-1 and SMK-37 (Pro/Elite/MKE-P37). It also includes the
 fm1-emu model layer and a WASM web app.
@@ -44,8 +42,7 @@ fm1-emu model layer and a WASM web app.
 ## Try a project in the browser
 
 The web app is the first place I go to hear a project before I flash anything.
-There's no toolchain and no device. It compiles the same generated DSP to WASM and
-runs it in a browser page, bit-exact with the host build.
+It doesn't emulate the FM-1 hardware, but it compiles the same generated DSP to WASM and runs it in a browser page, and umetate checks the output is bit-exact with the host build.
 
 ```sh
 umetate web-build --synth examples/type-p-fm1   # build the browser app
@@ -90,25 +87,24 @@ macOS DAW matrix are still open. You'll find the evidence in `plugin/`.
 framework source, the plugin bundles, the third-party licences, and optionally the
 vendored dependency source. It writes `RELEASES.md`, `SHA256SUMS`, and
 `release.json`, so the firmware and plugin downloads carry checksums and source
-links. Build artefacts stay in the ignored `build/` tree.
+links. Locally, build artefacts will stay in the ignored `build/` tree.
 
 ```sh
 umetate publish --plugins --vendor-deps build/plugin-juce/_deps
 ```
 
 A hand-written `publish-readme.md` in the project is copied verbatim as the release
-front door. Without one, `publish` writes a README from its template.
+front door. Without one, `publish` writes a README from its template. Ideally, hand-write your own if possible. Show that amount of passion for your own project as well, I beg you, or at least use my interview functionality (see next) so that your LLM agent has an idea of why you made your synth and what you want to tell your users. 
 
 ## Write the docs
 
 `umetate interview --synth examples/type-p-fm1 --write` generates a synth-specific
 design interview form from the project's `patch.json`, `panel.json`, and
-`synth-brief.md`. The questions use the synth's own architecture and words, rather
-than a fixed FM template. The documentation skill uses the answers to write the
+`synth-brief.md`. The questions use the synth's own architecture and words. The documentation skill then uses your answers to write a
 manual preface: personal history, the synthesis lineage, the design decisions, the
 trade-offs, and the first patch. The raw notes stay in the project and out of the
-release. `umetate interview --next 3` prints the next gaps, and `--check` lists every
-open question.
+release. `umetate interview --next 3` prints the next pending items, and `--check` lists every
+open question. I've tried to calibrate the resulting prose from my own personal writing, which might sound a bit chummy, nerdy and British. If that's not your thing I appreciate your position, but I'm going to feel guilty and embarrassed if you use umetate to make something and publish it with awful slop marketing blurb docs. Please take care of the community. We're making open source synths for fun and musical discovery, so it'd be great if we were at least kind enough to each other to actually document how to use our synths and tell the community about the ideas, hopes and passions we wanted to share with fellow m-vavers, right? Much better than "Absolute Plonker Yatch for the FM-1: fourty-nine engines, eleven tracks, thirteen MIDI channels. Absolute Plonker Yatch 69 for the FM-1 does for synths what Depeche Mode did for Mute Records, perfected. Melody, at your fingertips. Play it, then shut it down. What it is:", innit?
 
 ## Continuous integration
 
@@ -159,7 +155,7 @@ examples/      worked examples
 
 ## Status
 
-[`docs/roadmap.md`](docs/roadmap.md) is the source of truth for the design,
-implementation plan, and status of each claim. Device acceptance remains `blocked`
+[`docs/roadmap.md`](docs/roadmap.md) is the only reference for the design,
+implementation plan, and status of each claimed feature. Device acceptance remains `blocked`
 until hardware is available. A successful target build does not establish that the
 firmware has been accepted on a device.
