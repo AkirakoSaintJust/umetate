@@ -422,12 +422,11 @@ def _nearest_rate(opm_time: float, candidates: Sequence[tuple[int, float]]) -> i
     return best_rate
 
 
-# How far into a decay the rate map aims. A larger drop shortens the one-pole
-# tail at the cost of a faster first few dB. Eight matches the early body, the
-# converter defaults to a little more so the stage does not read long.
+# Envelope match points. The attack aims at -12 dB below full. The decay aims
+# 12 dB into the trip, which keeps the early body and the tail in the same
+# region. A larger drop shortens the tail at the cost of a faster first few dB.
+_ATTACK_TARGET_DB = -12.0
 _DECAY_DROP_DB = 12.0
-# No extra rate offset. With the corrected OPM EG clock, the 12 dB target is
-# enough to keep the early body and the tail in the same region.
 _DECAY_BIAS = 0
 
 _ATTACK_CACHE: dict[tuple[int, int, int], int] = {}
@@ -436,7 +435,7 @@ _RELEASE_CACHE: dict[tuple[int, int, int], int] = {}
 
 
 def _attack_rate(ar: int, ks: int, midi: int = 60) -> int:
-    """The Type P.fm1 rate whose rise to -12 dB takes the OPM's time."""
+    """The Type P.fm1 rate whose rise to the target dB takes the OPM's time."""
     key = (ar, ks, midi)
     cached = _ATTACK_CACHE.get(key)
     if cached is not None:
@@ -445,9 +444,9 @@ def _attack_rate(ar: int, ks: int, midi: int = 60) -> int:
         result = 0
     else:
         ticks = _opm_ticks(ar, "attack", d1l=0, ks=ks, midi=midi, start_el=1024)
-        # -12 dB below full is Xr_el 128.
-        opm_time = _opm_time_to(ticks, start_el=1024, target_el=128)
-        aim = round(32767.0 * 10.0 ** (-12.0 / 20.0))
+        target_el = round(-_ATTACK_TARGET_DB / _DB_PER_EL)
+        opm_time = _opm_time_to(ticks, start_el=1024, target_el=target_el)
+        aim = round(32767.0 * 10.0 ** (_ATTACK_TARGET_DB / 20.0))
         candidates = [(rate, _fm1_time(rate, 0, 99, aim)) for rate in range(100)]
         result = _nearest_rate(opm_time, candidates)
     _ATTACK_CACHE[key] = result
