@@ -22,7 +22,7 @@ enforces that, and `AGENTS.md` carries the compaction procedure.
 | Engine | 44.1 kHz, integer-first, bit-exact. 20 voices, 2 parts, 4-op FM, 8 algorithms, 12 waveforms, two filters, a wavefolder, and key and velocity follow. |
 | Target evidence | Source, host, browser/WASM parity, target package, emulator, and Linux DAW pass. Physical device timing and acceptance are `blocked`. |
 | Gate | The full gate is green. It passed host, web, Python, skill, lib, links, pyright, and memory. |
-| Docs | Tutorial, DSP study, Type P.fm1 docs, the OPM patch reference and mapping, the envelope design note, templates, and the voice profile are current. The Type P.fm1 manual includes the panel section, written from `panel.json` with every page, parameter, and flow. The OPM mapping page carries the `umetate opm convert` recipe, the bank geometry, and the measured tolerance. Docs skill `1.5.0`. Humanizer skill `1.1.0`. The K5/K5000 guide is in the ignored `doc-test/`. |
+| Docs | Tutorial, DSP study, Type P.fm1 docs, the OPM patch reference and mapping, the envelope design note, templates, and the voice profile are current. The Type P.fm1 manual includes the panel section, written from `panel.json` with every page, parameter, and flow. The OPM mapping page carries the `umetate opm convert` recipe, the bank geometry, and the measured tolerance. Docs skill `1.6.0`. Humanizer skill `1.2.0`. The K5/K5000 guide is in the ignored `doc-test/`. |
 | CI | Framework CI covers Linux and Windows, with macOS `continue-on-error`. The release repo workflow builds Linux x86_64, Linux aarch64, and Windows x86_64 VST3/CLAP from a `v*` tag or a version dispatch, and attaches the archives to a GitHub Release. |
 
 The framework has moved past `31ecc64` with the design interview, the voice profile,
@@ -131,7 +131,7 @@ One table for the pieces I need to find quickly.
 | CLI | `umetate` commands | `umetate/` | done (host/browser/target) |
 | Development skill | design and build loop | `skills/umetate-development/` | done |
 | Safety skill | threat model and device gates | `skills/umetate-safety/` | done |
-| Documentation skill | user docs, voice, interview | `skills/umetate-documentation/` | done, 1.5.0 |
+| Documentation skill | user docs, voice, interview | `skills/umetate-documentation/` | done, 1.6.0 |
 | Docker and toolchain | pinned Linux host and JieLi SDK | `docker/`, `umetate/runner.py` | done |
 | RIB runtime | dual-core starter firmware | `firmware/` | done (host/target), device blocked |
 | Docs | tutorial, DSP study, platform facts, module library, OPM format and mapping, envelope design | `docs/`, `firmware/README.md` | current |

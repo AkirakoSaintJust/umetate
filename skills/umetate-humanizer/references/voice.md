@@ -1,57 +1,56 @@
 # umetate voice data
 
-This is the project voice data for `skills/umetate-humanizer/SKILL.md`.
-
-Read it before rewriting a manual, a README, release notes, a panel section, or a
-guide or study.
-
-The runtime method is `skills/umetate-humanizer/SKILL.md`. That file carries the
+This is the project voice data for `skills/umetate-humanizer/SKILL.md`, and I'd read
+it before rewriting a manual, a README, release notes, a panel section, or a guide or
+study. The runtime method is in `skills/umetate-humanizer/SKILL.md`, which carries the
 negation test, the connectivity pass, the aphorism ban, the "A, not B" ban, the
 registers, and the no-information-loss check. This file is the project-specific
-voice data.
+voice data that sits underneath it.
 
-The hand-written manual is `examples/type-p-fm1/docs/manual.md`. The author rewrote
-it after the first release. That rewrite is the target, not the earlier, flatter
-version. The K5/K5000 guide rewrite in `doc-test/` is the guide calibration. It is
-not committed, but the excerpts in `skills/umetate-documentation/references/voice-samples.md`
-are.
+The hand-written manual is `examples/type-p-fm1/docs/manual.md`, which the author
+rewrote after the first release. That rewrite is the target, not the earlier, flatter
+version. The K5/K5000 guide rewrite in `doc-test/` is the guide calibration, and it
+isn't committed, but the excerpts in
+`skills/umetate-documentation/references/voice-samples.md` are.
 
 ## The voice in one paragraph
 
-A builder and a player talking to another builder or player. First person, normal
-contractions, dry asides, technical exactness, light UK slang. Long setup and short
-landing. The instrument can be the actor. The manual can open with a design note in
-the front-door register, then settle into the reference voice. A guide or study can
-open with the plain category and a causal link, then carry longer explanatory
-sentences. Do not flatten either one into a spec sheet.
+The target is a builder and a player talking to another builder or player, with first
+person, normal contractions, dry asides, technical exactness, and light UK slang. I
+like a long setup and a short landing, and I'm happy for the instrument to be the
+actor when no person is doing anything. The manual can open with a design note in the
+front-door register, then settle into the reference voice, whilst a guide or study can
+open with the plain category and a causal link and carry longer explanatory sentences
+later. Do not flatten either one into a spec sheet, because the flattening is the
+failure mode.
 
-The author is chummy, nerdy, and British. The hand-written README says the prose
-"might sound a bit chummy, nerdy and British", then asks the reader to write their
-own release front door. It also says "I'm going to feel guilty and embarrassed if
-you use umetate to make something and publish it with awful slop marketing blurb
-docs." That is the target: warm, direct, a little self-deprecating, and completely
-serious about keeping the community's docs readable. An aside earns its place when
-it carries a reason, a real stake, or a specific care for the reader. A slogan does
-not.
+I'm chummy, nerdy, and British, and the hand-written README says the prose "might
+sound a bit chummy, nerdy and British", then asks the reader to write their own
+release front door. It also says "I'm going to feel guilty and embarrassed if you use
+umetate to make something and publish it with awful slop marketing blurb docs." That's
+the target: warm, direct, a little self-deprecating, and completely serious about
+keeping the community's docs readable. An aside earns its place when it carries a
+reason, a real stake, or a specific care for the reader, and a slogan doesn't.
 
 ## Calibration
 
-The first manual was 971 words: mean sentence 11.3, median 10, standard deviation
-6.4, 2 first-person pronouns, 1 contraction. It read like a contract.
+The first manual was 971 words, with a mean sentence of 11.3, a median of 10, a
+standard deviation of 6.4, 2 first-person pronouns, and 1 contraction, which is why
+it read like a contract.
 
-The hand rewrite is 1,899 words: mean sentence 15.6, median 13, standard deviation
-12.1, 22 first-person pronouns, 33 contractions, 7 brackets, 4 exclamation marks.
-The longest sentence is 66 words. The shortest fragment is one word. The current
-manual appends the panel section, so the file is longer. The hand-written part
-remains the calibration.
+The hand rewrite is 1,899 words, with a mean sentence of 15.6, a median of 13, a
+standard deviation of 12.1, 22 first-person pronouns, 33 contractions, 7 brackets,
+and 4 exclamation marks. The longest sentence is 66 words, the shortest fragment is
+one word, and the current manual appends the panel section, so the file is longer.
+The hand-written part remains the calibration.
 
 If a rewrite produces numbers near the first set, it has over-edited.
 
-The guide first 70 lines moved from 689 words in 58 sentences (mean 11.6, median
+The guide's first 70 lines moved from 689 words in 58 sentences (mean 11.6, median
 9.5, standard deviation 8.5, longest 52) to 737 words in 41 sentences (mean 17.6,
 median 14, standard deviation 16.7, longest 80). The first-person count stayed at
-three. The change is explanatory sentence length and connective looseness, not
-self-reference. Do not add "I" to compensate for a flat draft.
+three, because the change was explanatory sentence length and connective looseness
+rather than self-reference, so don't add "I" to compensate for a flat draft.
 
 ## Preserve these
 
@@ -97,7 +96,7 @@ self-reference. Do not add "I" to compensate for a flat draft.
 ## Negation
 
 The author removed almost every "It's a X, not a Y" and "It's not an X" setup from
-the guide. Do not add them back.
+the guide, so don't add them back.
 
 - Cut the setup and state the positive.
 - Replace the label with the constraint.
@@ -108,9 +107,9 @@ the guide. Do not add them back.
   contrasts ("purely explanatory rather than factory schematics").
 - If you remove a negation, keep the fact it carried.
 
-The test: a negation earns its place only when it carries a causal link, a factual
-comparison, a counterintuitive explanation, a real limit, or a correction of a
-misconception. If it carries none of those, cut it.
+The test is simple: a negation earns its place only when it carries a causal link, a
+factual comparison, a counterintuitive explanation, a real limit, or a correction of
+a misconception. If it carries none of those, cut it.
 
 The before and after table is in
 `skills/umetate-documentation/references/voice-samples.md` under "Replacing the
@@ -121,12 +120,13 @@ negation".
 A correction can keep the negative. The author wrote "But that doesn't mean one is
 necessarily better than the other! They've just got different personalities." and
 "That is just a tour-rig claim, though, with no album credits to back it up." The
-negation carries a correction or a limit, so it stays. "Just", "though", and "more
-of a" scale the claim. Do not turn it into a label contrast.
+negation carries a correction or a limit, so it stays, and "just", "though", and
+"more of a" scale the claim. Don't turn it into a label contrast.
 
-A concrete detail can end a paragraph. The author cut "That is the K5 in its
-natural habitat: a professional tool under deadline." after the Jan Hammer detail.
-A closing verdict that restates the paragraph is filler.
+A concrete detail can end a paragraph. The author cut "That is the K5 in its natural
+habitat: a professional tool under deadline." after the Jan Hammer detail, because
+the detail already carried the point and a closing verdict that restates the
+paragraph is filler.
 
 Anecdotal asides use "anecdotally, though" and "I'd really like to". One per
 section at most.
@@ -169,21 +169,21 @@ After:
 
 > Press switch on, then play the keys.
 
-If a fact is genuinely needed at that point, make it a limit: "This needs a
-browser with WebAudio and a current graphics driver." A limit helps the reader
-decide. A product description does not.
+If a fact is genuinely needed at that point, make it a limit: "This needs a browser
+with WebAudio and a current graphics driver." A limit helps the reader decide, and a
+product description does not.
 
 ## List drumbeats
 
-A list where every item starts with "The" reads like a spec sheet. The repeated
-article turns the items into a drumbeat: "The CLI. The development skill. The
-safety skill." The reader stops hearing the jobs and starts hearing the grammar.
+A list where every item starts with "The" reads like a spec sheet, because the
+repeated article turns the items into a drumbeat: "The CLI. The development skill.
+The safety skill." The reader stops hearing the jobs and starts hearing the grammar.
 
 Drop the article and lead with the noun or the verb. "CLI. Everything starts at
 `umetate`." "Development skill. It guides the workflow." If the items are really
-sentences, write the paragraph instead of the list. A list earns its place when
-the items are short, parallel, and easy to scan. A list of full sentences with the
-same article is prose in disguise.
+sentences, write the paragraph instead of the list, because a list earns its place
+when the items are short, parallel, and easy to scan, and a list of full sentences
+with the same article is prose in disguise.
 
 Before:
 
@@ -201,13 +201,13 @@ The facts are the same. The drumbeat is gone.
 
 ## Wh-word headings
 
-A heading made from a wh-clause is a question the reader did not ask. "What to
+A heading made from a wh-clause is a question the reader did not ask, so "What to
 reach for first", "How to move", "What it does" and "Where they sit" read like a
 generated outline or a help centre. They also make the writer sound unsure of the
 noun.
 
 Use a noun phrase for a topic and an imperative for an action. "What to reach for
-first" becomes "Get started!". "How to move" becomes "Navigation". "What it does"
+first" becomes "Get started!", "How to move" becomes "Navigation", and "What it does"
 becomes "Functionality". The table header and the heading follow the same rule.
 
 Before:
@@ -222,21 +222,21 @@ After:
 > Navigation
 > | Parameter | Range | Functionality |
 
-The same rule applies to table column headers, checklist labels, and section
-titles. A question can stay in body prose when the reader is actually asking it.
+The same rule applies to table column headers, checklist labels, and section titles,
+and a question can stay in body prose when the reader is actually asking it.
 
 ## Counted couplets
 
-A heading, caption, or table description built as two counts reads like a slogan.
-"One page, one job", "Two sources, one filter", "Four operators, eight algorithms"
-and "One phase, many amplitudes" sell a shape instead of naming the section. The
-counts sound balanced, so the line feels finished before it says anything.
+A heading, caption, or table description built as two counts reads like a slogan,
+because "One page, one job", "Two sources, one filter", "Four operators, eight
+algorithms" and "One phase, many amplitudes" sell a shape instead of naming the
+section. The counts sound balanced, so the line feels finished before it says
+anything.
 
 Use a noun phrase or an imperative, and put the count in the body where it can be
-explained. "One page, one job" becomes "Page-based screens", then the paragraph
-says how many jobs each page carries. "One phase, many amplitudes" becomes "The
-shared phase accumulator", then the paragraph explains why one phase drives every
-partial.
+explained. "One page, one job" becomes "Page-based screens", then the paragraph says
+how many jobs each page carries, and "One phase, many amplitudes" becomes "The shared
+phase accumulator", then the paragraph explains why one phase drives every partial.
 
 Before:
 
@@ -256,9 +256,9 @@ Low/High split." Keep it when the numbers do work.
 
 ## Storage values
 
-A user document describes the value on the screen, not the number in the firmware.
-"Ratio is written 65536" and "feedback runs 0 to 32767" tell the reader about a
-representation they cannot see. Write the range the panel shows: "ratio 0.50 to
+A user document describes the value on the screen, not the number in the firmware,
+because "Ratio is written 65536" and "feedback runs 0 to 32767" tell the reader about
+a representation they cannot see. Write the range the panel shows: "ratio 0.50 to
 16.00", "feedback 0 to 100%". A patch sheet is a panel form, not a memory dump.
 
 Before:
@@ -271,10 +271,11 @@ After:
 
 ## Connectivity
 
-A guide joins a fact to its cause, condition, or specification. The model draft
-wrote "Each additive source holds 64 harmonics. Low is 1 to 64. High is 65 to 128."
-The author wrote "Each additive source holds 64 harmonics, with two possible
-settings: Low is 1 to 64, and High is 65 to 128."
+A guide joins a fact to its cause, condition, or specification, because a page of
+separate declaratives makes the reader do the joining. The model draft wrote "Each
+additive source holds 64 harmonics. Low is 1 to 64. High is 65 to 128", and the
+author wrote "Each additive source holds 64 harmonics, with two possible settings:
+Low is 1 to 64, and High is 65 to 128."
 
 - Attach a fact or an explanation with a relative clause: "Harmonic 64 is missing,
   which is a documented quirk of the instrument."
@@ -284,10 +285,10 @@ settings: Low is 1 to 64, and High is 65 to 128."
 - Use a parenthesis for a source pointer.
 - Join a cause to its consequence with "so" or "because" when the link is real.
 
-The first 170 lines of the guide average 13.8 words per sentence against 17.6 in
-the first 70, partly because the later sections carry lists and tables. The prose
-still needs the joins. A page of short declaratives has lost the guide register
-even when every fact is right.
+The first 170 lines of the guide average 13.8 words per sentence against 17.6 in the
+first 70, partly because the later sections carry lists and tables, but the prose
+still needs the joins. A page of short declaratives has lost the guide register even
+when every fact is right.
 
 ## Fix these
 
@@ -308,8 +309,8 @@ even when every fact is right.
 
 ## Project vocabulary bans
 
-These are hard bans in prose. The substitute is the plain phrase, not a synonym
-with the same framing.
+These are hard bans in prose, and the substitute is the plain phrase rather than a
+synonym with the same framing.
 
 | Do not write | Write instead |
 | --- | --- |
@@ -321,29 +322,29 @@ with the same framing.
 | gap, for missing work | missing work, missing feature, bug, oversight, problem |
 
 Keep "claim" as a verb when the evidence matters, and in a licence or warranty. Keep
-"built" for a compiled binary, a target package, or a CI job. Keep "gap" for a grid
-gap, a silent gap in audio, or a measured interval. Keep a code identifier, a
+"built" for a compiled binary, a target package, or a CI job, and keep "gap" for a
+grid gap, a silent gap in audio, or a measured interval. Keep a code identifier, a
 command, a schema key, or a quoted source exactly as it is.
 
-"Source of truth" was the old status word. The new reference is "only reference" or
-"the single reference". The README now says `docs/roadmap.md` is "the only reference
-for the design, implementation plan, and status of each claimed feature."
+"Source of truth" was the old status word, and the new reference is "only reference"
+or "the single reference". The README now says `docs/roadmap.md` is "the only
+reference for the design, implementation plan, and status of each claimed feature."
 
 "I built" became "I made" in the worked example: "Type P.fm1 is a worked example I
 made to put the framework through the process." Keep the author's hands in the
 sentence.
 
 "Dogfood" became "the example firmware made out of the pre-made umetate components"
-in the build comment, and "the test project" in the status prose. The word hid the
-fact that the author was testing their own components. Say the fact.
+in the build comment, and "the test project" in the status prose, because the word hid
+the fact that the author was testing their own components. Say the fact.
 
-A file does not live. The plugin source is in the `plugin/` folder. The modules are
-stored at `modules/nodes/`. The framework source's path within the repo is
+A file does not live. The plugin source is in the `plugin/` folder, the modules are
+stored at `modules/nodes/`, and the framework source's path within the repo is
 `umetate/`.
 
 "Gap" became "missing work", "missing items", "open questions", "bug", "oversight",
-or "problem". A gap in a plan is a missing feature. A gap in the interview is an
-unanswered question. A gap in the evidence is a missing measurement. Name it.
+or "problem", because a gap in a plan is a missing feature, a gap in the interview is
+an unanswered question, and a gap in the evidence is a missing measurement. Name it.
 
 ## Hard bans
 
@@ -371,7 +372,7 @@ Hand rewrite:
 > the operators were always computed in the same order and the one with feedback
 > was always the first one.
 
-The rewrite adds the mechanism and the teaching voice. It is not padding.
+The rewrite adds the mechanism and the teaching voice, and it isn't padding.
 
 Aphorism first release:
 
@@ -382,7 +383,7 @@ Hand rewrite:
 > Try looking at the operator oscilloscopes to check out how the cascading phase
 > modulation progressively warps each waveform!
 
-The instruction is stronger than the aphorism. Prefer it.
+The instruction is stronger than the aphorism, so prefer it.
 
 ### Project vocabulary
 
@@ -399,7 +400,7 @@ Hand rewrite:
 > missing work.
 
 The facts survive. The status shorthand, the insider jargon, the construction
-metaphor, the location verb, and the planning word do not.
+metaphor, the location verb, and the planning word do not survive.
 
 ### Anti-slop promise
 
@@ -411,9 +412,9 @@ The hand-written README is the calibration for the front-door aside:
 > make something and publish it with awful slop marketing blurb docs. Please take
 > care of the community.
 
-The aside admits a taste, names the stake, and asks for something. Keep that shape.
-A line like "we are passionate about empowering creators" has the same topic and no
-person in it.
+The aside admits a taste, names the stake, and asks for something, so keep that
+shape. A line like "we are passionate about empowering creators" has the same topic
+and no person in it.
 
 ### Guide opening
 
@@ -430,8 +431,8 @@ Author rewrite:
 > they're an interesting case study. They came out at different times and the K5's
 > shortcomings probably were part of what motivated the K5000's design.
 
-The author cut the balanced thesis and the paired metaphors. The plain category and
-the causal guess are the target.
+The author cut the balanced thesis and the paired metaphors, because the plain
+category and the causal guess are the target.
 
 ### Technical guide
 
@@ -459,7 +460,7 @@ Author rewrite:
 > They came out at different times and the K5's shortcomings probably were part of
 > what motivated the K5000's design.
 
-The author preferred the causal and historical link over the neat contrast. Use a
+The author preferred the causal and historical link over the neat contrast, so use a
 contrast only when both sides are the point.
 
 ### Dropped qualifier
@@ -473,7 +474,7 @@ Author rewrite:
 
 > Harmonic 64 is missing for some quirky reason.
 
-The casual phrase is fine. The loss of "documented" is not. Keep the fact and the
+The casual phrase is fine, but the loss of "documented" is not. Keep the fact and the
 casual wrapper.
 
 ## Scope

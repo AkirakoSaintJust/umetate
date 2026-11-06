@@ -1,43 +1,51 @@
 ---
 name: umetate-humanizer
 description: Rewrite prose in the author's voice, extracted from the Type P.fm1 manual, the K5/K5000 guide, and the hand-written README. Use when text sounds like a spec sheet, a chatbot, or marketing copy, when a draft needs the author's rhythm and causal links, or when editing a Markdown file in place. Covers the negation test, the connectivity pass, the aphorism ban, the "A, not B" ban, the project vocabulary bans (claim, source of truth, I built, dogfood, lives in, gap), the manual and guide registers, the anti-slop promise, and the no-information-loss check. Pure Markdown, no dependencies, no network calls.
-version: 1.1.0
+version: 1.2.0
 license: GPL-3.0-only
 allowed-tools: read, grep, glob, edit, write, shell
 ---
 
 # umetate humanizer
 
-This is the author's voice method. It comes from the hand-written Type P.fm1
-manual and the K5/K5000 guide rewrite. It is not a generic AI-tell filter. The
-target is a specific builder and player talking to another builder or player.
+This is the voice method I use on my own docs, and it comes from the hand-written
+Type P.fm1 manual and the K5/K5000 guide rewrite. It isn't a generic AI-tell
+filter, because the target is narrower than that: a specific builder and player
+talking to another builder or player, with the same dry asides and the same
+impatience for a poster line.
 
-The method has four jobs: keep the facts, choose the right register, join the
-clauses, and cut the lines that sound like a poster. Everything else follows from
-those.
+The method has four jobs, and everything else follows from them: keep the facts,
+choose the right register, join the clauses that belong together, and cut the
+lines that sound like a poster. I'd read the rest of this file with those four
+jobs in mind, because a rule that doesn't serve one of them is probably just
+decoration.
 
 ## Target voice
 
-A builder and a player, writing to another builder or player. First person, normal
-contractions, dry asides, technical exactness, light UK slang. Long setup and short
-landing. The instrument can be the actor. A manual can open with a design note in
-the front-door register, then settle into the reference voice. A guide can open
-with the plain category and a causal link, then carry longer explanatory
-sentences. Do not flatten either one into a spec sheet.
+The target is a builder and a player, writing to another builder or player, with
+first person, normal contractions, dry asides, technical exactness, and light UK
+slang. I like a long setup and a short landing, and I'm happy for the instrument to
+be the actor when no person is doing anything. A manual can open with a design note
+in the front-door register, then settle into the reference voice, whilst a guide
+can open with the plain category and a causal link and carry longer explanatory
+sentences later. Do not flatten either one into a spec sheet, because the flattening
+is the failure mode this whole file is trying to prevent.
 
-The author is opinionated and specific. They say what is good, bad, boring, or
-unremarkable, and give the reason. They admit a limit, a failed experiment, or a
-change of mind. They use "I" when the judgement is theirs. They use "you" for the
-reader. They let the instrument be the subject when no person is acting.
+I'm opinionated and specific, and I'd rather say what is good, bad, boring, or
+unremarkable and give the reason than hedge around it. I'll admit a limit, a failed
+experiment, or a change of mind when the evidence says so, which is why "I" belongs
+on the judgement and "you" belongs on the reader's experience. The instrument can
+take the subject when no person is acting, and that's usually the clearer sentence.
 
-The author is also chummy, nerdy, and British. The front door can carry a dry aside,
-a self-deprecating admission, or a direct request to the reader. The hand-written
-README says the prose "might sound a bit chummy, nerdy and British", and it asks the
+I'm also chummy, nerdy, and British, and the front door can carry a dry aside, a
+self-deprecating admission, or a direct request to the reader. The hand-written
+README says the prose "might sound a bit chummy, nerdy and British", then asks the
 reader to write their own release front door "because I'm going to feel guilty and
 embarrassed if you use umetate to make something and publish it with awful slop
-marketing blurb docs." That is the register: warm, direct, a bit embarrassed about
-asking, and completely serious about the anti-slop promise. Keep the aside when it
-carries a reason or a real care for the reader. Cut it when it becomes a slogan.
+marketing blurb docs." That's the register I want: warm, direct, a bit embarrassed
+about asking, and completely serious about the anti-slop promise. Keep the aside
+when it carries a reason or a real care for the reader, and cut it when it turns
+into a slogan.
 
 ## Six rules
 
@@ -57,8 +65,9 @@ carries a reason or a real care for the reader. Cut it when it becomes a slogan.
 
 ## Project vocabulary bans
 
-These words carry a model's default framing. Use the substitute or rewrite the
-sentence. They are hard bans in prose, not preferences.
+These words carry a model's default framing, and each one hides a simpler fact
+underneath. Use the substitute or rewrite the sentence, because a hard ban in prose
+is not a preference you can skip when the sentence feels awkward.
 
 | Do not write | Write instead |
 | --- | --- |
@@ -69,37 +78,43 @@ sentence. They are hard bans in prose, not preferences.
 | lives in, live in, for a file, folder, sub-project, document, or component | is in the PATH folder, is stored at, PATH's path within the repo is |
 | gap, for missing work | missing work, missing feature, bug, oversight, problem |
 
-A bare "claim" is a debate word. "The status of each claim" becomes "the status of
-each claimed feature". Keep "claim" as a verb when someone is claiming a fact and
-the evidence matters, and keep it in a licence or warranty. Do not use it as a label
-for a feature.
+A bare "claim" is a debate word, so "the status of each claim" becomes "the status
+of each claimed feature", which says what the thing is without turning it into a
+courtroom. Keep "claim" as a verb when someone is claiming a fact and the evidence
+matters, and keep it in a licence or warranty, but don't use it as a label for a
+feature.
 
-"Source of truth" is a status word borrowed from software management. The repo has
-one reference for status: `docs/roadmap.md`. Write "the only reference" or "the
-single reference".
+"Source of truth" is a status word borrowed from software management, and it sounds
+more grand than the thing it describes. This repo has one reference for status,
+`docs/roadmap.md`, so write "the only reference" or "the single reference" and let
+the fact do the work.
 
-"I built" is the model's construction metaphor. The author made the thing. Use "I
-made", "we made", "the example I made". Keep "built" for a compiled binary, a target
-package, or a CI job, where the literal build is the subject.
+"I built" is the model's construction metaphor, and it tends to turn a piece of
+writing into a building project. I made the thing, so use "I made", "we made", or
+"the example I made", and keep "built" for a compiled binary, a target package, or a
+CI job, where the literal build is the subject.
 
-"Dogfood" is insider jargon that hides who did what. Write "the test project made
-from our own readymade components" on first use, then "the test project" or "the
-worked example". If a build command or a historical identifier uses the word, keep
-the literal token and explain it in plain words around it.
+"Dogfood" is insider jargon that hides who did what, and it always sounds like a
+private joke rather than a description. Write "the test project made from our own
+readymade components" on first use, then shorten it to "the test project" or "the
+worked example" once the reader knows what you mean. If a build command or a
+historical identifier uses the word, keep the literal token and explain it in plain
+words around it.
 
-A file, folder, sub-project, document, or component does not "live" anywhere. It is
-in a folder, it is stored at a path, or its path within the repo is the path. "The
-plugin source lives in `plugin/`" becomes "The plugin source is in the `plugin/`
-folder." "The modules live in `modules/nodes/`" becomes "The modules are stored at
-`modules/nodes/`."
+A file, folder, sub-project, document, or component doesn't "live" anywhere, and
+saying it does makes a path sound like a habitat. It is in a folder, it is stored at
+a path, or its path within the repo is the path. "The plugin source lives in
+`plugin/`" becomes "The plugin source is in the `plugin/` folder", and "The modules
+live in `modules/nodes/`" becomes "The modules are stored at `modules/nodes/`."
 
-"Gap" is a planning word that hides the concrete failure. Name the missing work, the
-missing feature, the bug, the oversight, or the problem. "The next gaps" becomes "the
-next missing items" or "the open questions". Keep "gap" for a physical space, a grid
-gap, a silent gap in audio, or a measured interval.
+"Gap" is a planning word that hides the concrete failure, and a plan full of gaps
+is harder to act on than a list of jobs. Name the missing work, the missing feature,
+the bug, the oversight, or the problem, so "the next gaps" becomes "the next missing
+items" or "the open questions". Keep "gap" for a physical space, a grid gap, a
+silent gap in audio, or a measured interval.
 
-These bans apply to prose. A code identifier, a command, a schema key, or a quoted
-source keeps its spelling.
+These bans apply to prose, so a code identifier, a command, a schema key, or a
+quoted source keeps its spelling even when the word is on the list.
 
 ## Registers
 
@@ -117,18 +132,20 @@ source keeps its spelling.
 
 ## Calibration
 
-The hand-written manual is 1,899 words: mean sentence 15.6, median 13, standard
-deviation 12.1, 22 first-person pronouns, 33 contractions, 7 brackets, 4
-exclamation marks. The current Type P.fm1 manual appends the panel section, so the
-file is longer. The hand-written part remains the calibration.
+The hand-written manual is 1,899 words, with a mean sentence of 15.6 words, a
+median of 13, a standard deviation of 12.1, 22 first-person pronouns, 33
+contractions, 7 brackets, and 4 exclamation marks. The current Type P.fm1 manual
+appends the panel section, so the file is longer, but the hand-written part remains
+the calibration and I'd keep coming back to it.
 
-The K5/K5000 guide's first 70 lines are 737 words in 41 sentences: mean 17.6,
-median 14, standard deviation 16.7, longest 80. The first-person count stayed at
-three. The change was explanatory length and connective looseness, not
-self-reference.
+The K5/K5000 guide's first 70 lines are 737 words in 41 sentences, with a mean of
+17.6, a median of 14, a standard deviation of 16.7, and a longest sentence of 80
+words. The first-person count stayed at three, because the change was explanatory
+length and connective looseness rather than self-reference, and that's the lesson
+I'd take into a guide.
 
-Do not add "I" to compensate for a flat draft. Add explanatory clauses,
-connectives, and a longer sentence where the thought needs it. A manual with two
+Don't add "I" to compensate for a flat draft. Add explanatory clauses, connectives,
+and a longer sentence where the thought needs one, because a manual with two
 first-person pronouns and one contraction in 1,000 words has been over-edited.
 
 ## Negation test
@@ -141,31 +158,35 @@ A negation earns its place only when it carries one of these:
 - a real scope or limit,
 - a correction of a specific misconception.
 
-If it carries none of those, cut it. It is a debate move with no information.
+If it carries none of those, cut it, because it is a debate move with no
+information in it.
 
-Do not write "A, not B" as an adversative. "single precision, not double", "whole
-waveforms, not partials", and "the framework, not the glue" read like a spec
-sheet. Use "rather than", a separate sentence, or a "but" clause. Keep the
-comma-not form only when the second half is a precise factual limit and the
-sentence would be clumsy without it, and even then prefer "rather than".
+Don't write "A, not B" as an adversative. "single precision, not double", "whole
+waveforms, not partials", and "the framework, not the glue" read like a spec sheet,
+and the contrast is usually doing less work than the writer thinks. Use "rather
+than", a separate sentence, or a "but" clause, and keep the comma-not form only when
+the second half is a precise factual limit and the sentence would be clumsy without
+it. Even then, I'd prefer "rather than".
 
 A conversational correction can keep the negative. "But that doesn't mean one is
 necessarily better than the other! They've just got different personalities." The
-negation carries a correction, and "just" scales it. "That is just a tour-rig
-claim, though, with no album credits to back it up" does the same with a limit.
-The target is the theatrical label contrast, not every negative sentence.
+negation carries a correction, and "just" scales it, whilst "That is just a tour-rig
+claim, though, with no album credits to back it up" does the same with a limit. The
+target is the theatrical label contrast, not every negative sentence, so don't go
+through a draft with a red pen and remove every "not" you see.
 
-The tell: "It's not just a synth, it's a way of thinking." "This isn't about
-features, it's about feel." "Less a manual, more a conversation." "Not X. Y." If
-the contrast is real, state both sides plainly: "The filter is 12 dB per octave.
-It does not self-oscillate."
+The tell is easy to spot once you know it: "It's not just a synth, it's a way of
+thinking", "This isn't about features, it's about feel", "Less a manual, more a
+conversation", "Not X. Y." If the contrast is real, state both sides plainly and
+stop: "The filter is 12 dB per octave. It does not self-oscillate."
 
 ## Connectivity
 
-Join a fact to its cause, condition, or specification. The model draft wrote
-"Each additive source holds 64 harmonics. Low is 1 to 64. High is 65 to 128." The
-author wrote "Each additive source holds 64 harmonics, with two possible settings:
-Low is 1 to 64, and High is 65 to 128."
+Join a fact to its cause, condition, or specification, because a page of separate
+declaratives makes the reader do the joining. The model draft wrote "Each additive
+source holds 64 harmonics. Low is 1 to 64. High is 65 to 128", and the author wrote
+"Each additive source holds 64 harmonics, with two possible settings: Low is 1 to
+64, and High is 65 to 128."
 
 - Attach a fact or an explanation with a relative clause: "Harmonic 64 is missing,
   which is a documented quirk of the instrument."
@@ -177,21 +198,23 @@ Low is 1 to 64, and High is 65 to 128."
 - Let a recommendation explain itself: "Its restrictions are instructive, so it is
   the synth to learn additive synthesis on."
 
-Do not split a connected explanation into three declaratives. A page of short
-sentences has lost the guide register even when every fact is right.
+Don't split a connected explanation into three declaratives, because a page of
+short sentences has lost the guide register even when every fact is right. The
+reader can feel the difference before they can name it.
 
 ## Commit bodies and code comments
 
-A good commit body states the current constraint, the change, and the reason. The
-envelope refactor is the shape:
+A good commit body states the current constraint, the change, and the reason, and
+then gets out of the way. The envelope refactor is the shape:
 
 > The attack target was hardcoded at -12 dB. Make it a module constant next to the
 > decay target, so an experiment can render other match points without touching the
 > shipped value. The default stays -12 dB.
 
-Three sentences: what was fixed, what changed, why, and what stayed. No "refactored
-the codebase" and no "improved maintainability". Name the constant, the file, or the
-behaviour. A code comment gets the same treatment, and it names the trade-off:
+Three sentences do the whole job: what was fixed, what changed, why, and what
+stayed. There's no "refactored the codebase" and no "improved maintainability",
+because neither one tells the next reader anything. Name the constant, the file, or
+the behaviour, and give a code comment the same treatment by naming the trade-off:
 
 > Envelope match points. The attack aims at -12 dB below full. The decay aims 12 dB
 > into the trip, which keeps the early body and the tail in the same region. A
@@ -199,24 +222,24 @@ behaviour. A code comment gets the same treatment, and it names the trade-off:
 
 ## Aphorisms and endings
 
-An aphorism is a short, universal-sounding verdict that could go on a poster. It
-flatters the writer and adds no information. Cut "Its restrictions are the
+An aphorism is a short, universal-sounding verdict that could go on a poster, and
+it flatters the writer whilst adding no information. Cut "Its restrictions are the
 lesson", "Two sources with clear jobs beat six sources with vague ones", "They are
 instruments for composing the inside of a sound", "The K5 teaches you to think
 spectrally", "The filter is useful, and it is also a trap", and "Hybridisation is
 musically intelligent."
 
 The quasi-aphorism is the same move with a concrete noun. "Its restrictions are the
-lesson" sounds like a design principle, but it does not say which restrictions or
-what they teach. Replace it with the concrete reason: "Its two sources and four
+lesson" sounds like a design principle, but it doesn't say which restrictions or
+what they teach, so replace it with the concrete reason: "Its two sources and four
 envelopes are enough to learn how harmonic groups move."
 
-A specific verdict is allowed: "The K5000W is the least immediate additive
-instrument of the three." A slogan is not: "The K5000 is a way of thinking."
-
-A concrete detail can end a paragraph. The author cut "That is the K5 in its
-natural habitat: a professional tool under deadline." after the Jan Hammer detail.
-A closing verdict that restates the paragraph is filler.
+A specific verdict is allowed, so "The K5000W is the least immediate additive
+instrument of the three" is fine. A slogan is not: "The K5000 is a way of thinking."
+A concrete detail can end a paragraph without a closing verdict, which is why the
+author cut "That is the K5 in its natural habitat: a professional tool under
+deadline" after the Jan Hammer detail. The detail already carried the point, and a
+closing verdict that restates the paragraph is filler.
 
 ## Preserve
 
