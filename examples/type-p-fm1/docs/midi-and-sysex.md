@@ -61,8 +61,9 @@ The host tool also converts an OPM text bank into single-part patches:
 umetate opm convert voices.opm --out voices.bank.json --syx voices.syx
 ```
 
-Load a converted part from the `GLO` browser. `docs/opm-to-type-p-fm1.md` carries
-the mapping, the bank geometry, and the measured tolerance.
+Load a converted part from the `GLO` browser. The
+[OPM mapping page](https://github.com/AkirakoSaintJust/umetate/blob/main/docs/opm-to-type-p-fm1.md)
+carries the mapping, the bank geometry, and the measured tolerance.
 
 A Type P.fm1 patch is a four-operator FM patch, so a DX7 sysex file will not
 load, because DX7 is a six-operator format.
