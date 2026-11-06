@@ -812,12 +812,16 @@ static void ui_draw_grid(const ui_widget *w)
  * the current canvas (wd x ht). Stage length = log2 of the one-pole time constant,
  * so the exponential rate curve is shown on a log scale (a linear length would
  * make every slow rate identical). The level height = fm1_level_gain[level]
- * (0.25 dB/step: 99 = max, 0 = silence). No cursor. */
-static void ui_env_curve(uint32_t wd, uint32_t ht, const uint16_t *p)
+ * (0.25 dB/step: 99 = max, 0 = silence). A bipolar envelope (the pitch envelope)
+ * draws its levels around a centre line instead, with the Q15 level as the
+ * signed distance from that line. No cursor. */
+static void ui_env_curve(uint32_t wd, uint32_t ht, const uint16_t *p, int bipolar)
 {
     uint32_t i, cx;
     uint32_t len[5], total = 0;
     int32_t lvl[5], px[6], py[6];
+    int32_t mid = (int32_t)ht / 2;
+    int32_t span = mid - 2;
     for (i = 0; i < 3; i++) {                       /* r1..r3: attack, decay1, decay2 */
         int32_t r = p[i] < ui_t->n_params ? ui_param_v[p[i]] : 0;
         int32_t c = fm1_rate_coeff[r < 0 ? 0 : (r > 99 ? 99 : r)];
@@ -840,17 +844,24 @@ static void ui_env_curve(uint32_t wd, uint32_t ht, const uint16_t *p)
         total = 1u;
     for (i = 0; i < 3; i++) {
         int32_t l = p[4u + i] < ui_t->n_params ? ui_param_v[p[4u + i]] : 0;
-        lvl[i] = fm1_level_gain[l < 0 ? 0 : (l > 99 ? 99 : l)];
+        if (bipolar)
+            lvl[i] = l < -32768 ? -32768 : (l > 32767 ? 32767 : l);
+        else
+            lvl[i] = fm1_level_gain[l < 0 ? 0 : (l > 99 ? 99 : l)];
     }
     lvl[3] = lvl[2];
     lvl[4] = 0;
+    if (bipolar && span > 0)
+        cv_line(0, mid, (int32_t)wd - 1, mid, C_LINE);   /* the zero line */
     px[0] = 0;
-    py[0] = (int32_t)ht;
+    py[0] = bipolar ? mid : (int32_t)ht;
     cx = 0;
     for (i = 0; i < 5; i++) {
         cx += (len[i] * wd) / total;
         px[i + 1] = (int32_t)cx;
-        py[i + 1] = (int32_t)ht - (lvl[i] * (int32_t)ht) / 32768;
+        py[i + 1] = bipolar && span > 0
+            ? mid - (lvl[i] * span) / 32768
+            : (int32_t)ht - (lvl[i] * (int32_t)ht) / 32768;
     }
     for (i = 0; i < 5; i++)
         cv_line(px[i], py[i], px[i + 1], py[i + 1], C_AMB);   /* the curve: graph highlight */
@@ -863,7 +874,7 @@ static void ui_env_at(uint32_t op, uint32_t x, uint32_t y, uint32_t wd, uint32_t
         return;
     cv_begin(wd, ht, C_BLACK);
     ui_env_curve(wd, ht, &ui_t->env[((uint32_t)ui_selected_part * ui_t->n_op
-                                     + op) * 7u]);
+                                     + op) * 7u], 0);
     cv_blit(x, y);
 }
 
@@ -876,6 +887,17 @@ static void ui_draw_envelope(const ui_widget *w)
     ui_env_at(op, x, y, wd, ht);
 }
 
+/* 1 when a global envelope's levels are bipolar (the pitch envelope): the level
+ * params are Q15 semitones, so their display kind is `UI_DISP_SEMI`. */
+static int ui_genv_bipolar(uint16_t group)
+{
+    uint16_t l;
+    if (!ui_t->genv || group >= ui_t->n_genv)
+        return 0;
+    l = ui_t->genv[(uint32_t)group * 7u + 4u];       /* l1 */
+    return l < ui_t->n_params && ui_t->disp && ui_t->disp[l].kind == UI_DISP_SEMI;
+}
+
 /* a global envelope (7 fixed param ids, e.g. the filter F-ENV / pitch P-ENV). */
 static void ui_draw_genv(const ui_widget *w)
 {
@@ -884,7 +906,8 @@ static void ui_draw_genv(const ui_widget *w)
     if (!ui_t->genv || w->param >= ui_t->n_genv)
         return;
     cv_begin(wd, ht, C_BLACK);
-    ui_env_curve(wd, ht, &ui_t->genv[(uint32_t)w->param * 7u]);
+    ui_env_curve(wd, ht, &ui_t->genv[(uint32_t)w->param * 7u],
+                 ui_genv_bipolar(w->param));
     cv_blit(x, y);
 }
 
