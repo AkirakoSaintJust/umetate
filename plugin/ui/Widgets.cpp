@@ -130,7 +130,7 @@ juce::String formatParamValue(const P1ParamSpec& spec, double value)
         return v <= 0 ? "off" : juce::String(v) + "ms";
     if (display == "fold")
         return "fold";
-    if (display == "semi") {
+    if (display == "semi" || display == "semi_fine") {
         const double st = value * 12.0 / 32768.0;
         return (st > 0.0 ? "+" : "") + juce::String(st, 1) + "st";
     }
@@ -164,7 +164,7 @@ double parseParamValue(const P1ParamSpec& spec, const juce::String& text)
     if (display == "ratio")
         return juce::jlimit(static_cast<double>(spec.min),
                             static_cast<double>(spec.max), v * 65536.0);
-    if (display == "semi")
+    if (display == "semi" || display == "semi_fine")
         return juce::jlimit(static_cast<double>(spec.min),
                             static_cast<double>(spec.max), v * 32768.0 / 12.0);
     if (display == "hz")

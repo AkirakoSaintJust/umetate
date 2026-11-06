@@ -638,6 +638,7 @@ void ui_param_fmt(uint16_t p, const char *unit, char *out, uint32_t n)
         ui_strcat(out, "Hz");
         break;
     case UI_DISP_SEMI:                             /* bipolar Q15 -> signed semitones */
+    case UI_DISP_SEMI_FINE:                        /* the same form, finer detents */
         ui_itoa_dec((int32_t)(((int64_t)v * 1200) / 32768), 2, out);
         ui_strcat(out, "st");
         break;
@@ -894,7 +895,9 @@ static int ui_genv_bipolar(uint16_t group)
     if (!ui_t->genv || group >= ui_t->n_genv)
         return 0;
     l = ui_t->genv[(uint32_t)group * 7u + 4u];       /* l1 */
-    return l < ui_t->n_params && ui_t->disp && ui_t->disp[l].kind == UI_DISP_SEMI;
+    return l < ui_t->n_params && ui_t->disp
+        && (ui_t->disp[l].kind == UI_DISP_SEMI
+            || ui_t->disp[l].kind == UI_DISP_SEMI_FINE);
 }
 
 /* a global envelope (7 fixed param ids, e.g. the filter F-ENV / pitch P-ENV). */

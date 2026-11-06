@@ -224,6 +224,7 @@ _DISPLAY = {
     "off_pct": "UI_DISP_OFF_PCT",
     "hz": "UI_DISP_HZ",
     "semi": "UI_DISP_SEMI",
+    "semi_fine": "UI_DISP_SEMI_FINE",
     "cent": "UI_DISP_CENT",
     "wave": "UI_DISP_WAVE",
     "filter": "UI_DISP_FILTER",
@@ -262,6 +263,24 @@ def _semi_landmarks(lo: int, hi: int) -> list[int]:
             vals.add(v)
     vals.add(lo)
     vals.add(hi)
+    return sorted(vals)
+
+
+def _semi_fine_landmarks(lo: int, hi: int) -> list[int]:
+    """The integer semitones plus the 0.02, 0.05, 0.10, 0.30, 0.50 and 0.75
+    offsets inside each one, in Q15. The values are rounded away from zero for the
+    same reason as `_semi_landmarks`: the 2-decimal display truncates, so a value
+    just past the fraction is what reads as that fraction."""
+    vals = set(_semi_landmarks(lo, hi))
+    first = -((-lo * 12) // _Q15_OCTAVE)
+    last = (hi * 12) // _Q15_OCTAVE
+    for k in range(first, last + 1):
+        for frac in (2, 5, 10, 30, 50, 75):  # hundredths of a semitone
+            num = k * 100 + (frac if k >= 0 else -frac)  # hundredths of a semitone
+            mag = (abs(num) * _Q15_OCTAVE + 1199) // 1200  # away from zero
+            v = mag if num >= 0 else -mag
+            if lo <= v <= hi:
+                vals.add(v)
     return sorted(vals)
 
 
@@ -677,6 +696,8 @@ def generate_panel(
             vals = _ratio_landmarks(lo, hi)
         elif display == "semi":
             vals = _semi_landmarks(lo, hi)
+        elif display == "semi_fine":
+            vals = _semi_fine_landmarks(lo, hi)
         else:
             return "0", "0", "0"
         if not vals:
