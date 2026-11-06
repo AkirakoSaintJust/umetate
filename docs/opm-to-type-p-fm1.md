@@ -197,13 +197,14 @@ flattened into its quiet tail. The attack and the two decays share the same step
 
 | OPM rate | Match point |
 | ---: | ---: |
-| 0 | 21 dB |
-| 1 | 18 dB |
-| 2, 3 | 15 dB |
-| 4, 5, 6 | 12 dB |
-| 7 to 12 | 9 dB |
-| 13 to 22 | 6 dB |
-| 23 to 31 | 3 dB |
+| 0 | no attack, unused |
+| 1 | 21 dB |
+| 2 | 18 dB |
+| 3, 4 | 15 dB |
+| 5, 6, 7 | 12 dB |
+| 8 to 13 | 9 dB |
+| 14 to 23 | 6 dB |
+| 24 to 31 | 3 dB |
 
 The release matches the time to -20 dB.
 
@@ -224,12 +225,13 @@ one-pole spends most of the stage in its quiet tail. The `RR` 4 release was 2 to
 The curves still differ. An OPM decay is a straight line in dB. The Type P.fm1
 one-pole starts faster and eases into its target, and its one-unit floor sets a
 minimum speed at low gain. Across the table, `AR` 4 to 22 land within 0.83 to 1.01
-of the OPM time at the chosen point, and `D1R` 3 to 28 within 0.89 to 1.06. The
-slowest three of each hit the Type P.fm1 rate 0 floor, so `AR` 1 to 3 and `D1R` 1
-to 2 still arrive early. The last decibel of a slow stage takes 1.4 to 4 times the
-OPM time, so the tail beyond the chosen point is longer. A slow OPM decay to a low
-`D1L` settles differently, and a `D2R` stage that takes tens of seconds in OPM
-maps to the slowest Type P.fm1 rate and still arrives sooner.
+of the OPM time at the chosen point, and `D1R` 3 to 23 within 0.80 to 1.17. The
+slowest three attacks and the slowest two decays hit the Type P.fm1 rate 0 floor,
+so `AR` 1 to 3 and `D1R` 1 to 2 still arrive early. The last decibel of a slow
+stage takes 1.4 to 4 times the OPM time, so the tail beyond the chosen point is
+longer. A slow OPM decay to a low `D1L` settles differently, and a `D2R` stage
+that takes tens of seconds in OPM maps to the slowest Type P.fm1 rate and still
+arrives sooner.
 
 OPM rates are key-scaled. The converter compares the OPM stage times two octaves
 either side of the breakpoint and fits the change onto the envelope key-follow

@@ -123,9 +123,9 @@ because the one-pole tail is longer. The rate map aims 21, 18, 15, 12, 9, 6 or
 3 dB into the stage, depending on the OPM rate.
 
 The match table was checked rate by rate against both engines. `AR` 4 to 22 land
-within 0.83 to 1.01 of the OPM time at the chosen point, and `D1R` 3 to 28 within
-0.89 to 1.06. The slowest three of each hit the Type P.fm1 rate 0 floor, so `AR` 1
-to 3 and `D1R` 1 to 2 still arrive early.
+within 0.83 to 1.01 of the OPM time at the chosen point, and `D1R` 3 to 23 within
+0.80 to 1.17. The slowest three attacks and the slowest two decays hit the Type
+P.fm1 rate 0 floor, so `AR` 1 to 3 and `D1R` 1 to 2 still arrive early.
 
 Matching the whole stage time was tried, and it reads badly: an `AR` 3 attack
 reached -12 dB at 0.30 s against the OPM's 1.96 s, and an `RR` 4 release was 2
