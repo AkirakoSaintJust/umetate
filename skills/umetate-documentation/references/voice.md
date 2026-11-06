@@ -60,6 +60,21 @@ mechanism first, exact numbers, and the reason attached. "A Kawai-style harmonic
 source does not need 64 or 128 independent oscillators" is the shape. Use it for
 engineering prose that still has to read like the author.
 
+## Project measurements
+
+The repo-wide rhythm pass on 64 non-handwritten Markdown files moved the prose from
+13.1 mean, 11 median, 9.1 standard deviation to 15.5 / 13 / 10.3. The docs group is
+17.0 / 15 / 10.4, the plugin group 16.0 / 13 / 11.0, the design group 16.8 / 14 /
+11.6, the worked example 15.7 / 13 / 11.3, and the skills tree 14.8 / 12 / 10.0.
+Use the manual row for a manual page and the guide row for a study. The reference
+register stays terse.
+
+The gate is `skills/umetate-humanizer/scripts/voice_stats.py`, run with
+`--register manual`, `--register guide`, or `--register reference`. The mean is not
+enough, because a page can hit it while every sentence sits at the same length.
+Check the median and the standard deviation together, and fix the spread with a
+longer setup or a shorter landing rather than padding.
+
 ## Narrator
 
 A builder and a player, writing to another builder or player, rather than a brand, a

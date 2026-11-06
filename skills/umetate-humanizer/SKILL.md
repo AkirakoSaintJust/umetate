@@ -1,7 +1,7 @@
 ---
 name: umetate-humanizer
-description: Rewrite prose in the author's voice, extracted from the Type P.fm1 manual, the K5/K5000 guide, and the hand-written README. Use when text sounds like a spec sheet, a chatbot, or marketing copy, when a draft needs the author's rhythm and causal links, or when editing a Markdown file in place. Covers the negation test, the connectivity pass, the aphorism ban, the "A, not B" ban, the project vocabulary bans (claim, source of truth, I built, dogfood, lives in, gap), the manual and guide registers, the anti-slop promise, and the no-information-loss check. Pure Markdown, no dependencies, no network calls.
-version: 1.2.0
+description: Rewrite prose in the author's voice, extracted from the Type P.fm1 manual, the K5/K5000 guide, and the hand-written README. Use when text sounds like a spec sheet, a chatbot, or marketing copy, when a draft needs the author's rhythm and causal links, or when editing a Markdown file in place. Covers the negation test, the connectivity pass, the aphorism ban, the "A, not B" ban, the project vocabulary bans (claim, source of truth, I built, dogfood, lives in, gap), the manual and guide registers, the measured rhythm gate, the anti-slop promise, and the no-information-loss check. Pure Markdown, no dependencies, no network calls.
+version: 1.3.0
 license: GPL-3.0-only
 allowed-tools: read, grep, glob, edit, write, shell
 ---
@@ -147,6 +147,35 @@ I'd take into a guide.
 Don't add "I" to compensate for a flat draft. Add explanatory clauses, connectives,
 and a longer sentence where the thought needs one, because a manual with two
 first-person pronouns and one contraction in 1,000 words has been over-edited.
+
+## Rhythm gate
+
+The calibration is not a suggestion, and a page is not done because the sentences feel longer. Measure it. The hand-written manual is 15.6 mean, 13 median, 12.1 standard deviation, longest 66. The K5/K5000 guide is 17.6 / 14 / 16.7, longest 80. The repo-wide pass on 64 non-handwritten Markdown files moved the prose from 13.1 / 11 / 9.1 to 15.5 / 13 / 10.3, and the groups landed between 14.8 and 17.0 mean. Those are the expected shapes, not a quota.
+
+| Register | Mean | Median | SD | Longest | First person | Contractions |
+| --- | --- | --- | --- | --- | --- | --- |
+| Manual | 15.6 | 13 | 12.1 | 66 | 22 per 1,899 words | 33 per 1,899 words |
+| Guide | 17.6 | 14 | 16.7 | 80 | 3 per 737 words | 8 per 737 words |
+| Reference | terse | terse | terse | terse | none | none |
+
+Run the gate before you call the pass done:
+
+```sh
+python skills/umetate-humanizer/scripts/voice_stats.py <files...> --register manual
+```
+
+Use `--register guide` for a guide or study, `--register technical` for multi-sentence code comments and hardware headers, `--register reference` for a patch sheet or a byte table, and `--register auto` for a repo-wide check. The script reports mean, median, standard deviation, longest sentence, short and long sentence counts, first person, contractions, brackets, and exclamations. It exits non-zero when the prose misses the band.
+
+A page can hit the mean and still fail the rhythm. Too many 17-word sentences give a high median and a low spread. Too many short declaratives give a low median and a low spread. The fix is a longer setup, a shorter landing, or a split, not padding. Check these together:
+
+- mean and median in the register's band
+- standard deviation at least 10, ideally 11 to 14 for manual prose
+- at least one sentence over 50 words on a page long enough to need it
+- short sentences that land a point, not fragments added to move the average
+- first person and contractions where the register allows them, because a manual with two first-person pronouns and one contraction in 1,000 words is still over-edited
+- no em dash, no semicolon, no comma-spliced run-on
+
+The gate covers Markdown prose paragraphs and multi-sentence comments. Tables, register maps, one-line labels, forms, and reference sheets stay terse. Do not pad a reference page to hit a mean.
 
 ## Negation test
 
@@ -346,7 +375,10 @@ closing verdict that restates the paragraph is filler.
    source paragraph by paragraph. Put back anything that went missing.
 9. **Read it aloud.** If it sounds like a press release or a generated outline,
    rewrite it.
-10. **Self-audit.** Ask what still sounds AI. Answer in two or three bullets, then
+10. **Run the rhythm gate.** Measure the page with `voice_stats.py` for its
+    register, and fix the median or the spread if the mean is in band but the page
+    is flat.
+11. **Self-audit.** Ask what still sounds AI. Answer in two or three bullets, then
     fix exactly those. The checklist catches the rest.
 
 ## Modes
@@ -374,6 +406,8 @@ the fixes, the hard bans, and the before and after samples.
   report, and edit safety.
 - `references/always-on.md`: short standing-instruction blocks for `AGENTS.md`,
   system prompts, and umetate docs.
+- `scripts/voice_stats.py`: the rhythm gate for Markdown prose and multi-sentence
+  comments. Run it with the register the page uses.
 
 ## AI-tell checklist
 
@@ -532,12 +566,16 @@ feeling.
 - A last grep for the six banned words finds no prose use.
 - The front-door asides carry a reason or a real stake. They are not slogans.
 - A commit body names the constraint, the change, the reason, and what stayed.
+- The rhythm gate passes for the page's register, or the page is a reference where
+  the gate does not apply.
+- The median and standard deviation are in band, not only the mean.
 - Read it aloud. If it sounds like a press release, rewrite it.
 
 ## Score
 
 Use the score as a signal, not a verdict. A model grading its own output inflates
-the result.
+the result. Run the rhythm gate first, because a page that misses the mean, median,
+or spread is not finished even when the score looks good.
 
 | Range | Meaning |
 | --- | --- |

@@ -44,6 +44,8 @@ When you write prose, docs, commit bodies, or messages:
   the PATH folder`, `is stored at`, or `PATH's path within the repo is`.
 - No `gap` for missing work. Name the missing work, the missing feature, the bug, the
   oversight, or the problem.
+- Measure the prose with the rhythm gate for its register. Check the mean, median,
+  and spread, not only the mean.
 - Keep the author's first person, contractions, dry asides, light UK slang, and
   self-description. Fix grammar, not voice.
 - Do not invent a model, date, number, or quote.
@@ -59,9 +61,10 @@ parallelism, no "A, not B" adversatives. No product self-description sections.
 No article-drumbeat lists. No wh-word headings. No counted-couplet headings,
 captions, or table descriptions. No raw storage values. No bare claim, no
 `source of truth`, no `I built` for a made thing, no dogfood, no `lives in` for a
-location, and no `gap` for missing work. End on a concrete fact, an instruction, or a
-specific judgement. Preserve the author's contractions, asides, and UK slang. Never
-invent a fact.
+location, and no `gap` for missing work. Measure the prose with the rhythm gate for
+its register, and check the median and spread as well as the mean. End on a concrete
+fact, an instruction, or a specific judgement. Preserve the author's contractions,
+asides, and UK slang. Never invent a fact.
 ```
 
 ## For umetate docs
@@ -73,8 +76,9 @@ the parenthetical "(!)", and deliberate contrast bold. No em dash, no semicolon,
 no swearing, no invented facts, no `what this is` section, no `The... The...`
 lists, no wh-word headings, no counted-couplet headings or table descriptions, no
 raw storage values. No bare claim, no `source of truth`, no `I built` for a made
-thing, no dogfood, no `lives in` for a location, and no `gap` for missing work. The
-panel section and the manual follow the same register.
+thing, no dogfood, no `lives in` for a location, and no `gap` for missing work. Run
+the rhythm gate for the page's register, and check the median and spread as well as
+the mean. The panel section and the manual follow the same register.
 ```
 
 ## The one-line version

@@ -66,7 +66,11 @@ or `is stored at` rather than `lives in`, and the missing work, missing feature,
 oversight, or problem rather than `gap`. Keep `built` for a compiled binary or a CI
 job, and keep `gap` for a grid gap, a silent gap in audio, or a measured interval.
 The front door can carry the author's chummy, nerdy, British asides and the anti-slop
-promise. A community paragraph names the reader, the harm, and the request.
+promise. A community paragraph names the reader, the harm, and the request. Before a
+prose pass is done, run the rhythm gate in
+`skills/umetate-humanizer/scripts/voice_stats.py` for the page's register. A mean in
+band with a low spread is still a flat page, so check the median and the standard
+deviation with it.
 
 The hand-written preface and sound-design part of
 `examples/type-p-fm1/docs/manual.md` is the manual calibration, and the panel section

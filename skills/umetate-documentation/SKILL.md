@@ -1,7 +1,7 @@
 ---
 name: umetate-documentation
-description: Write thorough, readable, human documentation for end users of a synthesizer built on umetate. Covers the user manual, including the panel walkthrough, the MIDI and SysEx reference, patch sheet, installation guide, release notes, and technical guides or instrument studies. Includes a journalist-style design interview for the manual preface and design note. Rewrites are measured against the author's own corpus, hand-rewritten manual, hand-rewritten guide, and hand-written README so they read like a person wrote them. Never uses em dashes or semi-colons, never loses information, and bans negative parallelism, heading chains, false dichotomies, marketing hooks, and the project vocabulary (claim, source of truth, I built, dogfood, lives in, gap). Preserves the author's contractions, asides, light UK slang, explanatory long sentences, joined clauses, self-description, chummy tone, and anti-slop promise.
-version: 1.6.0
+description: Write thorough, readable, human documentation for end users of a synthesizer built on umetate. Covers the user manual, including the panel walkthrough, the MIDI and SysEx reference, patch sheet, installation guide, release notes, and technical guides or instrument studies. Includes a journalist-style design interview for the manual preface and design note. Rewrites are measured against the author's own corpus, hand-rewritten manual, hand-rewritten guide, and hand-written README so they read like a person wrote them. Never uses em dashes or semi-colons, never loses information, and bans negative parallelism, heading chains, false dichotomies, marketing hooks, and the project vocabulary (claim, source of truth, I built, dogfood, lives in, gap). Preserves the author's contractions, asides, light UK slang, explanatory long sentences, joined clauses, self-description, chummy tone, and anti-slop promise. Includes a measured rhythm gate with mean, median, and standard deviation targets for the manual, guide, and reference registers.
+version: 1.7.0
 license: GPL-3.0-only
 compatibility: OpenCode and Agent Skills-compatible loaders
 allowed-tools: read, grep, glob, edit, write, shell, websearch, webfetch
@@ -134,6 +134,42 @@ aside, the self-deprecating admission, and the direct request, because a communi
 paragraph earns its place when it names a real stake and asks for something
 specific. It doesn't earn its place as "we are passionate about empowering
 creators". That's the register.
+
+## Rhythm gate
+
+The doc skill uses the same gate as the humanizer. The hand-written manual is 15.6
+mean, 13 median, 12.1 standard deviation, longest 66. The K5/K5000 guide is 17.6 /
+14 / 16.7, longest 80. The repo-wide pass on 64 non-handwritten Markdown files moved
+the prose from 13.1 / 11 / 9.1 to 15.5 / 13 / 10.3. The docs group landed at 17.0 /
+15 / 10.4, the plugin group at 16.0 / 13 / 11.0, the design group at 16.8 / 14 /
+11.6, and the worked example at 15.7 / 13 / 11.3. Use the numbers for the register
+the page is in.
+
+| Page | Register | Mean | Median | SD |
+| --- | --- | --- | --- | --- |
+| Manual, panel, install | Manual | 15.6 | 13 | 12.1 |
+| Guide, study, long design note | Guide | 17.6 | 14 | 16.7 |
+| Patch sheet, MIDI table, byte layout | Reference | terse | terse | terse |
+
+Run:
+
+```sh
+python skills/umetate-humanizer/scripts/voice_stats.py docs/manual.md --register manual
+python skills/umetate-humanizer/scripts/voice_stats.py docs/dsp-study.md --register guide
+```
+
+The script reports the mean, median, standard deviation, longest sentence, short
+and long sentence counts, first person, contractions, brackets, and exclamations. A
+mean in band is not enough. A high median with a low spread means the page is
+uniformly long, and a low median with a low spread means it is uniformly short. Add
+a longer setup, a shorter landing, or a split. Do not pad a reference page.
+
+The gate covers prose paragraphs and multi-sentence comments. It does not cover
+tables, register maps, one-line labels, forms, or reference sheets, because those
+stay terse. The voice profile itself is a reference, so measure it with
+`--register manual` or `--register reference`, not `--register guide`. A manual page
+that passes the gate still needs the facts, the panel names, and the
+no-information-loss check.
 
 ## Design interview
 
@@ -544,6 +580,9 @@ Checklist for the final pass:
       thing, no dogfood, no "lives in" for a location, and no "gap" for missing work.
 - [ ] A last grep for `claim`, `source of truth`, `dogfood`, `lives in`, `gap`, and
       `I built` finds no prose use.
+- [ ] The rhythm gate passes for the page's register, or the page is a reference
+      where the gate does not apply.
+- [ ] The median and standard deviation are in band, not only the mean.
 - [ ] The front-door asides carry a reason or a real stake. They are not slogans.
 - [ ] No what-this-is section in an app or a manual.
 - [ ] No needless "It's a X, not a Y" or "It's not an X" setup. The positive comes

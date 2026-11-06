@@ -52,6 +52,29 @@ median 14, standard deviation 16.7, longest 80). The first-person count stayed a
 three, because the change was explanatory sentence length and connective looseness
 rather than self-reference, so don't add "I" to compensate for a flat draft.
 
+## Project measurements
+
+The repo-wide rhythm pass measured 64 non-handwritten Markdown files. The prose
+moved from 13.1 mean, 11 median, 9.1 standard deviation to 15.5 mean, 13 median,
+10.3 standard deviation. The groups:
+
+| Group | Mean | Median | SD |
+| --- | --- | --- | --- |
+| Docs | 17.0 | 15 | 10.4 |
+| Plugin plan and contracts | 16.0 | 13 | 11.0 |
+| Design | 16.8 | 14 | 11.6 |
+| Worked example | 15.7 | 13 | 11.3 |
+| Skills tree | 14.8 | 12 | 10.0 |
+| Modules (comments) | 16.70 | 14 | 11.27 |
+| Plugin C++ (comments) | 16.7 | 14 | 9.9 |
+| Python (comments) | 17.2 | 15 | 8.6 |
+
+The point is not to force every page to the same mean. A reference page stays terse.
+A manual page should sit near the manual row, and a guide near the guide row. A
+generated page that lands at 10 mean and 8 median has been flattened. The gate is
+`scripts/voice_stats.py`, and the mean is not enough on its own. Check the median
+and the standard deviation with it.
+
 ## Preserve these
 
 - **The self-description.** "I'm more of a sound design gal." Do not neutralise
