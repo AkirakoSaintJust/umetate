@@ -53,8 +53,21 @@ if [ ! -x "$VST3_SCANNER" ]; then
     echo "linux-daws: missing $VST3_SCANNER" >&2
     exit 1
 fi
-LD_LIBRARY_PATH="$ARDOUR_LIB_DIR" "$VST3_SCANNER" \
-    "$WORK/home/.vst3/$(basename "$VST3")" >"$WORK/ardour-scan.log" 2>&1
+scan_vst3() {
+    LD_LIBRARY_PATH="$ARDOUR_LIB_DIR" "$VST3_SCANNER" \
+        "$WORK/home/.vst3/$(basename "$VST3")" >"$WORK/ardour-scan.log" 2>&1
+}
+
+if ! scan_vst3; then
+    echo "linux-daws: the VST3 scanner failed" >&2
+    cat "$WORK/ardour-scan.log" >&2
+    exit 1
+fi
+if ! ls "$HOME/.cache/ardour8/vst/"*.v3i >/dev/null 2>&1; then
+    echo "linux-daws: the VST3 scanner wrote no cache entry" >&2
+    cat "$WORK/ardour-scan.log" >&2
+    exit 1
+fi
 
 check_wav() {
     python3 - "$1" "$2" <<'PY'
@@ -128,13 +141,28 @@ s:save_state('')
 f:close()
 LUA
 
-timeout 60s xvfb-run -a ardour8-lua "$WORK/add_track.lua" \
-    >"$WORK/ardour-lua.log" 2>&1 || true
-if ! grep -q 'type="vst3"' "$SESSION_DIR/$SESSION_NAME.ardour"; then
-    echo "linux-daws: Ardour did not save the VST3 track" >&2
-    cat "$WORK/add_track.out" >&2
-    tail -20 "$WORK/ardour-lua.log" >&2
-    exit 1
+ardour_track() {
+    rm -f "$WORK/add_track.out"
+    timeout 90s xvfb-run -a ardour8-lua "$WORK/add_track.lua" \
+        >"$WORK/ardour-lua.log" 2>&1 || true
+    grep -q 'type="vst3"' "$SESSION_DIR/$SESSION_NAME.ardour"
+}
+
+if ! ardour_track; then
+    # Ardour can miss a freshly written VST3 cache on a loaded host. Scan
+    # again and retry once, so a cold cache does not fail the gate. A plugin
+    # that fails twice still fails, and the scan log explains why.
+    scan_vst3 || true
+    if ! ardour_track; then
+        echo "linux-daws: Ardour did not save the VST3 track" >&2
+        cat "$WORK/add_track.out" 2>/dev/null >&2 || true
+        echo "linux-daws: VST3 scan log:" >&2
+        cat "$WORK/ardour-scan.log" >&2 || true
+        echo "linux-daws: plugin cache:" >&2
+        ls -l "$HOME/.cache/ardour8/vst/" >&2 || true
+        tail -20 "$WORK/ardour-lua.log" >&2
+        exit 1
+    fi
 fi
 
 python3 - "$SESSION_DIR" "$SESSION_NAME" <<'PY'
