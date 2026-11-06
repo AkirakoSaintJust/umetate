@@ -129,6 +129,7 @@ screen with the dot grid and guides. The casebook and research links are in
 python -m umetate.cli deep-check --all          # the full gate
 python -m umetate.cli tokens                    # design tokens + hard-coded UI values
 python -m umetate.cli build --synth examples/type-p-fm1
+python -m umetate.cli opm convert voices.opm --out voices.bank.json --syx voices.syx
 python -m umetate.cli interview --synth examples/type-p-fm1 --write
 python -m umetate.cli plugin-generate --synth examples/type-p-fm1
 python -m umetate.cli plugin-build --synth examples/type-p-fm1
