@@ -108,46 +108,45 @@ open question. I've tried to calibrate the resulting prose from my own personal 
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs the Python gate and the plugin build on Linux and
+`.github/workflows/ci.yml` runs the Python gate tests and the plugin build on Linux and
 Windows. macOS is reported without blocking while the macOS build and the AU target
 remain open. The workflow runs on pushes to `main` and on pull requests. Its plugin
-jobs are framework tests, so they keep the product build path honest without
-publishing an archive.
+jobs are the framework tests.
 
-The published `type-p-fm1` repository has its own release workflow. A `v*` tag, or
-a manual run with `1.0.2` or `v1.0.2`, builds the VST3 and CLAP archives for Linux
+The published `type-p-fm1` repository has its own release workflow, as an example of the workflow you'd have with your own umetate-made projects. A `v*` tag, or
+a manual run with a release tag, will build the VST3 and CLAP archives for Linux
 x86_64, Linux aarch64, and Windows x86_64 from the bundled `framework/plugin`
-source. A manual run tags the dispatched `main` commit when the tag does not exist,
-and it refuses a version that does not match the newest `CHANGELOG.md` heading. The
+source. A manual run will tag the dispatched `main` commit if the tag doesn't exist,
+and will refuse a version if it doesn't match the newest `CHANGELOG.md` heading. The
 workflow attaches the firmware, the per-platform plugin archives, the manifests,
 and a source archive to a GitHub Release, then records `RELEASES.md`, `SHA256SUMS`,
 and `release.json` on `main`. Build outputs and plugin archives stay out of the
-repository. The firmware is the committed `.fwsc`, so that workflow does not need
-the JieLi toolchain.
+repository for basic hygiene. The firmware is the committed `.fwsc` built locally, so that workflow does not need
+the JieLi toolchain and won't compromise your project licence-wise.
 
 ## First commands
 
 ```sh
 python -m pip install -e .
 umetate quick-check      # check the environment, read-only
-umetate setup --dry-run  # see what setup would install, before it does
+umetate setup --dry-run  # see what setup would install without actually installing anything
 umetate deep-check       # run the host-side checks
-umetate build --synth examples/type-p-fm1   # compose the dogfood firmware (host evidence and package)
+umetate build --synth examples/type-p-fm1   # compose the example firmware made out of the pre-made umetate components (host evidence and package)
 umetate emu --check --mhz 240              # boot it and hold a chord
 ```
 
 ## Repository map
 
 ```text
-umetate/       the CLI (Python)
+umetate/       CLI (Python)
 firmware/      RIB starter firmware (hardware layer + reference engine)
-modules/       the module library: nodes/ (DSP primitives) + macros/ (subgraphs)
+modules/       module library: nodes/ (DSP primitives) + macros/ (composite subgraphs)
 plugin/        the JUCE VST3/CLAP target and its tests
 design/        design tokens, the plugin mockup, the firmware screen mockup
-build/web/     the browser app output (`web-build` → the page + `firmware.wasm`)
-skills/        the four skills: development, safety, documentation, humanizer
+build/web/     browser app output (`web-build` → the page + `firmware.wasm`)
+skills/        skills: development, safety, documentation, humaniser
 templates/     fillable forms + the four schemas
-docker/        the pinned build container
+docker/        build container
 docs/          roadmap (status), platform-facts, tutorial, dsp-study, opm-file-format, opm-to-type-p-fm1, type-p-fm1-envelope-design
 examples/      worked examples
 .github/       CI workflows
