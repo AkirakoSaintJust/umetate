@@ -201,6 +201,12 @@ one-pole tail is longer. On the demo bank, Solid Bass tracks the OPM within abou
 a decibel through 0.8 s, Hard Tines is about 2 to 3 dB fast, and Tubular Bells is
 still about 3.5 dB long at 0.4 s.
 
+I tried matching the whole stage time instead of a point, so an `AR` 3 attack
+would take the OPM's 1.96 s and an `RR` 4 release its 2.23 s. The audible part
+went far too fast: the Type P.fm1 attack reached -12 dB at 0.30 s, because the
+one-pole spends most of the stage in its quiet tail. The `RR` 4 release was 2 to
+3 times too slow. The point match stays.
+
 The curves still differ. An OPM decay is a straight line in dB. The Type P.fm1
 one-pole starts faster and eases into its target, and its one-unit floor sets a
 minimum speed at low gain. A slow OPM decay to a low `D1L` settles differently, and

@@ -121,6 +121,11 @@ both engines. The whole stage to `D1L` takes 1.41 s in OPM and 2.18 s in Type
 P.fm1, because the one-pole tail is longer. The rate map targets 12 dB into the
 stage.
 
+Matching the whole stage time was tried. It reads badly: an `AR` 3 attack
+reached -12 dB at 0.30 s against the OPM's 1.96 s, and an `RR` 4 release was 2
+to 3 times too slow. The one-pole spends most of a stage in its quiet tail, so
+the audible part has to stay fast. The point match is the shipped choice.
+
 ## Risks and fallback
 
 - **Assumptions/open research:** the OPM envelope timing comes from the

@@ -499,8 +499,8 @@ def _release_rate(rr: int, ks: int, midi: int = 60) -> int:
     ticks = _opm_ticks(rr, "release", d1l=0, ks=ks, midi=midi, start_el=0)
     # Match the audible part of the release. The OPM runs down in a straight
     # dB line, so its -20 dB point is a fifth of the stage. Type P.fm1's
-    # one-pole has a long, quiet tail, matching the tail would make the note
-    # seem to hang after the OPM has gone.
+    # one-pole has a long, quiet tail, so matching the tail would make the
+    # note seem to hang after the OPM has gone.
     opm_time = _opm_time_to(ticks, start_el=0, target_el=round(20.0 / _DB_PER_EL))
     aim = round(32767.0 * 10.0 ** (-20.0 / 20.0))
     candidates = [(r, _fm1_time(r, 99, 0, aim)) for r in range(100)]
