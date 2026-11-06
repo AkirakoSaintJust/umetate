@@ -3,7 +3,7 @@
   "home": "home",
   "alg": "algorithm",
   "parts": 2,
-  "legend": "~SEL+EDIT~ copy page\\n~2xSEL~ pts  ~SEL+ARP-REC~ mute pt\\n~SEL~ ops  ~ARP-REC~ mute op",
+  "legend": "~SEL+EDIT~ copy  ~SEL+SELECT~ ops\\n~2xSEL~ pts  ~SEL+ARP-REC~ mute pt\\n~SEL~ ops  ~ARP-REC~ mute op",
   "operators": ["op1", "op2", "op3", "op4"],
   "mute": ["op1_mute", "op2_mute", "op3_mute", "op4_mute"],
   "global": [
@@ -125,7 +125,7 @@
             { "type": "param_row", "row": 4, "param": "op1.tl.level", "text": "LEVEL" },
             { "type": "param_row", "row": 5, "param": "op1.fb.level", "text": "FEEDBACK" },
             { "type": "param_row", "row": 6, "param": "op1.osc.waveform", "text": "WAVE" },
-            { "type": "scope", "row": 7, "span": 4, "active": true }
+            { "type": "band", "row": 7, "span": 6, "kind": "scope" }
           ]
         },
         {
@@ -174,8 +174,7 @@
             { "type": "param_row", "row": 4, "param": "op1.eg.r2", "text": "DECAY1 RATE" },
             { "type": "param_row", "row": 5, "param": "op1.eg.r3", "text": "DECAY2 RATE" },
             { "type": "param_row", "row": 6, "param": "op1.eg.r4", "text": "RELEASE RATE" },
-            { "type": "envelope", "row": 7, "span": 5,
-              "params": ["op1.eg.r1", "op1.eg.r2", "op1.eg.r3", "op1.eg.r4", "op1.eg.l1", "op1.eg.l2", "op1.eg.l3"] }
+            { "type": "band", "row": 7, "span": 6, "kind": "env" }
           ]
         },
         {
@@ -185,8 +184,7 @@
             { "type": "param_row", "row": 3, "param": "op1.eg.l1", "text": "LEVEL 1" },
             { "type": "param_row", "row": 4, "param": "op1.eg.l2", "text": "LEVEL 2" },
             { "type": "param_row", "row": 5, "param": "op1.eg.l3", "text": "SUSTAIN" },
-            { "type": "envelope", "row": 6, "span": 5,
-              "params": ["op1.eg.r1", "op1.eg.r2", "op1.eg.r3", "op1.eg.r4", "op1.eg.l1", "op1.eg.l2", "op1.eg.l3"] }
+            { "type": "band", "row": 7, "span": 6, "kind": "env" }
           ]
         },
         {

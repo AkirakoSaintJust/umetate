@@ -33,6 +33,7 @@ enum {
     UI_SUBHEADER,      /* a page's param-group title: "OP N <suffix>" / "PART N <suffix>" */
     UI_NAME,           /* a name row (label + the name string), a page slot -> the editor */
     UI_ALGO,           /* the current algorithm graph (operators + routing) */
+    UI_BAND,           /* the operator band: selected graph + its direct targets */
     UI_CUSTOM,         /* the cv_* canvas escape hatch: ui_draw_custom() draws it */
 };
 
@@ -178,6 +179,7 @@ uint8_t ui_part(void);                           /* the active part (0-based) */
 void ui_part_next(void);                         /* cycle the active part (the SEL double-tap) */
 void ui_part_set(uint8_t part);                  /* set the active part (INIT) */
 void ui_op_set(uint8_t op);                      /* set the active operator (INIT) */
+void ui_op_step(int32_t delta);                  /* move the operator selection (SEL + SELECT) */
 void ui_part_mute_toggle(uint8_t part);          /* mute/unmute a part (the header + chords) */
 void ui_part_mute_set(uint8_t part, uint8_t muted); /* set a part's mute (INIT) */
 uint8_t ui_part_muted(uint8_t part);             /* 1 = the part is muted */

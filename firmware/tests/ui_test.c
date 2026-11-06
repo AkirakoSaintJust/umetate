@@ -154,6 +154,11 @@ int main(void)
     CHECK(ui_top() == 1 && ui_pageno() == 0, "switch opens edit at page 0");
     ui_handle(UI_SRC_BTN_EDIT, 1);
     CHECK(ui_pageno() == 1, "the menu button advances to the next page");
+    ui_handle(UI_SRC_BTN_FX, 1);
+    CHECK(ui_top() == 3 && ui_pageno() == 0, "switch opens fx at page 0");
+    ui_handle(UI_SRC_BTN_EDIT, 1);
+    CHECK(ui_top() == 1 && ui_pageno() == 1,
+          "edit reopens on the page it was left on");
     ui_handle(UI_SRC_BTN_EDIT, 1);
     CHECK(ui_pageno() == 0, "the menu button wraps at the last page");
     ui_handle(UI_SRC_BTN_HOME, 1);

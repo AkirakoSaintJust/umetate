@@ -334,7 +334,12 @@ static void app_step(void)
         }
         if ((e = fm1_enc_take(ENC_SELECT)) != 0) {
             input_seen = 1;
-            ui_handle(UI_SRC_ENC_SELECT, e);
+            if (fm1_in.buttons & (1u << BTN_SEL)) {
+                app_scl_pending = 0;               /* the twist is the chord, not a tap */
+                ui_op_step(e);
+            } else {
+                ui_handle(UI_SRC_ENC_SELECT, e);
+            }
         }
         if ((e = fm1_enc_take(ENC_KNOB1)) != 0) { input_seen = 1; ui_handle(UI_SRC_ENC_KNOB1, e); }
         if ((e = fm1_enc_take(ENC_KNOB2)) != 0) { input_seen = 1; ui_handle(UI_SRC_ENC_KNOB2, e); }

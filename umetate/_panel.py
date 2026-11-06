@@ -208,6 +208,7 @@ _WIDGETS = {
     "subheader": "UI_SUBHEADER",
     "name": "UI_NAME",
     "algo": "UI_ALGO",
+    "band": "UI_BAND",
     "custom": "UI_CUSTOM",
 }
 
@@ -418,6 +419,13 @@ def generate_panel(
                         f"0..{len(operators) - 1}"
                     )
                 param = str(channel)
+        elif w["type"] == "band":
+            typ = "UI_BAND"
+            kind = w.get("kind", "env")
+            if kind not in ("env", "scope"):
+                raise GenError(f"band widget: kind {kind!r} is not 'env' or 'scope'")
+            # param = the graph kind (0 = A-ENV, 1 = scope)
+            param = "0" if kind == "env" else "1"
         elif w["type"] == "subheader":
             typ = "UI_SUBHEADER"
             # param = the prefix mode (see subheader_mode)
