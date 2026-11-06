@@ -74,8 +74,8 @@ Building the example exposed two bugs, both fixed, and a bunch of follow-up work
    param's literal as the DSP initial value. Recorded in the roadmap §6.9.
 4. **The liquid ladder has a coefficient ceiling (recorded).** Above 55296 the
    feedback loop breaks into a parasitic oscillation at moderate resonance, so
-   the node clamps there. The top of the `res` range is the strongest stable
-   resonance, and the filter still self-oscillates at the very top. Recorded in
+   the node clamps there. The Type P.fm1 resonance knob tops out below the
+   self-oscillation threshold, at the strongest stable resonance. Recorded in
    the roadmap §6.9.
 5. **Velocity → amplitude/FM/envelope-rate is wired, defaulted off (shipped,
    F2).** The `fm_op` macro has `vel_amp`/`vel_fm`/`vel_rate` depths (the
