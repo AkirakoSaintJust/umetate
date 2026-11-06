@@ -150,6 +150,7 @@ _PYTHON_STEPS: tuple[tuple[str, list[str]], ...] = (
     ("test_tokens", ["python3", "-m", "umetate.test_tokens"]),
     ("test_font_atlas", ["python3", "-m", "umetate.test_font_atlas"]),
     ("test_perf", ["python3", "-m", "umetate.test_perf"]),
+    ("test_opm", ["python3", "-m", "umetate.test_opm"]),
 )
 
 

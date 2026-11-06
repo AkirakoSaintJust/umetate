@@ -28,6 +28,11 @@ four part-2 mutes, and the four waveforms back from the engine after loading eac
 case file, and it refuses to render if any of them is not the isolated value. A typo
 in a case cannot quietly leave a filter or the wavefolder in the signal.
 
+VOPMex also has an optional output FIR, on by default. The chip has no such stage,
+and the filter colours bright patches, so the analysis turns it off (`render_opm`
+takes a final `0` argument) and compares the two cores rather than the player's
+output stage.
+
 The measures are the full-band spectral centroid, the 95 percent roll-off
 frequency, the band energy above 1, 2, 4, and 8 kHz, and the odd-to-even harmonic
 ratio. None of them depends on a detected fundamental, which matters because a deep
@@ -39,19 +44,19 @@ level is ignored because the two engines have different output gains.
 | OPM | Type P.fm1 | How close |
 | --- | --- | --- |
 | `M1`, `C1`, `M2`, `C2` | `O1`, `O2`, `O3`, `O4` | direct |
-| `CON` 0 to 7 | `algorithm.p0` 0 to 7 | direct for 0, 1, 2, 4, 5, 6, 7, and 3 uses algorithm 2 with a remap |
+| `CON` 0 to 7 | `algorithm.p0` 0 to 7 | direct except 3, which uses algorithm 2 |
 | `MUL` 0 to 15 | `opN_ratio.p0` | direct |
 | `TL` 0 to 127 | `opN_level.p0` 0 to 99 | measured for carriers and modulators, matched against VOPMex |
 | `FL` 0 to 7 | `op1_feedback.p0`, or `op2_feedback.p0` for algorithm 3 | two cycles at 100%, halved per `FL` step |
-| `AR` | `attack.p0` or `opN.eg.r1.p0` | approximate |
-| `D1R` | `opN.eg.r2.p0` | approximate |
-| `D1L` | `opN.eg.l2.p0` | approximate |
-| `D2R` | `opN.eg.r3.p0` | approximate |
-| `RR` | `release.p0` or `opN.eg.r4.p0` | approximate |
-| `KS` 0 to 3 | `opN_aenv_ks_lo.p0` and `opN_aenv_ks_hi.p0` | approximate |
-| `DT1` 0 to 7 | `opN_detune.p0` | approximate, the OPM table is key-dependent |
-| `DT2` 0 to 3 | folded into `opN_ratio.p0` | approximate |
-| `PMS`, `AMS`, `AMD`, `PMD`, `LFRQ`, `WF` | pitch LFO and per-operator tremolo | approximate |
+| `AR` | `attack.p0` or `opN.eg.r1.p0` | measured stage time |
+| `D1R` | `opN.eg.r2.p0` | measured stage time |
+| `D1L` | `opN.eg.l2.p0` | exact level conversion |
+| `D2R` | `opN.eg.r3.p0` | measured stage time |
+| `RR` | `release.p0` or `opN.eg.r4.p0` | measured stage time |
+| `KS` 0 to 3 | `opN_aenv_ks_lo.p0` and `opN_aenv_ks_hi.p0` | fitted over F3 to G5 |
+| `DT1` 0 to 7 | `opN_detune.p0` | measured at middle C, the OPM table is key-dependent |
+| `DT2` 0 to 3 | folded into `opN_ratio.p0` | exact ratio |
+| `PMS`, `AMS`, `AMD`, `PMD`, `LFRQ`, `WF` | pitch LFO and per-operator tremolo | measured rate law, approximate depth |
 | `NE`, `NFRQ` | no counterpart | none |
 | `PAN` | no per-voice counterpart | none |
 | `SLOT` | `opN_mute.p0` | only whole-operator muting |
@@ -133,9 +138,9 @@ reaches four cycles of phase deviation, which is the OPM's full-scale index at
 `TL` 0. The index at a level follows the same 0.75 dB step, so the DX21, DX27 and
 DX100 line up too: their output level maps to `TL = 99 - level`, and a level-75
 modulator reaches π radians in both. A two-operator test at ratio 1:1 confirms the
-curve: the Type P.fm1 centroid follows the OPM centroid within about 11 percent
-from `TL` 0 to `TL` 32. Use the same `level = 99 - TL` formula for modulators and
-carriers.
+curve: the Type P.fm1 centroid follows the OPM centroid within about 9 percent at
+`TL` 0 and within a few percent through the musical range. Use the same
+`level = 99 - TL` formula for modulators and carriers.
 
 ## Feedback
 
@@ -162,11 +167,12 @@ so halve the Type P.fm1 value per step:
 | 7 | 32767 |
 
 The measured match is closest at moderate depths. On a single self-feedback
-operator the `TL` 24 and `TL` 32 cases land within a few percent of the OPM
-centroid, and a two-operator patch at half feedback reads 957 Hz against the OPM's
-974 Hz. A full-level operator puts the loop in a chaotic regime in both engines,
-and the spectra differ there, so treat the top of the range as a similar amount of
-noise rather than the same noise.
+operator at `FL` 7, the `TL` 24 and `TL` 32 cases read 416 Hz in both engines and
+313 Hz against 312 Hz. Half feedback is darker in Type P.fm1, 312 Hz against
+416 Hz at `TL` 24, so a patch that leans on a small feedback amount may want one
+step more. A full-level operator puts the loop in a chaotic regime in both
+engines, and the spectra differ there, so treat the top of the range as a similar
+amount of noise rather than the same noise.
 
 The harmonic balance differs too. OPM was odd-heavy in the test, at +8.1 dB, while
 Type P.fm1 was even-heavy, at -4.2 dB. The two synths will not match harmonic for
@@ -176,15 +182,27 @@ harmonic.
 
 The envelope fields map by job: `AR` to `attack` or `opN.eg.r1`, `D1R` to
 `opN.eg.r2`, `D1L` to `opN.eg.l2`, `D2R` to `opN.eg.r3`, and `RR` to `release` or
-`opN.eg.r4`. The rates and curves are different, so the numbers are a starting point.
+`opN.eg.r4`. The level conversion is exact. The attack target is `l1` 99, the first
+decay target is `l2 = 99 - 4*D1L` with `D1L` 15 at silence, and the second decay
+runs to `l3` 0. When `D2R` is 0 the second decay holds `l2`, so `l3` is `l2`.
 
-A measured pluck with `AR` 31, `D1R` 10, `D1L` 8, `D2R` 4, and `RR` 8 fell from
--25.4 dB to -36.3 dB over the first 0.8 s. The first Type P.fm1 setting, with `r2`
-40, `r3` 20, `l2` 70, and `l3` 40, fell from -14.9 dB to -21.5 dB over the same
-time. The Type P.fm1 envelope sustained more, so adjust `r2`, `r3`, `l2`, and `l3`,
-or shorten the note. OPM rates are also key-scaled, which Type P.fm1 models with the
-envelope key-follow controls rather than the rate number itself. The broader
-sound-design assessment is in
+The rates come from measured stage times, not a guessed table. The converter
+simulates the OPM envelope tables at the chip EG clock, 13.98 kHz, and the Type
+P.fm1 one-pole at the 1.38 kHz control rate, then picks the rate whose time to a
+chosen point in the stage is closest. The attack matches the time to -12 dB below
+full. The decays match the first 8 dB of the trip, or the whole stage when it is
+shorter. The release matches the time to -20 dB.
+
+The curves still differ. An OPM decay is a straight line in dB. The Type P.fm1
+one-pole starts faster and eases into its target, and its one-unit floor sets a
+minimum speed at low gain. A slow OPM decay to a low `D1L` settles differently, and
+a `D2R` stage that takes tens of seconds in OPM maps to the slowest Type P.fm1 rate
+and still arrives sooner. The chosen points stay close, and the tail beyond them
+does not.
+
+OPM rates are key-scaled. The converter compares the OPM stage times two octaves
+either side of the breakpoint and fits the change onto the envelope key-follow
+controls. The broader sound-design assessment is in
 [Type P.fm1 envelope design](type-p-fm1-envelope-design.md).
 
 ## LFO and noise
@@ -212,19 +230,18 @@ The cases below use the same note and the same operator ratios. Type P.fm1 uses
 `level = 99 - TL` for every operator. The measure is the full-band spectral
 centroid of the steady segment.
 
-| Case | OPM centroid | Type P.fm1 centroid | Result |
+| Case | OPM centroid | Type P.fm1 centroid | Ratio |
 | --- | --- | --- | --- |
-| Additive algorithm 7 | 345 Hz | 348 Hz | same |
-| Serial algorithm 0 | 3604 Hz | 4989 Hz | topology matches, Type P.fm1 richer |
-| Algorithm 3 remap | 3311 Hz | 3359 Hz | graph matches, close |
-| Parallel algorithm 4 | 2635 Hz | 2810 Hz | topology matches, close |
-| Feedback, `FL` 7 | 974 Hz | 4005 Hz | loop differs, Type P.fm1 noisier |
-| Envelope pluck | -25.4 to -36.3 dB | -14.9 to -21.5 dB | OPM decays more |
+| Additive algorithm 7 | 345 Hz | 348 Hz | 1.01 |
+| Serial algorithm 0 | 4841 Hz | 4989 Hz | 1.03 |
+| Algorithm 3 remap | 3405 Hz | 3359 Hz | 0.99 |
+| Parallel algorithm 4 | 2660 Hz | 2810 Hz | 1.06 |
+| Feedback, `FL` 7, `TL` 24 | 416 Hz | 416 Hz | 1.00 |
 
 The additive case has no modulation index, so it tests the level curve only. The
-serial case is the furthest apart because the index compounds through three stages,
-and a small difference at each stage adds up. The remapped algorithm 3 and the
-parallel algorithm 4 are within 7 percent.
+serial case compounds the index through three stages, and it was the farthest
+apart before the index and level scales were corrected. With the OPM output FIR
+off, all five cases land within 7 percent.
 
 A two-operator pair at ratio 1:1 isolates the index. The modulator `TL` sweeps from
 0 to 64, and the centroid follows the OPM until the Type P.fm1 level runs out:
@@ -253,7 +270,8 @@ half that index.
 
 The sweep above is the evidence. With the old scale the Type P.fm1 pair read
 262 Hz to 524 Hz across `TL` 0 to 32, against the OPM's 494 Hz to 3895 Hz. The
-current build tracks the OPM within about 11 percent over the same span.
+current build reads 4262 Hz at `TL` 0 against 3895 Hz, and the two centroids stay
+within a few percent through `TL` 8 to 40.
 
 Feedback no longer adds to the gap. Both engines tap the level-gained output,
 average two samples, and reach two cycles at a full-level operator, so the depth
@@ -266,7 +284,9 @@ there.
    `op4_mute.p1` to 1, so only part 1 sounds.
 2. Set `op1_waveform.p0` through `op4_waveform.p0` to 0. This page assumes sine
    operators only.
-3. Set `filter_on=0`, `filter2_on=0`, `fold_on=0`, and `fold=0`.
+3. Leave `filter_on`, `filter2_on`, `fold_on`, and `fold` at 0. These are global
+   settings, not part-patch parameters, and the instrument ships with them
+   bypassed. The bank assumes that.
 4. Assign operators. For algorithms 0, 1, 2, 4, 5, 6, and 7 use
    `M1=O1`, `C1=O2`, `M2=O3`, `C2=O4`. For OPM algorithm 3 use `M2=O1`, `M1=O2`,
    `C1=O3`, `C2=O4` and put the feedback on `op2_feedback.p0`.
@@ -277,21 +297,86 @@ there.
    use the same formula.
 8. Set `op1_feedback.p0` from `FL`: 32767 for `FL` 7, and half for each step down
    the table above.
-9. Map the envelope rates and levels, then adjust `r2`, `r3`, `l2`, and `l3` until
-   the decay sits where you want it.
+9. Map the envelope levels with `l1=99`, `l2=99-4*D1L`, and `l3=0` when `D2R` is
+   running. Pick the rates from the measured stage times, or let the converter do
+   it.
 10. Play the same note through both patches and compare the first few harmonics.
     The useful goal is the same ratios, the same algorithm, and a similar
     brightness. The two synths will not null.
+
+## The converter
+
+`umetate opm convert` does the whole recipe. It reads a VOPM or VOPMex text bank,
+converts every voice, and writes a 128-slot bank JSON. The `--syx` option also
+writes the device stream, and `--report` prints the per-slot warnings.
+
+```sh
+umetate opm convert voices.opm --out voices.bank.json --syx voices.syx
+umetate opm convert voices.opm --first 16 --pack --report
+```
+
+The converter keeps the OPM slot number when it is free, so a full bank keeps its
+layout. `--pack` fills from `--start` upwards instead, which is handier for a
+partial selection. `--first` takes the first voices after the slot and silent
+filters.
+
+A device part record holds 134 timbre parameters. The five routing fields
+(`channel`, `low`, `high`, `level`, `delay`) live in the multi patch, so the
+converter leaves the part record at the SysEx layout's `n_params` and fills no
+multi patches. Load a converted part from the `GLO` browser. The `.syx` stream
+round-trips through `umetate preset import`.
+
+The converter is not a clone and does not try to null the two engines. It keeps
+the graph, the ratios, the level curve, the modulation index, the feedback depth,
+and the measured envelope timing. It warns on the fields it cannot carry or has to
+clamp: the OPM noise generator, a pan setting, a ratio above 16.00, an operator
+with `AR` 0, a pitch LFO depth above the Type P.fm1 range, and a name over 15
+characters. The feature contract and the corpus evidence are in
+[the converter contract](feature-contract-opm-converter.md).
+
+### Tolerance
+
+The working tolerance is a factor of 1.5 on the full-band spectral centroid and
+the 95 percent roll-off for a held middle-C note, and a factor of 2 on the
+audible envelope timing. A voice inside that band is recognisably the same kind of
+sound. The comparison set is a local corpus of 438 OPM bank files and 56,032
+voices, rendered at middle C with both filters and the wavefolder off and the
+VOPMex output FIR off.
+
+On a 200-voice sample, 89 percent of the converted voices are within 1.5 on the
+centroid and 83 percent within 1.5 on the roll-off. The median ratio is 1.01. The
+release time is within a factor of 2 for 93 percent of the voices that have an
+audible release. The decay slope over 0.1 to 0.7 s is the weakest measure, with a
+median of 0.76 and only 56 percent inside a factor of 2: the Type P.fm1 one-pole
+eases into a sustain where the OPM decay is a straight dB line. Treat the timing
+tolerance as the stage time at the chosen point, not the whole curve.
+
+The serial graphs are the furthest apart in the spectrum because the index
+compounds. A converted serial patch can read brighter than its OPM source by a
+factor of two or more, still with the same ratios and envelope gesture. The
+converter reports nothing for that case, because it is a property of the two
+engines rather than a bad parse.
 
 ## Remaining differences
 
 The two engines differ in the chaotic regime at the top of the feedback range, the
 phase relationship between carrier and modulator, the level taper at low levels,
-the envelope timing, and the LFO ranges. Type P.fm1 also has no noise generator and
-no per-voice pan. A conversion can preserve the operator graph, the ratio
-relationships, the level curve, the modulation index, and the feedback depth, but
-the spectrum will not be identical. That is expected. The two chips share a family
-resemblance, but they are different designs.
+the envelope curve, and the LFO depth ranges. Type P.fm1 also has no noise
+generator and no per-voice pan. A conversion can preserve the operator graph, the
+ratio relationships, the level curve, the modulation index, the feedback depth, and
+the envelope stage times, but the spectrum will not be identical. That is
+expected. The two chips share a family resemblance, but they are different designs.
+
+The LFO mapping is the least exact part. `LFRQ` converts through the measured
+YM2151 rate law, so the rate is right. The Type P.fm1 pitch depth tops out at
+about 165 cents, so `PMS` 6 and 7 clamp, and the tremolo depth is a fraction of
+the gain rather than an attenuation in dB, so the average level can rise slightly
+where OPM only cuts. The converter warns on none of these because they are smooth
+approximations, not parse errors.
+
+A ratio above 16.00 clamps to the Type P.fm1 maximum. `MUL` 15 with `DT2` 3 is
+25.98, which is the usual case. A patch that relies on the top of that range will
+lose the top partials.
 
 ## Credits
 

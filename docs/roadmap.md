@@ -22,7 +22,7 @@ enforces that, and `AGENTS.md` carries the compaction procedure.
 | Engine | 44.1 kHz, integer-first, bit-exact. 20 voices, 2 parts, 4-op FM, 8 algorithms, 12 waveforms, two filters, a wavefolder, and key and velocity follow. |
 | Target evidence | Source, host, browser/WASM parity, target package, emulator, and Linux DAW pass. Physical device timing and acceptance are `blocked`. |
 | Gate | The full gate is green. It passed host, web, Python, skill, lib, links, pyright, and memory. |
-| Docs | Tutorial, DSP study, Type P.fm1 docs, the OPM patch reference and mapping, the envelope design note, templates, and the voice profile are current. The Type P.fm1 manual includes the panel section, written from `panel.json` with every page, parameter, and flow. Docs skill `1.4.6`. The K5/K5000 guide is in the ignored `doc-test/`. |
+| Docs | Tutorial, DSP study, Type P.fm1 docs, the OPM patch reference and mapping, the envelope design note, templates, and the voice profile are current. The Type P.fm1 manual includes the panel section, written from `panel.json` with every page, parameter, and flow. The OPM mapping page carries the `umetate opm convert` recipe, the bank geometry, and the measured tolerance. Docs skill `1.4.6`. The K5/K5000 guide is in the ignored `doc-test/`. |
 | CI | Framework CI covers Linux and Windows, with macOS `continue-on-error`. The release repo workflow builds Linux x86_64, Linux aarch64, and Windows x86_64 VST3/CLAP from a `v*` tag or a version dispatch, and attaches the archives to a GitHub Release. |
 
 The framework has moved past `31ecc64` with the design interview, the voice profile,
