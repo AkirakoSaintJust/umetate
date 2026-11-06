@@ -1,6 +1,6 @@
 {
   "name": "liquid_filter",
-  "summary": "A 4-pole (24 dB/oct) resonant lowpass ladder in the spirit of the Mutable Instruments Ripples / Audible Instruments Liquid Filter. Four one-pole OTA stages with a 4x negative feedback whose soft clip sits on the resonance path (the Ripples OTA, and the SH-101's feedback diodes), so the input stays linear and the self-oscillation amplitude is independent of the input level. `f` (Q16) is the per-stage coefficient, `res` the resonance, and `comp` (Q15) the fraction of a `1 + 4.5*res` passband makeup, so the level stays put as the resonance rises. `fenv`/`k`/`vk` modulate the cutoff and `on` bypasses. `mode` picks the output: 0 = LP4, 1 = the 2-pole band tap, 2 = the 2-pole HP (the `(1 - L)^2` tap, so its corner lines up with the LP pole). Outputs `out` (the selected mode), `lp2` (LP2), `band` (BP tap), and `hp`.",
+  "summary": "A 4-pole (24 dB/oct) resonant lowpass ladder in the spirit of the Mutable Instruments Ripples / Audible Instruments Liquid Filter. Four one-pole OTA stages with a 4x negative feedback whose soft clip sits on the resonance path (the Ripples OTA, and the SH-101's feedback diodes), so the input stays linear and the self-oscillation amplitude is independent of the input level. `f` (Q16) is the per-stage coefficient, `res` the resonance, and `comp` (Q15) the fraction of a `1 + 4.5*res` passband makeup, so the level stays put as the resonance rises. `fenv` (Q15) is doubled to Q16, scaled by `fenv_depth` (Q16) and added to the cutoff. The sum is clamped at 55296, the highest coefficient the feedback loop takes without a parasitic oscillation, so the top of the range self-oscillates cleanly. `k`/`vk` modulate the cutoff and `on` bypasses. `mode` picks the output: 0 = LP4, 1 = the 2-pole band tap, 2 = the 2-pole HP (the `(1 - L)^2` tap, so its corner lines up with the LP pole). Outputs `out` (the selected mode), `lp2` (LP2), `band` (BP tap), and `hp`.",
   "ins": {
     "audio": "audio",
     "fenv": { "rate": "control", "default": "0" },
@@ -26,6 +26,6 @@
   },
   "block_derived": {
     "f_eff": "fm1_key_apply(${param.f}, fm1_key_add(${in.k}, ${in.vk}), 0, 65535)",
-    "fc": "fm1_clamp16(${state.f_eff} + fm1_q16_mul(${param.fenv_depth}, ${in.fenv}))"
+    "fc": "fm1_clamp16_max(${state.f_eff} + fm1_q16_mul(${param.fenv_depth}, ${in.fenv} << 1), 55296)"
   }
 }

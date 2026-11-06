@@ -199,6 +199,15 @@ FM1_MATH_INLINE int32_t fm1_clamp16(int32_t v)
     return v;
 }
 
+/* Clamp an int32 to [0, max]. The ladder filter uses this for the one-pole
+   coefficient, which is unstable in the feedback loop above its own ceiling. */
+FM1_MATH_INLINE int32_t fm1_clamp16_max(int32_t v, int32_t max)
+{
+    if (v < 0) return 0;
+    if (v > max) return max;
+    return v;
+}
+
 /* 4-input weighted sum against a routing-matrix row (a `const int16_t *` of four
    0/1 Q15 weights): out = a*w0 + b*w1 + c*w2 + d*w3. The multiply stays, because
    the weights are runtime table data, so a select would be a data-dependent

@@ -1,6 +1,6 @@
 {
   "name": "svf",
-  "summary": "Chamberlin state-variable filter with a selectable output (LP/BP/HP), a bypass, and a cutoff envelope. `f` = 2*sin(pi*fc/fs) (Q16), `q` = damping (Q16), `type` 0=LP 1=BP 2=HP picks `out`, `on` 0 = bypass (out = input), `fenv` (control, Q15) scales `fenv_depth` (Q16) and is added to `f`, so a note-gated envelope opens/closes the cutoff. Bipolar `k` (key-follow) and `vk` (velocity-follow) factors (Q15) push `f` toward 0/65535 (block-derived `f_eff`). The combined cutoff `fc = clamp16(f_eff + fenv_depth·fenv)` is block-derived (all its inputs are block-rate), so it is computed once per block, and it is a state field, so two `svf` instances don't collide on a hardcoded local.",
+  "summary": "Chamberlin state-variable filter with a selectable output (LP/BP/HP), a bypass, and a cutoff envelope. `f` = 2*sin(pi*fc/fs) (Q16), `q` = damping (Q16), `type` 0=LP 1=BP 2=HP picks `out`, `on` 0 = bypass (out = input), `fenv` (control, Q15) is doubled to Q16, scaled by `fenv_depth` (Q16) and added to `f`, so a note-gated envelope opens/closes the cutoff over its whole range. Bipolar `k` (key-follow) and `vk` (velocity-follow) factors (Q15) push `f` toward 0/65535 (block-derived `f_eff`). The combined cutoff `fc = clamp16(f_eff + fenv_depth·2·fenv)` is block-derived (all its inputs are block-rate), so it is computed once per block, and it is a state field, so two `svf` instances don't collide on a hardcoded local.",
   "ins": {
     "audio": "audio",
     "fenv": { "rate": "control", "default": "0" },
@@ -12,6 +12,6 @@
   "state": { "low": "q15", "band": "q15", "f_eff": "q16", "fc": "q16" },
   "block_derived": {
     "f_eff": "fm1_key_apply(${param.f}, fm1_key_add(${in.k}, ${in.vk}), 0, 65535)",
-    "fc": "fm1_clamp16(${state.f_eff} + fm1_q16_mul(${param.fenv_depth}, ${in.fenv}))"
+    "fc": "fm1_clamp16(${state.f_eff} + fm1_q16_mul(${param.fenv_depth}, ${in.fenv} << 1))"
   }
 }

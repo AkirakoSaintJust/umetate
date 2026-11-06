@@ -7,7 +7,8 @@
    not clamped. The feedback clip already bounds the loop, so the cells settle
    within a few times the input level and int32 holds them comfortably. `f` is the
    per-stage coefficient (Q16). `fc` is block-derived from the envelope plus key /
-   velocity follow. The feedback also drops the passband by `1/(1+4.5*res)`, so
+   velocity follow, and clamped at 55296 because the feedback loop breaks into a
+   parasitic oscillation above that coefficient. The feedback also drops the passband by `1/(1+4.5*res)`, so
    `comp` (Q15) is the fraction of a `1+4.5*res` makeup applied to the LP4 output;
    at `comp` = 1 the passband stays level as the resonance rises. `mode` selects
    the output: 0 = LP4, 1 = the band tap, 2 = the 2-pole highpass, the (1 - L)^2
