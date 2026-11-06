@@ -1,6 +1,8 @@
-/* Linear ADSR (Q15, control rate). On the gate rising: attack (0 -> 32767), at the
-   top: decay (32767 -> s); gate off: release (level -> 0). Rates are Q16 one-pole
-   coefficients applied per control tick. `stage`: 0 attack, 1 decay, 2 sustain, 3 release. */
+/* Linear ADSR at Q15 and control rate. When the gate rises the attack runs from 0
+   to 32767, and at the top the decay falls from 32767 to `s`. When the gate goes
+   off, the release falls from the level to 0. The rates are Q16 one-pole
+   coefficients applied per control tick, and `stage` reads 0 attack, 1 decay,
+   2 sustain, 3 release. */
 if (${in.gate}) {
     if (${state.stage} == 3u) { ${state.stage} = 0u; }
 } else if (${state.stage} != 3u) {

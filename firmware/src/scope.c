@@ -67,8 +67,8 @@ int16_t scope_at_ch(uint32_t ch, uint32_t i)
     return scope_buf[ch < SCOPE_CH ? ch : 0u][i < SCOPE_N ? i : SCOPE_N - 1u];
 }
 
-/* Goertzel *power* (|X|^2) at frequency f over a channel's snapshot. `k` is
- * 2*cos(2*pi*f/fs) in Q15 ([-65536, 65536], an int32); the states stay < ~2^31
+/* Goertzel *power* (|X|^2) at frequency f over a channel's snapshot, with `k` =
+ * 2*cos(2*pi*f/fs) in Q15 ([-65536, 65536], an int32). The states stay < ~2^31
  * for a 256-point window. Integer throughout, int64 for the products. */
 static int64_t scope_goertzel_power(uint32_t ch, uint32_t f, uint32_t fs)
 {
@@ -85,9 +85,9 @@ static int64_t scope_goertzel_power(uint32_t ch, uint32_t f, uint32_t fs)
     return (int64_t)s1 * s1 + (int64_t)s2 * s2 - (((int64_t)k * s1 * s2) >> 15);
 }
 
-/* integer log2 (the highest set bit): a log-power scale for the spectrogram.
- * each step is 6 dB, which is how the ear hears power. Avoids the 64-bit division
- * that a linear `pw*32767/peak` normalization would need (no `__divdi3` on target). */
+/* integer log2 (the highest set bit) for a log-power scale on the spectrogram,
+ * where each step is 6 dB, which is how the ear hears power. It avoids the 64-bit
+ * division that a linear `pw*32767/peak` normalisation would need (no `__divdi3` on target). */
 static uint32_t scope_log2(uint64_t v)
 {
     uint32_t n = 0;

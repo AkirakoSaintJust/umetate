@@ -2,10 +2,11 @@
 # Copyright (C) 2026 P1Onken (umetate)
 """Host tests for the generator (docs/roadmap.md §12.4 verification).
 
-- a minimal two-op FM patch (op macro + delay1 feedback + global chain)
-  must *compile* for host;
-- a delay-free env/vca patch must render non-silent then silent (the seam contract);
-- an `audio->event` edge must be rejected with a type error.
+The first checks compile a minimal two-op FM patch (an op macro, delay1 feedback,
+and a global chain) for the host, and prove that a delay-free env/vca patch renders
+non-silent and then silent, which is the seam contract. A third check requires an
+`audio->event` edge to be rejected with a type error.
+
 Run: python3 -m umetate.test_generate
 """
 
@@ -3656,7 +3657,7 @@ def main() -> int:
     )
     failures += 0 if ok else 1
 
-    # the dogfood patch itself (examples/type-p-fm1/patch.json) renders.
+    # the test project's patch itself (examples/type-p-fm1/patch.json) renders.
     ffm = as_patch(
         json.loads(
             (
@@ -3955,8 +3956,8 @@ def main() -> int:
     except GenError:
         print("ok: an unknown cc: name is rejected")
 
-    # the dogfood panel (examples/type-p-fm1/panel.json) resolves against the patch's
-    # params (every widget/binding names a real set_param id).
+    # the test project's panel (examples/type-p-fm1/panel.json) resolves against the
+    # patch's params (every widget/binding names a real set_param id).
     ffm_panel = as_panel(
         json.loads(
             (

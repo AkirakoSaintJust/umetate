@@ -2,8 +2,8 @@
 # Copyright (C) 2026 P1Onken (umetate)
 """UI token checks: one source, generated headers, no hard-coded values.
 
-The design language lives in `design/tokens.json`. The firmware palette lives in
-`firmware/theme.json`. Both are projected into C headers. This module checks
+The design language is stored at `design/tokens.json`, and the firmware palette is
+at `firmware/theme.json`. Both are projected into C headers, so this module checks
 that the projections are current and that the UI source does not quietly
 reintroduce a raw colour, font family, or theme value.
 

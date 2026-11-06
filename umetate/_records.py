@@ -3,12 +3,12 @@
 """The preset record formats + CRCs (docs/roadmap.md §6.11.4): the shared data
 layer of the preset store, the SysEx envelope, and the CLI's export/import.
 
-The byte layouts are fixed here (little-endian); both the host tools and the
+The byte layouts are fixed here in little-endian, and both the host tools and the
 device C store implement them. Every record is a self-validating unit: a `u8
-version` (`0xFF` = empty slot), a body, and a **CRC-32** (poly `0xEDB88320`,
-the platform's `crc32`) over version+body, so a corrupt record is skipped rather
-than losing the whole bank. The SysEx envelope's **CRC-16-CCITT** (poly `0x1021`, init
-`0xFFFF`, no reflect) is here too.
+version` (`0xFF` = empty slot), a body, and a **CRC-32** (poly `0xEDB88320`, the
+platform's `crc32`) over version and body. A corrupt record is therefore skipped
+rather than losing the whole bank. The SysEx envelope's **CRC-16-CCITT** (poly
+`0x1021`, init `0xFFFF`, no reflect) is here too.
 """
 
 from __future__ import annotations
@@ -18,12 +18,12 @@ from typing import TypedDict
 NAME_LEN = 16
 RECORD_VERSION = 1
 EMPTY = 0xFF
-# The preset store's logical slot counts: 128 single-part slots + 64 multi-patch
+# The preset store's logical slot counts: 128 single-part slots and 64 multi-patch
 # slots. Each bank is a contiguous byte array chunked across the flash slots at
-# record boundaries (a record never straddles a slot). The flash slot byte ceiling
-# is store.h `SLOT_MAX` = 16 372 B, the type-p-fm1 317 B part record spans the 128
-# parts over 3 flash slots (51 per slot), the 63 B multi record fits 64 in one
-# (roadmap §6.11.4).
+# record boundaries, so a record never straddles a slot. The flash slot byte
+# ceiling is store.h `SLOT_MAX` = 16 372 B, the type-p-fm1 317 B part record
+# spans the 128 parts over 3 flash slots (51 per slot), and the 63 B multi record
+# fits 64 in one (roadmap §6.11.4).
 PART_SLOTS = 128
 MULTI_SLOTS = 64
 

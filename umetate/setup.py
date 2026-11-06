@@ -4,9 +4,9 @@
 fm1-emu.
 
 1. The JieLi toolchain and SDK go into the `/opt/jieli` volume. The fetch needs
-   opt-in consent and is SHA-256-verified against `env.lock`. It runs in a
-   throwaway container with `umetate-target` mounted read-write, the only
-   legitimate volume writer.
+   opt-in consent and is SHA-256-verified against `env.lock`, and it runs in a
+   throwaway container with `umetate-target` mounted read-write, because that is the
+   only legitimate volume writer.
 2. Rust (rustup) and fm1-emu go on the host. The clone is
    `joakimeriksson/fm1-emu` at the pinned commit, then `cargo build --release -p
    fm1-emu -p fm1-live` builds the batch runner and the GUI.

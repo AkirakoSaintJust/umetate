@@ -6,7 +6,7 @@ The default GUI runs `fm1-live --fwsc <built .fwsc>` in an emulated FM-1 window.
 Play with the computer keyboard, the mouse, or a MIDI keyboard, and hear the
 audio on the default device. `--persist` keeps the flash chip between runs.
 
-`--check` is headless. `fm1-live --shot` boots the package, holds a chord, and
+`--check` is headless: `fm1-live --shot` boots the package, holds a chord, and
 writes the panel and the audio peak, which is the model-layer regression. The
 `fm1-emu` batch interpreter is built too, for deeper WAV and histogram runs.
 """
@@ -89,10 +89,11 @@ def _check(args: argparse.Namespace, fwsc: Path) -> int:
 def _memory_check(fwsc: Path, ms: int = 3000, mhz: int = 240) -> int:
     """Boot the package on the emulator with FM1_STRICT (the hardware guard and the
     misaligned 16-/32-bit RAM-access fault are both enforced) and hold a chord. A
-    memory-safety bug raises the CPU exception, which stops the audio; a clean render
-    fills the buffer. Returns 0 = clean, 1 = the firmware faulted.
+    memory-safety bug raises the CPU exception, which stops the audio, whilst a
+    clean render fills the buffer. Returns 0 = clean, 1 = the firmware faulted.
 
-    This is a host-side check: it runs the host-built `fm1-live`, not the container."""
+    This is a host-side check, so it runs the host-built `fm1-live` rather than the
+    container."""
     env = dict(os.environ)
     env["FM1_STRICT"] = "1"
     cmd = [str(_emu.LIVE_BIN), "--shot", str(ms), "--fwsc", str(fwsc)]

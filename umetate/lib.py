@@ -4,9 +4,9 @@
 uses no registry.
 
 `markdown` prints the node library as a table generated from the manifests, which
-are the authoritative source. `docs/module-library.md` is the checked-in copy,
-so the roadmap's node table cannot drift from the manifests. `generate` writes
-that file. `check` regenerates it in memory and diffs, and any drift is an error.
+are the only reference for it. `docs/module-library.md` is the checked-in copy, so
+the roadmap's node table cannot drift from the manifests. `generate` writes that
+file, and `check` regenerates it in memory and diffs, so any drift is an error.
 """
 
 from __future__ import annotations
@@ -66,7 +66,7 @@ def _list_templates() -> list[str]:
 
 
 def _port(p: str, spec: str | PortDict) -> str:
-    """A port as `` `name`(rate) `` (the format/default live in the manifest)."""
+    """A port as `` `name`(rate) `` (the format and default come from the manifest)."""
     rate = spec if isinstance(spec, str) else spec.get("rate", "")
     return f"`{p}`({rate})"
 

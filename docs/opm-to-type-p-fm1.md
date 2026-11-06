@@ -64,10 +64,10 @@ level is ignored because the two engines have different output gains.
 
 ## Operator order and algorithms
 
-The operator order lines up for algorithms 0, 1, 2, 4, 5, 6, and 7. OPM's `M1`
-becomes Type P.fm1's `O1`, `C1` becomes `O2`, `M2` becomes `O3`, and `C2` becomes
-`O4`. Algorithm 3 uses a different assignment, covered below. The algorithm numbers
-also line up in most cases:
+The operator order lines up for algorithms 0, 1, 2, 4, 5, 6, and 7, where OPM's
+`M1` becomes Type P.fm1's `O1`, `C1` becomes `O2`, `M2` becomes `O3`, and `C2`
+becomes `O4`, whilst algorithm 3 uses a different assignment, covered below. The
+algorithm numbers also line up in most cases:
 
 | OPM `CON` | OPM routing | Type P.fm1 routing | Match |
 | --- | --- | --- | --- |
@@ -133,7 +133,7 @@ is about -82 dB in OPM and silent in Type P.fm1 at level 0. That tail is below
 the noise floor of most material.
 
 Modulators follow the same level curve. Type P.fm1's generated router scales the
-modulator path by 2 and the phasor scales that by 2^20. A level-99 modulator
+modulator path by 2 and the phasor scales that by 2^20, so a level-99 modulator
 reaches four cycles of phase deviation, which is the OPM's full-scale index at
 `TL` 0. The index at a level follows the same 0.75 dB step, so the DX21, DX27 and
 DX100 line up too: their output level maps to `TL = 99 - level`, and a level-75
@@ -152,8 +152,8 @@ controls. For OPM algorithm 3, M1 is `O2` in the remapped layout, so use
 Both engines take the feedback from the operator's level-gained output and average
 two samples, so the depth follows the level. OPM's `FL` 7 is two cycles of phase
 deviation at a full-level operator, half a cycle at `TL` 16 and a quarter at
-`TL` 24. Type P.fm1's 100% is the same set of depths. Each OPM `FL` step is 6 dB,
-so halve the Type P.fm1 value per step:
+`TL` 24, and Type P.fm1's 100% is the same set of depths, so each OPM `FL` step is
+6 dB and you halve the Type P.fm1 value per step:
 
 | OPM `FL` | `opN_feedback.p0` |
 | ---: | ---: |
@@ -191,15 +191,29 @@ The rates come from measured stage times, not a guessed table. The converter
 simulates the OPM envelope tables at the chip EG clock, 18.64 kHz, and the Type
 P.fm1 one-pole at the 1.38 kHz control rate, then picks the rate whose time to a
 chosen point in the stage is closest. The OPM clock is one tick per three inner
-timer calls, which is `OpmRate / 6`. The attack matches the time to -12 dB below
-full. The decays match the time 12 dB into the trip, or the whole stage when it is
-shorter. The release matches the time to -20 dB.
+timer calls, which is `OpmRate / 6`. The chosen point deepens as the stage slows,
+because a slow OPM stage is still a straight dB line when the one-pole has
+flattened into its quiet tail. The attack and the two decays share the same steps:
 
-A controlled `D1R` 10, `D1L` 8 stage reaches -12 dB in 0.66 s in both engines. The
-whole stage to `D1L` takes 1.41 s in OPM and 2.18 s in Type P.fm1, because the
+| OPM rate | Match point |
+| ---: | ---: |
+| 0 | 21 dB |
+| 1 | 18 dB |
+| 2, 3 | 15 dB |
+| 4, 5, 6 | 12 dB |
+| 7 to 12 | 9 dB |
+| 13 to 22 | 6 dB |
+| 23 to 31 | 3 dB |
+
+The release matches the time to -20 dB.
+
+A controlled `D1R` 10, `D1L` 8 stage reaches -9 dB in 0.52 s in both engines. The
+whole stage to `D1L` takes 1.41 s in OPM and 2.3 s in Type P.fm1, because the
 one-pole tail is longer. On the demo bank, Solid Bass tracks the OPM within about
-a decibel through 0.8 s, Hard Tines is about 2 to 3 dB fast, and Tubular Bells is
-still about 3.5 dB long at 0.4 s.
+a decibel through 0.8 s, Hard Tines within 2 dB, and Tubular Bells within 2 dB
+after the first 0.2 s. 5th Strings is within a decibel from 0.2 s, though its
+first 50 ms are about 14 dB louder than the OPM, because the carrier attack now
+lands sooner.
 
 I tried matching the whole stage time instead of a point, so an `AR` 3 attack
 would take the OPM's 1.96 s and an `RR` 4 release its 2.23 s. The audible part
@@ -209,10 +223,13 @@ one-pole spends most of the stage in its quiet tail. The `RR` 4 release was 2 to
 
 The curves still differ. An OPM decay is a straight line in dB. The Type P.fm1
 one-pole starts faster and eases into its target, and its one-unit floor sets a
-minimum speed at low gain. A slow OPM decay to a low `D1L` settles differently, and
-a `D2R` stage that takes tens of seconds in OPM maps to the slowest Type P.fm1 rate
-and still arrives sooner. The chosen points stay close, and the tail beyond them
-does not.
+minimum speed at low gain. Across the table, `AR` 4 to 22 land within 0.83 to 1.01
+of the OPM time at the chosen point, and `D1R` 3 to 28 within 0.89 to 1.06. The
+slowest three of each hit the Type P.fm1 rate 0 floor, so `AR` 1 to 3 and `D1R` 1
+to 2 still arrive early. The last decibel of a slow stage takes 1.4 to 4 times the
+OPM time, so the tail beyond the chosen point is longer. A slow OPM decay to a low
+`D1L` settles differently, and a `D2R` stage that takes tens of seconds in OPM
+maps to the slowest Type P.fm1 rate and still arrives sooner.
 
 OPM rates are key-scaled. The converter compares the OPM stage times two octaves
 either side of the breakpoint and fits the change onto the envelope key-follow

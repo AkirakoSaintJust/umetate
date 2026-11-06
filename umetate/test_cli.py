@@ -718,8 +718,9 @@ def _budget_measures() -> None:
 
 
 def _budget_measures_tabled() -> None:
-    """`umetate budget` generates + compiles the patch's `tables:` (a regression:
-    the dogfood's `routing` table once left `table_routing` undefined)."""
+    """`umetate budget` generates and compiles the patch's `tables:`, which is a
+    regression guard because the test project's `routing` table once left
+    `table_routing` undefined."""
     root = Path(__file__).resolve().parents[1]
     patch = root / "examples" / "type-p-fm1" / "patch.json"
     buf = io.StringIO()
@@ -736,9 +737,9 @@ def _budget_measures_tabled() -> None:
 
 
 def _synth_build_composes() -> None:
-    """`umetate build --synth examples/type-p-fm1` composes the dogfood firmware:
-    the generated engine/panel/CC/layout files, a sounding host run, and, with
-    the toolchain, the target package."""
+    """`umetate build --synth examples/type-p-fm1` composes the test project's
+    firmware: the generated engine, panel, CC, and layout files, a sounding host
+    run, and, with the toolchain, the target package."""
     import struct
     import wave
 
@@ -764,7 +765,7 @@ def _synth_build_composes() -> None:
     with wave.open(str(wav_path), "rb") as w:
         frames = w.readframes(w.getnframes())
     peak = max(abs(v) for (v,) in struct.iter_unpack("<h", frames))
-    assert peak > 1000, f"the dogfood host run is silent (peak {peak})"
+    assert peak > 1000, f"the test project's host run is silent (peak {peak})"
     pkg = root / "firmware" / "build" / "umetate-fm1-pro-type_p_fm1.fwsc"
     if "target package blocked" not in out:
         assert pkg.is_file(), "with the toolchain, the synth package must exist"
@@ -1090,7 +1091,7 @@ def _publish_vendor_copy() -> None:
 
 
 def _interview_roundtrip() -> None:
-    """The design interview form writes, reports gaps, and round-trips."""
+    """The design interview form writes, reports the open questions, and round-trips."""
     from . import interview
 
     with tempfile.TemporaryDirectory() as tmp:
@@ -1118,7 +1119,7 @@ def _interview_roundtrip() -> None:
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
             rc = interview.main(["--synth", str(synth), "--check"])
-        assert rc == 1, "a fresh form must have gaps"
+        assert rc == 1, "a fresh form must have open questions"
         assert "questions still open" in buf.getvalue()
 
         buf = io.StringIO()
@@ -1190,7 +1191,7 @@ def main() -> int:
         ("the C SysEx handler matches the Python envelope", _sysex_c_parity),
         ("umetate budget measures the polyphony scaling", _budget_measures),
         ("umetate budget compiles the patch's tables", _budget_measures_tabled),
-        ("build --synth composes the dogfood firmware", _synth_build_composes),
+        ("build --synth composes the test project's firmware", _synth_build_composes),
         (
             "publish carries the plugin source + bundles",
             _publish_includes_plugin_source,

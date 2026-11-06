@@ -1,15 +1,18 @@
 /* SPDX-License-Identifier: GPL-3.0-only
  * Copyright (C) 2026 zvenson (from OberVave; the Firmware Hub's look)
  * Copyright (C) 2026 illuminus5 (Skiff: the idea, a loader that draws, its 5 x 7 letters and the order of things) */
-/* The update loader's screen (loader.c; tests/ldr_screen_test.c). A unit whose install was cut off comes back to the
- * loader at every power-on and showed a black screen, now it says what it does, in the Firmware Hub's colours:
- *   the firmware's name, big, in its colour, a thin line under it
+/* The update loader's screen (loader.c, tests/ldr_screen_test.c). A unit whose install was cut off comes back to the
+ * loader at every power-on, and it used to show a black screen, so now it says what it does in the Firmware Hub's
+ * colours:
+ *   the firmware's name, big, in its colour, with a thin line under it
  *   what happens (UPDATE MODE, WRITING, UPDATE FAILED) and what to do, white and grey
- *   20 segments: a light running to and fro while it waits (ldr_anim), the share written while it writes, the percent
+ *   20 segments: a light runs to and fro while it waits (ldr_anim), the share written while it writes, the percent
  *   thefirmwarehub.com at the foot, in the hub's lila
- * Drawn with the loader's own letters (the app area may be half written: never read), before USB starts (USB is
- * polled: the panel's ~0.3 s init would leave the host's enumeration unanswered). FM-1 only (the SMK-37's stays dark).
- * LDR_NAME / LDR_COLOUR: the firmware's name (at most 9 letters at size 4, more get smaller) and colour (RGB565). */
+ * The screen is drawn with the loader's own letters, because the app area may be half written and is never read, and it
+ * comes up before USB starts, since USB is polled and the panel's ~0.3 s init would leave the host's enumeration
+ * unanswered. FM-1 only, because the SMK-37's screen stays dark.
+ * LDR_NAME / LDR_COLOUR carry the firmware's name (at most 9 letters at size 4, more get smaller) and its colour
+ * (RGB565). */
 #ifndef LDR_NAME
 #define LDR_NAME "RIB"                  /* (tools/build.py: LOADER_NAME) */
 #endif

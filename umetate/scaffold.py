@@ -78,9 +78,10 @@ def _write(directory: Path, name: str, data: object) -> None:
 
 
 # -----------------------------------------------------------------------------
-# `umetate scaffold synth`, a complete, minimal full firmware (the two-tier gap:
-# patch-level `scaffold patch` stops at a generator dogfood, `synth` adds the app
-# glue so `umetate build --synth <dir>` produces sound out of the box).
+# `umetate scaffold synth`, a complete, minimal full firmware. There are two
+# tiers: patch-level `scaffold patch` stops at a generator test project, whilst
+# `synth` adds the app glue, so `umetate build --synth <dir>` produces sound out
+# of the box.
 # -----------------------------------------------------------------------------
 
 
@@ -436,9 +437,10 @@ def _synth(name: str, out: Path) -> int:
 
 
 def _builds(patch: Patch) -> bool:
-    """Does the patch generate + compile on the host? True when a local `cc` is
-    absent (the check is a host-toolchain nicety, not a gate), e.g. Windows
-    without WSL, where the Docker image holds the toolchain instead."""
+    """Does the patch generate and compile on the host? It answers True when a
+    local `cc` is absent, because the check is a host-toolchain nicety rather than
+    a gate, e.g. on Windows without WSL, where the Docker image holds the
+    toolchain instead."""
     src = generate(patch)
     with tempfile.TemporaryDirectory() as tmp:
         d = Path(tmp)

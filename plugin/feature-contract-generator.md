@@ -12,8 +12,8 @@
 - **New player action:** point one command at a synth project and get a plugin
   project that builds against the reusable host.
 - **Sound and behaviour:** the plugin and the firmware render the same
-  generated C from the same `patch.json`, `panel.json`, and `app.c`. The 44.1 kHz
-  core stays bit-exact.
+  generated C from the same `patch.json`, `panel.json`, and `app.c`, and the
+  44.1 kHz core stays bit-exact.
 - **Failure mode:** a missing project, an unknown key in `plugin.json`, a
   four-character code that is not four ASCII letters or digits, or a stale
   generated tree stops with a non-zero exit before CMake runs.
@@ -71,7 +71,7 @@
 
 - **Host vector(s):** the new `umetate.test_cli` cases run the generate/check
   round trip, a stale-file failure, the identity override, the four-character
-  rule, and the quote rejection. The plugin CTest suite runs `engine_parity`,
+  rule, and the quote rejection, and the plugin CTest suite runs `engine_parity`,
   `rate_bridge`, `preset_smoke`, `plugin_smoke`, `plugin_stability`, the editor
   snapshots, and `linux_daws`.
 - **Browser vector:** not applicable. The generator change does not touch the web
@@ -79,10 +79,10 @@
 - **Target package check:** no firmware change. `umetate build --synth` still
   composes the `.fwsc` and the host WAV.
 - **Physical timing/device check:** not available. Recorded as blocked.
-- **Tolerance/metric:** the generated files match byte-for-byte on `--check`. The
-  44.1 kHz render stays bit-exact. A generated project must configure and build
-  with its rendered C in `gen/` and only the tracked `firmware/gen/math_tables.h`
-  from the source tree.
+- **Tolerance/metric:** the generated files match byte-for-byte on `--check`, and
+  the 44.1 kHz render stays bit-exact. A generated project must configure and
+  build with its rendered C in `gen/` and only the tracked
+  `firmware/gen/math_tables.h` from the source tree.
 - **Evidence artefact:** `umetate/plugin_cli.py`, `plugin/feature-contract-generator.md`,
   and the roadmap 13.31 entry.
 
@@ -94,13 +94,13 @@
 - `umetate.test_cli` passes the generate/check round trip, the identity override,
   the four-character rule, and the quote rejection.
 - The plain `cmake -S plugin` build configures and links the VST3, CLAP and
-  standalone host with JUCE 8.0.9 and the pinned CLAP wrapper.
-- The ctest suite passes `engine_parity`, `rate_bridge`, `preset_smoke`,
+  standalone host with JUCE 8.0.9 and the pinned CLAP wrapper, and the ctest
+  suite passes `engine_parity`, `rate_bridge`, `preset_smoke`,
   `plugin_smoke`, `plugin_stability`, and both editor snapshot tests.
-- `linux_daws` passes Ardour and both Carla renders. The Carla VST3 and CLAP
+- `linux_daws` passes Ardour and both Carla renders, and the Carla VST3 and CLAP
   renders are 132300 frames at 44100 Hz, 24-bit stereo, peak 0.609467.
 - `publish --plugins` copies `plugin.json` into `src/` and stages one VST3 and one
-  CLAP archive. It ignores `_deps`, hidden folders, and the Linux DAW test's
+  CLAP archive, and it ignores `_deps`, hidden folders, and the Linux DAW test's
   isolated HOME.
 - The generated project built against the same `_deps` tree and passed all eight
   CTest cases, including `linux_daws`. `plugin-build` defaults to four jobs
@@ -117,6 +117,6 @@
   build the engine bridge first. Stop if any generated file differs from the
   firmware render or the 44.1 kHz parity test fails.
 - **Smaller alternative:** keep the fixed Type P.fm1 source and add only the CLI
-  wrapper. This does not generalise and was rejected.
+  wrapper, which does not generalise and was rejected.
 - **Rollback:** revert the Milestone 7 commit. The firmware generator is the same
   code path, and `umetate build --synth` regenerates the deterministic output.

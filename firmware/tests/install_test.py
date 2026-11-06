@@ -5,9 +5,12 @@
 The fake device is the one in web/test_web.mjs: identity on the handshake,
 then "device asks, host answers" reads of the logical image. Run from the repo root:
   python3 tests/install_test.py
-Also checks logical_image/product_of against web/fm1pkg.js (needs node, web/ and
-build/umetate-fm1-pro.fwsc, skipped otherwise: Dinghy has no web installer of its own; from genkigenki/sloop-fm1 smk37), the SMK-37 Pro identities, and the 20 / 36 block
-deinterleave against the stock SMK-37 Pro packages (a directory named by SMK_STOCK_DIR, skipped when unset)."""
+It also checks logical_image/product_of against web/fm1pkg.js, which needs node,
+web/ and build/umetate-fm1-pro.fwsc, and the check is skipped otherwise, since
+Dinghy has no web installer of its own (from genkigenki/sloop-fm1 smk37). The
+same run covers the SMK-37 Pro identities and the 20 / 36 block deinterleave
+against the stock SMK-37 Pro packages (a directory named by SMK_STOCK_DIR,
+skipped when unset)."""
 import io
 import queue
 import shutil

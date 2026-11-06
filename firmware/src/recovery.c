@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* Application-level recovery, not a second firmware bank. The intact app's
- * startup, RAM flash driver and USB stack are still required. TIMER5, audio,
+/* Application-level recovery, which uses the intact app's startup, RAM flash
+ * driver and USB stack rather than a second firmware bank. TIMER5, audio,
  * settings, samples, projects, editor and normal UI are never started here. */
 static uint32_t recovery_last, recovery_fraction, recovery_usb_last;
 

@@ -2,7 +2,7 @@
 
 umetate is **GPL-3.0-only** for project code, documentation, and skills. Third-party
 terms are preserved. RIB is a source-owned fork of Dinghy/Felucca. Dinghy is
-lineage, not the product boundary.
+lineage rather than the product boundary.
 
 The firmware and the CLI are GPL-3.0-only. The VST3, CLAP and standalone plugin
 binaries also link **JUCE 8.0.9**, which is dual-licensed under **AGPL-3.0-only**
@@ -78,12 +78,12 @@ system has it. Only the two OFL fonts above travel in the plugin binary.
 
 ## Non-redistribution
 
-The JieLi pi32v2 toolchain is **not redistributed**, the user obtains it and
+The JieLi pi32v2 toolchain is **not redistributed**, so the user obtains it and
 `umetate setup` installs it into the Docker volume (vendor-terms compliance). The
 AC79 SDK is Apache-2.0: its **binary assets** (uboot.boot, cfg_tool.bin,
 eq_cfg_hw.bin) and the precompiled FFT library (`libFFT_pi32v2_OnChip.a`) are read
-from the user's SDK checkout at build time, not stored here, the small **C math
-source** we compile (kiss_fft under BSD-3, and `fftvec_math_drv.h` +
+from the user's SDK checkout at build time rather than stored here, whilst the small
+**C math source** we compile (kiss_fft under BSD-3, and `fftvec_math_drv.h` +
 `flfft_core_pi32v2.c` under Apache-2.0) is vendored under `firmware/vendor/` with
 its licences. M-VAVE stock firmware and assets are **not redistributed**. Record
 the exact toolchain/SDK commit and asset hashes in `env.lock`.
@@ -97,4 +97,4 @@ repository, the build, or any release, and none of its source is redistributed o
 compiled into the instrument.
 
 The FM-1 emulator used for the target timing checks is joakimeriksson's fm1-emu.
-It is a development tool, not a release artefact.
+It is a development tool rather than a release artefact.

@@ -7,8 +7,8 @@ CRC-16-CCITT, and the 7-bit packing of payloads.
 F0 00 21 1D <model> <cmd> <ver> <payload…> <crc16-lo> <crc16-hi> F7
 ```
 
-The CRC covers `<cmd>…<payload>` (the packed body, as transmitted); the receiver
-checks it before unpacking. Responses echo the command with the high bit set;
+The CRC covers `<cmd>…<payload>` (the packed body, as transmitted), and the receiver
+checks it before unpacking. Responses echo the command with the high bit set, and
 `0x7F` is the unknown-command reply.
 """
 

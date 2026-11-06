@@ -2,8 +2,8 @@
 # Copyright (C) 2026 P1Onken (umetate)
 """`umetate quick-check`: a fast, read-only presence and version probe (§12.8).
 
-It reports each §5.5 layer. A missing toolchain is `blocked` rather than `fail`.
-The deep verification is `deep-check`, not here.
+It reports each §5.5 layer, and a missing toolchain is `blocked` rather than
+`fail`. The deep verification is in `deep-check`, so this stays a fast probe.
 """
 
 from __future__ import annotations

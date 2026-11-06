@@ -2,11 +2,11 @@
 # Copyright (C) 2026 P1Onken (umetate)
 """`umetate deep-check`: run the host tests and the gate checks (§12.8).
 
-`--host` (the default) runs the host DSP, UI, and unit tests. `--safety` runs the
-C standing checks. `--web` builds the standalone WASM and proves host and wasm
-match (P4-1). `--python` runs ruff, mypy, and the test modules. `--skill`
-verifies the offline skill bundles (P5). `--links` checks the docs
-cross-references (P6). `--roadmap` keeps the dashboard under 500 lines.
+`--host` (the default) runs the host DSP, UI, and unit tests, `--safety` runs the C
+standing checks, and `--web` builds the standalone WASM and proves that host and
+wasm match (P4-1). `--python` runs ruff, mypy, and the test modules, `--skill`
+verifies the offline skill bundles (P5), `--links` checks the docs
+cross-references (P6), and `--roadmap` keeps the dashboard under 500 lines.
 `--pyright` runs the strict Python type check. `--all` is the complete gate, the
 one deterministic "is this increment done" check.
 """
@@ -42,8 +42,8 @@ def _web() -> int:
         print(f"deep-check --web: {exc}", file=sys.stderr)
         return 1
     name = patch["name"].replace("-", "_").replace(".", "_")
-    # the parity harness is a different page from the user-facing emulator;
-    # keep it out of `build/web` so a gate run cannot clobber a served app
+    # the parity harness is a different page from the user-facing emulator, so it
+    # stays out of `build/web` and a gate run cannot clobber a served app
     if web.build(patch, web.PARITY_OUT, name) != 0:
         return 1
     ok, msg = web.check_parity(web.PARITY_OUT, name)
@@ -108,8 +108,9 @@ def _pyright() -> int:
 
 def _memory() -> int:
     """The memory-safety gate (host-side): boot the built firmware on the emulator
-    with FM1_STRICT (the hardware guard + the misaligned-access fault) and fail on a
-    CPU exception. Skipped inside the container, where the host emulator is absent."""
+    with FM1_STRICT (the hardware guard and the misaligned-access fault) and fail on
+    a CPU exception. It is skipped inside the container, where the host emulator is
+    absent."""
     from . import _emu, emu
 
     if not runner.probe().docker:

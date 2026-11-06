@@ -1,20 +1,22 @@
 # Voice samples
 
 These are short excerpts from the author's own writing: reviews, forum posts, and
-notes. They are here for rhythm, not for content. Read them before a front-door
-page, a manual intro, or a guide or study, then read `voice.md` for the rules.
+notes. They are here for rhythm rather than content, so read them before a
+front-door page, a manual intro, or a guide or study, then read `voice.md` for the
+rules.
 
-The full corpus is not checked in. It is the author's personal film and music
-writing, not part of the framework. The excerpts are enough to hear the rhythm.
+The full corpus is not checked in, because it is the author's personal film and
+music writing rather than part of the framework. The excerpts are enough to hear the
+rhythm.
 
-The published manual is a restrained version of this. No film opinions, no
-swearing. The hand rewrite keeps the digressions, the slang, and the jokes. The
+The published manual is a restrained version of this, with no film opinions and no
+swearing. The hand rewrite keeps the digressions, the slang, and the jokes, and the
 sentence is the same.
 
 ## Guide rewrite
 
-These are from the author's rewrite of the first 70 lines of the K5/K5000 guide.
-They are the target for a guide or study, not a manual page.
+These are from the author's rewrite of the first 70 lines of the K5/K5000 guide,
+and they are the target for a guide or study rather than a manual page.
 
 ### Plain category opening
 
@@ -24,7 +26,7 @@ They are the target for a guide or study, not a manual page.
 > They came out at different times and the K5's shortcomings probably were part of
 > what motivated the K5000's design.
 
-The model draft opened with a balanced thesis. The author cut it for a plain
+The model draft opened with a balanced thesis, and the author cut it for a plain
 category, a reason to care, and a causal guess. "Probably" is the right hedge. The
 plain version is the target.
 
@@ -34,7 +36,7 @@ plain version is the target.
 > Each of these sines is called a harmonic, and the fundamental determines the
 > sound's "pitch".
 
-The guide can explain a term the audience may not know. Do not assume the reader
+The guide can explain a term the audience may not know, so don't assume the reader
 already knows what a harmonic is.
 
 ### Long explanatory sentence
@@ -52,8 +54,9 @@ long sentence. Fix "over from" to "take over from". Keep "whilst" and "and so on
 > Each additive source holds 64 harmonics, with two possible settings: Low is 1 to
 > 64, and High is 65 to 128.
 
-The model draft wrote that as three sentences. The author joined the specification
-to its main clause with "with" and a colon. The same move runs through the guide:
+The model draft wrote that as three sentences, and the author joined the
+specification to its main clause with "with" and a colon. The same move runs through
+the guide:
 
 | Draft | Rewrite |
 | --- | --- |
@@ -70,14 +73,14 @@ fact as its own sentence has lost the rhythm, even when every sentence is clear.
 
 > ... whilst the K5000 has got one envelope per harmonic (!)
 
-"Has got" and the parenthetical "(!)" are voice. They are not P41 or P14.
+"Has got" and the parenthetical "(!)" are voice rather than P41 or P14.
 
 ### Factual contrast
 
 > A K5 Single patch has two sources, containing a complete voice path, rather than
 > just the oscillator.
 
-"Rather than just" is a factual contrast. It names both sides. Do not rewrite it
+"Rather than just" is a factual contrast that names both sides, so don't rewrite it
 into a positive-only sentence.
 
 ### Scope and audience
@@ -90,8 +93,8 @@ records" is a category label, not prose punctuation.
 
 ### Replacing the negation
 
-The author removed nearly every "It's a X, not a Y" and "It's not an X" setup.
-The replacements are the lesson.
+The author removed nearly every "It's a X, not a Y" and "It's not an X" setup, and
+the replacements are the lesson.
 
 | Draft | Rewrite |
 | --- | --- |
@@ -125,7 +128,7 @@ The author keeps the negative when it corrects a real inference or names missing
 evidence. "Just", "though", and "more of a" scale the claim without turning it into
 a label contrast. The third example replaces the label with the evidence: the
 sounds are similar, but there is no session credit. The earlier "That is a
-difference in personality, not a ranking" was correct but stiffer. The spoken
+difference in personality, not a ranking" was correct but stiffer, and the spoken
 correction is the voice.
 
 ### Anecdotal aside
@@ -133,8 +136,8 @@ correction is the voice.
 > Anecdotally, though, *Revolutions* is known to be made out of D50 presets mostly,
 > so I'd really like to give it a closer listen and track the possible K5 sounds.
 
-"Anecdotally, though" marks the lower confidence. "I'd really like to" is a genuine
-intention, not a marketing hook. One aside per section at most.
+"Anecdotally, though" marks the lower confidence, whilst "I'd really like to" is a
+genuine intention rather than a marketing hook. One aside per section at most.
 
 ### Cut the summary verdict
 
@@ -164,8 +167,8 @@ restrictions are the lesson." The author joined the cause and the consequence wi
 | The filter is useful, and it is also a trap. | A filter sweep can make a weak harmonic construction sound exciting for a moment and hide what the K5 is doing. |
 | Hybridisation is musically intelligent. | Additive and PCM cover different jobs. |
 
-An aphorism is a short, universal-sounding verdict that could go on a poster. The
-quasi-aphorism is the same move with a concrete noun, such as "its restrictions
+An aphorism is a short, universal-sounding verdict that could go on a poster, and
+the quasi-aphorism is the same move with a concrete noun, such as "its restrictions
 are the lesson". Replace both with the concrete reason or the instruction. A
 specific verdict is fine. A slogan is not.
 
@@ -221,12 +224,12 @@ Then every page gets a row with its four knob assignments and its display:
 | --- | --- | --- | --- | --- | --- |
 | OSCILLATOR | RATIO | LEVEL | FEEDBACK | WAVE | A scope of the selected operator. |
 
-The tables are plain. The voice sits in the navigation prose and the short page
-notes. Do not write a control list and call it a panel section.
+The tables are plain, and the voice sits in the navigation prose and the short page
+notes. Don't write a control list and call it a panel section.
 
 ## Hand rewrite
 
-These are from the author's hand rewrite of the Type P.fm1 manual. They are the
+These are from the author's hand rewrite of the Type P.fm1 manual, and they are the
 target for manual voice. The first release was flatter. Read these before a manual
 page.
 
@@ -236,9 +239,9 @@ page.
 > thinking about things I wanted to change on the Yamahas (and Yamaha emulators)
 > I've been using over the years. That's where Type P.fm1 comes from.
 
-First person, a specific history, a long setup. The next paragraph can start with
-"Originally" and carry the constraint. The preface is front-door register, not a
-spec sheet.
+First person, a specific history, a long setup: the next paragraph can start with
+"Originally" and carry the constraint. The preface is front-door register rather than
+a spec sheet.
 
 ### The list is content
 
@@ -246,17 +249,17 @@ spec sheet.
 > because they help massively with the sheer amount of params, and provide an easy
 > overview of what the patch is like at a given moment.
 
-The list is the author's seven design observations. It is content, not rule-of-three
-padding. The sentence is long and comma-heavy but reads as one thought. A manual can
-carry it.
+The list is the author's seven design observations, and it is content rather than
+rule-of-three padding. The sentence is long and comma-heavy but reads as one
+thought. A manual can carry it.
 
 ### Exclamation cluster
 
 > 6. velocity and key scaling are cool but they've got to live in their little
 > corner because there are just so! many! params!
 
-The three exclamation marks are deliberate. They are in the design note, not a
-procedure. Keep the cluster. Do not spray it through the page.
+The three exclamation marks are deliberate, because they are in the design note
+rather than a procedure. Keep the cluster. Don't spray it through the page.
 
 ### Factual contrast
 
@@ -264,8 +267,8 @@ procedure. Keep the cluster. Do not spray it through the page.
 > implemented from scratch, but it **is** a DX-style synth, and it **does** take
 > cues from the way Yamaha emulators are implemented, particularly ymfm and Dexed.
 
-Both sides are real. The bold `is` and `does` are deliberate contrast, not random
-inline bold. This is not the "not just X, it's Y" hook.
+Both sides are real, because the bold `is` and `does` are deliberate contrast
+rather than random inline bold. This is not the "not just X, it's Y" hook.
 
 ### Concrete sound, then the aside
 
@@ -286,8 +289,8 @@ Taco Bell aside to make the page neutral.
 > the operators were always computed in the same order and the one with feedback
 > was always the first one.
 
-"That's because" is the teaching voice, not filler. The history explains why the
-panel behaves the way it does. Keep it.
+"That's because" is the teaching voice rather than filler, because the history
+explains why the panel behaves the way it does. Keep it.
 
 ### Design aside
 
@@ -316,7 +319,7 @@ aphorism with a concrete next action. Do that.
 
 ## Anti-slop front door
 
-These are from the hand-written README. They set the register for a release front
+These are from the hand-written README, and they set the register for a release front
 door and for the documentation skill's own promise.
 
 > I've tried to calibrate the resulting prose from my own personal writing, which
@@ -336,8 +339,8 @@ creators" has the same topic and no person in it.
 > your LLM agent has an idea of why you made your synth and what you want to tell
 > your users.
 
-The instruction is direct, the aside is in brackets, and the ask is specific. That is
-the front-door voice. Do not tidy it into "authors are encouraged to provide a
+The instruction is direct, the aside is in brackets, and the ask is specific, which
+is the front-door voice. Don't tidy it into "authors are encouraged to provide a
 bespoke release README".
 
 > We're making open source synths for fun and musical discovery, so it'd be great if
@@ -345,8 +348,8 @@ bespoke release README".
 > synths and tell the community about the ideas, hopes and passions we wanted to
 > share with fellow m-vavers, right?
 
-"Right?" is a real question tag, not a marketing hook. Keep it when the author wrote
-it. Do not replace it with "join us on this journey".
+"Right?" is a real question tag rather than a marketing hook, so keep it when the
+author wrote it. Don't replace it with "join us on this journey".
 
 ## Long setup, short landing
 
@@ -363,17 +366,17 @@ carry a 40-word sentence if the clauses belong together, then land it in five.
 > The interludes featuring Gwar are mostly terrible. They've got some funny,
 > campy, practical effects at times, but the script is painful.
 
-The verdict is the first sentence. The second gives the exception without softening
-the verdict. This is how to be fair without hedging. "Mostly terrible" is a real
-judgment, not a vibe.
+The verdict is the first sentence, and the second gives the exception without
+softening it. This is how to be fair without hedging. "Mostly terrible" is a real
+judgment rather than a vibe.
 
 ## Concede, then return
 
 > It's well made as a photography and editing exercice, but not too interesting.
 
-One concession, one verdict. No "however" stack, no "on the other hand" chain. The
-spelling mistake is left in the corpus and corrected in published docs. The shape is
-what matters: credit the craft, then say what it does for you.
+One concession, one verdict, with no "however" stack and no "on the other hand"
+chain. The spelling mistake is left in the corpus and corrected in published docs.
+The shape is what matters: credit the craft, then say what it does for you.
 
 ## Answer the question
 
@@ -390,17 +393,17 @@ decoration.
 > Negative feedback is, roughly, a lot like an operator (or more, or a stack) at
 > ratio 2 into an operator at ratio 1.
 
-"Roughly" signals the approximation. The comparison uses the reader's own vocabulary.
-Then the precise version follows. A comparison to "warmth" or "character" would tell
-the reader nothing.
+"Roughly" signals the approximation, and the comparison uses the reader's own
+vocabulary before the precise version follows. A comparison to "warmth" or
+"character" would tell the reader nothing.
 
 ## Negate a fact, not a strawman
 
 > It's not exactly the same sound but that's it basically.
 
-This is how the corpus negates. It does not say "it's not just a sound, it's a
-texture". It states the limit and stops. If the difference matters, name both sides.
-If it does not, do not build a sentence around it.
+This is how the corpus negates: it does not say "it's not just a sound, it's a
+texture", but states the limit and stops. If the difference matters, name both sides.
+If it does not, don't build a sentence around it.
 
 ## Name the structure
 
@@ -422,8 +425,9 @@ page, and never as a substitute for the argument.
 > I've done a bit of audio DSP work with C# and sometimes you get some very dumb
 > asm, although I'm guessing the JIT or a good PGO profile would help.
 
-The claim, then the correction. The hedge is on the cause, not on the experience. The
-reader trusts the experience because the author does not overclaim the explanation.
+The claim, then the correction, with the hedge on the cause rather than the
+experience. The reader trusts the experience because the author does not overclaim
+the explanation.
 
 ## Recommend it
 
@@ -444,9 +448,9 @@ the project. A manual can carry one of these in the preface. Not one per section
 
 > kind of like Angular if you know about web dev?
 
-The analogy is specific to the reader's world. The question tag checks whether the
-reader is the right reader. In docs, drop the tag if the audience is already clear.
-Keep the specificity.
+The analogy is specific to the reader's world, and the question tag checks whether
+the reader is the right reader. In docs, drop the tag if the audience is already
+clear. Keep the specificity.
 
 ## One line is a paragraph
 
@@ -478,5 +482,5 @@ concrete. "Old computers" would be true and useless.
 > your house, shooting tapes of you being violent in moments you don't remember,
 > alternatively threatening you and helping you kill people.
 
-A genuine question, then the evidence. Not a hook. Use a real question when you are
-actually going to answer it. Do not use a question to announce a section.
+A genuine question, then the evidence, rather than a hook. Use a real question when
+you are actually going to answer it. Don't use a question to announce a section.

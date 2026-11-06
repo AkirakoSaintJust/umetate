@@ -2,27 +2,26 @@
 
 ## Purpose
 
-The manual preface and any design note come from the author, not the model. The
-interview is how the personal experience, the design motivation, and the lineage
-get out. A point-blank "what is your design philosophy?" produces a press release.
-A specific question about the first patch produces a paragraph.
+The manual preface and any design note come from the author rather than the model,
+and the interview is how the personal experience, the design motivation, and the
+lineage get out. A point-blank "what is your design philosophy?" produces a press
+release, whilst a specific question about the first patch produces a paragraph.
 
-The form is generated from the project. `umetate interview --write` reads
+The form is generated from the project, so `umetate interview --write` reads
 `patch.json`, `panel.json`, `synth-brief.md`, and `plugin.json`, then renders the
 generic core in `templates/design-interview.md` with the synth's own terms. It
 does not assume FM, operators, or Type P.fm1. `--next 3` prints the next missing
-items. `--check` lists every open question.
+items, and `--check` lists every open question.
 
-The generated form is a starting point. Read it, add or remove questions from the
-brief, and ask one topic at a time. The template is the generic core. The
+The generated form is a starting point, so read it, add or remove questions from the
+brief, and ask one topic at a time. The template is the generic core, whilst the
 project's `design-interview.md` is the form you fill in.
 
 ## The role
 
-You are a journalist who knows synth design. You are not a fan and not a
-stenographer. You ask short questions, listen, and follow up. The author is the
-expert on their own instrument. Your job is to get the concrete detail they would
-not volunteer.
+You are a journalist who knows synth design, not a fan or a stenographer, so you
+ask short questions, listen, and follow up. The author is the expert on their own
+instrument, and your job is to get the concrete detail they would not volunteer.
 
 ## The rules
 
@@ -44,23 +43,24 @@ not volunteer.
 
 ## Generator inputs
 
-- `synth-brief.md` is the richest source. The generator reads the `- **Key:**`
-  bullets: the working name, who plays it, what it should feel like, the reference
-  sounds, the non-goals, the synthesis method, the oscillators or operators, the
-  filters, the modulation, the output stage, the controls, and the polyphony.
+- `synth-brief.md` is the richest source, because the generator reads the
+  `- **Key:**` bullets: the working name, who plays it, what it should feel like,
+  the reference sounds, the non-goals, the synthesis method, the oscillators or
+  operators, the filters, the modulation, the output stage, the controls, and the
+  polyphony.
 - `patch.json` gives the name, the part count, the voice count, the parameter
   count, the voice and global node types, the tables, and the taps.
 - `panel.json` gives the contexts, the pages, the home page, and the page titles.
 - `plugin.json` gives the product name.
 
 The generator adds questions from the voice and global node types and the panel
-pages. If the brief calls the synth subtractive or wavetable, the questions use
-the brief's words, not an FM template. If the brief is missing, the generic core
-still works.
+pages, and if the brief calls the synth subtractive or wavetable, the questions use
+the brief's words rather than an FM template. If the brief is missing, the generic
+core still works.
 
 ## The generic ladder
 
-The generated form has nine sections. The order is a guide, not a script.
+The generated form has nine sections, and the order is a guide rather than a script.
 
 ### First sound
 
@@ -147,7 +147,7 @@ the name about?" "What do you want them to hear first?"
 ## Synthesis-family branches
 
 Use these when the generated form is thin, or when the brief names a family the
-generator did not turn into a question. Ask only the branch the synth actually
+generator did not turn into a question, and ask only the branch the synth actually
 uses.
 
 **FM and phase modulation.** Why PM rather than FM? How many operators, and why?
@@ -183,7 +183,7 @@ What is shared, and what is per-part?
 ## Lineage and DSP specifics
 
 The author may know more about the lineage and the algorithms than the manual
-shows. Ask for it directly, but always through a concrete comparison.
+shows, so ask for it directly, always through a concrete comparison.
 
 - Which instruments, chips, or algorithms, and what did each contribute?
 - Which synthesis method, and why this one rather than the obvious alternative?
@@ -196,27 +196,27 @@ shows. Ask for it directly, but always through a concrete comparison.
 
 ## Recording
 
-- Write the answers into `design-interview.md` under the question. Keep the
-  author's words. Do not paraphrase into polished prose yet.
+- Write the answers into `design-interview.md` under the question, keep the
+  author's words, and don't paraphrase into polished prose yet.
 - Mark anything you could not verify with a note, not a guess.
-- The notes are private by default. `umetate publish` does not copy them. Do not
-  move them into `docs/`.
+- The notes are private by default, so `umetate publish` does not copy them and you
+  don't move them into `docs/`.
 - If the author gives you a sentence you want to keep, keep it verbatim and mark
   it as a quote.
 
 ## Writing the design note
 
-The design note is not the transcript. It is the author's voice, edited.
+The design note is the author's voice, edited from the transcript.
 
 - Open with the first sound or the constraint, not the feature list.
-- Use the lineage to explain a choice, not to show off. "I took the feedback order
-  from the Yamaha chips" is better than a history of FM. Replace the model with
-  the author's actual reference, whatever family it is.
-- Keep three to seven concrete decisions, each with the tradeoff. The hand
+- Use the lineage to explain a choice rather than to show off, because "I took the
+  feedback order from the Yamaha chips" is better than a history of FM. Replace the
+  model with the author's actual reference, whatever family it is.
+- Keep three to seven concrete decisions, each with the tradeoff, since the hand
   rewrite's seven-item list is the shape.
 - Include one failure, one limit, and one patch recipe.
 - Keep the author's asides. Cut the interviewer's questions.
-- Use the manual calibration in `voice.md`. Do not flatten the note into a spec
+- Use the manual calibration in `voice.md`, and don't flatten the note into a spec
   sheet.
 - Do not invent a fact. If the interview did not answer it, leave it out.
 
@@ -231,13 +231,13 @@ Stop when the answers can support:
 - one patch recipe,
 - one sentence about who the synth is for.
 
-That is enough for a manual preface. The interview can be longer than the public
-note. The public note is the edit.
+That is enough for a manual preface, because the interview can be longer than the
+public note and the public note is the edit.
 
 ## Worked example: Type P.fm1
 
 This is what a generated form looks like for one project, and how the answers
-became prose. It is an example, not the template.
+became prose. It is an example rather than the template.
 
 The generator read the Type P.fm1 brief and patch. It produced questions like:
 
@@ -259,6 +259,6 @@ The generator read the Type P.fm1 brief and patch. It produced questions like:
   paragraph: "I'm more of a sound design gal, I fully sequence my music and I
   prefer trackers to little boxes ..."
 
-The concrete names, models, and numbers stay. The interviewer's questions do not.
-The author's asides stay. The order is the order of the argument, not the order of
-the form.
+The concrete names, models, and numbers stay, and the interviewer's questions do
+not. The author's asides stay, and the order is the order of the argument rather
+than the order of the form.

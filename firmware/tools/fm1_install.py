@@ -3,16 +3,16 @@
 # Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments
 """Install a Felucca package (.fwsc) on an FM-1 (or an M-Vave SMK-37 Pro) over USB-MIDI.
 
-The same update as the web installer (web/fm1ota.js): step 1, the
-running firmware reads parts of the package and starts the update loader;
-step 2, the loader reads the whole package and writes it. In both steps the
-device asks (SysEx read requests on the logical image) and we answer. Then
-the FM-1 restarts and the installed identity is checked.
+This is the same update as the web installer (web/fm1ota.js). In step 1 the
+running firmware reads parts of the package and starts the update loader, then
+step 2 has the loader read the whole package and write it, and in both steps the
+device asks with SysEx read requests on the logical image whilst we answer. The
+FM-1 restarts afterwards, and the installed identity is checked.
 
   fm1_install.py PACKAGE.fwsc [--port NAME] [--yes] [--force]
   fm1_install.py --info [--port NAME]
 
-If the FM-1 is still in update mode (an earlier install was cut off), the
+If the FM-1 is still in update mode because an earlier install was cut off, the
 install finishes the write. Needs mido with python-rtmidi.
 
 Exit codes: 0 done, 1 cancelled or other error, 2 bad arguments or package,
@@ -21,8 +21,9 @@ loader / no restart), 6 wrong model, another identity after the install, or the
 FM-1 is in the update mode of another firmware (only SLOOP's own loader,
 ota-FM-1_9XX or ota-SMK-37 Pro_9XX, is resumed).
 
-Packages: 20 interleave blocks (FM-1, SLOOP, SMK-37 Pro up to v011) or more (the stock SMK-37 Pro
-v016 has 36: the extra markers are 0x7D); the count is detected and checked with the files' CRCs.
+Packages carry 20 interleave blocks for the FM-1, SLOOP and the SMK-37 Pro up to
+v011, or more for the stock SMK-37 Pro v016, which has 36 because the extra
+markers are 0x7D. The count is detected and checked with the files' CRCs.
 """
 import argparse
 import queue
@@ -153,8 +154,9 @@ def product_of(raw):
 
 
 def block_count(raw):
-    """interleave blocks: the identity blocks, then more while the marker is the unused 0x7D (SMK-37 Pro v016: 36).
-    A 20-block package can have 0x7D there by chance: load_package checks the CRCs and falls back."""
+    """interleave blocks: the identity blocks, then more while the marker is the unused 0x7D, which the SMK-37 Pro
+    v016 uses for 36. A 20-block package can have 0x7D there by chance, so load_package checks the CRCs and falls
+    back."""
     n = identity_blocks(raw)
     while n < MAX_BLOCKS and (n + 1) * BLK <= len(raw) and raw[n * BLK + KEEP] == 0x7D:
         n += 1
@@ -484,9 +486,9 @@ def package_damage(image):
         if off + size > len(image):
             return f"{name}: cut short"
         typ = int.from_bytes(e[0:2], "little")
-        # flash.bin (0) and ota.bin (100), what the device installs, carry the CRC of their bytes as
-        # served. The stock packer's other entries (USR 50, isd_config.ini 52, script.ver, blimit.bin)
-        # store a CRC of something else (decrypted contents): checked for their bounds only.
+        # flash.bin (0) and ota.bin (100) are what the device installs, and they carry the CRC of their bytes as
+        # served, whilst the stock packer's other entries (USR 50, isd_config.ini 52, script.ver, blimit.bin)
+        # store a CRC of something else (decrypted contents), so those are checked for their bounds only.
         if typ in (0, 100) and _crc16(image[off:off + size]) != dcrc:
             return f"{name}: CRC"
     return None

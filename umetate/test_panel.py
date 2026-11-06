@@ -2,10 +2,11 @@
 # Copyright (C) 2026 P1Onken (umetate)
 """Host tests for the panel generator (docs/roadmap.md §12.6 verification).
 
-- the demo panel generates deterministically (the checked-in firmware/src/panel.h is
-  exactly what panel.json produces);
-- the generated header compiles against the UI runtime types;
-- an unknown source/action is rejected with a GenError.
+The demo panel generates deterministically, so the checked-in
+`firmware/src/panel.h` is exactly what `panel.json` produces, and the generated
+header compiles against the UI runtime types. An unknown source or action is
+rejected with a GenError.
+
 Run: python3 -m umetate.test_panel
 """
 

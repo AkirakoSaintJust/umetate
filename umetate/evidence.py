@@ -19,7 +19,7 @@ from ._schema import as_evidence
 
 
 class Status(StrEnum):
-    """A claim's status; a lower layer never proves a higher one."""
+    """The status of a claimed feature. A lower layer never proves a higher one."""
 
     PASS = "pass"
     FAIL = "fail"

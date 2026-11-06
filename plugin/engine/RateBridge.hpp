@@ -10,8 +10,8 @@ namespace p1 {
 class Engine;
 
 /* Output-only 32-tap Kaiser-windowed sinc polyphase resampler. The core runs at
- * 44.1 kHz and the bridge converts to the host rate. At 44.1 kHz the processor
- * bypasses it, so the core output stays bit-exact there. */
+ * 44.1 kHz, whilst the bridge converts to the host rate, and at 44.1 kHz the
+ * processor bypasses it so the core output stays bit-exact there. */
 class RateBridge {
 public:
     void prepare(double hostRate, int maxBlock);
@@ -20,8 +20,8 @@ public:
     /* The engine path: render core chunks, then pull host frames. */
     void process(Engine& engine, float* left, float* right, int frames);
 
-    /* Test and offline path: push interleaved int32 core frames, pull host
-     * frames. The ring keeps the history the 32-tap kernel needs. */
+    /* Test and offline path that pushes interleaved int32 core frames and pulls
+     * host frames. The ring keeps the history the 32-tap kernel needs. */
     void pushCore(const int32_t* interleaved, int frames);
     void pull(float* left, float* right, int frames);
 

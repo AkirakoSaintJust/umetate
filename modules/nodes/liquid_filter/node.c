@@ -1,13 +1,13 @@
 /* A 4-pole resonant lowpass ladder in the spirit of the Ripples / Liquid Filter.
-   Four one-pole OTA stages in series, the 4th fed back negatively (4x, so the loop
-   gain reaches unity at the cutoff and it self-oscillates). The soft clip sits on
-   the resonance feedback path (the Ripples OTA, and the SH-101's feedback diodes),
-   not on the input, so the input stays linear and the self-oscillation amplitude
-   does not change with the input level. The states are not clamped: the feedback
-   clip already bounds the loop, so the cells settle within a few times the input
-   level and int32 holds them comfortably. `f` is the per-stage coefficient (Q16);
-   `fc` is block-derived (envelope + key / velocity follow). Locals are scoped so
-   several instances can coexist. */
+   Four one-pole OTA stages run in series, with the 4th fed back negatively at 4x.
+   The loop gain reaches unity at the cutoff, so it self-oscillates. The soft clip
+   sits on the resonance feedback path (the Ripples OTA, and the SH-101's feedback
+   diodes) rather than on the input, so the input stays linear and the
+   self-oscillation amplitude does not change with the input level. The states are
+   not clamped. The feedback clip already bounds the loop, so the cells settle
+   within a few times the input level and int32 holds them comfortably. `f` is the
+   per-stage coefficient (Q16). `fc` is block-derived from the envelope plus key /
+   velocity follow. Locals are scoped so several instances can coexist. */
 int32_t ${out.out} = 0;
 int32_t ${out.lp2} = 0;
 int32_t ${out.band} = 0;

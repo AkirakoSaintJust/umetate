@@ -3,21 +3,22 @@
 Status: milestones 0 to 7 are done, as of 2026-11-04. The JUCE VST3, CLAP and
 standalone builds compile on Linux and Windows, render audio, accept MIDI and save
 state. The editor, the 64 multi and 128 part banks, and the 32-tap output rate
-bridge are in. The VST3 and CLAP artefacts pass their validators on both platforms.
-REAPER renders the Windows VST3 and CLAP builds byte-identically, and Renoise loads
-the Windows VST3 and renders a one-note project, so the Windows DAW matrix is done.
-The Docker image adds Ardour and Carla, and the `linux_daws` CTest covers the Linux
-DAW matrix. Milestone 7 adds the generator, the three `umetate plugin-*` commands,
-and the project template. The macOS build and the AU target remain open.
+bridge are in, and the VST3 and CLAP artefacts pass their validators on both
+platforms. REAPER renders the Windows VST3 and CLAP builds byte-identically whilst
+Renoise loads the Windows VST3 and renders a one-note project, so the Windows DAW
+matrix is done, whilst the Docker image adds Ardour and Carla, and the `linux_daws`
+CTest covers the Linux DAW matrix. Milestone 7 adds the generator, the three
+`umetate plugin-*` commands, and the project template. The macOS build and the AU
+target remain open.
 
-This is the plan for the optional JUCE build path in umetate: a reusable plugin
-host plus a generated `type-p-fm1` project. The visual language is in
+This is the plan for the optional JUCE build path in umetate, which is a reusable
+plugin host plus a generated `type-p-fm1` project, and the visual language is in
 `design/README.md`, the JUCE mapping is in `design/juce.md`, and the firmware
 parameter manifest is `firmware/gen/params.json`.
 
 ## 1. Scope
 
-Build a real DAW plugin from the same generated DSP that runs on the FM-1. The
+Build a real DAW plugin from the same generated DSP that runs on the FM-1, so the
 plugin is that engine behind a desktop editor.
 
 In scope:
@@ -60,7 +61,8 @@ Out of scope for the first release:
 
 ## 3. Parameter count
 
-The generated manifest is the authority. It currently contains **313** parameters:
+The generated manifest is the authority, and it currently contains **313**
+parameters:
 
 | Group | Count | Notes |
 | --- | --- | --- |
@@ -69,9 +71,9 @@ The generated manifest is the authority. It currently contains **313** parameter
 | per-part routing | 5 × 2 = 10 | Channel, keyzone low, keyzone high, level, delay. |
 | total | 313 | `SYNTH_ROUTING_BASE` is 303. |
 
-The earlier "194 parameters" figure was a pre-manifest estimate and is retired.
-The official number is whatever `params.json` says. The plugin generator reads it
-at build time.
+The earlier "194 parameters" figure was a pre-manifest estimate and is retired, so
+the official number is whatever `params.json` says, which the plugin generator
+reads at build time.
 
 Two details matter:
 
@@ -113,10 +115,10 @@ Layers:
 
 ## 5. Phase 0: instance-safe engine state
 
-This is the blocking prerequisite. The generated DSP declares 332 file-scope
-statics, including per-voice arrays, global state and the parameter slot table.
-The device has one engine, so this was correct for firmware. A DAW can load two
-instances, so it is not correct for a plugin.
+This is the blocking prerequisite, because the generated DSP declares 332
+file-scope statics, including per-voice arrays, global state and the parameter
+slot table. The device has one engine, so this was correct for firmware, but a DAW
+can load two instances, so it is not correct for a plugin.
 
 Required change:
 
@@ -143,17 +145,17 @@ Exit evidence:
 - State size and instructions per sample stay within the current budget.
 - The web lab still builds and matches the host.
 
-This is a generator change, not a plugin-only change. It gets its own feature
-contract and its own commit.
+This is a generator change that reaches beyond the plugin, so it gets its own
+feature contract and its own commit.
 
-Milestone 0 status: **done**. The generated engine exposes `type_p_fm1_state`
-and the `_s` API. The legacy API wraps one static instance, so the firmware, the
-web lab and the existing host tests keep their calls. The old and new host
-renders of the type-p-fm1 script are byte-identical, two states stay isolated,
-the full generator suite passes, the web parity gate is exact, and the target
-package builds with the Docker/JieLi toolchain. The host A/B is slightly faster,
-120.7 us before and 115.1 us after per `render(256)`. Physical device acceptance
-and timing remain blocked.
+Milestone 0 status: **done**, because the generated engine exposes
+`type_p_fm1_state` and the `_s` API. The legacy API wraps one static instance, so
+the firmware, the web lab and the existing host tests keep their calls. The old
+and new host renders of the type-p-fm1 script are byte-identical, two states stay
+isolated, the full generator suite passes, the web parity gate is exact, and the
+target package builds with the Docker/JieLi toolchain, whilst the host A/B is
+slightly faster. It runs at 120.7 us before and 115.1 us after per `render(256)`.
+Physical device acceptance and timing remain blocked.
 
 ## 6. Engine bridge
 
@@ -262,9 +264,9 @@ Milestone 3 implements:
 - Text entry, keyboard focus and the cut-polygon tabs follow the design language.
 - No filler copy.
 
-The patch and part banks are in. The editor stores patch and part names as UI
-state in the plugin state blob. The rename dialog enforces the device record
-limit of 15 characters.
+The patch and part banks are in, and the editor stores patch and part names as UI
+state in the plugin state blob. The rename dialog enforces the device record limit
+of 15 characters.
 
 ## 10. Presets and state
 
@@ -296,8 +298,8 @@ current multi slot, part source slots
 
 ## 11. Build and toolchain
 
-The plugin build is optional and host-native. `deep-check --all` does not build
-JUCE, so a plugin change needs the explicit plugin commands below. The Linux
+The plugin build is optional and host-native, and `deep-check --all` does not
+build JUCE, so a plugin change needs the explicit plugin commands below. The Linux
 container is the pinned host for the Linux plugin build and its CTest suite.
 
 Repository shape:
@@ -315,10 +317,10 @@ plugin/
   ui/                    tokens, LookAndFeel, components
 ```
 
-A generated project is written to `build/plugin/<cname>/`, not into this tree.
-It holds the synth's rendered C under `gen/`, a `P1Project.cmake` with the
-identity, a thin `CMakeLists.txt`, and a README. `plugin/` keeps the checked-in
-Type P.fm1 defaults for a plain `cmake -S plugin` build.
+A generated project is written to `build/plugin/<cname>/` rather than into this
+tree, and it holds the synth's rendered C under `gen/`, a `P1Project.cmake` with
+the identity, a thin `CMakeLists.txt`, and a README. `plugin/` keeps the
+checked-in Type P.fm1 defaults for a plain `cmake -S plugin` build.
 
 Toolchain:
 
@@ -345,11 +347,11 @@ CLI:
 - `umetate plugin-build --synth examples/type-p-fm1`
 - `umetate plugin-check --synth examples/type-p-fm1`
 
-`plugin-generate` renders `build/plugin/<cname>/` and `--check` compares that
-tree without writing. `plugin-build` renders the same files, configures
-`<out>/build`, builds, and runs ctest. `plugin-check` verifies the generated
-files and runs ctest in the existing build tree. The plugin identity comes from
-`plugin.json` in the synth project. `--product-name`, `--bundle-id`,
+`plugin-generate` renders `build/plugin/<cname>/` and `--check` compares that tree
+without writing, whilst `plugin-build` renders the same files, configures
+`<out>/build`, builds, and runs ctest. `plugin-check` verifies the generated files
+and runs ctest in the existing build tree. The plugin identity comes from
+`plugin.json` in the synth project, and `--product-name`, `--bundle-id`,
 `--manufacturer-code`, and `--plugin-code` override it for a one-off build.
 
 The generated project includes its own `P1Project.cmake` before it adds `plugin/`
@@ -357,13 +359,13 @@ as a subdirectory, so `P1_SYNTH_GEN`, `P1_SYNTH_CNAME`, `P1_PRODUCT_NAME`,
 `P1_PLUGIN_TARGET`, `P1_BUNDLE_ID`, `P1_MANUFACTURER_CODE`, `P1_PLUGIN_CODE`, and
 `P1_STATE_TREE_ID` come from the synth, not from the checked-in defaults. The
 engine and the editor talk to `P1Synth.h` and `P1Product.h`, which are generated
-at configure time from `plugin/tools/*.in`. The rendered C is stored in the project's
-`gen/`. The fixed `firmware/gen/math_tables.h` stays in the source tree and is
-included after the project's `gen/`.
+at configure time from `plugin/tools/*.in`. The rendered C is stored in the
+project's `gen/`, and the fixed `firmware/gen/math_tables.h` stays in the source
+tree and is included after the project's `gen/`.
 
 ## 12. Verification ladder
 
-Plugin work adds a new evidence layer. It does not replace the firmware layers.
+Plugin work adds a new evidence layer, so the firmware layers keep their evidence.
 
 1. **Parameter map coverage.** Every id in `params.json` maps to exactly one page
    control or to a documented advanced group. No duplicate and no orphan. This is
@@ -408,108 +410,110 @@ Plugin work adds a new evidence layer. It does not replace the firmware layers.
 
 Milestone 0 is firmware work and can start before any JUCE dependency is added.
 
-Milestone 1 is done. `plugin/` builds a JUCE-free `p1_engine` library and an
-`engine_parity` test. The engine matches the firmware render bit-exactly, two
+Milestone 1 is done, because `plugin/` builds a JUCE-free `p1_engine` library and
+an `engine_parity` test. The engine matches the firmware render bit-exactly, two
 instances stay isolated, a MIDI script matches the `synth_midi_poll` reference,
 and sustain state is per bridge. The full `deep-check --all` remains green.
 
-Milestone 2 is done. `plugin/juce` builds a VST3 and a standalone app against
-JUCE 8.0.9. The processor exposes the 313 manifest parameters through the APVTS,
-applies automation at the 32-sample control block, feeds MIDI through
+Milestone 2 is done, because `plugin/juce` builds a VST3 and a standalone app
+against JUCE 8.0.9. The processor exposes the 313 manifest parameters through the
+APVTS, applies automation at the 32-sample control block, feeds MIDI through
 `synth_midi_feed`, renders the 44.1 kHz core bit-exactly, and saves and restores
-the parameter state. The generic JUCE editor was the Milestone 2 placeholder.
-The 48 kHz path used the temporary linear RateBridge at that point, so it
-rendered audio but was not release quality. The `plugin_smoke` CTest checks the parameter count,
-unique ids, contiguous engine ids, bit-exact 44.1 kHz output, an automation
+the parameter state. The generic JUCE editor was the Milestone 2 placeholder. The
+48 kHz path used the temporary linear RateBridge at that point, so it rendered
+audio but was not release quality. The `plugin_smoke` CTest checks the parameter
+count, unique ids, contiguous engine ids, bit-exact 44.1 kHz output, an automation
 write at the 32-sample control block, a MIDI offset at its control block and a
 state round trip. `engine_parity` remains green.
 
-Milestone 3 is done. The generic JUCE panel is replaced by the designed editor.
-`UiTokens.h` is generated from `design/tokens.json`, the two OFL fonts are
+Milestone 3 is done, and the generic JUCE panel is replaced by the designed
+editor. `UiTokens.h` is generated from `design/tokens.json`, the two OFL fonts are
 bundled, and the three pages match the v1.1 design. The editor scales the whole
-1240 by 985 canvas uniformly. The header algorithm block opens the picker and
-cycles on the wheel. The patch, operator and part visualisers read the lock-free
-scope rings. The key and velocity follow cards have real on switches and wipe
-buttons. The operator envelopes use the two-row rate and level layout. The
-algorithm picker and rename dialogs are in. `plugin_editor_snapshot` renders the
-pages and dialogs under Xvfb and the PNGs are the visual evidence. The plugin
-state now stores patch and part names plus the active part and page.
+1240 by 985 canvas uniformly. The header algorithm block opens the picker
+and cycles on the wheel. The patch, operator and part visualisers read the
+lock-free scope rings, the key and velocity follow cards have real on switches and
+wipe buttons, and the operator envelopes use the two-row rate and level layout.
+The algorithm picker and rename dialogs are in, and `plugin_editor_snapshot`
+renders the pages and dialogs under Xvfb, so the PNGs are the visual evidence. The
+plugin state now stores patch and part names plus the active part and page.
 
-Milestone 4 is done. The plugin has 64 multi slots and 128 part slots. The banks
-reuse the firmware `presets.c` pack and unpack functions, so a part record is
-557 bytes and a multi record is 63 bytes. Empty slots are `0xFF` and corrupt
-records are skipped. The plugin state version is 2 and restores both banks, the
-current multi and the part source slots. The patch button opens the 64-slot
-browser. The part menu opens the 128-slot browser in save or load mode. A save
-into a used slot opens a confirmation dialog before overwriting. A multi save
-uses the saved part source slots and puts a part with no source into a free slot
-first. `preset_smoke` proves the device record round trip. `plugin_smoke` proves
-the bank state round trip. `plugin_editor_snapshot` saves and loads a part and a
-multi through the editor.
+Milestone 4 is done, and the plugin has 64 multi slots and 128 part slots. The
+banks reuse the firmware `presets.c` pack and unpack functions, so a part record
+is 557 bytes and a multi record is 63 bytes. Empty slots are `0xFF` and corrupt
+records are skipped, whilst the plugin state version is 2 and restores both
+banks, the current multi and the part source slots. The patch button opens the
+64-slot browser, the part menu opens the 128-slot browser in save or load mode,
+and a save into a used slot opens a confirmation dialog before overwriting. A
+multi save uses the saved part source slots and puts a part with no source into a
+free slot first. `preset_smoke` proves the device record round trip, and
+`plugin_smoke` proves the bank state round trip. `plugin_editor_snapshot` saves and
+loads a part and a multi through the editor.
 
-Milestone 5 is done. The temporary linear rate bridge is replaced by the 32-tap
-polyphase resampler. The 44.1 kHz path is still bypassed and bit-exact, with zero
-reported latency. At 48, 96 and 192 kHz the bridge reports 17, 34 and 67 host
-samples. `rate_bridge_test` measures the passband, images, THD, latency and block
-sizes from 32 to 1024. The 20 kHz image rejection is -110 dB at 48 kHz and
--25.4 dB at 96 and 192 kHz. That is the limit of the 32-tap kernel. A longer
-kernel is the next quality step if a stricter budget is set.
+Milestone 5 is done, because the temporary linear rate bridge is replaced by the
+32-tap polyphase resampler. The 44.1 kHz path is still bypassed and bit-exact,
+with zero reported latency. At 48, 96 and 192 kHz the bridge reports 17, 34
+and 67 host samples. `rate_bridge_test` measures the passband, images, THD,
+latency and block sizes from 32 to 1024, and the 20 kHz image rejection is -110 dB
+at 48 kHz and -25.4 dB at 96 and 192 kHz, which is the limit of the 32-tap
+kernel. A longer kernel is the next quality step if a stricter budget is set.
 
-Milestone 6 is done for the Linux and Windows builds. The JUCE project creates a
-CLAP target next to VST3 and standalone. `P1_BUILD_CLAP` defaults to ON inside
-the `P1_BUILD_JUCE` path and fetches `clap-juce-extensions` at the pinned MIT
-commit. The CLAP plugin ID is `com.p1onken.typepfm1`. `clap-validator` reports 33
-passed, 0 failed, 1 warning and 10 skipped on Linux. On Windows it reports 32
-passed, 0 failed, 1 warning and 11 skipped. The warning is the wrapper returning
-success for random state bytes even though the processor rejects them. It does
-not crash and the wrapper gives the plugin no way to report the rejection.
-`pluginval` passes strictness level 5 both with the editor open and with GUI
-tests skipped on both platforms. The VST3 checks cover 44.1, 48, 96 and 192 kHz
-and blocks from 32 to 1024.
+Milestone 6 is done for the Linux and Windows builds, where the JUCE project
+creates a CLAP target next to VST3 and standalone. `P1_BUILD_CLAP` defaults to ON
+inside the `P1_BUILD_JUCE` path and fetches `clap-juce-extensions` at the pinned
+MIT commit, and the CLAP plugin ID is `com.p1onken.typepfm1`. `clap-validator`
+reports 33 passed, 0 failed, 1 warning and 10 skipped on Linux, and 32 passed, 0
+failed, 1 warning and 11 skipped on Windows. The warning is the wrapper returning
+success for random state bytes even though the processor rejects them, and the
+plugin does not crash, though the wrapper gives it no way to report the rejection.
+`pluginval` passes strictness level 5 both with the editor open and with GUI tests
+skipped on both platforms, and the VST3 checks cover 44.1, 48, 96 and 192 kHz and
+blocks from 32 to 1024.
 
-Milestone 6b is done. `plugin_stability` drives every manifest parameter to its
-minimum and maximum, holds 256 notes at once, runs a deterministic 9600-event
-MIDI storm, sends a zero-frame block and a mono block, walks the sample rate from
-44.1 to 192 kHz and back, fuzzes the state with 200 truncated and bit-flipped
-blobs, and checks the voice tail decays. Every sample stays finite and the
-reported latency matches each rate. The test passes in 0.14 seconds in the Linux
-container. It is a host-side test, not a device or DAW substitute.
+Milestone 6b is done, because `plugin_stability` drives every manifest parameter
+to its minimum and maximum, holds 256 notes at once, runs a deterministic
+9600-event MIDI storm, sends a zero-frame block and a mono block, walks the sample
+rate from 44.1 to 192 kHz and back, fuzzes the state with 200 truncated and
+bit-flipped blobs, and checks the voice tail decays. Every sample stays finite and
+the reported latency matches each rate, and the test passes in 0.14 seconds in the
+Linux container. It is a host-side test, so it does not stand in for a device or a
+DAW.
 
-REAPER 7.84 loads the Windows VST3 and CLAP builds. A one-note project renders
-88200 frames at 44100 Hz from each format, and the two WAV files are byte
+REAPER 7.84 loads the Windows VST3 and CLAP builds, and a one-note project renders
+88200 frames at 44100 Hz from each format, so the two WAV files are byte
 identical. The VST3 bundle was installed in
-`C:\Program Files\Common Files\VST3`, where Renoise 3.5.4 scans. Renoise loaded
-`P1Onken: Type P.fm1` and rendered a one-note project to 39200 frames at 44100
-Hz, 24-bit stereo, peak 0.225197 and RMS 0.105559. The Windows DAW matrix now has
-REAPER and Renoise.
+`C:\Program Files\Common Files\VST3`, where Renoise 3.5.4 scans. Renoise
+loaded `P1Onken: Type P.fm1` and rendered a one-note project to 39200 frames at
+44100 Hz, 24-bit stereo, peak 0.225197 and RMS 0.105559. The Windows DAW matrix
+now has REAPER and Renoise.
 
-The Docker image carries Ardour 8.12 and Carla 2.6.0-alpha1. The `linux_daws`
+The Docker image carries Ardour 8.12 and Carla 2.6.0-alpha1, and the `linux_daws`
 CTest copies the VST3 and CLAP to an isolated `$HOME`, scans them with Ardour's
-VST3 scanner, builds a one-note Ardour session and exports it headlessly. It
-then starts a dummy JACK server, runs Carla headless, adds each plugin through
-Carla's OSC API, sends a MIDI note and records the plugin output with `jack_rec`.
-The Ardour render is 88200 frames at 44100 Hz, 24-bit stereo, peak 0.609467 and
-RMS 0.196450. The Carla VST3 and CLAP renders are 132300 frames at 44100 Hz,
-24-bit stereo, peak 0.609467. The Linux DAW matrix is now automated. The macOS
+VST3 scanner, builds a one-note Ardour session and exports it headlessly, then
+starts a dummy JACK server, runs Carla headless, adds each plugin through Carla's
+OSC API, sends a MIDI note and records the plugin output with `jack_rec`. The
+Ardour render is 88200 frames at 44100 Hz, 24-bit stereo, peak 0.609467 and RMS
+0.196450. The Carla VST3 and CLAP renders are 132300 frames at 44100 Hz,
+24-bit stereo, peak 0.609467. The Linux DAW matrix is now automated, and the macOS
 build and AU remain open.
 
-Milestone 7 is done. `umetate/_synthgen.py` is the single generation step behind
-`umetate build --synth` and `umetate plugin-generate`, so the firmware and the
-plugin render the same C from one `patch.json`, `panel.json`, and `app.c`. The
-fixed `type_p_fm1_*` calls in the bridge are gone. `plugin/tools/P1Synth.h.in`
-maps `P1_STATE`, `P1_RESET`, `P1_SET_PARAM`, and the rest to the synth's
-generated names, and `P1Product.h.in` carries the product name and the APVTS
-state tree id. `plugin-build` renders, configures, builds, and runs ctest.
-`plugin-check` verifies the generated tree and runs ctest in the existing build
-tree. The Python tests cover the generate/check round trip and the identity
+Milestone 7 is done, because `umetate/_synthgen.py` is the single generation step
+behind `umetate build --synth` and `umetate plugin-generate`, so the firmware and
+the plugin render the same C from one `patch.json`, `panel.json`, and `app.c`. The
+fixed `type_p_fm1_*` calls in the bridge are gone.
+`plugin/tools/P1Synth.h.in` maps `P1_STATE`, `P1_RESET`, `P1_SET_PARAM`, and the
+rest to the synth's generated names, and `P1Product.h.in` carries the product name
+and the APVTS state tree id. `plugin-build` renders, configures, builds, and runs
+ctest. `plugin-check` verifies the generated tree and runs ctest in the existing
+build tree. The Python tests cover the generate/check round trip and the identity
 validation. `publish` copies `plugin.json` into `src/` and stages only the real
 artefacts, not the Linux DAW test's isolated copies. It also writes `RELEASES.md`,
 `SHA256SUMS`, and `release.json`, which cover the firmware and the plugin
 archives. The plain `cmake -S plugin` build keeps the checked-in Type P.fm1
 defaults, so the existing validator and DAW evidence does not depend on the
-generated project. The generated project built in `build/plugin/type_p_fm1/build`
-and passed the same eight CTest cases as the plain tree. `plugin-build` defaults
-to four jobs because an unbounded compile can exhaust a small Docker VM.
+generated project. The generated project built in
+`build/plugin/type_p_fm1/build` and passed the same eight CTest cases as the plain
+tree. `plugin-build` defaults to four jobs because an unbounded compile can
+exhaust a small Docker VM.
 
 Plain checkout, bridge only:
 
@@ -527,11 +531,11 @@ umetate plugin-build --synth examples/type-p-fm1
 ```
 
 That writes `build/plugin/type_p_fm1/` and builds in
-`build/plugin/type_p_fm1/build`. `umetate plugin-check` re-verifies the generated
-files and reruns ctest. Pass `--deps-dir <juce build>/_deps` to `plugin-build` to
-reuse an existing JUCE and CLAP checkout instead of fetching them again. `--jobs`
-defaults to 4. Raise it on a large host, and lower it if the Docker VM runs out
-of memory.
+`build/plugin/type_p_fm1/build`, and `umetate plugin-check` re-verifies the
+generated files and reruns ctest. Pass `--deps-dir <juce build>/_deps` to
+`plugin-build` to reuse an existing JUCE and CLAP checkout instead of fetching them
+again. `--jobs` defaults to 4, so raise it on a large host and lower it if the
+Docker VM runs out of memory.
 
 JUCE VST3, CLAP and standalone build:
 
@@ -551,18 +555,18 @@ cmake --build build\plugin-juce --parallel 8
 ctest --test-dir build\plugin-juce --output-on-failure
 ```
 
-`P1_BUILD_CLAP` defaults to ON when `P1_BUILD_JUCE` is ON. The CLAP wrapper is
+`P1_BUILD_CLAP` defaults to ON when `P1_BUILD_JUCE` is ON, and the CLAP wrapper is
 fetched at the pinned commit. In a plain checkout the artefacts are under
 `build/plugin-juce/juce/type_p_fm1_artefacts/Release/VST3`,
 `build/plugin-juce/juce/type_p_fm1_artefacts/Release/CLAP` and `Standalone`. A
 generated project puts them under `<out>/build/p1plugin/juce/` with the same
 `type_p_fm1_artefacts` leaf. On Windows the same paths use backslashes and the
 VST3 bundle contains `Contents\x86_64-win`. The editor snapshots are under the
-build tree's `juce/snapshots`. The `plugin_editor_snapshot` CTest uses `xvfb-run`
-when it is available. `plugin_editor_snapshot_diff` compares the PNGs with the
-committed Linux golden set.
+build tree's `juce/snapshots`, where the `plugin_editor_snapshot` CTest uses
+`xvfb-run` when it is available. `plugin_editor_snapshot_diff` compares the PNGs
+with the committed Linux golden set.
 
-`plugin_stability` is the edge-case sweep. It sets every manifest parameter to
+`plugin_stability` is the edge-case sweep, and it sets every manifest parameter to
 both ends of its range, fires 256 simultaneous notes, runs a deterministic
 9600-event MIDI storm, sends a zero-frame block and a mono block, walks the
 sample rate from 44.1 to 192 kHz and back, fuzzes the state with truncated and
@@ -573,10 +577,10 @@ DAW:
 ctest --test-dir build/plugin-juce -R plugin_stability --output-on-failure
 ```
 
-`plugin_editor_snapshot_diff` is the visual gate. It compares the ten editor
+`plugin_editor_snapshot_diff` is the visual gate, which compares the ten editor
 PNGs with `plugin/tests/snapshots/linux-x86_64` and fails on a missing, extra,
-or changed image. The gate runs only in the Linux container because font
-rasterisation differs on other hosts. When the UI is supposed to change, review
+or changed image. The gate runs only in the Linux container. Font rasterisation
+differs on other hosts. When the UI is supposed to change, review
 the diff overlays under `build/plugin-juce/juce/snapshot-diff`, then accept the
 change deliberately:
 
@@ -588,7 +592,7 @@ python3 plugin/tools/snapshot_check.py --update \
 
 Commit the new golden PNGs, `manifest.json`, and the code in the same commit.
 
-`umetate tokens` is the token gate. It checks `design/tokens.css` against
+`umetate tokens` is the token gate, which checks `design/tokens.css` against
 `design/tokens.json`, runs `gen_tokens.py` and checks that every colour, font,
 size and space token is in the generated `UiTokens.h`, checks that
 `firmware/gen/theme.h` matches `firmware/theme.json`, and scans the plugin and
@@ -607,7 +611,7 @@ build/plugin-juce/_deps`. The publish tree carries the plugin source, the exact
 dependency pins in `DEPENDENCIES.md`, and the zipped VST3 and CLAP builds under
 `plugins/<platform>/`.
 
-Build outputs stay in the git-ignored `build/` tree. They are not committed to
+Build outputs stay in the git-ignored `build/` tree, so they are not committed to
 this repo and they are not copied to a folder outside it. The publish output is
 the release staging area, and the source archive and binaries should travel in
 the same GitHub release.
@@ -637,12 +641,12 @@ Xinerama, Xcomposite and Xrender headers, freetype and fontconfig, and the
 OpenGL headers. JUCE 8.0.9 is fetched at configure time.
 
 The Docker image already carries those packages plus Ardour, Carla, JACK, Xvfb
-and the Qt runtime. Build it with `docker/build.sh`. `ctest` then runs
+and the Qt runtime, so build it with `docker/build.sh`. `ctest` then runs
 `linux_daws` automatically when `ardour8-export`, `carla-jack-single` and
 `jack_rec` are on `PATH`. The test keeps its own `$HOME` under the build tree
 and does not touch the host plugin folders. The container needs
-`--shm-size=512m` for JACK. `umetate/runner.py` and `docker/docker-compose.yml`
-set it.
+`--shm-size=512m` for JACK, which `umetate/runner.py` and `docker/docker-compose.yml`
+set.
 
 Platform matrix:
 
@@ -653,15 +657,16 @@ Platform matrix:
 | macOS arm64 and x86-64 | not built | not built | not built | no macOS runner |
 
 The Windows VST3 and CLAP builds render equivalent one-note REAPER projects to
-byte-identical WAV files. REAPER 7.84 and Renoise 3.5.4 both load the Windows
+byte-identical WAV files, and REAPER 7.84 and Renoise 3.5.4 both load the Windows
 VST3 build and render it. The `linux_daws` CTest renders the Linux VST3 in
-Ardour 8.12 and renders both Linux formats in Carla 2.6.0-alpha1. Both DAW
-matrices are done. The macOS rows are not evidence of support. They need a native
-build, `pluginval` and two DAWs per platform before they move to pass. AU
+Ardour 8.12 and renders both Linux formats in Carla 2.6.0-alpha1, so both DAW
+matrices are done. The macOS rows are not evidence of support, because they need
+a native build, `pluginval` and two DAWs per platform before they move to pass. AU
 remains a later macOS target.
 
-The bridge build is host-native and optional. It is separate from the firmware
-Docker gate. The generated `firmware/gen` must exist before CMake configures.
+The bridge build is host-native and optional, and it stays separate from the
+firmware Docker gate. The generated `firmware/gen` must exist before CMake
+configures.
 
 ## 14. Risks
 
@@ -706,5 +711,5 @@ Read in this order:
 5. `firmware/src/synth_midi.h`, `synth_runtime.h`, `presets.h`
 6. `examples/type-p-fm1/patch.json`
 
-Do not start with the editor. Start with Milestone 0. A plugin that cannot run
+Start with Milestone 0 rather than the editor, because a plugin that cannot run
 two instances is not a plugin yet.

@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 /* Copyright (C) 2026 P1Onken (umetate) */
-/* The preset store implementation (presets.h). Byte-exact little-endian layouts,
- * matching `umetate/_records.py`, the bank save/load calls the platform's storage
- * services (`slot_load/slot_save/settings_load/settings_save`), which the includer
- * provides (platform.c on device, stubs in the host test). */
+/* The preset store implementation (presets.h): byte-exact little-endian layouts that
+ * match `umetate/_records.py`, over a bank save/load that calls the platform's storage
+ * services (`slot_load/slot_save/settings_load/settings_save`). The includer provides
+ * those (platform.c on device, stubs in the host test). */
 #include "presets.h"
 /* no <string.h> here: the device TU gets memset/memcpy/memcmp from the platform's
  * libc.c (included before this file); the standalone host tests include it first. */
@@ -182,7 +182,7 @@ int preset_settings_unpack(const uint8_t *raw, int32_t *base_channel, int32_t *m
 /* A bank is a contiguous byte array of records, chunked across consecutive flash
  * slots at record boundaries, so a record never straddles a slot and a corrupt slot
  * never splits a record. `PRESET_SLOT_MAX` (the byte ceiling, mirroring store.h
- * `SLOT_MAX`) gives the records-per-slot, the device build asserts the two agree
+ * `SLOT_MAX`) gives the records-per-slot, and the device build asserts the two agree
  * below. */
 #ifdef SLOT_MAX
 _Static_assert(PRESET_SLOT_MAX == SLOT_MAX, "PRESET_SLOT_MAX must equal store.h SLOT_MAX");

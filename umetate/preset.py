@@ -4,8 +4,8 @@
 (roadmap §6.11.4).
 
 This is the host-side round trip. A JSON bank holds 128 single parts and 64 multi
-patches, and the `.syx` stream is a sequence of dump frames. The device transfer
-over MIDI is the firmware's job (F7). Here the `.syx` file is the exchange
+patches, and the `.syx` stream is a sequence of dump frames, because the device
+transfer over MIDI is the firmware's job (F7). Here the `.syx` file is the exchange
 format.
 """
 

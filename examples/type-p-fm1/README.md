@@ -1,15 +1,17 @@
 # Worked example: Type P.fm1 (4-op Yamaha-style phase modulation)
 
-Type P.fm1 is a worked example I made to put the framework through the process of designing, implementing and publishing a complete
-two-part, four-operator FM synth. It corresponds to the **type-p-fm1 program** in `docs/roadmap.md`
-§6.11 (the modules it shipped are documented in §6.9). It's broadly inspired on
-the OPZ, OPL and OPM/OPN/OPP (DX21, Mega Drive, etc) lineage with some new features drawn from my experience with those synths.
-It has per-operator feedback, eight algorithms, rate/level envelopes, and 12 waveforms. It also
-has a per-part pitch LFO and a per-note pitch envelope, plus an amplitude LFO for
-each operator. It builds into a full firmware with **two independent timbres**
-(parts, channels 0/1), velocity, presets (128 single parts+64 multi patches plus system settings), SysEx, and MIDI
-CC, sustain, panic, and bend. The app glue `app.c` composes onto the frozen
-`rib.c` framework through `umetate build --synth`.
+Type P.fm1 is a worked example I made to put the framework through the process of
+designing, implementing and publishing a complete two-part, four-operator FM synth,
+and it corresponds to the **type-p-fm1 program** in `docs/roadmap.md` §6.11, with
+the modules it shipped documented in §6.9. It's broadly inspired by the OPZ, OPL and
+OPM/OPN/OPP (DX21, Mega Drive, etc) lineage, with some new features drawn from my
+experience with those synths. It has per-operator feedback, eight algorithms,
+rate/level envelopes, and 12 waveforms, plus a per-part pitch LFO, a per-note pitch
+envelope, and an amplitude LFO for each operator. It builds into a full firmware with
+**two independent timbres** (parts, channels 0/1), velocity, presets (128 single
+parts+64 multi patches plus system settings), SysEx, and MIDI CC, sustain, panic,
+and bend. The app glue `app.c` composes onto the frozen `rib.c` framework through
+`umetate build --synth`.
 
 ## 1. Synth architecture
 
@@ -64,7 +66,7 @@ Building the example exposed two bugs, both fixed, and a bunch of follow-up work
 2. **Five `route4` nodes wasn't the right architecture (fixed).** The plan's five
    `route4` instances would each carry their own `algorithm` param, five knobs
    for one selection. A single `route` node (one `algorithm`, four rows) replaced
-   them. `route4` stays as the general primitive. `route` is the ergonomic 4-op
+   them. `route4` stays as the general primitive, and `route` is the ergonomic 4-op
    wrapper.
 3. **Patch `params:` `default` is ignored (recorded).** `patch.schema.json`
    accepts a `default` on a param binding, but the generator uses the node

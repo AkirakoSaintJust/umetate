@@ -1,9 +1,10 @@
 /* Band-limited triangle: the polyBLEP'd square (width 0.5), leaky-integrated.
-   `integ` is the one extra state; the leak (`integ >> 10` per sample) stops the
-   DC that a pure integrator would accumulate, at the cost of a brief note-on
-   transient (the integrator starts from 0). `slope` = inc/2^16 (block-derived)
-   is the integration gain, so the steady-state output is full-scale at any pitch;
-   the int64 accumulator peaks around 2^30 (no int32 overflow). */
+   `integ` is the one extra state. The leak (`integ >> 10` per sample) stops the DC
+   that a pure integrator would accumulate, at the cost of a brief note-on
+   transient, because the integrator starts from 0, and `slope` = inc/2^16
+   (block-derived) is the integration gain, so the steady-state output is full-scale
+   at any pitch, whilst the int64 accumulator peaks around 2^30, which keeps it clear
+   of int32 overflow. */
 uint32_t ph = ${state.phase} + ${state.inc} + ${in.fm} + ${in.mod};
 ${state.phase} = ph;
 int32_t sq = (ph < 0x80000000u) ? 32767 : -32767;   /* naive square, Q15 */

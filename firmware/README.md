@@ -3,10 +3,10 @@
 RIB is umetate's starter firmware for the M-VAVE FM-1 and SMK-37, derived from
 Dinghy/Felucca and maintained here as source. This file defines the **code-level
 contract**: the app API, numeric conventions, and rules for readable, fast code.
-For a guided introduction, see `docs/tutorial.md`, for project status, see
+For a guided introduction, see `docs/tutorial.md`, and for project status, see
 `docs/roadmap.md`.
 
-Only `hal/` accesses raw registers. App code uses the named helpers documented
+Only `hal/` accesses raw registers, so app code uses the named helpers documented
 below.
 
 ## 1. The app contract
@@ -110,8 +110,8 @@ are **frozen** at `_990`.
 
 ## 5. The ten rules (readable *and* fast)
 
-These rules are adapted from NASA/JPL's "Power of 10" (Holzmann, 2006). Check
-them with `umetate lint --c`, `.clang-tidy`, and code review:
+These rules are adapted from NASA/JPL's "Power of 10" (Holzmann, 2006), and
+`umetate lint --c`, `.clang-tidy`, and code review check them:
 
 1. **Keep control flow simple.** Do not use `goto`, `setjmp`/`longjmp`, or
    recursion.
@@ -194,7 +194,7 @@ per-sample branch. Prefer these approaches in order:
    `render_fn` is a `static const` table indexed once per block, allowed because
    it is per-block, never per-sample.
 
-These techniques apply to individual DSP primitives. At the framework level,
+These techniques apply to individual DSP primitives, whilst at the framework level
 runtime model selection belongs in the graph (see `../docs/roadmap.md` §3.1): use
 a `select` node or separate patches. The generator emits the block-rate switch or
 buckets, so users do not write dispatch code themselves. On the pi32v2, with its
@@ -205,8 +205,8 @@ than on a desktop. An indirect call per sample can thrash the cache and mispredi
 
 Inside `app_audio` and every function it calls, do not access the display or flash,
 log or print, block or wait, allocate memory, or divide by a runtime value without
-a guard. Give each shared value one writer or use a snapshot protocol. `volatile`
-alone does not make an access atomic.
+a guard, and give each shared value one writer or use a snapshot protocol.
+`volatile` alone does not make an access atomic.
 
 ## 7. Tooling
 
@@ -222,6 +222,6 @@ alone does not make an access atomic.
 
 The SMK-37 uses the same chip and adds a 37-key velocity keybed, 16 RGB pads,
 four faders and eight encoders (both banked), pitch and modulation wheels, and
-outer keys. Build with `--board smk37`, the app source stays the same. The board
+outer keys. Build with `--board smk37`, and the app source stays the same. The board
 layer (`board/`) is guarded by `BOARD_SMK37`, and the store uses an owner tag. The
 FM-1 build remains byte-identical.

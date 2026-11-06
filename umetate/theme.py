@@ -3,17 +3,17 @@
 """`umetate theme`: a WCAG 2.1 contrast checker and dark-palette generator.
 
 The screen is a fixed 240 by 240 RGB565 display, so the applicable WCAG subset is
-narrow. There is no text resize and no pointer or audio. The tool checks 1.4.3
-contrast (4.5:1 for normal text and 3:1 for large text or graphics), 1.4.11
+narrow, because there is no text resize and no pointer or audio. The tool checks
+1.4.3 contrast (4.5:1 for normal text and 3:1 for large text or graphics), 1.4.11
 non-text contrast (3:1), and 2.4.7 and 2.4.13 focus visibility (3:1). The
 not-colour-alone rule in 1.4.1 is a design rule rather than a numeric check.
 `check` verifies the numeric pairs: `text` at 4.5:1 or better, and every other
 foreground role at 3:1 or better against `background`.
 
-`check` verifies a palette (a `{name, colors}` object) and prints a report. It
-exits non-zero on any failed pair. `generate` builds a dark palette from an accent
-hue, brightening the accent and status hues until they meet 3:1 against black, and
-prints the palette as JSON + a report.
+A palette is a `{name, colors}` object. `check` verifies one and prints a report,
+and it exits non-zero on any failed pair. `generate` builds a dark palette from an
+accent hue, brightening the accent and status hues until they meet 3:1 against
+black, then prints the palette as JSON and a report.
 """
 
 from __future__ import annotations

@@ -3,7 +3,7 @@
  *
  * Dual-core DSP transport (docs/roadmap.md §12.1, synchronous one-job model).
  * Core 0 produces note events, core 1 renders each block as a job handed over
- * through hal/fm1_cpu1.h's mailbox. The shared state below lives in plain .bss,
+ * through hal/fm1_cpu1.h's mailbox. The shared state below sits in plain .bss,
  * 64-byte aligned, with csync barriers, because the cores share the caches (fm1_cpu1.h),
  * so ordering is the only concern, there is no uncached alias on this chip.
  *

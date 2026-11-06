@@ -5,9 +5,10 @@
 
   tools/build.py [--release X.Y[-suffix]] [--board fm1|smk37] [--model pro|elite|mke]
 
-The default target profile remains the existing -Os build. The opt-in performance profile isolates DSP code in
-its own translation unit and places its executable routines in SRAM; it is a code-generation experiment, not
-hardware acceptance. The JieLi toolchain is Linux x86-64 only; macOS uses Docker linux/amd64.
+The default target profile remains the existing -Os build, whilst the opt-in performance profile isolates DSP code
+in its own translation unit and places its executable routines in SRAM. That profile is a code-generation
+experiment, so it stops short of hardware acceptance. The JieLi toolchain is Linux x86-64 only, which is why macOS
+uses Docker linux/amd64.
 """
 import argparse
 import hashlib
@@ -49,9 +50,10 @@ SCREEN_NAME = "RIB"
 SCREEN_COLOUR = 0xB47F
 PRODUCT = "FM-1_990"
 VERSION = None
-# The DSP translation units (relative to FW). The demo build compiles rib_dsp.c;
-# a `umetate build --synth` composition overrides this with the generated engine
-# (gen/<name>_dsp.c, gen/tables.c) via cmake_target.py's --dsp-tus.
+# The DSP translation units, relative to FW. The demo build compiles rib_dsp.c,
+# whilst a `umetate build --synth` composition overrides this list with the
+# generated engine (gen/<name>_dsp.c, gen/tables.c) via cmake_target.py's
+# --dsp-tus.
 DSP_TUS = ["src/rib_dsp.c"]
 
 
@@ -182,10 +184,10 @@ def build_app():
             raise SystemExit("app.ld: the XIP LENGTH line was not found")
         linker = OUT / "app.ld"
         linker.write_text(text.replace("LENGTH = 0x8DFBC", f"LENGTH = {APP_SLOT:#x}"))
-    # The DSP objects link *before* rib.o: the split-core render (`.text`, XIP) long-
-    # jumps to `.dsp_text` (SRAM at 0x01C08000), a ~4.3 MB flash->SRAM offset right
-    # at the R_PI32V2_LONG_JUMP_23M2 limit. Placing the DSP first keeps that jump
-    # close to the XIP base, so the UI/platform code (rib.o) can grow without
+    # The DSP objects link *before* rib.o, because the split-core render (`.text`, XIP)
+    # long-jumps to `.dsp_text` (SRAM at 0x01C08000), a ~4.3 MB flash->SRAM offset that
+    # sits right at the R_PI32V2_LONG_JUMP_23M2 limit. Placing the DSP first keeps that
+    # jump close to the XIP base, so the UI/platform code (rib.o) can grow without
     # pushing the DSP's jump out of range.
     tc("pi32v2/bin/ld", "--Map", OUT / "rib.link.map", "--gc-sections", "-e", "_start", "-T", linker,
        OUT / "crt0.o", OUT / "fm1_vec.o", OUT / "fm1_isr.o", OUT / "fm1_cpu1.o",

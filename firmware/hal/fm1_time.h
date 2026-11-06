@@ -1,11 +1,11 @@
 /* SPDX-License-Identifier: GPL-3.0-only
  * Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments */
-/* FM-1 time base: TIMER4 free-running from the 24 MHz crystal.
- * TIMER4 is not used by the ROM or the SPL. No interrupts, no ROM calls.
+/* FM-1 time base: TIMER4 free-running from the 24 MHz crystal, on a timer the
+ * ROM and the SPL leave alone. There are no interrupts and no ROM calls.
  *
  * JL_TIMER4 = 0x10800: CON [1:0]=1 run, [3:2]=2 OSC source, [7:4]=0 /1,
  * bit14 = clear pending; CNT +4; PRD +8 (32-bit, set to 0xFFFFFFFF).
- * The counter wraps every 178.9 s; use differences (unsigned arithmetic).
+ * The counter wraps every 178.9 s, so use differences (unsigned arithmetic).
  */
 #pragma once
 #include <stdint.h>

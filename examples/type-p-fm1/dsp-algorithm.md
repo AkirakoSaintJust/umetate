@@ -31,12 +31,12 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
 ## Component: `dx_env` (rate/level envelope)
 
 - **Purpose:** the FM operator envelope, the DX/TX rate/level shape that gives
-  4-op FM its attack/decay/sustain/release character. Replaces the shipped `env`
-  node's linear attack/release.
+  4-op FM its attack/decay/sustain/release character, and it replaces the shipped
+  `env` node's linear attack/release.
 
 - **Algorithm** (fixed-point, exactly):
-  `level` is a Q15 gain (0…32767). Four stages, each an exponential one-pole toward
-  a target (`level += (target − level)·rate / 2¹⁶`, via `fm1_onepole`):
+  `level` is a Q15 gain (0…32767), and four stages each run an exponential one-pole
+  toward a target (`level += (target − level)·rate / 2¹⁶`, via `fm1_onepole`):
 
   | stage | target | advance when | on advance |
   | --- | --- | --- | --- |
@@ -46,9 +46,10 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   | 3 sustain |, | hold | level := l3 |
   | 4 release | `0` | `level < 8` | level := 0 |
 
-  Gate edges drive the stage: gate↑ from release → stage 0 (level := 0). Gate↓ from
-  any non-release stage → stage 4. A `trigger` edge (default `voice_trig[v]`)
-  resets to stage 0 regardless of stage, a note-on retriggers even a stolen voice.
+  Gate edges drive the stage, so gate↑ from release goes to stage 0 (level := 0) and
+  gate↓ from any non-release stage goes to stage 4, whilst a `trigger` edge (default
+  `voice_trig[v]`) resets to stage 0 regardless of stage, because a note-on
+  retriggers even a stolen voice.
 
 - **Inputs / outputs:** `gate` (event, default `voice_gate[v]`), `trigger` (event,
   default `voice_trig[v]`), `rate_scale` (control, default 32768, scales every
@@ -63,9 +64,9 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   | `l2` | level | 0…99 | decay1 target |
   | `l3` | level | 0…99 | sustain level |
 
-  All block rate, modulatable. The rate is a table-looked one-pole coefficient. The
-  level is a table-looked gain (0.75 dB/step: 99 = max, 50 ≈ −37 dB, 0 = silence),
-  so the UI knobs are linear 0–99.
+  All block rate and modulatable, with the rate as a table-looked one-pole
+  coefficient and the level as a table-looked gain (0.75 dB/step: 99 = max, 50 ≈
+  −37 dB, 0 = silence), so the UI knobs are linear 0–99.
 
 - **Coefficients / precompute:** `fm1_rate_coeff[100]` (Q16) and
   `fm1_level_gain[100]` (Q15) are the fixed tables (`gen/math_tables.h`). The
@@ -75,18 +76,18 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
 - **State:** `stage` (uint32, 0…4), `level` (q15).
 
 - **Edge cases:** `level` is clamped to [0, 32767] by the stage thresholds. Release
-  from a held level. A gate↑ during release restarts attack from 0. The +8/−8
+  from a held level, a gate↑ during release restarts attack from 0, and the +8/−8
   hysteresis prevents asymptotic creep.
 
 - **Reference + credit:** stage structure and rate/level semantics from **ymfm**
   (`fm_operator::clock_envelope`, BSD-3-Clause, consulted for the
   attack/decay/sustain/release decomposition and the "attack is the only stage that
-  raises the level" rule). Cross-checked against **Dexed/msfa** (GPL-3.0, consulted
+  raises the level" rule), cross-checked against **Dexed/msfa** (GPL-3.0, consulted
   only). **Deviation:** ymfm/Dexed advance a log-domain *attenuation* by a table
-  increment and convert via a power table. Here the rate is a 0–99 index into a
-  one-pole coefficient table and the level a 0–99 index into a gain table, the
-  same exponential character (rate→time, level→dB), one multiply-add + two table
-  loads. Recorded as *learned, re-implemented*.
+  increment and convert via a power table, whilst here the rate is a 0–99 index into
+  a one-pole coefficient table and the level a 0–99 index into a gain table, with the
+  same exponential character (rate→time, level→dB) for one multiply-add plus two
+  table loads. Recorded as *learned, re-implemented*.
 
 - **Performance note:** control rate (no audio ports), one `fm1_onepole` + one
   compare per tick. Runs in the control prologue, not the sample loop.
@@ -97,7 +98,7 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
 
 - **Purpose:** give each operator one of 12 waveforms, the **OPZ (YM2414)** 8 plus
   the **OPL2/OPL3 (YM3812)** shapes the OPZ doesn't already produce, from one
-  quarter-sine table + a `waveform` select. Waveform 0 is the plain sine, so the
+  quarter-sine table + a `waveform` select, and waveform 0 is the plain sine, so the
   `osc` node stays backward-compatible.
 
 - **Algorithm** (fixed-point, exactly): `phase` is Q32 (full cycle). `s = fm1_sin(phase)`,

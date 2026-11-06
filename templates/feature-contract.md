@@ -1,7 +1,7 @@
 # Feature contract
 
-> One contract per accepted feature. A feature is done when the contract and its
-> evidence are satisfied. Compiling is one check among several.
+> Write one contract per accepted feature. A feature is done when the contract and
+> its evidence are satisfied, and compiling is one check among several.
 
 ## Identity
 

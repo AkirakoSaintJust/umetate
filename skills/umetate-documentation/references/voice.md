@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The voice is the author's, not the model's. This file is the profile. The evidence
+The voice is the author's, not the model's. This file is the profile, and the evidence
 is four things:
 
 1. The hand-written front doors in this repo:
@@ -15,13 +15,13 @@ is four things:
 4. The earlier published docs, kept as a contrast. They are flatter than the
    author sounds.
 
-When this file and a sample disagree, the sample wins. When a rule and the
+When this file and a sample disagree, the sample wins, and when a rule and the
 instrument's clarity disagree, clarity wins.
 
-The published docs are the same person at the bench. Fewer film references, no
-swearing, more structure. The hand rewrite kept the digressions, the slang, and
+The published docs are the same person at the bench, with fewer film references, no
+swearing, and more structure. The hand rewrite kept the digressions, the slang, and
 the jokes, and doubled the first-person count and the contractions. That is the
-target. Do not flatten it back.
+target. Don't flatten it back.
 
 ## Manual calibration
 
@@ -32,28 +32,28 @@ like a spec sheet.
 The author's hand rewrite is 1,899 words: 119 sentences, a 15.6-word mean, a
 13-word median, a 12.1-word standard deviation, 22 first-person pronouns, 33
 contractions, 7 brackets, and 4 exclamation marks. The longest sentence is 66
-words. The shortest fragment is one word.
+words, and the shortest fragment is one word.
 
-The rewrite is the calibration. A manual with a 10-word median and almost no
+The rewrite is the calibration, so a manual with a 10-word median and almost no
 contractions has been over-edited.
 
 ## Guide calibration
 
-The K5/K5000 guide was written in two passes. The first 70 lines of the model draft
-were 689 words: 58 sentences, an 11.6-word mean, a 9.5-word median, an 8.5-word
+The K5/K5000 guide was written in two passes, and the first 70 lines of the model
+draft were 689 words: 58 sentences, an 11.6-word mean, a 9.5-word median, an 8.5-word
 standard deviation, and a 52-word maximum. The author's rewrite was 737 words: 41
-sentences, a 17.6-word mean, a 14-word median, a 16.7-word standard deviation, and
-an 80-word maximum. The first-person count stayed at three. The contraction count
+sentences, a 17.6-word mean, a 14-word median, a 16.7-word standard deviation, and an
+80-word maximum. The first-person count stayed at three, whilst the contraction count
 went from six to eight.
 
-The rewrite is the calibration for a guide or study. It did not add more "I". It
-added longer explanatory sentences, "whilst", "sort of", "and so on", "probably",
-and a parenthetical "(!)". A humanising pass that produces the first set of numbers
-has flattened the guide.
+The rewrite is the calibration for a guide or study. It added longer explanatory
+sentences, "whilst", "sort of", "and so on", "probably", and a parenthetical "(!)"
+rather than more "I". A humanising pass that produces the first set of numbers has
+flattened the guide.
 
 The first 170 lines of the full draft sit at 2,100 words in 147 sentences: a
 13.8-word mean, a 12-word median, an 11.0-word standard deviation. The opening is
-more connected than the rest. The distance is the thing to close.
+more connected than the rest, and the distance is the thing to close.
 
 The software reconstruction adds a technical-guide register to the same document:
 mechanism first, exact numbers, and the reason attached. "A Kawai-style harmonic
@@ -62,26 +62,26 @@ engineering prose that still has to read like the author.
 
 ## Narrator
 
-A builder and a player, writing to another builder or player. Not a brand, not a
-support desk, not a teacher who is worried about being liked.
+A builder and a player, writing to another builder or player, rather than a brand, a
+support desk, or a teacher who is worried about being liked.
 
 The person is:
 
 - **Opinionated and specific.** Says what is good, bad, boring, or unremarkable,
   and gives the reason. "It's well made as a photography and editing exercise, but
   not too interesting" is the shape. A verdict plus a cause.
-- **Materialist.** Looks at incentives, structures, and who benefits. Names the
+- **Materialist.** Looks at incentives, structures, and who benefits, and names the
   mechanism before the moral. In user docs, the politics stays out unless the
-  project itself is the subject. The evaluative edge stays.
+  project itself is the subject, whilst the evaluative edge stays.
 - **Curious and self-correcting.** Admits ignorance, changes their mind
   mid-sentence, asks a real question and then answers it. "I might be hearing
   things." "I'm not sure why this is a thing." "Might be a skill issue though."
-- **Allergic to pretension and to slop.** Uses theory when it does work, not as
-  decoration. Calls a pile of slop a pile of slop.
+- **Allergic to pretension and to slop.** Uses theory when it does work rather than
+  as decoration, and calls a pile of slop a pile of slop.
 - **Dry.** The joke is usually in the understatement, the deadpan list, or the
-  sudden drop from theory to plain speech. Not in a punchline.
+  sudden drop from theory to plain speech, rather than in a punchline.
 - **Direct.** States facts, analysis, and assertions as facts, analysis, and
-  assertions. Does not warm up, announce, or ask permission.
+  assertions, without warming up, announcing, or asking permission.
 - **Self-describing.** Calls themselves "a sound design gal" in the manual. Keep
   the author's self-description when it appears. Do not neutralise it to
   "person" or switch it to "guy".
@@ -94,18 +94,18 @@ The person is:
   guilty and embarrassed if you use umetate to make something and publish it with
   awful slop marketing blurb docs. Please take care of the community." That is a
   real stake, not a slogan. A community paragraph names the reader, the harm, and
-  the request. It does not say "we are passionate about empowering creators".
+  the request, rather than saying "we are passionate about empowering creators".
 
 The reader is a musician with the instrument in front of them, or a builder with a
-terminal open. Assume they are smart and busy. Do not explain the obvious. Do not
-sell them the thing they already downloaded. A guide or study may be for readers
-who do not own the instrument. State the audience: "players and sound designers" is
-enough.
+terminal open, so assume they are smart and busy and don't explain the obvious. Do
+not sell them the thing they already downloaded. A guide or study may be for readers
+who do not own the instrument, so state the audience: "players and sound designers"
+is enough.
 
 ## Four registers
 
-Use the register that fits the page. Do not use the front-door register for a
-procedure.
+Use the register that fits the page, because the front-door register does not belong
+in a procedure.
 
 ### Front door
 
@@ -115,7 +115,7 @@ This is the author talking.
 - First person is normal: "I wanted", "I reckon", "I have not tested this yet".
 - Digressions are allowed if they earn their place. A short story about the name,
   the constraint, or the mistake helps the reader remember the instrument.
-- Long sentences are fine when the clauses belong together. Follow one with a
+- Long sentences are fine when the clauses belong together, so follow one with a
   short sentence.
 - One or two personal asides in the preface. The hand rewrite has three in the
   opening design note.
@@ -124,21 +124,21 @@ This is the author talking.
   rewrite has seven.
 - End with a direct sign-off or a verdict, not a call to action.
 
-The corpus is this register at its most relaxed. The published front door is the
+The corpus is this register at its most relaxed, and the published front door is the
 same voice with the film talk and the swearing removed. The hand rewrite shows the
 same voice in the manual preface.
 
 ### Manual
 
 The user manual, including the panel section, the MIDI and SysEx reference, and
-the installation guide. This is the author explaining the instrument at the bench.
+the installation guide, is the author explaining the instrument at the bench.
 
 - Address the reader as "you". "Turn the knob" beats "the user turns the knob".
 - Use first person in section intros and design asides: "I put the wavefolder
-  before the filters because ...". Then return to direct instructions. One or two
-  "I" per section is enough. The preface can carry many.
-- Contractions are normal. The hand rewrite uses 33 in 1,899 words. A manual with
-  one contraction reads like a contract.
+  before the filters because ...". Then return to direct instructions, because one
+  or two "I" per section is enough and the preface can carry many.
+- Contractions are normal, because the hand rewrite uses 33 in 1,899 words and a
+  manual with one contraction reads like a contract.
 - Name every control exactly as the panel names it. If the panel says `SELECT`,
   the manual says `SELECT`, not "the page knob".
 - For each parameter, answer three questions: what it does, what you hear when you
@@ -155,14 +155,14 @@ the installation guide. This is the author explaining the instrument at the benc
 - The instrument can be the actor: "the filter removes", "the envelope holds".
 - A design note paragraph can run to about 150 words. A procedure paragraph stays
   under about 60.
-- Tables and step lists stay neutral. Neutral means no jokes, not no contractions.
-  The voice sits in the prose around them.
+- Tables and step lists stay neutral, because neutral means no jokes rather than no
+  contractions, and the voice sits in the prose around them.
 
 ### Guide or study
 
-A document about an existing instrument, a lineage, or a design question. The
-reader may not own the hardware. History is allowed, and the analysis is part of
-the value.
+A document about an existing instrument, a lineage, or a design question, where the
+reader may not own the hardware. History is allowed, and the analysis is part of the
+value.
 
 - Open with the plain category and why it matters: "The K5 and K5000 are two
   additive synths from Kawai. Additive synths are rare, so they're an interesting
@@ -183,30 +183,31 @@ the value.
 
 ### Reference
 
-The patch sheet, the CC table, the SysEx byte layout, the parameter index. Terse
-and exact. No asides, no jokes, no first person. A reader is copying bytes.
+The patch sheet, the CC table, the SysEx byte layout, the parameter index. Terse and
+exact, with no asides, no jokes, and no first person, because a reader is copying
+bytes.
 
 ## Sentence movement
 
-The corpus has 457 sentences in 9,015 words. The median is 16 words. The 90th
-percentile is 39. The longest is 120. There are 62 sentences of five words or
-fewer and 20 of fifty or more. The voice is not one sentence length. It is the
-contrast between them.
+The corpus has 457 sentences in 9,015 words, with a median of 16 words, a 90th
+percentile of 39, and a longest of 120. There are 62 sentences of five words or
+fewer and 20 of fifty or more, so the voice comes from the contrast between those
+lengths.
 
-The hand rewrite has 119 sentences in 1,899 words. The mean is 15.6, the median
-13, the standard deviation 12.1. The longest is 66 words. The shortest fragment is
-one word. The old manual had a 10-word median and a 35-word maximum. That ceiling
-was the problem.
+The hand rewrite has 119 sentences in 1,899 words, with a mean of 15.6, a median of
+13, and a standard deviation of 12.1. The longest is 66 words, and the shortest
+fragment is one word. The old manual had a 10-word median and a 35-word maximum, and
+that ceiling was the problem.
 
-The manual does not need to match the corpus's 120-word maximum. It does need the
+The manual does not need to match the corpus's 120-word maximum, but it does need the
 contrast: a 60-word sentence can sit next to a four-word verdict. A manual where
 every sentence is 10 to 15 words has been flattened.
 
 The guide rewrite has a 17.6-word mean, a 14-word median, a 16.7-word standard
 deviation, and an 80-word maximum. The first-person count is the same as the model
-draft. The change is explanatory length and connective looseness, not
-self-reference. Do not split the 80-word sentence just because it is long. Split it
-only when the reader has to backtrack.
+draft, because the change is explanatory length and connective looseness rather than
+self-reference. Don't split the 80-word sentence just because it is long, only when
+the reader has to backtrack.
 
 **Connect the cause to the consequence.** The model draft had "Each additive
 source holds 64 harmonics. Low is 1 to 64. High is 65 to 128." The author wrote
@@ -232,28 +233,28 @@ Python interpreter. The good thing is the processor can read/execute stuff direc
 from flash (XIP)!" Answer, reason, caveat, good news. No throat-clearing.
 
 **Long setup, short landing.** A long qualified sentence is allowed to run when the
-clauses belong together. Then land it with a short one. "The shorts are tied by
+clauses belong together, then land it with a short one. "The shorts are tied by
 themes of music or sound, but they engage with it to varying degrees and with one of
 the shorts I don't even see the connection at all, other than having been directed by
 a well-known musician." The next paragraph starts "The interludes featuring Gwar are
 mostly terrible." That is the rhythm. Setup, then verdict.
 
-**Join with commas, "and", "but", "so", "then".** The corpus has one semicolon in
-9,015 words. It has no em dashes. The rhythm is speech, not an essay. A sentence can
-carry two or three clauses on commas if it reads as one thought. The hand rewrite
-has more comma splices than the old manual. Keep a comma splice when it reads as
-one thought. Split it when the reader has to backtrack. Do not turn a long sentence
-into three tidy ones just to satisfy a style checker.
+**Join with commas, "and", "but", "so", "then".** The rhythm is speech rather than an
+essay, which is why the corpus has one semicolon in 9,015 words and no em dashes. A
+sentence can carry two or three clauses on commas if it reads as one thought. The
+hand rewrite has more comma splices than the old manual, so keep a comma splice when
+it reads as one thought and split it when the reader has to backtrack. Don't turn a
+long sentence into three tidy ones just to satisfy a style checker.
 
 **Front the condition or the comparison.** "For a movie with a lot of heavily
 traumatised characters, the alcoholic one seems completely fine." "Even if the stats
 said ..., there'd be no reason ...". The reader gets the frame before the claim.
 
 **Put the aside in brackets.** The corpus opens 47 brackets in 9,015 words. A
-bracket is for a quick clarification, a number, a self-correction, or a joke. Not
-for a second essay. If the aside is longer than the sentence it interrupts, make it
+bracket is for a quick clarification, a number, a self-correction, or a joke, rather
+than a second essay. If the aside is longer than the sentence it interrupts, make it
 a sentence. The hand rewrite opens 7 brackets in 1,899 words, about one per 270
-words. The old manual had 2 in 971, which was too few.
+words, whilst the old manual had 2 in 971, which was too few.
 
 **Let "which" carry the judgment.** "..., which is simply stupid." "..., which can
 potentially damage the knobs." The relative clause is where the opinion often lives.
@@ -263,8 +264,8 @@ Use it once or twice per page.
 "apparently", "if I remember correctly" are for facts you are not sure of. The
 verdict is direct: "It's boring." "It's well made." "I recommend it." Do not write
 "It's perhaps somewhat interesting" when you mean "It's fine". "Kinda", "I think",
-and "I believe" can also be voice markers, not just hedges. Keep the ones that
-calibrate a real uncertainty. Cut the ones that weaken a claim the author clearly
+and "I believe" can also be voice markers rather than just hedges. Keep the ones that
+calibrate a real uncertainty, and cut the ones that weaken a claim the author clearly
 wants to make.
 
 **Correct yourself in public.** "or, if someone at customs doesn't believe that
@@ -285,7 +286,7 @@ each waveform!" The instruction is stronger.
 
 **Let a one-line sentence be a paragraph.** Eight of the 52 corpus paragraphs are a
 single sentence. The one-liner is a beat: a verdict, a limit, a joke. Use it once or
-twice per page. Never in the middle of a procedure.
+twice per page, and never in the middle of a procedure.
 
 **Vary the opening.** The corpus starts sentences with "The" 71 times, "I" 40 times,
 "It" 27 times, "But" 10 times, "So" 5, "Then" 5, "Anyway" 4, "However" 7. That is a
@@ -319,20 +320,20 @@ preface. "I'm a hardcore fan ... That's where Type P.fm1 comes from." Then the
 constraint, then the seven things the author wanted, then who it is for. The list is
 content, not padding.
 
-The last line lands. It can be a verdict ("I recommend it"), a limit ("That's it
+The last line lands, whether it is a verdict ("I recommend it"), a limit ("That's it
 basically"), a joke ("Stupid music."), or an instruction ("Go watch it"). An
-instruction is usually stronger than an aphorism. Do not end with a summary of the
+instruction is usually stronger than an aphorism, so don't end with a summary of the
 paragraph you just wrote. The reader was there.
 
-The register can drop in one sentence. The corpus goes from a Lacan reference to
-"Music is unremarkable" without a transition. That drop is the personality. Use it
-once per page, not every paragraph. If every paragraph ends with a joke, the page is
-a performance.
+The register can drop in one sentence, because the corpus goes from a Lacan reference
+to "Music is unremarkable" without a transition. That drop is the personality. Use it
+once per page rather than every paragraph, because if every paragraph ends with a
+joke, the page is a performance.
 
-A paragraph is one thought. It can be one sentence. In a manual, aim for 40 to 120
-words in a parameter section, up to about 150 in a design note, and under about 60
-in a procedure. The corpus can afford a 300-word paragraph because it is an essay.
-A manual cannot. If a parameter paragraph passes 150 words, look for the second
+A paragraph is one thought, and it can be one sentence. In a manual, aim for 40 to 120
+words in a parameter section, up to about 150 in a design note, and under about 60 in
+a procedure. The corpus can afford a 300-word paragraph because it is an essay,
+whilst a manual cannot. If a parameter paragraph passes 150 words, look for the second
 thought and split it.
 
 Do not start every paragraph with "Firstly", "Moreover", "Furthermore", "In
@@ -365,12 +366,12 @@ of" are generalisers. They are voice when the list is illustrative. Do not strip
 them all.
 
 **Plain verdicts.** good, bad, fine, okay, boring, interesting, unremarkable,
-remarkable, astonishing, terrible. The corpus is not afraid of a plain verdict. The
-docs can say "This is the boring part" or "This is the useful part".
+remarkable, astonishing, terrible. The corpus is not afraid of a plain verdict, and
+the docs can say "This is the boring part" or "This is the useful part".
 
 **Technical words stay exact.** operator, algorithm, ratio, envelope, detune,
 feedback, wavefolder, filter, resonance, polyphony, voice, part, patch. Explain them
-once, then use them. Do not invent synonyms.
+once, then use them, and don't invent synonyms.
 
 **Collocations that sound like the author.** "the whole point", "the whole thing",
 "the thing is", "the problem is", "the good thing is", "that's because", "I've got
@@ -390,9 +391,8 @@ you are about to say, not to decorate a heading.
 **Slashes are for alternatives and units, not for prose.** The corpus uses them
 for "eros/thanatos", "and/or", and technical lists. In docs, write "or" unless you
 mean a file path, a unit, or a scope label. The author uses "2x4-op" and "two-part
-x four-operator" as shorthand. Keep it after the first mention. A slash in a scope
-or category label is fine: "anecdotal/historical records". Do not expand every
-slash.
+x four-operator" as shorthand, so keep it after the first mention. A slash in a scope
+or category label is fine: "anecdotal/historical records". Don't expand every slash.
 
 **Use the project vocabulary.** Six words carry a model's framing and hide the
 fact. They are hard bans in prose.
@@ -420,41 +420,41 @@ grid gap, a silent gap in audio, or a measured interval. Keep a code identifier,
 command, a schema key, or a quoted source exactly as it is.
 
 **No article drumbeats.** A list where every item starts with "The" reads like a
-spec sheet. The corpus uses lists of concrete items and labels, not full sentences
-with the same article. Drop the article, lead with the noun or the verb, or write
-the list as prose.
+spec sheet, because the corpus uses lists of concrete items and labels rather than
+full sentences with the same article. Drop the article, lead with the noun or the
+verb, or write the list as prose.
 
 **No wh-word headings or labels.** "What to reach for first", "How to move" and
-"What it does" are questions the reader did not ask. They make a page read like a
-generated outline or a help centre. Use a noun phrase or an imperative: "Get
+"What it does" are questions the reader did not ask, because they make a page read
+like a generated outline or a help centre. Use a noun phrase or an imperative: "Get
 started!", "Navigation", "Functionality". The rule covers headings, table column
 headers, and checklist labels.
 
 **No counted couplets.** A heading, caption, or table description built as two
 counts reads like a slogan: "One page, one job", "Two sources, one filter", "One
-phase, many amplitudes". It sells a shape instead of naming the section. Use a noun
-phrase or an imperative, and put the count in the body where it can be explained.
-The rule covers headings, captions, and table descriptions, not prose.
+phase, many amplitudes". It sells a shape instead of naming the section, so use a noun
+phrase or an imperative and put the count in the body where it can be explained. The
+rule covers headings, captions, and table descriptions rather than prose.
 
 **No raw storage values.** A user document describes the value on the screen, not
 the number in the firmware. "Ratio is written 65536" and "feedback runs 0 to
 32767" tell the reader about a representation they cannot see. Write the panel
-range: "ratio 0.50 to 16.00", "feedback 0 to 100%". A patch sheet is a panel form,
-not a memory dump.
+range: "ratio 0.50 to 16.00", "feedback 0 to 100%". A patch sheet is a panel form
+rather than a memory dump.
 
 **No product self-description.** A "what this is" section in an app or a manual
-explains the product to someone already using it. Put the proof in the README or
-the release notes. Use the page for the next action, the controls, or a real limit.
+explains the product to someone already using it. Put the proof in the README or the
+release notes, and use the page for the next action, the controls, or a real limit.
 
 **No em dash. No semicolon.** The corpus has zero em dashes and one semicolon in
-9,015 words. Use a full stop, a comma, a colon, or brackets. This is not a stylistic
-preference. It is the strongest punctuation evidence in the corpus.
+9,015 words, so use a full stop, a comma, a colon, or brackets. That is the strongest
+punctuation evidence in the corpus, rather than a stylistic preference.
 
 **No exclamation marks in procedures.** The corpus uses 15 in 9,015 words, mostly
 for genuine enthusiasm. The design note can use an exclamation cluster for emphasis
 ("so! many! params!"). A tip can end with one. A guide body can use one for genuine
-emphasis: "That can be the point!" A step never does. Do not spray them. The hand
-rewrite uses four, mostly in one cluster.
+emphasis: "That can be the point!" A step never does. Don't spray them, because the
+hand rewrite uses four, mostly in one cluster.
 
 **A parenthetical "(!)" is a genuine surprise marker.** "one envelope per harmonic
 (!)" is the author drawing attention to the scale of the feature. Use it once or
@@ -465,7 +465,7 @@ purpose clause. Suggest the short form only when it does not flatten the rhythm.
 
 **Bold is for panel labels and the occasional contrast.** The manual bolds
 `**Cutoff**` and the other UI labels. The hand rewrite also bolds `**is**` and
-`**does**` in one factual contrast. That is allowed. Do not bold whole sentences.
+`**does**` in one factual contrast, which is allowed. Don't bold whole sentences.
 
 ## Page structure
 
@@ -480,43 +480,44 @@ care: "two additive synths from Kawai. Additive synths are rare, so they're an
 interesting case study." Do not replace that with a pair of metaphors.
 
 **Give the short version first if the page is long.** Two sentences or a short
-paragraph at the top, then the detail. The corpus does this with "Short version:"
-and "Long version:" in the Funeral Parade review. Use the shape, not the labels
-every time.
+paragraph at the top, then the detail, because the corpus does this with "Short
+version:" and "Long version:" in the Funeral Parade review. Use the shape rather
+than the labels every time.
 
 **Walk the signal in the player's order.** Keys, oscillators, filter, envelope,
-effects, output. Or the order of the panel. Not the order of the source files. If
-the reader has to jump back and forth, the page is wrong.
+effects, output, or the order of the panel, rather than the order of the source files.
+If the reader has to jump back and forth, the page is wrong.
 
 **One or two digressions in the preface, one per section in the body.** A design
-story, a comparison, a warning. It must teach something. Then return with "Anyway"
+story, a comparison, a warning: it must teach something. Then return with "Anyway"
 or "Back to the ..." and get on with it. The corpus can afford five digressions in a
-review. A manual cannot. The hand rewrite has the Taco Bell aside in Ratio, the
+review, whilst a manual cannot. The hand rewrite has the Taco Bell aside in Ratio, the
 Yamaha chip order in Feedback, and the "that's why I added it" in Wavefolder. That
 is the target. Never in a step.
 
 **Headings: sentence case, specific, varied.** "Install", "First sound", "The
 filter", "Why the envelope is slow", "Patch storage", "MIDI clock", "What the
-filter does not do". A heading is a signpost, not a template. If a heading can be a
-question the reader is actually asking, use it. If a heading can be a full sentence,
-use it. A plain noun heading like "K5 architecture" is better than a spatial
+filter does not do". A heading is a signpost, not a template. When a heading can be a
+question the reader is actually asking, use it, and when it can be a full sentence,
+use that too. A plain noun heading like "K5 architecture" is better than a spatial
 metaphor like "Inside the K5". A playful heading can stay if the author wrote it:
 "Sixty-fourrrrrr". One is enough. Not every heading needs a verb or a colon.
 
 **End with a verdict or an instruction.** "Start with a sine and add feedback until
 it bites." "If you only want clean tones, leave the wavefolder at 0." Not "Now it's
-your turn to explore." Prefer the instruction. The hand rewrite ends with "Try
-looking at the operator oscilloscopes ...", not a line about the whole of FM.
+your turn to explore." Prefer the instruction, because the hand rewrite ends with
+"Try looking at the operator oscilloscopes ..." rather than a line about the whole of
+FM.
 
-Sometimes the concrete detail is the ending. The author cut "That is the K5 in its
-natural habitat: a professional tool under deadline." after the Jan Hammer detail.
-A closing verdict that restates the paragraph is filler.
+Sometimes the concrete detail is the ending, which is why the author cut "That is the
+K5 in its natural habitat: a professional tool under deadline." after the Jan Hammer
+detail. A closing verdict that restates the paragraph is filler.
 
-**Procedures are neutral.** A step is "Turn the encoder to 50." The voice sits in
-the intro and the notes, not in the step. Do not write "Now we'll turn the encoder,
-and you'll hear the magic happen." Neutral means no jokes, not no contractions. The
-prose around the step can say "you've got four operators". The step itself stays
-plain.
+**Procedures are neutral.** A step is "Turn the encoder to 50", because the voice sits
+in the intro and the notes rather than in the step. Do not write "Now we'll turn the
+encoder, and you'll hear the magic happen." Neutral means no jokes, not no
+contractions. The prose around the step can say "you've got four operators". The step
+itself stays plain.
 
 ## Prohibited patterns
 
@@ -531,20 +532,20 @@ instrument you learn by doing. The K5000 is a spectral instrument you compose
 with." The author replaced it with "The K5 and K5000 are two additive synths from
 Kawai. Additive synths are rare, so they're an interesting case study."
 
-The plain category and the reason to care are the target. Do not replace them with
+The plain category and the reason to care are the target, so don't replace them with
 a pair of metaphors or a balanced thesis. A guide can open with a fact and a
-"because". It does not need a manifesto.
+"because", since it does not need a manifesto.
 
 ### Meta-commentary about other summaries
 
-"The detail most online summaries get wrong" is a line about other summaries, not
-about the instrument. The author cut it. State the fact and let it stand.
+"The detail most online summaries get wrong" is a line about other summaries rather
+than about the instrument, so the author cut it. State the fact and let it stand.
 
 ### Negation and negative parallelism
 
-Humans rarely introduce a thing by saying what it is not. The author removed most
-"It's a X, not a Y" and "It's not an X" setups from the K5/K5000 guide. Start with
-the positive, the cause, or the constraint.
+Humans rarely introduce a thing by saying what it is not, which is why the author
+removed most "It's a X, not a Y" and "It's not an X" setups from the K5/K5000 guide.
+Start with the positive, the cause, or the constraint.
 
 The replacement moves:
 
@@ -563,10 +564,10 @@ The replacement moves:
   single oscillator" becomes "a complete voice path, rather than just the
   oscillator."
 
-A factual limit stays. "You can't add inharmonic partials" and "it isn't a
-universal system" are information. A scope contrast stays: "purely explanatory
-rather than factory schematics." The target is the needless label negation, not
-every "not".
+A factual limit stays, because "you can't add inharmonic partials" and "it isn't a
+universal system" are information. A scope contrast stays: "purely explanatory rather
+than factory schematics." The target is the needless label negation rather than every
+"not".
 
 The test: a negation earns its place only when it carries one of these:
 
@@ -576,13 +577,14 @@ The test: a negation earns its place only when it carries one of these:
 - a real scope or limit,
 - a correction of a specific misconception.
 
-If it carries none of those, cut it. It is a debate move with no information.
+If it carries none of those, cut it, because it is a debate move with no
+information.
 
 A conversational correction can keep the negative. "But that doesn't mean one is
 necessarily better than the other! They've just got different personalities." The
 negation carries a correction, and "just" scales it. "That is just a tour-rig
 claim, though, with no album credits to back it up" does the same with a limit.
-The target is the theatrical label contrast, not every negative sentence.
+The target is the theatrical label contrast rather than every negative sentence.
 
 Do not write "A, not B" as an adversative. "single precision, not double", "whole
 waveforms, not partials", and "the framework, not the glue" read like a spec
@@ -594,8 +596,8 @@ The tell: "It's not just a synth, it's a way of thinking." "This isn't about
 features, it's about feel." "Less a manual, more a conversation." "Not X. Y." "X
 isn't about Y, it's about Z." "It doesn't just do X, it does Y."
 
-These constructions invent a contrast so the sentence sounds deeper. They add no
-fact. The corpus rarely does this. When it negates, it negates a fact and then
+These constructions invent a contrast so the sentence sounds deeper, and they add no
+fact. The corpus rarely does this, because when it negates, it negates a fact and then
 states the fact: "It's not exactly the same sound but that's it basically." "I
 didn't dislike it." The negation is information, not a drumroll.
 
@@ -604,17 +606,17 @@ or "X isn't about Y, it's about Z", stop. Say what the thing is. If the contrast
 real, state both sides plainly: "The filter is 12 dB per octave. It does not
 self-oscillate." Not "It's not a screaming acid filter, it's a gentle tone shaper."
 
-A factual contrast is the exception, not the default. "It's not an emulation of any
+A factual contrast is the exception rather than the default. "It's not an emulation of any
 one Yamaha chip in particular, but it **is** a DX-style synth" names both sides and
 prevents a false expectation. The ban is on the theatrical "not just X, it's Y"
 hook.
 
 "Each source is a complete voice path, rather than just the oscillator" is the
-same kind of factual contrast. It names both sides. Do not rewrite it into a
+same kind of factual contrast, because it names both sides. Don't rewrite it into a
 positive-only sentence that loses the comparison.
 
 "Not only X, but also Y" is allowed when both halves are real and the second half is
-not a supposed revelation. It is not allowed as a hook.
+not a supposed revelation, and it is not allowed as a hook.
 
 ### Heading chains
 
@@ -638,17 +640,17 @@ This is a page:
 - Why the envelope is slow
 - Patch storage
 
-The second list is varied, specific, and written in the reader's language. The
-first is a taxonomy. One "The X" heading is fine. A chain of them is not. Do not put
-a colon subtitle on every heading. One or two in a page is enough.
+The second list is varied, specific, and written in the reader's language. The first
+is a taxonomy. One "The X" heading is fine, but a chain of them is not, so don't put a
+colon subtitle on every heading. One or two in a page is enough.
 
 ### False dichotomies
 
 Do not invent a strawman to make the instrument look different. "Most synths make
 you menu-dive. This one doesn't." Only write that if you can name the synths and the
-difference is real. If the instrument is a four-operator FM synth, say that. It does
-not need an enemy. A contrast is only worth making when both sides are true and the
-reader can act on the difference.
+difference is real. If the instrument is a four-operator FM synth, say that, because
+it does not need an enemy. A contrast is only worth making when both sides are true
+and the reader can act on the difference.
 
 ### Marketing hooks
 
@@ -661,9 +663,9 @@ with the content. The reader is already here.
 
 "The filter is warm, musical, and expressive" is three adjectives doing the work of
 one fact. The corpus uses triads when the items are concrete ("clever, fun, and full
-of ideas"), not when they are abstract. List two real things or four. Do not pad to
-three. A 7-item design list is content. Three concrete tips are content. The ban is
-on three abstract nouns doing the work of one fact.
+of ideas") rather than abstract, so list two real things or four. Don't pad to three,
+because a 7-item design list is content and three concrete tips are content. The ban
+is on three abstract nouns doing the work of one fact.
 
 ### Summaries that restate the heading
 
@@ -674,16 +676,16 @@ already told the reader the topic. The sentence has to tell them the thing.
 
 ### Verdicts that restate the paragraph
 
-A concrete detail can end the paragraph. The author cut "That is the K5 in its
-natural habitat: a professional tool under deadline." after the Jan Hammer detail.
-The detail already carried the point. A closing verdict that restates the paragraph
-is filler, even when it sounds good.
+A concrete detail can end the paragraph, which is why the author cut "That is the K5
+in its natural habitat: a professional tool under deadline." after the Jan Hammer
+detail. The detail already carried the point, so a closing verdict that restates the
+paragraph is filler, even when it sounds good.
 
 ### Aphorisms
 
-An aphorism is a short, universal-sounding verdict that could go on a poster. It
-flatters the writer and adds no information. The K5/K5000 guide had several: "Its
-restrictions are the lesson." "Two sources with clear jobs beat six sources with
+An aphorism is a short, universal-sounding verdict that could go on a poster, and it
+flatters the writer whilst adding no information. The K5/K5000 guide had several:
+"Its restrictions are the lesson." "Two sources with clear jobs beat six sources with
 vague ones." "They are instruments for composing the inside of a sound." "The K5
 teaches you to think spectrally." "The filter is useful, and it is also a trap."
 "Hybridisation is musically intelligent."
@@ -700,25 +702,25 @@ instrument of the three." A slogan is not: "The K5000 is a way of thinking."
 ### Hedging stacks
 
 "Perhaps it might be argued that the filter could potentially ..." Pick one. The
-corpus hedges once, then commits. One genuine uncertainty is enough. A single
-"kinda" or "I think" is not a stack. Do not strip every qualifier. The hand rewrite
-uses "kinda" as a voice marker in the design note and the body. Keep the ones that
-are doing work.
+corpus hedges once and then commits, so one genuine uncertainty is enough, and a
+single "kinda" or "I think" is not a stack. Don't strip every qualifier. The hand
+rewrite uses "kinda" as a voice marker in the design note and the body, so keep the
+ones that are doing work.
 
 ### Corporate "we"
 
-The corpus uses "I" 151 times and "we" 10 times. The docs are written by one person.
-Use "I" for the author's choices, "you" for the player, "it" for the instrument.
-"We" is for a genuinely collective act, not for the brand. "We recommend" is
-marketing. "I recommend" is a person.
+The corpus uses "I" 151 times and "we" 10 times, and the docs are written by one
+person. Use "I" for the author's choices, "you" for the player, and "it" for the
+instrument. "We" is for a genuinely collective act rather than for the brand, because
+"we recommend" is marketing and "I recommend" is a person.
 
 ### Slang and in-group references
 
-The corpus swears. The published manual does not. It does keep light UK slang and
-internet asides: "innit", "kinda", "gal", "whatever", "aka", "i.e.", "terminally
+The corpus swears and the published manual does not, but it does keep light UK slang
+and internet asides: "innit", "kinda", "gal", "whatever", "aka", "i.e.", "terminally
 online". The hand rewrite uses them in the preface and in one-line tips.
 
-Keep them rare. A few per page, never in a procedure, a warning, or a reference
+Keep them rare: a few per page, never in a procedure, a warning, or a reference
 table. Keep the author's self-description ("I'm more of a sound design gal"). Do
 not change "gal" to "guy" or "person". Do not sand off "innit" because a style guide
 would. If a reference needs a paragraph of explanation, cut it.
@@ -726,26 +728,27 @@ would. If a reference needs a paragraph of explanation, cut it.
 ### Over-signposting
 
 No "In this section", "Let's explore", "As we'll see", "First, let's understand",
-"Before we dive in". The corpus never does this. It says the thing. Do the same.
+"Before we dive in". The corpus never does this, because it says the thing. Do the
+same.
 
 ### The "actually" tic
 
-The corpus uses "actually" 11 times in 9,000 words. It is fine in that dose. The
-model will use it three times a paragraph. One per page.
+The corpus uses "actually" 11 times in 9,000 words, and that dose is fine. The model
+will use it three times a paragraph. One per page.
 
 ### The "just" softener
 
 "Just turn the knob" can sound condescending, and it hides the real step. The corpus
-uses "just" 21 times, often as "only" or "simply". Use it the same way. If the step
+uses "just" 21 times, often as "only" or "simply", so use it the same way. If the step
 has two parts, say both.
 
 ### Over-editing
 
 The first manual was 971 words, an 11.3-word mean, a 10-word median, 2 first-person
-pronouns, and 1 contraction. It read like a spec sheet. The author's hand rewrite is
-1,899 words, a 15.6-word mean, a 13-word median, a 12.1-word standard deviation, 22
-first-person pronouns, 33 contractions, 7 brackets, and 4 exclamation marks. The
-rewrite is the target. A humanising pass that produces the first set of numbers has
+pronouns, and 1 contraction, and it read like a spec sheet. The author's hand rewrite
+is 1,899 words, a 15.6-word mean, a 13-word median, a 12.1-word standard deviation,
+22 first-person pronouns, 33 contractions, 7 brackets, and 4 exclamation marks. The
+rewrite is the target, so a humanising pass that produces the first set of numbers has
 failed.
 
 Fix grammar, not voice. "both parts's algorithms" becomes "both parts' algorithms".
@@ -763,8 +766,8 @@ explanatory clauses, "whilst", "sort of", "and so on", "probably", a parenthetic
 rougher one. Do not split every clause, cut every generaliser, or restore the
 thesis.
 
-The rewrite also shows where not to stop. "The even harmonics over from the odd
-ones" is missing "take". "More of an specialised tool" should be "more of a
+The rewrite also shows where not to stop, because "the even harmonics over from the
+odd ones" is missing "take" and "more of an specialised tool" should be "more of a
 specialised tool". Fix those. Keep the rhythm.
 
 Do not split a connected explanation into three sentences. The model draft had
@@ -774,9 +777,9 @@ voice, not a compression trick.
 
 ### Dropped qualifier
 
-A casual phrase can replace a precise one. It must not drop the fact. "Harmonic 64
-is missing for some quirky reason" is fine as a phrase, but it loses the documented
-quirk. Keep the fact and the casual wrapper: "for some quirky reason. It's a
+A casual phrase can replace a precise one, but it must not drop the fact. "Harmonic
+64 is missing for some quirky reason" is fine as a phrase, but it loses the documented
+quirk, so keep the fact and the casual wrapper: "for some quirky reason. It's a
 documented quirk, not a mistake in your patch."
 
 ### No invented facts

@@ -1,7 +1,7 @@
 # Working on umetate
 
-This file is the entry point for an agent working in this repository. It is a
-router, not a second manual. The authoritative documents are:
+This file is the entry point for an agent working in this repository, and it is a
+router rather than a second manual. The authoritative documents are:
 
 - `README.md` for the user-facing start guide.
 - `docs/roadmap.md` for status and design decisions.
@@ -69,8 +69,8 @@ The front door can carry the author's chummy, nerdy, British asides and the anti
 promise. A community paragraph names the reader, the harm, and the request.
 
 The hand-written preface and sound-design part of
-`examples/type-p-fm1/docs/manual.md` is the manual calibration. The panel section
-follows the same register. Keep its contractions, asides, light UK slang, and
+`examples/type-p-fm1/docs/manual.md` is the manual calibration, and the panel section
+follows the same register, so keep its contractions, asides, light UK slang, and
 self-description. Do not flatten it back to a spec sheet. The humanizer skill is
 `skills/umetate-humanizer/`. Its `references/voice.md` carries the project voice
 data.
@@ -81,8 +81,8 @@ parenthetical "(!)" are voice. The software reconstruction section is the
 technical-guide calibration: mechanism first, exact numbers, and the reason
 attached. Do not tighten a guide into a thesis, and do not add
 "I" to compensate for a flat draft. Join a fact to its cause, condition, or
-specification. A relative clause, "with" and a colon, and "only when" carry the
-guide's rhythm. A page of short declaratives has lost it even when every fact is
+specification, because a relative clause, "with" and a colon, and "only when" carry
+the guide's rhythm. A page of short declaratives has lost it even when every fact is
 right.
 
 Do not introduce a thing by saying what it is not. Start with the positive, the
@@ -118,7 +118,7 @@ grows, compact it with the structure from commit `88f08db`: baseline, settled
 decisions, current work, blocked items, what not to do, project map, status
 ledger, evidence, risks, and the old section-number map. Move the detail into git
 history and name the archive commit in the header. Keep the `umetate status` phase
-and step lines in their format. The 88f08db text is a structural reference. Write
+and step lines in their format. The 88f08db text is a structural reference, but write
 the compacted prose fresh in the project voice.
 
 ## UI work
@@ -155,4 +155,4 @@ When the UI is meant to change, review the snapshot diff, then accept it with
 code.
 
 The Docker image is the pinned Linux host. See `docker/README.md` and
-`umetate/runner.py`. JACK needs `--shm-size=512m`.
+`umetate/runner.py`, and note that JACK needs `--shm-size=512m`.

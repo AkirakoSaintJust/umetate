@@ -1,12 +1,12 @@
 /* SPDX-License-Identifier: GPL-3.0-only
  * Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments */
-/* Host test of the Felucca update loader (loader/ldr_core.c): a fake
- * host serves a package over the SysEx protocol, the "device" flash starts as
- * another package's flash.bin (as if that firmware were installed).
+/* Host test of the Felucca update loader (loader/ldr_core.c), where a fake
+ * host serves a package over the SysEx protocol and the "device" flash starts as
+ * another package's flash.bin, as if that firmware were installed.
  *   ldr_test OLD.fwsc NEW.fwsc
- * With -DBOARD_SMK37=1 (packages from fm1pkg_make.py --board smk37): the SMK-37 Pro windows (app area
- * up to 0x9D000, records 0x9D000..0xBFFFF) and the protected ranges BTIF / USRTRIM 0xC0000..0xC1FFF,
- * USR 0xF4000..0xFDFFF and key_mac 0xFF000 never touched, even with a valid-looking record in them. */
+ * With -DBOARD_SMK37=1 (packages from fm1pkg_make.py --board smk37), the test covers the SMK-37 Pro windows (app area
+ * up to 0x9D000, records 0x9D000..0xBFFFF) and checks that the protected ranges BTIF / USRTRIM 0xC0000..0xC1FFF,
+ * USR 0xF4000..0xFDFFF and key_mac 0xFF000 are never touched, even with a valid-looking record in them. */
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>

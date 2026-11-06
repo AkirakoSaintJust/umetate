@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
 """The platform abstraction (docs/roadmap.md §12.8): everything POSIX runs in the
-pinned container via `docker exec`; device writes never use this.
+pinned container via `docker exec`, whilst device writes never use it.
 
-A persistent container (`umetate-host`) of the pinned image, the repo mounted
-read-write at `/work`, the `umetate-target` volume read-only at `/opt/jieli`. On
-Windows the runner uses native `docker.exe` (Docker Desktop), falling back to
-`wsl docker`; `$UMETATE_DOCKER` overrides.
+A persistent container (`umetate-host`) of the pinned image runs with the repo
+mounted read-write at `/work` and the `umetate-target` volume read-only at
+`/opt/jieli`. On Windows the runner uses native `docker.exe` (Docker Desktop) and
+falls back to `wsl docker`. `$UMETATE_DOCKER` overrides both.
 """
 
 from __future__ import annotations
@@ -102,9 +102,9 @@ def run(
 def run_writable(cmd: list[str]) -> int:
     """Run `cmd` in a throwaway container with `umetate-target` mounted read-write.
 
-    `umetate setup` is the only legitimate writer to the volume; the persistent
-    container (and every build) keeps it read-only. The repo is mounted at `/work`
-    so a `--toolchain/--sdk` path under the checkout stays visible.
+    `umetate setup` is the only legitimate writer to the volume, so the persistent
+    container and every build keep it read-only. The repo is mounted at `/work`, so
+    a `--toolchain/--sdk` path under the checkout stays visible.
     """
     docker = _docker()
     if docker is None:

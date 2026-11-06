@@ -3,7 +3,7 @@
 """The generator's typed intermediate representation (docs/roadmap.md §12.4).
 
 Everything the front-end produces and the back-end consumes, plus the node-library
-loader. Pure data + pure functions; no side effects.
+loader. It is pure data and pure functions, so it has no side effects.
 """
 
 from __future__ import annotations
@@ -175,7 +175,8 @@ class ParamEntry:
     """One flattened DSP param: set_param id, C backing name, and its binding.
 
     `name` is the manifest key when the patch's `params:` section binds this param,
-    else its flattened `target` path (`<instance>.<param>`). Both resolve to `id`.
+    else its flattened `target` path (`<instance>.<param>`). Either way it resolves
+    to `id`.
     """
 
     id: int
@@ -229,8 +230,9 @@ class CompiledGraph:
 def to_c_identifier(name: str) -> str:
     """A patch/synth id (dots, hyphens) -> a C identifier (underscores).
 
-    The result must be a valid C identifier; anything else is a `GenError` (never a
-    silently-corrupt `.c`), so a crafted name cannot inject code into the output.
+    The result must be a valid C identifier, because anything else is a `GenError`
+    rather than a silently-corrupt `.c`, so a crafted name cannot inject code into
+    the output.
     """
     result = name.replace(".", "_").replace("-", "_")
     if not _IDENTIFIER_RE.fullmatch(result):
@@ -292,7 +294,7 @@ def load_library(root: str | Path) -> dict[str, NodeSpec]:
 def load_macros(root: str | Path) -> dict[str, Macro]:
     """Load every `modules/macros/<name>/macro.json` into a name -> macro map.
 
-    The macro's name is its directory name; the manifest is the same shape as a
+    The macro's name is its directory name. The manifest is the same shape as a
     patch's inline `macros:` entry (`ins`/`outs`/`params`/`nodes`/`wires`), plus a
     `summary` for `umetate lib`.
     """
@@ -321,10 +323,11 @@ def node_spec_from_manifest(manifest: NodeManifest, body: str) -> NodeSpec:
             if spec.get("modulatable"):
                 modulatable.add(pname)
 
-    # D23: a modulatable param gets a paired control input `<p>_mod` + a depth
-    # param `<p>_depth`, the effective value `base + mod·depth` is a block-derived
-    # state `<p>_eff`. Synthesized before the node's own block_derived so that
-    # `${param.<p>}` (redirected to `<p>_eff`) is available to it.
+    # D23: a modulatable param gets a paired control input `<p>_mod` and a depth
+    # param `<p>_depth`, and the effective value `base + mod·depth` is a
+    # block-derived state `<p>_eff`. These are synthesized before the node's own
+    # block_derived, so that `${param.<p>}` (redirected to `<p>_eff`) is available
+    # to it.
     state = dict(manifest.get("state", {}))
     block_derived: dict[str, str] = {}
     for pname in sorted(modulatable):

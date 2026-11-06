@@ -3,8 +3,8 @@
 /* MIDI IN on the TRS jack: PH8 -> input channel 1 -> UART1 RX, 31250 baud,
  * RX DMA into a 128-byte ring, polled from the TIMER5 ISR (no UART IRQ).
  * Built only with FELUCCA_UART=1. Channel messages, clock and transport (F8 FA FB FC) go into midi_in_q next to
- * USB, as USB-MIDI packets with cable 1 (CIN = status >> 4), so midi_get tells the jack from USB (2, not 1);
- * other realtime, system common and SysEx are dropped.
+ * USB, as USB-MIDI packets with cable 1 (CIN = status >> 4). So midi_get tells the jack from USB (2, not 1).
+ * Other realtime, system common and SysEx are dropped.
  *
  * The ring is read by content, not by the DMA count: every slot the parser has
  * not yet been given holds UM_EMPTY, and the reader takes bytes until it meets

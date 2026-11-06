@@ -1,7 +1,7 @@
 """Generate UiTokens.h from design/tokens.json.
 
-The design tokens are the single source for colours, type sizes, metrics and
-control geometry. The JUCE editor reads only this header.
+The design tokens are the only reference for colours, type sizes, metrics and
+control geometry, and the JUCE editor reads only the generated header.
 """
 
 from __future__ import annotations

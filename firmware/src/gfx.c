@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-only
  * Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments */
-/* Small-canvas renderer (no full framebuffer). Draw text/lines into
- * an off-screen strip, then blit it in one DMA transfer. Pixels are stored
- * byte-swapped (the panel takes RGB565 big-endian). */
+/* Small-canvas renderer: draw text/lines into an off-screen strip, then blit it
+ * in one DMA transfer, because there is no full framebuffer. Pixels are stored
+ * byte-swapped, since the panel takes RGB565 big-endian. */
 typedef struct {               /* proportional, see tools/gen_font.py */
     uint8_t h;
     uint8_t pad;               /* bitmap starts this many pixels left of the pen */

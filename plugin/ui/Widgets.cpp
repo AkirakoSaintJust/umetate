@@ -40,9 +40,9 @@ int32_t snapRatio(int32_t value)
     return (value - low) <= (high - value) ? low : high;
 }
 
-/* The detent one step above (dir > 0) or below the current value. An
-   off-detent value moves to the neighbour on that side, so a typed 1.37 then
-   an up-arrow lands on 1.41 rather than 1.50. */
+/* The detent one step above (dir > 0) or one step below the current value.
+   An off-detent value moves to the neighbour on that side, so a typed 1.37
+   followed by an up-arrow lands on 1.41 rather than 1.50. */
 int32_t stepRatioDetent(int32_t value, int dir)
 {
     if (kP1RatioDetents.empty())
@@ -526,9 +526,9 @@ void P1Scope::paint(juce::Graphics& g)
     juce::Path path;
     const int n = static_cast<int>(samples_.size());
     /* The operator level is a Yamaha total-level curve, so a normal patch sits
-       well below full scale. A 4x soft-knee gain restores the old trace height
-       and the tanh keeps a loud trace inside the widget instead of squaring off
-       at its top. */
+       well below full scale, and a 4x soft-knee gain restores the old trace
+       height whilst the tanh keeps a loud trace inside the widget. That stops
+       it squaring off at the top. */
     const float gain = 4.0f;
     if (n < 2) {
         path.startNewSubPath(area.getX(), area.getCentreY());
@@ -580,9 +580,9 @@ void P1Spectro::paint(juce::Graphics& g)
         for (int k = bin; k < juce::jmin(256, bin + 3); ++k)
             magnitude = juce::jmax(magnitude, fftData_[static_cast<size_t>(k)]);
         magnitude = magnitude / 512.0f;
-        /* The same 4x as the scope: the operator level curve leaves normal
-           patches well below full scale, so lift the log argument to keep the
-           bars readable. The clamp keeps a loud spectrum at full height. */
+        /* The same 4x as the scope, because the operator level curve leaves
+           normal patches well below full scale. Lift the log argument to keep
+           the bars readable. The clamp keeps a loud spectrum at full height. */
         const float level = juce::jlimit(
             0.04f, 1.0f, std::log10(1.0f + magnitude * 360.0f));
         const float height = level * (getHeight() - 2.0f);

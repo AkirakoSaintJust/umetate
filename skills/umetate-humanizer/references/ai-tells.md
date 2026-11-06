@@ -1,11 +1,11 @@
 # AI tells
 
 This is the reviewed detection reference for the umetate humanizer. The original
-generic catalog had 55 patterns. This reference keeps the ones that matter for this
-voice, adds the product self-description, article-drumbeat, wh-word heading,
+generic catalog had 55 patterns, and this reference keeps the ones that matter for
+this voice, adds the product self-description, article-drumbeat, wh-word heading,
 counted-couplet and storage-value tells, and folds the rest into the main
-checklist. A pattern is a signal, not a verdict. Read `voice.md` and the skill
-before you change a sentence.
+checklist. A pattern is a signal rather than a verdict, so read `voice.md` and the
+skill before you change a sentence.
 
 ## The patterns that matter
 
@@ -58,13 +58,13 @@ before you change a sentence.
 | P66 | `Gap` for missing work | Name the missing work, the missing feature, the bug, the oversight, or the problem. |
 
 The patterns the original catalog had that are not listed here are covered by the
-main checklist, or they are generic detector noise that does not fit this voice.
-Do not turn the table into a score-chasing exercise.
+main checklist, or they are generic detector noise that does not fit this voice, so
+don't turn the table into a score-chasing exercise.
 
 ## Project vocabulary
 
-The project has six words that the model reaches for and the author does not. They
-are hard bans in prose.
+The project has six words that the model reaches for and the author does not, and
+they are hard bans in prose.
 
 | Banned | Substitute |
 | --- | --- |
@@ -76,30 +76,30 @@ are hard bans in prose.
 | gap, for missing work | missing work, missing feature, bug, oversight, problem |
 
 Keep the literal word when it is a code identifier, a command, a schema key, a quoted
-source, a grid gap, a silent gap in audio, or a compiled artefact. The ban is on the
-framing, not on the spelling everywhere.
+source, a grid gap, a silent gap in audio, or a compiled artefact, because the ban is
+on the framing rather than on the spelling everywhere.
 
-The hand-written README is the calibration for the replacement. It says
+The hand-written README is the calibration for the replacement: it says
 `docs/roadmap.md` is "the only reference for the design, implementation plan, and
-status of each claimed feature." It says the worked example is one "I made". It says
-the build composes "the example firmware made out of the pre-made umetate
-components". Those are the target sentences.
+status of each claimed feature", the worked example is one "I made", and the build
+composes "the example firmware made out of the pre-made umetate components". Those
+are the target sentences.
 
 ## False positives and author-specific exceptions
 
-Flag a cluster, not an isolated tell. A single em dash, a single "crucial", or one
-three-item list is how humans write too.
+Flag a cluster rather than an isolated tell, because a single em dash, a single
+"crucial", or one three-item list is how humans write too.
 
 - **Perfect grammar is not AI.** Clean spelling and consistent punctuation are
   signs of a careful writer.
 - **Formal or non-native English is not AI.** A stiff register can be an honest
-  second-language voice. Do not flag it on style alone.
+  second-language voice, so don't flag it on style alone.
 - **Low sentence-length variance is not AI.** Some writers are naturally precise
-  and low-variance. Look for the vocabulary and content tells too.
+  and low-variance, so look for the vocabulary and content tells too.
 - **Quotes, titles, code, and examples are not yours to rewrite.** Leave them
-  exactly as written. Mask code and block quotes before scanning.
-- **Jargon and repetition can be correct.** Repeat `useEffect` or `set_param`.
-  Do not vary a technical term for elegance.
+  exactly as written, and mask code and block quotes before scanning.
+- **Jargon and repetition can be correct.** Repeat `useEffect` or `set_param`,
+  because a technical term does not need a synonym for elegance.
 - **Reference and manual sections are self-contained.** Do not force a transition
   between parameter sections.
 - **A note next to a control is not a product description.** A line that explains
@@ -132,7 +132,7 @@ three-item list is how humans write too.
 - **A specific verdict is allowed.** "The K5000W is the least immediate additive
   instrument of the three" is a judgement, not an aphorism.
 - **"Claim" as a verb is fine.** "The evidence supports the claim that the envelope
-  is slow" keeps it. The ban is on a bare `claim` used as a feature label.
+  is slow" keeps it, because the ban is on a bare `claim` used as a feature label.
 - **"Built" for a compiled artefact is fine.** "The Windows VST3 is built and
   validated" describes a build. The ban is on "I built" when the author made
   something.
@@ -163,17 +163,17 @@ words.
 
 ## Edit safety
 
-Before editing a file in place, check that it is prose. Refuse source code,
+Before editing a file in place, check that it is prose, and refuse source code,
 configuration, and structured data. Extensions such as `.py`, `.js`, `.ts`, `.go`,
-`.rs`, `.c`, `.h`, `.json`, `.yaml`, `.yml`, `.toml`, `.csv`, and `.lock` are out.
-Markdown, plain text, and prose documents are fine.
+`.rs`, `.c`, `.h`, `.json`, `.yaml`, `.yml`, `.toml`, `.csv`, and `.lock` are out,
+whilst Markdown, plain text, and prose documents are fine.
 
-Preserve the author's existing voice. Make targeted edits. Re-read the file after
+Preserve the author's existing voice with targeted edits, then re-read the file after
 the edit and check the facts.
 
 ## Honest limits
 
-A pattern count is a signal, not a verdict. A model grading its own output inflates
-the result. The real gate is a reader who knows the author, or a second pass with
-the voice method. Short samples are unreliable. Do not claim a text is AI-generated
-from a single tell.
+A pattern count is a signal rather than a verdict, because a model grading its own
+output inflates the result. The real gate is a reader who knows the author, or a
+second pass with the voice method. Short samples are unreliable, so don't claim a
+text is AI-generated from a single tell.

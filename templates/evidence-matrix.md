@@ -2,7 +2,7 @@
 
 > Copy this into the project, attach the exact commands and artefacts, and
 > validate it with `umetate evidence`. A lower layer never proves a higher one,
-> and `blocked` or `not-run` is not a pass.
+> and a `blocked` or `not-run` row counts as unfinished work rather than a pass.
 
 | Layer | Status | Evidence | Notes |
 | --- | --- | --- | --- |

@@ -6,9 +6,9 @@ Each voice starts with an `@` line and carries five parameter lines. The parser 
 the blocks in file order, and the `@` number names the slot.
 
 Two other formats use the same extension. This page covers the text patch bank that
-VOPM and VOPMex import. The other formats are at the end. The companion page,
-[Mapping OPM voices to Type P.fm1](opm-to-type-p-fm1.md), covers a conversion to
-Type P.fm1.
+VOPM and VOPMex import, and the other formats are at the end, whilst the companion
+page, [Mapping OPM voices to Type P.fm1](opm-to-type-p-fm1.md), covers a conversion
+to Type P.fm1.
 
 ## File shape
 
@@ -37,8 +37,8 @@ C2: 31 0 0 15 0 0 0 1 0 0 0
 The example uses algorithm 0, so C2 is the carrier and the other three operators
 sit at their quietest level. The patch is a sine at the played note.
 
-Values are decimal integers, spaces and tabs both separate fields, and blank lines
-are ignored. `//` starts a comment that runs to the end of the line. Write ASCII
+Values are decimal integers, spaces and tabs both separate fields, blank lines
+are ignored, and `//` starts a comment that runs to the end of the line. Write ASCII
 without a byte-order mark. Line endings can be LF or CRLF, though older VOPM builds
 are happier with LF.
 
@@ -84,7 +84,7 @@ algorithm, the LFO sensitivities, the key-on mask, and noise.
 | `NE` | 0 or 1 | Noise enable. 1 replaces C2's sine with the noise generator. |
 
 `PAN` trips up writers. The file stores the two register bits in bits 6 and 7, so
-the usual values are 0, 64, 128, and 192. 192 enables both outputs. VOPM's editor
+the usual values are 0, 64, 128, and 192, where 192 enables both outputs. VOPM's editor
 treats 64 as its centre setting, and the exact left and right mapping varies
 between players and converters, so test a pan setting in the target before you rely
 on it.
@@ -112,8 +112,8 @@ the file order is M1, C1, M2, C2.
 | `AME` | 0 or 1 | `0xA0` bit 7 | Amplitude modulation enable for the operator. |
 
 The register bits in the table are offsets from the operator group base, and the
-group bases are below. `AME` is the field that some tables call `AMS-EN`. VOPM and
-VOPMex write 0 or 1, but a table that shows 128 is showing the register bit rather
+group bases are below. `AME` is the field that some tables call `AMS-EN`. VOPM
+and VOPMex write 0 or 1, but a table that shows 128 is showing the register bit rather
 than the file value, so treat any nonzero `AME` as enabled.
 
 `DT2` is not a cents offset. The chip multiplies the operator frequency by 1, √2,
@@ -160,7 +160,7 @@ the file order and the chip order differ:
 
 The file order is M1, C1, M2, C2. The chip order is M1, M2, C1, C2. If you write the
 file's C1 line at offset `0x08`, you have written M2, which swaps a carrier with a
-modulator. It is the most common conversion bug, and muting one operator at a time
+modulator, and it is the most common conversion bug, so muting one operator at a time
 is a quick way to find it.
 
 ## Compatibility notes
@@ -168,33 +168,33 @@ is a quick way to find it.
 VOPMex 2021.05.01 fixed loading CR+LF files. Older VOPM builds may reject them, so
 LF is the safer line ending when a file has to load everywhere.
 
-The file has no magic number and no version field. A text patch bank starts with
-`//` or `@:`, and a binary file with the same extension is a different format.
+The file has no magic number and no version field. A text patch bank starts with `//`
+or `@:`, and a binary file with the same extension is a different format.
 
 VOPM and VOPMex banks use slots 0 to 127. A parser may accept a larger `@` number,
 but the editor will not show it, and writer tools often pad a bank to 128 slots with
 placeholder voices.
 
-`AME` is normally 0 or 1. Treat any nonzero value as enabled. `PAN` uses the top two
-bits, and 192 is the value that enables both outputs. Both fields are common sources
-of mismatch between converters.
+`AME` is normally 0 or 1, and any nonzero value counts as enabled. `PAN` uses the top
+two bits, and 192 is the value that enables both outputs, so both fields are common
+sources of mismatch between converters.
 
 The LFO line is per voice in the file, whilst on hardware the LFO is global, so only
-one voice's `LFRQ`, `AMD`, `PMD`, and `WF` are in force. VOPMex virtual mode can use a
-per-channel LFO. Noise is also global on hardware, whilst VOPMex virtual mode can
-give noise to more than one voice.
+one voice's `LFRQ`, `AMD`, `PMD`, and `WF` are in force, and VOPMex virtual mode can
+use a per-channel LFO. Noise is also global on hardware, whilst VOPMex virtual mode
+can give noise to more than one voice.
 
 ## Binary files with the same extension
 
 The text patch bank is one of three things that use `.opm`.
 
-The Otomata Labs OPM stream format starts with the four bytes `OPM\x1A`. It has a
+The Otomata Labs OPM stream format starts with the four bytes `OPM\x1A`, and it has a
 binary header with a version, chip type, clock rate, frame rate, stream count, and
 stream descriptors. It is a music and stream container rather than a YM2151 patch
 bank.
 
-OPMDRV `.opm` files are MML music data. They contain commands such as `(v...)`,
-`@N`, and `cdefgab`.
+OPMDRV `.opm` files are MML music data, with commands such as `(v...)`, `@N`, and
+`cdefgab`.
 
 A quick check: a file that starts with `//` or `@:` is the VOPM and VOPMex patch
 bank. A file that starts with `OPM\x1A` is the binary stream format. A file that

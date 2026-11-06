@@ -1,15 +1,15 @@
 # umetate roadmap
 
-This is the current map. The detailed design and the chronological log are stored in
-git at `9375ffe:docs/roadmap.md` and earlier, so this file can stay short.
+This is the current map, and the detailed design and the chronological log are stored
+in git at `9375ffe:docs/roadmap.md` and earlier, so this file can stay short.
 
 I use it to answer four things: what exists, what is settled, what is open, and
 what I don't want to reopen. Read §2 before you change code, §3 before you pick
 work, and §5 before you propose a change. §10 maps the old section numbers that
 still show up in code comments.
 
-This file stays at or under 500 lines. `python -m umetate.deep_check --roadmap`
-enforces that, and `AGENTS.md` carries the compaction procedure.
+This file stays at or under 500 lines, and `python -m umetate.deep_check --roadmap`
+enforces that limit. `AGENTS.md` carries the compaction procedure.
 
 ## 1. Baseline
 
@@ -27,7 +27,7 @@ enforces that, and `AGENTS.md` carries the compaction procedure.
 
 The framework has moved past `31ecc64` with the design interview, the voice profile,
 and the docs rewrite. The release workflow now owns the plugin archives, so the
-hashes come from the GitHub build. A new release is only needed when the binaries
+hashes come from the GitHub build, and a new release is only needed when the binaries
 change.
 
 ## 2. Settled decisions
@@ -78,7 +78,7 @@ evidence.
 
 ## 3. Current work
 
-The pyright gate is green now. I'd take the rest in this order.
+The pyright gate is green now, so I'd take the rest in this order.
 
 | # | Work | Done when | Status |
 | --- | --- | --- | --- |
@@ -145,31 +145,31 @@ One table for the pieces I need to find quickly.
 ### Phase 0, Governance & skeleton (P0), **done**
 ### Phase 1, Docker image + volume (P1), **done**
 ### Phase 2, RIB runtime + generator (P2), **done (host + target), blocked (device)**
-**P2-2, Dual-core bring-up.**, **done (source/host/target), blocked (device)**, the core-1 probe and CPU0 fallback are in. Device acceptance waits on hardware.
-**P2-3, Hardware acceleration HAL.**, **done (source/host/target), blocked (device)**, the HAL and fallback are in. Hardware parity waits on a device.
+**P2-2, Dual-core bring-up.**, **done (source/host/target), blocked (device)**, the core-1 probe and CPU0 fallback are in, and device acceptance waits on hardware.
+**P2-3, Hardware acceleration HAL.**, **done (source/host/target), blocked (device)**, the HAL and fallback are in, and hardware parity waits on a device.
 **P2-4, FPU opt-in (`--dsp float`).**, **blocked**, the flag is accepted, the DSP path is not wired, and target parity waits on a device.
-**P2-5, Clock profiles (240/320).**, **done (CLI), blocked (device)**, the setup and CLI are in. The soak waits on a device.
-**P2-6, SMK-37 board layer.**, **done (builds), blocked (device)**, the board layer builds. Device acceptance waits on hardware.
-**P2-7, Recovery and safety in firmware.**, **done (host), blocked (device)**, the host tests and gates are in. The device check waits on hardware.
+**P2-5, Clock profiles (240/320).**, **done (CLI), blocked (device)**, the setup and CLI are in, and the soak waits on a device.
+**P2-6, SMK-37 board layer.**, **done (builds), blocked (device)**, the board layer builds, and device acceptance waits on hardware.
+**P2-7, Recovery and safety in firmware.**, **done (host), blocked (device)**, the host tests and gates are in, and the device check waits on hardware.
 ### Phase 3, CLI (P3), **done (host/browser/target), blocked (device)**
-**P3-4, Flash and debrick.**, **done (host), blocked (device)**, the gates and wrong-model exit 6 are in. The real-device pass waits on hardware.
+**P3-4, Flash and debrick.**, **done (host), blocked (device)**, the gates and wrong-model exit 6 are in, and the real-device pass waits on hardware.
 ### Phase 4, Web lab and emulator (P4), **done**
 ### Phase 5, Skills (P5), **done**
 ### Phase 6, Tutorial and start guide (P6), **done**
 ### Phase 7, Release and provenance (P7), **done (Linux and Windows), blocked (device)**
 **P7-1, Baseline tag and provenance.**, **done**, `provenance/` and the baseline tag are in.
 ### Phase 8, Post-release (P8), **done (Linux/Windows/docs), open (macOS/AU)**
-**P8-1, Type P.fm1 1.0.2.**, **done (Linux x86_64, Linux aarch64, Windows x86_64)**, the firmware and plugin archives are published on the `v1.0.2` GitHub Release. macOS/AU remains open.
+**P8-1, Type P.fm1 1.0.2.**, **done (Linux x86_64, Linux aarch64, Windows x86_64)**, the firmware and plugin archives are published on the `v1.0.2` GitHub Release, and macOS/AU remains open.
 **P8-2, Documentation voice pass.**, **done**, tutorial, DSP study, Type P.fm1 docs, templates, and the voice profile are current.
 **P8-3, Pyright gate.**, **done**, the 14 errors in `interview.py`, `publish.py`, and `test_cli.py` are fixed.
-**P8-4, Windows plugin archives.**, **done**, the release workflow builds the Windows x86_64 VST3 and CLAP archives and attaches them to `v1.0.2`. Signing remains under P8-7.
+**P8-4, Windows plugin archives.**, **done**, the release workflow builds the Windows x86_64 VST3 and CLAP archives and attaches them to `v1.0.2`, and signing remains under P8-7.
 **P8-5, macOS build and AU.**, **blocked**, no macOS host.
 **P8-6, Physical device acceptance.**, **blocked**, no hardware.
 **P8-7, Signed installers.**, **open**, no signing identity.
 **P8-8, Vendored JUCE archive.**, **open**, the source asset excludes `vendor/deps`, so the vendored JUCE source still needs a release asset or an explicit source offer.
 **P8-9, Usability test.**, **open**, optional, a player who did not design the panel.
 **P8-10, Panel fixes.**, **done**, the PERFORMANCE page, TUNE on MONO STACK, per-operator A-ENVS graphs, and the INIT PATCH confirmation are in.
-**P8-11, Humanizer skill.**, **done**, the voice method and the project voice data are folded into `skills/umetate-humanizer/`. The local `.agents` copy is removed.
+**P8-11, Humanizer skill.**, **done**, the voice method and the project voice data are folded into `skills/umetate-humanizer/`, and the local `.agents` copy is removed.
 **P8-12, Web app interface.**, **done**, the browser app uses the plugin interface language, self-hosted OFL fonts, the design tokens, the 240 by 240 screen at 1:1 on a wide desktop, and a help panel with a single `controls` section and `links`. The `what this is` section is gone.
 **P8-13, Wordmark.**, **done**, the wordmark is `type P.fm1` in Zen Dots across the web app, the mockup, and the plugin. The brand font is unused.
 
@@ -204,8 +204,8 @@ One table for the pieces I need to find quickly.
 
 ## 10. Old section numbers still cited in code
 
-The detailed design is in git at `9375ffe:docs/roadmap.md`. Code comments still cite
-these old section numbers, so this table is the bridge.
+The detailed design is in git at `9375ffe:docs/roadmap.md`, and code comments still
+cite these old section numbers, so this table is the bridge.
 
 | Old | Use now |
 | --- | --- |

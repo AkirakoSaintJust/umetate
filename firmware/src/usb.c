@@ -40,7 +40,7 @@ enum { S_FADDR = 0, S_POWER = 1, S_INTRTX1 = 2, S_INTRTX2 = 3, S_INTRRX1 = 4, S_
        S_COUNT0 = 22, S_RXCOUNT1 = 22, S_RXCOUNT2 = 23 };
 
 /* Full-speed bulk/interrupt endpoints carry at most 64 bytes. Every buffer, descriptor field and SIE MAXP
- * register below derives from these bounds, do not reintroduce a bare 64 or 0xFF in an endpoint path. */
+ * register below derives from those bounds, so do not reintroduce a bare 64 or 0xFF in an endpoint path. */
 #define USB_EP_MAXPACKET 64u
 #define USB_EP2_MAXPACKET 8u
 
@@ -255,11 +255,11 @@ static const uint8_t CFG_DESC[] = {
 typedef char cfg_len_ok[sizeof CFG_DESC == CFG_LEN ? 1 : -1];
 #if FELUCCA_CDC
 /* SLOOP 2.4, after Felucca 1.0.3 (#67): menu USB SERIAL. ON presents the serial console as before (the
- * descriptors above, byte for byte), OFF, the default, presents the device as a FELUCCA_CDC=0 build does: class 0,
- * no IAD, audio + MIDI only (the same bytes: tests/uac_test.c compares them). With the console, macOS 13-15 let
- * Apple's CDC composite driver take the device and the USB audio input never appears. The console is a developer
- * tool; the editor, the installer and the soft key use USB-MIDI. Read once, before usb_start (main.c: the settings
- * are loaded first), so the host sees one device from the start */
+ * descriptors above, byte for byte), whilst OFF, the default, presents the device as a FELUCCA_CDC=0 build
+ * does. That means class 0, no IAD, audio + MIDI only (the same bytes: tests/uac_test.c compares them). With the
+ * console, macOS 13-15 let Apple's CDC composite driver take the device, so the USB audio input never
+ * appears. The console is a developer tool, and the editor, the installer and the soft key use USB-MIDI.
+ * Read it once, before usb_start (main.c loads the settings first). The host then sees one device from the start */
 static uint8_t usb_cdc_on;
 static const uint8_t DEV_DESC_PLAIN[18] = {18, 1, 0x10, 0x01, 0, 0, 0, 64, 0x09, 0x12, 0x01, 0x00,
                                            0x00 + 0x10 * (FELUCCA_UAC + FELUCCA_UAC_48K), 0x03, 1, 2, 0, 1};
@@ -393,9 +393,9 @@ static void uac_stream(uint32_t alt)                    /* SET_INTERFACE, config
 #endif
 
 #if FELUCCA_UAC
-/* SET_CUR sampling frequency (any time: before or after SET_INTERFACE; a bus reset or a new configuration go
- * back to 44.1). 48 kHz when built with it and asked for (the nearer of the two), else 44.1. A change restarts
- * the stream: silence packets until the next render primes the ring at the new rate. */
+/* SET_CUR sampling frequency (any time: before or after SET_INTERFACE, and a bus reset or a new configuration
+ * go back to 44.1). 48 kHz when built with it and asked for (the nearer of the two), else 44.1. A change
+ * restarts the stream: silence packets until the next render primes the ring at the new rate. */
 static void uac_rate_set(uint32_t hz)
 {
     uint8_t r48 = (uint8_t)(FELUCCA_UAC_48K && hz >= (UAC_RATE + 48000u) / 2u);
@@ -782,8 +782,8 @@ static void midi_in_event(uint32_t pkt)
         usb.rx_bad++;
 }
 
-/* one EP1 OUT packet (<= 16 events) into the MIDI ring, or 0: fewer than 16 + 8 slots free, so the
- * packet stays (the host is NAKed) and is taken on a later poll: a burst from a DAW never drops a
+/* one EP1 OUT packet (<= 16 events) into the MIDI ring, or 0 when fewer than 16 + 8 slots are free, so the
+ * packet stays (the host is NAKed) and is taken on a later poll. A burst from a DAW never drops a
  * note-off (0.9 dropped what did not fit: hanging notes), and 8 slots stay for the TRS input, which
  * shares the ring and cannot wait. The update loader never drains the ring: no back-pressure there.
  * (After Felucca 1.0.) */
@@ -1100,7 +1100,7 @@ static __attribute__((noinline)) void uac_tap(const int32_t *out, uint32_t n)   
 }
 
 /* the next packet into d: 44 / 45 frames (+-1 to hold the ring's fill), from the ring or, until it is
- * primed, silence. An empty ring repeats the last frame. Returns the frame count. */
+ * primed, silence. An empty ring repeats the last frame, and the return value is the frame count. */
 static uint32_t uac_packet(uint32_t *d)
 {
     uint32_t n = 44u, r, fill, k, i, lo = UA_LO, hi = UA_HI;

@@ -82,7 +82,7 @@ _WEB_ASSETS = (
     ),
 )
 
-# the corresponding source: the project's declarative synth + app glue + the design
+# the corresponding source: the project's declarative synth, app glue, and design
 # specs. (The framework, umetate, is GPL-3.0 source in its own repo, linked in the
 # README.) The GPL requires the source to travel with the binary.
 _SRC_FILES = (
@@ -100,12 +100,12 @@ _SRC_FILES = (
 # the licence + attribution manifest, copied from the umetate root verbatim.
 _LICENCE_FILES = ("LICENSE", "LICENSING.md")
 
-# the framework source, snapshotted into the published repo as `framework/` so the
+# the framework source, snapshotted into the published repo as `framework/`, so the
 # corresponding source is self-contained (a user does not need the umetate repo to
 # rebuild the firmware). `git archive` lists only tracked files, so the gitignored
-# build artifacts and the generated-from-patch `firmware/gen/*.c` stay out, the
+# build artifacts and the generated-from-patch `firmware/gen/*.c` stay out. The
 # generator (`umetate/`) regenerates them from `src/patch.json`, and `_bundle_dsp`
-# additionally copies the already-generated DSP so the tree also compiles as-is.
+# additionally copies the already-generated DSP, so the tree also compiles as-is.
 _FRAMEWORK_PATHS = (
     "LICENSE",
     "LICENSING.md",
@@ -188,9 +188,9 @@ attribution.
 The `.fwsc` is the compiled firmware. Its corresponding source is the project
 files in [`src/`](src/) (the patch, the panel, and the app glue) and the complete
 umetate framework source in [`framework/`](framework/), also GPL-3.0, at
-<https://github.com/AkirakoSaintJust/umetate>. The generated DSP is more of an
+<https://github.com/AkirakoSaintJust/umetate>. The DSP output is closer to
 object code generated from the JSONs, but it's bundled at
-framework/firmware/gen/, so the tree builds as-is.
+`framework/firmware/gen/`, so the tree builds as-is.
 
 {plugin_source}
 """
@@ -215,8 +215,9 @@ for install steps and the licence note. The plugin source is in
 _DEPENDENCIES = """# Build dependencies
 
 The firmware and web app build from the tree in this repository. The optional
-plugin fetches two pinned upstream projects with CMake `FetchContent`. The pins
-are in `framework/plugin/juce/CMakeLists.txt`, which is the authority.
+plugin fetches two pinned upstream projects with CMake `FetchContent`, and the pins
+are in `framework/plugin/juce/CMakeLists.txt`, which is the only reference for
+them.
 
 - **JUCE** 8.0.9, AGPL-3.0-only or commercial.
   <https://github.com/juce-framework/JUCE>
@@ -315,8 +316,8 @@ def _gather(synth_dir: Path, name: str, cname: str, out: Path) -> list[str]:
 
 def _bundle_dsp(framework: Path, cname: str) -> bool:
     """Copy the already-generated DSP from `firmware/gen/` into the snapshot, so the
-    published tree compiles as-is (not only via the generator). Returns True when the
-    per-patch `<cname>_dsp.c` was found."""
+    published tree compiles as-is, rather than only through the generator. Returns
+    True when the per-patch `<cname>_dsp.c` was found."""
     src_dir = _ROOT / "firmware" / "gen"
     dest_dir = framework / "firmware" / "gen"
     dest_dir.mkdir(parents=True, exist_ok=True)
@@ -398,9 +399,9 @@ _NOTICE_FILES = (
 
 def _notices(licence_root: Path | None) -> list[Path]:
     """The notice files, looked up beside the published tree, in the working
-    directory (the release repo root), and in the framework checkout. The
-    release workflow stages archives into `dist/`, so the working directory is
-    where `third-party-licenses/` lives."""
+    directory (the release repo root), and in the framework checkout. The release
+    workflow stages archives into `dist/`, so `third-party-licenses/` is found from
+    the working directory."""
     roots = [root for root in (licence_root, Path.cwd(), _ROOT) if root is not None]
     found: dict[str, Path] = {}
     for name in _NOTICE_DOCS:

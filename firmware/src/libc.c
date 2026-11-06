@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-only
  * Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments */
 /* The few libc routines the compiler may call implicitly (struct copies,
- * zeroing). Freestanding: no other libc. */
+ * zeroing), from a freestanding build with no other libc. */
 void *memset(void *d, int c, unsigned n)
 {
     unsigned char *p = d;

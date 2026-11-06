@@ -2,7 +2,7 @@
 /* Copyright (C) 2026 P1Onken (umetate) */
 /* The device-side MIDI handler implementation (synth_midi.h). `midi_get` is the
  * platform's (provided by the includer: platform.c on device, a stub in tests).
- * The sustain state lives in the context, so two engines can run in one process. */
+ * The sustain state is held in the context, so two engines can run in one process. */
 #include "synth_midi.h"
 
 #ifdef UMETATE_MIDI_EXTERNAL

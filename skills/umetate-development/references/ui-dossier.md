@@ -1,51 +1,50 @@
 # UI dossier: what to study and what to take
 
-This is a casebook. For each reference, read the instrument or the article,
-name the lesson, and decide whether it applies. Do not copy a look. Copy a decision
-that made the instrument easier to play.
+This is a casebook: for each reference, read the instrument or the article, name the
+lesson, and decide whether it applies. A look is not worth copying, but a decision
+that made the instrument easier to play is.
 
-The method is in `ui-design.md`. The exact Type P.fm1 language is in
+The method is in `ui-design.md`, and the exact Type P.fm1 language is in
 `design/README.md`.
 
 ## Hardware and firmware
 
 ### Direct panels: the state is the interface
 
-**Roland TR-808.** Nearly every control is one function, and the panel state is
-the machine state. The dadamachines analysis calls it near-perfect WYSIWYG. The
-lesson is not "make a drum machine". It is that a visible state is a trustworthy
-state, and a simple surface can be fast because there is nothing to remember.
-The caution is that there is no undo. Modern instruments can keep the directness
-and add a safety net.
+**Roland TR-808.** Nearly every control is one function, and the panel state is the
+machine state, so the dadamachines analysis calls the instrument near-perfect
+WYSIWYG. The lesson is that a visible state is a trustworthy state, and that a simple
+surface can be fast because there is nothing to remember. That is the point, rather
+than a call to make a drum machine. The caution is that there is no undo. Modern
+instruments can keep the directness and add a safety net.
 
 **Erica Synths Pērkons HD-01.** The same analysis praises its "one knob, not more
-than two functions" approach and its near-zero mental tax. This is the strongest
-argument against feature packing. If a knob needs a paragraph, the paragraph is
-the design smell. The caution is that patterns and kits need a deliberate save,
-and an accidental loss is unrecoverable.
+than two functions" approach and its near-zero mental tax, which is the strongest
+argument against feature packing. If a knob needs a paragraph, the paragraph is the
+design smell. The caution is that patterns and kits need a deliberate save. An
+accidental loss is unrecoverable.
 
 **Make Noise 0-Coast and Hologram Microcosm.** No screen, few controls, a clear
-signal path or a clear set of modes. The panel is the manual. The lesson is that
-a small instrument can be deep when every control has a stable meaning. The
-caution is documentation. A hidden interaction needs a card, a manual, or a
-cheat sheet.
+signal path or a clear set of modes, so the panel is the manual. The lesson is that a
+small instrument can be deep when every control has a stable meaning. The caution is
+documentation. A hidden interaction needs a card, a manual, or a cheat sheet.
 
 ### Page-based screens
 
 **Elektron Digitakt II and Digitone.** A row of encoders under the screen, one
 page per function, and consistent navigation. The screen labels the encoders, so
 the same hardware control can do many jobs without ambiguity. The lesson is the
-page-slot model, used consistently. The caution is the multi-key chord and the
-deep menu. The dadamachines analysis rates Elektron high on capability and high
+page-slot model, used consistently. The caution is the multi-key chord and the deep
+menu. The dadamachines analysis rates Elektron high on capability and high
 on recall.
 
 **Elektron Octatrack.** The cautionary version of the same idea. It is powerful
-and loved by experts, but the mental load and the menu choreography are high. A
-new player needs a manual and a cheat sheet. The lesson is that depth has a
-cost, and the cost is paid by the first month, not the first minute.
+and loved by experts, but the mental load and the menu choreography are high, so a new
+player needs a manual and a cheat sheet. The lesson is that depth has a
+cost. The cost is paid by the first month, not the first minute.
 
 **Dirtywave M8 and Polyend Tracker.** A small screen, eight buttons, and a
-tracker grid. The mental model is strong and consistent, so expert users move
+tracker grid, and the mental model is strong and consistent, so expert users move
 fast. The lesson is that a dense, consistent model can beat a larger screen. The
 caution is the learning curve and the reliance on memorised shortcuts. If you
 choose this path, invest in the first-run experience.
@@ -80,8 +79,8 @@ the most useful design interview in the dossier. Gillet's rules:
   function comes from one underlying principle.
 
 **Mutable Instruments Braids and Clouds, by Gillet's own account.** She calls
-Braids a mistake and Clouds a mistake in this interview, not because they sound
-bad, but because they became collections of features and hidden settings. This is
+Braids a mistake and Clouds a mistake in this interview, because they became
+collections of features and hidden settings rather than because they sound bad. This is
 the best cautionary tale from a designer who shipped the popular version. A
 feature that cannot be reached, named, and understood from the panel is a
 liability.
@@ -91,7 +90,7 @@ liability.
 **Moog One.** The design team's stated principles are familiar flow, flat
 interface hierarchy, and synth panel focus. The "More" panel holds the advanced
 parameters in a flat list, while the performance controls stay on the surface.
-The lesson is progressive disclosure with a stable top layer. Do not hide the
+The lesson is progressive disclosure with a stable top layer. Don't hide the
 performance controls to make room for the advanced ones.
 
 **ASM Hydrasynth, Novation Peak, Arturia MicroFreak, Sequential Prophet-6.**
@@ -109,14 +108,13 @@ parameter name.
 
 **Teenage Engineering OP-1.** A strong identity, a constrained surface, and a
 colour-coded screen that maps to the physical controls. The lesson is that
-constraint and identity can make an instrument memorable. The caution is
-learnability. A distinctive interface still has to explain itself, and the
+constraint and identity can make an instrument memorable, whilst the caution is
+learnability, because a distinctive interface still has to explain itself and the
 colour coding must be more than decoration.
 
 **Any panel with hidden modes.** If the same knob does three things and the
-screen does not say which one is live, the player will change an unseen value.
-This is the most common firmware UI bug. Make the mode visible, or do not use
-the mode.
+screen does not say which one is live, the player will change an unseen value, which
+is the most common firmware UI bug. Make the mode visible, or do not use the mode.
 
 ## DAW plugins
 
@@ -124,12 +122,13 @@ the mode.
 
 **FabFilter Pro-Q.** The EQ curve is the control. Drag a band on the spectrum,
 see the result, and stay on one screen. The lesson is direct manipulation of the
-representation, not a form of numbers beside it. The consistent band colours and
-the lack of modal dialogs keep the flow.
+representation rather than a form of numbers beside it. The consistent band
+colours and the lack of modal dialogs keep the flow.
 
 **iZotope Ozone.** Real-time visual feedback and an assisted workflow. The lesson
 is to show the result of a change. The caution is that an assistant can hide the
-model. A player who does not know what the assistant did cannot reproduce it.
+model. A player who does not know what the assistant did cannot reproduce
+it.
 
 ### Minimal surfaces
 
@@ -143,8 +142,8 @@ complex instrument when the modules are visually grouped and the signal path is
 stable.
 
 **u-he Zebra.** A modular synth with a stable grid and a visible routing model.
-The lesson is that modularity needs a persistent spatial model. If the modules
-move, the player cannot build muscle memory.
+The lesson is that modularity needs a persistent spatial model, because if the
+modules move, the player cannot build muscle memory.
 
 ### Visual modulation
 
@@ -153,13 +152,13 @@ waveform. The lesson is to show the source, the destination, and the result in
 the same gesture.
 
 **Vital.** Drag-and-drop modulation with a preview before the drop, colour-coded
-sources, and a visible modulation depth. The lesson is to preview the connection
-before the commit. The player should not have to undo to find out what a drop
-does.
+sources, and a visible modulation depth, because the player should not have to undo
+to find out what a drop does. The lesson is to preview the connection before the
+commit.
 
 **Arturia Pigments.** Colour-coded modulation sources, visible connections, and a
-play view. The lesson is one colour per source, used everywhere. The caution is
-that colour alone cannot carry the meaning. Pair it with a label, a shape, or a
+play view. The lesson is one colour per source, used everywhere. The caution is that
+colour alone cannot carry the meaning. Pair it with a label, a shape, or a
 line.
 
 ### Host-native and cautionary
@@ -170,7 +169,7 @@ scaling, focus, or automation model feels broken even when it sounds good.
 
 **Kilohearts Phase Plant and similar modular plugins.** Very powerful and very
 dense. The lesson is that power needs progressive disclosure. A first screen full
-of empty slots is not an invitation, it is a questionnaire.
+of empty slots is a questionnaire rather than an invitation.
 
 **Skeuomorphic plugins with small text.** Texture and character are fine. A
 wood-grain panel with 9 pixel labels is not. The lesson is that the metaphor
@@ -188,7 +187,7 @@ do. Signifiers are what tells you it can do it. Mapping is the relation between 
 control and its effect. Feedback tells you what happened. A conceptual model is
 the story the user tells themselves about the system. Design for error, because
 people will make slips and mistakes. In a synth, the knob is the affordance, the
-label is the signifier, and the screen is the feedback. If the screen lags, the
+label is the signifier, and the screen is the feedback, so if the screen lags, the
 model breaks.
 
 **Jakob Nielsen, 10 usability heuristics.** Visibility of system status, match
@@ -198,24 +197,25 @@ design, error recovery, and help. The heuristics are a review method, not a
 recipe. Use them to find problems, then test with a player.
 
 **Dieter Rams, ten principles for good design.** Useful, understandable,
-unobtrusive, honest, long-lasting, thorough, and as little design as possible.
-"Less, but better" is the relevant one for a panel. The instrument should not
-shout. It should be a tool for the player's expression.
+unobtrusive, honest, long-lasting, thorough, and as little design as possible, and
+"less, but better" is the relevant one for a panel. The instrument should not
+shout, and it should be a tool for the player's expression.
 
-**The laws of UX.** Fitts's law says large, close targets are faster. Hick's law
-says more choices take longer. Miller's law says working memory is small. Jakob's
+**The laws of UX.** Fitts's law says large, close targets are faster, Hick's law
+says more choices take longer, and Miller's law says working memory is small. Jakob's
 law says players expect your instrument to behave like the ones they already
 know. The Gestalt principles of proximity, common region, and similarity explain
-why grouping works. Use them to structure the panel, not to decorate it.
+why grouping works, so use them to structure the panel rather than to decorate it.
 
 **WCAG contrast.** Normal text needs 4.5:1, large text needs 3:1, and graphical
-objects and interface components need 3:1. These are floors, not targets. A dark
-synth panel with dim grey labels often fails. Check the actual token pairs.
+objects and interface components need 3:1. These are floors rather than targets,
+because a dark synth panel with dim grey labels often fails. Check the actual token
+pairs.
 
 **Edward Tufte.** The data-ink ratio says most of the ink should carry data.
-Chartjunk is decoration that competes with the data. Small multiples compare
-many series on the same scale. A scope and a spectrogram are data displays. The
-grid, the axes, and the glow should earn their pixels.
+Chartjunk is decoration that competes with the data. Small multiples compare many
+series on the same scale. A scope and a spectrogram are data displays, so the grid,
+the axes, and the glow should earn their pixels.
 
 **Refactoring UI.** Visual hierarchy is not document hierarchy. Use fewer
 borders. Start with too much space, then remove it. Build a spacing and type

@@ -3,9 +3,9 @@
 """`umetate flash`: write a `.fwsc` to a device over USB-MIDI (docs §6.1 and §8).
 
 It wraps the inherited `firmware/tools/fm1_install.py`, a strangler-fig
-arrangement rather than a rewrite. The command is gated. `--device` is required,
-the package is verified before any MIDI, and the installer's own confirmation
-still applies. A wrong model exits 6.
+arrangement rather than a rewrite. The command is gated, so `--device` is required,
+the package is verified before any MIDI, and the installer's own confirmation still
+applies. A wrong model exits 6.
 """
 
 from __future__ import annotations

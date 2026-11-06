@@ -11,43 +11,43 @@
 
 - **Board / revision:** FM-1 (`--board fm1`).
 - **Controls and their kinds:** 27 keys (momentary note, F3–G5). `MASTER` is a
-  smooth analogue pot (volume, platform-owned, never a page slot). `SELECT`,
-  `ALGORITHM`, `PRESETS`, `KNOB1–4` are detented encoders. `OCT− OCT+ FX SEL ENV
-  LFO EDIT GLO HOME SAVE ARP SEQ PLAY REC` are momentary buttons.
-- **Knob kinds:** dedicated (`ALGORITHM`, `PRESETS`) and page-slot (`KNOB1–4`).
-  `MASTER` is volume.
+  smooth analogue pot (volume, platform-owned, never a page slot), whilst `SELECT`,
+  `ALGORITHM`, `PRESETS` and `KNOB1–4` are detented encoders and `OCT− OCT+ FX SEL
+  ENV LFO EDIT GLO HOME SAVE ARP SEQ PLAY REC` are momentary buttons.
+- **Knob kinds:** dedicated (`ALGORITHM`, `PRESETS`) and page-slot (`KNOB1–4`),
+  and `MASTER` is volume.
 - **Silkscreen labels:** `ALGORITHM`, `PRESETS`, `ENV`, `LFO`, `FX`, `GLO`,
   `EDIT`, `HOME`, `SAVE`, `SEL`, `OCT−/OCT+`. The firmware means what they say.
-- **Display / fonts / LEDs available:** 240×240 LCD. The widget set includes
-  `label`, `value`, `bar`, `param_row`, `param_column`, `list`, `grid`, `op_row`,
-  `part_row`, `envelope`, `genv`, `scope`, `spectro`, `algo`, `name`, `status`,
-  and `custom`. Per-key and per-button LEDs.
-- **Controls explicitly unmapped:** none. `ARP/SEQ/PLAY/REC` mute operators, and
-  with `SEL` they mute parts. `PRESETS` opens the browser. `SAVE` opens the save
-  chooser. `ENV` and `LFO` open their own contexts.
+- **Display / fonts / LEDs available:** a 240×240 LCD, with a widget set that
+  includes `label`, `value`, `bar`, `param_row`, `param_column`, `list`, `grid`,
+  `op_row`, `part_row`, `envelope`, `genv`, `scope`, `spectro`, `algo`, `name`,
+  `status`, and `custom`, plus per-key and per-button LEDs.
+- **Controls explicitly unmapped:** none. `ARP/SEQ/PLAY/REC` mute operators and, with
+  `SEL`, mute parts, whilst `PRESETS` opens the browser, `SAVE` opens the save
+  chooser, and `ENV` and `LFO` open their own contexts.
 - **Firmware-level controls:** `OCT−`/`OCT+` shift the keybed base note a whole
-  octave (`app_oct`, clamped ±2) in `app.c`. `MASTER` is platform volume.
+  octave (`app_oct`, clamped ±2) in `app.c`, whilst `MASTER` is platform volume.
 
 ## 2. Player model
 
-- **Performance gesture:** one hand on the keys, one on the `ALGORITHM` encoder.
-  The four page knobs belong to the page you open.
+- **Performance gesture:** one hand on the keys and one on the `ALGORITHM` encoder,
+  with the four page knobs belonging to the page you open.
 - **Menu depth tolerance:** six sibling contexts (`home`, `edit`, `env`, `lfo`,
-  `fx`, `glo`). The stack is `[home, mode]`, depth 2.
-- **Keys as shortcuts:** `SEL` + key mutes the active operator. The keybed does
+  `fx`, `glo`), so the stack is `[home, mode]`, depth 2.
+- **Keys as shortcuts:** `SEL` + key mutes the active operator, and the keybed does
   not double as a menu surface.
-- **What must stay playable during any interaction:** held notes. Redraw is
+- **What must stay playable during any interaction:** held notes, so redraw is
   rate-bounded and never runs in the audio callback.
 
 ## 3. Navigation
 
-- **Context buttons:** `HOME`, `EDIT`, `ENV`, `LFO`, `FX`, `GLO`. A button opens
-  its context at page 0. Pressing the same button again advances to the next page,
-  wrapping. `SELECT` moves forward and back through the current context.
-- **HOME:** pops back to the home context. Pressing `HOME` while already home
+- **Context buttons:** `HOME`, `EDIT`, `ENV`, `LFO`, `FX` and `GLO`. A button opens
+  its context at page 0, pressing the same button again advances to the next page with
+  wrapping, and `SELECT` moves forward and back through the current context.
+- **HOME:** pops back to the home context, and pressing `HOME` while already home
   advances to the next home page.
-- **Page knobs:** `KNOB1–4` edit the page's parameter rows from top to bottom. A
-  page with fewer than four rows leaves the extra knobs idle. Display pages have
+- **Page knobs:** `KNOB1–4` edit the page's parameter rows from top to bottom, so a
+  page with fewer than four rows leaves the extra knobs idle, and display pages have
   no assignments.
 - **Modifier chords:**
 
@@ -66,10 +66,10 @@
 
 ### `home`
 
-Display and performance context. Nine pages. It opens on `PERFORMANCE`, the live
-page with cutoff, resonance, wavefolder amount, and operator 1 feedback. The other
-eight pages are displays, and the four page knobs have no assignments there. The
-`ALGORITHM` encoder edits the active part's algorithm and shows the graph popup.
+Display and performance context, nine pages. It opens on `PERFORMANCE`, the live
+page with cutoff, resonance, wavefolder amount, and operator 1 feedback, whilst the
+other eight pages are displays, and the four page knobs have no assignments there.
+The `ALGORITHM` encoder edits the active part's algorithm and shows the graph popup.
 
 | Page | Contents |
 | --- | --- |
@@ -85,7 +85,7 @@ eight pages are displays, and the four page knobs have no assignments there. The
 
 ### `edit`
 
-Operator editor. Four pages, operator-relative except `OP DETUNES`.
+Operator editor, four pages, operator-relative except `OP DETUNES`.
 
 | Page | KNOB 1 | KNOB 2 | KNOB 3 | KNOB 4 | Screen |
 | --- | --- | --- | --- | --- | --- |
@@ -96,7 +96,7 @@ Operator editor. Four pages, operator-relative except `OP DETUNES`.
 
 ### `env`
 
-Envelope context. Six pages. A-ENV follows the selected operator. P-ENV is
+Envelope context, six pages, where A-ENV follows the selected operator and P-ENV is
 part-level.
 
 | Page | KNOB 1 | KNOB 2 | KNOB 3 | KNOB 4 | Screen |
@@ -110,7 +110,7 @@ part-level.
 
 ### `lfo`
 
-Two pages. `A-LFO` follows the selected operator. `P-LFO` is part-level.
+Two pages, where `A-LFO` follows the selected operator and `P-LFO` is part-level.
 
 | Page | KNOB 1 | KNOB 2 | KNOB 3 | KNOB 4 | Screen |
 | --- | --- | --- | --- | --- | --- |
@@ -119,8 +119,8 @@ Two pages. `A-LFO` follows the selected operator. `P-LFO` is part-level.
 
 ### `fx`
 
-Output chain. Eight pages. Signal order is filter 1 → wavefolder → filter 2.
-Filter 1 has the F-ENV. Filter 2 is static.
+Output chain, eight pages, where the signal order is filter 1 → wavefolder →
+filter 2. Filter 1 has the F-ENV, and filter 2 is static.
 
 | Page | KNOB 1 | KNOB 2 | KNOB 3 | KNOB 4 | Screen |
 | --- | --- | --- | --- | --- | --- |
@@ -153,22 +153,21 @@ Setup and global context. Ten pages.
 ## 5. Flows
 
 - **Save:** `SAVE` opens the chooser. `KNOB1` toggles single part or multi-patch,
-  `KNOB2` scrolls the slot, `SAVE` commits, `HOME` cancels. A single part then
-  opens the part chooser. A multi-patch then opens the mode chooser (`discard
-  edits`, `save as new part`, `mutate in place`). The bank write waits for
-  silence.
-- **Load:** `PRESETS` opens the multi-patch browser outside GLO and the
-  single-part browser in GLO. The popup shows the slot and name. Two seconds of
-  idle applies it. A single-part load opens the part chooser first.
-- **Init:** `SEL+SAVE` outside GLO opens a confirmation popup. SAVE resets the
-  whole patch, mutes part 2, and resets the names. HOME cancels. In GLO it opens
+  `KNOB2` scrolls the slot, `SAVE` commits, `HOME` cancels, a single part then opens
+  the part chooser, a multi-patch then opens the mode chooser (`discard edits`, `save
+  as new part`, `mutate in place`), and the bank write waits for silence.
+- **Load:** `PRESETS` opens the multi-patch browser outside GLO and the single-part
+  browser in GLO. The popup shows the slot and name, two seconds of idle applies it,
+  and a single-part load opens the part chooser first.
+- **Init:** `SEL+SAVE` outside GLO opens a confirmation popup, where SAVE resets the
+  whole patch, mutes part 2, and resets the names, and HOME cancels. In GLO it opens
   the part chooser to initialise one part.
-- **Copy:** `SEL+EDIT` on a page with copyable params. Part pages copy to another
-  part. Operator pages copy to another part and operator. `KNOB1` picks the
-  target, `SAVE` applies, `HOME` cancels.
-- **Names:** from `GLO/NAMES`, the matching knob opens the editor. `K1` changes
+- **Copy:** `SEL+EDIT` on a page with copyable params, where part pages copy to
+  another part, operator pages copy to another part and operator, `KNOB1` picks the
+  target, `SAVE` applies, and `HOME` cancels.
+- **Names:** from `GLO/NAMES`, the matching knob opens the editor, where `K1` changes
   the character, `K2` moves the cursor, `SEL` deletes, `SAVE` accepts, `HOME`
-  cancels. An idle close restores the old name.
+  cancels, and an idle close restores the old name.
 
 ## 6. LED / pad feedback
 
@@ -185,9 +184,9 @@ Setup and global context. Ten pages.
 
 ## 8. Control flow
 
-- **Context transitions:** boot → `home`. `EDIT`, `ENV`, `LFO`, `FX`, and `GLO`
-  are siblings. A switch pops back to home and pushes the new context. Pressing
-  the same context button again advances its page.
+- **Context transitions:** boot → `home`, where `EDIT`, `ENV`, `LFO`, `FX`, and
+  `GLO` are siblings, a switch pops back to home and pushes the new context, and
+  pressing the same context button again advances its page.
 - **Full context stack, worst case:** `[home, mode]`, depth 2.
 - **Selected operator:** a flat 0..3 counter (`op_next`), shared across contexts.
 - **Selected part:** a flat 0..1 counter (`part_next`), shared across contexts.
@@ -195,9 +194,9 @@ Setup and global context. Ten pages.
 
 ## 9. Open problems
 
-None after the panel fixes. The live page, the TUNE assignment, the per-operator
-envelope graphs, and the INIT PATCH confirmation all match `panel.json` and the
-app handlers.
+None after the panel fixes, because the live page, the TUNE assignment, the
+per-operator envelope graphs, and the INIT PATCH confirmation all match `panel.json`
+and the app handlers.
 
 ## 10. Acceptance
 

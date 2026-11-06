@@ -1,8 +1,8 @@
 """Generate the C++ parameter table from firmware/gen/params.json.
 
-The manifest is the source of truth. This keeps the JUCE APVTS, the engine ids
-and the editor names in one place. The APVTS key is the stable manifest name.
-The engine id is the manifest index.
+The manifest is the only reference. This keeps the JUCE APVTS, the engine ids
+and the editor names in one place, because the APVTS key is the stable manifest
+name and the engine id is the manifest index.
 """
 
 from __future__ import annotations

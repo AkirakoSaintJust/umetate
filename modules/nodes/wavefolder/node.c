@@ -1,8 +1,8 @@
 /* Sine wavefolder: folds the portion of the input above `threshold` (Q15) by
-   `folds` sine folds, crossfaded by `amount` (Q15, modulatable). `on` 0 = dry
-   bypass; `type` 0 = sine fold (reserved). The band below `threshold` passes
-   unmodified; the excess is folded `folds` times and crossfaded in. Bounded:
-   each sine fold maps Q15 (0..32767) back to Q15. */
+   `folds` sine folds, crossfaded by `amount` (Q15, modulatable). `on` 0 is a dry
+   bypass. `type` 0 is the sine fold (reserved). The band below `threshold`
+   passes unmodified, whilst the excess is folded `folds` times and crossfaded in.
+   It is bounded, because each sine fold maps Q15 (0..32767) back to Q15. */
 int32_t in = ${in.audio};
 int32_t ${out.audio};
 if (!${param.on}) {

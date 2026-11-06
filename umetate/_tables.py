@@ -2,9 +2,9 @@
 # Copyright (C) 2026 P1Onken (umetate)
 """The table generator (docs/roadmap.md §12.4): patch `tables:` -> `const` XIP arrays.
 
-Built-in shapes + a small inline spec. Every table becomes a `const int16_t
-table_<name>[]` + a `#define table_<name>_len` in `tables.c`/`.h`; a node body may
-reference it with the `${table.<name>}` placeholder.
+Built-in shapes plus a small inline spec. Every table becomes a `const int16_t
+table_<name>[]` and a `#define table_<name>_len` in `tables.c` and `tables.h`, which
+a node body may reference with the `${table.<name>}` placeholder.
 """
 
 from __future__ import annotations
@@ -29,9 +29,9 @@ _ROUTING: list[tuple[list[list[int]], list[int]]] = [
     ([[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 0, 0], [0, 0, 1, 0]], [0, 0, 0, 1]),
     # 2: (O1 + (O2 -> O3)) -> O4 -> out (O4)
     ([[0, 0, 0, 0], [0, 0, 0, 0], [0, 1, 0, 0], [1, 0, 1, 0]], [0, 0, 0, 1]),
-    # 3: 1 is modulator, 2 is modulator, 3 is modulator, 4 is carrier;
-    #    1 -> 2, 1 -> 3, 2+3 -> 4 (replaces the redundant 1->2/2,3->4, which
-    #    per-op feedback made the same as a simpler stack).
+    # 3: 1 is modulator, 2 is modulator, 3 is modulator, 4 is carrier. So
+    #    1 -> 2, 1 -> 3, 2+3 -> 4, which replaces the redundant 1->2/2,3->4
+    #    because per-op feedback made that the same as a simpler stack.
     ([[0, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0], [0, 1, 1, 0]], [0, 0, 0, 1]),
     # 4: (O1 -> O2) + (O3 -> O4) -> out (O2 + O4)
     ([[0, 0, 0, 0], [1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 1, 0]], [0, 1, 0, 1]),
@@ -133,8 +133,8 @@ def _segments(spec: TableSpec) -> list[int]:
 
 def _routing() -> list[int]:
     """The 8-algorithm routing matrix: per algorithm, 4 modulation rows (dest 0..3)
-    + 1 carrier-mask row, each a 4-weight 0/1 vector (Q15 0 or 32767). Layout:
-    `routing[algorithm * 20 + dest * 4 + src]`."""
+    and 1 carrier-mask row, each a 4-weight 0/1 vector (Q15 0 or 32767). The layout
+    is `routing[algorithm * 20 + dest * 4 + src]`."""
     flat: list[int] = []
     for mod, carrier in _ROUTING:
         for dest in range(4):

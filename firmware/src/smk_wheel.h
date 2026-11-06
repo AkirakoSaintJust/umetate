@@ -2,12 +2,12 @@
  * SMK-37 Pro port: Copyright (C) 2026 M. Geisler (genkigenki/makkuro)
  * (from genkigenki/sloop-fm1 smk37, as OberVave carries it) */
 /* The SMK-37 Pro's pitch wheel as a bend (rib.c: smk_pw_bend on fm1_in.wheel[0]):
- * raw ADC reading -> 1/4096 semitone, +-SMK_PW_ST semitones. Self-calibrating: the rest (centre) is the first
- * reading, the range grows to what the wheel has reached, a dead band of SMK_PW_DEAD around the centre.
+ * raw ADC reading -> 1/4096 semitone, +-SMK_PW_ST semitones. It is self-calibrating, with the rest (centre) as the first
+ * reading, the range growing to what the wheel has reached, and a dead band of SMK_PW_DEAD around the centre.
  * While the wheel rests in the dead band the centre follows a slow drift, at most one step per SMK_PW_DRIFT_MS
  * (in time, not in calls: the main loop calls this thousands of times a second, and a centre that moves that
- * fast is dragged along by a slow touch of the wheel, the spring then brings the wheel back to its real rest,
- * outside the dragged dead band, and a bend stays on whatever track is selected). No hardware here: the host
+ * fast is dragged along by a slow touch of the wheel, so the spring then brings the wheel back to its real rest,
+ * outside the dragged dead band, and a bend stays on whatever track is selected). No hardware here, so the host
  * tests (tests/smk_wheel_test.c) run it. */
 #pragma once
 #include <stdint.h>

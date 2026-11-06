@@ -6,17 +6,18 @@ saw/square.
 
 `fm1_naive_wave` holds, contiguously:
   - shapes 1 (sine) and 2 (triangle): one 1024-sample table each (already
-    band-limited by construction);
+    band-limited by construction).
   - shapes 0 (saw) and 3 (square): MIP=6 band-limited tables each (harmonic
     counts 32..1), the same anti-aliasing fix as the operators' `osc`, so the
     naive oscillator's saw/square stop aliasing at high pitches. Each is an
     additive (truncated-Fourier) synthesis of the naive shape.
 
-`fm1_naive_base[4]` gives each shape's mip-0 offset (in 1024-sample units); a
-reader adds `mip << 10` for shapes 0/3. Total 14336 samples.
+`fm1_naive_base[4]` gives each shape's mip-0 offset (in 1024-sample units),
+and a reader adds `mip << 10` for shapes 0/3. Total 14336 samples.
 
-Pulse/square *width* is not a table: it is the `phase_dist` node's `d` bend
-applied before this read (PWM). Deterministic; the output is checked in.
+The pulse/square *width* comes from the `phase_dist` node's `d` bend, which is
+applied before this read (PWM), so there is no width table. The output is
+deterministic, and it is checked in.
 
 Run from the firmware root:  python3 tools/gen_naive_wave.py
 """

@@ -1,10 +1,10 @@
 /* SPDX-License-Identifier: GPL-3.0-only
  * Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments */
 /* ST7789-class 240x240 panel on SPI1: PC9 CLK, PC10 DO, PC7 CS, PC8 D/C,
- * backlight PA2 active low. Polled DMA transfers, every source buffer must be
- * in RAM. A pixel transfer is left running (lcd_busy): the next LCD access, or
- * a write to its source buffer (lcd_sync), waits for it, so the main loop works
- * while the last strip of a frame goes out. */
+ * backlight PA2 active low, with polled DMA transfers, and every source buffer
+ * must be in RAM. A pixel transfer is left running (lcd_busy), and the next LCD
+ * access, or a write to its source buffer (lcd_sync), waits for it. The main
+ * loop therefore works while the last strip of a frame goes out. */
 /* pins and SPI1: hal/fm1_lcd_hw.h */
 #ifndef LCD_BAUD
 #define LCD_BAUD 4u                /* lsb/(BAUD+1): 4 = 12 MHz */
@@ -101,8 +101,8 @@ static void lcd_blit(uint32_t x, uint32_t y, uint32_t w, uint32_t h, const uint1
 
 #if BOARD_SMK37
 /* SMK-37 Pro ST7789V 240x240: the stock v016 table with a SWRESET in
- * front (stock relies on the power-on reset) and NORON instead of its DISPOFF + 50 ms;
- * lcd_init sends DISPON after the clear. Same format as below. */
+ * front (stock relies on the power-on reset) and NORON instead of its DISPOFF + 50 ms,
+ * so lcd_init sends DISPON after the clear. Same format as below. */
 static const uint8_t LCD_SEQ[] = {
     0x01, 0,                     /* SWRESET */
     0x00, 1, 150,
@@ -124,9 +124,9 @@ static const uint8_t LCD_SEQ[] = {
     0x13, 0,                     /* NORON */
 };
 #else
-/* ST7789V init: reset, then 16-bit colour, scan direction and IPS inversion;
- * voltage and gamma stay at the defaults. Format: cmd, n, n data bytes;
- * cmd 0x00 = wait (data byte: ~ms). */
+/* ST7789V init: reset, then 16-bit colour, scan direction and IPS inversion,
+ * whilst voltage and gamma stay at the defaults. Format: cmd, n, n data bytes,
+ * where cmd 0x00 = wait (data byte: ~ms). */
 static const uint8_t LCD_SEQ[] = {
     0x01, 0,                     /* SWRESET */
     0x00, 1, 150,
@@ -161,12 +161,12 @@ static void lcd_init(void)
 }
 
 #if BOARD_SMK37
-/* The 16 RGB pads (SMK-37 Pro): WS2812-class LEDs on SPI1 group B (PC10), one SPI byte per
- * LED bit (0xF0 = 1, 0xC0 = 0, MSB first, GRB), 250 zero bytes of reset first (~300 us; the
- * stock firmware's 36 bytes = 43 us are too short for newer WS2812 parts: a glitch on PC10 at the
- * pin switch then counts as a first bit and shifts the chain by one, so a lit pad turns its chain
- * neighbour green). The frame goes out between LCD transfers (LCD CS high), blocking for ~0.8 ms;
- * padled_flush() only sends when a colour changed. */
+/* The 16 RGB pads (SMK-37 Pro): WS2812-class LEDs on SPI1 group B (PC10), with one SPI byte per
+ * LED bit (0xF0 = 1, 0xC0 = 0, MSB first, GRB). The reset is 250 zero bytes first (~300 us),
+ * because the stock firmware's 36 bytes = 43 us are too short for newer WS2812 parts. A glitch on
+ * PC10 at the pin switch then counts as a first bit and shifts the chain by one, so a lit pad turns
+ * its chain neighbour green. The frame goes out between LCD transfers (LCD CS high), blocking for
+ * ~0.8 ms, and padled_flush() only sends when a colour changed. */
 #define PADLED_N 16u
 #define PADLED_LATCH 250u
 static uint8_t padled_buf[PADLED_LATCH + PADLED_N * 24u];

@@ -3,7 +3,8 @@
 """Refresh the Linux-filesystem umetate copy used for WSL builds.
 
 Run from the Windows checkout in WSL with: python3 tools/refresh_wsl_copy.py
-The source .git and build/ directories are not copied; ~/umetate/build is preserved.
+The source .git and build/ directories are not copied, whilst ~/umetate/build is
+preserved.
 """
 from pathlib import Path
 import os

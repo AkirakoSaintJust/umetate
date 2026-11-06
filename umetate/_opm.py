@@ -422,11 +422,46 @@ def _nearest_rate(opm_time: float, candidates: Sequence[tuple[int, float]]) -> i
     return best_rate
 
 
-# Envelope match points. The attack aims at -12 dB below full. The decay aims
-# 12 dB into the trip, which keeps the early body and the tail in the same
-# region. A larger drop shortens the tail at the cost of a faster first few dB.
-_ATTACK_TARGET_DB = -12.0
-_DECAY_DROP_DB = 12.0
+# Envelope match points, indexed by the OPM rate. A slow stage aims deep into
+# the stage, where the OPM runs in a straight dB line and the Type P.fm1
+# one-pole has already flattened out. A fast stage aims shallow, because its
+# audible body is over early. Rates 1 to 31 read 21, 18, 15 for 3 and 4, 12 for
+# 5 to 7, 9 for 8 to 13, 6 for 14 to 23, and 3 for 24 to 31. Rate 0 is unused,
+# because `AR` 0 has no attack and `D1R` 0 holds.
+_MATCH_DB: tuple[float, ...] = (
+    21.0,
+    21.0,
+    18.0,
+    15.0,
+    15.0,
+    12.0,
+    12.0,
+    12.0,
+    9.0,
+    9.0,
+    9.0,
+    9.0,
+    9.0,
+    9.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    3.0,
+    3.0,
+    3.0,
+    3.0,
+    3.0,
+    3.0,
+    3.0,
+    3.0,
+)
 _DECAY_BIAS = 0
 
 _ATTACK_CACHE: dict[tuple[int, int, int], int] = {}
@@ -444,9 +479,10 @@ def _attack_rate(ar: int, ks: int, midi: int = 60) -> int:
         result = 0
     else:
         ticks = _opm_ticks(ar, "attack", d1l=0, ks=ks, midi=midi, start_el=1024)
-        target_el = round(-_ATTACK_TARGET_DB / _DB_PER_EL)
+        drop = _MATCH_DB[ar]
+        target_el = round(drop / _DB_PER_EL)
         opm_time = _opm_time_to(ticks, start_el=1024, target_el=target_el)
-        aim = round(32767.0 * 10.0 ** (_ATTACK_TARGET_DB / 20.0))
+        aim = round(32767.0 * 10.0 ** (-drop / 20.0))
         candidates = [(rate, _fm1_time(rate, 0, 99, aim)) for rate in range(100)]
         result = _nearest_rate(opm_time, candidates)
     _ATTACK_CACHE[key] = result
@@ -467,11 +503,11 @@ def _decay_rate(d1l: int, rate: int, ks: int, kind: str, midi: int = 60) -> int:
         span_db = (start_level - end_level) * 0.75
         start_el = 0 if kind == "decay1" else 16 * _D1LTBL[d1l]
         ticks = _opm_ticks(rate, kind, d1l=d1l, ks=ks, midi=midi, start_el=start_el)
-        if span_db >= _DECAY_DROP_DB:
+        drop = _MATCH_DB[min(31, max(0, rate))]
+        if span_db >= drop:
             # Aim a little past the first few dB so the one-pole tail does not
             # make the whole stage read long. A larger drop is a faster rate,
             # at the cost of a faster early slope.
-            drop = _DECAY_DROP_DB
             opm_time = _opm_time_to(
                 ticks,
                 start_el=start_el,

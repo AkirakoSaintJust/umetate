@@ -11,8 +11,8 @@ stream of *byte-swapped* RGB565 pixels: a run is a `count` word (1..65535) then 
 gfx.c's canvas convention (the ST7789 takes big-endian RGB565), so `logo_draw()`
 blits the decoded rows straight out.
 
-Deterministic; the output is checked in (like gen/wavetable.h). Run from the
-firmware root:
+The output is deterministic, and it is checked in (like gen/wavetable.h). Run
+from the firmware root:
 
     python3 tools/gen_logo.py
 """

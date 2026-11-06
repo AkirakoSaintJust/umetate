@@ -1,8 +1,9 @@
 /* SPDX-License-Identifier: GPL-3.0-only
  * Copyright (C) 2026 P1Onken (umetate)
- * Host parity for hal/fm1_math.h (docs/roadmap.md P2-3): saturating Q arithmetic,
- * the sine/exp/log tables against libm, and a kiss_fft round-trip. The software
- * fallback here is the reference the emulator/device hw path must match. */
+ * Host parity for hal/fm1_math.h (docs/roadmap.md P2-3), covering saturating Q
+ * arithmetic, the sine/exp/log tables against libm and a kiss_fft round-trip. The
+ * software fallback here is the reference that the emulator/device hw path must
+ * match. */
 #include <stdio.h>
 #include <math.h>
 #include <stdint.h>

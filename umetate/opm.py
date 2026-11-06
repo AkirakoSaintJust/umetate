@@ -2,8 +2,8 @@
 # Copyright (C) 2026 P1Onken (umetate)
 """`umetate opm` - convert an OPM text patch bank to a Type P.fm1 bank.
 
-The converter is a starting point, not a clone. It keeps the operator graph,
-ratios, level curve, feedback depth, and the measured envelope timing, and it
+The converter is a starting point rather than a clone, so it keeps the operator
+graph, ratios, level curve, feedback depth, and the measured envelope timing. It
 writes a normal 128-slot bank JSON plus an optional `.syx` stream. The tolerance
 and the known limits are in `docs/opm-to-type-p-fm1.md`.
 """

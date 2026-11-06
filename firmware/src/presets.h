@@ -8,7 +8,7 @@
  * a CRC-32 (poly 0xEDB88320, the platform's crc32) over version+body. The banks
  * are chunked across the flash slots (the part bank from slot 0, the multi bank
  * straight after it) at record boundaries. A record never straddles a slot, so the
- * settings record lives in the settings sector. Save only when silent (the
+ * settings record is stored in the settings sector. Save only when silent (the
  * platform's area_save erases with interrupts off). */
 #pragma once
 #include <stdint.h>
@@ -20,7 +20,7 @@
  * is a contiguous byte array chunked across one or more flash slots (a record never
  * straddles a slot boundary). The flash slot byte ceiling is store.h `SLOT_MAX`,
  * mirrored here as `PRESET_SLOT_MAX` so the host tests can build presets.c with
- * `-Isrc` only, the device build asserts the two agree. The type-p-fm1 317 B part
+ * `-Isrc` only, and the device build asserts the two agree. The type-p-fm1 317 B part
  * record spans the 128 parts over 3 flash slots (51 per slot); the 63 B multi
  * record fits all 64 in one (roadmap §6.11.4). */
 #define PRESET_PART_SLOTS 128u

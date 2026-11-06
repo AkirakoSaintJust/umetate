@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-only
  * Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments */
 /* FM-1 GPIO port registers: one 0x40 block per
- * port at 0x50000 + p * 0x40. HAL-internal: src/ uses the per-driver
- * helpers (fm1_input.h, fm1_audio.h, fm1_adc.h, fm1_lcd_hw.h). */
+ * port at 0x50000 + p * 0x40, and HAL-internal, so src/ goes through the
+ * per-driver helpers (fm1_input.h, fm1_audio.h, fm1_adc.h, fm1_lcd_hw.h). */
 #pragma once
 #include <stdint.h>
 

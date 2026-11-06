@@ -1,10 +1,11 @@
 /* SPDX-License-Identifier: GPL-3.0-only
  * Copyright (C) 2026 zvenson (from OberVave's; after genkigenki/sloop-fm1 smk37 tests/smk_flash_test.c) */
-/* Dinghy's SMK-37 flash map (build with -DBOARD_SMK37=1; src/store.h, hal/fm1_flash_map.h): every 4 KiB
- * sector of the 1 MiB part through the app's allow-list (FL_RANGE_OK / FL_GUARD) and the update loader's
- * (FL_LDR_RANGE_OK): none may ever reach the head 0x0-0x3FFF, BTIF / USRTRIM 0xC0000-0xC1FFF (the calibration),
- * USR 0xF4000-0xFDFFF or key_mac 0xFF000-. The settings, the blobs, the owner tag, the slots and the OTA staging lie
- * in the store windows, each in its own sectors, ranges that wrap or straddle a boundary are refused. */
+/* Dinghy's SMK-37 flash map (build with -DBOARD_SMK37=1, src/store.h and hal/fm1_flash_map.h): every 4 KiB
+ * sector of the 1 MiB part goes through the app's allow-list (FL_RANGE_OK / FL_GUARD) and the update loader's
+ * (FL_LDR_RANGE_OK), and none of them may ever reach the head 0x0-0x3FFF, BTIF / USRTRIM 0xC0000-0xC1FFF (the
+ * calibration), USR 0xF4000-0xFDFFF or key_mac 0xFF000-. The settings, the blobs, the owner tag, the slots and the OTA
+ * staging sit in the store windows, each in its own sectors, whilst a range that wraps or straddles a boundary is
+ * refused. */
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>

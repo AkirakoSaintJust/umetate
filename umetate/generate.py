@@ -2,9 +2,10 @@
 # Copyright (C) 2026 P1Onken (umetate)
 """The patch generator's public entry (docs/roadmap.md §12.4).
 
-A pure function: a patch + the node library -> `<synth>_dsp.c` (+ `tables.c`/`.h`).
-Deterministic (same inputs -> byte-identical output). The passes live in
-`_ir`/`_frontend`/`_backend`/`_tables`; this module only wires them together.
+A pure function: a patch and the node library become `<synth>_dsp.c` (plus
+`tables.c`/`.h`), and the output is deterministic, so the same inputs give
+byte-identical output. The passes are stored at `_ir`/`_frontend`/`_backend`/
+`_tables`, and this module only wires them together.
 """
 
 from __future__ import annotations
@@ -102,9 +103,9 @@ def param_ids(
 ) -> dict[str, int]:
     """The name -> set_param id map (friendly names *and* flattened targets).
 
-    With parts, the per-part params carry a `.pN` suffix. Part 0's params are
-    also registered unsuffixed (the operator-relative names the panel uses,
-    `op1.eg.r1`, which address part 0, the CC/preset surface)."""
+    With parts, the per-part params carry a `.pN` suffix, and part 0's params are
+    also registered unsuffixed. Those are the operator-relative names the panel
+    uses (`op1.eg.r1`, which addresses part 0 on the CC and preset surface)."""
     graph = _graph(patch, nodes, macros)
     ids: dict[str, int] = {}
     for p in graph.params:
@@ -310,9 +311,10 @@ def generate_glue(
     macros: Mapping[str, Macro] | None = None,
 ) -> str:
     """The generated `<name>` firmware glue (the app-transport layer, firmware-only):
-    the dual-core-aware seam adapters + the frozen `app_audio`. A synth's `app.c`
-    includes this and keeps only the instrument-specific glue (the main loop, the
-    `ui_act_*` hooks, the preset orchestration). The parity seam is `dsp.h` (pure)."""
+    the dual-core-aware seam adapters and the frozen `app_audio`. A synth's `app.c`
+    includes this and keeps only the instrument-specific glue: the main loop, the
+    `ui_act_*` hooks, and the preset orchestration. `dsp.h` stays the pure parity
+    seam."""
     graph = _graph(patch, nodes, macros)
     name = graph.name
     lines = [
@@ -441,9 +443,10 @@ def generate_cc_map(
     base: int = 16,
 ) -> CcMap:
     """The fixed `cc -> param` map (roadmap §6.11.4): one CC per param, ascending
-    from `base`, skipping the reserved CCs. The patch's `cc:` list names the
-    CC-exposed params (friendly name or flattened target; with parts, the `.pN`
-    names); absent, every param is mapped. A GenError when the params don't fit."""
+    from `base`, and the reserved CCs are skipped. The patch's `cc:` list names the
+    CC-exposed params (a friendly name or a flattened target, with the `.pN` names
+    when the patch has parts), and when the list is absent every param is mapped. A
+    GenError when the params don't fit."""
     graph = _graph(patch, nodes, macros)
     want = patch.get("cc")
     params: list[ParamEntry]

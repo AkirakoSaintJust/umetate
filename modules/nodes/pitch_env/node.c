@@ -1,11 +1,11 @@
 /* Per-note pitch envelope (control rate). on/off + 4 rates (0..99) + 3 levels
    (Q15 pitch offset, bipolar). Retriggers to attack on every note-on
-   (`trigger` = voice_trig[v]); a gate edge starts release. A key-follow factor
-   `k` (Q15) pushes each rate toward 0 (slower) or 99 (faster), and the effective
-   rates are block-derived. Stages 0=attack (0->l1), 1=decay1 (l1->l2),
-   2=decay2 (l2->l3), 3=sustain (hold l3), 4=release (->0). Levels are signed, so
-   the stage transitions use an absolute distance. No local declarations (inlined
-   once per operator). */
+   (`trigger` = voice_trig[v]), and a gate edge starts release. A key-follow factor
+   `k` (Q15) pushes each rate toward 0 (slower) or 99 (faster), so the effective
+   rates are block-derived. The stages run 0=attack (0->l1), 1=decay1 (l1->l2),
+   2=decay2 (l2->l3), 3=sustain (hold l3), 4=release (->0), and the levels are
+   signed, so the stage transitions use an absolute distance. No local declarations
+   (inlined once per operator). */
 if (${in.trigger}) { ${state.stage} = 0u; ${state.level} = 0; }
 if (${in.gate}) {
     if (${state.stage} == 4u) { ${state.stage} = 0u; ${state.level} = 0; }

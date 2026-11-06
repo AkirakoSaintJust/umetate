@@ -7,18 +7,19 @@ pulse/square/saw.
 The layout (one contiguous Q15 table, `fm1_wave`):
   - waves 0-8 (the sin-derived OPZ set + rectified |sin|): one 1024-sample table
     each. They are band-limited by construction (sin and its rectified/doubled
-    derivatives have finite harmonic content), so they need no anti-aliasing;
+    derivatives have finite harmonic content), so they need no anti-aliasing.
   - waves 9 (pulse), 10 (square), 11 (saw): MIP=6 band-limited tables each, with
     harmonic counts 2^5..2^0 (32,16,8,4,2,1), the "multitable" anti-aliasing
     fix for the top octaves. Each is an additive (truncated-Fourier / offline
     IFFT) synthesis of the *naive* shape, so the highest harmonics that would
-    otherwise alias above Nyquist are simply not present; the oscillator picks
+    otherwise alias above Nyquist are simply not present, and the oscillator picks
     the level whose top harmonic sits below Nyquist for the current note.
 
-`fm1_wave_base[12]` gives each waveform's mip-0 offset (in 1024-sample units); a
-reader adds `mip << 10` for waves 9..11. Total 27648 samples (54 KB, const XIP).
+`fm1_wave_base[12]` gives each waveform's mip-0 offset (in 1024-sample units),
+and a reader adds `mip << 10` for waves 9..11. Total 27648 samples (54 KB, const
+XIP).
 
-Deterministic; the output is checked in (as gen/wavetable.h).
+The output is deterministic, and it is checked in (as gen/wavetable.h).
 
 Run from the firmware root:  python3 tools/gen_wavetable.py
 """
@@ -97,9 +98,10 @@ def band_limited(ws: int, harm: int) -> list[int]:
     """The band-limited Q15 table for waveform `ws`, harmonics 1..harm (a
     truncated Fourier series, the offline IFFT). DC + sine + cosine
     coefficients are projected from the exact naive shape with a DFT, so the
-    quirky OPL `pulse` (ws 9) is handled identically to square/saw (no hand-
-    derived series). The result keeps the naive shape's exact harmonic
-    amplitudes; the Gibbs overshoot at a discontinuity is clamped to full-scale."""
+    quirky OPL `pulse` (ws 9) is handled identically to square/saw, with no
+    hand-derived series. The result keeps the naive shape's exact harmonic
+    amplitudes, and the Gibbs overshoot at a discontinuity is clamped to
+    full-scale."""
     a = [0.0] * (harm + 1)
     b = [0.0] * (harm + 1)
     for k in range(harm + 1):

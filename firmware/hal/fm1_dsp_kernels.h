@@ -1,17 +1,16 @@
 /* SPDX-License-Identifier: GPL-3.0-only
  * Copyright (C) 2026 P1Onken (umetate)
  *
- * Reusable pi32v2 DSP kernels. The compiler-codegen gap made a contract.
+ * Reusable pi32v2 DSP kernels. The stock firmware is fast because its compiler
+ * emits the pi32v2's VLIW/loop machinery, whilst our clang 4.0.1 emits neither.
+ * So this header wraps the primitives that close the difference as `static
+ * inline` helpers, one per operation. Each has a bit-identical C fallback for
+ * host/WASM (the `#else` branch) and a pi32v2 asm body
+ * (`#if defined(UMETATE_TARGET)`). The pattern is the same one fm1_math.h uses
+ * for the ROM transcendentals: portable C everywhere, hand-asm on device.
  *
- * The stock firmware is fast because its compiler emits the pi32v2's VLIW/loop
- * machinery, our clang 4.0.1 emits neither. This header wraps the primitives that
- * close that gap as `static inline` helpers, one per operation, each with a
- * bit-identical C fallback for host/WASM (the `#else` branch) and a pi32v2 asm
- * body (`#if defined(UMETATE_TARGET)`). The pattern is the same one fm1_math.h
- * uses for the ROM transcendentals: portable C everywhere, hand-asm on device.
- *
- * Verified against the assembler (the disassembler's "arithmetic" syntax is NOT
- * what the parser accepts. This header holds the parser's form):
+ * Verified against the assembler, because the disassembler's "arithmetic" syntax
+ * is not what the parser accepts. This header holds the parser's form:
  *
  *   rep <counter> { <body> }         zero-overhead hardware loop, the body size is
  *                                     auto-computed (2*iwords); <counter> is a
@@ -28,8 +27,8 @@
  *   r1_r0 = r0 * r0                  square (64-bit); `r1_r0 += r0 * r0` square-MAC.
  *
  * Every kernel must stay bit-identical to its C fallback, because the host/WASM parity
- * tests (firmware/tests) rely on that. Counts are runtime (a `rep` register); the
- * generator/RuBI passes NVOICE and CONTROL_BLOCK directly.
+ * tests (firmware/tests) rely on that. Counts are runtime (a `rep` register), and
+ * the generator/RuBI passes NVOICE and CONTROL_BLOCK directly.
  */
 #pragma once
 #include <stdint.h>

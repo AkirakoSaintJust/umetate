@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: GPL-3.0-only
  * Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments */
 /* FM-1 XIP window: flash offset off (>= 0x4000, the app area start) reads
- * at CPU address 0x02000000 + off - 0x4000 through the SFC/cache. Data
- * outside the plain (unencrypted) window reads decrypted: see
- * fm1_flash.h fl_plain_window_init. */
+ * at CPU address 0x02000000 + off - 0x4000 through the SFC/cache, whilst data
+ * outside the plain (unencrypted) window reads decrypted (see
+ * fm1_flash.h fl_plain_window_init). */
 #pragma once
 #include <stdint.h>
 #include "fm1_cc.h"

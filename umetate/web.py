@@ -3,11 +3,11 @@
 """`umetate web-build` and `web-serve` (docs/roadmap.md §12.7.2, P4-1).
 
 `web-build` compiles the whole firmware (rib.c, the generated engine, and the
-app) to a standalone `firmware.wasm`. It writes the FM-1 emulator page with
-`index.html` and `worklet.js`, and the 240 by 240 screen is read back from the
-framebuffer. `web-serve` is a loopback static server. `build()` and
-`check_parity` prove the engine output matches between host gcc and wasm/node,
-which is the CI parity check, now separate from the user-facing emulator build.
+app) to a standalone `firmware.wasm`. It also writes the FM-1 emulator page with
+`index.html` and `worklet.js`, where the 240 by 240 screen is read back from the
+framebuffer. `web-serve` is a loopback static server, whilst `build()` and
+`check_parity` prove the engine output matches between host gcc and wasm/node.
+That parity check is the CI job, now separate from the user-facing emulator build.
 """
 
 from __future__ import annotations

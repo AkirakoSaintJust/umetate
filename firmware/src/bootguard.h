@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* Warm-reset guard, retained in RAM only. Never writes the bootloader/flash.
- * This cannot rescue an image that fails before reaching the application. */
+/* Warm-reset guard, retained in RAM only, which never writes the bootloader or
+ * the flash. It cannot rescue an image that fails before reaching the application. */
 #ifndef FELUCCA_BOOTGUARD_H
 #define FELUCCA_BOOTGUARD_H
 #include <stdint.h>

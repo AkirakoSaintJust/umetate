@@ -51,7 +51,7 @@ COMMANDS: dict[str, tuple[str, str]] = {
     "fmt": ("format the repo with clang-format", "fmt"),
     "web-build": ("build the FM-1 emulator with Emscripten", "web:build_main"),
     "web-serve": ("serve the emulator on loopback", "web:serve_main"),
-    "status": ("show the per-layer claim ledger", "status"),
+    "status": ("show the per-layer status ledger", "status"),
     "evidence": ("validate an evidence matrix", "evidence"),
     "version": ("print the CLI version", "version"),
 }

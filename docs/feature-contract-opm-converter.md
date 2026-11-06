@@ -80,23 +80,24 @@
 
 ### Measured evidence
 
-The corpus has 438 text banks and 56,032 voices. A deterministic 200-voice
+The corpus has 438 text banks and 56,032 voices, and a deterministic 200-voice
 sample was rendered at middle C with the filters and wavefolder off and the
 VOPMex output FIR off.
 
 | Measure | Median ratio | Within 1.25 | Within 1.5 | Within 2 |
 | --- | ---: | ---: | ---: | ---: |
-| Spectral centroid | 1.02 | 83 percent | 92 percent | 97 percent |
-| 95 percent roll-off | 1.00 | 82 percent | 90 percent | 94 percent |
+| Spectral centroid | 1.01 | 87 percent | 95 percent | 98 percent |
+| 95 percent roll-off | 1.00 | 85 percent | 90 percent | 94 percent |
 
 | Timing measure | Median | Within a factor of 2 |
 | --- | ---: | ---: |
 | Release time to -20 dB | 1.00 | 98 percent |
-| Decay slope, 0.1 to 0.7 s | 1.00 | 81 percent |
+| Decay slope, 0.1 to 0.7 s | 1.03 | 77 percent |
 
 The decay slope is the weakest measure because the Type P.fm1 one-pole eases
-into a sustain where the OPM decay is a straight dB line. The rate map targets
-12 dB into the stage.
+into a sustain where the OPM decay is a straight dB line. The rate map aims at a
+shallower point as the OPM stage gets faster, from 21 dB at rate 0 down to 3 dB at
+rates 23 to 31.
 
 The measured algorithm cases in the mapping page land at 0.99 to 1.06 on the
 centroid with the current engine.
@@ -110,18 +111,23 @@ The pitch LFO depth was measured on a plain sine at C7 with `PMD` 127:
 | 5 | 96 cents | 103 cents |
 
 The earlier mapping had a unit error here, 1/64 semitone read as 1/64 octave,
-which made the vibrato twelve times too deep. The corpus spectra still matched
+which made the vibrato twelve times too deep, and the corpus spectra still matched
 because the vibrato averaging hid it, but the A/B renders did not. The unit test
 now pins the expected depth.
 
-`D1L` 15 is the special 93 dB step and now maps to silence. The earlier code used
-`99 - 4*15 = 39`, which sustained at about -45 dB and made a decay to `D1L` 15
-feel longer. A controlled `D1R` 10, `D1L` 8 stage reaches -12 dB in 0.66 s in
-both engines. The whole stage to `D1L` takes 1.41 s in OPM and 2.18 s in Type
-P.fm1, because the one-pole tail is longer. The rate map targets 12 dB into the
-stage.
+`D1L` 15 is the special 93 dB step and now maps to silence, though the earlier code
+used `99 - 4*15 = 39`, which sustained at about -45 dB and made a decay to `D1L` 15
+feel longer. A controlled `D1R` 10, `D1L` 8 stage reaches -9 dB in 0.52 s in both
+engines. The whole stage to `D1L` takes 1.41 s in OPM and 2.3 s in Type P.fm1,
+because the one-pole tail is longer. The rate map aims 21, 18, 15, 12, 9, 6 or
+3 dB into the stage, depending on the OPM rate.
 
-Matching the whole stage time was tried. It reads badly: an `AR` 3 attack
+The match table was checked rate by rate against both engines. `AR` 4 to 22 land
+within 0.83 to 1.01 of the OPM time at the chosen point, and `D1R` 3 to 28 within
+0.89 to 1.06. The slowest three of each hit the Type P.fm1 rate 0 floor, so `AR` 1
+to 3 and `D1R` 1 to 2 still arrive early.
+
+Matching the whole stage time was tried, and it reads badly: an `AR` 3 attack
 reached -12 dB at 0.30 s against the OPM's 1.96 s, and an `RR` 4 release was 2
 to 3 times too slow. The one-pole spends most of a stage in its quiet tail, so
 the audible part has to stay fast. The point match is the shipped choice.

@@ -26,9 +26,9 @@
 
 /* ---- the preset store's writable memory (the banks + the settings record) ----
  * The 128 single-part records (40 576 B) do not fit CPU0's 96 KiB .bss alongside
- * the rest of the firmware, so the banks live in .pool (the big-buffer region;
- * app.ld): flash is the persistence, RAM is just the working copy reloaded each
- * boot. */
+ * the rest of the firmware, so the banks sit in .pool, the big-buffer region in
+ * app.ld. Flash is the persistence, and RAM is just the working copy reloaded
+ * each boot. */
 static uint8_t part_bank[PP_BANK(SYNTH_N_PARAMS)] __attribute__((section(".pool")));
 static uint8_t multi_bank[MP_BANK(SYNTH_N_PARTS)] __attribute__((section(".pool")));
 static uint8_t settings[ST_RECORD];

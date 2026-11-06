@@ -213,15 +213,17 @@ def _timing() -> None:
     assert _d1l_level(15) == 0
     # Fast attacks hit the top rate, and a slow attack is mapped to a slow rate.
     assert _attack_rate(31, 0) == 99
-    assert _attack_rate(23, 0) == 93
-    assert _attack_rate(9, 0) == 40
+    assert _attack_rate(23, 0) == 97
+    assert _attack_rate(9, 0) == 45
+    assert _attack_rate(7, 0) == 28
+    assert _attack_rate(5, 0) == 15
     assert _attack_rate(1, 0) == 0
     # The first decay gets slower as the rate falls and as D1L asks for a
-    # shorter trip, the second decay tracks D2R. The map aims 12 dB into the
-    # stage, which keeps the early body and the tail in the same region.
-    assert _decay_rate(8, 10, 0, "decay1") == 51
-    assert _decay_rate(8, 4, 0, "decay1") == 15
-    assert _decay_rate(8, 20, 0, "decay1") == 89
+    # shorter trip, the second decay tracks D2R. The match point deepens as
+    # the OPM stage slows, because the one-pole flattens out in a long tail.
+    assert _decay_rate(8, 10, 0, "decay1") == 50
+    assert _decay_rate(8, 4, 0, "decay1") == 17
+    assert _decay_rate(8, 20, 0, "decay1") == 88
     # RR 8 is the common pluck release.
     assert _release_rate(8, 0) == 79
     assert _release_rate(4, 0) == 43

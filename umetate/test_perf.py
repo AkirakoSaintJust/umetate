@@ -2,12 +2,12 @@
 # Copyright (C) 2026 P1Onken (umetate)
 """Host performance regression guard (docs/roadmap.md §12.7.3).
 
-Generates + compiles the type-p-fm1 dogfood (20 voices) and times a worst-case
-`render(256)` on host. The figure is a *relative* measure, the device fit is the
-emulator's job (`umetate emu --check --mhz 320`), but a gross slowdown in the
-generator's emitted code shows up here too. The budget is ~2.8x the measured
-baseline, so it catches algorithmic regressions without flaking on wall-clock
-noise.
+It generates and compiles the `examples/type-p-fm1` test project (20 voices), then
+times a worst-case `render(256)` on host. The figure is a *relative* measure,
+because the device fit is the emulator's job (`umetate emu --check --mhz 320`),
+though a gross slowdown in the generator's emitted code shows up here too. The
+budget is ~2.8x the measured baseline, so it catches algorithmic regressions
+without flaking on wall-clock noise.
 
 Run: python3 -m umetate.test_perf
 """

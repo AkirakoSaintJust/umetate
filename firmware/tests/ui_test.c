@@ -82,9 +82,9 @@ int main(void)
     ui_handle(UI_SRC_KEY, 60);
     CHECK(n_note_on == 1 && n_set_step == 0, "home KEY -> note_on");
 
-    /* page-slot resolution: the `status` widget (P_alg) is NOT slot 0. The first
-     * param_row (P_cutoff) is. A write to slot 0 must leave the algorithm alone
-     * and move the cutoff (a per-param step, not a raw +1). */
+    /* page-slot resolution: the `status` widget (P_alg) is NOT slot 0, because the
+     * first param_row (P_cutoff) is. A write to slot 0 must leave the algorithm alone
+     * and move the cutoff by a per-param step, rather than adding a raw +1. */
     {
         int32_t alg0 = ui_params()[P_alg], cut0 = ui_params()[P_cutoff], fold0 = ui_params()[P_fold];
         ui_handle(UI_SRC_ENC_KNOB1, 5);                /* slot 0 = cutoff, not algorithm */

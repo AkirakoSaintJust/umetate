@@ -5,19 +5,20 @@
 
   flash.bin  head [0, 0x4000): flash header (JieLi SDK default values), JLFS
              entries, the SDK SPL (uboot.boot, Apache-2.0) and an isd_config
-             blob that decodes to the chip key. The update loader never writes
-             the head.
+             blob that decodes to the chip key (the update loader never writes
+             the head)
              app area 0x4000..: app_area_head, app.bin, the SDK cfg_tool.bin and
-             eq_cfg_hw.bin, the region descriptors; SFC-encrypted with the chip key
+             eq_cfg_hw.bin, the region descriptors, SFC-encrypted with the chip key
   ota.bin    the Felucca update loader (firmware/loader)
 
-The SDK files come from the JieLi AC79 SDK (AC79_SDK, or --sdk).
-All integrity checks in the format are CRC16 (poly 0x1021, init 0).
+The SDK files come from the JieLi AC79 SDK (AC79_SDK, or --sdk), and every
+integrity check in the format is CRC16 (poly 0x1021, init 0).
 
   fm1pkg_make.py APP.bin OTA.bin OUT.fwsc [--board fm1|smk37] [--product FM-1_9XY] [--sdk DIR]
 
---board smk37 (M-Vave SMK-37 Pro, same AC791N, SPL and loader) selects the SMK flash layout: PRCT
-0x9D000 and the stock v016 region table (VM, BTIF, USRTRIM, USRFLASH, USR; see the fm1-to-smk37 guide).
+--board smk37 selects the SMK flash layout for the M-Vave SMK-37 Pro, which uses
+the same AC791N, SPL and loader: PRCT 0x9D000 and the stock v016 region table
+(VM, BTIF, USRTRIM, USRFLASH, USR, see the fm1-to-smk37 guide).
 """
 import argparse
 import os
@@ -28,7 +29,7 @@ APP_SLOT = 0x8DFBC
 FLASH_SIZE = 0x93000
 BOARD = "fm1"
 # the region descriptors after app.bin / cfg_tool.bin: (offset, size, flags, resvd, index, name16 or name).
-# The offsets are ABSOLUTE flash offsets. The 16 name bytes after the names are SDK packer fields.
+# The offsets are ABSOLUTE flash offsets, and the 16 name bytes after the names are SDK packer fields.
 REGIONS = {
     "fm1": [(0x93000, 352256, 0x12, 0x80, 0, bytes.fromhex("564d00ffffffffffffffffff00800000")),     # VM
             (0, None, 0x92, 0x82, 0, bytes.fromhex("5052435400ffffffffffffff434f4445")),         # PRCT = FLASH_SIZE

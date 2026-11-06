@@ -2,10 +2,11 @@
 # Copyright (C) 2026 P1Onken (umetate)
 """The panel generator (docs/roadmap.md §12.6): panel.json -> the UI tables.
 
-Emits a `panel.h` of `static const` tables (widgets, pages, contexts, bindings, the
-`PANEL` struct) that the shipped runtime (`firmware/src/ui.c`) renders. Param names
-and source/action/behavior strings are resolved to the fixed numeric ids in `ui.h`;
-an unknown name is a GenError, never a silently-wrong table.
+Emits a `panel.h` of `static const` tables (widgets, pages, contexts, bindings, and
+the `PANEL` struct) that the shipped runtime (`firmware/src/ui.c`) renders. Param
+names and the source, action, and behaviour strings resolve to the fixed numeric
+ids in `ui.h`. An unknown name raises a GenError rather than writing a
+silently-wrong table.
 """
 
 from __future__ import annotations
@@ -60,8 +61,9 @@ _PREFIX_SOURCES = {
 }
 
 # ---- the per-board control inventory (firmware/src/platform.c BTN_*/ENC_* enums) ----
-# A panel must only bind sources the target board actually has. `KEY` + the MIDI
-# prefixes (`cc:`, `note:`) are universal, `pad:`/`fader:`/`wheel:` are SMK-37 only.
+# A panel may only bind sources the target board actually has, so `KEY` and the
+# MIDI prefixes (`cc:`, `note:`) are universal whilst `pad:`, `fader:`, and
+# `wheel:` belong to the SMK-37 only.
 _BOARD_SOURCES: dict[str, frozenset[str]] = {
     "fm1": frozenset(
         {
@@ -137,8 +139,8 @@ def _iter_panel_sources(panel: PanelManifest) -> Iterator[str]:
 def check_sources(panel: PanelManifest, board: str) -> list[str]:
     """The panel's sources the target `board` does not have (empty = all valid).
 
-    The source-vocabulary check (roadmap §6.11 L1): a panel must not bind a
-    control that the board lacks (e.g. `ENC_KNOB5` on the FM-1).
+    This is the source-vocabulary check (roadmap §6.11 L1), which stops a panel
+    binding a control that the board lacks (e.g. `ENC_KNOB5` on the FM-1).
     """
     valid = _BOARD_SOURCES.get(board)
     if valid is None:
@@ -246,7 +248,7 @@ _Q15_OCTAVE = 32768
 def _semi_landmarks(lo: int, hi: int) -> list[int]:
     """Every integer semitone in [lo, hi] (Q15, 32768 = one octave), plus the
     range endpoints. Values are rounded away from zero so the signed 2-decimal
-    display is exactly `N.00` for both signs; 32767 adds the +11.99 top."""
+    display is exactly `N.00` for both signs, and 32767 adds the +11.99 top."""
     if lo > hi:
         return []
     first = -((-lo * 12) // _Q15_OCTAVE)  # ceil(lo * 12 / 32768)
@@ -269,10 +271,11 @@ def generate_panel(
 ) -> str:
     """Compile a panel.json dict into the generated `panel.h` C source.
 
-    `param_ids` (optional) maps a param name to its DSP `set_param` id; when given,
-    the panel's `P_x` enum shares that id space, so a knob writes the right param.
-    `param_meta` (optional) maps a param id to `(display, min, max, curve)`, the
-    per-param display scale the runtime uses to format + step the value.
+    `param_ids` (optional) maps a param name to its DSP `set_param` id, and when it
+    is given the panel's `P_x` enum shares that id space, so a knob writes the right
+    param. `param_meta` (optional) maps a param id to `(display, min, max, curve)`,
+    which is the per-param display scale the runtime uses to format and step the
+    value.
     """
     name = panel["name"]
     contexts = panel["contexts"]
@@ -600,9 +603,10 @@ def generate_panel(
             f"panel: {n_params} params exceed the UI kit's UI_PARAM_MAX (512)"
         )
     mute = panel.get("mute") or []
-    # the mute/operator/envelope/part-relative tables are per-part (part-major): the
-    # runtime indexes them by ui_selected_part so the editor + mutes follow the
-    # active part (§13.3 item 33). part 0 = the unsuffixed name, later parts = `.pN`.
+    # the mute/operator/envelope/part-relative tables are per-part (part-major), and
+    # the runtime indexes them by ui_selected_part, so the editor and the mutes
+    # follow the active part (§13.3 item 33). part 0 = the unsuffixed name, later
+    # parts = `.pN`.
     mute_ids: list[str] = []
     for part in range(n_parts):
         for p in mute[:4]:
@@ -654,7 +658,7 @@ def generate_panel(
     else:
         part_ptr = "0"
     # the per-param display scale: one ui_param_disp per param id (raw by default).
-    # Ratio + semitone params also carry a sorted landmark table, a quantized
+    # Ratio and semitone params also carry a sorted landmark table, and a quantized
     # param steps landmark-to-landmark, so the sparse ratio series is never
     # skipped (§6.11.4 L11).
     landmark_tables: dict[tuple[str, int, int], str] = {}

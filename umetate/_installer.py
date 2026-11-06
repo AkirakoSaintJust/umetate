@@ -2,8 +2,9 @@
 # Copyright (C) 2026 P1Onken (umetate)
 """Load the inherited `firmware/tools/fm1_install.py` as a module.
 
-`inspect` (its parsing functions) and `flash` (its install seam) both need it; this
-is the one loader (strangler-fig: the installer itself is not rewritten).
+`inspect` (its parsing functions) and `flash` (its install seam) both need it, so
+this is the one loader. The installer itself is not rewritten, which is the
+strangler-fig arrangement.
 """
 
 from __future__ import annotations

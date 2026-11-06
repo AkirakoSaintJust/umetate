@@ -1,8 +1,9 @@
 /* SPDX-License-Identifier: GPL-3.0-only
  * Copyright (C) 2026 P1Onken (umetate)
- * Host test for the dual-core note queue (hal/fm1_ipc.h): FIFO order, wrap-around,
- * overrun counting, and the "no lost note-off" rule. The queue's logic is target
- * and host identical; only the csync barrier (FM1_CPU1_USED) is a target no-op here. */
+ * Host test for the dual-core note queue (hal/fm1_ipc.h), covering FIFO order,
+ * wrap-around, overrun counting and the "no lost note-off" rule. The queue's logic
+ * is identical on target and host, since only the csync barrier (FM1_CPU1_USED) is
+ * a target no-op here. */
 #include <stdio.h>
 #include "fm1_ipc.h"
 

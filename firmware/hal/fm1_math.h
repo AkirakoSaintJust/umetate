@@ -79,7 +79,7 @@ FM1_MATH_INLINE int32_t fm1_madd_sat(int32_t acc, int32_t a, int32_t b, int shif
 /* A one-pole toward `target`: level += (target - level) * coeff / 65536.
  * When the rounded step is 0 (a small coeff times a small remaining delta) the
  * step is forced to ±1, so the envelope always converges to `target` instead of
- * stalling just short of it. That is the cause of "DECAY holds forever" at low rates. */
+ * stalling just short of it. That stall is what shows up as "DECAY holds forever" at low rates. */
 FM1_MATH_INLINE int32_t fm1_onepole(int32_t level, int32_t target, int32_t coeff)
 {
     int32_t d = target - level;
@@ -111,13 +111,13 @@ FM1_MATH_INLINE int32_t fm1_cos(uint32_t phase) { return fm1_sin(phase + 0x40000
 
 /* The 12-waveform union of the OPZ (YM2414) and OPL2/OPL3 (YM3812) sets, from
    ymfm's `opz_registers` and `opl_registers_base` constructors (BSD-3-Clause,
-   re-implemented in linear Q15). `phase` is Q32 (full cycle); `ws` is 0..11.
+   re-implemented in linear Q15). `phase` is Q32 (full cycle), and `ws` is 0..11.
    0-7 are the OPZ set (sine, triangle, half sine, half triangle, double sine,
-   double triangle, double half sine, double half triangle); 8-11 are the OPL-only
-   shapes (rectified |sin|, pulse, square, saw). A bad `ws` degrades to sine.
+   double triangle, double half sine, double half triangle), whilst 8-11 are the
+   OPL-only shapes (rectified |sin|, pulse, square, saw). A bad `ws` degrades to sine.
    Precomputed into gen/wavetable.h (`fm1_wave`, tools/gen_wavetable.py): waves
-   0-8 are one 1024-sample table each; 9 (pulse) / 10 (square) / 11 (saw) are six
-   band-limited tables each (harmonic counts 32..1) for the top-octave
+   0-8 are one 1024-sample table each, whilst 9 (pulse) / 10 (square) / 11 (saw)
+   are six band-limited tables each (harmonic counts 32..1) for the top-octave
    anti-aliasing. `fm1_wave_base[ws]` is ws's mip-0 offset; this helper reads the
    richest (mip-0) table, the oscillator node adds the `mip` selected from its
    note's increment. */
@@ -129,8 +129,8 @@ FM1_MATH_INLINE int32_t fm1_sin_wave(uint32_t phase, uint32_t ws)
 
 /* The band-limited-table mip index for a carrier increment `step` (Q32, samples
    per cycle): the level whose top harmonic sits below Nyquist. The harmonic
-   count per level is 2^(5-mip) (32,16,8,4,2,1); the selection is one octave
-   conservative (level mip keeps its top harmonic at <= Nyquist/2), so a vibrato
+   count per level is 2^(5-mip) (32,16,8,4,2,1), and the selection is one octave
+   conservative, so level mip keeps its top harmonic at <= Nyquist/2. A vibrato
    or detune of up to +/-1 octave never folds a harmonic above Nyquist. */
 FM1_MATH_INLINE uint32_t fm1_wave_mip(uint32_t step)
 {
@@ -175,7 +175,7 @@ FM1_MATH_INLINE int32_t fm1_key_apply(int32_t v, int32_t k, int32_t min, int32_t
 
 /* The velocity follow factor (Q15): 0 at velocity 0, ramping linearly to `amount`
  * at maximum velocity. `vel` is `voice_velocity[v]` (velocity × 258, so 127 →
- * ~32766, ≈ Q15 normalized); `amount` is a signed percent (-100..+100). */
+ * ~32766, ≈ Q15 normalised), and `amount` is a signed percent (-100..+100). */
 FM1_MATH_INLINE int32_t fm1_vel_scale(int32_t vel, int32_t amount)
 {
     return (int32_t)(((int64_t)amount * vel) / 3276700);
@@ -200,9 +200,9 @@ FM1_MATH_INLINE int32_t fm1_clamp16(int32_t v)
 }
 
 /* 4-input weighted sum against a routing-matrix row (a `const int16_t *` of four
-   0/1 Q15 weights): out = a*w0 + b*w1 + c*w2 + d*w3. The multiply stays (not a
-   boolean select): the weights are runtime table data, so a select is a
-   data-dependent branch per term, measured slower than the straight-line MAC. */
+   0/1 Q15 weights): out = a*w0 + b*w1 + c*w2 + d*w3. The multiply stays, because
+   the weights are runtime table data, so a select would be a data-dependent
+   branch per term and measured slower than the straight-line MAC. */
 FM1_MATH_INLINE int32_t fm1_route4(const int16_t *w, int32_t a, int32_t b, int32_t c, int32_t d)
 {
     return fm1_q15_mul(a, w[0]) + fm1_q15_mul(b, w[1])
@@ -231,7 +231,7 @@ FM1_MATH_INLINE int32_t fm1_tune_q16(int32_t octave, int32_t semi, int32_t cent)
     return (int32_t)((uint32_t)r >> (-oct));
 }
 
-/* The 2nd-order PolyBLEP residual (Tale / Martin Finke; "Making Audio Plugins
+/* The 2nd-order PolyBLEP residual (Tale / Martin Finke, "Making Audio Plugins
  * Part 18"). Returns the Q15 correction for a unit step at phase 0: the value to
  * layer on the naive waveform around its discontinuity. `p` is the Q32 phase
  * position (0..2^32), `inc` the Q32 increment, `inv_inc` = 2^32/inc (note-on

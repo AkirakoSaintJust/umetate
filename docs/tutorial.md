@@ -120,7 +120,7 @@ umetate setup --dry-run     # see exactly what would be installed, nothing writt
 `quick-check` reports each evidence layer, and a missing toolchain shows as
 `blocked` rather than `fail`. When you're ready to build for the target, run
 `umetate setup` and approve installation of the JieLi toolchain and SDK into the
-volume. Setup also installs Rust and the `fm1-emu` emulator. `--no-emulator`
+volume. Setup also installs Rust and the `fm1-emu` emulator, and `--no-emulator`
 skips the emulator if you want.
 
 **Checkpoint:** `quick-check` shows `source`/`host` as `pass` and `target`/`device`
@@ -141,8 +141,8 @@ browser lab in `build/web/` runs the same pure DSP in an AudioWorklet, so you ca
 listen locally. Neither check establishes FM-1 timing, panel ergonomics, DMA
 behaviour, flash safety, or recovery.
 
-Get the browser lab making noise before you touch synth code. That gives you a
-known-good baseline to compare against.
+Get the browser lab making noise before you touch synth code, because that gives
+you a known-good baseline to compare against.
 
 To produce a target package, which still does not flash anything and needs the
 toolchain from stage 3, run:
@@ -305,8 +305,8 @@ panic), or a `slot` (the Nth param on the current page). A widget is a `label`,
 `value`, `bar`, `param_row`, `scope`, `spectro`, or `envelope`, placed by
 `row` and `col`.
 
-The panel is a description of the screen. The generator emits the wiring, and a
-retained-mode redraw engine draws it, so you edit the JSON and never write drawing
+The panel is a description of the screen, and the generator emits the wiring, which
+a retained-mode redraw engine draws, so you edit the JSON and never write drawing
 code.
 
 Work in **small, measured increments**, with one decision-set in each, and keep
@@ -375,7 +375,7 @@ framework (`src/rib.c`) provides everything else, and
 `examples/type-p-fm1/app.c` for the worked glue.
 
 Keep display work, flash access, logging, blocking calls, and allocation out of the
-audio callback. Give each shared value one writer, or use a snapshot protocol. On
+audio callback, and give each shared value one writer, or use a snapshot protocol. On
 the UI side, draw only what changed. Save versioned records with a CRC and commit
 rule, and write them while the instrument is silent.
 

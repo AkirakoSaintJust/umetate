@@ -31,15 +31,16 @@ principal, buffer, endpoint, or security outcome is not a confirmed finding.
 ## Evidence discipline
 
 - Source/static, host, browser/WASM, target package, emulator, physical timing,
-  and device acceptance are separate layers. A lower layer never proves a higher
+  and device acceptance are separate layers, and a lower layer never proves a higher
   one.
-- Use `pass`, `fail`, `blocked`, `not-applicable`, or `not-run`. `blocked` and
-  `not-run` are not passes.
-- A source fix without a target rebuild is `source-only`, "validated" requires
+- Use `pass`, `fail`, `blocked`, `not-applicable`, or `not-run`, because `blocked`
+  and `not-run` are not passes.
+- A source fix without a target rebuild is `source-only`, whilst "validated" requires
   the device result. The baseline is **not** security-clean while `SEC-1` device
   validation is blocked.
-- Updates use CRC-16, not a signature: integrity, not authenticity. Model checks
-  prevent wrong-model installs, not malicious packages. Preserve that wording.
+- Updates use CRC-16 rather than a signature, so they give integrity rather than
+  authenticity. Model checks prevent wrong-model installs rather than malicious
+  packages. Preserve that wording.
 
 ## Surface map
 
@@ -79,8 +80,8 @@ pattern), each with the exact source location and the smallest fix.
 
 ### 2. Attack-surface review
 
-Walk each surface to code, a test, or an explicit gate. A surface with no test
-and no gate is a finding, not a non-issue. Re-check with `umetate lint --c`
+Walk each surface to code, a test, or an explicit gate, because a surface with no test
+and no gate is a finding rather than a non-issue. Re-check with `umetate lint --c`
 (SEC-1 MAXP bounds, SEC-2 UAC access, ROM-address constants, HAL-only MMIO, the
 flash-busy call graph, no `double`/64-bit-div/allocation in the DSP TU).
 
@@ -89,7 +90,7 @@ flash-busy call graph, no `double`/64-bit-div/allocation in the DSP TU).
 For `.fwsc` handling, confirm the installer parses the identity as
 `([^_]+)_(\d+)`, runs `same_keyboard` and the model check on install **and**
 resume, and checks the header/file-list/file CRCs before writing. Identity
-strings are frozen (`_990`), the artefact filename is not the identity.
+strings are frozen (`_990`), whilst the artefact filename is not the identity.
 
 ### 4. Device-write gate (§8)
 
@@ -110,7 +111,7 @@ Hard stops: unknown recovery route or rollback image → stop, wrong-model ident
 
 ### 5. Report
 
-Record each surface as a row in the evidence vocabulary. A finding cites source,
+Record each surface as a row in the evidence vocabulary, and a finding cites source,
 a safe reproduction, priority, and the smallest effective fix. Do not relabel a
 blocked layer as a pass, and do not write "security-clean" while `SEC-1` device
 validation is blocked.

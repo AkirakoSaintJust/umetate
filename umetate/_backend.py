@@ -2,9 +2,10 @@
 # Copyright (C) 2026 P1Onken (umetate)
 """The generator's back-end (docs/roadmap.md §12.4): CompiledGraph -> `<synth>_dsp.c`.
 
-Pure emission: state allocation, the rate-split fused `render`, and the §12.1 seam.
-The node bodies are inlined from their `node.c` templates with placeholder
-substitution; a leftover placeholder is a GenError (never a silently-wrong .c).
+Pure emission, so the module only returns C source lines: state allocation, the
+rate-split fused `render`, and the §12.1 seam. The node bodies are inlined from
+their `node.c` templates with placeholder substitution, and a leftover placeholder
+raises a GenError rather than emitting a silently-wrong .c.
 """
 
 from __future__ import annotations
@@ -106,7 +107,8 @@ def _state_fields(
     graph: CompiledGraph,
 ) -> tuple[list[StateField], list[str], list[tuple[str, str]]]:
     """The node state as struct fields, plus the target pool globals and the
-    legacy pool bindings. Pool buffers stay in `.pool`; the state holds pointers."""
+    legacy pool bindings. Pool buffers stay in `.pool`, and the state holds the
+    pointers."""
     fields: list[StateField] = []
     pool_defs: list[str] = []
     pool_bind: list[tuple[str, str]] = []
@@ -304,7 +306,7 @@ def _legacy_state(graph: CompiledGraph, pool_bind: list[tuple[str, str]]) -> lis
 
 
 def _param_tables(graph: CompiledGraph) -> list[str]:
-    """The `dsp_param` metadata table (const, XIP). The slot lookup lives in
+    """The `dsp_param` metadata table (const, XIP). The slot lookup is in
     `_state_support` because it now offsets from a state pointer."""
     params = graph.params
     lines = [
@@ -447,8 +449,8 @@ def _render_voices_block(
     voice_audio: list[NodeInstance],
 ) -> list[str]:
     """One CONTROL_BLOCK of voice synthesis for voices [v0, v1) into `bus` (a
-    caller buffer of CONTROL_BLOCK samples). Reads the file-scope global control
-    temps written by `dsp_render`'s prologue for this block."""
+    caller buffer of CONTROL_BLOCK samples). It reads the file-scope global control
+    temps that `dsp_render`'s prologue wrote for this block."""
     name, cb = graph.name, graph.control_block
     per_part = graph.n_parts > 1
     taps = graph.taps
@@ -476,10 +478,10 @@ def _render_voices_block(
         )
         lines.append("    }")
 
-    # block-derived state: recompute per-voice block-constant values after the
+    # block-derived state: recompute per-voice block-constant values once the
     # global control temps are available (e.g. the phasor's pitch-scaled
-    # increment `inc * (32768 + pitch) >> 15`. Pitch is control-rate, so the
-    # multiply was being redone every sample).
+    # increment, `inc * (32768 + pitch) >> 15`). Pitch is control-rate, so the
+    # multiply was being redone every sample.
     block_derived = [
         by_id[iid] for iid in graph.voice_order if by_id[iid].block_derived
     ]
@@ -492,11 +494,11 @@ def _render_voices_block(
                 lines.append(f"        {i.state_ref(field, 'v')} = {expr};")
         lines.append("    }")
 
-    # audio loop. It is voice-outer (§13.9 3c), so the per-voice block-constant values
-    # (`step`/`base`/`mip`/`bl`/levels/cvs) and the delay1/phase state are
-    # loop-invariant over `f`, so with the voice loop outside the sample loop the
-    # compiler hoists them into registers (no per-sample SoA reload), and the
-    # delay1/phase stay live in registers across the sample loop.
+    # audio loop. It is voice-outer (§13.9 3c), so the per-voice block-constant
+    # values (`step`/`base`/`mip`/`bl`/levels/cvs) and the delay1/phase state are
+    # loop-invariant over `f`. With the voice loop outside the sample loop the
+    # compiler hoists them into registers, which avoids a per-sample SoA reload,
+    # and delay1/phase stay in registers across the sample loop.
     lines.append(f"    for (uint32_t i = 0; i < {cb}u; i++) bus[i] = 0;")
     lines.append("    for (uint32_t v = v0; v < v1; v++) {")
     lines.append("        if (!voice_gate[v] && !voice_rel[v]) continue;")
@@ -523,10 +525,11 @@ def _render_voices_block(
             )
 
     if taps:
-        # per-op scope taps (§6.11.4 L11): accumulate each tap source's output
-        # local, per part (so the HOME 4-op scope shows the active part's ops).
+        # per-op scope taps (§6.11.4 L11): accumulate each tap source's output into
+        # a local, per part, so the HOME 4-op scope shows the active part's ops.
         # `f < UMETATE_DSP_BLOCK_FRAMES` bounds the tap window to one block (the
-        # scope snapshot), host tests render larger `frames` than the target.
+        # scope snapshot), because the host tests render larger `frames` than the
+        # target.
         lines.append("            if (f < UMETATE_DSP_BLOCK_FRAMES) {")
         if per_part:
             lines.append("                uint32_t _tp = voice_part[v];")
@@ -586,12 +589,12 @@ def _render_dsp_render(graph: CompiledGraph) -> list[str]:
 
 
 def _render_split(graph: CompiledGraph) -> list[str]:
-    """The split-core dispatch (target only): per block, the pre on CPU0, then CPU0
-    renders [0, N0) while CPU1 renders [N0, NVOICE) via the mailbox; CPU1 then
-    waits for CPU0's bus, combines, and runs the post, so the heavier post (filters
-    + wavefolder) lands on the cooler core. `N0` is the patch's `cpu0_voices`
-    (default `voices//2`). Falls back to CPU0-only when core 1 is off or gave up
-    (`fm1_cpu1_wait` returns non-zero and holds core 1)."""
+    """The split-core dispatch (target only): per block, the pre runs on CPU0, then
+    CPU0 renders [0, N0) whilst CPU1 renders [N0, NVOICE) via the mailbox. CPU1
+    then waits for CPU0's bus, combines, and runs the post, so the heavier post
+    (filters and the wavefolder) lands on the cooler core. `N0` is the patch's
+    `cpu0_voices` (default `voices//2`). It falls back to CPU0-only when core 1 is
+    off or gave up (`fm1_cpu1_wait` returns non-zero and holds core 1)."""
     name, cb = graph.name, graph.control_block
     n0 = graph.cpu0_voices if graph.cpu0_voices >= 0 else graph.voices // 2
     has_taps = bool(graph.taps)
@@ -719,7 +722,7 @@ def _emit_body(
 ) -> list[str]:
     """Emit a node's full body (read + write parts) at the given indent.
 
-    Unwired outputs are `(void)`-ed so a multi-output node (e.g. `svf` with
+    Unwired outputs are `(void)`-ed, so a multi-output node (e.g. `svf` with
     low/band/high) doesn't leave unused locals under `-Wall`.
     """
     read, write = _split_template(inst.spec.body)
@@ -932,9 +935,10 @@ def _seam(graph: CompiledGraph, by_id: dict[str, NodeInstance]) -> list[str]:
             f"UMETATE_DSP_API uint32_t {name}_dsp_param_count(void) {{ return PARAM_COUNT; }}",
             "",
             # the core-1 render job (fm1_cpu1.h, §12.1): drain the note queue, render
-            # one block, then publish the reverse status, the dual-core default (D3). Runs
-            # from XIP and calls the .dsp_text (SRAM) functions, as rib_dsp.c's
-            # rib_render_block. Compiled out on the host (no second core).
+            # one block, then publish the reverse status, which is the dual-core
+            # default (D3). It runs from XIP and calls the .dsp_text (SRAM)
+            # functions, as rib_dsp.c's rib_render_block does, and it is compiled out
+            # on the host, where there is no second core.
             "#if FM1_CPU1_USED",
             f"void {name}_render_block(uint32_t arg) {{",
             f"    {name}_state *state = {name}_legacy();",

@@ -3,23 +3,24 @@
 /* Felucca update loader, the portable part (step 2 of the M-UPGRADE update
  * protocol).
  *
- * The host serves the package ("logical image") with cmd 0x30 reads (ota.c).
- * The loader:
- *   1. reads the UFW header and finds flash.bin;
- *   2. checks that the package's app area decrypts with THIS chip's key
- *      (taken from isd_config.ini in the device's own flash head), so a
- *      package for another key is refused before anything is erased;
- *   3. writes ONLY the app area [0x4000, 0x93000), sector by sector, skipping
- *      sectors that are already equal, and verifies each one, the flash head
- *      (SPL, isd_config) is never written;
- *   4. checks the CRC16 the package stores for flash.bin against everything it
- *      was served (the head too, which it never writes; a mismatch: up to two
- *      more passes, rewriting what differs), asks 0xF0000000 ("success"), then
- *      invalidates the update record (RAM and flash) so the SPL boots the new
- *      app, and resets. A damaged package or no "success" leaves the record:
- *      the loader stays (also after a power cycle) and the host can resume.
- * Power loss during 3: the record is still there, the SPL runs the loader
- * again on the next power-on and the host can resume.
+ * The host serves the package ("logical image") with cmd 0x30 reads (ota.c),
+ * and the loader walks the upgrade in four moves:
+ *   1. read the UFW header and find flash.bin.
+ *   2. check that the package's app area decrypts with THIS chip's key, which
+ *      comes from isd_config.ini in the device's own flash head, so a package
+ *      for another key is refused before anything is erased.
+ *   3. write ONLY the app area [0x4000, 0x93000), sector by sector, skipping
+ *      sectors that are already equal and verifying each one, whilst the flash
+ *      head (SPL, isd_config) is never written.
+ *   4. check the CRC16 that the package stores for flash.bin against
+ *      everything it was served, the head included even though that is never
+ *      written, and a mismatch gets up to two more passes that rewrite what
+ *      differs. Then it asks 0xF0000000 ("success"), invalidates the update
+ *      record in RAM and flash so the SPL boots the new app, and resets. A
+ *      damaged package or a missing "success" leaves the record, so the loader
+ *      stays (also after a power cycle) and the host can resume.
+ * A power loss during step 3 is survivable because the record is still there:
+ * the SPL runs the loader again on the next power-on and the host can resume.
  *
  * Hooks from the platform (loader.c, tests/ldr_test.c):
  *   ldr_fread(off, p, n)  ldr_erase(off)  ldr_prog(off, p, n)   flash, 0 = ok

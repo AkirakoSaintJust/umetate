@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 /* Copyright (C) 2026 P1Onken (umetate) */
-/* The device-side SysEx handler host test: feed frames (synth_sysex_feed) and
- * check the dispatched responses (the stub midi_send_sysex captures them). The
+/* The device-side SysEx handler host test, which feeds frames (synth_sysex_feed) and
+ * checks the dispatched responses (the stub midi_send_sysex captures them). The
  * identity + part-patch-read response hex is the cross-language parity fixture
  * against umetate/_sysex.py. */
 #include <stdint.h>

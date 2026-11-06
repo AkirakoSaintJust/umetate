@@ -35,11 +35,12 @@ static uint32_t fm1_p33_timeouts;
  * and a core left running there would execute whatever they put in it. Hold: C1_CON bit 1 set, then bit 3 (enable)
  * cleared, registers only, safe when it never ran. Without FM1_CPU1_USED none of this is built.
  *
- * The bus-invalid traps are off around the hold. Holding core 1 cuts the read it has on the bus (its waiting loop
- * reads the mailbox all the time), and the chip flags that a few instructions later as an AXI read invalid
- * (DBG_MSG bit 4): with the traps on (fm1_guard.h FM1_GUARD_BUS) core 0 took the exception, so 1 in 6 updates
- * with 2ND CORE ON ended in a crash report and a plain reboot before the update record was written, and the SPL
- * started the app instead of the update loader. So: traps off, hold, wait for the flag, clear it, traps back. */
+ * The bus-invalid traps are off around the hold. Holding core 1 cuts the read it has on the bus, because
+ * its waiting loop reads the mailbox all the time. The chip flags that a few instructions later as an AXI
+ * read invalid (DBG_MSG bit 4). With the traps on (fm1_guard.h FM1_GUARD_BUS) core 0 took the exception. So
+ * 1 in 6 updates with 2ND CORE ON ended in a crash report and a plain reboot before the update record was
+ * written. The SPL then started the app instead of the update loader. So: traps off, hold, wait for the flag,
+ * clear it, traps back. */
 #ifndef FM1_CPU1_USED
 #define FM1_CPU1_USED 0
 #endif

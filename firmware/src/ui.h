@@ -4,13 +4,13 @@
  * a panel described by generated tables (gen/panel.h). Pure C, runs on CPU0 in
  * app_main (never in the audio callback), renders through gfx.c's canvas.
  *
- * The tables are `const` (XIP); the only mutable runtime state is the context/page
+ * The tables are `const` (XIP), and the only mutable runtime state is the context/page
  * stack, the shared param values, the bend slot, and one `ui_dirty[]` entry per
  * widget (its last-drawn value, for the retained-mode dirty check).
  *
- * Layout convention (the 240x240 screen): `row` is a text line (16 px, FONT_S;
+ * Layout convention (the 240x240 screen): `row` is a text line (16 px, FONT_S, and
  * a 2-line widget uses `span` = 2, e.g. a FONT_L value), `col` is 0 = full width or
- * a column for side-by-side (a col = 120 px), `span` is the height in lines. */
+ * a column for side-by-side (a col = 120 px), and `span` is the height in lines. */
 #pragma once
 #include <stdint.h>
 

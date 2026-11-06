@@ -10,7 +10,7 @@
 - **Pitch bend** bends the whole voice.
 - **Program change** selects a patch.
 - **Continuous controllers** map to parameters, with each exposed parameter
-  getting a CC assigned in order from a base. The parameter list is the same one
+  getting a CC assigned in order from a base, and the parameter list is the same one
   the panel edits: algorithm, filter cutoff and resonance, wavefolder, the operator
   ratios, levels, waveforms, feedback, mutes, and the envelopes, plus the voice
   modes.

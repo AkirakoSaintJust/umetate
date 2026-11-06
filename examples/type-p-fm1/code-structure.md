@@ -39,7 +39,7 @@
 ## 2. The seam (library path)
 
 No hand-written `dsp.c`: `generate(patch)` emits `<synth>_dsp_*` from the patch
-(`docs/roadmap.md` §12.1). The new code is nodes/macros + the two HAL helpers.
+(`docs/roadmap.md` §12.1), and the new code is nodes/macros + the two HAL helpers.
 
 ### New nodes
 
@@ -49,7 +49,7 @@ No hand-written `dsp.c`: `generate(patch)` emits `<synth>_dsp_*` from the patch
   `state { stage(uint32), level(q15) }`. `node.c`: a 5-stage one-pole state
   machine (control rate) whose stage coefficient is `fm1_rate_coeff[rate]`
   (scaled by `rate_scale`, velocity → envelope rate) and whose level targets are
-  `fm1_level_gain[level]` (0.75 dB/step). `trigger` retriggers on a note-on edge.
+  `fm1_level_gain[level]` (0.75 dB/step), and `trigger` retriggers on a note-on edge.
   Host test: `test_generate.py` `DX_ENV` + `RELEASE_PATCH`.
 - **`tl`**, `node.json`: `ins { audio, cv(control, default 32768) }`,
   `outs { audio }`, `params { level(level 0..99) }`. `node.c`: the Yamaha
@@ -86,8 +86,8 @@ No hand-written `dsp.c`: `generate(patch)` emits `<synth>_dsp_*` from the patch
 ### HAL helpers (`firmware/hal/fm1_math.h`)
 
 - `FM1_MATH_INLINE int32_t fm1_sin_wave(uint32_t phase, uint32_t ws)`, the
-  12-waveform OPZ + OPL union (0–7 OPZ, 8–11 OPL-only).
-  `FM1_MATH_INLINE`, so a `.dsp_text` call never goes XIP.
+  12-waveform OPZ + OPL union (0–7 OPZ, 8–11 OPL-only), and `FM1_MATH_INLINE` means
+  a `.dsp_text` call never goes XIP.
 - `FM1_MATH_INLINE int32_t fm1_route4(const int16_t *w, int32_t a, int32_t b,
   int32_t c, int32_t d)`, which computes `Σ a·w0 + b·w1 + c·w2 + d·w3` via
   `fm1_q15_mul`.
@@ -106,16 +106,15 @@ No hand-written `dsp.c`: `generate(patch)` emits `<synth>_dsp_*` from the patch
 ## 4. State publication
 
 - **One writer per shared value:** params are single-writer (`set_param` writes
-  the shared slot, and the render reads it). The voice allocator owns `gate`/`inc`,
-  and the envelope owns its `stage`/`level`.
+  the shared slot, and the render reads it), whilst the voice allocator owns
+  `gate`/`inc` and the envelope owns its `stage`/`level`.
 
 ## 5. Host-test hook
 
 - **`umetate/test_generate.py`**, `DX_ENV` (envelope), `ROUTE4_TEST`
   (route4+mix4), the routing-table assertions, and the type-p-fm1 patch render
-  (non-silent → decays) + panel resolve. Run:
-  `python3 -m umetate.test_generate` (or the whole gate: `umetate deep-check
-  --all`).
+  (non-silent → decays) + panel resolve, with `python3 -m umetate.test_generate` to
+  run it (or the whole gate: `umetate deep-check --all`).
 
 ## 6. Forbidden dependencies (re-check)
 

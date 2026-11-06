@@ -3,7 +3,7 @@
 """`umetate build`: generate the firmware, compile it for the target, and package
 the `.fwsc`.
 
-This is the target branch. The host and WASM builds live in `deep-check` and
+This is the target branch, whilst the host and WASM builds are in `deep-check` and
 `web-build`. A missing JieLi toolchain leaves the command `blocked` rather than
 failing halfway. It wraps the inherited `firmware/tools/cmake_target.py` build, a
 strangler-fig arrangement rather than a rewrite. The toolchain and SDK come from
@@ -45,8 +45,9 @@ def _volume_populated() -> bool:
 def _resolve() -> tuple[str, str] | None:
     """The (toolchain, sdk) container-side paths, or `None` when nothing is set up.
 
-    Precedence: explicit `$JIELI_TOOLCHAIN`/`$AC79_SDK`, then the `umetate-target`
-    volume (the canonical `setup` location), then the local `.jieli/` checkout.
+    Precedence: an explicit `$JIELI_TOOLCHAIN` and `$AC79_SDK` pair comes first,
+    then the `umetate-target` volume (the canonical `setup` location), then the
+    local `.jieli/` checkout.
     """
     tc_env, sdk_env = os.environ.get("JIELI_TOOLCHAIN"), os.environ.get("AC79_SDK")
     if tc_env and sdk_env:

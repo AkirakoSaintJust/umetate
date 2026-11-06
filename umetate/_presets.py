@@ -2,15 +2,14 @@
 # Copyright (C) 2026 P1Onken (umetate)
 """The preset bank SysEx export and import (docs/roadmap.md §6.11.4): the
 host-side half of the preset store, a bank of 128 single-part and 64 multi-patch
-slots (the slot area's measured ceiling), exchanged as a sequence of single-part
-and multi-patch dump frames (the `.syx` stream). The device store (F4d) uses the
-same records.
+slots (the slot area's measured ceiling). The bank is exchanged as a sequence of
+single-part and multi-patch dump frames (the `.syx` stream), and the device store
+(F4d) uses the same records.
 
-A dump frame's payload is `slot byte + record` (7-bit packed by the envelope).
-Export emits every slot in order, with empty slots as version-0xFF records.
-Import requires the same strict sequence. A wrong-model, corrupt, or truncated
-stream
-parses to None (a rejected import, never a partial bank).
+A dump frame's payload is `slot byte + record`, 7-bit packed by the envelope.
+Export emits every slot in order, with empty slots as version-0xFF records. Import
+requires the same strict sequence. A wrong-model, corrupt, or truncated stream
+parses to None, which is a rejected import rather than a partial bank.
 """
 
 from __future__ import annotations

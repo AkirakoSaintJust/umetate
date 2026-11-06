@@ -7,12 +7,12 @@
 
 - **Working name:** type-p-fm1 (a 4-operator Yamaha FM synth).
 - **Who plays it and in what setting:** a desktop/tabletop FM voice in the
-  OPZ/DX21 lineage, pads, bells, EPs, basses. Played from the keys or MIDI.
-- **What should it feel like to play:** immediate, bright-but-tameable. The
-  algorithm knob should be the headline gesture, the filter + wavefolder the
+  OPZ/DX21 lineage, with pads, bells, EPs and basses played from the keys or MIDI.
+- **What should it feel like to play:** immediate, bright-but-tameable, with the
+  algorithm knob as the headline gesture and the filter + wavefolder as the
   softening stage.
 - **Three reference sounds:** (1) a DX7-style E-piano (algorithm 4, two
-  2-operator stacks). (2) a clangorous bell (algorithm 0, deep stack + feedback).
+  2-operator stacks), (2) a clangorous bell (algorithm 0, deep stack + feedback), and
   (3) an additive organ pad (algorithm 7, all four carriers).
 - **Explicit non-goals:** no effects beyond filter + wavefolder (patch
   persistence, SysEx, and velocity scaling are now shipped, see §4/§5).
@@ -35,13 +35,13 @@
   the depths to 0 (off), settable via `set_param` (`opN.velamp.depth` etc.),
   not on the panel.
 - **Modulation:** the routing matrix (8 algorithms) selects which operator
-  phase-modulates which. Feedback = self-modulation. One **per-part pitch LFO**
-  (vibrato), one **per-note pitch envelope** (the "pitch blip": a `base` offset
-  that decays back at note-on), and one **amplitude LFO per operator** (tremolo,
-  per-voice).
+  phase-modulates which, feedback is self-modulation, and there is one **per-part
+  pitch LFO** (vibrato), one **per-note pitch envelope** (the "pitch blip": a `base`
+  offset that decays back at note-on), and one **amplitude LFO per operator**
+  (tremolo, per-voice).
 - **Effects and output stage:** carrier sum → `svf` (type LP/BP/HP + bypass +
-  a cutoff ADSR) → `wavefolder` (threshold + fold count + type) → `out` (the
-  `MASTER` pot is the volume. No output VCA).
+  a cutoff ADSR) → `wavefolder` (threshold + fold count + type) → `out`, where the
+  `MASTER` pot is the volume and there is no output VCA.
 
 ### 2.1a The output chain (filter + fold), specified
 
@@ -157,18 +157,19 @@ knob reaches its whole range in a sane number of turns and clamps at the ends.
 (`level` is the Yamaha total-level (0–99, 0.75 dB/step: 99 = max, 50 ≈ −37 dB,
 0 = silence) that gates the operator's
 output with −12 dB single-operator headroom (`fm1_level_gain[level] >> 2`), so a
-solo carrier never clips and a four-carrier additive algorithm sums to ~0 dBFS.
-`opN_feedback` is each operator's own self-modulation depth. The DX rates
+solo carrier never clips and a four-carrier additive algorithm sums to ~0 dBFS,
+whilst `opN_feedback` is each operator's own self-modulation depth. The DX rates
 (`r1..r4`, `penv_r1..r4`) are 0–99 → a one-pole coefficient via
-`fm1_rate_coeff` (a non-uniform Yamaha-style curve: 99 = instant ≈ 0.73 ms, 0 ≈ 7 s). The DX levels (`l1..l3`) are
-0–99 → Q15 gain via `fm1_level_gain` (0.75 dB/step). `rate` is a Q32 phase
-increment per sample, `f · 2³² / 44100`, so ~97392 = 1 Hz. `depth` is `depth/32768` in the
-use's units: octaves of vibrato for `pitch_depth` (273 ≈ ±10 cents), fraction of
-full amplitude for `trem_depth` (~16000 ≈ ±50%). `ratio` is the q16 frequency
-multiplier, `ratio/65536` = the multiplier (65536 = 1.0, 32768 = 0.5). The
-per-note pitch envelope (`penv`) retriggers on every note-on, releases on
-note-off, and is off by default. Its levels `l1..l3` are q15 pitch offsets
-(32768 = +1 octave, 2731 ≈ +1 semitone). All block rate.)
+`fm1_rate_coeff` (a non-uniform Yamaha-style curve: 99 = instant ≈ 0.73 ms, 0 ≈ 7 s),
+and the DX levels (`l1..l3`) are 0–99 → Q15 gain via `fm1_level_gain` (0.75 dB/step).
+`rate` is a Q32 phase increment per sample, `f · 2³² / 44100`, so ~97392 = 1 Hz,
+whilst `depth` is `depth/32768` in the use's units: octaves of vibrato for
+`pitch_depth` (273 ≈ ±10 cents), and a fraction of full amplitude for `trem_depth`
+(~16000 ≈ ±50%). `ratio` is the q16 frequency multiplier, `ratio/65536` = the
+multiplier (65536 = 1.0, 32768 = 0.5), and the per-note pitch envelope (`penv`)
+retriggers on every note-on, releases on note-off, and is off by default. Its levels
+`l1..l3` are q15 pitch offsets (32768 = +1 octave, 2731 ≈ +1 semitone), and all of
+it runs at block rate.)
 
 ### 2.3 Tables
 
@@ -189,23 +190,25 @@ pages (§3.3): the active part's four operators are its four channels, so the
 
 ### 3.1 The control surface (fixed)
 
-`MASTER` = volume (platform). `ALGORITHM` = always-on algorithm encoder. `KNOB1–4`
-= the current page's params. `SELECT` = page up/down (wrapping). The buttons:
+`MASTER` = volume (platform), `ALGORITHM` = always-on algorithm encoder, `KNOB1–4`
+= the current page's params, and `SELECT` = page up/down (wrapping). The buttons:
 `EDIT` (operator pitch), `ENV` (envelopes), `LFO` (modulation), `FX` (filter +
 fold), `GLO` (parts + patch), `HOME` (the visual pages), `ARP`/`SEQ`/`PLAY`/`REC`
 (operator mutes 1–4), `SEL` (operator select + part switch + part mute combos),
 `PRESETS` (the patch-browser popup), `OCT−`/`OCT+` (shift the keybed a whole
-octave, ±2, firmware-level). The keybed plays notes. `SEL`+key is the mute chord.
+octave, ±2, firmware-level). The keybed plays notes, and `SEL`+key is the mute
+chord.
 
 ### 3.2 Always visible (every page, a fixed header)
 
-The header is two lines. Line 1 shows, at all times: every **part** (`P1 P2`) and
+The header is two lines and line 1 shows, at all times, every **part** (`P1 P2`) and
 **operator** (`op 1 2 3 4`), each with its **ON/OFF** (muted, red) state and the
-active one highlighted. The **current algorithm** (`ALG n`). And the **current menu
+active one highlighted, the **current algorithm** (`ALG n`), and the **current menu
 name + page number/total** (`EDIT 1/2`). Line 2 is the **page description** (the
-page's first widget, e.g. `OSCILLATOR`, `OP DETUNES`). Colours: parts + operators
-white, the selected part/operator light blue, `ALG` + values hot pink, muted red,
-menu/page purple, the description bright green. No page may hide any of it.
+page's first widget, e.g. `OSCILLATOR`, `OP DETUNES`), and the colours run parts +
+operators white, the selected part/operator light blue, `ALG` + values hot pink,
+muted red, menu/page purple, and the description bright green. No page may hide any
+of it.
 
 ### 3.3 Contexts (menus) and their pages
 

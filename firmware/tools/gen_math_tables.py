@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
 """Generate gen/math_tables.h, the const XIP fixed-point tables hal/fm1_math.h
-serves. Deterministic; the output is checked in (as gen/felucca_font.h).
+serves. The output is deterministic, and it is checked in
+(as gen/felucca_font.h).
 
 Run from the firmware root:  python3 tools/gen_math_tables.py
 
@@ -53,18 +54,18 @@ def main() -> None:
     cent_q16 = [q16(2.0 ** (i / 1200.0)) for i in range(100)]
     # Per-operator detune (the fm_op `detune` param, cents −50..+50) -> the Q15
     # pitch offset the phasor adds to `32768 + pitch` so the frequency shift is
-    # *exact*: offset = 32768 · (2^(cents/1200) − 1). Indexed `[cents + 50]`.
+    # *exact*: offset = 32768 · (2^(cents/1200) − 1), indexed `[cents + 50]`.
     detune_pitch = [
         round(32768.0 * (2.0 ** (d / 1200.0) - 1.0)) for d in range(-50, 51)
     ]
 
     # DX rate -> one-pole coefficient (Q16). Yamaha-style *non-uniform* curve: the
     # time constant is ~2^(sqrt(99-r) / 0.75) blocks, so the slow end has fine
-    # granularity (each step ~5% faster) while "instant" is compressed to the very
+    # granularity (each step ~5% faster) whilst "instant" is compressed to the very
     # top (rate 99 ≈ 0.73 ms). A uniform exponential (×2 per 8 steps) instead made
-    # everything above ~64 read as "instant", 35 dead settings, and left the
-    # musical decay/release range (tens of ms .. ~1 s) crowded below ~40. Rate 0 ≈
-    # 7 s (a long release), rate 50 ≈ 0.5 s, rate 64 ≈ 170 ms, rate 99 = instant.
+    # everything above ~64 read as "instant" and left 35 settings dead, whilst the
+    # musical decay/release range (tens of ms .. ~1 s) stayed crowded below ~40. Rate
+    # 0 ≈ 7 s (a long release), rate 50 ≈ 0.5 s, rate 64 ≈ 170 ms, rate 99 = instant.
     # Drives the dx_env / pitch_env stages.
     rate_coeff = [
         min(65536, max(0, round(65536.0 * 2.0 ** (-((99 - r) ** 0.5) / 0.75))))
@@ -74,8 +75,8 @@ def main() -> None:
     # 50 ≈ −37 dB, 0 = silence. This is the OPM/OPP scale: the OPM `TL` register is
     # 0.75 dB per step, and the DX21/DX27/DX100 output level maps to it one step per
     # level (`TL = 99 - level`). It also makes the modulation index match those
-    # synths: a level-75 modulator reaches π radians, not 4π. The operator output
-    # level uses `fm1_level_gain[level] >> 2` for the −12 dB single-operator
+    # synths: a level-75 modulator reaches π radians, rather than 4π. The operator
+    # output level uses `fm1_level_gain[level] >> 2` for the −12 dB single-operator
     # headroom (four additive carriers then sum to 0 dBFS).
     level_gain = [0] + [
         max(1, min(32767, round(32767.0 * 10.0 ** (-(99 - l) * 0.75 / 20.0))))

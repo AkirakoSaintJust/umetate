@@ -2,11 +2,13 @@
 # Copyright (C) 2026 P1Onken (umetate)
 """The docs' cross-reference check (roadmap §12.8, P6-1).
 
-Scans the canonical docs for Markdown link/image destinations and verifies each
-relative target resolves to a file. Scope: file paths only, `#anchor` suffixes
-are stripped and `http(s)://`/`mailto:` are ignored (no heading-slug validation).
+Scans the canonical docs for Markdown link and image destinations, then verifies
+that each relative target resolves to a file. The scope is file paths only: an
+`#anchor` suffix is stripped, and `http(s)://` or `mailto:` targets are ignored, so
+there is no heading-slug validation.
 
-Run standalone: `python -m umetate._links check`, or via `umetate deep-check --links`.
+Run it standalone with `python -m umetate._links check`, or through
+`umetate deep-check --links`.
 """
 
 from __future__ import annotations

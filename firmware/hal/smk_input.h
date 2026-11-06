@@ -247,8 +247,8 @@ static void smk_trim_defaults(void)
             smk_trim_key[i][j] = K[j];
 }
 
-/* the factory calibration record (0x22C bytes, "trimdat\0" at +0x224), e.g. read from flash 0xC1000;
- * ignored unless the marker and strictly rising curves check out. Returns 1 if taken. */
+/* the factory calibration record (0x22C bytes, "trimdat\0" at +0x224), e.g. read from flash 0xC1000.
+ * It is ignored unless the marker and strictly rising curves check out, and returns 1 when taken. */
 static int smk_trim_load(const uint8_t *rec)
 {
     static const char M[8] = "trimdat";

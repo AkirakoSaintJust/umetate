@@ -7,9 +7,9 @@ command reads the project's `patch.json`, `panel.json`, `synth-brief.md`, and
 `plugin.json`, then renders the generic question form with the synth's own
 vocabulary. It does not assume FM, operators, or Type P.fm1.
 
-The command does not run the conversation. It writes the form, prints the next
-unanswered questions, and shows the writer where the gaps are. The protocol is
-in the documentation skill.
+The command writes the form rather than running the conversation, so it prints the
+next unanswered questions and shows the writer which ones are still open. The
+protocol is in the documentation skill.
 
 Run `umetate interview --write`, then `--next 3` after each answer, then
 `--check`.
@@ -508,7 +508,10 @@ def _write(synth: Path, force: bool) -> int:
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(text, encoding="utf-8")
     print(f"interview: wrote {target}")
-    print("  ask one topic at a time. `umetate interview --next 3` prints the gaps.")
+    print(
+        "  ask one topic at a time. `umetate interview --next 3` prints the open "
+        "questions."
+    )
     return 0
 
 

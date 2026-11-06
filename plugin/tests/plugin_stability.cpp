@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* Stability and edge-case sweep for the JUCE processor. No DAW needed. */
+/* Stability and edge-case sweep for the JUCE processor, which needs no DAW. */
 #include <cmath>
 #include <cstdint>
 #include <cstdio>

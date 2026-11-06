@@ -1,6 +1,6 @@
 # Third-party licence texts
 
-These texts travel with the release. The source tree uses them, the publish tool
+These texts travel with the release, and the source tree uses them: the publish tool
 copies this folder when it stages plugin archives, and a plugin archive carries
 them in `licences/`.
 

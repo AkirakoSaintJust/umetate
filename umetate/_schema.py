@@ -2,13 +2,14 @@
 # Copyright (C) 2026 P1Onken (umetate)
 """The typed mirror of the JSON manifests (docs/roadmap.md §6.8, §12.4).
 
-Every `*.schema.json` shape has a `TypedDict` here, the mypy mirror of the JSON
-Schema. The JSON boundary (a `json.loads` result) is narrowed to these via the
-`as_*` loaders below: a single `isinstance` check on the required keys, then one
-`cast`. The deeper per-field validation (unknown `kind`, unknown `source`, …) stays
-in the consuming modules, which now operate on typed data.
+Every `*.schema.json` shape has a `TypedDict` here, which is the mypy mirror of the
+JSON Schema. The JSON boundary (a `json.loads` result) is narrowed to these through
+the `as_*` loaders below: a single `isinstance` check on the required keys, then one
+`cast`. The deeper per-field validation (an unknown `kind`, an unknown `source`, and
+so on) stays in the consuming modules, which now operate on typed data.
 
-No `Any` here, by design: this module is what lets `disallow_any_explicit` stay on.
+No `Any` here, by design, because this module is what lets
+`disallow_any_explicit` stay on.
 """
 
 from __future__ import annotations
@@ -68,9 +69,9 @@ class ParamBinding(TypedDict):
     `display` is the value's on-screen form (the panel's per-param scale): `"raw"`
     (the integer), `"ratio"` (a Q16 frequency multiplier, `1.00` = base pitch),
     `"pct"` (0..100% of [min,max]), `"pct_inv"` (100..0%), `"onoff"` (off/on),
-    `"off_pct"` (≤0 → "off", else %), `"hz"` (a Q32 rate as Hz), or `"semi"` (a
+    `"off_pct"` (≤0 → "off", else %), `"hz"` (a Q32 rate as Hz), `"semi"` (a
     bipolar Q15 as ±semitones), or `"wave"` (a 0..11 waveform index as its name).
-    Absent = `"raw"`.
+    An absent value means `"raw"`.
     """
 
     target: str
@@ -95,9 +96,10 @@ class TableSpec(TypedDict):
 
 
 class Parts(TypedDict):
-    """A patch `parts:` section: N timbres, routing in parallel arrays (indexed by
-    part). Chosen (over a list of per-part objects) so a future firmware can add an
-    `engine: [...]` array and point different parts at different patch engines."""
+    """A patch `parts:` section: N timbres, with the routing in parallel arrays
+    indexed by part. This shape was chosen over a list of per-part objects. A
+    future firmware can then add an `engine: [...]` array and point different parts
+    at different patch engines."""
 
     count: int
     channel: NotRequired[list[int]]  # MIDI channel per part, -1 = omni
@@ -148,8 +150,8 @@ class ParamSpec(TypedDict):
     """A node.json param in object form: `{kind, default?, modulatable?}`.
 
     `default` overrides the kind's default. `modulatable` (D23) gives the param a
-    paired control input `<param>_mod` + a depth param `<param>_depth`; the effective
-    value is base + mod·depth at block rate."""
+    paired control input `<param>_mod` and a depth param `<param>_depth`, so the
+    effective value is base + mod·depth at block rate."""
 
     kind: str
     default: NotRequired[str]

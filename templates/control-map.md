@@ -1,12 +1,12 @@
 # Control map (UI plan)
 
-> Fill this in during the UI interview, and it becomes `panel.json`. Delete the
-> options you reject. One control map per project. The voice architecture and
-> parameter manifest in `synth-brief.md` are upstream, so bind only parameters that
-> exist there.
+> Fill this in during the UI interview, and it becomes `panel.json`. One
+> control map covers one project, so delete the options you reject. The voice
+> architecture and parameter manifest in `synth-brief.md` are upstream, so bind
+> only parameters that exist there.
 >
-> **Do not author the panel until sections 1 to 8a are filled.** The handoff in
-> §8b is written with the reference. The ten-item minimum bar is in
+> **Do not author the panel until sections 1 to 8a are filled**, because the
+> handoff in §8b is written with the reference. The ten-item minimum bar is in
 > `skills/umetate-development/SKILL.md` §2, the reasoning and design-language
 > reference are in `skills/umetate-development/references/ui-design.md`, and the
 > casebook is `ui-dossier.md`.
@@ -37,14 +37,14 @@
 
 ## 3. Contexts (modes) and their bindings
 
-> A context owns both its view and its control meaning. For **each** context, fill
-> a table like the one below with one row per control or MIDI source that does
-> something here, and a row for every on-enter or on-exit side effect.
+> A context owns both its view and its control meaning, so fill a table like the
+> one below for **each** context, with one row per control or MIDI source that
+> does something here and a row for every on-enter or on-exit side effect.
 >
-> First draw the **menu tree**, every context (menu), its pages, and the *modes*
-> within a page (a page whose widgets change under a hold or shift, or a multi-mode
-> page). A fresh reader must be able to draw the screen for every state from this
-> section alone.
+> First draw the **menu tree**, which means every context (menu), its pages, and
+> the *modes* within a page (a page whose widgets change under a hold or shift,
+> or a multi-mode page). A fresh reader must be able to draw the screen for every
+> state from this section alone.
 
 ### Context: `home`
 
@@ -84,7 +84,7 @@
 
 ### 5b. Parameter specification
 
-One row per editable parameter. The range, unit, and curve are the same ones the
+One row per editable parameter, with the same range, unit, and curve that the
 stepper and the display use. A value is clamped to this range, so the display and
 the value never disagree.
 
@@ -138,9 +138,10 @@ the value never disagree.
 
 ## 8b. Panel section handoff
 
-The user-facing panel section is written from this map and `panel.json`. It goes
-into the user manual after the sound-design chapters and before the first-patch
-chapter. It must teach a fresh reader how to move, with the controls listed second.
+Write the user-facing panel section from this map and `panel.json`, then put it in
+the user manual after the sound-design chapters and before the first-patch
+chapter. It has to teach a fresh reader how to move, with the controls listed
+second.
 
 - **Surface:** every physical control, its kind, and its global job.
 - **Navigation:** every context button, how pages advance, how HOME works, every
@@ -156,8 +157,8 @@ chapter. It must teach a fresh reader how to move, with the controls listed seco
 - **Screen:** header fields, footer legend, popup behaviour, and LED feedback.
 - **Quick reference:** one line per context with its page count and job.
 
-Use `templates/panel-reference.md` as the shape. Do not write the section from the
-design intent. Read the generated page table and the app's popup handlers, then
+Use `templates/panel-reference.md` as the shape, and write it from the generated
+page table and the app's popup handlers rather than from the design intent, so you
 describe what the instrument actually does.
 
 ## 9. Acceptance

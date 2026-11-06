@@ -9,8 +9,8 @@ namespace p1 {
 
 class Engine;
 
-/* The device MIDI handler over one engine. The sustain state lives in the
- * context, so bridges do not share pedal state. */
+/* The device MIDI handler over one engine, where the sustain state sits in the
+ * context so bridges keep separate pedal state. */
 class MidiBridge {
 public:
     explicit MidiBridge(Engine& engine);

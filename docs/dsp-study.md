@@ -1,6 +1,6 @@
 # DSP implementation study
 
-This is the implementation study behind `docs/roadmap.md` §12.5. It compares the
+This is the implementation study behind `docs/roadmap.md` §12.5, and it compares the
 component interfaces and the DSP kernels the generator uses, with the trade-offs
 that shaped them.
 
@@ -45,14 +45,14 @@ out = a + (((b - a) * (int32_t)frac) >> 16);   /* linear interpolation */
 
 Compute **`inc` once per note**, or once per control tick only when pitch is
 modulated, so the sample loop never recalculates it. A 512–2048-sample table with
-linear interpolation produces about 0.1% THD at 512, which is inaudible. A sine
+linear interpolation produces about 0.1% THD at 512, which is inaudible, and a sine
 table needs no anti-aliasing because it contains no harmonics to fold.
 
 ### 2.2 PolyBLEP (band-limited saw/square/pulse, cheap anti-aliasing)
 
 MI's `PolyblepOscillator` uses the **polyBLEP** correction, a 2nd-order polynomial
-applied around each discontinuity. It costs about four extra operations per sample
-and needs no oversampling:
+applied around each discontinuity, which costs about four extra operations per
+sample and needs no oversampling:
 
 ```c
 float poly_blep(float t, float dt) {          /* t = phase in [0,1), dt = inc */
@@ -66,8 +66,8 @@ float poly_blep(float t, float dt) {          /* t = phase in [0,1), dt = inc */
 ```
 
 The correction has the same shape at each discontinuity, with only its phase
-changing. For a **pulse (PWM)**, move the second correction to the pulse width
-`pw`:
+changing, so for a **pulse (PWM)** you move the second correction to the pulse
+width `pw`:
 
 ```c
 /* pulse: v = (ph < pw ? 1 : -1); p2 = (ph + 1 - pw) mod 1;
@@ -90,23 +90,23 @@ leak keeps the output full-scale at any pitch, and the price is a brief note-on
 transient (the integrator starts from 0, decaying over ~2^10 samples) and a ~1 LSB
 DC offset.
 
-The same polynomial works in Q15/Q16. In fixed-point code, avoid the divide in
-`poly_blep` (`t /= dt`): compute `1/dt` at **note-on**, whilst `dt` is constant,
-so the sample loop multiplies instead of dividing. This is the default
+The same polynomial works in Q15/Q16, and in fixed-point code you avoid the divide
+in `poly_blep` (`t /= dt`) by computing `1/dt` at **note-on**, whilst `dt` is
+constant, so the sample loop multiplies instead of dividing. This is the default
 "analogue-ish" oscillator, with the polynomial doing the anti-aliasing.
 
 ### 2.3 Wavetable morphing (MI `VariableSawOscillator`)
 
-Store one cycle in a wavetable and scan it with the phase accumulator. To change
-the shape, cross-fade between precomputed tables. MI's variable saw, for example,
-morphs between several saw shapes rather than recomputing the waveform.
+Store one cycle in a wavetable and scan it with the phase accumulator. To change the
+shape, cross-fade between precomputed tables, which is what MI's variable saw does
+rather than recomputing the waveform.
 
 ### 2.4 Phase distortion (Casio CZ)
 
 Phase distortion (PD) applies a **static** warp: the phase ramp passes through a
 monotonic transfer function before the sine lookup. The CZ used a
-cycle-synchronised modulator/carrier pair. Unlike FM's dynamic phase modulation,
-this needs no delay. FM feedback does need a one-sample delay:
+cycle-synchronised modulator/carrier pair, and unlike FM's dynamic phase modulation,
+this needs no delay, though FM feedback does need a one-sample delay:
 
 ```c
 uint32_t pd = transfer[phase >> (32 - LOG2_TF)];   /* warp the phase */
@@ -121,11 +121,11 @@ rather than a new node.
 
 Vector phaseshaping (VPS), described by Kleimola, Lazzarini, Timoney, and
 Välimäki at DAFx-11, is the technique behind FAW's Circle². It extends classic PD
-in three ways. First, the inflection point becomes a **2-D vector `p = (d, v)`**,
-with `d` setting the bend's x-position and `v` its y-position, where classic PD
-fixes `v = 0.5`. Second, the transfer can have **multiple, piecewise inflection
-points**. Third, those points can be **modulated at audio rate**. VPS turns a
-static phase curve into a dynamic shaper with multiple breakpoints:
+in three ways: the inflection point becomes a **2-D vector `p = (d, v)`**, with `d`
+setting the bend's x-position and `v` its y-position where classic PD fixes
+`v = 0.5`, the transfer can have **multiple, piecewise inflection points**, and
+those points can be **modulated at audio rate**. VPS turns a static phase curve
+into a dynamic shaper with multiple breakpoints:
 
 ```c
 /* phase p in [0,1) -> a "bent" phase, then the sine. One inflection point (d,v):
@@ -159,15 +159,15 @@ An FM operator advances phase by `inc = f·2^32/FS` and reads the sine table:
 `phase += inc; out = sin_table[phase] * level`. Here, `level` is the rate/level
 amplitude envelope. ymfm computes sine and attenuation in the **log domain** with
 phase-to-sine and level-to-gain tables, which makes the operator a sequence of
-integer table lookups. umetate uses the same basic pieces across its `phasor` +
+integer table lookups, and umetate uses the same basic pieces across its `phasor` +
 `osc` + `env` + `vca` decomposition.
 
 umetate's `fm_op` macro adds two FM-specific controls to that arrangement. The
 **`ratio`** parameter is `note_derived`: `inc = note_to_inc(note)·ratio`, so
 non-integer ratios such as 2.5 stay in tune. Optional **one-sample feedback** uses
 `delay1` for operator self-modulation (the DX/TX "feedback" control), and
-`detune` is a small fixed offset to `inc`. An N-operator voice can therefore use N
-`fm_op` macros, wired according to its algorithm, without new C code.
+`detune` is a small fixed offset to `inc`, so an N-operator voice can use N `fm_op`
+macros, wired according to its algorithm, without new C code.
 
 ### 2.7 OPL's waveform bit trick and the OPZ waveforms
 
@@ -202,7 +202,7 @@ choices, but the actual shapes and selection logic differ.
 ### 2.8 Wavetables and cache
 
 A single-cycle wavetable (512–2048 samples, or 1–4 KB) fits in cache and is read
-**sequentially** as phase advances. Cache thrashing is a concern when many large
+**sequentially** as phase advances, and cache thrashing is a concern when many large
 tables exceed the cache and voices jump between them, evicting one table's lines
 with another's.
 
@@ -226,7 +226,7 @@ Keep both tables small and place them in `.cpu1_rodata` so they fit in SRAM.
 ### 2.9 Wavefolding (nonlinear waveshaping)
 
 A wavefolder applies a **memoryless nonlinear transfer function** to each input
-sample. As the input amplitude crosses the fold points, the output bends back and
+sample, so as the input amplitude crosses the fold points, the output bends back and
 adds harmonics. Unlike a filter, a wavefolder has no state. Here are several
 fixed-point transfer functions:
 
@@ -244,11 +244,10 @@ fixed-point transfer functions:
   progressively folded copy of the signal.
 
 For umetate, I'd keep one wavefolder node and treat the transfer function as
-data: a shape enum or a set of Chebyshev coefficients. The node applies the
-selected transfer function.
+data: a shape enum or a set of Chebyshev coefficients, which the node applies.
 
 The proposed umetate `wavefolder` node has `ins {audio}`, `outs {audio}`, and no
-state. Its params are modulatable `amount` and `shape` (`sine | triangle | cheby`).
+state, with modulatable `amount` and `shape` (`sine | triangle | cheby`) params.
 Sine folding uses `fm1_sin`, and polynomial folding uses `fm1_madd_sat` or
 `fm1_sat_add32` because the result can exceed the input range.
 
@@ -280,14 +279,14 @@ Each stage has a **rate**, looked up as an increment in an exponential table, an
 a **level**, the target value:
 `env += rate_table[rate]; if (env >= level) next_stage;`. The rate is exponential
 and the level is linear in the log domain, so convert it to amplitude with a table
-lookup for `10^(-env/…)`. This uses fewer controls than a segment envelope and
+lookup for `10^(-env/…)`, which uses fewer controls than a segment envelope and
 matches what FM chips do, at about two table lookups per tick.
 
 ### 3.3 Exponential one-pole
 
 `env += (target - env) * coeff` moves the envelope toward its target with a
 one-pole filter. The result is a true exponential curve and costs one
-multiply-add. It works well for a simple ADSR decay or release, whilst a segment
+multiply-add, and it works well for a simple ADSR decay or release, whilst a segment
 envelope can express more shapes.
 
 ### 3.4 Efficiency lesson
@@ -313,9 +312,9 @@ band += f * high;
 /* low / band / high are the LP/BP/HP outputs; notch = low + high */
 ```
 
-The Chamberlin form is simple, but it can become unstable at high resonance.
-**Simper's TDF2 form** is more stable under modulation and at high resonance, and
-it produces the same LP/BP/HP outputs using mix coefficients (`m0,m1,m2`):
+The Chamberlin form is simple, but it can become unstable at high resonance,
+whilst **Simper's TDF2 form** is more stable under modulation and at high resonance,
+and it produces the same LP/BP/HP outputs using mix coefficients (`m0,m1,m2`):
 
 ```c
 g  = tanf(pi * cutoff / FS);            /* k = 1/Q */
@@ -331,12 +330,12 @@ ic2eq = 2 * v2 - ic2eq;
 out   = m0 * in + m1 * v1 + m2 * v2;    /* low = v2, band = v1, high = in - k*v1 - v2 */
 ```
 
-For fixed-point code, use `g = 2·sin(π·fc/fs)` instead of `tan`. Simper notes
-that sine is more accurate at low bit depth, and `fm1_sin` is already available.
-`tan` is not free on the pi32v2, so the TDF2 topology with an `fm1_sin`-derived
-`g` is the better fit, which is the form I'd use. Both forms use two state
-variables and recompute one coefficient per control tick, matching umetate's
-`svf` node (`z1`/`z2` state).
+For fixed-point code, use `g = 2·sin(π·fc/fs)` instead of `tan`, because Simper
+notes that sine is more accurate at low bit depth, `fm1_sin` is already available,
+and `tan` is not free on the pi32v2. The TDF2 topology with an `fm1_sin`-derived `g`
+is the better fit, which is the form I'd use. Both forms use
+two state variables and recompute one coefficient per control tick, matching
+umetate's `svf` node (`z1`/`z2` state).
 
 ### 4.2 One-pole
 
@@ -346,8 +345,8 @@ node does.
 
 ### 4.3 Biquad (RBJ cookbook)
 
-A biquad uses five coefficients to place two poles and two zeros. It supports more
-responses (LP/HP/BP/notch/peak/shelf) than the SVF, but recomputing its
+A biquad uses five coefficients to place two poles and two zeros, and it supports
+more responses (LP/HP/BP/notch/peak/shelf) than the SVF, but recomputing its
 coefficients takes more work (sin/cos) each control tick, so use one only when the
 SVF's fixed topologies are not enough.
 
@@ -360,8 +359,8 @@ This is the classic character-filter topology, with `res` setting the feedback a
 
 ### 4.5 Low-pass gate (vactrol)
 
-The Buchla 292 low-pass gate (LPG) combines a one-pole low-pass filter and a VCA.
-Both respond to the **same** vactrol control (an LED and an LDR). Its nonlinear
+The Buchla 292 low-pass gate (LPG) combines a one-pole low-pass filter and a VCA,
+which both respond to the **same** vactrol control (an LED and an LDR). Its nonlinear
 decay gives the circuit its character:
 
 - **Fast attack:** nearly instant to about 3 ms.
@@ -414,15 +413,15 @@ with feedback also covers flanging, chorus, resonators, and Karplus–Strong.
 
 In additive synthesis, the spectrum (magnitude and phase per bin) is the data. Run
 an inverse FFT at build time to create a single-cycle wavetable, then read it like
-any other table oscillator (§2.1). The IFFT is **offline and precomputed**, so it
-never belongs in the per-block audio loop. A fixed-spectrum "spectral oscillator"
-is therefore a wavetable rather than a separate algorithm. umetate keeps an `ifft`
-node for live spectral work. This is how SC's `IFFT` and Csound's `adsyn` can
+any other table oscillator (§2.1), because the IFFT is **offline and precomputed**
+and never belongs in the per-block audio loop. A fixed-spectrum "spectral oscillator"
+is therefore a wavetable rather than a separate algorithm, and umetate keeps an
+`ifft` node for live spectral work. This is how SC's `IFFT` and Csound's `adsyn` can
 reduce to table reads when the spectrum is fixed.
 
 **Fixed-point caution:** kiss_fft's fixed-point build scales by `1/N` in both
-directions to prevent overflow. A forward and inverse transform therefore scale
-the result by `1/N²`, so multiply back by `N²` when reconstructing a Q15 table. The
+directions to prevent overflow, so a forward and inverse transform scale the result
+by `1/N²`, and you multiply back by `N²` when reconstructing a Q15 table. The
 pi32v2 hardware FFT is **float** (`libFFT_pi32v2_OnChip.a`,
 `flfft_core_pi32v2.c`). A 64-harmonic `ifft` wavetable can use that hardware at
 control rate, with float isolated there, or use kiss_fft with its scaling handled.
@@ -533,12 +532,12 @@ per sample, per grain:
 
 Modulating pitch before the map changes phase/frequency directly: one
 multiply-add, with no resampling or extra aliasing. Apply the window after the map
-to shape each grain's amplitude. The window must stay **aligned to the grain**, so
-it needs the grain's progress value from the phase generator.
+to shape each grain's amplitude, and the window must stay **aligned to the grain**,
+so it needs the grain's progress value from the phase generator.
 
 ### 8.3 Three nodes rather than a loop
 
-The window needs the grain's progress. Putting the phase generator and window in
+The window needs the grain's progress, and putting the phase generator and window in
 one node that loops through an external oscillator would create a graph cycle,
 which the DAG generator rejects. Use a linear chain instead:
 
@@ -567,8 +566,8 @@ osc.audio           ->  gran_window.audio
 The Xenakis-inspired core is GENDYN, described in _Formalized Music_. Its waveform
 is a polygon: both breakpoint amplitudes and distances between breakpoints take
 bounded random walks, with samples linearly interpolated between points. At the
-±32768 limits, the walk **reflects** rather than clamps. This "elastic barrier" is
-part of Xenakis's method, and clamping would change the sound. The values are
+±32768 limits, the walk **reflects** rather than clamps, and this "elastic barrier"
+is part of Xenakis's method, because clamping would change the sound. The values are
 already integer (Q15 ±32767), so the method fits umetate's fixed-point baseline.
 Implement the random process as control-rate nodes connected to `gran_phase`'s
 modulation inputs:
@@ -587,7 +586,7 @@ control rate.
 ### 8.5 Fixed-point and cost
 
 Use Q32 for `p0`, `length`, and `pitch`, store the map as a Q15 `const` XIP table,
-`progress` as Q16, and the window as Q15. Per sample, each active grain needs one
+`progress` as Q16, and the window as Q15, and per sample each active grain needs one
 addition, one map lookup, one window multiply, and one saturating accumulate. The
 stochastic nodes run at block rate, so in total a grain costs about four integer
 operations and two table reads. The map is stored in XIP and the window is either a

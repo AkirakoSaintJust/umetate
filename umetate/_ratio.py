@@ -9,8 +9,8 @@ import math
 _Q16 = 65536
 
 # A ratio detent is a multiple of one of these bases. The first five are the
-# panel's harmonic and inharmonic series. The last three add the half roots in
-# the lower range: sqrt(2)/2, pi/4 and sqrt(3)/2.
+# panel's harmonic and inharmonic series, whilst the last three add the half roots
+# in the lower range: sqrt(2)/2, pi/4 and sqrt(3)/2.
 _RATIO_BASES: tuple[float, ...] = (
     0.5,
     1.0,
@@ -33,7 +33,7 @@ def _display(value: int) -> tuple[str, float]:
 def ratio_detents(lo: int, hi: int) -> list[int]:
     """The sorted Q16 ratio detents in [lo, hi]. Two series that meet inside the
     last displayed digit collapse to one detent, so every click changes the
-    readout. The survivor is the one whose ratio is closest to that readout."""
+    readout, and the survivor is the one whose ratio is closest to that readout."""
     groups: dict[str, list[int]] = {}
     for base in _RATIO_BASES:
         k = 1

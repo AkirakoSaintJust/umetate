@@ -16,7 +16,7 @@
  * Units that cannot run it (fm1-x0x#10, measured by Jangada, github.com/zednaked/jangada): on some
  * FM-1s core 1 reads words that are not in RAM (0x00200000 where core 0 reads 0), idle now and then,
  * often under load. So core 1 runs only the next job, and only when its check word (the function,
- * the argument and the job's number, written before the job) matches, the jobs it finished stay in a
+ * the argument and the job's number, written before the job) matches. The jobs it finished stay in a
  * register (Melodee's, keremimo/melodee#21: a stale function read as the next job fails the check).
  * Anything else it counts (mb.bad) and leaves, and core 0 holds it at the first one (fm1_cpu1_wait):
  * one core from then on. The mailbox keeps each core's writes on cache lines of their own

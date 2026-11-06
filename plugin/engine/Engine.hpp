@@ -8,8 +8,9 @@
 
 namespace p1 {
 
-/* One generated engine state behind a small C++ seam. No JUCE, no audio backend.
- * The wrappers are the only place the host touches the generated C API. */
+/* One generated engine state behind a small C++ seam. There is no JUCE and no
+ * audio backend here, because the wrappers are the only place the host touches
+ * the generated C API. */
 class Engine {
 public:
     Engine();

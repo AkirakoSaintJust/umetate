@@ -13,10 +13,10 @@
   change the session rate, and load a damaged state without the plugin going
   silent, hanging, or leaving the DAW with a non-finite sample.
 - **Sound and behaviour:** extreme patches may clip, as any synth may. They
-  stay finite and the plugin keeps rendering. A damaged state is rejected or
-  repaired, never trusted blindly.
-- **Failure mode:** the audio stays finite. A rejected state leaves the previous
-  parameters in place.
+  stay finite and the plugin keeps rendering, because a damaged state is rejected
+  or repaired, never trusted blindly.
+- **Failure mode:** the audio stays finite, and a rejected state leaves the
+  previous parameters in place.
 
 ## Dependencies and interactions
 
@@ -33,10 +33,11 @@
   driven to its minimum and its maximum through the host parameter object.
 - **Note/event ordering and ownership:** 256 note-ons, then note-offs, then a
   deterministic 9600-event storm of note on, note off, CC, pitch bend, channel
-  pressure, and program change. The engine receives note, CC, and bend only.
+  pressure, and program change, though the engine receives note, CC, and bend
+  only.
 - **Voice allocation and stealing:** the stress exceeds the 20-voice pool on
-  purpose. The allocator must stay finite and must not crash.
-- **Sustain/panic behaviour:** not changed. The storm includes note-offs. The
+  purpose, so the allocator must stay finite and must not crash.
+- **Sustain/panic behaviour:** not changed. The storm includes note-offs, and the
   existing panic path is untouched.
 
 ## Bounds and resources
@@ -45,9 +46,9 @@
   per block for 400 blocks.
 - **Per-sample and per-block operations:** unchanged by the test.
 - **RAM, flash, stack, pool:** the test allocates small standard containers on the
-  test thread only. The audio callback still does no allocation.
-- **Overflow/overload policy:** finite output is the gate. A loud, clipped signal
-  is allowed. NaN, infinity, or a hang is a failure.
+  test thread only, and the audio callback still does no allocation.
+- **Overflow/overload policy:** finite output is the gate, and a loud, clipped
+  signal is allowed, whilst NaN, infinity, or a hang is a failure.
 - **Division, shift, and range analysis:** no new arithmetic in the plugin.
 
 ## Files and interfaces
@@ -59,30 +60,30 @@
 - **State owner and publication rule:** the processor owns the state. The test
   round-trips it through `getStateInformation` and `setStateInformation`.
 - **Forbidden dependencies (malloc, float, flash, display in audio):** the test is
-  not in the audio callback. No new audio-thread allocation.
+  not in the audio callback, so there is no new audio-thread allocation.
 
 ## Verification
 
 - **Host vector(s):** `plugin_stability` runs the full sweep at 44.1, 48, 96, and
-  192 kHz. It checks the reported latency at each rate.
+  192 kHz, and it checks the reported latency at each rate.
 - **Browser vector (if applicable):** none.
 - **Target package check:** none. This is a host-side test.
 - **Physical timing/device check:** blocked, no hardware.
-- **Tolerance/metric:** every rendered sample is finite. The parameter extremes
-  stay below an absolute peak of 100.0. The voice tail after 16 seconds is below
-  0.05.
+- **Tolerance/metric:** every rendered sample is finite, the parameter extremes
+  stay below an absolute peak of 100.0, and the voice tail after 16 seconds is
+  below 0.05.
 - **Evidence artefact:** the `plugin_stability` CTest output in the Linux
-  container. The test passes in 0.14 seconds. Every check reports `ok`, including
-  the parameter extremes, the polyphony burst, the MIDI storm, the rate changes,
-  the state fuzz, and the voice tail.
+  container, where the test passes in 0.14 seconds, and every check reports `ok`,
+  including the parameter extremes, the polyphony burst, the MIDI storm, the rate
+  changes, the state fuzz, and the voice tail.
 
 ## Risks and fallback
 
 - **Assumptions/open research:** a finite output does not prove musical
-  correctness. The parity and validator tests still carry that evidence.
-- **Safe experiment and stop criterion:** run the sweep on every plugin change.
-  Stop on any non-finite sample, crash, hang, or latency mismatch.
+  correctness, though the parity and validator tests still carry that evidence.
+- **Safe experiment and stop criterion:** run the sweep on every plugin change,
+  and stop on any non-finite sample, crash, hang, or latency mismatch.
 - **Smaller alternative:** keep the smoke test and add only the state fuzz and
-  rate changes. The full sweep is cheap enough to keep.
+  rate changes, because the full sweep is cheap enough to keep.
 - **Rollback:** remove the `plugin_stability` test target. No production code
   depends on it.

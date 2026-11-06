@@ -1,10 +1,10 @@
 /* SPDX-License-Identifier: GPL-3.0-only
  * Copyright (C) 2026 P1Onken (umetate) */
-/* Hand-maintained UI-kit test fixture (docs/roadmap.md §12.6). Exercises the
- * context stack + the operator-relative machinery against a minimal four-context
- * panel: home (a `status` + three `param_row`s), edit (an op row + operator
- * select/mute), step (KEY -> set_step), and fx (switch target). Do not edit
- * casually: ui_test.c asserts against these exact ids. */
+/* Hand-maintained UI-kit test fixture (docs/roadmap.md §12.6), which exercises
+ * the context stack and the operator-relative machinery against a minimal
+ * four-context panel: home (a `status` + three `param_row`s), edit (an op row +
+ * operator select/mute), step (KEY -> set_step) and fx (switch target). Do not
+ * edit casually, because ui_test.c asserts against these exact ids. */
 #pragma once
 #include "ui.h"
 

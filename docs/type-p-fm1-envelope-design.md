@@ -11,7 +11,7 @@ Each operator has four rates and three levels. The rates are attack or `r1`, `r2
 `r3`, and release or `r4`. The levels are `l1`, `l2`, and `l3`. The envelope moves
 through the levels on the way to the sustain stage, holds there while the key is
 down, and then runs the release stage. On the parameter side, operator 1's first and
-last rates appear as `attack.p0` and `release.p0`, while operators 2 to 4 use
+last rates appear as `attack.p0` and `release.p0`. Operators 2 to 4 use
 `opN.eg.r1.p0` and `opN.eg.r4.p0`. The rest of the envelope is per operator.
 
 The per-operator controls are:
@@ -30,8 +30,8 @@ key scaling, and velocity. That envelope is shared by the operators in the part.
 The envelope runs at the control rate, 32 frames per tick, so one tick is 0.73 ms
 at 44.1 kHz. A stage moves the gain toward its level target with a one-pole step,
 using the coefficient the rate selects. It ends when the gain is within 8 units of
-the target, about 72 dB below full scale, so the times below run to the envelope's
-own floor rather than to silence in the room.
+the target, about 72 dB below full scale. The times below therefore run to the
+envelope's own floor rather than to silence in the room.
 
 | Rate | Coefficient | Time constant | Silence to level 99 | Level 99 to silence |
 | ---: | ---: | ---: | ---: | ---: |
@@ -57,22 +57,23 @@ them within a millisecond.
 
 Stage time is not the time constant. A plain one-pole needs about 8 time constants
 to come within 8 units of its target, and the forced one-unit step shortens that
-tail, so a full-scale stage runs for about 8 time constants at the fast end and
+tail. A full-scale stage then runs for about 8 time constants at the fast end and
 2.3 at the slow end. The 7 s figure beside rate 0 in the table generator is the
 time constant.
 
 The curve is fixed. Each tick moves a constant fraction of the remaining gain, so
-the stage starts quickly and eases into its target. Measured at rate 50, the first
+the stage starts quickly and eases into its target, and at rate 50 the first
 half of the gain span arrives in 14 percent of the stage time and the first 90
 percent in 46 percent. On a 2.3 s attack, half the gain is in place after a third
 of a second and 90 percent after about a second, so the stage reads faster than
 its length suggests. A release to silence is an exponential decay, which is a
 straight line in decibels until the remaining gain is small enough for the
-one-unit step to take over. A decay to a sustain level flattens as it approaches
-that level, which is the shape that makes an electric piano bark and then settle.
+one-unit step to take over, whilst a decay to a sustain level flattens as it
+approaches that level, which is the shape that makes an electric piano bark and then
+settle.
 
-The one-unit floor also sets the slowest possible movement. At rate 0 a step of 1
-unit per tick covers 9362 units in 6.8 s, so any move smaller than that runs at
+The one-unit floor also sets the slowest possible movement, because at rate 0 a step
+of 1 unit per tick covers 9362 units in 6.8 s, so any move smaller than that runs at
 one unit per tick whatever the exponential would do. One level step at the top of
 the range is about 2710 units and takes 2.0 s at rate 0. The floor keeps the
 envelope converging instead of stalling, and it puts a hard lower bound on how
@@ -87,9 +88,9 @@ envelopes let you separate the attack transient from the body, for example a fas
 modulator decay against a slow carrier.
 
 The three levels and four rates are enough for a two-stage decay and a shaped
-sustain, which is more than a plain ADSR and enough for acoustic-inspired FM. The
+sustain. That is more than a plain ADSR, and enough for acoustic-inspired FM. The
 key scaling and velocity controls make the sound respond across the keyboard and to
-touch, and the shared pitch envelope handles the attack pitch blip or the rising
+touch. The shared pitch envelope handles the attack pitch blip or the rising
 brass gesture.
 
 The per-operator velocity-to-FM-depth control is particularly useful. It lets a
@@ -98,23 +99,23 @@ way to make FM sounds feel expressive rather than static.
 
 ## Limits
 
-The envelope cannot loop a section, so it will not produce the slow evolving or
+The envelope cannot loop a section. It will not produce the slow evolving or
 rhythmic textures that a looping envelope gives you on held notes. It has no tempo
 sync, so it cannot lock a rhythmic shape to the host. Modern FM synths such as FM7
 and FM8 offer looped envelopes and tempo-synced breakpoints, and Aurora FM offers
 six stages with selectable slopes. Type P.fm1 offers neither.
 
 It also cannot make an arbitrary multi-stage shape. Three levels and four rates
-cover a two-stage decay, but not a double-strike attack, a three-slope attack, or a
-long chain of breakpoints. FM7 allows up to 31 breakpoints per envelope, with
-independent slopes. The Type P.fm1 envelope also has fixed curves rather than a
-choice of linear, logarithmic, or exponential segments.
+cover a two-stage decay. They cannot make a double-strike attack, a three-slope
+attack, or a long chain of breakpoints. FM7 allows up to 31 breakpoints per
+envelope, with independent slopes. The Type P.fm1 envelope also has fixed curves
+rather than a choice of linear, logarithmic, or exponential segments.
 
 The pitch envelope is shared by the operators in a part, so you cannot bend one
-operator against another. The
-Deep DX article on the DX7 makes the same point about Yamaha's global pitch
-envelope, and calls per-operator pitch modulation the more useful design. Type P.fm1
-has per-operator tremolo but not per-operator pitch envelopes.
+operator against another. The Deep DX article on the DX7 makes the same point about
+Yamaha's global pitch envelope. It calls per-operator pitch modulation the more
+useful design. Type P.fm1 has per-operator tremolo but not per-operator pitch
+envelopes.
 
 There is no envelope delay or hold stage, and no separate envelope routed to FM
 depth or another destination. The operator's amplitude envelope necessarily shapes

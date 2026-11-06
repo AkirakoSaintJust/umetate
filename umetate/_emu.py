@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
-"""The fm1-emu host toolchain: paths + helpers shared by `setup`, `emu`, `quick-check`.
+"""The fm1-emu host toolchain: paths and helpers shared by `setup`, `emu`, and
+`quick-check`.
 
-`umetate setup` installs Rust (rustup) and builds fm1-emu here (git-ignored
-`.tools/`); `umetate emu` launches it; `quick-check` probes it.
+`umetate setup` installs Rust through rustup and builds fm1-emu in the git-ignored
+`.tools/` folder, then `umetate emu` launches it whilst `quick-check` probes it.
 """
 
 from __future__ import annotations

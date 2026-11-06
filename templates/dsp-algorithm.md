@@ -2,17 +2,17 @@
 
 > One section per DSP component (oscillator, filter, envelope, LFO, mixer, delay,
 > and so on). This is the *math* that the `patch.json` and `node.c` translation
-> follows, so when it is complete a fresh agent can write the code without
+> follows, so once it's complete a fresh agent can write the code without
 > re-deriving anything. Link it from `project-plan.md` rather than duplicating it
 > there.
 
 > **Research first.** When you specify or implement an algorithm, research how it
-> is best done, start from the default reference points below, honour any the user
-> supplies, and let online search surface more. Record what you consulted and
-> **give credit**: distinguish *consulting* (learn the technique) from
-> *copying or deriving* (preserve the source's notice and record it in
-> `LICENSING.md`). Check each source's licence before copying. Incompatible
-> licences are consulted, never copied.
+> is best done, start from the default reference points below, honour any that the
+> user supplies, and let online search surface more. Record what you consulted and
+> **give credit**, which means distinguishing *consulting* (learn the technique)
+> from *copying or deriving* (preserve the source's notice and record it in
+> `LICENSING.md`). Check each source's licence before copying, because an
+> incompatible licence is one you consult and never copy.
 
 > **Performance and memory safety are standing constraints:** bounded loops, no
 > allocation, no 64-bit division, no `double`, and no per-sample dispatch in the
@@ -29,8 +29,8 @@
 | maximilian | https://github.com/micknoise/Maximilian | see LICENSE |
 | music dsp archives | https://www.musicdsp.org/en/latest/ | per-snippet (see each) |
 
-In-repo study: [`docs/dsp-study.md`](../docs/dsp-study.md) (MI, SuperCollider,
-Pure Data, Dexed/msfa, Nuked, ymfm, SAPF).
+The in-repo study is [`docs/dsp-study.md`](../docs/dsp-study.md), which covers MI,
+SuperCollider, Pure Data, Dexed/msfa, Nuked, ymfm, and SAPF.
 
 ## Component: `___`
 

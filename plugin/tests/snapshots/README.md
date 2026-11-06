@@ -26,7 +26,7 @@ hosts, so a Windows run is a manual review until a Windows golden set exists.
    commit. The commit message says which pages changed and why.
 
 Do not accept a snapshot change you cannot explain. A red pixel in the diff is a
-question, not an error.
+question rather than an error.
 
 ## Unintended UI changes
 
@@ -42,6 +42,7 @@ SHA-256.
 
 ## Committed goldens
 
-The gate needs a baseline that travels with the code. A hash alone would tell you
-that something changed, not what changed. The PNGs are small (about 560 KB for
-the current set) and they give the reviewer a visual history in git.
+The gate needs a baseline that travels with the code, because a hash alone would
+tell you that something changed without telling you what changed. The PNGs are
+small (about 560 KB for the current set), and they give the reviewer a visual
+history in git.

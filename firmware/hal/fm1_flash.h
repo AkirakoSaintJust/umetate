@@ -1,13 +1,13 @@
 /* SPDX-License-Identifier: GPL-3.0-only
  * Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments */
-/* FM-1 SPI NOR at runtime: erase / program / read. Used only when
+/* FM-1 SPI NOR at runtime: erase / program / read, used only when
  * FELUCCA_FLASH is 1.
  *
- * Everything that executes while the SFC (XIP) is switched off lives in
- * .ram_text and touches only SFRs, the stack and RAM buffers: no .rodata, no
- * libcalls, no XIP-resident helpers. Call the fl_*_ram() entry points with
- * interrupts disabled. Same sequence as the AC79 SDK flash driver
- * (enter_spi_code, norflash_erase, norflash_wait_ok, exit_spi_code).
+ * Everything that executes while the SFC (XIP) is switched off is held in
+ * .ram_text and touches only SFRs, the stack and RAM buffers. So .rodata,
+ * libcalls and XIP-resident helpers stay out of it. Call the fl_*_ram() entry
+ * points with interrupts disabled. The sequence is the same as the AC79 SDK flash
+ * driver (enter_spi_code, norflash_erase, norflash_wait_ok, exit_spi_code).
  */
 #pragma once
 #include <stdint.h>

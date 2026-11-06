@@ -1,12 +1,12 @@
 /* SPDX-License-Identifier: GPL-3.0-only
  * Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments */
-/* Felucca update loader (device side). Runs from RAM, started by the SPL from
- * an update record, with interrupts off: USB is polled from the main loop.
- * It is a USB-MIDI device "Felucca Update" (1209:0002) that answers the
- * M-UPGRADE update protocol as "ota-FM-1_900" (SMK: "ota-SMK-37 Pro_900", or the
- * SMK_MODEL build's name, hosts look for "ota-"), and
- * writes the app area only (ldr_core.c). The UBOOT soft key works here too.
- * Single compilation unit. */
+/* Felucca update loader (device side). It runs from RAM, started by the SPL
+ * from an update record, with interrupts off, so USB is polled from the main
+ * loop. It presents itself as a USB-MIDI device called "Felucca Update"
+ * (1209:0002) and answers the M-UPGRADE update protocol as "ota-FM-1_900", or
+ * on SMK-37 boards as "ota-SMK-37 Pro_900" or the SMK_MODEL build's name, since
+ * hosts look for the "ota-" prefix. The only flash it writes is the app area
+ * (ldr_core.c), and the UBOOT soft key works here too. Single compilation unit. */
 #include <stdint.h>
 #define FELUCCA_LOADER 1
 #define FELUCCA_CDC 0

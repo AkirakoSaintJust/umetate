@@ -18,10 +18,10 @@
  * fm1_input_scan() runs one full frame (11 columns, ~0.6 ms) and calls
  * FM1_INPUT_IDLE() while it waits.
  * Keys/buttons (as Felucca 1.0): debounced as soon as their column is read. A press counts after
- * FM1_DEB_PRESS frames closed in a row (1.1-2.2 ms: the matrix has diodes and no ghosting, so a closed
- * sample is a closed key, two in a row keep one stray sample from playing a note), a release after
- * FM1_DEB_RELEASE frames open in a row (~9 ms): a contact bouncing open on the way down, or chattering
- * on the way up, never ends a note early or plays it twice.
+ * FM1_DEB_PRESS frames closed in a row (1.1-2.2 ms). The matrix has diodes and no ghosting, so a
+ * closed sample is a closed key, and two in a row keep one stray sample from playing a note. A release
+ * waits for FM1_DEB_RELEASE frames open in a row (~9 ms). A contact bouncing open on the way down, or
+ * chattering on the way up, never ends a note early or plays it twice.
  * Encoders: quadrature decoder (2-sample filter, + = clockwise) with detent counting, as
  * Felucca 1.0 reworked it (its #23, "knobs skipping or jumping"): an FM-1 detent is one full
  * quadrature cycle (4 transitions) and the knob rests in one state, the one seen at power-on
@@ -32,15 +32,15 @@
  * mid-click taught the complement as a rest and every click counted twice, and short mid-click
  * pauses of a slow turn taught the mid states and the knob went dead (the 0.9 learner).
  * fm1_enc_take() returns the steps.
- * LEDs: set fm1_led[col] (packed row bits, bit1 PA5..bit4 PA8); they are lit while that column is
+ * LEDs: set fm1_led[col] (packed row bits, bit1 PA5..bit4 PA8), and they are lit while that column is
  * selected (one tick, ~95 us a frame). Two dim layers (fm1_input_tick only), after Felucca 1.0.1 (its
- * #35: the eye is logarithmic, an LED lit 1/4 or 1/6 of the time reads as nearly lit): a short pulse on
- * every frame (~910 Hz, no flicker) at the start of the column's next tick, riding on the 595 shift of
+ * #35: the eye is logarithmic, an LED lit 1/4 or 1/6 of the time reads as nearly lit). A short pulse on
+ * every frame (~910 Hz, no flicker) at the start of the column's next tick rides on the 595 shift of
  * the next column (its outputs change only at the latch, so the pulse stays on column p and the key
- * read before it is unchanged). fm1_led_dim[col]: the glow (landmarks, notes under tiles), FM1_GLOW_NS
- * (~1/24 of a lit LED); fm1_led_bg[col]: the backlight (menu LIGHTS), fm1_led_bg_ns, shorter. TIMER4
- * times the pulses bit by bit, only a pulse longer than the whole shift waits for the rest. An LED in
- * several layers takes the brightest. fm1_led_key/btn helpers address them by id.
+ * read before it is unchanged). fm1_led_dim[col] is the glow (landmarks, notes under tiles), at
+ * FM1_GLOW_NS (~1/24 of a lit LED), and fm1_led_bg[col] is the backlight (menu LIGHTS), fm1_led_bg_ns,
+ * shorter. TIMER4 times the pulses bit by bit, and only a pulse longer than the whole shift waits for
+ * the rest. An LED in several layers takes the brightest, and the fm1_led_key/btn helpers address them by id.
  */
 #pragma once
 #include <stdint.h>

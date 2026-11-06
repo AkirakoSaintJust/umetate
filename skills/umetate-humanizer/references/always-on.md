@@ -1,7 +1,7 @@
 # Always-on writing rules
 
 Copy one of these blocks into a project's standing instructions when you want the
-voice on by default. The skill is still the full method. These blocks are the
+voice on by default. The skill is still the full method, and these blocks are the
 short version.
 
 ## For `AGENTS.md` or project instructions

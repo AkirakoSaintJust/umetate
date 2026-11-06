@@ -2,9 +2,9 @@
 # Copyright (C) 2026 P1Onken (umetate)
 """The generator's front-end (docs/roadmap.md §12.4): patch -> CompiledGraph.
 
-Pure passes in order: parse, macro expansion, wire resolution, type-check,
-cycle-check + topological sort. Everything is deterministic; errors raise GenError
-with a reason, never a silent fallback.
+Pure passes in order: parse, macro expansion, wire resolution, type-check, then the
+cycle-check with its topological sort. Everything is deterministic, so an error
+raises GenError with a reason rather than falling back to a silent default.
 """
 
 from __future__ import annotations
@@ -45,8 +45,9 @@ from ._schema import (
 from ._tables import build_tables
 from ._voice import MODE_PARAMS, mode_param_entries
 
-# firmware/src/scope.h SCOPE_CH: ch 0 is the final mix, 1.. are the taps. A patch
-# whose taps overflow it would silently lose channels at the scope/spectro widget.
+# firmware/src/scope.h SCOPE_CH: ch 0 is the final mix, and 1.. are the taps. A
+# patch whose taps overflow it would silently lose channels at the scope/spectro
+# widget.
 _SCOPE_CH = 12
 
 # the part count must also fit the UI kit's fixed per-part state (ui.h
@@ -61,7 +62,7 @@ def compile(
 ) -> CompiledGraph:
     """Compile a patch into a CompiledGraph (parse -> expand -> check -> topo).
 
-    `macros` is the shipped macro library (`modules/macros`); the patch's own
+    `macros` is the shipped macro library (`modules/macros`), and the patch's own
     `macros:` section shadows it.
     """
     name = to_c_identifier(patch["name"])

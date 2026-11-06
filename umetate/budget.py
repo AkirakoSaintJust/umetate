@@ -5,9 +5,9 @@
 It generates the patch at each `--voices` count and a forced `--parts` count,
 compiles it for the host, and times a worst-case `render(256)` with every voice
 sounding and every envelope open. The host figure is a relative measure of the
-per-voice cost and its linearity. The 2.9 ms device fit is the emulator's job
-with a built firmware (F7), and it stays `blocked` until then. The voice count is
-a measured claim rather than an estimate.
+per-voice cost and its linearity. The 2.9 ms device fit is the emulator's job with
+a built firmware (F7), and that one stays `blocked` until it can run. The voice
+count is a measured claim rather than an estimate.
 """
 
 from __future__ import annotations

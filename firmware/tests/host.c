@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* A fake FM-1 (or SMK-37) on a computer: the app (src/rib.c) runs unchanged on it. platform.c includes
- * this file instead of the hardware when UMETATE_HOST is set. A script presses keys over time, out come
+/* A fake FM-1 (or SMK-37) on a computer, where the app (src/rib.c) runs unchanged and platform.c includes
+ * this file instead of the hardware when UMETATE_HOST is set. A script presses keys over time, so out come
  * the screen (PPM, at the times SHOT asks) and the sound (WAV, as the FM-1 sends it over USB).
  *
  *   mkdir -p build/host

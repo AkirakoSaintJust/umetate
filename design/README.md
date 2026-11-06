@@ -1,29 +1,29 @@
 # p1onken interface language
 
 The shared visual language for the Type P.fm1 web interface and the JUCE plugin.
-The reference implementation is the clickable mockup at
-`mockups/type-p-fm1-plugin.html`. The machine-readable source is `tokens.json`,
-with a CSS projection in `tokens.css` and platform notes in `juce.md`.
+The clickable mockup at `mockups/type-p-fm1-plugin.html` is the reference
+implementation, and `tokens.json` is the machine-readable source. The CSS
+projection is `tokens.css`, and the platform notes are in `juce.md`.
 
-Status: v1.1, 2026-11-03. Signed off on the mockup. Revised for the split
-follow cards, part tune, filter env symmetry, centred algorithm graphs and the
-two-row operator envelopes.
+Status: v1.1, 2026-11-03, signed off on the mockup. Revised for the split follow
+cards, part tune, filter env symmetry, centred algorithm graphs and the two-row
+operator envelopes.
 
 ## Principles
 
 1. Black is the room. Surfaces do not need outlines to exist.
-2. Pink is identity and the primary value. Green is live signal and active state.
-   Purple is selection and modulation. No other hues.
-3. Controls are outlined. Content surfaces are not. If it cannot be clicked or
-   typed into, it probably should not have a border.
-4. Square corners, flat fills, no gradients, no blur, no glow. The only shadow is
-   the solid offset behind the wordmark.
-5. Type is lowercase and pixel-sharp. Headers use Zen Dots, everything else uses
-   DotGothic16. The wordmark keeps its mixed case: `type P.fm1`, with a pink dot
-   before `fm1`. User-entered names keep their case.
-6. Every label earns its place. No filler text such as voice counts, operator
-   counts, or a `what this is` section. The page shows the product. Use the words
-   for the next action, the controls, or a real limit.
+2. Pink is identity and the primary value, green is live signal and active state,
+   and purple is selection and modulation. No other hues.
+3. Controls are outlined and content surfaces are not, so if it cannot be clicked
+   or typed into, it probably should not have a border.
+4. Square corners, flat fills, no gradients, no blur, no glow, and the only shadow
+   is the solid offset behind the wordmark.
+5. Type is lowercase and pixel-sharp, with Zen Dots for headers and DotGothic16 for
+   everything else. The wordmark keeps its mixed case: `type P.fm1`, with a pink
+   dot before `fm1`, and user-entered names keep their case.
+6. Every label earns its place, so there is no filler text such as voice counts,
+   operator counts, or a `what this is` section. The page shows the product, and the
+   words go on the next action, the controls, or a real limit.
 7. One algorithm per node, one meaning per colour, one home for every token.
 
 ## Colour
@@ -50,9 +50,9 @@ Rules:
 
 - Pink is identity and primary emphasis. It is not a success colour.
 - Green means signal or an active path. It is not decoration.
-- Purple marks the selected or the modulating thing. Filter envelope and pitch
-  LFO curves are green. Amplitude and pitch envelope curves are purple.
-- Retire `panel2`, `green2`, `select` and `yellow` from new code. They were
+- Purple marks the selected or the modulating thing, whilst filter envelope and pitch
+  LFO curves are green and amplitude and pitch envelope curves are purple.
+- Retire `panel2`, `green2`, `select` and `yellow` from new code, since they were
   exploratory values and are not part of v1.
 
 ## Type
@@ -65,10 +65,10 @@ Families:
 | DotGothic16 | all other interface text, values, labels, buttons, notes | SIL Open Font License |
 | Digital Desolation Plus | reserved, unused | not bundled, not needed |
 
-The web app self-hosts both OFL families with local fallbacks. The mockup loads
-them from Google Fonts after first paint. The JUCE build must bundle the OFL
-files as binary resources. The wordmark is all Zen Dots. Digital Desolation Plus
-is not used in the interface and stays out of the binary.
+The web app self-hosts both OFL families with local fallbacks, whilst the mockup
+loads them from Google Fonts after first paint. The JUCE build must bundle the OFL
+files as binary resources. The wordmark is all Zen Dots, and Digital Desolation
+Plus is not used in the interface, so it stays out of the binary.
 
 Scale:
 
@@ -100,12 +100,12 @@ Scale:
 | algorithm number | Zen Dots | 30 | lower |
 | wordmark | Zen Dots | 30 | `type P.fm1` |
 
-Tracking is tight, between 0.01em and 0.06em. Section titles carry a `//` prefix
+Tracking is tight, between 0.01em and 0.06em, and section titles carry a `//` prefix
 in `faint`. The wordmark is `type P.fm1` in Zen Dots, with `type` lowercase, `P`
 uppercase, `.fm1` lowercase, and a pink dot before `fm1`. It keeps the solid
-shadow. Zen Dots has one weight, so the whole wordmark uses 400 at 30px. The
-select text at 9px is the one survivor from the old scale and should be reviewed
-when the real control is rebuilt.
+shadow. Zen Dots has one weight. The whole wordmark uses 400 at 30px. The select
+text at 9px is the one survivor from the old scale. Review it when the real control
+is rebuilt.
 
 ## Metrics
 
@@ -153,95 +153,94 @@ Shape:
 - Radius is always 0.
 - The active tab is a cut polygon:
   `polygon(5px 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 7px) 100%, 0 100%, 5px 50%)`.
-- No gradients. No blurred shadows. The wordmark shadow is a solid 4 by 4 offset
+- No gradients and no blurred shadows. The wordmark shadow is a solid 4 by 4 offset
   in `brandShadow`.
 
 ## Components
 
 ### Header
 
-Brand left, algorithm centre-left, output scope right, patch controls far right.
-The wordmark is `type P.fm1` in Zen Dots, with the dot before `fm1` in pink. The
-brand line is `p1onken // パンク派第１音響合成研究班` in 12px DotGothic `dim`.
+Brand left, algorithm centre-left, output scope right and patch controls far right,
+with the wordmark as `type P.fm1` in Zen Dots, the dot before `fm1` in pink, and the
+brand line `p1onken // パンク派第１音響合成研究班` in 12px DotGothic `dim`.
 
-The algorithm block is a button. It shows a 30px Zen Dots number, a caret, and the
-routing graph. The graph is 240 by 128 in the viewBox, scaled to about 244 by 130.
-The graph content is centred in that viewBox, so the header and the picker tiles
-share one optical centre. White operators are modulators, pink operators are
-carriers, grey lines are modulation, purple downward arrows mark carrier output.
-Clicking the block opens the algorithm picker. The mouse wheel over the block
-cycles the eight algorithms without opening the picker.
+The algorithm block is a button, and it shows a 30px Zen Dots number, a caret, and
+the routing graph. The graph is 240 by 128 in the viewBox, scaled to about 244 by
+130. The graph content is centred in that viewBox, so the header and the picker
+tiles share one optical centre. White operators are modulators, pink operators are
+carriers, grey lines are modulation, and purple downward arrows mark carrier
+output. Clicking the block opens the algorithm picker, whilst the mouse wheel over
+the block cycles the eight algorithms without opening the picker.
 
-The output section is a label plus a `scope` and `spectro` segmented control. The
-active segment is purple. The plot is 50px high, borderless, black.
+The output section is a label plus a `scope` and `spectro` segmented control, with
+the active segment in purple. The plot is 50px high, borderless, black.
 
 The patch control shows `patch` and the current patch name, with a separate
 `rename` button.
 
 ### Toolbar
 
-Left: the mute legend. A small dark square with a pink outline and pink 猫 means
-muted. A solid pink square with a black 猫 means active. Then the real mute tiles,
-`op1` to `op4` and `p1`, `p2`, at 36 by 22. An active tile is solid pink with a
-black label. A muted tile is black with a pink outline and a pink label. The 猫 is
-only a legend glyph, never a button label.
+Left is the mute legend. A small dark square with a pink outline and pink 猫 means
+muted, and a solid pink square with a black 猫 means active. Then the real mute
+tiles, `op1` to `op4` and `p1`, `p2`, at 36 by 22. An active tile is solid pink with
+a black label, and a muted tile is black with a pink outline and a pink label. The
+猫 is only a legend glyph, never a button label.
 
-Right: `now editing part:` with `part 1`, `part 2` and `edit`. The selected part
-button has a green border and green text.
+Right is `now editing part:` with `part 1`, `part 2` and `edit`, and the selected
+part button has a green border and green text.
 
 ### Tabs
 
-`patch settings`, `operators`, `fx / mod`. No vertical dividers. The active tab is
-a pink cut polygon, not a rectangle. Inactive tabs are dim text on black.
+`patch settings`, `operators`, `fx / mod`, with no vertical dividers. The active tab
+is a pink cut polygon rather than a rectangle. Inactive tabs are dim text on black.
 
 ### Patch settings
 
-Two part cards. The title is `part n: name` in Zen Dots. The active part has a
-green border, the inactive part has no visible border. Each card holds rename,
-copy, paste and a mute switch, five knobs, a wide level slider with the caption
-`level`, and two borderless visualisers, one scope and one spectro. No captions on
-the visualisers. The five knobs are `midi channel`, `keyzone start`, `keyzone
-end`, `tune` and `delay`. `tune` is the part detune in cents. Then a voice mode
-block with `poly`, `mono`, `legato`, `unison` and the unison, detune and porta
-knobs.
+Two part cards, each titled `part n: name` in Zen Dots. The active part has a green
+border, and the inactive part has no visible border. Each card holds rename, copy,
+paste and a mute switch, five knobs, a wide level slider with the caption `level`,
+and two borderless visualisers, one scope and one spectro, with no captions on the
+visualisers. The five knobs are `midi channel`, `keyzone start`, `keyzone end`,
+`tune` and `delay`, where `tune` is the part detune in cents. Then a voice mode
+block with `poly`, `mono`, `legato`, `unison` and the unison, detune and porta knobs.
 
 ### Operators
 
-Four borderless columns. Each has the operator name, copy and paste, the mute
+Four borderless columns, each with the operator name, copy and paste, the mute
 switch, a scope and spectro pair, and three cards: `oscillator`, `envelope`,
 `amplitude lfo`. The oscillator card holds ratio, detune, level, feedback and the
-wave select. The envelope holds R1 to R4 on the first row and L1 to L3 on the
-second row. The amplitude LFO holds rate, depth and the wave select. The four
-oscillator knobs spread across the card, the two LFO knobs sit apart, and the
+wave select. The envelope holds R1 to R4 on the first row and L1 to L3 on the second
+row, and the amplitude LFO holds rate, depth and the wave select. The four
+oscillator knobs spread across the card, and the two LFO knobs sit apart. The
 envelope rates and levels each get their own row.
 
 ### FX / MOD
 
-One page, a four by two grid that fills the window. Filters 1 and 2, filter
-envelope and wavefolder fill the first row. Pitch LFO, pitch envelope, key follow
-and velocity follow fill the second row. Each filter card has cutoff, resonance
-and env amount. Key and velocity tracking sit in the two follow cards, not on
+One page, a four by two grid that fills the window, with filters 1 and 2, filter
+envelope and wavefolder on the first row. Pitch LFO, pitch envelope, key follow and
+velocity follow fill the second row. Each filter card has cutoff, resonance and env
+amount, whilst key and velocity tracking sit in the two follow cards rather than on
 the filter cards.
 
 Key follow and velocity follow are separate cards. Each has an on switch, a
-`wipe all` button and its own target selector. Key follow has a breakpoint and
-below and above amounts. Velocity follow has one amount. The wipe button sets
-every target amount to 0%, so the card can be cleared without visiting each
-target. The same target set is used for both cards: operator level, feedback and
-amp envelope, pitch envelope, filter 1 and 2 cutoff, and filter envelope.
+`wipe all` button and its own target selector. Key follow has a breakpoint and below
+and above amounts, whilst velocity follow has one amount. The wipe button sets every
+target amount to 0%, so the card can be cleared without visiting each target. The
+same target set is used for both cards: operator level, feedback and amp envelope,
+pitch envelope, filter 1 and 2 cutoff, and filter envelope.
 
 ### Dialogs
 
-Patch browser and part slot lists are vertical scrollers with a thin scrollbar.
-Rows show the slot number, the name, and the state. Selected rows use a purple
-border and text. Confirmations use the same dialog frame. The algorithm picker is
-a wide dialog with eight routing tiles. Each tile centres its graph in the figure
-area and keeps `alg n` on its own line below, with enough tile height that the
-graph cannot clip or touch the caption.
+Patch browser and part slot lists are vertical scrollers with a thin scrollbar,
+where rows show the slot number, the name, and the state, and selected rows use a
+purple border and text. Confirmations use the same dialog frame. The algorithm
+picker is a wide dialog with eight routing tiles, and each tile centres its graph in
+the figure area and keeps `alg n` on its own line below, with enough tile height
+that the graph cannot clip or touch the caption.
 
 ### Status
 
-`midi` and `sync` with green LEDs. No editing text on the right.
+`midi` and `sync` with green LEDs, and no editing text on the right.
 
 ## State language
 
@@ -293,24 +292,24 @@ graph cannot clip or touch the caption.
 
 ## Platform mapping
 
-- Web: use `tokens.css`. The mockup remains the visual reference. The web app
-  self-hosts the OFL fonts with local fallbacks and draws the device at 1:1 on a
-  wide desktop, so the 240 by 240 screen stays pixel-sharp.
-- JUCE: see `juce.md`. Generate `UiTokens` from `tokens.json` rather than typing
-  the values again. Bundle the OFL fonts. Keep GPL-3.0-only.
-- HiDPI: draw in logical units and scale the whole editor uniformly. Do not scale
+- Web: use `tokens.css`, and the mockup remains the visual reference, because the
+  web app self-hosts the OFL fonts with local fallbacks and draws the device at 1:1
+  on a wide desktop, so the 240 by 240 screen stays pixel-sharp.
+- JUCE: see `juce.md`. Generate `UiTokens` from `tokens.json` rather than typing the
+  values again, bundle the OFL fonts, and keep GPL-3.0-only.
+- HiDPI: draw in logical units and scale the whole editor uniformly, and never scale
   individual strokes or font sizes.
 
 ## Firmware screen mockup
 
-`design/firmware-mockup.html` is the 240 by 240 screen mockup for firmware UI
-work. It reads a project's `panel.json` and `firmware/theme.json` and draws the
-header, page title, widgets, values, and legend on a 240 by 240 screen. The dot
-grid, 16 pixel row guides, and 120 pixel column guide are design overlays.
+`design/firmware-mockup.html` is the 240 by 240 screen mockup for firmware UI work.
+It reads a project's `panel.json` and `firmware/theme.json` and draws the header,
+page title, widgets, values, and legend on a 240 by 240 screen. The dot grid, 16
+pixel row guides, and 120 pixel column guide are design overlays.
 
-It is a design tool, not the firmware renderer. The web emulator is still the
-parity check. The mockup is a projection of `panel.json`, so a layout change is
-a change to the spec, not a second implementation.
+It is a design tool rather than the firmware renderer. The web emulator is still the
+parity check. The mockup is a projection of `panel.json`, so a layout change is a
+change to the spec rather than a second implementation.
 
 Run it from the repository root:
 
@@ -321,21 +320,20 @@ python -m http.server 8000
 Then open
 `http://localhost:8000/design/firmware-mockup.html?panel=examples/type-p-fm1/panel.json`.
 
-The useful query parameters are `panel`, `theme`, `context`, `page`, and
-`scale`. The page also accepts a `panel.json` through the file picker when it is
-opened without a server. Controls switch the context, page, active part and
-operator, mutes, algorithm and palette. Clicking a parameter row cycles its
-value. The PNG button exports the screen without the overlays.
+The useful query parameters are `panel`, `theme`, `context`, `page`, and `scale`.
+The page also accepts a `panel.json` through the file picker when it is opened
+without a server. Controls switch the context, page, active part and operator,
+mutes, algorithm and palette. Clicking a parameter row cycles its value, and the PNG
+button exports the screen without the overlays.
 
-The first pass duplicated the page title because the generated panel consumes
-the first `subheader` as the page title and shifts the widget rows up by one.
-The mockup now does the same. That is exactly the kind of mismatch the tool is
-for.
+The first pass duplicated the page title because the generated panel consumes the
+first `subheader` as the page title and shifts the widget rows up by one, and the
+mockup now does the same. That is exactly the kind of mismatch the tool is for.
 
-The mockup loads `design/firmware-font.json`, the firmware's own 4-bit bitmap
-font built from `firmware/gen/felucca_font.h`. The glyphs and advances are the
-firmware's, not a lookalike. If the atlas is missing, the mockup falls back to
-the bundled DotGothic16. Regenerate the atlas after a font change with:
+The mockup loads `design/firmware-font.json`, the firmware's own 4-bit bitmap font
+built from `firmware/gen/felucca_font.h`, so the glyphs and advances are the
+firmware's rather than a lookalike. If the atlas is missing, the mockup falls back
+to the bundled DotGothic16. Regenerate the atlas after a font change with:
 
 ```sh
 python -m umetate.font_atlas write
@@ -345,15 +343,15 @@ python -m umetate.font_atlas write
 
 ## Working method
 
-The process lessons from building this mockup are in `agent-workflow.md`. Read it
+The process lessons from making this mockup are in `agent-workflow.md`, so read it
 before changing the interface. The transferable method and the design reference
 dossier are in `skills/umetate-development/references/ui-design.md` and
 `ui-dossier.md`.
 
 ## Open items
 
-- Digital Desolation Plus is not used. The wordmark is all Zen Dots, so the brand
+- Digital Desolation Plus is not used, and the wordmark is all Zen Dots, so the brand
   font licence no longer blocks packaging.
 - Review the 9px select text when the real control is built.
 - The `part settings` page is intentionally sparse at the top and fills with the
-  two part visualisers. Do not add filler widgets to fill space.
+  two part visualisers, so do not add filler widgets to fill space.

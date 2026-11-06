@@ -2,11 +2,11 @@
 # Copyright (C) 2026 P1Onken (umetate)
 """`umetate debrick`: name the recovery routes and their actual procedures.
 
-This is a route dispatcher, not a writer. `app-rescue` and `update-loader`
-recover through the boot chord and `umetate flash`, so there is no separate host
-write here. The one distinct recovery write, `mask-rom`, is a raw-NOR write over
-the USB_KEY dongle and `jl-uboot-tool`, and it is `blocked` because the dongle
-needs a USB solder.
+This is a route dispatcher that writes nothing itself. `app-rescue` and
+`update-loader` recover through the boot chord and `umetate flash`, so there is no
+separate host write here. The one distinct recovery write, `mask-rom`, is a raw-NOR
+write over the USB_KEY dongle and `jl-uboot-tool`, and it stays `blocked` because
+the dongle needs a USB solder.
 """
 
 from __future__ import annotations

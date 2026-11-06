@@ -1,11 +1,11 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 /* Copyright (C) 2026 P1Onken (umetate) */
 /* The dual-core DSP transport (docs/roadmap.md §12.1), defined once and shared by
- * both cores and by every engine: the demo's rib_dsp.c and the generated
+ * both cores and by every engine. The demo's rib_dsp.c and the generated
  * `<synth>_dsp.c` both reference these (fm1_ipc.h declares them). Core 0 produces
  * note events, core 1 drains the queue, renders, and publishes the reverse status.
- * Plain .bss, 64-byte aligned, csync barriers: the cores share the caches
- * (fm1_cpu1.h), so ordering is the only concern. */
+ * The state is plain .bss, 64-byte aligned, with csync barriers, because the cores
+ * share the caches (fm1_cpu1.h), so ordering is the only concern. */
 #include "fm1_ipc.h"
 
 volatile dsp_cmd dsp_cmd_buf[UMETATE_DSP_CMD_CAP] __attribute__((aligned(64)));

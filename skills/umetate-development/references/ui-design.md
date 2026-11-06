@@ -1,28 +1,29 @@
 # Designing an instrument interface
 
-Read this before any panel, screen, editor, or web UI work. The Type P.fm1
-language is in `design/README.md`. The casebook and research links are in
-`ui-dossier.md`.
+Read this before any panel, screen, editor, or web UI work, because the interface
+rules below apply to all four. The Type P.fm1 language is in `design/README.md`, and
+the casebook and research links are in `ui-dossier.md`.
 
 ## One rule
 
 The interface is designed before it is written.
 
-The Type P.fm1 firmware UI was underspecified on the first pass. Button meanings,
-page contents, and per-parameter semantics were decided while the panel was being
-coded. The result was buggy, incomplete, and cryptic, and the navigation map had
-to be re-derived after the code existed. The fix was not more code. It was a
-written control map, a written brief, and a mockup that was signed off before the
-panel was authored. The full lesson is L8 and L10 in `docs/roadmap.md`.
+The Type P.fm1 firmware UI was underspecified on the first pass, because button
+meanings, page contents, and per-parameter semantics were decided while the panel
+was being coded. The result was buggy, incomplete, and cryptic, and the navigation
+map had to be re-derived after the code existed. The fix was a written control map,
+a written brief, and a mockup signed off before the panel was authored, rather than
+more code. The full lesson is L8 and L10 in `docs/roadmap.md`.
 
-The plugin editor followed the same rule. The design language was fixed first,
-the mockup was made clickable, the tokens were extracted, and only then was the
-JUCE editor built. The editor projects the tokens. It is not a new design.
+The plugin editor followed the same rule, because the design language was fixed
+first, the mockup was made clickable, the tokens were extracted, and only then was
+the JUCE editor built. The editor projects the tokens rather than inventing a new
+design.
 
 ## The meaning of "determined"
 
-A UI is not specified until all of these are written and checkable. This is the
-minimum bar. Do not author the panel or the editor until each one is filled in.
+A UI is not specified until all of these are written and checkable, and that is the
+minimum bar. Don't author the panel or the editor until each one is filled in.
 
 1. **Surface inventory.** Every physical control, its kind, its printed label, and
    the controls that are deliberately unmapped.
@@ -50,9 +51,9 @@ minimum bar. Do not author the panel or the editor until each one is filled in.
     callback, a full clear on page change, and held notes still playable during a
     redraw.
 
-The same list works for a plugin editor, with "screen" replaced by "editor page"
-and "button" replaced by "control". The plugin adds host automation, resizing,
-and keyboard focus to item 10.
+The same list works for a plugin editor, with "screen" replaced by "editor page" and
+"button" replaced by "control". The plugin adds host automation, resizing, and
+keyboard focus to item 10.
 
 ## Design loop
 
@@ -86,7 +87,7 @@ This is the loop that produced the Type P.fm1 mockup and the JUCE editor.
 
 ## Design language that worked
 
-The exact values are in `design/README.md` and `design/tokens.json`. These are
+The exact values are in `design/README.md` and `design/tokens.json`, and these are
 the transferable principles behind them.
 
 - **Ground first.** Black is the room. A surface does not need an outline to
@@ -116,9 +117,9 @@ the transferable principles behind them.
 - **Signal has a language.** Scope traces, spectra, envelopes, level fills, and
   routing colours say what the signal is doing. Decorative colour is banned.
 
-What generalises: role-based colour, border discipline, a token file, a fixed
-canvas, a state language, and copy rules. What does not: the exact hex values,
-the two fonts, and the Type P.fm1 page count.
+Role-based colour, border discipline, a token file, a fixed canvas, a state language,
+and copy rules generalise. The exact hex values, the two fonts, and the Type P.fm1
+page count do not.
 
 ## Graphic design crib
 
@@ -153,11 +154,12 @@ These are the visual craft rules that apply to any panel or editor page.
 
 ## Composition and visual weight
 
-A page needs one composition centre, the element the eye lands on first. It is
-not necessarily the geometric centre. It is the element with the most visual
-weight, and it should be the thing the player needs first.
+A page needs one composition centre, the element the eye lands on first. The centre
+need not be the geometric middle, and it is the element with the most visual weight,
+which should be the thing the player needs first.
 
-Weight comes from contrast, not decoration. Use one or two of these at a time:
+Weight comes from contrast rather than decoration, so use one or two of these at a
+time:
 
 - Colour: a complementary hue, or a much brighter or darker value.
 - Scale: a clearly larger or smaller element.
@@ -166,14 +168,14 @@ Weight comes from contrast, not decoration. Use one or two of these at a time:
 - Direction and rotation: an element that breaks the flow.
 - Position and negative space: an element set apart from the group.
 
-Balance the page around that centre. Symmetry gives calm and order. Asymmetry
-gives movement and tension. Rhythm comes from repeated spacing and repeated
-shapes, not from repeated decoration. The player should feel where to look
-before they read a label.
+Balance the page around that centre, because symmetry gives calm and order whilst
+asymmetry gives movement and tension. Rhythm comes from repeated spacing and repeated
+shapes rather than repeated decoration. The player should feel where to look before
+they read a label.
 
 ## Gestalt grouping
 
-The eye groups before it reads. Use the principles deliberately:
+The eye groups before it reads, so use the principles deliberately:
 
 - **Proximity:** related controls sit closer to each other than to unrelated
   ones. The space around a group must be larger than the space inside it.
@@ -214,8 +216,8 @@ Colour is a role system.
 
 ## Type
 
-Typography is the interface's voice. It should disappear into the reading
-experience, not compete with it.
+Typography is the interface's voice, and it should disappear into the reading
+experience rather than compete with it.
 
 - Use no more than two type families. One for body or controls, one for display
   or headings. A third family needs a job that the first two cannot do.
@@ -242,8 +244,8 @@ experience, not compete with it.
 
 ## Grid
 
-A grid gives the page a repeatable structure and saves decisions. It is an aid,
-not a guarantee. It does not make the composition good on its own.
+A grid gives the page a repeatable structure and saves decisions, but it is an aid
+rather than a guarantee and does not make the composition good on its own.
 
 - Define the module, the columns, the rows, the gutters, and the margins. Use a
   small set of spacing values that are multiples of the base unit.
@@ -327,14 +329,14 @@ and how to get back.
 
 ## Design as a practice
 
-Frank Chimero's *The Shape of Design* is a reminder that design is not
-decoration. It is imagining a future and working toward it for other people. A
-panel is a gift to the player, not a display of the designer's taste. The
-instrument should help them make the sound they hear in their head.
+Frank Chimero's *The Shape of Design* is a reminder that design is not decoration,
+because it is imagining a future and working toward it for other people. A panel is a
+gift to the player rather than a display of the designer's taste, and the instrument
+should help them make the sound they hear in their head.
 
 ## Firmware UI
 
-The physical panel and the 240 by 240 screen are one interface. The screen does
+The physical panel and the 240 by 240 screen are one interface, and the screen does
 not get to be a settings form for an app.
 
 The firmware mockup gate is `design/firmware-mockup.html`. It renders a project's
@@ -343,8 +345,8 @@ column, the header, the page title, the widgets, and the legend. The dot grid an
 guides are design overlays, not part of the screen. It loads the firmware's own
 4-bit bitmap font from `design/firmware-font.json`, so the glyphs and advances
 match the device. Use it before the panel code, inspect every page at 3x, and fix
-the labels and rows in `panel.json` first. The mockup is a projection of the
-spec. The web emulator is the parity check.
+the labels and rows in `panel.json` first. The mockup is a projection of the spec,
+and the web emulator is the parity check.
 
 - **The silkscreen is law.** A printed label fixes a control's meaning. Do not
   reassign a labelled control. If the panel says `MASTER`, it is volume.
@@ -379,14 +381,14 @@ spec. The web emulator is the parity check.
 - **Test with a stranger.** Do not explain the panel. Watch where they hesitate.
   The hesitation is the design bug.
 
-The existing firmware checklist in `SKILL.md` §2 remains the gate. This section
+The existing firmware checklist in `SKILL.md` §2 remains the gate, and this section
 is the reasoning behind it.
 
 ## Plugin UI
 
-The plugin is an instrument panel inside a host window. The host owns the frame,
-the scaling, the focus, and the automation. The plugin owns the layout and the
-state language.
+The plugin is an instrument panel inside a host window. The host owns the frame, the
+scaling, the focus, and the automation, and the plugin owns the layout and the state
+language.
 
 - **Fixed canvas, uniform scale.** Draw in logical units and scale the whole
   editor. Do not scale individual strokes or font sizes. At 50 percent the

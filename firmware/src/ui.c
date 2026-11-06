@@ -238,8 +238,8 @@ static const ui_binding *ui_resolve(uint16_t source)
 }
 
 /* clamp a param's value to its [min, max] (the display scale's range, which the
- * DSP's set_param also enforces). A value must never sit outside its range. The
- * display forms assume it (an on/off that slid negative would read "on"). */
+ * DSP's set_param also enforces). A value must never sit outside its range, because
+ * the display forms assume it (an on/off that slid negative would read "on"). */
 static void ui_clamp_param(uint16_t p)
 {
     const ui_param_disp *d = (ui_t->disp && p < ui_t->n_params) ? &ui_t->disp[p] : 0;
@@ -712,8 +712,8 @@ static void ui_draw_value(const ui_widget *w)
     cv_blit(x, y);
 }
 
-/* a name row: the label (text, dim) + the name string (bright). `w->param` is the
- * name index (0 = part, 1 = patch). Twisting its page slot opens the editor. */
+/* a name row: the label (text, dim) + the name string (bright), where `w->param`
+ * is the name index (0 = part, 1 = patch). Twisting its page slot opens the editor. */
 static void ui_draw_name_row(const ui_widget *w)
 {
     uint32_t x, y, wd, ht;
@@ -776,9 +776,9 @@ static void ui_draw_grid(const ui_widget *w)
 }
 
 /* draw a DX rate/level envelope curve for 7 param ids (r1,r2,r3,r4,l1,l2,l3) into
- * the current canvas (wd x ht). Stage length = log2 of the one-pole time constant
- * (so the exponential rate curve is shown on a log scale. A linear length would
- * make every slow rate identical), the level height = fm1_level_gain[level]
+ * the current canvas (wd x ht). Stage length = log2 of the one-pole time constant,
+ * so the exponential rate curve is shown on a log scale (a linear length would
+ * make every slow rate identical). The level height = fm1_level_gain[level]
  * (0.25 dB/step: 99 = max, 0 = silence). No cursor. */
 static void ui_env_curve(uint32_t wd, uint32_t ht, const uint16_t *p)
 {
@@ -867,10 +867,10 @@ static uint32_t ui_scope_channel(const ui_widget *w)
 }
 
 /* the oscilloscope: the selected channel's snapshot, downsampled to the widget
- * width, drawn as a line with a mid-line. Time-varying - redraws whenever the
- * snapshot advances (scope_seq), which the ISR bumps every block. The knee is
- * half of a level-99 operator's tap, so a normal patch fills most of the height
- * and a louder one soft-clips at the edge. */
+ * width, drawn as a line with a mid-line. It is time-varying, so it redraws
+ * whenever the snapshot advances (scope_seq), which the ISR bumps every block.
+ * The knee is half of a level-99 operator's tap, so a normal patch fills most of
+ * the height and a louder one soft-clips at the edge. */
 /* a scope sample -> the vertical pixel: a quarter-sine soft-clip (the existing
  * fm1_sin_q15 table). `shift` sets the knee. A sample of 2^(shift+8) fills the
  * widget and anything louder saturates at the edge, so the trace clips instead of
@@ -918,7 +918,8 @@ static void ui_draw_scope(const ui_widget *w)
 }
 
 /* the spectrogram: SCOPE_BINS linearly-spaced Goertzel bars (power-normalized),
- * log-free and integer. The ear hears power, and the harmonic series is visible. */
+ * log-free and integer. That suits an ear that hears power, and it keeps the
+ * harmonic series visible. */
 static void ui_draw_spectro(const ui_widget *w)
 {
     uint32_t x, y, wd, ht, i;
@@ -972,9 +973,9 @@ static void ui_draw_status(const ui_widget *w)
     cv_blit(x, y);
 }
 
-/* the 8 standard 4-op FM algorithms (ymfm s_algorithm_ops, with alg 3 replaced).
- * see umetate/_tables.py `_ROUTING`): ALGO_MOD[alg][i] is the bitmask of operators
- * that phase-modulate operator i, ALGO_CAR[alg] is the carrier bitmask. */
+/* the 8 standard 4-op FM algorithms, from ymfm s_algorithm_ops with alg 3 replaced
+ * (see umetate/_tables.py `_ROUTING`). ALGO_MOD[alg][i] is the bitmask of operators
+ * that phase-modulate operator i, and ALGO_CAR[alg] is the carrier bitmask. */
 static const uint8_t ALGO_MOD[8][4] = {
     {0, 1, 2, 4},   /* 0: 1->2->3->4 */
     {0, 0, 3, 4},   /* 1: (1+2)->3->4 */
@@ -1111,7 +1112,7 @@ static void ui_draw_subheader(const ui_widget *w)
 
 /* the always-visible header (rows 0-1, full width): the active part + operator,
  * the algorithm, the menu name, the page N/M, and every part's + operator's
- * mute/active state. Drawn every redraw, its value folds all of those into one
+ * mute/active state. It is drawn every redraw. Its value folds all of those into one
  * word (distinct bit fields, no overlap). */
 static int32_t ui_header_value(void)
 {
@@ -1153,8 +1154,8 @@ static void ui_draw_header(void)
     cv_begin(240u, 2u * UI_ROW_H, C_BLACK);
 
     /* row 0 (one line): P1 P2 · op 1 2 3 4 · ALG<alg> · <menu> <page>/<n>. Parts +
-     * operators are the white base text (selected = light blue, muted = red); ALG is
-     * pink, the menu + page is purple. */
+     * operators are the white base text (selected = light blue, muted = red), whilst
+     * ALG is pink and the menu + page is purple. */
     x = 0;
     if (ui_t->n_part <= 4u) {
         for (i = 0; i < ui_t->n_part; i++) {
