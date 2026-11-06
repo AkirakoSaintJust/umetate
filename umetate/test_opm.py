@@ -213,18 +213,18 @@ def _timing() -> None:
     assert _d1l_level(15) == 0
     # Fast attacks hit the top rate, and a slow attack is mapped to a slow rate.
     assert _attack_rate(31, 0) == 99
-    assert _attack_rate(23, 0) == 91
-    assert _attack_rate(9, 0) == 35
+    assert _attack_rate(23, 0) == 93
+    assert _attack_rate(9, 0) == 40
     assert _attack_rate(1, 0) == 0
     # The first decay gets slower as the rate falls and as D1L asks for a
-    # shorter trip, the second decay tracks D2R. The map aims 16 dB into the
-    # stage and adds four rate steps, so the tail reads closer to the OPM line.
-    assert _decay_rate(8, 10, 0, "decay1") == 52
-    assert _decay_rate(8, 4, 0, "decay1") == 12
-    assert _decay_rate(8, 20, 0, "decay1") == 91
+    # shorter trip, the second decay tracks D2R. The map aims 12 dB into the
+    # stage, which keeps the early body and the tail in the same region.
+    assert _decay_rate(8, 10, 0, "decay1") == 51
+    assert _decay_rate(8, 4, 0, "decay1") == 15
+    assert _decay_rate(8, 20, 0, "decay1") == 89
     # RR 8 is the common pluck release.
-    assert _release_rate(8, 0) == 76
-    assert _release_rate(4, 0) == 38
+    assert _release_rate(8, 0) == 79
+    assert _release_rate(4, 0) == 43
     print("ok: the measured envelope map has the expected rates")
 
 

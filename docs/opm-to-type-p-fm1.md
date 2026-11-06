@@ -188,19 +188,18 @@ decay target is `l2 = 99 - 4*D1L` for `D1L` 0 to 14, and the second decay runs t
 `D2R` is 0 the second decay holds `l2`, so `l3` is `l2`.
 
 The rates come from measured stage times, not a guessed table. The converter
-simulates the OPM envelope tables at the chip EG clock, 13.98 kHz, and the Type
+simulates the OPM envelope tables at the chip EG clock, 18.64 kHz, and the Type
 P.fm1 one-pole at the 1.38 kHz control rate, then picks the rate whose time to a
-chosen point in the stage is closest. The attack matches the time to -12 dB below
-full. The decays match the time 16 dB into the trip, or the whole stage when it is
-shorter, and the rate then moves up four steps. The release matches the time to
--20 dB. The four-step bias is deliberate: the one-pole tail made the stage read
-long, and a slightly faster rate brings the whole stage closer even though the
-first few dB are now a little fast.
+chosen point in the stage is closest. The OPM clock is one tick per three inner
+timer calls, which is `OpmRate / 6`. The attack matches the time to -12 dB below
+full. The decays match the time 12 dB into the trip, or the whole stage when it is
+shorter. The release matches the time to -20 dB.
 
-A controlled `D1R` 10, `D1L` 8 stage takes 1.87 s in OPM and 2.07 s in Type P.fm1
-to reach the target, against 2.84 s without the bias. On the demo bank, Solid Bass
-tracks the OPM within about a decibel through 0.8 s, Hard Tines is about 1.5 dB
-fast, and Tubular Bells is still about 3.5 dB long at 0.4 s.
+A controlled `D1R` 10, `D1L` 8 stage reaches -12 dB in 0.66 s in both engines. The
+whole stage to `D1L` takes 1.41 s in OPM and 2.18 s in Type P.fm1, because the
+one-pole tail is longer. On the demo bank, Solid Bass tracks the OPM within about
+a decibel through 0.8 s, Hard Tines is about 2 to 3 dB fast, and Tubular Bells is
+still about 3.5 dB long at 0.4 s.
 
 The curves still differ. An OPM decay is a straight line in dB. The Type P.fm1
 one-pole starts faster and eases into its target, and its one-unit floor sets a
@@ -352,11 +351,11 @@ sound. The comparison set is a local corpus of 438 OPM bank files and 56,032
 voices, rendered at middle C with both filters and the wavefolder off and the
 VOPMex output FIR off.
 
-On a 200-voice sample, 89 percent of the converted voices are within 1.5 on the
-centroid, 82 percent within 1.25, and 89 percent within 1.5 on the roll-off. The
-median ratio is 1.01. The release time is within a factor of 2 for 97 percent of
+On a 200-voice sample, 92 percent of the converted voices are within 1.5 on the
+centroid, 83 percent within 1.25, and 90 percent within 1.5 on the roll-off. The
+median ratio is 1.02. The release time is within a factor of 2 for 98 percent of
 the voices that have an audible release. The decay slope over 0.1 to 0.7 s has a
-median of 0.97 and 83 percent inside a factor of 2. It is still the weakest
+median of 1.00 and 81 percent inside a factor of 2. It is still the weakest
 measure because the one-pole eases into a sustain where the OPM decay is a
 straight dB line. Treat the timing tolerance as the stage time at the chosen
 point, not the whole curve.

@@ -60,9 +60,11 @@ _XRTBL = _make_xrtbl()
 # and the special full-attenuation step at 15.
 _D1LTBL: list[int] = [i * 2 for i in range(15)] + [62]
 
-# OPM EG clock: OpmRate = 3 579 545 >> 5, and the chip's timer runs the EG once
-# per eight OpmRate ticks. This is the rate VOPMex's `EnvCounter` advances at.
-_OPM_EG_HZ = (3579545 >> 5) / 8.0
+# OPM EG clock: OpmRate = 3 579 545 >> 5 = 111 860. VOPMex's `EnvCounter2`
+# starts at 3 and wraps on the third inner tick (`--EnvCounter2 == 0`), and the
+# inner loop runs OpmRate / 2 times a second. So the EG advances OpmRate / 6
+# times a second, 18 643 Hz.
+_OPM_EG_HZ = (3579545 >> 5) / 6.0
 _DB_PER_EL = 20.0 * math.log10(2.0) / 64.0  # one `Xr_el` unit
 
 # Type P.fm1 control rate: CONTROL_BLOCK samples at 44.1 kHz.
@@ -423,10 +425,10 @@ def _nearest_rate(opm_time: float, candidates: Sequence[tuple[int, float]]) -> i
 # How far into a decay the rate map aims. A larger drop shortens the one-pole
 # tail at the cost of a faster first few dB. Eight matches the early body, the
 # converter defaults to a little more so the stage does not read long.
-_DECAY_DROP_DB = 16.0
-# A small rate offset on top of the time fit. The fit targets the chosen point,
-# and the offset shortens the one-pole tail without changing the level targets.
-_DECAY_BIAS = 4
+_DECAY_DROP_DB = 12.0
+# No extra rate offset. With the corrected OPM EG clock, the 12 dB target is
+# enough to keep the early body and the tail in the same region.
+_DECAY_BIAS = 0
 
 _ATTACK_CACHE: dict[tuple[int, int, int], int] = {}
 _DECAY_CACHE: dict[tuple[int, int, int, str, int], int] = {}
