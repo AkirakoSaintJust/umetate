@@ -50,7 +50,7 @@ umetate deep-check --all                       # the gate (renders the patch, re
 umetate build --synth examples/type-p-fm1       # compose + host run + target package (needs the toolchain)
 umetate emu --check --mhz 240                  # boot the package, hold a chord (no halt, full-scale peak)
 umetate preset export examples/type-p-fm1       # the 128+64 bank as .syx (import reverses it)
-umetate budget examples/type-p-fm1/patch.json --voices 20   # the measured polyphony claim
+umetate budget examples/type-p-fm1/patch.json --voices 20   # the measured polyphony figure
 ```
 
 ## 4. Lessons drawn
@@ -76,7 +76,7 @@ Building the example exposed two bugs, both fixed, and a bunch of follow-up work
 5. **Velocity → amplitude/FM/envelope-rate is wired, defaulted off (shipped,
    F2).** The `fm_op` macro has `vel_amp`/`vel_fm`/`vel_rate` depths (the
    reserved `velocity` input), so velocity reaches the operators, but the
-   dogfood defaults each depth to 0, so velocity is inaudible until set via
+   test project sets each depth to 0 by default, so velocity is inaudible until set via
    `set_param` (`opN.velamp.depth` etc.). Not on the panel/CC surface.
 6. **Control-rate LFO (shipped).** Each tick, the `lfo` node advances by
    `rate × CONTROL_BLOCK`, using the macro emitted by the generator. Its phase is

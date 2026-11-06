@@ -25,6 +25,15 @@ the front-door register, then settle into the reference voice. A guide or study 
 open with the plain category and a causal link, then carry longer explanatory
 sentences. Do not flatten either one into a spec sheet.
 
+The author is chummy, nerdy, and British. The hand-written README says the prose
+"might sound a bit chummy, nerdy and British", then asks the reader to write their
+own release front door. It also says "I'm going to feel guilty and embarrassed if
+you use umetate to make something and publish it with awful slop marketing blurb
+docs." That is the target: warm, direct, a little self-deprecating, and completely
+serious about keeping the community's docs readable. An aside earns its place when
+it carries a reason, a real stake, or a specific care for the reader. A slogan does
+not.
+
 ## Calibration
 
 The first manual was 971 words: mean sentence 11.3, median 10, standard deviation
@@ -297,10 +306,51 @@ even when every fact is right.
   as a phrase, but it loses "documented". Keep the fact: "for some quirky reason.
   It's a documented quirk, not a mistake in your patch."
 
+## Project vocabulary bans
+
+These are hard bans in prose. The substitute is the plain phrase, not a synonym
+with the same framing.
+
+| Do not write | Write instead |
+| --- | --- |
+| claim, as a label for a feature | claimed feature, or name the feature |
+| source of truth | only reference, single reference |
+| I built, we built | I made, we made |
+| dogfood | test project made from our own readymade components, then the test project or the worked example |
+| lives in, live in, for a file, folder, sub-project, document, or component | is in the PATH folder, is stored at, PATH's path within the repo is |
+| gap, for missing work | missing work, missing feature, bug, oversight, problem |
+
+Keep "claim" as a verb when the evidence matters, and in a licence or warranty. Keep
+"built" for a compiled binary, a target package, or a CI job. Keep "gap" for a grid
+gap, a silent gap in audio, or a measured interval. Keep a code identifier, a
+command, a schema key, or a quoted source exactly as it is.
+
+"Source of truth" was the old status word. The new reference is "only reference" or
+"the single reference". The README now says `docs/roadmap.md` is "the only reference
+for the design, implementation plan, and status of each claimed feature."
+
+"I built" became "I made" in the worked example: "Type P.fm1 is a worked example I
+made to put the framework through the process." Keep the author's hands in the
+sentence.
+
+"Dogfood" became "the example firmware made out of the pre-made umetate components"
+in the build comment, and "the test project" in the status prose. The word hid the
+fact that the author was testing their own components. Say the fact.
+
+A file does not live. The plugin source is in the `plugin/` folder. The modules are
+stored at `modules/nodes/`. The framework source's path within the repo is
+`umetate/`.
+
+"Gap" became "missing work", "missing items", "open questions", "bug", "oversight",
+or "problem". A gap in a plan is a missing feature. A gap in the interview is an
+unanswered question. A gap in the evidence is a missing measurement. Name it.
+
 ## Hard bans
 
 - No em dash. No semicolon.
-- No swearing.
+- No swearing in published docs. The corpus swears, the release does not.
+- No bare claim for a feature, no "source of truth", no "I built" for a made thing,
+  no dogfood, no "lives in" for a location, and no "gap" for missing work.
 - No marketing hooks, negative-parallelism hooks, false dichotomies, or heading
   chains.
 - No needless "It's a X, not a Y" or "It's not an X" setup. Start with the positive.
@@ -334,7 +384,38 @@ Hand rewrite:
 
 The instruction is stronger than the aphorism. Prefer it.
 
-### The guide opening
+### Project vocabulary
+
+Old draft:
+
+> `docs/roadmap.md` is the source of truth for the status of each claim. The dogfood
+> firmware lives in `examples/type-p-fm1`, and I built it to expose the next gaps.
+
+Hand rewrite:
+
+> `docs/roadmap.md` is the only reference for the design, implementation plan, and
+> status of each claimed feature. The test project made from our own readymade
+> components is in the `examples/type-p-fm1` folder, and I made it to expose the next
+> missing work.
+
+The facts survive. The status shorthand, the insider jargon, the construction
+metaphor, the location verb, and the planning word do not.
+
+### Anti-slop promise
+
+The hand-written README is the calibration for the front-door aside:
+
+> I've tried to calibrate the resulting prose from my own personal writing, which
+> might sound a bit chummy, nerdy and British. If that's not your thing I appreciate
+> your position, but I'm going to feel guilty and embarrassed if you use umetate to
+> make something and publish it with awful slop marketing blurb docs. Please take
+> care of the community.
+
+The aside admits a taste, names the stake, and asks for something. Keep that shape.
+A line like "we are passionate about empowering creators" has the same topic and no
+person in it.
+
+### Guide opening
 
 Model draft:
 
@@ -352,7 +433,7 @@ Author rewrite:
 The author cut the balanced thesis and the paired metaphors. The plain category and
 the causal guess are the target.
 
-### The technical guide
+### Technical guide
 
 > A Kawai-style harmonic source does not need 64 or 128 independent oscillators.
 > The partials share one fundamental, so one phase accumulator can drive them all.
@@ -367,7 +448,7 @@ exact, the metaphor is absent, and the engineering vocabulary stays in the
 sentence. This is the register for a software reconstruction: explain the machine
 to a reader who will build it.
 
-### The factual contrast
+### Factual contrast
 
 Model draft:
 
@@ -381,7 +462,7 @@ Author rewrite:
 The author preferred the causal and historical link over the neat contrast. Use a
 contrast only when both sides are the point.
 
-### The dropped qualifier
+### Dropped qualifier
 
 Model draft:
 

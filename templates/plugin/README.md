@@ -22,6 +22,6 @@ cmake --build build --config Release
 ctest --test-dir build -C Release --output-on-failure
 ```
 
-The reusable host is `@P1_PLUGIN_SOURCE@`, and the plugin identity lives in
+The reusable host is `@P1_PLUGIN_SOURCE@`, and the plugin identity is stored in
 `P1Project.cmake`. Change it in the synth's `plugin.json` so the generated file
 stays disposable.

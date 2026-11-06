@@ -20,7 +20,7 @@ retains control over every device write.
 ## Start here
 
 1. Read `README.md`, `docs/roadmap.md`, `docs/tutorial.md`, and `LICENSING.md` in
-   that order. `docs/roadmap.md` is the single source of truth for status.
+   that order. `docs/roadmap.md` is the only reference for status.
 2. Inspect `git status --short` and any project instructions before editing.
    Never discard or overwrite user work.
 3. Read `references/platform-facts.md` (hardware facts) and
@@ -29,7 +29,7 @@ retains control over every device write.
 
 ## The prime directive: design before code
 
-No code is written until **three artifacts are complete, mutually consistent, and
+No code is written until **three artefacts are complete, mutually consistent, and
 user-confirmed**:
 
 1. **Synth design + architecture**, the voice graph, the parameter manifest, and
@@ -45,7 +45,7 @@ user-confirmed**:
    `templates/dsp-algorithm.md`, `templates/code-structure.md`).
 
 These map **one-to-one** onto `patch.json`, `panel.json`, and the plan/evidence
-artifacts. Step 5 (authoring) is _mechanical translation_, not design. If translation
+artefacts. Step 5 (authoring) is _mechanical translation_, not design. If translation
 requires a new design decision, stop and ask. Do not improvise in code.
 
 ## Operating contract
@@ -194,7 +194,7 @@ screen. LED/pad feedback, and the full control flow.
     targets (key-follow and velocity-follow), give them the same page *shape* in
     the same menus, one page set per source, differing only where the source
     differs (velocity drops the breakpoint/LO-HI and adds a single per-target
-    amount + a global on/off). Put a "targets live in EDIT/FX/ENV" hint on the
+    amount + a global on/off). Put a "targets are in EDIT/FX/ENV" hint on the
     global page that owns the shared control, so the user learns one set of pages
     and understands the other.
 
@@ -254,8 +254,8 @@ Turn the two designs into one living plan:
   audio callback ≤ 2.9 ms (50% of 5.8 ms). CPU0 `.data`/`.bss` ≤ 96 KiB. CPU1
   `.cpu1_bss` ≤ 16 KiB, `.dsp_text` ≤ 32 KiB, `.pool` ≤ 336 KiB. XIP code + const
   ≤ 568 KiB, stack 24 KiB CPU0 + 8 KiB CPU1.
-- `templates/evidence-matrix.md`, one row per layer, exact command/artifact.
-- The **voice count is a measured claim**, run `umetate budget --voices N,M --parts P`
+- `templates/evidence-matrix.md`, one row per layer, exact command/artefact.
+- The **voice count is a measured figure**, run `umetate budget --voices N,M --parts P`
   (host timing: per-voice cost + linearity, the 2.9 ms device fit is the
   emulator's job, `blocked` until the firmware is built). Never estimate polyphony.
 - `templates/dsp-algorithm.md`, the exact algorithm for each component (see
@@ -325,8 +325,8 @@ the verification plan.
 
 ### 4. The consistency gate (fully green before any code)
 
-Cross-check the three artifacts against each other. A failure means _fix the
-artifact_, never the code. Walk every item, do not skip:
+Cross-check the three artefacts against each other. A failure means _fix the
+artefact_, never the code. Walk every item, do not skip:
 
 - [ ] Every GUI binding target is a parameter in the manifest, or a reserved
       action verb from `panel.schema.json`.
@@ -415,7 +415,7 @@ the deterministic "is this increment done" check. The wider, slower steps follow
 
 ```sh
 umetate deep-check --all                       # the gate (one command, exit 0/1)
-umetate budget <patch.json> --voices N         # the measured polyphony claim
+umetate budget <patch.json> --voices N         # the measured polyphony figure
 umetate build --synth examples/<project>       # compose + host evidence + package
 umetate emu --check --mhz 240                  # boot the package, hold a chord
 ```

@@ -9,14 +9,14 @@
 
 ## Player outcome
 
-- **What the player can do that they could not do before:** load the Type P.fm1
-  engine as a VST3 instrument or a standalone app, play it from MIDI, automate
-  the manifest parameters and save the session state.
-- **How it sounds or behaves:** the 44.1 kHz core renders bit-exactly with the
-  firmware engine. Both parts stay addressable, and the device MIDI behavior is
+- **New player action:** load the Type P.fm1 engine as a VST3 instrument or a
+  standalone app, play it from MIDI, automate the manifest parameters and save
+  the session state.
+- **Sound and behaviour:** the 44.1 kHz core renders bit-exactly with the
+  firmware engine. Both parts stay addressable, and the device MIDI behaviour is
   reused.
-- **How it fails visibly and safely:** the smoke test fails on a parameter count,
-  id, render or state mismatch. A host that asks for an unsupported layout gets
+- **Failure mode:** the smoke test fails on a parameter count, id, render or
+  state mismatch. A host that asks for an unsupported layout gets
   no bus. No code path writes files, allocates or locks on the audio thread.
 
 ## Dependencies and interactions
@@ -88,13 +88,13 @@
   target package.
 - **Physical timing/device check:** blocked, no hardware.
 - **Tolerance/metric:** bit-exact floats at 44.1 kHz. Parameter state exact.
-- **Evidence artifact:** `ctest` output for `engine_parity` and `plugin_smoke`,
-  and the VST3 and standalone artifacts.
+- **Evidence artefact:** `ctest` output for `engine_parity` and `plugin_smoke`,
+  and the VST3 and standalone artefacts.
 
 ## Result (2026-11-03)
 
 - `P1_BUILD_JUCE=ON` builds a VST3 and a standalone target against JUCE 8.0.9.
-- The VST3 and standalone artifacts are produced under
+- The VST3 and standalone artefacts are produced under
   `build/plugin-juce/juce/type_p_fm1_artefacts/Release`.
 - The APVTS exposes 313 parameters. The ids are the manifest names and are
   unique. The engine ids cover 0 to 308 with no gap.

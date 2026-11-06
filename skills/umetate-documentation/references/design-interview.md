@@ -10,8 +10,8 @@ A specific question about the first patch produces a paragraph.
 The form is generated from the project. `umetate interview --write` reads
 `patch.json`, `panel.json`, `synth-brief.md`, and `plugin.json`, then renders the
 generic core in `templates/design-interview.md` with the synth's own terms. It
-does not assume FM, operators, or Type P.fm1. `--next 3` prints the next gaps.
-`--check` lists every gap.
+does not assume FM, operators, or Type P.fm1. `--next 3` prints the next missing
+items. `--check` lists every open question.
 
 The generated form is a starting point. Read it, add or remove questions from the
 brief, and ask one topic at a time. The template is the generic core. The
@@ -36,10 +36,10 @@ not volunteer.
    a sound beat an adjective.
 6. Do not accept "it sounds better" or "it is more flexible". Ask what it sounds
    like, at what setting, against what.
-7. Let the author digress. Follow the energy, then return to the gap.
+7. Let the author digress. Follow the energy, then return to the open question.
 8. Record the answers in their words. Do not clean up yet. Mark uncertain facts.
 9. Do not invent an answer. If the author does not remember, ask for the nearest
-   concrete thing or leave the gap.
+   concrete thing or leave the question open.
 10. Ask permission before publishing personal details.
 
 ## Generator inputs
@@ -62,7 +62,7 @@ still works.
 
 The generated form has nine sections. The order is a guide, not a script.
 
-### The first sound
+### First sound
 
 - What was the first patch or sound that made you want to build the synth?
 - What did the instruments you were using fail to do?
@@ -71,7 +71,7 @@ The generated form has nine sections. The order is a guide, not a script.
 Follow-ups: "What did it sound like?" "Which instrument were you using?" "What
 did you try first?" "What made you keep going?"
 
-### The lineage
+### Lineage
 
 - Which instruments, chips, or algorithms are in its DNA, and what did you take
   from each?
@@ -81,7 +81,7 @@ did you try first?" "What made you keep going?"
 Follow-ups: "Which model?" "Which record or patch?" "What did the reference get
 wrong?" "What did you reject?"
 
-### The architecture
+### Architecture
 
 - Walk me through the voice architecture from the key to the output.
 - Why this voice count and this part count?
@@ -91,7 +91,7 @@ wrong?" "What did you reject?"
 Follow-ups: "What does each stage do?" "What did the voice budget allow?" "What
 did the panel make easy or hard?"
 
-### The output chain
+### Output chain
 
 - What is the output chain, and why does it end where it ends?
 - What did you cut from the output stage, and why?
@@ -100,7 +100,7 @@ did the panel make easy or hard?"
 Follow-ups: "What patch made the last stage worth it?" "What did you try before
 it?" "What did you cut to make room?"
 
-### The interface
+### Interface
 
 - Why this panel and these controls?
 - What did you cut from the UI, and what is still awkward?
@@ -110,7 +110,7 @@ it?" "What did you cut to make room?"
 Follow-ups: "What did you have to move off the home page?" "What did the screen
 width rule out?" "What did you copy from hardware you like?"
 
-### The tradeoffs
+### Tradeoffs
 
 - What did you cut from the original design, and why?
 - What broke during development, and what was the worst bug?
@@ -120,7 +120,7 @@ width rule out?" "What did you copy from hardware you like?"
 Follow-ups: "What did the first version do badly?" "What did you think was a good
 idea and was not?" "What is the next thing if the hardware had more power?"
 
-### The sound
+### Sound
 
 - What is your favourite patch you made with it, and what does it do?
 - What do you listen for when you tweak a patch?
@@ -131,7 +131,7 @@ idea and was not?" "What is the next thing if the hardware had more power?"
 Follow-ups: "What settings?" "What does it do at the high end?" "What is the
 recipe?" "What do you reach for first?"
 
-### The person and the name
+### Person and name
 
 - What does your workflow look like when you use it?
 - Where does the name come from?
@@ -140,7 +140,7 @@ recipe?" "What do you reach for first?"
 Follow-ups: "What do you sequence with?" "What is the live context?" "What is
 the name about?" "What do you want them to hear first?"
 
-### The interview itself
+### Interview itself
 
 - What did I not ask that I should have?
 

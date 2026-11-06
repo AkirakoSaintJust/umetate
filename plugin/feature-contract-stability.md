@@ -9,15 +9,14 @@
 
 ## Player outcome
 
-- **What the player can do that they could not do before:** push every control to
-  its limit, play dense chords, change the session rate, and load a damaged state
-  without the plugin going silent, hanging, or leaving the DAW with a non-finite
-  sample.
-- **How it sounds or behaves:** extreme patches may clip, as any synth may. They
+- **New player action:** push every control to its limit, play dense chords,
+  change the session rate, and load a damaged state without the plugin going
+  silent, hanging, or leaving the DAW with a non-finite sample.
+- **Sound and behaviour:** extreme patches may clip, as any synth may. They
   stay finite and the plugin keeps rendering. A damaged state is rejected or
   repaired, never trusted blindly.
-- **How it fails visibly and safely:** the audio stays finite. A rejected state
-  leaves the previous parameters in place.
+- **Failure mode:** the audio stays finite. A rejected state leaves the previous
+  parameters in place.
 
 ## Dependencies and interactions
 
@@ -72,7 +71,7 @@
 - **Tolerance/metric:** every rendered sample is finite. The parameter extremes
   stay below an absolute peak of 100.0. The voice tail after 16 seconds is below
   0.05.
-- **Evidence artifact:** the `plugin_stability` CTest output in the Linux
+- **Evidence artefact:** the `plugin_stability` CTest output in the Linux
   container. The test passes in 0.14 seconds. Every check reports `ok`, including
   the parameter extremes, the polyphony burst, the MIDI storm, the rate changes,
   the state fuzz, and the voice tail.
@@ -80,7 +79,7 @@
 ## Risks and fallback
 
 - **Assumptions/open research:** a finite output does not prove musical
-  correctness. The parity and validator tests still carry that claim.
+  correctness. The parity and validator tests still carry that evidence.
 - **Safe experiment and stop criterion:** run the sweep on every plugin change.
   Stop on any non-finite sample, crash, hang, or latency mismatch.
 - **Smaller alternative:** keep the smoke test and add only the state fuzz and

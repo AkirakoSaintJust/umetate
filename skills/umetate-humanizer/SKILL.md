@@ -1,7 +1,7 @@
 ---
 name: umetate-humanizer
-description: Rewrite prose in the author's voice, extracted from the Type P.fm1 manual and the K5/K5000 guide. Use when text sounds like a spec sheet, a chatbot, or marketing copy, when a draft needs the author's rhythm and causal links, or when editing a Markdown file in place. Covers the negation test, the connectivity pass, the aphorism ban, the "A, not B" ban, the manual and guide registers, and the no-information-loss check. Pure Markdown, no dependencies, no network calls.
-version: 1.0.0
+description: Rewrite prose in the author's voice, extracted from the Type P.fm1 manual, the K5/K5000 guide, and the hand-written README. Use when text sounds like a spec sheet, a chatbot, or marketing copy, when a draft needs the author's rhythm and causal links, or when editing a Markdown file in place. Covers the negation test, the connectivity pass, the aphorism ban, the "A, not B" ban, the project vocabulary bans (claim, source of truth, I built, dogfood, lives in, gap), the manual and guide registers, the anti-slop promise, and the no-information-loss check. Pure Markdown, no dependencies, no network calls.
+version: 1.1.0
 license: GPL-3.0-only
 allowed-tools: read, grep, glob, edit, write, shell
 ---
@@ -16,7 +16,7 @@ The method has four jobs: keep the facts, choose the right register, join the
 clauses, and cut the lines that sound like a poster. Everything else follows from
 those.
 
-## The target voice
+## Target voice
 
 A builder and a player, writing to another builder or player. First person, normal
 contractions, dry asides, technical exactness, light UK slang. Long setup and short
@@ -30,7 +30,16 @@ unremarkable, and give the reason. They admit a limit, a failed experiment, or a
 change of mind. They use "I" when the judgement is theirs. They use "you" for the
 reader. They let the instrument be the subject when no person is acting.
 
-## The six rules
+The author is also chummy, nerdy, and British. The front door can carry a dry aside,
+a self-deprecating admission, or a direct request to the reader. The hand-written
+README says the prose "might sound a bit chummy, nerdy and British", and it asks the
+reader to write their own release front door "because I'm going to feel guilty and
+embarrassed if you use umetate to make something and publish it with awful slop
+marketing blurb docs." That is the register: warm, direct, a bit embarrassed about
+asking, and completely serious about the anti-slop promise. Keep the aside when it
+carries a reason or a real care for the reader. Cut it when it becomes a slogan.
+
+## Six rules
 
 1. **Synchronic, not historical.** Describe the instrument as it is now. Release
    notes are the exception. A guide or study can use history as its subject.
@@ -45,6 +54,52 @@ reader. They let the instrument be the subject when no person is acting.
    exception.
 6. **Radical rewrites are fine.** The goal is prose quality, not a minimal diff. A
    clean page that reads like a spec sheet is a failed rewrite.
+
+## Project vocabulary bans
+
+These words carry a model's default framing. Use the substitute or rewrite the
+sentence. They are hard bans in prose, not preferences.
+
+| Do not write | Write instead |
+| --- | --- |
+| claim, as a label for a feature | claimed feature, or name the feature |
+| source of truth | only reference, single reference |
+| I built, we built | I made, we made |
+| dogfood | test project made from our own readymade components, or the worked example |
+| lives in, live in, for a file, folder, sub-project, document, or component | is in the PATH folder, is stored at, PATH's path within the repo is |
+| gap, for missing work | missing work, missing feature, bug, oversight, problem |
+
+A bare "claim" is a debate word. "The status of each claim" becomes "the status of
+each claimed feature". Keep "claim" as a verb when someone is claiming a fact and
+the evidence matters, and keep it in a licence or warranty. Do not use it as a label
+for a feature.
+
+"Source of truth" is a status word borrowed from software management. The repo has
+one reference for status: `docs/roadmap.md`. Write "the only reference" or "the
+single reference".
+
+"I built" is the model's construction metaphor. The author made the thing. Use "I
+made", "we made", "the example I made". Keep "built" for a compiled binary, a target
+package, or a CI job, where the literal build is the subject.
+
+"Dogfood" is insider jargon that hides who did what. Write "the test project made
+from our own readymade components" on first use, then "the test project" or "the
+worked example". If a build command or a historical identifier uses the word, keep
+the literal token and explain it in plain words around it.
+
+A file, folder, sub-project, document, or component does not "live" anywhere. It is
+in a folder, it is stored at a path, or its path within the repo is the path. "The
+plugin source lives in `plugin/`" becomes "The plugin source is in the `plugin/`
+folder." "The modules live in `modules/nodes/`" becomes "The modules are stored at
+`modules/nodes/`."
+
+"Gap" is a planning word that hides the concrete failure. Name the missing work, the
+missing feature, the bug, the oversight, or the problem. "The next gaps" becomes "the
+next missing items" or "the open questions". Keep "gap" for a physical space, a grid
+gap, a silent gap in audio, or a measured interval.
+
+These bans apply to prose. A code identifier, a command, a schema key, or a quoted
+source keeps its spelling.
 
 ## Registers
 
@@ -76,7 +131,7 @@ Do not add "I" to compensate for a flat draft. Add explanatory clauses,
 connectives, and a longer sentence where the thought needs it. A manual with two
 first-person pronouns and one contraction in 1,000 words has been over-edited.
 
-## The negation test
+## Negation test
 
 A negation earns its place only when it carries one of these:
 
@@ -124,6 +179,23 @@ Low is 1 to 64, and High is 65 to 128."
 
 Do not split a connected explanation into three declaratives. A page of short
 sentences has lost the guide register even when every fact is right.
+
+## Commit bodies and code comments
+
+A good commit body states the current constraint, the change, and the reason. The
+envelope refactor is the shape:
+
+> The attack target was hardcoded at -12 dB. Make it a module constant next to the
+> decay target, so an experiment can render other match points without touching the
+> shipped value. The default stays -12 dB.
+
+Three sentences: what was fixed, what changed, why, and what stayed. No "refactored
+the codebase" and no "improved maintainability". Name the constant, the file, or the
+behaviour. A code comment gets the same treatment, and it names the trade-off:
+
+> Envelope match points. The attack aims at -12 dB below full. The decay aims 12 dB
+> into the trip, which keeps the early body and the tail in the same region. A
+> larger drop shortens the tail at the cost of a faster first few dB.
 
 ## Aphorisms and endings
 
@@ -181,6 +253,17 @@ A closing verdict that restates the paragraph is filler.
 
 - **Marketing adjectives.** "seamless", "robust", "state of the art", "unleash",
   "vibrant", "cutting-edge", "world-class".
+- **Status shorthand.** "source of truth" becomes "only reference" or "single
+  reference". A bare "claim" becomes "claimed feature" or the feature's name.
+- **Construction metaphors.** "I built" becomes "I made" unless the subject is a
+  compiled binary or a CI job.
+- **Insider jargon.** "dogfood" becomes "test project made from our own readymade
+  components", then "the test project" or "the worked example".
+- **Location verbs.** A file, folder, sub-project, document, or component does not
+  "live in" a place. It is in a folder, it is stored at a path, or its path within
+  the repo is the path.
+- **Planning words that hide the failure.** "Gap" for missing work becomes the
+  missing work, the missing feature, the bug, the oversight, or the problem.
 - **Significance inflation.** "stands as", "is a testament to", "pivotal moment",
   "underscores the importance", "evolving landscape".
 - **Vague attributions.** "experts argue", "research suggests", "industry reports",
@@ -232,8 +315,10 @@ A closing verdict that restates the paragraph is filler.
    their main clauses. Do not split a connected explanation.
 6. **Cut the aphorisms and summary verdicts.** End on a fact, an instruction, or a
    specific judgement.
-7. **Check the surface.** No em dashes, no semicolons, British spelling in prose
-   except "synthesizer", panel names exact.
+7. **Check the surface and the vocabulary.** No em dashes, no semicolons, British
+   spelling in prose except "synthesizer", panel names exact. No bare claim, no
+   source-of-truth shorthand, no "I built" for a made thing, no dogfood, no "lives
+   in" for a location, and no "gap" for missing work.
 8. **Audit for information loss and invention.** Compare the rewrite with the
    source paragraph by paragraph. Put back anything that went missing.
 9. **Read it aloud.** If it sounds like a press release or a generated outline,
@@ -243,7 +328,7 @@ A closing verdict that restates the paragraph is filler.
 
 ## Modes
 
-- **`detect`:** report the tells and the voice gaps. No rewrite.
+- **`detect`:** report the tells and the weak spots. No rewrite.
 - **`rewrite`:** full rewrite. Default.
 - **`edit`:** targeted changes in a file. Preserve the author's existing voice.
 
@@ -271,6 +356,13 @@ the fixes, the hard bans, and the before and after samples.
 
 | Tell | Fix |
 | --- | --- |
+| Bare claim for a feature | Write "claimed feature" or name the feature. |
+| "Source of truth" | Write "only reference" or "single reference". |
+| "I built" for a made thing | Write "I made". Keep "built" for a compiled binary or a CI job. |
+| "Dogfood" | Write "test project made from our own readymade components", then "the test project". |
+| "Lives in" for a file, folder, sub-project, document, or component | Write "is in the PATH folder", "is stored at", or "PATH's path within the repo is". |
+| "Gap" for missing work | Name the missing work, the missing feature, the bug, the oversight, or the problem. |
+| Commit body with no constraint or reason | State what was fixed, what changed, why, and what stayed. |
 | Significance inflation | State what the thing is or does. Cut the "represents" commentary. |
 | Promotional adjectives | Replace with a specific fact, setting, or sound. |
 | Vague attribution | Name the source and what it said, or cut the claim. |
@@ -364,6 +456,37 @@ becomes:
 > When ideas did not come, he would stop watching the screen and experiment until a
 > new sound appeared.
 
+### Project vocabulary
+
+Before:
+
+> `docs/roadmap.md` is the source of truth for the status of each claim. The dogfood
+> firmware lives in `examples/type-p-fm1`, and I built it to expose the next gaps.
+
+After:
+
+> `docs/roadmap.md` is the only reference for the status of each claimed feature. The
+> test project made from our own readymade components is in the
+> `examples/type-p-fm1` folder, and I made it to expose the next missing work.
+
+The facts are the same. The status shorthand, the insider jargon, the construction
+metaphor, the location verb, and the planning word are gone.
+
+### Anti-slop promise
+
+The front door can say why the docs matter. The hand-written README does:
+
+> I've tried to calibrate the resulting prose from my own personal writing, which
+> might sound a bit chummy, nerdy and British. If that's not your thing I appreciate
+> your position, but I'm going to feel guilty and embarrassed if you use umetate to
+> make something and publish it with awful slop marketing blurb docs. Please take
+> care of the community.
+
+Keep that register. It is an aside with a reason, a real stake, and a direct request.
+Do not turn it into "we are passionate about empowering creators to unlock their
+sonic journey". The author would rather admit the embarrassment than sell the
+feeling.
+
 ## Final check
 
 - Every fact from the source is present, or deliberately scoped out with a reason.
@@ -381,6 +504,11 @@ becomes:
 - No product self-description section, no `The... The...` list, no wh-word heading
   or table label, and no counted-couplet heading, caption, or table description.
 - No raw storage value in a user document. Show the panel value and range.
+- No bare claim for a feature, no "source of truth", no "I built" for a made thing,
+  no dogfood, no "lives in" for a location, and no "gap" for missing work.
+- A last grep for the six banned words finds no prose use.
+- The front-door asides carry a reason or a real stake. They are not slogans.
+- A commit body names the constraint, the change, the reason, and what stayed.
 - Read it aloud. If it sounds like a press release, rewrite it.
 
 ## Score

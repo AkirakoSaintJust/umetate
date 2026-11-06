@@ -13,12 +13,12 @@
 
 ## Player outcome
 
-- **What the player can do that they could not do before:** load a VOPM or
-  VOPMex voice as a Type P.fm1 single part without rebuilding it by hand.
-- **How it sounds or behaves:** the same operator graph, ratios, levels, feedback
+- **New player action:** load a VOPM or VOPMex voice as a Type P.fm1 single part
+  without rebuilding it by hand.
+- **Sound and behaviour:** the same operator graph, ratios, levels, feedback
   depth, and envelope gesture. The timbre sits in the same spectral region and
   the audible envelope stages keep their timing within the stated tolerance.
-- **How it fails visibly and safely:** a malformed bank, an out-of-range field, a
+- **Failure mode:** a malformed bank, an out-of-range field, a
   missing operator line, or a bad slot is rejected with a line number. A field
   with no counterpart (noise, pan, a ratio above 16.00) is reported per slot and
   the rest of the voice still converts.

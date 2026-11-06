@@ -34,6 +34,16 @@ When you write prose, docs, commit bodies, or messages:
   a specific judgement.
 - No em dashes, no semicolons, no marketing adjectives, no heading chains, no false
   dichotomies, no negative parallelism.
+- No bare `claim` for a feature. Write `claimed feature`, or name the feature.
+- No `source of truth`. Write `only reference` or `single reference`.
+- No `I built` for a thing you made. Write `I made`. Keep `built` for a compiled
+  binary or a CI job.
+- No `dogfood`. Write `test project made from our own readymade components`, then
+  `the test project`.
+- No `lives in` for a file, folder, sub-project, document, or component. Write `is in
+  the PATH folder`, `is stored at`, or `PATH's path within the repo is`.
+- No `gap` for missing work. Name the missing work, the missing feature, the bug, the
+  oversight, or the problem.
 - Keep the author's first person, contractions, dry asides, light UK slang, and
   self-description. Fix grammar, not voice.
 - Do not invent a model, date, number, or quote.
@@ -47,9 +57,11 @@ the cause, or the constraint. Join facts to their causes and conditions. No em
 dashes, no semicolons, no aphorisms, no marketing adjectives, no negative
 parallelism, no "A, not B" adversatives. No product self-description sections.
 No article-drumbeat lists. No wh-word headings. No counted-couplet headings,
-captions, or table descriptions. No raw storage values. End on a
-concrete fact, an instruction, or a specific judgement. Preserve the author's
-contractions, asides, and UK slang. Never invent a fact.
+captions, or table descriptions. No raw storage values. No bare claim, no
+`source of truth`, no `I built` for a made thing, no dogfood, no `lives in` for a
+location, and no `gap` for missing work. End on a concrete fact, an instruction, or a
+specific judgement. Preserve the author's contractions, asides, and UK slang. Never
+invent a fact.
 ```
 
 ## For umetate docs
@@ -60,7 +72,9 @@ guide as the calibration. Preserve "gal", "innit", "kinda", the Taco Bell aside,
 the parenthetical "(!)", and deliberate contrast bold. No em dash, no semicolon,
 no swearing, no invented facts, no `what this is` section, no `The... The...`
 lists, no wh-word headings, no counted-couplet headings or table descriptions, no
-raw storage values. The panel section and the manual follow the same register.
+raw storage values. No bare claim, no `source of truth`, no `I built` for a made
+thing, no dogfood, no `lives in` for a location, and no `gap` for missing work. The
+panel section and the manual follow the same register.
 ```
 
 ## The one-line version

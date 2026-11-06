@@ -12,9 +12,9 @@
 
 ## Player outcome
 
-- **What the player can do that they could not do before:**
-- **How it sounds or behaves:**
-- **How it fails visibly and safely:**
+- **New player action:**
+- **Sound and behaviour:**
+- **Failure mode:**
 
 ## Dependencies and interactions
 

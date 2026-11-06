@@ -1,6 +1,6 @@
 # UI dossier: what to study and what to take
 
-This is a curated casebook. For each reference, read the instrument or the article,
+This is a casebook. For each reference, read the instrument or the article,
 name the lesson, and decide whether it applies. Do not copy a look. Copy a decision
 that made the instrument easier to play.
 

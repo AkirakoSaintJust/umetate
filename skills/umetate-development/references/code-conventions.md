@@ -119,7 +119,7 @@ them with `umetate lint --c`, `.clang-tidy`, and code review:
    recursion.
 2. **Bound every loop.** Give each loop a named upper limit. Never use an unbounded
    `while (1)` in the audio callback.
-3. **Do not allocate after initialization.** Use `static` or `.pool` buffers, the
+3. **Do not allocate after initialisation.** Use `static` or `.pool` buffers, the
    audio path must not allocate.
 4. **Keep functions small** (about 60 lines or fewer). Factor longer functions.
    `static inline` lets `-O3`/LTO remove the call where appropriate.
@@ -140,7 +140,7 @@ them with `umetate lint --c`, `.clang-tidy`, and code review:
    are the fixed platform seams `app_audio`, `app_main`, and `LCD_IDLE`, and the
    synth services' contexts (`synth_midi_ctx`, `synth_sysex_ctx`,
    `synth_runtime_ctx`, set up once at boot, never in the hot loop).
-10. **Treat warnings as errors from the start.** Run the static analyzers daily.
+10. **Treat warnings as errors from the start.** Run the static analysers daily.
 
 **Data layout:** Store parallel per-voice state as **SoA**: separate arrays such
 as `int16_t phase[NVOICE]` and `int16_t env[NVOICE]`, iterated together. The hot

@@ -37,7 +37,7 @@ Out of scope for the first release:
 
 - Audio input, sidechain, or an effect version.
 - Device flashing or firmware updates from the plugin.
-- A sample-accurate automation claim beyond the engine's 32-sample control block.
+- A sample-accurate automation promise beyond the engine's 32-sample control block.
 - Bundling the Digital Desolation Plus brand font. The wordmark is all Zen Dots,
   so the brand font is unused and stays out of the binary.
 
@@ -215,7 +215,7 @@ Rules:
 
 ## 8. MIDI
 
-Use the device MIDI handler so the behavior does not fork.
+Use the device MIDI handler so the behaviour does not fork.
 
 - Add `synth_midi_feed(ctx, status, data1, data2)` to `synth_midi.c`. The existing
   `synth_midi_poll` becomes a loop over `midi_get` that calls it.
@@ -357,7 +357,7 @@ as a subdirectory, so `P1_SYNTH_GEN`, `P1_SYNTH_CNAME`, `P1_PRODUCT_NAME`,
 `P1_PLUGIN_TARGET`, `P1_BUNDLE_ID`, `P1_MANUFACTURER_CODE`, `P1_PLUGIN_CODE`, and
 `P1_STATE_TREE_ID` come from the synth, not from the checked-in defaults. The
 engine and the editor talk to `P1Synth.h` and `P1Product.h`, which are generated
-at configure time from `plugin/tools/*.in`. The rendered C lives in the project's
+at configure time from `plugin/tools/*.in`. The rendered C is stored in the project's
 `gen/`. The fixed `firmware/gen/math_tables.h` stays in the source tree and is
 included after the project's `gen/`.
 
@@ -552,7 +552,7 @@ ctest --test-dir build\plugin-juce --output-on-failure
 ```
 
 `P1_BUILD_CLAP` defaults to ON when `P1_BUILD_JUCE` is ON. The CLAP wrapper is
-fetched at the pinned commit. In a plain checkout the artifacts are under
+fetched at the pinned commit. In a plain checkout the artefacts are under
 `build/plugin-juce/juce/type_p_fm1_artefacts/Release/VST3`,
 `build/plugin-juce/juce/type_p_fm1_artefacts/Release/CLAP` and `Standalone`. A
 generated project puts them under `<out>/build/p1plugin/juce/` with the same
@@ -656,7 +656,7 @@ The Windows VST3 and CLAP builds render equivalent one-note REAPER projects to
 byte-identical WAV files. REAPER 7.84 and Renoise 3.5.4 both load the Windows
 VST3 build and render it. The `linux_daws` CTest renders the Linux VST3 in
 Ardour 8.12 and renders both Linux formats in Carla 2.6.0-alpha1. Both DAW
-matrices are done. The macOS rows are not claims of support. They need a native
+matrices are done. The macOS rows are not evidence of support. They need a native
 build, `pluginval` and two DAWs per platform before they move to pass. AU
 remains a later macOS target.
 
@@ -689,7 +689,7 @@ Docker gate. The generated `firmware/gen` must exist before CMake configures.
 - Does the first release need device preset import and export, or only the
   in-plugin banks?
 - Block-accurate automation is accepted for v1. The processor reads the APVTS at
-  the 32-sample control block. A sample-accurate claim is not part of v1.
+  the 32-sample control block. A sample-accurate promise is not part of v1.
 - Should the plugin expose both parts on the operators page at once, or keep the
   active-part model from the mockup?
 - How should a DAW preset relate to a device multi patch when names are limited

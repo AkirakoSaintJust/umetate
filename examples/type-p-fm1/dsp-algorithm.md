@@ -197,7 +197,7 @@ In-repo study: [`docs/dsp-study.md`](../../docs/dsp-study.md).
   matrix-as-data idea is umetate's own. The acyclicity trick mirrors feedback.
 
 - **Performance note:** `route4` = four `fm1_q15_mul` + one table row read per
-  sample (per destination). `route` is **specialized**: an 8-algorithm `switch`
+  sample (per destination). `route` is **specialised**: an 8-algorithm `switch`
   whose 1-weights are `fm1_q15_mul(x, 32767)` (the compiler folds the constant to a
   32-bit shift/sub/add) and whose 0-weights are dropped, ~4–6 multiplies per
   sample, not the five generic `fm1_route4` rows (20 multiplies + 20 table loads).

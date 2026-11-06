@@ -10,14 +10,12 @@
 
 ## Player outcome
 
-- **What the player can do that they could not do before:** open the plugin and
-  edit the synth from the three designed pages instead of JUCE's generic
-  parameter list.
-- **How it sounds or behaves:** every knob and switch is attached to the same
+- **New player action:** open the plugin and edit the synth from the three
+  designed pages instead of JUCE's generic parameter list.
+- **Sound and behaviour:** every knob and switch is attached to the same
   APVTS parameter the host automates. The editor never writes engine state
   directly.
-- **How it fails visibly and safely:** a missing parameter leaves its control
-  inert. A scope with no audio draws a flat line. The editor never allocates,
+- **Failure mode:** a missing parameter leaves its control inert. A scope with no audio draws a flat line. The editor never allocates,
   locks or reads files on the audio thread.
 
 ## Dependencies and interactions
@@ -87,7 +85,7 @@
 - **Tolerance/metric:** the editor canvas is 1240 by 985 at 1x. A 620 by 493
   snapshot must show the same layout at 50 percent with no reflow or clipping.
   Every visible parameter maps to a manifest ID.
-- **Evidence artifact:** the editor PNGs under `juce/snapshots`, the CTest
+- **Evidence artefact:** the editor PNGs under `juce/snapshots`, the CTest
   output, and the full `deep-check --all`.
 
 ## Result (2026-11-04)

@@ -58,7 +58,15 @@ labels, so use a noun phrase or an imperative. No counted-couplet headings,
 captions, or table descriptions (`One page, one job`, `Two sources, one filter`,
 `One phase, many amplitudes`), so name the section and put the count in the body.
 No raw storage values in user docs, so show the value and range the panel shows. No
-`what this is` sections. One concrete example per major section.
+`what this is` sections. One concrete example per major section. Use the project
+vocabulary: `claimed feature` rather than a bare claim, `only reference` rather than
+`source of truth`, `I made` rather than `I built` for a made thing, `test project
+made from our own readymade components` rather than dogfood, `is in the PATH folder`
+or `is stored at` rather than `lives in`, and the missing work, missing feature, bug,
+oversight, or problem rather than `gap`. Keep `built` for a compiled binary or a CI
+job, and keep `gap` for a grid gap, a silent gap in audio, or a measured interval.
+The front door can carry the author's chummy, nerdy, British asides and the anti-slop
+promise. A community paragraph names the reader, the harm, and the request.
 
 The hand-written preface and sound-design part of
 `examples/type-p-fm1/docs/manual.md` is the manual calibration. The panel section

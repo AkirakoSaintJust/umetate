@@ -53,7 +53,7 @@ shipping the plugin.
 
 ## Plugin source and binaries
 
-The plugin source lives in `plugin/` and is GPL-3.0-only. The build pins JUCE
+The plugin source is in the `plugin/` folder and is GPL-3.0-only. The build pins JUCE
 8.0.9 and `clap-juce-extensions` commit
 `7adee3a1bd4684d4caa5601100e364abccff4b4d` in `plugin/juce/CMakeLists.txt` and
 fetches both with CMake `FetchContent`. CLAP 1.2.7 is a submodule of the

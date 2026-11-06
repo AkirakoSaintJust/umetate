@@ -1,7 +1,7 @@
 # umetate roadmap
 
-This is the current map. The detailed design and the chronological log live in git
-at `9375ffe:docs/roadmap.md` and earlier, so this file can stay short.
+This is the current map. The detailed design and the chronological log are stored in
+git at `9375ffe:docs/roadmap.md` and earlier, so this file can stay short.
 
 I use it to answer four things: what exists, what is settled, what is open, and
 what I don't want to reopen. Read §2 before you change code, §3 before you pick
@@ -22,7 +22,7 @@ enforces that, and `AGENTS.md` carries the compaction procedure.
 | Engine | 44.1 kHz, integer-first, bit-exact. 20 voices, 2 parts, 4-op FM, 8 algorithms, 12 waveforms, two filters, a wavefolder, and key and velocity follow. |
 | Target evidence | Source, host, browser/WASM parity, target package, emulator, and Linux DAW pass. Physical device timing and acceptance are `blocked`. |
 | Gate | The full gate is green. It passed host, web, Python, skill, lib, links, pyright, and memory. |
-| Docs | Tutorial, DSP study, Type P.fm1 docs, the OPM patch reference and mapping, the envelope design note, templates, and the voice profile are current. The Type P.fm1 manual includes the panel section, written from `panel.json` with every page, parameter, and flow. The OPM mapping page carries the `umetate opm convert` recipe, the bank geometry, and the measured tolerance. Docs skill `1.4.6`. The K5/K5000 guide is in the ignored `doc-test/`. |
+| Docs | Tutorial, DSP study, Type P.fm1 docs, the OPM patch reference and mapping, the envelope design note, templates, and the voice profile are current. The Type P.fm1 manual includes the panel section, written from `panel.json` with every page, parameter, and flow. The OPM mapping page carries the `umetate opm convert` recipe, the bank geometry, and the measured tolerance. Docs skill `1.5.0`. Humanizer skill `1.1.0`. The K5/K5000 guide is in the ignored `doc-test/`. |
 | CI | Framework CI covers Linux and Windows, with macOS `continue-on-error`. The release repo workflow builds Linux x86_64, Linux aarch64, and Windows x86_64 VST3/CLAP from a `v*` tag or a version dispatch, and attaches the archives to a GitHub Release. |
 
 The framework has moved past `31ecc64` with the design interview, the voice profile,
@@ -56,7 +56,7 @@ evidence.
   four-cycle full-scale deviation at level 99, and the feedback reaches half that
   at 100%, following the operator's level.
 - **Identity and clock.** The `_990` identities are frozen: `FM-1_990`,
-  `SMK-37 Pro_990`, `SMK-37 Elite_990`, `MKE-P37_990`. Artifact names can change.
+  `SMK-37 Pro_990`, `SMK-37 Elite_990`, `MKE-P37_990`. Artefact names can change.
   The clock offers 240 or 320 MHz only, because 360 and 396 aren't offered.
 - **UI method.** Design comes before code: control map, tokens, signed-off mockup.
   The ten-item gate is in the development skill and `templates/control-map.md`.
@@ -104,7 +104,7 @@ These wait on something I can't supply from here.
 | Windows signed binaries | A code-signing certificate. |
 | Signed installers | Signing identities and an installer pipeline. |
 
-## 5. What not to do
+## 5. Rules to keep
 
 These are the rules I don't want to lose.
 
@@ -131,7 +131,7 @@ One table for the pieces I need to find quickly.
 | CLI | `umetate` commands | `umetate/` | done (host/browser/target) |
 | Development skill | design and build loop | `skills/umetate-development/` | done |
 | Safety skill | threat model and device gates | `skills/umetate-safety/` | done |
-| Documentation skill | user docs, voice, interview | `skills/umetate-documentation/` | done, 1.4.4 |
+| Documentation skill | user docs, voice, interview | `skills/umetate-documentation/` | done, 1.5.0 |
 | Docker and toolchain | pinned Linux host and JieLi SDK | `docker/`, `umetate/runner.py` | done |
 | RIB runtime | dual-core starter firmware | `firmware/` | done (host/target), device blocked |
 | Docs | tutorial, DSP study, platform facts, module library, OPM format and mapping, envelope design | `docs/`, `firmware/README.md` | current |

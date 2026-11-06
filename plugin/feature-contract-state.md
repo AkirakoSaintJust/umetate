@@ -9,13 +9,12 @@
 
 ## Player outcome
 
-- **What the player can do that they could not do before:** load two or more
-  plugin instances in one DAW project and have each keep its own voices,
-  parameters and preset state.
-- **How it sounds or behaves:** identical to the firmware at 44.1 kHz. The
+- **New player action:** load two or more plugin instances in one DAW project
+  and have each keep its own voices, parameters and preset state.
+- **Sound and behaviour:** identical to the firmware at 44.1 kHz. The
   firmware still runs one engine instance and keeps the current API.
-- **How it fails visibly and safely:** if state isolation fails, the two-instance
-  test fails before any plugin work. The firmware build fails closed if the
+- **Failure mode:** if state isolation fails, the two-instance test fails before
+  any plugin work. The firmware build fails closed if the
   generated struct or the legacy wrappers do not compile.
 
 ## Dependencies and interactions
@@ -77,13 +76,13 @@
 - **Host vector(s):** the existing host DSP and generated-engine tests, plus a new
   two-instance test that renders two different patches and compares each with a
   single-instance run.
-- **Browser vector:** the existing web parity check, unchanged behavior.
+- **Browser vector:** the existing web parity check, unchanged behaviour.
 - **Target package check:** the target build compiles and the state stays within
   the CPU1 budget.
 - **Physical timing/device check:** not available. Recorded as blocked.
 - **Tolerance/metric:** bit-exact at 44.1 kHz. State size and instructions per
   sample within 2 percent of the current generated engine.
-- **Evidence artifact:** the host test output, the two-instance output files and
+- **Evidence artefact:** the host test output, the two-instance output files and
   the `umetate build` size report.
 
 ## Result (2026-11-03)

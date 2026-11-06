@@ -1,7 +1,7 @@
 # Custom code structure + interface, type-p-fm1
 
 > Everything beyond the declarative `patch.json`/`panel.json`. The type-p-fm1
-> dogfood is mostly *library*: it added a handful of nodes/macros + two HAL
+> test project is mostly *library*: it added a handful of nodes/macros + two HAL
 > helpers, then declared the synth. No hand-written `dsp.c`, the generator emits
 > it. The one hand-written piece is `app.c` (the app glue on the frozen `rib.c`
 > framework, F7): `app_audio`/`app_main`/`app_idle`, the `ui_act_*` hooks, and
@@ -10,7 +10,7 @@
 
 ## 1. Files
 
-- **Created** (nodes/macros the dogfood shipped, in the library):
+- **Created** (nodes/macros the test project shipped, in the library):
   - `modules/nodes/dx_env/`, the DX rate/level envelope (`node.json` + `node.c`).
   - `modules/nodes/mix4/`, 4-input summer.
   - `modules/nodes/route4/`, the general routing-matrix row mixer.
@@ -34,7 +34,7 @@
     `fm1_route4` (the 4-weight Q15 dot product).
   - `umetate/_tables.py`, the `routing` table kind (the 8-algorithm matrix).
 - **Forbidden to touch:** HAL registers, `platform.c` services, the loader,
-  `uboot.boot`/`isd_config.ini`, none were touched.
+  `uboot.boot` and `isd_config.ini`. None were touched.
 
 ## 2. The seam (library path)
 
@@ -106,8 +106,8 @@ No hand-written `dsp.c`: `generate(patch)` emits `<synth>_dsp_*` from the patch
 ## 4. State publication
 
 - **One writer per shared value:** params are single-writer (`set_param` writes
-  the shared slot. The render reads it). The voice allocator owns `gate`/`inc`.
-  the envelope owns its `stage`/`level`.
+  the shared slot, and the render reads it). The voice allocator owns `gate`/`inc`,
+  and the envelope owns its `stage`/`level`.
 
 ## 5. Host-test hook
 

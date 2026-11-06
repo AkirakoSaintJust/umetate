@@ -193,7 +193,7 @@ Setup and global context. Ten pages.
 - **Selected part:** a flat 0..1 counter (`part_next`), shared across contexts.
 - **Unresolved or ambiguous bindings:** none.
 
-## 9. Known gaps
+## 9. Open problems
 
 None after the panel fixes. The live page, the TUNE assignment, the per-operator
 envelope graphs, and the INIT PATCH confirmation all match `panel.json` and the

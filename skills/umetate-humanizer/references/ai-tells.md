@@ -40,7 +40,7 @@ before you change a sentence.
 | P48 | Aphorism formula: "Data is the new oil" | Replace it with the concrete reason, instruction, or specific judgement. |
 | P49 | Fragmented header: a heading followed by a sentence that repeats it | Make the first sentence say something new. |
 | P50 | Passive or subjectless: "the cache is invalidated automatically" | Name the actor and the action. |
-| P51 | Reasoning-chain artifact: "Let me break this down. Step 1..." | State the conclusion and the evidence. |
+| P51 | Reasoning-chain artefact: "Let me break this down. Step 1..." | State the conclusion and the evidence. |
 | P52 | Unicode obfuscation | Use plain characters. The goal is good writing, not evasion. |
 | P53 | Hedged enumeration: "There are several ways... In general, it is a good idea to consider..." | Give the specific change and the result. |
 | P54 | Argument residue: "While some might argue..." | State the claim and the evidence. |
@@ -50,10 +50,40 @@ before you change a sentence.
 | P58 | Wh-word nominal heading or label: `What to reach for first`, `How to move`, `What it does` | Use a noun phrase or an imperative: `Get started`, `Navigation`, `Functionality`. |
 | P59 | Storage-value leakage: a user document gives the raw `65536` or `32767` instead of the on-screen value | Give the panel value and range: `ratio 0.50..16.00`, `feedback 0..100%`. |
 | P60 | Counted-couplet heading, caption, or table description: `One page, one job`, `Two sources, one filter`, `One phase, many amplitudes` | Use a noun phrase or an imperative. Put the count in the body where it can be explained. |
+| P61 | Bare `claim` as a label for a feature: `the status of each claim` | Write `claimed feature`, or name the feature. Keep `claim` as a verb when the evidence matters. |
+| P62 | `Source of truth` as a status shorthand | Write `only reference` or `single reference`. |
+| P63 | `I built` for a thing the author made | Write `I made`. Keep `built` for a compiled binary, a target package, or a CI job. |
+| P64 | `Dogfood` as a label for the test project | Write `test project made from our own readymade components`, then `the test project` or `the worked example`. |
+| P65 | `Lives in` for a file, folder, sub-project, document, or component | Write `is in the PATH folder`, `is stored at`, or `PATH's path within the repo is`. |
+| P66 | `Gap` for missing work | Name the missing work, the missing feature, the bug, the oversight, or the problem. |
 
 The patterns the original catalog had that are not listed here are covered by the
 main checklist, or they are generic detector noise that does not fit this voice.
 Do not turn the table into a score-chasing exercise.
+
+## Project vocabulary
+
+The project has six words that the model reaches for and the author does not. They
+are hard bans in prose.
+
+| Banned | Substitute |
+| --- | --- |
+| claim, as a feature label | claimed feature, or the feature's name |
+| source of truth | only reference, single reference |
+| I built | I made |
+| dogfood | test project made from our own readymade components |
+| lives in | is in the PATH folder, is stored at, PATH's path within the repo is |
+| gap, for missing work | missing work, missing feature, bug, oversight, problem |
+
+Keep the literal word when it is a code identifier, a command, a schema key, a quoted
+source, a grid gap, a silent gap in audio, or a compiled artefact. The ban is on the
+framing, not on the spelling everywhere.
+
+The hand-written README is the calibration for the replacement. It says
+`docs/roadmap.md` is "the only reference for the design, implementation plan, and
+status of each claimed feature." It says the worked example is one "I made". It says
+the build composes "the example firmware made out of the pre-made umetate
+components". Those are the target sentences.
 
 ## False positives and author-specific exceptions
 
@@ -101,6 +131,14 @@ three-item list is how humans write too.
 - **A slash in a scope label** is a compact category label.
 - **A specific verdict is allowed.** "The K5000W is the least immediate additive
   instrument of the three" is a judgement, not an aphorism.
+- **"Claim" as a verb is fine.** "The evidence supports the claim that the envelope
+  is slow" keeps it. The ban is on a bare `claim` used as a feature label.
+- **"Built" for a compiled artefact is fine.** "The Windows VST3 is built and
+  validated" describes a build. The ban is on "I built" when the author made
+  something.
+- **"Gap" for a physical or measured interval is fine.** A grid gap of 10, a silent
+  gap in the audio, or a missing id in a range are technical uses. The ban is on a
+  gap that means missing work.
 
 ## Detect report
 
@@ -110,7 +148,7 @@ For `--mode detect`, output a short report:
 ## Voice report
 
 **Tells found:** 6
-**Voice gaps:** no first person, no contractions, uniform sentence length
+**Voice problems:** no first person, no contractions, uniform sentence length
 **Aphorisms:** 1
 **A, not B:** 2
 

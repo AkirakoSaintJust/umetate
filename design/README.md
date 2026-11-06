@@ -220,7 +220,7 @@ envelope rates and levels each get their own row.
 One page, a four by two grid that fills the window. Filters 1 and 2, filter
 envelope and wavefolder fill the first row. Pitch LFO, pitch envelope, key follow
 and velocity follow fill the second row. Each filter card has cutoff, resonance
-and env amount. Key and velocity tracking live in the two follow cards, not on
+and env amount. Key and velocity tracking sit in the two follow cards, not on
 the filter cards.
 
 Key follow and velocity follow are separate cards. Each has an on switch, a

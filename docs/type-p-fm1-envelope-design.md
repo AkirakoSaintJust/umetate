@@ -129,8 +129,8 @@ modulation envelope, and a sound designer who wants looping, tempo-locked, or
 multi-breakpoint shapes will run out of stages.
 
 If the instrument grows a modulation matrix, the first additions should be a loop
-mode and a per-operator pitch envelope. Those unlock movement and expression
-without changing the core FM sound.
+mode and a per-operator pitch envelope. Those add movement and expression without
+changing the core FM sound.
 
 ## Sources
 

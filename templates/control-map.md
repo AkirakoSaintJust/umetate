@@ -48,7 +48,7 @@
 
 ### Context: `home`
 
-| Source | Target param / action | Behavior / curve | Note |
+| Source | Target param / action | Behaviour / curve | Note |
 | --- | --- | --- | --- |
 | KEY | note_on | | keys play notes |
 | MASTER | master.volume | absolute | global fallthrough |
@@ -59,14 +59,14 @@
 
 ### Context: `___` (add one block per context)
 
-| Source | Target param / action | Behavior / curve | Note |
+| Source | Target param / action | Behaviour / curve | Note |
 | --- | --- | --- | --- |
 
 - **Pages:** **on-enter:** **on-exit:**
 
 ## 4. Global bindings (always-on, resolved last)
 
-| Source | Target / action | Behavior / curve |
+| Source | Target / action | Behaviour / curve |
 | --- | --- | --- |
 | MASTER | master.volume | absolute |
 | | | |
@@ -140,7 +140,7 @@ the value never disagree.
 
 The user-facing panel section is written from this map and `panel.json`. It goes
 into the user manual after the sound-design chapters and before the first-patch
-chapter. It must teach a fresh reader how to move, not just list the controls.
+chapter. It must teach a fresh reader how to move, with the controls listed second.
 
 - **Surface:** every physical control, its kind, and its global job.
 - **Navigation:** every context button, how pages advance, how HOME works, every

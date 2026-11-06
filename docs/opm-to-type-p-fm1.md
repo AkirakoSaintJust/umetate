@@ -335,7 +335,7 @@ partial selection. `--first` takes the first voices after the slot and silent
 filters.
 
 A device part record holds 134 timbre parameters. The five routing fields
-(`channel`, `low`, `high`, `level`, `delay`) live in the multi patch, so the
+(`channel`, `low`, `high`, `level`, `delay`) are stored in the multi patch, so the
 converter leaves the part record at the SysEx layout's `n_params` and fills no
 multi patches. Load a converted part from the `GLO` browser. The `.syx` stream
 round-trips through `umetate preset import`.

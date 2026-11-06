@@ -19,7 +19,7 @@ parameter in the manifest, state:
 - the rate (sample or block) and whether it is modulatable.
 
 A parameter without a unit and a meaning is a bug waiting for a player to find it.
-The manifest is the source of the generated `params.json` and the CC map.
+The manifest is the only reference for the generated `params.json` and the CC map.
 
 ## Preset formats (little-endian, self-validating)
 

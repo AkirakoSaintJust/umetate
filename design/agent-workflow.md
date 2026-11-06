@@ -4,7 +4,7 @@ The process that produced the Type P.fm1 interface. Use it for any future web or
 JUCE interface work in this repository. The design language is in `README.md`.
 
 The general method, the firmware and plugin mapping, and the design reference
-dossier live in the development skill:
+dossier sit in the development skill:
 `skills/umetate-development/references/ui-design.md` and
 `ui-dossier.md`. The ten-item written gate is in
 `skills/umetate-development/SKILL.md` section 2.
@@ -17,10 +17,10 @@ component, a restyle, a font change, a layout change, or a plugin editor.
 Start with a clickable mockup and make it right in a browser first. Do not start
 with production code. The interface is designed before it is written.
 
-## The loop
+## Design loop
 
 1. **Orient.** Read the design tokens, the mockup, and the parameter manifest for
-   the project. `examples/type-p-fm1/patch.json` is the source of truth for
+   the project. `examples/type-p-fm1/patch.json` is the only reference for
    controls and ranges.
 2. **Decide one set.** Take the smallest coherent set of changes. Do not batch
    unrelated restyles.

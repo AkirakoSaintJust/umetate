@@ -4,7 +4,7 @@ Read this before any panel, screen, editor, or web UI work. The Type P.fm1
 language is in `design/README.md`. The casebook and research links are in
 `ui-dossier.md`.
 
-## The one rule
+## One rule
 
 The interface is designed before it is written.
 
@@ -54,12 +54,12 @@ The same list works for a plugin editor, with "screen" replaced by "editor page"
 and "button" replaced by "control". The plugin adds host automation, resizing,
 and keyboard focus to item 10.
 
-## The loop
+## Design loop
 
 This is the loop that produced the Type P.fm1 mockup and the JUCE editor.
 
 1. **Orient.** Read the brief, the control map, the parameter manifest, the
-   tokens, and the current mockup. The manifest is the source of truth. Do not
+   tokens, and the current mockup. The manifest is the only reference. Do not
    invent a control that has no parameter.
 2. **Decide one set.** Take the smallest coherent set of changes. Do not batch
    unrelated restyles.
@@ -84,7 +84,7 @@ This is the loop that produced the Type P.fm1 mockup and the JUCE editor.
     renders every page and dialog. Keep the web and the plugin reading the same
     values.
 
-## The design language that worked
+## Design language that worked
 
 The exact values are in `design/README.md` and `design/tokens.json`. These are
 the transferable principles behind them.
@@ -103,7 +103,7 @@ the transferable principles behind them.
   the token file.
 - **Every label earns its place.** No filler copy, no voice counts, no
   description of the product inside the product.
-- **One home per token.** Colours, type sizes, spacing, and metrics live in one
+- **One home per token.** Colours, type sizes, spacing, and metrics sit in one
   file. The web CSS, the JUCE header, and the firmware theme are generated from
   it. A value typed twice will drift.
 - **A fixed canvas, uniformly scaled.** The plugin canvas is 1240 by 985 logical
@@ -409,7 +409,7 @@ state language.
   and never use colour as the only signal. The Web Content Accessibility
   Guidelines apply to the web view and are a good floor for the plugin.
 
-## The review
+## Review
 
 Before you call a UI done, run this:
 

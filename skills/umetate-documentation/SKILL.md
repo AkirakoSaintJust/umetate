@@ -1,7 +1,7 @@
 ---
 name: umetate-documentation
-description: Write thorough, readable, human documentation for end users of a synthesizer built on umetate. Covers the user manual, including the panel walkthrough, the MIDI and SysEx reference, patch sheet, installation guide, release notes, and technical guides or instrument studies. Includes a journalist-style design interview for the manual preface and design note. Rewrites are measured against the author's own corpus, hand-rewritten manual, and hand-rewritten guide so they read like a person wrote them. Never uses em dashes or semi-colons, never loses information, and bans negative parallelism, heading chains, false dichotomies, and marketing hooks. Preserves the author's contractions, asides, light UK slang, explanatory long sentences, joined clauses, and self-description.
-version: 1.4.6
+description: Write thorough, readable, human documentation for end users of a synthesizer built on umetate. Covers the user manual, including the panel walkthrough, the MIDI and SysEx reference, patch sheet, installation guide, release notes, and technical guides or instrument studies. Includes a journalist-style design interview for the manual preface and design note. Rewrites are measured against the author's own corpus, hand-rewritten manual, hand-rewritten guide, and hand-written README so they read like a person wrote them. Never uses em dashes or semi-colons, never loses information, and bans negative parallelism, heading chains, false dichotomies, marketing hooks, and the project vocabulary (claim, source of truth, I built, dogfood, lives in, gap). Preserves the author's contractions, asides, light UK slang, explanatory long sentences, joined clauses, self-description, chummy tone, and anti-slop promise.
+version: 1.5.0
 license: GPL-3.0-only
 compatibility: OpenCode and Agent Skills-compatible loaders
 allowed-tools: read, grep, glob, edit, write, shell, websearch, webfetch
@@ -14,7 +14,7 @@ MIDI sheet, the patch sheet, the install guide, and the release notes. The reade
 is a person with the synthesizer in front of them, not a developer. Your job is to
 help them get a sound and understand why.
 
-## The six rules
+## Six rules
 
 These are the whole skill. Read them before writing a word.
 
@@ -43,14 +43,29 @@ The hand rewrite is the calibration for rule 3. It doubled the first-person coun
 the contractions. A rewrite that removes the author's slang, asides, and contractions
 has gone too far, even if the prose is cleaner.
 
-## The voice
+## Project vocabulary
+
+Six words are hard bans in prose. A bare `claim` for a feature becomes `claimed
+feature`, or the feature's name. `Source of truth` becomes `only reference` or
+`single reference`. `I built` becomes `I made`, unless the subject is a compiled
+binary or a CI job. `Dogfood` becomes `test project made from our own readymade
+components`, then `the test project` or `the worked example`. A file, folder,
+sub-project, document, or component does not `live in` a place. It `is in the PATH
+folder`, it `is stored at` a path, or its path within the repo is the path. A `gap`
+for missing work becomes the missing work, the missing feature, the bug, the
+oversight, or the problem.
+
+The full table, the exceptions for technical uses, and the before and after samples
+are in `references/voice.md` and in the writing craft below.
+
+## Voice
 
 Read `references/voice.md` before the first paragraph. It defines four
 registers:
 
 - **Front door:** the README, release notes, and manual preface. The author is
   present, in first person, with a specific story, a concrete comparison, and a
-  plain statement of what the instrument is not.
+  plain statement of what the instrument is.
 - **Manual:** the manual, including the panel walkthrough, the MIDI reference, and
   the install guide. Warm technical prose. Address the reader as "you", use first
   person in section intros and design asides, and keep procedures neutral.
@@ -94,8 +109,17 @@ marketing adjectives, or three-item padding. Copy the habits, not the catchphras
 One or two personal asides in the preface, one per section in the body. Never in a
 step.
 
+The author is chummy, nerdy, and British. The hand-written README says the prose
+"might sound a bit chummy, nerdy and British", then asks the reader to write their
+own release front door. It also says "I'm going to feel guilty and embarrassed if
+you use umetate to make something and publish it with awful slop marketing blurb
+docs. Please take care of the community." That is the front-door calibration. Keep
+the dry aside, the self-deprecating admission, and the direct request. A community
+paragraph earns its place when it names a real stake and asks for something
+specific. It does not earn its place as "we are passionate about empowering
+creators".
 
-## The design interview
+## Design interview
 
 The manual preface and any design note come from the author. A point-blank "what is
 your design philosophy?" produces nothing. Run the interview before you write the
@@ -107,7 +131,7 @@ preface.
 the brief's words. It does not assume FM or Type P.fm1. Read the generated form,
 add or remove questions from the brief, then conduct the interview one topic at a
 time. If the brief is missing, the generic core still works. `--next 3` prints the
-next gaps. `--check` lists every gap. The full protocol is in
+next missing items. `--check` lists every open question. The full protocol is in
 `references/design-interview.md`, and the generic core is
 `templates/design-interview.md`.
 
@@ -127,7 +151,7 @@ public design note from them, in the author's voice, with the manual calibration
 Cut the questions, keep the concrete details and the author's asides. Do not invent
 an answer.
 
-## The document set
+## Document set
 
 A synthesizer project ships these user-facing documents. Each one has a job.
 
@@ -148,7 +172,7 @@ or 32767.
 The manual, including the panel section, is the most read page. Spend the most care
 there. `docs/panel.md` is a short redirect for old links.
 
-## The user manual
+## User manual
 
 Open with the sound, not the spec. Tell the player what kind of instrument this is
 and what it is good at. Then walk the signal, from the keys to the output, in the
@@ -200,7 +224,7 @@ preface and one-line tips. Never in a procedure, a warning, or a reference table
 Keep the author's self-description ("I'm more of a sound design gal"). Do not change
 "gal" to "guy" or "person".
 
-## The panel section
+## Panel section
 
 Write the panel section as part of the user manual, after the sound-design chapters
 and before the first-patch chapter. Read the filled control map and `panel.json`, so
@@ -220,7 +244,7 @@ knobs, what the screen confirms, and what auto-closes without committing.
 Popups are worth a sentence: they own the controls while open, they close on their
 own after about three seconds of no input, and a cancel does not lose work.
 
-## The MIDI and SysEx reference
+## MIDI and SysEx reference
 
 State the receive channels, the CC to parameter map, sustain, panic, pitch bend,
 and program change. Then the SysEx format: the header, the command byte, the data
@@ -228,7 +252,7 @@ layout, and the exact bytes of each of the five commands the firmware answers. A
 user who wants to back up patches with a SysEx librarian must be able to do it from
 this page alone. Use tables for the maps, keep the prose around them short.
 
-## The patch sheet
+## Patch sheet
 
 Fetch a few real patch sheets for comparable instruments (DX7, Volca FM, opsix) to
 see how they lay out one patch per page. Then build a blank template for this
@@ -255,14 +279,18 @@ patch still loads. Keep each entry to a few lines. This is the one place a
 `docs/release-notes.md` to `CHANGELOG.md`. The generated README is a fallback. If
 the project has a hand-written `publish-readme.md`, publish copies it verbatim and
 never overwrites it. Write that file by hand in the front-door register. The
-generated template is there for a project that does not have one yet.
+generated template is there for a project that does not have one yet. The
+hand-written README asks the author to do this: "Show that amount of passion for
+your own project as well, I beg you." A release front door with a real reason, a
+specific sound, and a plain limitation is the target. A template full of marketing
+blurb is the failure.
 
 The three docs the generated README links to are `docs/manual.md`,
 `docs/midi-and-sysex.md`, and `docs/patch-sheet.md`. Keep those names. The manual
 includes the panel section. `docs/panel.md` is a redirect for old links. If the
 project has more docs, link them from the README and the manual index.
 
-## The writing craft
+## Writing craft
 
 This is the humanisation part, the anti-slop part. Apply it to every page. It is a
 distillation of the author's corpus and the usual AI-tell catalogue, aimed at
@@ -372,6 +400,32 @@ the number in the firmware. "Ratio is written 65536" and "feedback runs 0 to
 range: "ratio 0.50 to 16.00", "feedback 0 to 100%". A patch sheet is a panel form,
 not a memory dump.
 
+**Use the project vocabulary.** Six words carry a model's framing and hide the
+fact. They are hard bans in prose.
+
+| Do not write | Write instead |
+| --- | --- |
+| claim, as a label for a feature | claimed feature, or name the feature |
+| source of truth | only reference, single reference |
+| I built, we built | I made, we made |
+| dogfood | test project made from our own readymade components, then the test project or the worked example |
+| lives in, live in, for a file, folder, sub-project, document, or component | is in the PATH folder, is stored at, PATH's path within the repo is |
+| gap, for missing work | missing work, missing feature, bug, oversight, problem |
+
+"`docs/roadmap.md` is the source of truth for the status of each claim" becomes
+"`docs/roadmap.md` is the only reference for the status of each claimed feature."
+"The example's implementation lives in `modules/nodes/`" becomes "The
+implementation is stored at `modules/nodes/`." "The build composes the dogfood
+firmware" becomes "The build composes the example firmware made out of the pre-made
+umetate components." "I built the example to expose the next gaps" becomes "I made
+the example to expose the next missing work."
+
+Keep "claim" as a verb when the evidence matters, and in a licence or warranty.
+Keep "built" for a compiled binary, a target package, or a CI job. Keep "gap" for a
+grid gap, a silent gap in audio, or a measured interval. Keep a code identifier, a
+command, a schema key, or a quoted source exactly as it is. A `gap` column in a
+table of missing hardware is a missing item, so rename it.
+
 **No product self-description.** A "what this is" section in a manual or an app's
 help rail explains the product to someone already using it. Put the proof in the
 README or the release notes. Use the page for the next action, the controls, or a
@@ -417,7 +471,7 @@ guide rewrite's definition of a harmonic, its comparison to PM sidebands, and it
 **Read it back as speech.** If you cannot imagine a patient teacher saying the
 sentence out loud, rewrite it.
 
-## The no information loss check
+## No information loss check
 
 After you write a page, go back paragraph by paragraph. For each original paragraph,
 name its facts and compare them to what you wrote. If a fact did not survive, put it
@@ -456,6 +510,11 @@ Checklist for the final pass:
 - [ ] No counted-couplet heading, caption, or table description. Name the section
       and put the count in the body.
 - [ ] No raw storage value. Show the panel value and range.
+- [ ] No bare claim for a feature, no "source of truth", no "I built" for a made
+      thing, no dogfood, no "lives in" for a location, and no "gap" for missing work.
+- [ ] A last grep for `claim`, `source of truth`, `dogfood`, `lives in`, `gap`, and
+      `I built` finds no prose use.
+- [ ] The front-door asides carry a reason or a real stake. They are not slogans.
 - [ ] No what-this-is section in an app or a manual.
 - [ ] No needless "It's a X, not a Y" or "It's not an X" setup. The positive comes
       first.

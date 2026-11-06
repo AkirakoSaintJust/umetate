@@ -9,13 +9,13 @@
 
 ## Player outcome
 
-- **What the player can do that they could not do before:** save and load whole
-  multi patches and individual part timbres inside the plugin.
-- **How it sounds or behaves:** a loaded part or multi writes the same parameters
+- **New player action:** save and load whole multi patches and individual part
+  timbres inside the plugin.
+- **Sound and behaviour:** a loaded part or multi writes the same parameters
   the host automates. The record bytes come from the firmware preset code, so a
   bank round-trips with the device once the import and export path lands.
-- **How it fails visibly and safely:** an empty or corrupt record is skipped.
-  A save into a used slot asks for a second press before overwriting. The plugin
+- **Failure mode:** an empty or corrupt record is skipped. A save into a used
+  slot asks for a second press before overwriting. The plugin
   never writes a device bank by itself.
 
 ## Dependencies and interactions
@@ -84,7 +84,7 @@
 - **Physical timing/device check:** blocked, no hardware.
 - **Tolerance/metric:** byte-identical device records through the C functions.
   The APVTS values and names match after a load.
-- **Evidence artifact:** the CTest output and the editor snapshot PNGs.
+- **Evidence artefact:** the CTest output and the editor snapshot PNGs.
 
 ## Result (2026-11-04)
 

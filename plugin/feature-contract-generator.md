@@ -9,14 +9,14 @@
 
 ## Player outcome
 
-- **What the player can do that they could not do before:** point one command at a
-  synth project and get a plugin project that builds against the reusable host.
-- **How it sounds or behaves:** the plugin and the firmware render the same
+- **New player action:** point one command at a synth project and get a plugin
+  project that builds against the reusable host.
+- **Sound and behaviour:** the plugin and the firmware render the same
   generated C from the same `patch.json`, `panel.json`, and `app.c`. The 44.1 kHz
   core stays bit-exact.
-- **How it fails visibly and safely:** a missing project, an unknown key in
-  `plugin.json`, a four-character code that is not four ASCII letters or digits,
-  or a stale generated tree stops with a non-zero exit before CMake runs.
+- **Failure mode:** a missing project, an unknown key in `plugin.json`, a
+  four-character code that is not four ASCII letters or digits, or a stale
+  generated tree stops with a non-zero exit before CMake runs.
 
 ## Dependencies and interactions
 
@@ -83,7 +83,7 @@
   44.1 kHz render stays bit-exact. A generated project must configure and build
   with its rendered C in `gen/` and only the tracked `firmware/gen/math_tables.h`
   from the source tree.
-- **Evidence artifact:** `umetate/plugin_cli.py`, `plugin/feature-contract-generator.md`,
+- **Evidence artefact:** `umetate/plugin_cli.py`, `plugin/feature-contract-generator.md`,
   and the roadmap 13.31 entry.
 
 ## Result (2026-11-04)

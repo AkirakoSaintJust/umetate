@@ -53,14 +53,14 @@ has flattened the guide.
 
 The first 170 lines of the full draft sit at 2,100 words in 147 sentences: a
 13.8-word mean, a 12-word median, an 11.0-word standard deviation. The opening is
-more connected than the rest. The gap is the thing to close.
+more connected than the rest. The distance is the thing to close.
 
 The software reconstruction adds a technical-guide register to the same document:
 mechanism first, exact numbers, and the reason attached. "A Kawai-style harmonic
 source does not need 64 or 128 independent oscillators" is the shape. Use it for
 engineering prose that still has to read like the author.
 
-## The narrator
+## Narrator
 
 A builder and a player, writing to another builder or player. Not a brand, not a
 support desk, not a teacher who is worried about being liked.
@@ -85,6 +85,16 @@ The person is:
 - **Self-describing.** Calls themselves "a sound design gal" in the manual. Keep
   the author's self-description when it appears. Do not neutralise it to
   "person" or switch it to "guy".
+- **Chummy, nerdy, and British.** The hand-written README says the prose "might
+  sound a bit chummy, nerdy and British". It uses a dry aside, an honest admission,
+  and a direct request to the reader. Keep that register in the front door. The
+  request to write the release front door by hand is the model: "Show that amount of
+  passion for your own project as well, I beg you."
+- **Serious about the anti-slop promise.** The same README says "I'm going to feel
+  guilty and embarrassed if you use umetate to make something and publish it with
+  awful slop marketing blurb docs. Please take care of the community." That is a
+  real stake, not a slogan. A community paragraph names the reader, the harm, and
+  the request. It does not say "we are passionate about empowering creators".
 
 The reader is a musician with the instrument in front of them, or a builder with a
 terminal open. Assume they are smart and busy. Do not explain the obvious. Do not
@@ -146,7 +156,7 @@ the installation guide. This is the author explaining the instrument at the benc
 - A design note paragraph can run to about 150 words. A procedure paragraph stays
   under about 60.
 - Tables and step lists stay neutral. Neutral means no jokes, not no contractions.
-  The voice lives in the prose around them.
+  The voice sits in the prose around them.
 
 ### Guide or study
 
@@ -384,6 +394,31 @@ x four-operator" as shorthand. Keep it after the first mention. A slash in a sco
 or category label is fine: "anecdotal/historical records". Do not expand every
 slash.
 
+**Use the project vocabulary.** Six words carry a model's framing and hide the
+fact. They are hard bans in prose.
+
+| Do not write | Write instead |
+| --- | --- |
+| claim, as a label for a feature | claimed feature, or name the feature |
+| source of truth | only reference, single reference |
+| I built, we built | I made, we made |
+| dogfood | test project made from our own readymade components, then the test project or the worked example |
+| lives in, live in, for a file, folder, sub-project, document, or component | is in the PATH folder, is stored at, PATH's path within the repo is |
+| gap, for missing work | missing work, missing feature, bug, oversight, problem |
+
+"`docs/roadmap.md` is the source of truth for the status of each claim" becomes
+"`docs/roadmap.md` is the only reference for the status of each claimed feature."
+"The example's implementation lives in `modules/nodes/`" becomes "The
+implementation is stored at `modules/nodes/`." "The build composes the dogfood
+firmware" becomes "The build composes the example firmware made out of the pre-made
+umetate components." "I built the example to expose the next gaps" becomes "I made
+the example to expose the next missing work."
+
+Keep "claim" as a verb when the evidence matters, and in a licence or warranty.
+Keep "built" for a compiled binary, a target package, or a CI job. Keep "gap" for a
+grid gap, a silent gap in audio, or a measured interval. Keep a code identifier, a
+command, a schema key, or a quoted source exactly as it is.
+
 **No article drumbeats.** A list where every item starts with "The" reads like a
 spec sheet. The corpus uses lists of concrete items and labels, not full sentences
 with the same article. Drop the article, lead with the noun or the verb, or write
@@ -477,7 +512,7 @@ Sometimes the concrete detail is the ending. The author cut "That is the K5 in i
 natural habitat: a professional tool under deadline." after the Jan Hammer detail.
 A closing verdict that restates the paragraph is filler.
 
-**Procedures are neutral.** A step is "Turn the encoder to 50." The voice lives in
+**Procedures are neutral.** A step is "Turn the encoder to 50." The voice sits in
 the intro and the notes, not in the step. Do not write "Now we'll turn the encoder,
 and you'll hear the magic happen." Neutral means no jokes, not no contractions. The
 prose around the step can say "you've got four operators". The step itself stays
@@ -488,7 +523,7 @@ plain.
 These are the patterns that make a page sound generated. Some are AI tells. Some
 are just bad manual habits. All of them are banned.
 
-### The thesis opening
+### Thesis opening
 
 The model draft of the K5/K5000 guide opened "The K5 and K5000 are the two Kawai
 instruments that take additive synthesis seriously... The K5 is a spectral
@@ -737,7 +772,7 @@ Do not split a connected explanation into three sentences. The model draft had
 author joined them with "with" and a colon. A connectivity pass is part of the
 voice, not a compression trick.
 
-### The dropped qualifier
+### Dropped qualifier
 
 A casual phrase can replace a precise one. It must not drop the fact. "Harmonic 64
 is missing for some quirky reason" is fine as a phrase, but it loses the documented
@@ -754,7 +789,7 @@ definition of a harmonic, a comparison to PM sidebands, and a causal "probably"
 about the K5 and K5000. Those are also the author's. Keep them, but do not invent
 your own.
 
-## The final pass
+## Final pass
 
 - [ ] The page uses the register it should. A reference table has no jokes.
 - [ ] The first sentence says what the thing is or does.
@@ -772,6 +807,10 @@ your own.
 - [ ] No counted-couplet heading, caption, or table description. Name the section
       and put the count in the body.
 - [ ] No raw storage value. Show the panel value and range.
+- [ ] No bare claim for a feature, no "source of truth", no "I built" for a made
+      thing, no dogfood, no "lives in" for a location, and no "gap" for missing work.
+- [ ] A last grep for the six banned words finds no prose use.
+- [ ] The front-door asides carry a reason or a real stake. They are not slogans.
 - [ ] No what-this-is section in an app or a manual.
 - [ ] No false dichotomy. No strawman.
 - [ ] No marketing hook. No rule-of-three padding.

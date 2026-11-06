@@ -9,15 +9,13 @@
 
 ## Player outcome
 
-- **What the player can do that they could not do before:** run the 44.1 kHz
-  engine in a host at 48, 96 or 192 kHz without dropouts or a changed core
-  sound.
-- **How it sounds or behaves:** at 44.1 kHz the bridge is bypassed and the output
+- **New player action:** run the 44.1 kHz engine in a host at 48, 96 or 192 kHz
+  without dropouts or a changed core sound.
+- **Sound and behaviour:** at 44.1 kHz the bridge is bypassed and the output
   is bit-exact with the firmware render. At other rates a 32-tap
   Kaiser-windowed sinc resampler converts the output and reports its group delay
   as host latency.
-- **How it fails visibly and safely:** a missing or silent core block produces
-  silence, not noise. The core rate never changes.
+- **Failure mode:** a missing or silent core block produces silence, not noise. The core rate never changes.
 
 ## Dependencies and interactions
 
@@ -76,7 +74,7 @@
 - **Tolerance/metric:** 44.1 kHz bypass is bit-exact. At other rates the passband
   is flat within 0.5 dB at 1 kHz and 1.5 dB at 10 kHz, and the 20 kHz image is
   below the fundamental.
-- **Evidence artifact:** the `rate_bridge_test` output and the plugin CTest
+- **Evidence artefact:** the `rate_bridge_test` output and the plugin CTest
   output.
 
 ## Result (2026-11-04)

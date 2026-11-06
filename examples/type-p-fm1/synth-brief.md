@@ -1,6 +1,6 @@
 # Synth brief: Type P.fm1
 
-> One brief as the source of truth. `patch.json` + `panel.json` are the
+> One brief as the only reference. `patch.json` + `panel.json` are the
 > translation of this brief. `dsp-algorithm.md` holds the math.
 
 ## 1. Instrument and player
@@ -31,7 +31,7 @@
   `q` = damping, with an **on/off bypass** and an **ADSR envelope routed to
   cutoff**.
 - **Envelopes and velocity:** DX rate/level (`dx_env`, 4 rates + 3 levels).
-  velocity → amplitude/FM/envelope-rate is wired (F2), but the dogfood defaults
+  velocity → amplitude/FM/envelope-rate is wired (F2), but the test project defaults
   the depths to 0 (off), settable via `set_param` (`opN.velamp.depth` etc.),
   not on the panel.
 - **Modulation:** the routing matrix (8 algorithms) selects which operator
@@ -291,7 +291,7 @@ page/context change, held notes stay playable. Per-param display scale (ratio
   output-chain params. Keys via mouse/MIDI.
 - **Supported browsers and offline expectation:** any WebAudio browser. Offline
   once built.
-- **What the browser must not be used to claim:** device performance, the WASM
+- **What the browser must not be used to prove:** device performance, the WASM
   build is the parity lab, not the device.
 
 ## 7. Acceptance and evidence
@@ -306,7 +306,7 @@ page/context change, held notes stay playable. Per-param display scale (ratio
 - **Host tests:** `umetate deep-check --all`, mypy + ruff + pyright, the four
   test modules (`test_generate` renders the patch + proves the 8 algorithms +
   resolves the panel. `test_cli` runs the `build --synth` composition), plus
-  `umetate budget` (the measured polyphony claim).
+  `umetate budget` (the measured polyphony figure).
 - **Target package checks:** `umetate build --synth examples/type-p-fm1` →
   `umetate-fm1-pro-type_p_fm1.fwsc` (82 060 B image, `.dsp_text` in SRAM). The
   JieLi build's own checks green.

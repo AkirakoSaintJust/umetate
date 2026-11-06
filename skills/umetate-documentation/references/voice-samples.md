@@ -11,12 +11,12 @@ The published manual is a restrained version of this. No film opinions, no
 swearing. The hand rewrite keeps the digressions, the slang, and the jokes. The
 sentence is the same.
 
-## The guide rewrite
+## Guide rewrite
 
 These are from the author's rewrite of the first 70 lines of the K5/K5000 guide.
 They are the target for a guide or study, not a manual page.
 
-### The plain category opening
+### Plain category opening
 
 > The K5 and K5000 are two additive synths from Kawai. Additive synths are rare, so
 > they're an interesting case study.
@@ -37,7 +37,7 @@ plain version is the target.
 The guide can explain a term the audience may not know. Do not assume the reader
 already knows what a harmonic is.
 
-### The long explanatory sentence
+### Long explanatory sentence
 
 > The upper harmonics can be strong at the attack and vanish in the sustain, and
 > then the fundamental can fade in late whilst the even harmonics over from the odd
@@ -47,7 +47,7 @@ already knows what a harmonic is.
 The author wrote one long sentence where the model wrote four short ones. Keep the
 long sentence. Fix "over from" to "take over from". Keep "whilst" and "and so on".
 
-### The connectivity join
+### Connectivity join
 
 > Each additive source holds 64 harmonics, with two possible settings: Low is 1 to
 > 64, and High is 65 to 128.
@@ -66,13 +66,13 @@ Attach a fact or an explanation with a relative clause. Attach a condition to it
 action with "only when". Use a colon for the list that follows. A guide that states every
 fact as its own sentence has lost the rhythm, even when every sentence is clear.
 
-### The parenthetical surprise
+### Parenthetical surprise
 
 > ... whilst the K5000 has got one envelope per harmonic (!)
 
 "Has got" and the parenthetical "(!)" are voice. They are not P41 or P14.
 
-### The factual contrast
+### Factual contrast
 
 > A K5 Single patch has two sources, containing a complete voice path, rather than
 > just the oscillator.
@@ -112,7 +112,7 @@ The test: a negation earns its place only when it carries a causal link, a factu
 comparison, an explanation of something potentially counterintuitive, a real
 limit, or a correction of a misconception. If it carries none of those, cut it.
 
-### The conversational correction
+### Conversational correction
 
 > But that doesn't mean one is necessarily better than the other! They've just got
 > different personalities.
@@ -128,7 +128,7 @@ sounds are similar, but there is no session credit. The earlier "That is a
 difference in personality, not a ranking" was correct but stiffer. The spoken
 correction is the voice.
 
-### The anecdotal aside
+### Anecdotal aside
 
 > Anecdotally, though, *Revolutions* is known to be made out of D50 presets mostly,
 > so I'd really like to give it a closer listen and track the possible K5 sounds.
@@ -145,7 +145,7 @@ The author cut the old ending, "That is the K5 in its natural habitat: a
 professional tool under deadline." A concrete detail can land without a closing
 verdict that restates it.
 
-### The causal recommendation
+### Causal recommendation
 
 > Its restrictions are instructive, so it is the synth to learn additive synthesis
 > on.
@@ -154,7 +154,7 @@ The old version had two short verdicts: "It is the instrument to learn on. Its
 restrictions are the lesson." The author joined the cause and the consequence with
 "so", so the recommendation explains itself.
 
-### The aphorism
+### Aphorism
 
 | Draft | Rewrite |
 | --- | --- |
@@ -169,7 +169,7 @@ quasi-aphorism is the same move with a concrete noun, such as "its restrictions
 are the lesson". Replace both with the concrete reason or the instruction. A
 specific verdict is fine. A slogan is not.
 
-### The comma-not adversative
+### Comma-not adversative
 
 | Draft | Rewrite |
 | --- | --- |
@@ -182,7 +182,7 @@ The comma-not form reads like a spec sheet. Use "rather than", a separate senten
 or a "but" clause. Keep it only when the second half is a precise factual limit and
 the sentence would be clumsy without it.
 
-### The one loss
+### One loss
 
 > Harmonic 64 is missing for some quirky reason.
 
@@ -190,7 +190,7 @@ The casual phrase is fine, but it drops "documented". Keep the fact: "Harmonic 6
 is missing for some quirky reason. It's a documented quirk, not a mistake in your
 patch."
 
-### The numbers
+### Numbers
 
 The first 70 lines moved from 689 words in 58 sentences (mean 11.6, median 9.5,
 standard deviation 8.5, longest 52) to 737 words in 41 sentences (mean 17.6,
@@ -200,9 +200,9 @@ self-reference.
 
 The first 170 lines are 2,100 words in 147 sentences: a 13.8-word mean, a 12-word
 median, an 11.0-word standard deviation. The opening is more connected than the rest
-of the first draft. The connectivity pass is how you close that gap.
+of the first draft. The connectivity pass is how you close that distance.
 
-## The panel section
+## Panel section
 
 A panel section teaches movement before it lists controls. The Type P.fm1 manual
 opens the panel part with the surface, then the navigation rule, then a table per
@@ -221,16 +221,16 @@ Then every page gets a row with its four knob assignments and its display:
 | --- | --- | --- | --- | --- | --- |
 | OSCILLATOR | RATIO | LEVEL | FEEDBACK | WAVE | A scope of the selected operator. |
 
-The tables are plain. The voice lives in the navigation prose and the short page
+The tables are plain. The voice sits in the navigation prose and the short page
 notes. Do not write a control list and call it a panel section.
 
-## The hand rewrite
+## Hand rewrite
 
 These are from the author's hand rewrite of the Type P.fm1 manual. They are the
 target for manual voice. The first release was flatter. Read these before a manual
 page.
 
-### The design note
+### Design note
 
 > I'm a hardcore fan of phase modulation synths, so for the longest time I've kept
 > thinking about things I wanted to change on the Yamahas (and Yamaha emulators)
@@ -250,7 +250,7 @@ The list is the author's seven design observations. It is content, not rule-of-t
 padding. The sentence is long and comma-heavy but reads as one thought. A manual can
 carry it.
 
-### The exclamation cluster
+### Exclamation cluster
 
 > 6. velocity and key scaling are cool but they've got to live in their little
 > corner because there are just so! many! params!
@@ -258,7 +258,7 @@ carry it.
 The three exclamation marks are deliberate. They are in the design note, not a
 procedure. Keep the cluster. Do not spray it through the page.
 
-### The factual contrast
+### Factual contrast
 
 > It's not an emulation of any one Yamaha chip in particular, and the DSP was
 > implemented from scratch, but it **is** a DX-style synth, and it **does** take
@@ -267,7 +267,7 @@ procedure. Keep the cluster. Do not spray it through the page.
 Both sides are real. The bold `is` and `does` are deliberate contrast, not random
 inline bold. This is not the "not just X, it's Y" hook.
 
-### The concrete sound, then the aside
+### Concrete sound, then the aside
 
 > Whole-number ratios sound clear, odd ratios sound metallic/reedy, and non-integer
 > ratios sound clangy and inharmonic, which can be industrial noise or struck-type
@@ -279,7 +279,7 @@ The aside names the sound and is one sentence. Keep it. The sentence is a run-on
 manual edit can split it after "inharmonic" without losing the voice. Do not cut the
 Taco Bell aside to make the page neutral.
 
-### The mechanism
+### Mechanism
 
 > All operators have feedback, but traditionally it shows up the most on carriers
 > and on the top operator of a stack. That's because of the way Yamaha chips work:
@@ -289,7 +289,7 @@ Taco Bell aside to make the page neutral.
 "That's because" is the teaching voice, not filler. The history explains why the
 panel behaves the way it does. Keep it.
 
-### The design aside
+### Design aside
 
 > Personally I find it sounds nice when a patch swells up, goes past the threshold
 > for a bit, then comes back under again (that's why I added it).
@@ -297,7 +297,7 @@ panel behaves the way it does. Keep it.
 One aside, one design reason. It earns its place. This is the model for a personal
 note in a parameter section.
 
-### The self-description
+### Self-description
 
 > I'm more of a sound design gal, I fully sequence my music and I prefer trackers to
 > little boxes for sequences/composition/arrangement, but it should work for those
@@ -313,6 +313,40 @@ how they work, and who the synth is for.
 
 The earlier draft ended on "the whole of FM in one knob". The author replaced the
 aphorism with a concrete next action. Do that.
+
+## Anti-slop front door
+
+These are from the hand-written README. They set the register for a release front
+door and for the documentation skill's own promise.
+
+> I've tried to calibrate the resulting prose from my own personal writing, which
+> might sound a bit chummy, nerdy and British. If that's not your thing I appreciate
+> your position, but I'm going to feel guilty and embarrassed if you use umetate to
+> make something and publish it with awful slop marketing blurb docs. Please take
+> care of the community.
+
+The aside admits a taste, names the stake, and asks for care. The embarrassment is
+real, so the request lands. A line like "we are passionate about empowering
+creators" has the same topic and no person in it.
+
+> A hand-written `publish-readme.md` in the project is copied verbatim as the release
+> front door. Without one, `publish` writes a README from its template. Ideally,
+> hand-write your own if possible. Show that amount of passion for your own project
+> as well, I beg you, or at least use my interview functionality (see next) so that
+> your LLM agent has an idea of why you made your synth and what you want to tell
+> your users.
+
+The instruction is direct, the aside is in brackets, and the ask is specific. That is
+the front-door voice. Do not tidy it into "authors are encouraged to provide a
+bespoke release README".
+
+> We're making open source synths for fun and musical discovery, so it'd be great if
+> we were at least kind enough to each other to actually document how to use our
+> synths and tell the community about the ideas, hopes and passions we wanted to
+> share with fellow m-vavers, right?
+
+"Right?" is a real question tag, not a marketing hook. Keep it when the author wrote
+it. Do not replace it with "join us on this journey".
 
 ## Long setup, short landing
 

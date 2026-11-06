@@ -89,7 +89,7 @@ flash-busy call graph, no `double`/64-bit-div/allocation in the DSP TU).
 For `.fwsc` handling, confirm the installer parses the identity as
 `([^_]+)_(\d+)`, runs `same_keyboard` and the model check on install **and**
 resume, and checks the header/file-list/file CRCs before writing. Identity
-strings are frozen (`_990`), the artifact filename is not the identity.
+strings are frozen (`_990`), the artefact filename is not the identity.
 
 ### 4. Device-write gate (§8)
 

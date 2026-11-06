@@ -41,7 +41,7 @@ umetate quick-check         # verify the environment per layer (read-only)
 umetate setup --dry-run     # see exactly what would be installed (opt-in)
 umetate deep-check          # run the host-side checks (default: --host)
 umetate build --board fm1 --model pro   # a target package -> .fwsc (no flash)
-umetate status              # the per-phase claim ledger
+umetate status              # the per-phase status ledger
 ```
 
 For current project status, use [`docs/roadmap.md`](roadmap.md). The evidence-tagged
@@ -73,8 +73,8 @@ The framework has one entry point, `umetate`, and these pieces behind it:
    `evidence`, `status`, `version`, `help`.
 2. **Skill: development**, the design → build loop (offline references).
 3. **Skill: safety**, threat model, attack surfaces, device-write gates.
-4. **Docker image + volume**, a pinned Linux container, the JieLi toolchain lives
-   in the `umetate-target` volume at `/opt/jieli` (read-only for builds, read-write
+4. **Docker image + volume**, a pinned Linux container, with the JieLi toolchain in
+   the `umetate-target` volume at `/opt/jieli` (read-only for builds, read-write
    only for `setup`).
 5. **RIB starter firmware**, dual-core, integer-first DSP, FPU opt-in, SMK-37
    board layer, the `app_audio`/`app_main` contract.
@@ -108,7 +108,7 @@ touching a device. You will not flash in this tutorial's no-hardware stages.
 
 The pinned Docker container runs target builds, host tests, and the WASM build, and
 on Windows umetate calls Docker Desktop through native `docker.exe`. The JieLi
-toolchain and SDK live in the `umetate-target` volume, so `umetate setup` installs
+toolchain and SDK are in the `umetate-target` volume, so `umetate setup` installs
 them there when you opt in, after checking their hashes against
 [`env.lock`](../env.lock).
 
@@ -358,8 +358,8 @@ The MIDI spec is now part of the framework rather than the app glue. The fixed C
 list: the params you declare there get one CC each, ascending from 16 (sustain 64
 and the channel-mode block stay reserved), and a 7-bit CC value is scaled to the
 param's full `[min, max]`. A multitimbral patch's params overflow the CC space, so
-the list is the deliberate surface (the dogfood maps part 0's timbre + the global
-FX). Notes route to the parts by channel + keyzone, sustain defers note-offs,
+the list is the deliberate surface (the test project maps part 0's timbre + the
+global FX). Notes route to the parts by channel + keyzone, sustain defers note-offs,
 CC 123 is panic, and bend is ±2 semitones, all shipped in `synth_midi`. Presets
 are 128 single parts + 64 multi patches (chunked across the slot area's measured
 ceiling) plus one settings record, the firmware answers the five SysEx commands
@@ -389,7 +389,7 @@ The gate is one command, so I'd run it after every increment:
 
 ```sh
 umetate deep-check --all                       # mypy + ruff + pyright + the test modules + host + skill + links + lint
-umetate budget patch.json --voices 20           # the measured polyphony claim
+umetate budget patch.json --voices 20           # the measured polyphony figure
 umetate build --synth examples/my-synth        # compose + host run + target package
 umetate emu --check --mhz 240                  # boot the built package, hold a chord
 umetate preset export examples/my-synth        # the bank as .syx (import reverses it)
@@ -401,8 +401,8 @@ umetate preset export examples/my-synth        # the bank as .syx (import revers
 through the JieLi toolchain (`umetate-fm1-pro-<synth>.fwsc`). Without the
 toolchain it reports the target leg blocked and stops at the host evidence.
 `emu --check --mhz 240` boots that package in the emulator and holds a chord: the
-dogfood run never halts and peaks at full scale, so the polyphony fit is measured
-rather than estimated.
+test project run never halts and peaks at full scale, so the polyphony fit is
+measured rather than estimated.
 
 Record the results in the
 [`evidence matrix`](../templates/evidence-matrix.md) and validate them with

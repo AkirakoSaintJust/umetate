@@ -4,7 +4,7 @@ This is the loop the Type P.fm1 plugin used. It turned a working firmware into a
 VST3 and CLAP plugin without changing the 44.1 kHz sound. Use it when a synth is
 stable enough that the risk is the host, not the DSP.
 
-## The order
+## Order
 
 Do not start with the editor. Do not start with the plugin format. Start with the
 invariant that is hardest to fix later.
@@ -28,7 +28,7 @@ invariant that is hardest to fix later.
    native validators, then two real DAWs per platform.
 8. **Packaging.** The source is part of the product. See the licence section.
 
-## The invariants
+## Invariants
 
 - Core rate is bit-exact. Any change that alters it is a regression, not a
   port.
@@ -46,7 +46,7 @@ invariant that is hardest to fix later.
 - Wordmark is all Zen Dots. Do not bundle the brand font. Ship only the OFL
   fonts whose licence texts travel with them.
 
-## The evidence ladder
+## Evidence ladder
 
 Each rung is a test, not a promise. Write it before the code.
 
@@ -95,7 +95,7 @@ a hash, a validator summary, and a host name are evidence.
   git-ignored `build/` tree. Stage release bundles from `publish`, never from a
   hand-copied folder.
 
-## The contract
+## Contract
 
 Write one `plugin/feature-contract-<milestone>.md` per milestone. Each one states
 the feature, the user-visible behaviour, the platform and HAL changes, the data

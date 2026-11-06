@@ -12,7 +12,7 @@ Status: Milestone 3 implements this mapping. `plugin/tools/gen_tokens.py` emits
 `UiTokens.h`, the editor is `plugin/juce/PluginEditor.*` and `plugin/ui/*`, and
 `plugin_editor_snapshot` renders the pages and dialogs for review.
 
-## One source of tokens
+## Token source
 
 Do not retype colours, sizes or metrics in C++. Generate a `UiTokens.h` from
 `tokens.json` at configure time, or commit the generated header and check it in a
@@ -160,7 +160,7 @@ the host disables them.
 
 ## Parameters
 
-`examples/type-p-fm1/patch.json` is the source of truth. The plugin exposes the
+`examples/type-p-fm1/patch.json` is the only reference. The plugin exposes the
 same parameter set and the same ranges. Group them to match the pages, not to
 match the JSON order.
 

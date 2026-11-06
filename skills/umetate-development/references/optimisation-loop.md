@@ -4,7 +4,7 @@ How to reduce the audio ISR cost without changing the sound, and without guessin
 Every rule below is a lesson from the type-p-fm1 render optimisation, where the ISR
 dropped from 60% to 45% at 320 MHz with the output provably byte-identical.
 
-## The metric
+## Metric
 
 The target number is the ISR instruction share, printed by
 
@@ -21,7 +21,7 @@ The provisional device budget, until a hardware unit is available, is 45% ISR at
 is roughly 86% of the real headroom. Do not claim a real-device fit from the
 emulator number alone.
 
-## The gate: bit-exactness
+## Gate: bit-exactness
 
 An optimisation that changes the audio is a bug, not an optimisation. Every change
 must leave the output byte-identical. The tooling for that gate is already in the
@@ -39,7 +39,7 @@ The cleanest gate is a before and after diff of the same firmware, same timing,
 only your optimisation toggled. If the hashes differ, revert. There is no
 "close enough".
 
-## The loop
+## Optimisation loop
 
 Run this for every optimisation increment. One change per pass.
 
@@ -87,7 +87,7 @@ Do not re-learn these.
 
 1. **Loop structure.** The voice-outer swap: hoist `bus[]=0` out of the sample loop,
    put the voice loop outside the sample loop, so the per-voice block constants and
-   the delay and phase state become loop-invariant over the samples and live in
+   the delay and phase state become loop-invariant over the samples and sit in
    registers. This one C-only change took 51% to 45%.
 2. **Fewer multiplies.** The route 0/1 specialisation folds constant 32767 and 0
    weights at compile time. The vca and tl nodes skip their two multiplies when the

@@ -9,12 +9,11 @@
 
 ## Player outcome
 
-- **What the player can do that they could not do before:** the future plugin host
-  can drive the generated engine and the device MIDI behavior without the
-  firmware app, the panel or the screen.
-- **How it sounds or behaves:** identical to the firmware at 44.1 kHz for the same
+- **New player action:** the future plugin host can drive the generated engine and
+  the device MIDI behaviour without the firmware app, the panel or the screen.
+- **Sound and behaviour:** identical to the firmware at 44.1 kHz for the same
   parameters, notes and MIDI messages.
-- **How it fails visibly and safely:** the parity harness fails if the engine,
+- **Failure mode:** the parity harness fails if the engine,
   parameter state or rendered samples differ. The firmware app is unchanged.
 
 ## Dependencies and interactions
@@ -74,7 +73,7 @@
 - **Physical timing/device check:** blocked, no hardware.
 - **Tolerance/metric:** bit-exact int32 samples at 44.1 kHz. MIDI state and params
   exact.
-- **Evidence artifact:** the `engine_parity` test output and the full gate.
+- **Evidence artefact:** the `engine_parity` test output and the full gate.
 
 ## Result (2026-11-03)
 

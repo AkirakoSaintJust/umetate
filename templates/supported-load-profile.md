@@ -39,7 +39,7 @@
 - **Parameter extremes:**
 - **Duration:**
 - **Pass condition:**
-- **Artifact:**
+- **Artefact:**
 
 ## Outside the profile
 

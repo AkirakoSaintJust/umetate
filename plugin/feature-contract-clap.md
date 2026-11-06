@@ -11,14 +11,14 @@
 
 ## Player outcome
 
-- **What the player can do that they could not do before:** load Type P.fm1 in a
-  CLAP host as well as a VST3 host, and automate the same 313 manifest
-  parameters with the same engine and preset banks.
-- **How it sounds or behaves:** identical to the VST3 build. The CLAP wrapper
+- **New player action:** load Type P.fm1 in a CLAP host as well as a VST3 host,
+  and automate the same 313 manifest parameters with the same engine and preset
+  banks.
+- **Sound and behaviour:** identical to the VST3 build. The CLAP wrapper
   carries the same processor, editor, MIDI bridge and output rate bridge. The
   CLAP plugin id is `com.p1onken.typepfm1`.
-- **How it fails visibly and safely:** a rejected state chunk leaves the current
-  parameters and banks in place. The wrapper returns success for a random chunk,
+- **Failure mode:** a rejected state chunk leaves the current parameters and
+  banks in place. The wrapper returns success for a random chunk,
   so the host cannot see the rejection, but the processor does not apply it and
   does not crash.
 
@@ -123,7 +123,7 @@
   The Windows DAW matrix is REAPER and Renoise. The Linux DAW matrix is Ardour
   and Carla. macOS is not built here. AU remains later.
 - **Tolerance/metric:** zero validator failures. The one warning is documented.
-- **Evidence artifact:** the `clap-validator` terminal summary, the `pluginval`
+- **Evidence artefact:** the `clap-validator` terminal summary, the `pluginval`
   `SUCCESS` line, the REAPER WAV hashes, the Ardour render summary, the Carla
   VST3 and CLAP render summaries, and the plugin CTest output.
 
