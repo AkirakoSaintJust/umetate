@@ -217,10 +217,11 @@ def _timing() -> None:
     assert _attack_rate(9, 0) == 35
     assert _attack_rate(1, 0) == 0
     # The first decay gets slower as the rate falls and as D1L asks for a
-    # shorter trip; the second decay tracks D2R.
-    assert _decay_rate(8, 10, 0, "decay1") == 46
-    assert _decay_rate(8, 4, 0, "decay1") == 8
-    assert _decay_rate(8, 20, 0, "decay1") == 87
+    # shorter trip; the second decay tracks D2R. The map aims 16 dB into the
+    # stage and adds four rate steps, so the tail reads closer to the OPM line.
+    assert _decay_rate(8, 10, 0, "decay1") == 52
+    assert _decay_rate(8, 4, 0, "decay1") == 12
+    assert _decay_rate(8, 20, 0, "decay1") == 91
     # RR 8 is the common pluck release.
     assert _release_rate(8, 0) == 76
     assert _release_rate(4, 0) == 38

@@ -191,14 +191,16 @@ The rates come from measured stage times, not a guessed table. The converter
 simulates the OPM envelope tables at the chip EG clock, 13.98 kHz, and the Type
 P.fm1 one-pole at the 1.38 kHz control rate, then picks the rate whose time to a
 chosen point in the stage is closest. The attack matches the time to -12 dB below
-full. The decays match the first 8 dB of the trip, or the whole stage when it is
-shorter. The release matches the time to -20 dB.
+full. The decays match the time 16 dB into the trip, or the whole stage when it is
+shorter, and the rate then moves up four steps. The release matches the time to
+-20 dB. The four-step bias is deliberate: the one-pole tail made the stage read
+long, and a slightly faster rate brings the whole stage closer even though the
+first few dB are now a little fast.
 
-The chosen points match, and the whole stage does not. A controlled `D1R` 10,
-`D1L` 8 stage takes 1.87 s in OPM and 2.84 s in Type P.fm1 to reach the target.
-The first 8 dB are the same, then the one-pole eases in while the OPM line keeps
-going. On the demo bank, Solid Bass is about 3 dB louder at 0.8 s and Tubular
-Bells about 4 dB longer at 0.4 s. That is the curve, not the rate.
+A controlled `D1R` 10, `D1L` 8 stage takes 1.87 s in OPM and 2.07 s in Type P.fm1
+to reach the target, against 2.84 s without the bias. On the demo bank, Solid Bass
+tracks the OPM within about a decibel through 0.8 s, Hard Tines is about 1.5 dB
+fast, and Tubular Bells is still about 3.5 dB long at 0.4 s.
 
 The curves still differ. An OPM decay is a straight line in dB. The Type P.fm1
 one-pole starts faster and eases into its target, and its one-unit floor sets a
@@ -351,12 +353,13 @@ voices, rendered at middle C with both filters and the wavefolder off and the
 VOPMex output FIR off.
 
 On a 200-voice sample, 89 percent of the converted voices are within 1.5 on the
-centroid and 83 percent within 1.5 on the roll-off. The median ratio is 1.01. The
-release time is within a factor of 2 for 97 percent of the voices that have an
-audible release. The decay slope over 0.1 to 0.7 s is the weakest measure, with a
-median of 0.76 and only 57 percent inside a factor of 2: the Type P.fm1 one-pole
-eases into a sustain where the OPM decay is a straight dB line. Treat the timing
-tolerance as the stage time at the chosen point, not the whole curve.
+centroid, 82 percent within 1.25, and 89 percent within 1.5 on the roll-off. The
+median ratio is 1.01. The release time is within a factor of 2 for 97 percent of
+the voices that have an audible release. The decay slope over 0.1 to 0.7 s has a
+median of 0.97 and 83 percent inside a factor of 2. It is still the weakest
+measure because the one-pole eases into a sustain where the OPM decay is a
+straight dB line. Treat the timing tolerance as the stage time at the chosen
+point, not the whole curve.
 
 The serial graphs are the furthest apart in the spectrum because the index
 compounds. A converted serial patch can read brighter than its OPM source by a

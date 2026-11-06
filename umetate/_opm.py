@@ -420,6 +420,14 @@ def _nearest_rate(opm_time: float, candidates: Sequence[tuple[int, float]]) -> i
     return best_rate
 
 
+# How far into a decay the rate map aims. A larger drop shortens the one-pole
+# tail at the cost of a faster first few dB. Eight matches the early body; the
+# converter defaults to a little more so the stage does not read long.
+_DECAY_DROP_DB = 16.0
+# A small rate offset on top of the time fit. The fit targets the chosen point,
+# and the offset shortens the one-pole tail without changing the level targets.
+_DECAY_BIAS = 4
+
 _ATTACK_CACHE: dict[tuple[int, int, int], int] = {}
 _DECAY_CACHE: dict[tuple[int, int, int, str, int], int] = {}
 _RELEASE_CACHE: dict[tuple[int, int, int], int] = {}
@@ -458,11 +466,11 @@ def _decay_rate(d1l: int, rate: int, ks: int, kind: str, midi: int = 60) -> int:
         span_db = (start_level - end_level) * 0.75
         start_el = 0 if kind == "decay1" else 16 * _D1LTBL[d1l]
         ticks = _opm_ticks(rate, kind, d1l=d1l, ks=ks, midi=midi, start_el=start_el)
-        if span_db >= 8.0:
-            # Match the early body of the decay: both the level drop and the
-            # timbre change are heard most clearly in the first few dB, and the
-            # Type P.fm1 one-pole then eases into its target.
-            drop = 8.0
+        if span_db >= _DECAY_DROP_DB:
+            # Aim a little past the first few dB so the one-pole tail does not
+            # make the whole stage read long. A larger drop is a faster rate,
+            # at the cost of a faster early slope.
+            drop = _DECAY_DROP_DB
             opm_time = _opm_time_to(
                 ticks,
                 start_el=start_el,
@@ -475,7 +483,7 @@ def _decay_rate(d1l: int, rate: int, ks: int, kind: str, midi: int = 60) -> int:
         candidates = [
             (r, _fm1_time(r, start_level, end_level, aim)) for r in range(100)
         ]
-        result = _nearest_rate(opm_time, candidates)
+        result = min(99, _nearest_rate(opm_time, candidates) + _DECAY_BIAS)
     _DECAY_CACHE[key] = result
     return result
 

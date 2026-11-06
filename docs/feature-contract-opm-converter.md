@@ -86,17 +86,18 @@ VOPMex output FIR off.
 
 | Measure | Median ratio | Within 1.25 | Within 1.5 | Within 2 |
 | --- | ---: | ---: | ---: | ---: |
-| Spectral centroid | 1.01 | 71 percent | 89 percent | 96 percent |
-| 95 percent roll-off | 1.01 | 64 percent | 83 percent | 89 percent |
+| Spectral centroid | 1.01 | 82 percent | 89 percent | 96 percent |
+| 95 percent roll-off | 1.00 | 79 percent | 89 percent | 95 percent |
 
 | Timing measure | Median | Within a factor of 2 |
 | --- | ---: | ---: |
 | Release time to -20 dB | 1.00 | 97 percent |
-| Decay slope, 0.1 to 0.7 s | 0.76 | 57 percent |
+| Decay slope, 0.1 to 0.7 s | 0.97 | 83 percent |
 
 The decay slope is the weakest measure because the Type P.fm1 one-pole eases
 into a sustain where the OPM decay is a straight dB line. The rate map targets
-the stage time at the chosen point, not the whole curve.
+16 dB into the stage and adds four rate steps, which brings the whole stage
+closer without changing the level targets.
 
 The measured algorithm cases in the mapping page land at 0.99 to 1.06 on the
 centroid with the current engine.
@@ -116,10 +117,10 @@ now pins the expected depth.
 
 `D1L` 15 is the special 93 dB step and now maps to silence. The earlier code used
 `99 - 4*15 = 39`, which sustained at about -45 dB and made a decay to `D1L` 15
-feel longer. A controlled `D1R` 10, `D1L` 8 stage still takes 1.87 s in OPM and
-2.84 s in Type P.fm1 to reach the target, because the first 8 dB match and the
-one-pole tail does not. That is the curve difference recorded in the mapping
-page.
+feel longer. A controlled `D1R` 10, `D1L` 8 stage takes 1.87 s in OPM and 2.07 s
+in Type P.fm1 with the 16 dB target and four-step bias, against 2.84 s without
+the bias. The early slope is a little fast and the tail a little long, which the
+ear reads as closer than the unbiased stage.
 
 ## Risks and fallback
 
