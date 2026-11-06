@@ -27,9 +27,9 @@
   (note-derived, non-integer ratios stay in tune).
 - **Oscillators / operators / noise:** 4 operators, each `phasor → osc →
   dx_env → vca` with 1-sample self-feedback (`fm_op` macro).
-- **Filter(s) and resonance:** one global `svf`, `type` selectable (LP/BP/HP),
-  `q` = damping, with an **on/off bypass** and an **ADSR envelope routed to
-  cutoff**.
+- **Filter(s) and resonance:** two global `liquid_filter` ladders (FILTER 1 and
+  FILTER 2), `mode` selectable (LP4/BP/HP), `res` = ladder feedback, with an
+  **on/off bypass** and an **ADSR envelope routed to cutoff**.
 - **Envelopes and velocity:** DX rate/level (`dx_env`, 4 rates + 3 levels).
   velocity → amplitude/FM/envelope-rate is wired (F2), but the test project defaults
   the depths to 0 (off), settable via `set_param` (`opN.velamp.depth` etc.),
@@ -39,19 +39,22 @@
   pitch LFO** (vibrato), one **per-note pitch envelope** (the "pitch blip": a `base`
   offset that decays back at note-on), and one **amplitude LFO per operator**
   (tremolo, per-voice).
-- **Effects and output stage:** carrier sum → `svf` (type LP/BP/HP + bypass +
-  a cutoff ADSR) → `wavefolder` (threshold + fold count + type) → `out`, where the
-  `MASTER` pot is the volume and there is no output VCA.
+- **Effects and output stage:** carrier sum → FILTER 1 (`liquid_filter`: LP4/BP/HP
+  + bypass + a cutoff ADSR) → `wavefolder` (threshold + fold count + type) →
+  FILTER 2 (`liquid_filter`) → `out`, where the `MASTER` pot is the volume and
+  there is no output VCA.
 
 ### 2.1a The output chain (filter + fold), specified
 
-- **Filter (`svf` extension).** Params: `type` (0 = LP, 1 = BP, 2 = HP, the
-  node already computes `low`/`band`/`high`, so `type` selects the output), `on`
-  (0 = bypass = pass the input straight through), `f` (cutoff, Q16), `q`
-  (damping, Q16). A **cutoff envelope** (F-ENV), a global `dx_env` (the Yamaha
+- **Filter (`liquid_filter`).** Params: `mode` (0 = LP4, 1 = the 2-pole band
+  tap, 2 = the 2-pole HP tap), `on` (0 = bypass = pass the input straight
+  through), `f` (the per-stage coefficient, Q16), `res` (the ladder feedback,
+  Q16), `comp` (the passband makeup, Q15). The ladder reaches its strongest
+  stable resonance at the top of `res`. A **cutoff envelope** (F-ENV), a global `dx_env` (the Yamaha
   rate/level envelope: 4 rates + 3 levels, gated by `patch_gate`) whose Q15 output
-  scales a `fenv_depth` and is added to `f`. On a note-on it opens the filter. On
-  note-off it closes.
+  is doubled to Q16, scales a `fenv_depth`, and is added to `f`. The sum is
+  clamped at the ladder's stable coefficient ceiling. On a note-on it opens the
+  filter. On note-off it closes.
 - **Fold (`wavefolder` extension).** Params: `on` (0 = dry), `threshold` (the
   input level, Q15, above which folding engages), `folds` (the fold count,
   number of sine folds applied. 1 = the current single fold), `type` (0 = sine
@@ -80,8 +83,9 @@ the global six to a per-part array.
   The four `delay1` make the graph acyclic for *every* algorithm (all modulation
   reads the 1-sample-delayed output of its sources).
 - **Global-zone graph:** `algo` (the algorithm selector) → `alg` into the `route`
-  node. `lp` (`svf`) → `wf` (`wavefolder`) → `out`: `voice → lp.audio`,
-  `lp.low → wf.audio`, `wf.audio → out`.
+  node. `lp` (`liquid_filter`) → `wf` (`wavefolder`) → `lp2`
+  (`liquid_filter`) → `out`: `voice → lp.audio`, `lp.out → wf.audio`,
+  `wf.audio → lp2.audio`, `lp2.out → out`.
 - **Voice-zone additions:** `penv` (a per-note `pitch_env`, retriggered on every
   note-on) + `plfo` (the per-part vibrato LFO) + `psum` (a `csum`):
   `plfo.cv + penv.cv → op1..op4.pitch`.
@@ -116,9 +120,9 @@ the global six to a per-part array.
 | Param (name) | Target | Min | Max | Curve | Unit | Display |
 | --- | --- | --- | --- | --- | --- | --- |
 | algorithm | algo.algorithm | 0 | 7 | linear | | raw (0–7) |
-| cutoff | lp.f | 0 | 65535 | log | | off_pct ("off" at 0) |
-| res | lp.q | 0 | 65535 | linear | | pct_inv (100% = least damping) |
-| filter_type | lp.type | 0 | 2 | linear | | raw (0=LP 1=BP 2=HP) |
+| cutoff | lp.f | 0 | 55296 | log | | off_pct ("off" at 0) |
+| res | lp.res | 0 | 41942 | log | | pct_exp (0.00–100.00%, fine near the top) |
+| filter_type | lp.mode | 0 | 2 | linear | | raw (0=LP 1=BP 2=HP) |
 | filter_on | lp.on | 0 | 1 | linear | | onoff (off/on) |
 | fenv_r1 | fenv.r1 | 0 | 99 | linear | | raw (Yamaha rate) |
 | fenv_r2 | fenv.r2 | 0 | 99 | linear | | raw (Yamaha rate) |
@@ -317,8 +321,10 @@ page/context change, held notes stay playable. Per-param display scale (ratio
   chord, no halt, full-scale audio peak.
 - **Physical timing and device checks:** device acceptance is `blocked`
   (hardware ~10 days out).
-- **Known unknowns:** the `svf` sub-LSB limit cycle (recorded in the roadmap,
-  benign).
+- **Known unknowns:** the liquid ladder's coefficient ceiling at 55296. Above it
+  the feedback loop breaks into a parasitic oscillation at moderate resonance, so
+  the node clamps there. The top of the `res` range is the strongest stable
+  resonance.
 
 ## 8. Confirmation
 

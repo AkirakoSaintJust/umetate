@@ -217,6 +217,7 @@ _DISPLAY = {
     "raw": "UI_DISP_RAW",
     "ratio": "UI_DISP_RATIO",
     "pct": "UI_DISP_PCT",
+    "pct_exp": "UI_DISP_PCT_EXP",
     "pct_bip": "UI_DISP_PCT_BIP",
     "pct_inv": "UI_DISP_PCT_INV",
     "onoff": "UI_DISP_ONOFF",

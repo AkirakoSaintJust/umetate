@@ -117,7 +117,7 @@ drives. Muting a carrier removes that carrier from the mix. That's useful if you
 Two filters and a wavefolder, in series, then the output.
 
 - **Cutoff** and **resonance** per filter. Cutoff is the frequency the filter
-  starts to remove. Resonance is the peak at the cutoff, i.e. it makes the part of your patch that's at the cutoff frequency louder. If you crank it up to the max it self resonates, kinda like guitar squeals or a sine wave with harmonic distortion.
+  starts to remove. Resonance is the peak at the cutoff, i.e. it makes the part of your patch that's at the cutoff frequency louder. The resonance display reads 0.00 to 100.00 percent, and the knob is curved so most of the range is the strong resonance near the top. At the top the ladder can ring on its own, kinda like guitar squeals or a sine wave with harmonic distortion.
 - **Filter type** is low-pass, band-pass, or high-pass.
 - **Filter envelope** bends the first filter's cutoff with a four-stage envelope,
   so the sound can open and close in brightness as the note goes on.
@@ -378,7 +378,7 @@ cover. The ranges are the ones the panel shows.
 | --- | --- | --- |
 | FILTER ON | on/off | Bypasses or enables filter 1. |
 | CUTOFF | frequency | The frequency where filter 1 starts to remove. Turn it down to darken the sound and up to open it. |
-| RES | resonance | The peak at the cutoff. At the top it self-oscillates. |
+| RES | resonance | The peak at the cutoff. The display is curved, so the top of the range is the strongest resonance. At the top the ladder can ring on its own. |
 | TYPE | LPF, BPF, HPF | The filter response. |
 | F-ENV RATE 1 to 4 | 0 to 99 | The four filter-envelope rates. Higher is faster. |
 | F-ENV LEVEL 1 to 3 | 0 to 99 | The levels the filter envelope holds. Level 3 is the sustain. |

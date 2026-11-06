@@ -2,6 +2,12 @@
 
 Newest first.
 
+## 1.0.4
+
+- Filters: FILTER 1 and FILTER 2 are now the 24 dB/oct liquid ladder. It has low-pass, band-pass and high-pass modes, a level-preserving resonance make-up, and a cutoff envelope that uses the whole range.
+- Resonance: the display reads 0.00 to 100.00 percent with an exponential taper. The top of the knob is the strongest stable resonance, and the curve gives fine control near it.
+- Cutoff: the top of the range stops at the ladder's stable coefficient ceiling, so the filter stays clean at every resonance.
+
 ## 1.0.3
 
 - Level: the operator level is now the Yamaha total-level scale, 0.75 dB per step. Level 75 on a ratio 1 modulator gives half a cycle of phase deviation, and the level-to-index table matches the OPM and the DX21, DX27, and DX100.

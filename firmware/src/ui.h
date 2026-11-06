@@ -42,6 +42,7 @@ enum {
     UI_DISP_RAW = 0,   /* the signed integer as-is */
     UI_DISP_RATIO,     /* a Q16 frequency multiplier -> "1.00" (65536 = base pitch) */
     UI_DISP_PCT,       /* [min,max] -> "N%" */
+    UI_DISP_PCT_EXP,   /* [min,max] -> "N.NN%", exponential (fine near the top) */
     UI_DISP_PCT_BIP,   /* a bipolar -100..100 -> "+N%" / "-N%" / "0%" (key scaling) */
     UI_DISP_PCT_INV,   /* [min,max] -> "N%" inverted (100% = min; e.g. damping) */
     UI_DISP_ONOFF,     /* 0/1 -> "off"/"on" */

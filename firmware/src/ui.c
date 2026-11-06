@@ -606,6 +606,24 @@ void ui_param_fmt(uint16_t p, const char *unit, char *out, uint32_t n)
         ui_strcat(out, "%");
         break;
     }
+    case UI_DISP_PCT_EXP: {                        /* fine near the top: 100% at max */
+        int32_t rng = d->max - d->min;
+        int32_t pct = 0;
+        if (rng > 0 && v > d->min) {
+            int32_t x = (int32_t)((int64_t)(v - d->min) * 65536 / rng);
+            /* exp(-3x) = 2^(-3x/ln2), and 3/ln2*256 = 1108. The table covers
+               one octave, so shift the integer part out. */
+            int32_t i = (int32_t)((int64_t)x * 1108 / 65536);
+            int32_t e = fm1_exp2_q16[i & 255] >> (i >> 8);
+            int32_t e1 = fm1_exp2_q16[1108 & 255] >> (1108 >> 8);
+            int32_t den = 65536 - e1;
+            pct = den ? (int32_t)((int64_t)(65536 - e) * 10000 / den) : 0;
+            if (pct < 0) pct = 0; else if (pct > 10000) pct = 10000;
+        }
+        ui_itoa_dec(pct, 2, out);
+        ui_strcat(out, "%");
+        break;
+    }
     case UI_DISP_PCT_BIP: {                         /* a bipolar -100..100 -> "+N%"/"-N%"/"0%" */
         if (v > 0) {
             ui_strcat(out, "+");

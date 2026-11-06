@@ -21,9 +21,10 @@ and bend. The app glue `app.c` composes onto the frozen `rib.c` framework throug
   algorithm's routing matrix at runtime. Because modulation reads delayed outputs,
   the graph stays acyclic for every algorithm. The `algo` node selects the matrix
   at runtime.
-- **Global:** the carrier sum passes through an `svf` low-pass and `wavefolder`
-  before `out`. A per-part `plfo` (vibrato) and a per-note `penv` (pitch
-  envelope) feed each operator's `pitch` through `csum`.
+- **Global:** the carrier sum passes through FILTER 1 (a `liquid_filter`
+  ladder), the `wavefolder`, and FILTER 2 (a second `liquid_filter`) before
+  `out`. A per-part `plfo` (vibrato) and a per-note `penv` (pitch envelope) feed
+  each operator's `pitch` through `csum`.
 - **Algorithms:** eight rows from ymfm's `s_algorithm_ops`: {0, 1, 2, 3, 4, 5, 6,
   7}, the full standard TX81Z/DX100/DX21 4-op set. See `dsp-algorithm.md`.
 
@@ -71,10 +72,11 @@ Building the example exposed two bugs, both fixed, and a bunch of follow-up work
 3. **Patch `params:` `default` is ignored (recorded).** `patch.schema.json`
    accepts a `default` on a param binding, but the generator uses the node
    param's literal as the DSP initial value. Recorded in the roadmap §6.9.
-4. **`svf` has a sub-LSB limit cycle (recorded).** The Chamberlin SVF never
-   reaches *exactly* zero after the input stops (≈ −80 dBFS), so a post-voice
-   filter fails the strict "silent after off" host contract. Because of that, the synth uses a
-   decay-to-near-silence contract. Recorded in the roadmap §6.9.
+4. **The liquid ladder has a coefficient ceiling (recorded).** Above 55296 the
+   feedback loop breaks into a parasitic oscillation at moderate resonance, so
+   the node clamps there. The top of the `res` range is the strongest stable
+   resonance, and the filter still self-oscillates at the very top. Recorded in
+   the roadmap §6.9.
 5. **Velocity → amplitude/FM/envelope-rate is wired, defaulted off (shipped,
    F2).** The `fm_op` macro has `vel_amp`/`vel_fm`/`vel_rate` depths (the
    reserved `velocity` input), so velocity reaches the operators, but the

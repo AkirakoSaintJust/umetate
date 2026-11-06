@@ -110,6 +110,14 @@ juce::String formatParamValue(const P1ParamSpec& spec, double value)
         return percentage(spec, value, true);
     if (display == "pct")
         return percentage(spec, value, false);
+    if (display == "pct_exp") {
+        const double range = static_cast<double>(spec.max - spec.min);
+        const double x = range > 0.0 ? (value - spec.min) / range : 0.0;
+        constexpr double k = 3.0;
+        const double den = 1.0 - std::exp(-k);
+        const double p = 100.0 * (1.0 - std::exp(-k * x)) / den;
+        return juce::String(p, 2) + "%";
+    }
     if (display == "pct_bip")
         return signedNumber(v) + "%";
     if (display == "filter") {
@@ -176,6 +184,16 @@ double parseParamValue(const P1ParamSpec& spec, const juce::String& text)
         return juce::jlimit(static_cast<double>(spec.min),
                             static_cast<double>(spec.max),
                             spec.min + v * range / 100.0);
+    }
+    if (display == "pct_exp") {
+        const double range = static_cast<double>(spec.max - spec.min);
+        constexpr double k = 3.0;
+        const double den = 1.0 - std::exp(-k);
+        const double p = juce::jlimit(0.0, 100.0, v) / 100.0;
+        const double x = -std::log(1.0 - p * den) / k;
+        return juce::jlimit(static_cast<double>(spec.min),
+                            static_cast<double>(spec.max),
+                            spec.min + x * range);
     }
     if (display == "pct_inv") {
         const double range = static_cast<double>(spec.max - spec.min);
