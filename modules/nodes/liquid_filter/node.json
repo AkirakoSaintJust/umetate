@@ -1,17 +1,18 @@
 {
   "name": "liquid_filter",
-  "summary": "A 4-pole (24 dB/oct) resonant lowpass ladder in the spirit of the Mutable Instruments Ripples / Audible Instruments Liquid Filter. Four one-pole OTA stages with a 4x negative feedback whose soft clip sits on the resonance path (the Ripples OTA, and the SH-101's feedback diodes), so the input stays linear and the self-oscillation amplitude is independent of the input level. `f` (Q16) is the per-stage coefficient, `res`/`comp` the resonance and output compensation, plus `fenv`/`k`/`vk` cutoff modulation and `on` bypass. Outputs `out` (LP4), `lp2` (LP2), `band` (BP tap).",
+  "summary": "A 4-pole (24 dB/oct) resonant lowpass ladder in the spirit of the Mutable Instruments Ripples / Audible Instruments Liquid Filter. Four one-pole OTA stages with a 4x negative feedback whose soft clip sits on the resonance path (the Ripples OTA, and the SH-101's feedback diodes), so the input stays linear and the self-oscillation amplitude is independent of the input level. `f` (Q16) is the per-stage coefficient, `res` the resonance, and `comp` (Q15) the fraction of a `1 + 4.5*res` passband makeup, so the level stays put as the resonance rises. `fenv`/`k`/`vk` modulate the cutoff and `on` bypasses. `mode` picks the output: 0 = LP4, 1 = the 2-pole band tap, 2 = the 2-pole HP (the `(1 - L)^2` tap, so its corner lines up with the LP pole). Outputs `out` (the selected mode), `lp2` (LP2), `band` (BP tap), and `hp`.",
   "ins": {
     "audio": "audio",
     "fenv": { "rate": "control", "default": "0" },
     "k": { "rate": "control", "format": "q15", "default": "0" },
     "vk": { "rate": "control", "format": "q15", "default": "0" }
   },
-  "outs": { "out": "audio", "lp2": "audio", "band": "audio" },
+  "outs": { "out": "audio", "lp2": "audio", "band": "audio", "hp": "audio" },
   "params": {
     "f": { "kind": "q16", "default": "32768" },
     "res": { "kind": "q16", "default": "0" },
-    "comp": { "kind": "q15", "default": "16384" },
+    "comp": { "kind": "q15", "default": "32767" },
+    "mode": "uint32",
     "on": "uint32",
     "fenv_depth": "q16"
   },
