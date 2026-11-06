@@ -279,6 +279,10 @@
         <button id="prev-page" class="tiny">prev</button>
         <button id="next-page" class="tiny">next</button>
       </div>
+      <div class="hint" id="band-hint" hidden>
+        Band preview: change the algorithm and operator to see the carrier, one,
+        two, or three targets.
+      </div>
     </div>
 
     <div class="card">
@@ -405,6 +409,7 @@
     font: null,
     context: null,
     page: 0,
+    pages: {},
     part: 0,
     op: 0,
     alg: 4,
@@ -683,7 +688,6 @@
 
   const drawEnvelope = (w, x, y, wd, ht, stroke) => {
     const c = color();
-    rect(x + 1, y + 1, wd - 2, ht - 2, "rgba(0,0,0,.22)", c.dim);
     const pad = 8;
     const gx = x + pad;
     const gy = y + pad;
@@ -691,7 +695,9 @@
     const gh = ht - pad * 2;
     for (let i = 1; i < 4; i++) line(gx + (gw * i) / 4, gy, gx + (gw * i) / 4, gy + gh, "rgba(255,255,255,.10)");
     for (let i = 1; i < 2; i++) line(gx, gy + gh / 2, gx + gw, gy + gh / 2, "rgba(255,255,255,.10)");
-    const pts = [0, 0.78, 0.45, 0.62, 0.22, 0.74, 0.12];
+    const op = w.op || 0;
+    const pts = [0, 0.78, 0.45, 0.62, 0.22, 0.74, 0.12].map((v, i) =>
+      Math.max(0.05, Math.min(0.95, v + Math.sin((i + 1) * op) * 0.12)));
     ctx.save();
     ctx.strokeStyle = stroke || c.amb;
     ctx.lineWidth = 2;
@@ -708,10 +714,10 @@
 
   const drawScope = (w, x, y, wd, ht) => {
     const c = color();
-    rect(x + 1, y + 1, wd - 2, ht - 2, "rgba(0,0,0,.22)", c.dim);
     const mid = y + ht / 2;
+    line(x, mid, x + wd - 1, mid, c.dim, 1);
     ctx.save();
-    ctx.strokeStyle = c.ok;
+    ctx.strokeStyle = c.amb;
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     for (let i = 0; i < wd - 4; i++) {
@@ -749,6 +755,81 @@
     [10, 10, 10, 10], [10, 10, 46, 82], [46, 10, 46, 82], [10, 46, 46, 82],
     [10, 46, 10, 46], [10, 46, 46, 46], [10, 46, 46, 46], [10, 10, 10, 10]
   ];
+
+  /* The operator band preview. The pages use panel.json rows, so the title at
+     row 2 promotes into the header and the band lands on rows 6 to 11. */
+  const BAND_LEGEND =
+    "~SEL+EDIT~ copy  ~SEL+SELECT~ ops\n~2xSEL~ pts  ~SEL+ARP-REC~ mute pt\n~SEL~ ops  ~ARP-REC~ mute op";
+  const BAND_PAGES = [
+    {
+      id: "a-env",
+      widgets: [
+        { type: "subheader", row: 2, text: "A-ENV" },
+        { type: "param_row", row: 3, text: "ATTACK RATE", param: "op1.eg.r1" },
+        { type: "param_row", row: 4, text: "DECAY 1 RATE", param: "op1.eg.r2" },
+        { type: "param_row", row: 5, text: "DECAY 2 RATE", param: "op1.eg.r3" },
+        { type: "param_row", row: 6, text: "RELEASE RATE", param: "op1.eg.r4" },
+        { type: "band", row: 7, span: 6, kind: "env" }
+      ]
+    },
+    {
+      id: "scope",
+      widgets: [
+        { type: "subheader", row: 2, text: "OSCILLATOR" },
+        { type: "param_row", row: 3, text: "RATIO", param: "op1.ph.inc_ratio" },
+        { type: "param_row", row: 4, text: "LEVEL", param: "op1.tl.level" },
+        { type: "param_row", row: 5, text: "FEEDBACK", param: "op1.fb.level" },
+        { type: "param_row", row: 6, text: "WAVE", param: "op1.osc.waveform" },
+        { type: "band", row: 7, span: 6, kind: "scope" }
+      ]
+    }
+  ];
+
+  const ensureBandContext = () => {
+    if (!state.panel || !state.panel.contexts) return;
+    state.panel.contexts.band = { pages: BAND_PAGES };
+  };
+
+  const legendFor = () =>
+    state.context === "band" ? BAND_LEGEND : state.panel.legend;
+
+  const bandTargets = (alg, op) => {
+    const out = [];
+    for (let j = 0; j < 4; j++) {
+      if (ALGO_MOD[alg][j] & (1 << op)) out.push(j);
+    }
+    return out;
+  };
+
+  const drawGraph = (kind, x, y, w, h, op) => {
+    if (kind === "env") drawEnvelope({ op }, x, y, w, h, color().amb);
+    else drawScope({ channel: op }, x, y, w, h);
+  };
+
+  const drawBand = (w, x, y, wd, ht) => {
+    const c = color();
+    const n = Math.max(0, Math.min(7, state.alg));
+    const targets = bandTargets(n, state.op);
+    if (!targets.length) {
+      drawGraph(w.kind, x, y, wd, ht, state.op);
+      return;
+    }
+    const graphH = 2 * ROW;
+    drawGraph(w.kind, x, y, wd, graphH, state.op);
+    const labelY = y + graphH;
+    const cols = targets.length;
+    const cw = wd / cols;
+    targets.forEach((t, i) => {
+      text(`OP ${t + 1}`, x + i * cw + cw / 2, labelY, c.gray, 16, "center");
+    });
+    const targetY = labelY + ROW;
+    for (let i = 1; i < cols; i++) {
+      line(x + i * cw, targetY, x + i * cw, targetY + 2 * ROW, c.line, 1);
+    }
+    targets.forEach((t, i) => {
+      drawGraph(w.kind, x + i * cw, targetY, cw, 2 * ROW, t);
+    });
+  };
 
   const drawAlgo = (w, x, y, wd, ht) => {
     const c = color();
@@ -810,21 +891,22 @@
       case "genv": drawEnvelope(w, x, y, wd, ht, color().ok); break;
       case "scope": drawScope(w, x, y, wd, ht); break;
       case "spectro": drawSpectro(w, x, y, wd, ht); break;
+      case "band": drawBand(w, x, y, wd, ht); break;
       case "custom": drawCustom(w, x, y, wd, ht); break;
       default: text(w.text || w.type, x + 1, y, color().dim, 14); break;
     }
   };
 
   const drawLegend = () => {
-    if (!state.showLegend || !state.panel.legend) return;
+    if (!state.showLegend || !legendFor()) return;
     const page = currentPage();
     const lastRow = Math.max(...pageWidgets().map((w) => (w.row || 0) + (w.span || 1)), 0);
-    if (lastRow >= 12) return;
+    if (lastRow > 12) return;
     const c = color();
-    const lines = String(state.panel.legend).split(/\n|\\n/).slice(0, 3);
+    const lines = String(legendFor()).split(/\n|\\n/).slice(0, 3);
     let y = H - lines.length * ROW;
     for (const raw of lines) {
-      let x = 2;
+      let x = 0;
       let hot = false;
       for (const part of raw.split("~")) {
         if (part) {
@@ -869,8 +951,9 @@
       b.textContent = key;
       b.className = key === state.context ? "active" : "";
       b.onclick = () => {
+        state.pages[state.context] = state.page;
         state.context = key;
-        state.page = 0;
+        state.page = state.pages[key] || 0;
         buildControls();
         render();
       };
@@ -944,6 +1027,9 @@
     const palettes = Object.keys(state.theme.palettes || DEFAULT_THEME.palettes);
     if (!palettes.includes(state.palette)) state.palette = palettes[0];
     $("palette").innerHTML = palettes.map((name) => `<option value="${name}"${name === state.palette ? " selected" : ""}>${name}</option>`).join("");
+    $("alg").value = String(state.alg);
+    $("alg-value").textContent = state.alg;
+    $("band-hint").hidden = state.context !== "band";
   };
 
   const connectControls = () => {
@@ -1000,6 +1086,7 @@
       if (!file) return;
       try {
         state.panel = JSON.parse(await file.text());
+        ensureBandContext();
         state.context = null;
         state.page = 0;
         state.values.clear();
@@ -1045,8 +1132,9 @@
         const keys = Object.keys(state.panel.contexts || {});
         const i = keys.indexOf(state.context);
         const next = e.key === "ArrowDown" ? (i + 1) % keys.length : (i - 1 + keys.length) % keys.length;
+        state.pages[state.context] = state.page;
         state.context = keys[next];
-        state.page = 0;
+        state.page = state.pages[state.context] || 0;
         buildControls(); render();
       }
     };
@@ -1132,12 +1220,21 @@
       await Promise.all([loadPanel(), loadTheme(), loadFont()]);
     }
     if (state.panel) {
+      ensureBandContext();
       const wantedContext = params.get("context");
       if (wantedContext && state.panel.contexts[wantedContext]) {
         state.context = wantedContext;
       }
       const wantedPage = Number(params.get("page") || "1") - 1;
       if (Number.isFinite(wantedPage)) state.page = Math.max(0, wantedPage);
+      const wantedAlg = params.get("alg");
+      if (wantedAlg !== null) {
+        state.alg = Math.max(0, Math.min(7, Number(wantedAlg) || 0));
+      }
+      const wantedOp = params.get("op");
+      if (wantedOp !== null) {
+        state.op = Math.max(0, Math.min(3, Number(wantedOp) || 0));
+      }
     }
     const scale = Number(params.get("scale") || 3);
     setScale([2, 3, 4].includes(scale) ? scale : 3);

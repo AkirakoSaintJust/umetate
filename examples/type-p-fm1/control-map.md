@@ -42,8 +42,10 @@
 ## 3. Navigation
 
 - **Context buttons:** `HOME`, `EDIT`, `ENV`, `LFO`, `FX` and `GLO`. A button opens
-  its context at page 0, pressing the same button again advances to the next page with
-  wrapping, and `SELECT` moves forward and back through the current context.
+  its context on the page it was left on, and the first visit opens page 0. Pressing
+  the same button again advances to the next page with wrapping, and `SELECT` moves
+  forward and back through the current context. Each context keeps its own page
+  while another context is open.
 - **HOME:** pops back to the home context, and pressing `HOME` while already home
   advances to the next home page.
 - **Page knobs:** `KNOB1–4` edit the page's parameter rows from top to bottom, so a
@@ -53,7 +55,8 @@
 
 | Gesture | Action |
 | --- | --- |
-| `SEL` (single tap) | Next operator, after the double-tap window |
+| `SEL` (single tap) | Next operator of the active part, after the double-tap window |
+| `SEL` + `SELECT` twist | Move the operator selection through the active part, wrapping |
 | `2x SEL` | Switch the active part |
 | `SEL` + key | Mute the active operator |
 | `SEL` + `EDIT` | Copy the current page |
@@ -89,10 +92,20 @@ Operator editor, four pages, operator-relative except `OP DETUNES`.
 
 | Page | KNOB 1 | KNOB 2 | KNOB 3 | KNOB 4 | Screen |
 | --- | --- | --- | --- | --- | --- |
-| OSCILLATOR | RATIO | LEVEL | FEEDBACK | WAVE | Selected operator scope |
+| OSCILLATOR | RATIO | LEVEL | FEEDBACK | WAVE | Operator band, scope kind |
 | OP DETUNES | OP 1 | OP 2 | OP 3 | OP 4 | Four part-level detunes |
 | OP KEY FOLLOW | OP LEVEL KS LO | OP LEVEL KS HI | OP FB KS LO | OP FB KS HI | Selected operator |
 | OP VEL SENS | OP LEVEL VS | OP FB VS | | | Selected operator |
+
+The oscillator page and the A-ENV pages share one **operator band**, six rows tall
+(96 px) between the last parameter row and the footer legend. A carrier gets one
+graph filling the band. A modulator gets its own graph on the top two rows, a label
+row naming its direct targets, and one target graph per column on the next two
+rows. The last row stays free above the legend. The direct targets come from the
+current algorithm, so the band has no controls of its own and the column count
+follows the routing: one target at 240 px, two at 120 px, three at 80 px. A hairline
+separates the target columns. The selected graph is named by the page title, and
+each target column is named by its label.
 
 ### `env`
 
@@ -101,8 +114,8 @@ part-level.
 
 | Page | KNOB 1 | KNOB 2 | KNOB 3 | KNOB 4 | Screen |
 | --- | --- | --- | --- | --- | --- |
-| A-ENV (rates) | ATTACK RATE | DECAY 1 RATE | DECAY 2 RATE | RELEASE RATE | A-ENV graph |
-| A-ENV (levels) | LEVEL 1 | LEVEL 2 | SUSTAIN | | A-ENV graph |
+| A-ENV (rates) | ATTACK RATE | DECAY 1 RATE | DECAY 2 RATE | RELEASE RATE | Operator band, envelope kind |
+| A-ENV (levels) | LEVEL 1 | LEVEL 2 | SUSTAIN | | Operator band, envelope kind |
 | P-ENV (rates) | ON | ATTACK RATE | DECAY 1 RATE | DECAY 2 RATE | P-ENV graph |
 | P-ENV (levels) | RELEASE RATE | LEVEL 1 | LEVEL 2 | SUSTAIN | P-ENV graph |
 | ENV KEY SCALE | A-ENV RATE KS LO | A-ENV RATE KS HI | P-ENV RATE KS LO | P-ENV RATE KS HI | |
