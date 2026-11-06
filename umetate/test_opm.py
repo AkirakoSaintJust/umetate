@@ -13,6 +13,7 @@ from ._opm import (
     OpmError,
     OpmVoice,
     _attack_rate,  # pyright: ignore[reportPrivateUsage]
+    _d1l_level,  # pyright: ignore[reportPrivateUsage]
     _decay_rate,  # pyright: ignore[reportPrivateUsage]
     _release_rate,  # pyright: ignore[reportPrivateUsage]
     convert_bank,
@@ -204,6 +205,12 @@ def _bank() -> None:
 
 
 def _timing() -> None:
+    # D1L steps are 3 dB, four Type P.fm1 levels each. D1L 15 is the special
+    # 93 dB step, which is silence.
+    assert _d1l_level(0) == 99
+    assert _d1l_level(8) == 67
+    assert _d1l_level(14) == 43
+    assert _d1l_level(15) == 0
     # Fast attacks hit the top rate, and a slow attack is mapped to a slow rate.
     assert _attack_rate(31, 0) == 99
     assert _attack_rate(23, 0) == 91

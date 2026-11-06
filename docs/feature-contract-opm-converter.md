@@ -91,8 +91,8 @@ VOPMex output FIR off.
 
 | Timing measure | Median | Within a factor of 2 |
 | --- | ---: | ---: |
-| Release time to -20 dB | 1.00 | 93 percent |
-| Decay slope, 0.1 to 0.7 s | 0.76 | 56 percent |
+| Release time to -20 dB | 1.00 | 97 percent |
+| Decay slope, 0.1 to 0.7 s | 0.76 | 57 percent |
 
 The decay slope is the weakest measure because the Type P.fm1 one-pole eases
 into a sustain where the OPM decay is a straight dB line. The rate map targets
@@ -113,6 +113,13 @@ The earlier mapping had a unit error here, 1/64 semitone read as 1/64 octave,
 which made the vibrato twelve times too deep. The corpus spectra still matched
 because the vibrato averaging hid it, but the A/B renders did not. The unit test
 now pins the expected depth.
+
+`D1L` 15 is the special 93 dB step and now maps to silence. The earlier code used
+`99 - 4*15 = 39`, which sustained at about -45 dB and made a decay to `D1L` 15
+feel longer. A controlled `D1R` 10, `D1L` 8 stage still takes 1.87 s in OPM and
+2.84 s in Type P.fm1 to reach the target, because the first 8 dB match and the
+one-pole tail does not. That is the curve difference recorded in the mapping
+page.
 
 ## Risks and fallback
 

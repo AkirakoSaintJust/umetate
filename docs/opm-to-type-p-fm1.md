@@ -50,7 +50,7 @@ level is ignored because the two engines have different output gains.
 | `FL` 0 to 7 | `op1_feedback.p0`, or `op2_feedback.p0` for algorithm 3 | two cycles at 100%, halved per `FL` step |
 | `AR` | `attack.p0` or `opN.eg.r1.p0` | measured stage time |
 | `D1R` | `opN.eg.r2.p0` | measured stage time |
-| `D1L` | `opN.eg.l2.p0` | exact level conversion |
+| `D1L` | `opN.eg.l2.p0` | exact level conversion, 15 is silence |
 | `D2R` | `opN.eg.r3.p0` | measured stage time |
 | `RR` | `release.p0` or `opN.eg.r4.p0` | measured stage time |
 | `KS` 0 to 3 | `opN_aenv_ks_lo.p0` and `opN_aenv_ks_hi.p0` | fitted over F3 to G5 |
@@ -183,8 +183,9 @@ harmonic.
 The envelope fields map by job: `AR` to `attack` or `opN.eg.r1`, `D1R` to
 `opN.eg.r2`, `D1L` to `opN.eg.l2`, `D2R` to `opN.eg.r3`, and `RR` to `release` or
 `opN.eg.r4`. The level conversion is exact. The attack target is `l1` 99, the first
-decay target is `l2 = 99 - 4*D1L` with `D1L` 15 at silence, and the second decay
-runs to `l3` 0. When `D2R` is 0 the second decay holds `l2`, so `l3` is `l2`.
+decay target is `l2 = 99 - 4*D1L` for `D1L` 0 to 14, and the second decay runs to
+`l3` 0. `D1L` 15 is the special 93 dB step, so it maps to 0 rather than 39. When
+`D2R` is 0 the second decay holds `l2`, so `l3` is `l2`.
 
 The rates come from measured stage times, not a guessed table. The converter
 simulates the OPM envelope tables at the chip EG clock, 13.98 kHz, and the Type
@@ -192,6 +193,12 @@ P.fm1 one-pole at the 1.38 kHz control rate, then picks the rate whose time to a
 chosen point in the stage is closest. The attack matches the time to -12 dB below
 full. The decays match the first 8 dB of the trip, or the whole stage when it is
 shorter. The release matches the time to -20 dB.
+
+The chosen points match, and the whole stage does not. A controlled `D1R` 10,
+`D1L` 8 stage takes 1.87 s in OPM and 2.84 s in Type P.fm1 to reach the target.
+The first 8 dB are the same, then the one-pole eases in while the OPM line keeps
+going. On the demo bank, Solid Bass is about 3 dB louder at 0.8 s and Tubular
+Bells about 4 dB longer at 0.4 s. That is the curve, not the rate.
 
 The curves still differ. An OPM decay is a straight line in dB. The Type P.fm1
 one-pole starts faster and eases into its target, and its one-unit floor sets a
@@ -345,9 +352,9 @@ VOPMex output FIR off.
 
 On a 200-voice sample, 89 percent of the converted voices are within 1.5 on the
 centroid and 83 percent within 1.5 on the roll-off. The median ratio is 1.01. The
-release time is within a factor of 2 for 93 percent of the voices that have an
+release time is within a factor of 2 for 97 percent of the voices that have an
 audible release. The decay slope over 0.1 to 0.7 s is the weakest measure, with a
-median of 0.76 and only 56 percent inside a factor of 2: the Type P.fm1 one-pole
+median of 0.76 and only 57 percent inside a factor of 2: the Type P.fm1 one-pole
 eases into a sustain where the OPM decay is a straight dB line. Treat the timing
 tolerance as the stage time at the chosen point, not the whole curve.
 

@@ -453,8 +453,8 @@ def _decay_rate(d1l: int, rate: int, ks: int, kind: str, midi: int = 60) -> int:
     if rate == 0:
         result = 0
     else:
-        start_level = 99 if kind == "decay1" else max(0, 99 - 4 * d1l)
-        end_level = max(0, 99 - 4 * d1l) if kind == "decay1" else 0
+        start_level = 99 if kind == "decay1" else _d1l_level(d1l)
+        end_level = _d1l_level(d1l) if kind == "decay1" else 0
         span_db = (start_level - end_level) * 0.75
         start_el = 0 if kind == "decay1" else 16 * _D1LTBL[d1l]
         ticks = _opm_ticks(rate, kind, d1l=d1l, ks=ks, midi=midi, start_el=start_el)
@@ -560,6 +560,17 @@ def _ratio_q16(op: OpmOperator) -> int:
 
 def _level(op: OpmOperator) -> int:
     return max(0, min(99, 99 - op.tl))
+
+
+def _d1l_level(d1l: int) -> int:
+    """The Type P.fm1 level for an OPM `D1L`.
+
+    The first 15 steps are 3 dB each, so one step is four Type P.fm1 levels.
+    `D1L` 15 is the special full-attenuation step, 93 dB, which is silence.
+    """
+    if d1l >= 15:
+        return 0
+    return max(0, 99 - 4 * d1l)
 
 
 def _feedback(fl: int) -> int:
@@ -713,7 +724,7 @@ def convert_voice(
         values[f"{prefix}_mute.p0"] = mute
 
         l1 = 99
-        l2 = 99 if op.d1r == 0 else max(0, 99 - 4 * op.d1l)
+        l2 = 99 if op.d1r == 0 else _d1l_level(op.d1l)
         l3 = 0 if op.d2r > 0 else l2
         r1 = _attack_rate(op.ar, op.ks)
         r2 = _decay_rate(op.d1l, op.d1r, op.ks, "decay1") if op.d1r else 99
