@@ -81,7 +81,7 @@ void synth_app_slot_name(const synth_app_ctx *ctx, uint8_t kind, uint16_t slot,
 
 /* Handle one modal popup (name editor / save-mode / save / part chooser / page-copy)
  * and drain its inputs. Returns 1 when a modal popup consumed the input (the app's
- * own control map must be skipped); 0 otherwise. */
+ * own control map must be skipped), 0 otherwise. */
 uint8_t synth_app_step(synth_app_ctx *ctx);
 
 /* The PRESETS encoder: open the multi-patch browser, or the single-part browser

@@ -35,7 +35,7 @@ static int32_t cv_oy;            /* y offset for graph drawing */
  * part/operator (light blue). Palettes are picked in the HOME-hold menu (COLOR).
  * DEFAULT: white base text (param names), bright-green page descriptions, hot-pink
  * values + the ALG readout, purple graphs, hot-pink accent (the cursor/active
- * element), light-blue selected part/operator, red muted operators/parts; the
+ * element), light-blue selected part/operator, red muted operators/parts, the
  * rest are five steps of one colour. The steps are generated from
  * firmware/theme.json, so the panel and the theme cannot drift. */
 #define NPALETTES THEME_PALETTE_COUNT
@@ -134,7 +134,7 @@ static uint32_t glyph(const felucca_font_t *f, uint32_t ch)
     return ch - f->first;
 }
 
-/* text, alpha-blended onto black with colour c; returns the end x */
+/* text, alpha-blended onto black with colour c, returns the end x */
 static int32_t cv_text(int32_t x, int32_t y, const felucca_font_t *f, const char *s, uint16_t c)
 {
     uint16_t ramp[16];

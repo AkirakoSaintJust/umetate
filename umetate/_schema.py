@@ -2,7 +2,7 @@
 # Copyright (C) 2026 P1Onken (umetate)
 """The typed mirror of the JSON manifests (docs/roadmap.md §6.8, §12.4).
 
-Every `*.schema.json` shape has a `TypedDict` here — the mypy mirror of the JSON
+Every `*.schema.json` shape has a `TypedDict` here, the mypy mirror of the JSON
 Schema. The JSON boundary (a `json.loads` result) is narrowed to these via the
 `as_*` loaders below: a single `isinstance` check on the required keys, then one
 `cast`. The deeper per-field validation (unknown `kind`, unknown `source`, …) stays
@@ -309,7 +309,7 @@ class ParamsDoc(TypedDict):
 
 class SysexLayout(TypedDict):
     """The generated `sysex-layout.json` (roadmap §6.11.4): the per-firmware SysEx
-    payload geometry — the firmware's `<model>` byte (the patch's `model`), the
+    payload geometry, the firmware's `<model>` byte (the patch's `model`), the
     part-patch record's param count, the part count, and the record/bank sizes."""
 
     model: int

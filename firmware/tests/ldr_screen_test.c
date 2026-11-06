@@ -3,7 +3,7 @@
 /* Host test of the update loader's screen (loader/ldr_screen.c) through src/lcd.c, on a fake ST7789: the
  * window and RAMWR commands into a 240 x 240 frame. UPDATE MODE after boot with the name, the 20 segments and the
  * hub's address, the waiting light running to and fro, WRITING at 50 % (10 segments, "50%"), a second write starting
- * over, UPDATE FAILED; every letter in the loader's font, only the screen's colours, nothing outside the panel.
+ * over, UPDATE FAILED, every letter in the loader's font, only the screen's colours, nothing outside the panel.
  * With a DIR, the screens as PPM files.   tests/ldr_screen_test [DIR] */
 #include <stdint.h>
 #include <stdio.h>

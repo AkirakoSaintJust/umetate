@@ -303,9 +303,9 @@ keyboard player, a screen reader user, a touch user, and a player in a dim room
 should all be able to reach the same musical result.
 
 **Frank Chimero, The Shape of Design.** Design is movement. It is imagining a
-future and working toward it for other people. It is not decoration, and it is
-not only problem-solving. The lesson is to design for the player's music, not
-for the designer's portfolio.
+future and working toward it for other people. It is decoration and
+problem-solving together, and the work serves the player's music rather than the
+designer's portfolio.
 
 **Practical CSS Theming Strategies.** The article compares CSS variables with
 Sass theme maps and shows why a theme class that fights a component class depends

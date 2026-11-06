@@ -1,4 +1,4 @@
-/* Classic phase distortion: the VPS inflection with v=0.5 fixed — a bend at x=`d`
+/* Classic phase distortion: the VPS inflection with v=0.5 fixed, with a bend at x=`d`
    distorts the phase ramp along x only. Slopes s0=0.5/d and s1=0.5/(1-d) are
    block_derived (control-rate). */
 uint32_t p = ${in.phase} >> 17;   /* phase fraction, Q15 */

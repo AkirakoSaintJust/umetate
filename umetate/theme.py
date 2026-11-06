@@ -1,17 +1,18 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
-"""`umetate theme` — a WCAG 2.1 contrast checker + dark-palette generator.
+"""`umetate theme`: a WCAG 2.1 contrast checker and dark-palette generator.
 
-The applicable WCAG subset for a fixed 240x240 RGB565 screen (no text resize, no
-pointer/audio): 1.4.3 contrast (text >= 4.5:1 normal, 3:1 large/graphics),
-1.4.11 non-text contrast (>= 3:1), 2.4.7/2.4.13 focus visibility (>= 3:1), and
-1.4.1 not-colour-alone (a design rule, not a numeric check). The tool checks the
-numeric ones: `text` >= 4.5:1 and every other foreground role >= 3:1 against
-`background`.
+The screen is a fixed 240 by 240 RGB565 display, so the applicable WCAG subset is
+narrow. There is no text resize and no pointer or audio. The tool checks 1.4.3
+contrast (4.5:1 for normal text and 3:1 for large text or graphics), 1.4.11
+non-text contrast (3:1), and 2.4.7 and 2.4.13 focus visibility (3:1). The
+not-colour-alone rule in 1.4.1 is a design rule rather than a numeric check.
+`check` verifies the numeric pairs: `text` at 4.5:1 or better, and every other
+foreground role at 3:1 or better against `background`.
 
-`check` verifies a palette (a `{name, colors}` object) and prints a report; it
+`check` verifies a palette (a `{name, colors}` object) and prints a report. It
 exits non-zero on any failed pair. `generate` builds a dark palette from an accent
-hue, brightening the accent/status hues until they meet 3:1 against black, and
+hue, brightening the accent and status hues until they meet 3:1 against black, and
 prints the palette as JSON + a report.
 """
 

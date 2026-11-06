@@ -322,7 +322,7 @@ def node_spec_from_manifest(manifest: NodeManifest, body: str) -> NodeSpec:
                 modulatable.add(pname)
 
     # D23: a modulatable param gets a paired control input `<p>_mod` + a depth
-    # param `<p>_depth`; the effective value `base + mod·depth` is a block-derived
+    # param `<p>_depth`, the effective value `base + mod·depth` is a block-derived
     # state `<p>_eff`. Synthesized before the node's own block_derived so that
     # `${param.<p>}` (redirected to `<p>_eff`) is available to it.
     state = dict(manifest.get("state", {}))

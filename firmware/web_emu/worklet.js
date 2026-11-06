@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // The AudioWorklet: instantiates the firmware wasm (the bytes come from the main
-// thread — `fetch` is absent here), runs it pull-based (web_render advances the
+// thread, `fetch` is absent here), runs it pull-based (web_render advances the
 // device one block at a time), and pushes the 240x240 screen + lights back.
 const SYNTH = "type_p_fm1";
 const SCREEN = 240 * 240;

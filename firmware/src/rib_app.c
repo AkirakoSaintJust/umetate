@@ -1,14 +1,14 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 /* RIB's shipped demo app: a sine wave on the keys, and that is all. This file is
  * included by rib.c (the frozen framework); it is the reference for the app half of
- * the contract — the app provides `app_audio`, `app_main`, `app_idle`, the `ui_act_*`
- * hooks and `ui_draw_custom`; the framework provides the platform, the UI kit, and
+ * the contract. The app provides `app_audio`, `app_main`, `app_idle`, the `ui_act_*`
+ * hooks and `ui_draw_custom`, the framework provides the platform, the UI kit, and
  * the synth services (synth_midi/synth_sysex/synth_runtime). A synth project swaps
  * this file for its own `app.c` (the `umetate build --synth` composition). */
 #include "rib_dsp.h"
 #include "panel.h"
 
-/* ---- audio callback; the kernel is a distinct translation unit */
+/* ---- audio callback, the kernel is a distinct translation unit */
 static void app_audio(int32_t *out, uint32_t n)
 {
 #if FM1_CPU1_USED

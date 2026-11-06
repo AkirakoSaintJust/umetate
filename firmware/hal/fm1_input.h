@@ -3,7 +3,7 @@
 /* FM-1 input HAL: key/button/encoder matrix and LEDs.
  *
  * One 11-column x 6-row diode matrix behind a 2x74HC595 chain (PA4 SER, PA3
- * SRCLK, PA1 RCLK), bit-banged and polled; rows PA0, PA5..PA8, PB7 with
+ * SRCLK, PA1 RCLK), bit-banged and polled, rows PA0, PA5..PA8, PB7 with
  * pull-ups (low = closed). LED lines PH6/PH9/PA9/PA10 light the LED on the
  * same column, row PA7/PA8/PA5/PA6 respectively.
  *
@@ -19,7 +19,7 @@
  * FM1_INPUT_IDLE() while it waits.
  * Keys/buttons (as Felucca 1.0): debounced as soon as their column is read. A press counts after
  * FM1_DEB_PRESS frames closed in a row (1.1-2.2 ms: the matrix has diodes and no ghosting, so a closed
- * sample is a closed key; two in a row keep one stray sample from playing a note), a release after
+ * sample is a closed key, two in a row keep one stray sample from playing a note), a release after
  * FM1_DEB_RELEASE frames open in a row (~9 ms): a contact bouncing open on the way down, or chattering
  * on the way up, never ends a note early or plays it twice.
  * Encoders: quadrature decoder (2-sample filter, + = clockwise) with detent counting, as
@@ -27,8 +27,8 @@
  * quadrature cycle (4 transitions) and the knob rests in one state, the one seen at power-on
  * (relearned only after FM1_REST_FRAMES, ~1 s, parked elsewhere). Steps are emitted on arriving
  * back at it, the net transitions rounded to whole cycles (>= 2 counts one: a lost transition or
- * two is forgiven; a two-state jump counts on in the direction of travel). One click = one step
- * at any speed; bounce and back-and-forth cancel out. Never a second rest state: a knob held
+ * two is forgiven, a two-state jump counts on in the direction of travel). One click = one step
+ * at any speed, bounce and back-and-forth cancel out. Never a second rest state: a knob held
  * mid-click taught the complement as a rest and every click counted twice, and short mid-click
  * pauses of a slow turn taught the mid states and the knob went dead (the 0.9 learner).
  * fm1_enc_take() returns the steps.
@@ -39,7 +39,7 @@
  * the next column (its outputs change only at the latch, so the pulse stays on column p and the key
  * read before it is unchanged). fm1_led_dim[col]: the glow (landmarks, notes under tiles), FM1_GLOW_NS
  * (~1/24 of a lit LED); fm1_led_bg[col]: the backlight (menu LIGHTS), fm1_led_bg_ns, shorter. TIMER4
- * times the pulses bit by bit; only a pulse longer than the whole shift waits for the rest. An LED in
+ * times the pulses bit by bit, only a pulse longer than the whole shift waits for the rest. An LED in
  * several layers takes the brightest. fm1_led_key/btn helpers address them by id.
  */
 #pragma once

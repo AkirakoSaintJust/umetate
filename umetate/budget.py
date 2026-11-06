@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
-"""`umetate budget` — measure the polyphony budget (roadmap §6.11.4, F6).
+"""`umetate budget`: measure the polyphony budget (roadmap §6.11.4, F6).
 
-Generates the patch at each `--voices` count (and a forced `--parts` count),
-compiles it for host, and times a worst-case `render(256)` — every voice sounding,
-envelopes open. The host figure is a *relative* measure (per-voice cost and
-linearity); the 2.9 ms device fit is the emulator's job (a built firmware, F7) and
-is reported `blocked` until then. The voice count is a measured claim, not an
-estimate.
+It generates the patch at each `--voices` count and a forced `--parts` count,
+compiles it for the host, and times a worst-case `render(256)` with every voice
+sounding and every envelope open. The host figure is a relative measure of the
+per-voice cost and its linearity. The 2.9 ms device fit is the emulator's job
+with a built firmware (F7), and it stays `blocked` until then. The voice count is
+a measured claim rather than an estimate.
 """
 
 from __future__ import annotations
@@ -152,7 +152,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  {n:>6}  {us:>14.1f} us  {us / n:>7.2f} us")
 
     print(
-        "device fit (2.9 ms): measured by the emulator — `umetate emu --check "
+        "device fit (2.9 ms): measured by the emulator, `umetate emu --check "
         "--mhz 240` boots the built firmware and holds a chord (F7e); the host "
         "figures above are the relative per-voice measure."
     )

@@ -9,7 +9,7 @@
 
 /* ---- the preset record helpers (the same logic every project needs) ---- */
 
-/* save one part's timbre into a single-part slot; remember it as that part's source
+/* save one part's timbre into a single-part slot, remember it as that part's source
  * so a multi-patch can reference it. */
 static void save_part_to(synth_app_ctx *ctx, uint8_t part, uint16_t slot)
 {

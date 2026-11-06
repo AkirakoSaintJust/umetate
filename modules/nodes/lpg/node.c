@@ -1,6 +1,6 @@
 /* vactrol low-pass gate: a fast-attack / slow-decay envelope (`level`, Q15) drives
    both the one-pole cutoff and the VCA gain, so the sound gets quieter *and*
-   darker as it closes — the "woody" pluck. */
+   darker as it closes, which gives the "woody" pluck. */
 if (${in.gate}) {
     ${state.level} += ${param.attack};
     if (${state.level} > 32767) ${state.level} = 32767;

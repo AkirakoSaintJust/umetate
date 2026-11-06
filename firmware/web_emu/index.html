@@ -523,7 +523,7 @@ for (let i = 0; i < 27; i++) {
 }
 
 // ---- the host keyboard (as fm1-x0x): Q..I / A..K are the white keys, 1..0 / - the
-// black keys, Space=PLAY, Enter=REC, Esc=HOME, Z/X=OCT-/+ , and the arrows turn SELECT.
+// black keys, Space=PLAY, Enter=REC, Esc=HOME, Z/X=OCT-/+, and the arrows turn SELECT.
 const KEYMAP = {};
 "qwertyui".split("").forEach((c, i) => { KEYMAP["Key" + c.toUpperCase()] = { key: WHITE[i] }; });
 "asdfghjk".split("").forEach((c, i) => { KEYMAP["Key" + c.toUpperCase()] = { key: WHITE[8 + i] }; });

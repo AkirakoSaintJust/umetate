@@ -203,7 +203,7 @@ def main(argv: list[str] | None = None) -> int:
         "--slot",
         type=int,
         action="append",
-        help="only the OPM slot `@:n` with this number; repeatable",
+        help="only the OPM slot `@:n` with this number. Repeatable.",
     )
     conv.add_argument(
         "--first", type=int, help="only the first N voices after the other filters"

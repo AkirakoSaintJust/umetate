@@ -143,7 +143,7 @@ static volatile struct {
 } fm1_in;
 
 /* pad events for an app that handles the pads itself (smk_pad_events = 1, e.g. a step sequencer's pads): hardware pad << 8 |
- * velocity, 0 = released; no note bits then */
+ * velocity, 0 = released, no note bits then */
 static volatile uint8_t smk_pad_events;
 #define SMK_PADQ 32u
 static volatile uint16_t smk_padq[SMK_PADQ];
@@ -693,7 +693,7 @@ static void fm1_led_key(uint32_t id, int on)
         fm1_led[id] = (uint8_t)(on != 0);
 }
 
-/* fm1_adc.h stand-ins for main.c: the battery comes from mux C; the FM-1's MASTER pot is knob K8 here, as a
+/* fm1_adc.h stand-ins for main.c: the battery comes from mux C, the FM-1's MASTER pot is knob K8 here, as a
  * virtual pot (0..1023, 24 a detent; starts at 724: SLOOP's master_q12 2048, as before) */
 enum { FM1_ADC_BATT = 3, FM1_ADC_MASTER = 4 };
 #define SMK_ENC_MASTER 0u          /* K1, where the FM-1 has its MASTER pot (top left) */

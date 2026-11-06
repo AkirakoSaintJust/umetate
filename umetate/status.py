@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
-"""`umetate status` — parse the roadmap's per-layer claim ledger (roadmap §12.8).
+"""`umetate status`: parse the roadmap's per-layer claim ledger (roadmap §12.8).
 
-Reads the phase/step/exit headers with a tolerant convention; a header that doesn't
-match is skipped, never an error. The status token after the header is one of
-`done` / `blocked` / `in progress` / `met`, optionally per-layer
-(`done (host), blocked (target/device)`).
+It reads the phase, step, and exit headers with a tolerant convention. A header
+that does not match is skipped rather than treated as an error. The status token
+after the header is one of `done`, `blocked`, `in progress`, or `met`, optionally
+per layer (`done (host), blocked (target/device)`).
 """
 
 from __future__ import annotations

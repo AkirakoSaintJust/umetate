@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
-"""`umetate inspect` — read a `.fwsc` (identity/model/loader/integrity).
+"""`umetate inspect`: read a `.fwsc` and report its identity, model, loader, and
+integrity.
 
-Wraps the inherited `firmware/tools/fm1_install.py` parsing (strangler-fig, not a
-rewrite): `product_of` / `model_of` / `deinterleave` / `package_damage`.
+It wraps the inherited `firmware/tools/fm1_install.py` parsing, a strangler-fig
+arrangement rather than a rewrite: `product_of`, `model_of`, `deinterleave`, and
+`package_damage`.
 """
 
 from __future__ import annotations

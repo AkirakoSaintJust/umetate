@@ -167,7 +167,7 @@ the value.
   and a 16.7-word standard deviation.
 - State the scope and the status of the diagrams: "it isn't a technical manual, so
   the diagrams are purely explanatory rather than factory schematics."
-- The audience can be players and sound designers, not only owners.
+- The audience can be players and sound designers as well as owners.
 - Use the product's own names in headings. "Twin Mode and Full Mode" beats "Two
   sources, two modes".
 

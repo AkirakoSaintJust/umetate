@@ -41,7 +41,7 @@ level is ignored because the two engines have different output gains.
 
 ## Mapping at a glance
 
-| OPM | Type P.fm1 | How close |
+| OPM | Type P.fm1 | Match |
 | --- | --- | --- |
 | `M1`, `C1`, `M2`, `C2` | `O1`, `O2`, `O3`, `O4` | direct |
 | `CON` 0 to 7 | `algorithm.p0` 0 to 7 | direct except 3, which uses algorithm 2 |

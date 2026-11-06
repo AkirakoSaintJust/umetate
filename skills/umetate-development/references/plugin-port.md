@@ -40,8 +40,8 @@ invariant that is hardest to fix later.
   changes.
 - Host automation is read at a fixed control block. Say so in the contract. Do
   not claim sample accuracy the code does not have.
-- MIDI is quantised to the control block. Test the offset behaviour, not only the
-  block start.
+- MIDI is quantised to the control block. Test the offset behaviour as well as
+  the block start.
 - Editor never owns audio state. It reads scope rings and writes parameters.
 - Wordmark is all Zen Dots. Do not bundle the brand font. Ship only the OFL
   fonts whose licence texts travel with them.
@@ -86,7 +86,7 @@ a hash, a validator summary, and a host name are evidence.
   has a documented no-gui mode, a JACK backend, and an OSC control API. Ardour
   exports a session headlessly. Use tools with a scriptable path.
 - **JACK that cannot allocate shared memory in a container.** Set
-  `--shm-size=512m`. Record it in the runner and the compose file, not only in a
+  `--shm-size=512m`. Record it in the runner and the compose file as well as a
   shell history.
 - **A licence assumption that was wrong.** JUCE 8 is AGPL-3.0-only or commercial,
   not GPLv3. Check the actual licence file at the pinned tag before the first

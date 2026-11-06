@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
-"""`umetate emu` — run your firmware in fm1-emu.
+"""`umetate emu`: run the firmware in fm1-emu.
 
-GUI (default): `fm1-live --fwsc <built .fwsc>` opens the emulated FM-1 window — play
-with the computer keyboard, mouse, or a MIDI keyboard; audio out the default device.
-`--persist` keeps the flash chip between runs.
+The default GUI runs `fm1-live --fwsc <built .fwsc>` in an emulated FM-1 window.
+Play with the computer keyboard, the mouse, or a MIDI keyboard, and hear the
+audio on the default device. `--persist` keeps the flash chip between runs.
 
-Headless (`--check`): `fm1-live --shot` boots the package, holds a chord, and writes
-the panel + audio peak — the P4-2 model-layer regression. (The `fm1-emu` batch
-interpreter is built too, for deeper WAV/histogram runs.)
+`--check` is headless. `fm1-live --shot` boots the package, holds a chord, and
+writes the panel and the audio peak, which is the model-layer regression. The
+`fm1-emu` batch interpreter is built too, for deeper WAV and histogram runs.
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ _BUILD = _ROOT / "firmware" / "build"
 
 def _default_fwsc(board: str, build: Path | None = None) -> Path:
     """The built package to boot: the newest composed synth package (the product
-    firmware — `umetate build --synth` names it with the synth's stem), else the
+    firmware, `umetate build --synth` names it with the synth's stem), else the
     demo package."""
     build = build or _BUILD
     synth = sorted(
@@ -121,7 +121,7 @@ def _memory_check(fwsc: Path, ms: int = 3000, mhz: int = 240) -> int:
 
 def _wav(args: argparse.Namespace, fwsc: Path) -> int:
     """The batch interpreter (`fm1-emu`, not the GUI) writes the I2S output to a WAV
-    (44.1 kHz stereo 16-bit) and/or dumps memory — the target bit-exactness gate."""
+    (44.1 kHz stereo 16-bit) and/or dumps memory, the target bit-exactness gate."""
     out = args.wav.resolve() if args.wav is not None else None
     cmd = [str(_emu.EMU_BIN), "--fwsc", str(fwsc)]
     if out is not None:
@@ -183,7 +183,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--keys",
-        help="--check: panel script (FM1_BENCH_KEYS); --wav: fm1-emu keys script",
+        help="--check: panel script (FM1_BENCH_KEYS). --wav: fm1-emu keys script.",
     )
     parser.add_argument(
         "--ram", type=int, help="--wav: emulated RAM bytes (fm1-emu --ram)"
@@ -191,12 +191,12 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if not _emu.emulator_built():
-        print("emu: fm1-emu not built — run `umetate setup` first", file=sys.stderr)
+        print("emu: fm1-emu is not built. Run `umetate setup` first.", file=sys.stderr)
         return 1
 
     fwsc: Path = args.fwsc or _default_fwsc(str(args.board))
     if not fwsc.is_file():
-        print(f"emu: {fwsc} not built — run `umetate build` first", file=sys.stderr)
+        print(f"emu: {fwsc} is not built. Run `umetate build` first.", file=sys.stderr)
         return 1
     fwsc = fwsc.resolve()  # fm1-live runs in a different cwd: absolute path
 

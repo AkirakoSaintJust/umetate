@@ -67,7 +67,7 @@ static void fm1_irq_init(void)
     FM1_ICFG(1) = (FM1_ICFG(1) & ~0xF0u) | 0xF0u;           /* exception: enable, prio 7 */
     /* div0 trap off (cleared, in case a reset kept it from a build that armed it), as SLOOP 2.4 / Felucca 1.0.3.1 (#61,
      * after PR #111 by spinkham): this compiler treats a divide as harmless and may run a loop-invariant one ahead of the
-     * test that guards it. Off, such a divide gives a value nobody uses; the cost: a real divide by 0 gives a wrong value
+     * test that guards it. Off, such a divide gives a value nobody uses, the cost: a real divide by 0 gives a wrong value
      * instead of a crash report (the host tests run with -fsanitize=integer-divide-by-zero to catch one) */
     FM1_EMU_CON &= ~(1u << 2);
     FM1_ETM_CON |= 1u;                                      /* branch trace for the report */

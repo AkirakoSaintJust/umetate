@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
-"""`umetate deep-check` — run the host tests + the checks (§12.8).
+"""`umetate deep-check`: run the host tests and the gate checks (§12.8).
 
-`--host` (the default) runs the host DSP/UI/unit tests; `--safety` runs the C
-standing checks (lint); `--web` builds the standalone wasm + proves host == wasm
-(P4-1); `--python` runs the Python layer (ruff + mypy + the four test modules);
-`--skill` verifies the offline skill bundles (P5); `--links` checks the docs'
-cross-references (P6); `--roadmap` keeps the roadmap dashboard under 500 lines;
-`--pyright` runs the strict Python type-check. `--all` is
-the complete gate — the single deterministic "is this increment done" check.
+`--host` (the default) runs the host DSP, UI, and unit tests. `--safety` runs the
+C standing checks. `--web` builds the standalone WASM and proves host and wasm
+match (P4-1). `--python` runs ruff, mypy, and the test modules. `--skill`
+verifies the offline skill bundles (P5). `--links` checks the docs
+cross-references (P6). `--roadmap` keeps the dashboard under 500 lines.
+`--pyright` runs the strict Python type check. `--all` is the complete gate, the
+one deterministic "is this increment done" check.
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ from . import runner
 
 
 def _host() -> int:
-    """Run the host tests (the RIB C tests) — via the runner, or directly when there
+    """Run the host tests (the RIB C tests), via the runner, or directly when there
     is no docker (a POSIX host with cc, e.g. the dev container)."""
     if not runner.probe().docker:
         cmd = ["sh", "tests/run_cmake_host.sh"]
@@ -99,7 +99,7 @@ def _pyright() -> int:
         return subprocess.run(["pyright"], cwd=runner.REPO_ROOT).returncode
     except FileNotFoundError:
         print(
-            "deep-check --pyright: pyright not found — rebuild the image "
+            "deep-check --pyright: pyright not found, rebuild the image "
             "(docker/build.sh) and recreate `umetate-host`",
             file=sys.stderr,
         )

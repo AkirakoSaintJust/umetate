@@ -33,7 +33,7 @@ static uint32_t fm1_p33_timeouts;
 /* FM1_CPU1_USED (build.py passes -DFM1_CPU1_USED=1; fm1_cpu1.h): the second core may be running. Every
  * reset below holds it first: its waiting loop sits in RAM that the ROM, the SPL and the update loader use at boot,
  * and a core left running there would execute whatever they put in it. Hold: C1_CON bit 1 set, then bit 3 (enable)
- * cleared; registers only, safe when it never ran. Without FM1_CPU1_USED none of this is built.
+ * cleared, registers only, safe when it never ran. Without FM1_CPU1_USED none of this is built.
  *
  * The bus-invalid traps are off around the hold. Holding core 1 cuts the read it has on the bus (its waiting loop
  * reads the mailbox all the time), and the chip flags that a few instructions later as an AXI read invalid

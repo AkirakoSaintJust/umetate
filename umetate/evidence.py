@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
-"""The evidence/status vocabulary (docs/platform-facts.md §5.5), one place.
+"""The evidence and status vocabulary (docs/platform-facts.md §5.5), in one
+place.
 
-Also `umetate evidence`: validate an evidence matrix (per-layer status, §12.8).
+`umetate evidence` validates an evidence matrix with a per-layer status (§12.8).
 """
 
 from __future__ import annotations

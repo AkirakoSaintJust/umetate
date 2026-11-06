@@ -8,7 +8,7 @@
 /* Apply one polyphase FIR phase to a pair of explicit L/R history windows.
  *
  * `taps` points at the phase's first tap and `n` is UAC_FIR_N. With
- * reverse == 0 the taps run oldest input first; with reverse == 1 the
+ * reverse == 0 the taps run oldest input first, with reverse == 1 the
  * symmetric prototype is read backwards. The two windows are separate
  * objects, so no pointer arithmetic crosses from L into R.
  */

@@ -98,7 +98,7 @@ enum {
 };
 
 #define UI_NO_PARAM 0xFFFFu
-#define UI_PARAM_MAX 512u   /* the ui_params[] cap; the generator errors beyond it */
+#define UI_PARAM_MAX 512u   /* the ui_params[] cap, the generator errors beyond it */
 
 /* ---- the generated (const, XIP) tables ---- */
 typedef struct {
@@ -271,7 +271,7 @@ void ui_draw_custom(const ui_widget *w);
 void ui_save_slot_name(uint8_t kind, uint16_t slot, char *out, uint32_t cap);
 
 /* ---- the slot browser (the preset-browse popup): the app calls ui_browser_step
- * each loop with the encoder delta + now; the framework scrolls the slot, shows its
+ * each loop with the encoder delta + now, the framework scrolls the slot, shows its
  * name, and after `timeout_ms` idle calls ui_preset_apply(kind, slot) + closes. ---- */
 typedef struct {
     uint8_t open;

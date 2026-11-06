@@ -1,11 +1,11 @@
 /* SPDX-License-Identifier: GPL-3.0-only
  * Copyright (C) 2026 P1Onken (umetate) */
 /* The boot splash: the umetate wordmark (gen/logo.h, from assets/umetate240.png,
- * set in the "Digital Desolation Plus" typeface — see
+ * set in the "Digital Desolation Plus" typeface, see
  * assets/Digital-Desolation-Plus-LICENSE.txt). The logo is a row-major RLE stream
  * of byte-swapped RGB565 (matching gfx.c's canvas: the ST7789 takes big-endian
  * RGB565), so logo_draw() decodes it into a small RAM row buffer and blits one
- * row at a time — the panel's DMA reads RAM only, and a full 240x240 framebuffer
+ * row at a time, because the panel's DMA reads RAM only, and a full 240x240 framebuffer
  * does not fit the reserved RAM. */
 
 #include "logo.h"

@@ -71,7 +71,7 @@ This is the loop that produced the Type P.fm1 mockup and the JUCE editor.
    capture the dense areas zoomed in. A screenshot can lie about timing. Read it
    only after the browser or capture has finished.
 6. **Inspect.** Check labels, collisions, clipping, scrollbars, alignment, and the
-   fixed height. Check the state, not only the default page.
+   fixed height. Check the state as well as the default page.
 7. **Test the interaction.** Open the dialogs, change a value, mute a part, switch
    a tab, type a name, and cancel a destructive action. A static screenshot does
    not prove a control works.
@@ -295,8 +295,8 @@ The Inclusive Design Principles are a good review lens for an instrument:
   list and a grid, a knob and a typed value, a mouse and a keyboard.
 - **Prioritise content.** Put the musical controls first. Progressively reveal
   the advanced settings.
-- **Add value.** A feature should make the instrument easier to play, not just
-  longer to learn.
+- **Add value.** A feature should make the instrument easier to play rather than
+  just longer to learn.
 
 ## Wayfinding
 

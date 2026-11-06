@@ -383,7 +383,7 @@ def _sysex_roundtrip() -> None:
     """The SysEx envelope frames + CRC-16 + 7-bit packing round-trip (§6.11.4)."""
     from . import _records, _sysex
 
-    # 7-bit packing round-trips; every packed byte stays a MIDI data byte
+    # 7-bit packing round-trips, every packed byte stays a MIDI data byte
     for n in (0, 1, 6, 7, 8, 100):
         data = bytes((i * 37 + 11) % 256 for i in range(n))
         packed = _sysex.pack7(data)
@@ -409,7 +409,7 @@ def _sysex_roundtrip() -> None:
     assert _sysex.decode(frame[:-1]) is None, "missing F7 undetected"
     assert _sysex.decode(b"\x00" + frame[1:]) is None, "bad F0 undetected"
 
-    # the response bit echoes the command; unknown-cmd classification
+    # the response bit echoes the command, unknown-cmd classification
     assert _sysex.known(_sysex.CMD_IDENTITY | _sysex.RESPONSE), "response cmd"
     assert not _sysex.known(0x7F), "unknown cmd classified as known"
 
@@ -737,8 +737,8 @@ def _budget_measures_tabled() -> None:
 
 def _synth_build_composes() -> None:
     """`umetate build --synth examples/type-p-fm1` composes the dogfood firmware:
-    the generated engine/panel/CC/layout files, a sounding host run, and — with
-    the toolchain — the target package."""
+    the generated engine/panel/CC/layout files, a sounding host run, and, with
+    the toolchain, the target package."""
     import struct
     import wave
 

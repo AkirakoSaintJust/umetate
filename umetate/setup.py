@@ -1,14 +1,18 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
-"""`umetate setup` — the full bootstrap: target toolchain + SDK, and fm1-emu.
+"""`umetate setup`: the full bootstrap, with the target toolchain, the SDK, and
+fm1-emu.
 
-1. The JieLi toolchain + SDK into the `/opt/jieli` volume (fetch with opt-in consent,
-   SHA-256-verified vs `env.lock`; runs in a throwaway container with `umetate-target`
-   mounted read-write — the only legitimate volume writer).
-2. Rust (rustup) + fm1-emu on the host: clone `joakimeriksson/fm1-emu` at the pinned
-   commit and `cargo build --release -p fm1-emu -p fm1-live` (the batch runner + GUI).
+1. The JieLi toolchain and SDK go into the `/opt/jieli` volume. The fetch needs
+   opt-in consent and is SHA-256-verified against `env.lock`. It runs in a
+   throwaway container with `umetate-target` mounted read-write, the only
+   legitimate volume writer.
+2. Rust (rustup) and fm1-emu go on the host. The clone is
+   `joakimeriksson/fm1-emu` at the pinned commit, then `cargo build --release -p
+   fm1-emu -p fm1-live` builds the batch runner and the GUI.
 
-`--no-emulator` skips step 2; `--dry-run` changes nothing; each step is idempotent.
+`--no-emulator` skips step 2, `--dry-run` changes nothing, and each step is
+idempotent.
 """
 
 from __future__ import annotations
@@ -230,7 +234,7 @@ def main(argv: list[str] | None = None) -> int:
     if not args.yes:
         print("umetate setup downloads the JieLi toolchain + SDK from their vendors,")
         print("and (unless --no-emulator) installs Rust + builds fm1-emu from GitHub.")
-        print("None are redistributed by umetate; see LICENSING.md.")
+        print("None are redistributed by umetate. See LICENSING.md.")
         print("Continue? [y/N] ", end="")
         if input().strip().lower() != "y":
             return 1
@@ -238,7 +242,7 @@ def main(argv: list[str] | None = None) -> int:
     rc = runner.run_writable(["sh", "-ec", _script(args, lock)])
     if rc != 0:
         print(
-            "setup: blocked — the container install failed (see output above)",
+            "setup: blocked, the container install failed (see output above)",
             file=sys.stderr,
         )
         return 1
@@ -248,7 +252,7 @@ def main(argv: list[str] | None = None) -> int:
             _run_emulator(lock)
         except (subprocess.SubprocessError, OSError, SystemExit) as exc:
             print(
-                f"setup: blocked — the emulator install failed: {exc}",
+                f"setup: blocked, the emulator install failed: {exc}",
                 file=sys.stderr,
             )
             return 1
@@ -256,7 +260,10 @@ def main(argv: list[str] | None = None) -> int:
     _LOCAL_ENV.write_text(f"clock={args.clock}\n", encoding="utf-8")
     print(f"setup: done (toolchain + SDK in {_VOLUME}, clock={args.clock})")
     if not args.no_emulator:
-        print("setup: fm1-emu ready — `umetate emu` opens the GUI, `--check` headless")
+        print(
+            "setup: fm1-emu ready. `umetate emu` opens the GUI, "
+            "`--check` runs headless."
+        )
     return 0
 
 

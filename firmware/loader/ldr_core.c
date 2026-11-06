@@ -10,7 +10,7 @@
  *      (taken from isd_config.ini in the device's own flash head), so a
  *      package for another key is refused before anything is erased;
  *   3. writes ONLY the app area [0x4000, 0x93000), sector by sector, skipping
- *      sectors that are already equal, and verifies each one; the flash head
+ *      sectors that are already equal, and verifies each one, the flash head
  *      (SPL, isd_config) is never written;
  *   4. checks the CRC16 the package stores for flash.bin against everything it
  *      was served (the head too, which it never writes; a mismatch: up to two
@@ -30,7 +30,7 @@
  * plus the ota.c hooks (frames, time, idle). */
 #define LDR_APP_LO 0x4000u
 #if BOARD_SMK37
-/* SMK-37 Pro: app area up to the stock PRCT end; records only in the VM, so ldr_records_drop can never
+/* SMK-37 Pro: app area up to the stock PRCT end, records only in the VM, so ldr_records_drop can never
  * erase BTIF / USRTRIM (0xC0000..0xC1FFF, the key calibration) or anything above (see the fm1-to-smk37 guide) */
 #define LDR_APP_HI 0x9D000u
 #define LDR_REC_LO 0x9D000u
@@ -187,7 +187,7 @@ static int ldr_pass(void)
 }
 
 /* a pass that does not add up (a byte damaged on the way) is run again: the host answers any read, so it
- * just serves the image once more and the sectors that differ are rewritten; a package that is damaged
+ * just serves the image once more and the sectors that differ are rewritten, a package that is damaged
  * itself fails every pass and the record stays */
 static int ldr_session(void)
 {

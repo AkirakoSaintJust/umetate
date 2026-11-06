@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 /* Copyright (C) 2026 P1Onken (umetate) */
-/* The synth runtime (docs/roadmap.md §6.11.4, F7): the preset integration — apply
+/* The synth runtime (docs/roadmap.md §6.11.4, F7): the preset integration. Apply
  * a stored multi patch to the engine (its part-patch refs become the parts'
  * timbre params, its routing becomes the parts' channel/keyzone/level/delay).
  * The engine's `set_param` is the single write path, so applying a preset is just

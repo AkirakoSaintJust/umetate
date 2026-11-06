@@ -104,7 +104,7 @@ static void app_audio(int32_t *out, uint32_t n);
 static void app_init(void);
 static void app_step(void);
 
-/* ---- audio: a ring the worklet drains; platform_poll fills it, web_render empties it ---- */
+/* ---- audio: a ring the worklet drains, platform_poll fills it, web_render empties it ---- */
 #define RING 4096u
 static float ring[RING * 2];
 static uint32_t ring_frames, ring_read;

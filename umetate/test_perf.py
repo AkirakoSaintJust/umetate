@@ -3,8 +3,8 @@
 """Host performance regression guard (docs/roadmap.md §12.7.3).
 
 Generates + compiles the type-p-fm1 dogfood (20 voices) and times a worst-case
-`render(256)` on host. The figure is a *relative* measure — the device fit is the
-emulator's job (`umetate emu --check --mhz 320`) — but a gross slowdown in the
+`render(256)` on host. The figure is a *relative* measure, the device fit is the
+emulator's job (`umetate emu --check --mhz 320`), but a gross slowdown in the
 generator's emitted code shows up here too. The budget is ~2.8x the measured
 baseline, so it catches algorithmic regressions without flaking on wall-clock
 noise.
@@ -25,7 +25,7 @@ _ROOT = Path(__file__).resolve().parents[1]
 _PATCH = _ROOT / "examples" / "type-p-fm1" / "patch.json"
 
 # The pinned-container baseline is ~140 us (`umetate budget examples/type-p-fm1`).
-# The min of a few process runs keeps the figure honest under load; the 2.8x
+# The min of a few process runs keeps the figure honest under load, the 2.8x
 # headroom tolerates wall-clock noise + a slower host while still tripping on a
 # real algorithmic regression (which is usually 2-10x).
 _RUNS = 3

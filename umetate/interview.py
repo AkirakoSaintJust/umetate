@@ -1,17 +1,18 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
-"""`umetate interview` - the synth-specific design interview for the docs.
+"""`umetate interview`: the synth-specific design interview for the docs.
 
 The interview is the raw material for a manual preface or a design note. The
 command reads the project's `patch.json`, `panel.json`, `synth-brief.md`, and
-`plugin.json`, then renders the generic question form with questions in the
-synth's own vocabulary. It does not assume FM, operators, or Type P.fm1.
+`plugin.json`, then renders the generic question form with the synth's own
+vocabulary. It does not assume FM, operators, or Type P.fm1.
 
 The command does not run the conversation. It writes the form, prints the next
-unanswered questions, and tells the writer where the gaps are. The protocol is in
-the documentation skill.
+unanswered questions, and shows the writer where the gaps are. The protocol is
+in the documentation skill.
 
-Run: `umetate interview --write`, then `--next 3` after each answer, then `--check`.
+Run `umetate interview --write`, then `--next 3` after each answer, then
+`--check`.
 """
 
 from __future__ import annotations
@@ -507,7 +508,7 @@ def _write(synth: Path, force: bool) -> int:
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(text, encoding="utf-8")
     print(f"interview: wrote {target}")
-    print("  ask one topic at a time; `umetate interview --next 3` prints the gaps")
+    print("  ask one topic at a time. `umetate interview --next 3` prints the gaps.")
     return 0
 
 

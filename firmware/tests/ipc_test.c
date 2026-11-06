@@ -57,7 +57,7 @@ int main(void)
         dsp_cmd_push(UMETATE_DSP_CMD_NOTE_ON, (uint16_t)(200 + i), 1);
     ok(dsp_cmd_pop(&c) && c.note == 200, "wrap-around: index wrapped, entries still FIFO");
 
-    /* overrun: a note-on is dropped and counted; a note-off sets all_off_pending */
+    /* overrun: a note-on is dropped and counted, a note-off sets all_off_pending */
     reset_queue();
     for (i = 0; i < UMETATE_DSP_CMD_CAP; i++)
         dsp_cmd_push(UMETATE_DSP_CMD_NOTE_ON, 60, 1);

@@ -5,9 +5,9 @@
  * little-endian and must match `umetate/_records.py` (proven by the parity test).
  *
  * A record is a self-validating unit: a version byte (0xFF = empty), a body, and
- * a CRC-32 (poly 0xEDB88320 — the platform's crc32) over version+body. The banks
+ * a CRC-32 (poly 0xEDB88320, the platform's crc32) over version+body. The banks
  * are chunked across the flash slots (the part bank from slot 0, the multi bank
- * straight after it) at record boundaries — a record never straddles a slot; the
+ * straight after it) at record boundaries. A record never straddles a slot, so the
  * settings record lives in the settings sector. Save only when silent (the
  * platform's area_save erases with interrupts off). */
 #pragma once
@@ -20,7 +20,7 @@
  * is a contiguous byte array chunked across one or more flash slots (a record never
  * straddles a slot boundary). The flash slot byte ceiling is store.h `SLOT_MAX`,
  * mirrored here as `PRESET_SLOT_MAX` so the host tests can build presets.c with
- * `-Isrc` only; the device build asserts the two agree. The type-p-fm1 317 B part
+ * `-Isrc` only, the device build asserts the two agree. The type-p-fm1 317 B part
  * record spans the 128 parts over 3 flash slots (51 per slot); the 63 B multi
  * record fits all 64 in one (roadmap §6.11.4). */
 #define PRESET_PART_SLOTS 128u
@@ -41,14 +41,14 @@
 uint32_t preset_crc32(const uint8_t *p, uint32_t n);
 uint16_t preset_crc16(const uint8_t *p, uint32_t n); /* the SysEx envelope's CRC-16-CCITT */
 
-/* pack -> the record length; the name is truncated to PRESET_NAME_LEN-1 chars. */
+/* pack -> the record length, the name is truncated to PRESET_NAME_LEN-1 chars. */
 uint32_t preset_part_pack(uint8_t *out, const char *name, const int32_t *params, uint32_t n);
 uint32_t preset_multi_pack(uint8_t *out, const char *name, const uint8_t *part_slot,
                            const int32_t *level, const int32_t *delay, const int32_t *channel,
                            const int32_t *low, const int32_t *high, uint32_t p);
 uint32_t preset_settings_pack(uint8_t *out, int32_t base_channel, int32_t master_tune);
 
-/* unpack -> 1 and fills the outputs; 0 when the slot is empty or the CRC fails
+/* unpack -> 1 and fills the outputs, 0 when the slot is empty or the CRC fails
  * (the outputs are then left untouched). */
 int preset_part_unpack(const uint8_t *raw, uint32_t n, char *name, int32_t *params);
 int preset_multi_unpack(const uint8_t *raw, uint32_t p, char *name, uint8_t *part_slot,

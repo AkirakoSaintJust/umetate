@@ -1,7 +1,7 @@
 # Provenance records
 
-This directory contains baseline and release records. They document evidence.
-they do not track current project status. See `docs/roadmap.md` for that.
+This directory contains baseline and release records. They document evidence,
+and they do not track current project status. See `docs/roadmap.md` for that.
 
 ## Naming
 

@@ -82,7 +82,7 @@ int main(void)
     ui_handle(UI_SRC_KEY, 60);
     CHECK(n_note_on == 1 && n_set_step == 0, "home KEY -> note_on");
 
-    /* page-slot resolution: the `status` widget (P_alg) is NOT slot 0 — the first
+    /* page-slot resolution: the `status` widget (P_alg) is NOT slot 0. The first
      * param_row (P_cutoff) is. A write to slot 0 must leave the algorithm alone
      * and move the cutoff (a per-param step, not a raw +1). */
     {
@@ -191,8 +191,8 @@ int main(void)
         CHECK(ui_streq(s, "1.0Hz"), "hz 97392 formats as 1.0Hz");
     }
 
-    /* a log-curve param steps multiplicatively, a linear one by a fraction; both
-       clamp to [min, max] — a relative detent never runs off the end */
+    /* a log-curve param steps multiplicatively, a linear one by a fraction, both
+       clamp to [min, max], a relative detent never runs off the end */
     ui_params()[P_fold] = 30000;
     ui_handle(UI_SRC_ENC_KNOB3, 9999);                /* slot 2 = fold (linear) */
     CHECK(ui_params()[P_fold] == 32767, "a linear step clamps at max");
@@ -224,7 +224,7 @@ int main(void)
     ui_handle(UI_SRC_ENC_PRESETS, -9999);
     CHECK(ui_params()[P_mute] == 0, "an on/off param clamps at its min");
 
-    /* the active part starts at 0; part_next is a no-op with one part */
+    /* the active part starts at 0, part_next is a no-op with one part */
     CHECK(ui_part() == 0, "ui_part starts at 0");
 
     /* part mute toggle + query (the header's part ON/OFF) */

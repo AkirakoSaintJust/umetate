@@ -3,7 +3,7 @@
 """The docs' cross-reference check (roadmap §12.8, P6-1).
 
 Scans the canonical docs for Markdown link/image destinations and verifies each
-relative target resolves to a file. Scope: file paths only — `#anchor` suffixes
+relative target resolves to a file. Scope: file paths only, `#anchor` suffixes
 are stripped and `http(s)://`/`mailto:` are ignored (no heading-slug validation).
 
 Run standalone: `python -m umetate._links check`, or via `umetate deep-check --links`.

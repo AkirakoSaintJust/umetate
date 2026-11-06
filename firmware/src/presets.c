@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 /* Copyright (C) 2026 P1Onken (umetate) */
 /* The preset store implementation (presets.h). Byte-exact little-endian layouts,
- * matching `umetate/_records.py`; the bank save/load calls the platform's storage
+ * matching `umetate/_records.py`, the bank save/load calls the platform's storage
  * services (`slot_load/slot_save/settings_load/settings_save`), which the includer
  * provides (platform.c on device, stubs in the host test). */
 #include "presets.h"
@@ -180,9 +180,9 @@ int preset_settings_unpack(const uint8_t *raw, int32_t *base_channel, int32_t *m
 }
 
 /* A bank is a contiguous byte array of records, chunked across consecutive flash
- * slots at record boundaries — a record never straddles a slot, so a corrupt slot
+ * slots at record boundaries, so a record never straddles a slot and a corrupt slot
  * never splits a record. `PRESET_SLOT_MAX` (the byte ceiling, mirroring store.h
- * `SLOT_MAX`) gives the records-per-slot; the device build asserts the two agree
+ * `SLOT_MAX`) gives the records-per-slot, the device build asserts the two agree
  * below. */
 #ifdef SLOT_MAX
 _Static_assert(PRESET_SLOT_MAX == SLOT_MAX, "PRESET_SLOT_MAX must equal store.h SLOT_MAX");
@@ -221,7 +221,7 @@ static int bank_load(uint8_t *bank, uint32_t count, uint32_t rec, uint32_t slot0
     return 0;
 }
 
-#define PART_BANK_SLOT 0u /* the part bank starts at flash slot 0; the multi bank follows */
+#define PART_BANK_SLOT 0u /* the part bank starts at flash slot 0, the multi bank follows */
 
 int preset_part_bank_save(const uint8_t *bank, uint32_t n)
 {

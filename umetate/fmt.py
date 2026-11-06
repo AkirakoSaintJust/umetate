@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
-"""`umetate fmt` — clang-format over the C files (`.clang-format`, §6.8)."""
+"""`umetate fmt`: run clang-format over the C files (`.clang-format`, §6.8)."""
 
 from __future__ import annotations
 
@@ -37,7 +37,7 @@ def main(argv: list[str] | None = None) -> int:
     if runner.probe().docker:
         mode = ["--dry-run", "--Werror"] if args.check else ["-i"]
         return runner.run(["clang-format"] + mode + _c_files(), cwd="/work/firmware")
-    print("fmt: blocked — clang-format not found", file=sys.stderr)
+    print("fmt: blocked because clang-format was not found", file=sys.stderr)
     return 1
 
 

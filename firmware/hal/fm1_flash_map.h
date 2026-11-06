@@ -40,7 +40,7 @@ _Static_assert(!FL_JEDEC_OK(0xFFFFFFu), "an unknown JEDEC id must be refused");
  *   0xF4000-0xFDFFF  USR (stock resources; kept for a rollback)   NEVER
  *   0xFE000-0xFEFFF  free, unused
  *   0xFF000-0xFFFFF  key_mac                        NEVER
- * Everything below is an explicit allow-list; the asserts keep each allowed window out of the
+ * Everything below is an explicit allow-list, the asserts keep each allowed window out of the
  * protected ranges at compile time. */
 #define FL_HEAD_HI      0x00004000u                /* protected: [0, FL_HEAD_HI) */
 #define FL_CAL_LO       0x000C0000u                /* protected: BTIF + USRTRIM */

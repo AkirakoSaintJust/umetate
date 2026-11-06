@@ -11,7 +11,7 @@
  *
  * Two independent-timbre parts: part 0 = MIDI channel 0 (the panel + the CC
  * surface edit part 0's timbre), part 1 = channel 1 (its timbre comes from the
- * multi patch / SysEx). The engine owns the param truth; the panel's values are
+ * multi patch / SysEx). The engine owns the param truth, the panel's values are
  * mirrored in and out every pass. */
 #include "dsp.h"            /* the generated seam prototypes (gen/dsp.h) */
 #include "glue.h"           /* the generated seam adapters + app_audio (gen/glue.h) */
@@ -74,7 +74,7 @@ static void ui_sync(void)
         last_ui[i] = v[i];
     }
     /* part mute: force a muted part's `level` routing param to 0 (the UI's level
-     * value is preserved; unmuting restores it through the normal mirror). */
+     * value is preserved, unmuting restores it through the normal mirror). */
     for (i = 0; i < SYNTH_N_PARTS; i++) {
         if (ui_part_muted((uint8_t)i))
             type_p_fm1_glue_set_param(SYNTH_ROUTING_BASE + 3u * SYNTH_N_PARTS + i, 0);
@@ -273,7 +273,7 @@ static void app_step(void)
             app_last_scl_ms = now;
         }
 
-        /* ARP/SEQ/PLAY/REC: plain = operator mutes 1-4; SEL+ARP/PLAY = part 1
+        /* ARP/SEQ/PLAY/REC: plain = operator mutes 1-4, SEL+ARP/PLAY = part 1
            mute, SEL+SEQ/REC = part 2 mute. */
         if (b & (1u << BTN_ARP)) {
             if (scl) ui_part_mute_toggle(0u);

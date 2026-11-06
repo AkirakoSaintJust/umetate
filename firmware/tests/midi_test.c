@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 /* Copyright (C) 2026 P1Onken (umetate) */
 /* The device-side MIDI handler host test: scripted messages against recording
- * seam stubs — note routing, the CC map + value scaling, sustain, panic, bend. */
+ * seam stubs: note routing, the CC map + value scaling, sustain, panic, bend. */
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>

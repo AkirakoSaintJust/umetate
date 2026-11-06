@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
-"""`umetate publish` — assemble a distributable firmware repo (docs/roadmap.md §6.14).
+"""`umetate publish`: assemble a distributable firmware repo
+(docs/roadmap.md §6.14).
 
-Gathers a built synth's user docs, the `.fwsc` firmware artifact, and the browser
-web app into a self-contained `publish/<name>/` folder, ready to push to a remote
-GitHub repo with GitHub Pages serving the web app. This is the repeatable
-publishing loop: edit, `umetate build` + `umetate web-build`, `umetate publish`,
-bump the release notes, push.
+It gathers a built synth's user docs, the `.fwsc` firmware, and the browser app
+into a self-contained `publish/<name>/` folder, ready to push to a remote GitHub
+repo with Pages serving the web app. The loop is: edit, run `umetate build` and
+`umetate web-build`, run `umetate publish`, bump the release notes, push.
 """
 
 from __future__ import annotations
@@ -54,8 +54,8 @@ class ReleaseArtifact(TypedDict):
 
 
 # the served web app: the emulator page + worklet are source files in
-# `firmware/web_emu/`; `firmware.wasm` is the compiled artifact in `build/web/`.
-# (Do not take `build/web/index.html` — the parity lab clobbers it.)
+# `firmware/web_emu/`, `firmware.wasm` is the compiled artifact in `build/web/`.
+# (Do not take `build/web/index.html` because the parity lab clobbers it.)
 _WEB_SOURCES = (
     (_EMU_DIR, "index.html"),
     (_EMU_DIR, "worklet.js"),
@@ -103,7 +103,7 @@ _LICENCE_FILES = ("LICENSE", "LICENSING.md")
 # the framework source, snapshotted into the published repo as `framework/` so the
 # corresponding source is self-contained (a user does not need the umetate repo to
 # rebuild the firmware). `git archive` lists only tracked files, so the gitignored
-# build artifacts and the generated-from-patch `firmware/gen/*.c` stay out; the
+# build artifacts and the generated-from-patch `firmware/gen/*.c` stay out, the
 # generator (`umetate/`) regenerates them from `src/patch.json`, and `_bundle_dsp`
 # additionally copies the already-generated DSP so the tree also compiles as-is.
 _FRAMEWORK_PATHS = (
@@ -885,7 +885,7 @@ def main(argv: list[str] | None = None) -> int:
     else:
         print("  all artifacts present.")
     if not bundled:
-        print("  note: could not snapshot the framework source (no git/HEAD);")
+        print("  note: could not snapshot the framework source (no git/HEAD).")
         print("        the README still links the umetate repo for it.")
     if user_readme.is_file() and staged:
         print("  note: README.md is your hand-written file. Add a link to")

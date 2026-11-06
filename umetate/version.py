@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
-"""`umetate version` — print the CLI version."""
+"""`umetate version`, print the CLI version."""
 
 from __future__ import annotations
 

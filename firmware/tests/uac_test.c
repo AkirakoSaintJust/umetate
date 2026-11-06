@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only
  * Stereo regression for the 44.1 -> 48 kHz USB audio tap. The old code read the
- * right channel through &rs.l[s] + 2*RS_H; this test makes a channel swap or a
+ * right channel through &rs.l[s] + 2*RS_H, this test makes a channel swap or a
  * stride error fail on the host, without a device. */
 #include <stdint.h>
 #include <stdio.h>

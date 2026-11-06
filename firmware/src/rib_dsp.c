@@ -19,7 +19,7 @@ static uint32_t ages;
 
 /* ---- shared transport (docs/roadmap.md §12.1): defined in src/dsp_ipc.c, shared by
  * both cores. The voice state above is owned by core 1 (it drains the queue, renders,
- * and publishes status); core 0 only writes the queue, the bend, and reads the status. */
+ * and publishes status), core 0 only writes the queue, the bend, and reads the status. */
 
 static DSP_FN int32_t sine(uint32_t phase)
 {
@@ -125,7 +125,7 @@ void rib_dsp_all_off(void)
 
 /* The core-1 render job (handed over through fm1_cpu1.h): drain the note queue,
  * render one block into the ISR's buffer, then publish the reverse status. Core 0
- * owns the queue and reads the status; the voice state stays on core 1. */
+ * owns the queue and reads the status, the voice state stays on core 1. */
 void rib_render_block(uint32_t arg)
 {
     int32_t *out = (int32_t *)(uintptr_t)arg;

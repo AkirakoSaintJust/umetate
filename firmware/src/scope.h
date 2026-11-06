@@ -9,7 +9,7 @@
 #define SCOPE_BINS 120u       /* the spectrogram bar count (2 px each on 240 px) */
 #define SCOPE_CH 12u          /* the simultaneous per-op/per-part scope channels
                                * (ch 0 = the mix + 1..N_TAP_CH taps; must cover
-                               * 1 + the synth's N_TAP_CH — type-p-fm1 has 10) */
+                               * 1 + the synth's N_TAP_CH, type-p-fm1 has 10) */
 
 /* Channel 0 (the legacy single-channel entry points) is the final mixed output;
  * channels 1..SCOPE_CH-1 are the synth's scope taps (`<name>_dsp_tap`, §6.11.4). */

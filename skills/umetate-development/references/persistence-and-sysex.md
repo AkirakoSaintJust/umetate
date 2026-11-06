@@ -8,7 +8,7 @@ the project only declares its params and their ranges.
 
 ## Parameter semantics (decide first)
 
-Every parameter is defined with its full meaning, not just its bounds. For each
+Every parameter is defined with its full meaning and its bounds. For each
 parameter in the manifest, state:
 
 - the flattened `<instance>.<param>` target (the generated `set_param` id order).

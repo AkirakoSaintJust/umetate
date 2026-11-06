@@ -83,7 +83,7 @@ Do not re-learn these.
   `[rN++=4]` auto-increment. The stock firmware's compiler does. That is a real
   gap, but the register file is the hard ceiling above it.
 
-## Effective changes, in order of leverage
+## Effective changes, most useful first
 
 1. **Loop structure.** The voice-outer swap: hoist `bus[]=0` out of the sample loop,
    put the voice loop outside the sample loop, so the per-voice block constants and

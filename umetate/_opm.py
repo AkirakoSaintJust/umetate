@@ -243,7 +243,7 @@ def parse_opm(text: str) -> list[OpmVoice]:
                 dt2=_ranged(values[9], 0, 3, where),
                 ame=1 if values[10] else 0,
             )
-        # Other keys are vendor extensions; ignore them.
+        # Other keys are vendor extensions, ignore them.
     if current is not None:
         voices.append(_finish(current, 0))
     return voices
@@ -329,7 +329,7 @@ def _opm_ticks(
     step = 0
     ticks: list[int] = []
     counter = 1
-    # The slowest stage (rate 0, maximum key scaling) is about 2.4 minutes; a
+    # The slowest stage (rate 0, maximum key scaling) is about 2.4 minutes, a
     # hard cap keeps a malformed table from looping forever.
     for _ in range(4_000_000):
         if (counter & mask) == cmp:
@@ -421,7 +421,7 @@ def _nearest_rate(opm_time: float, candidates: Sequence[tuple[int, float]]) -> i
 
 
 # How far into a decay the rate map aims. A larger drop shortens the one-pole
-# tail at the cost of a faster first few dB. Eight matches the early body; the
+# tail at the cost of a faster first few dB. Eight matches the early body, the
 # converter defaults to a little more so the stage does not read long.
 _DECAY_DROP_DB = 16.0
 # A small rate offset on top of the time fit. The fit targets the chosen point,
@@ -497,7 +497,7 @@ def _release_rate(rr: int, ks: int, midi: int = 60) -> int:
     ticks = _opm_ticks(rr, "release", d1l=0, ks=ks, midi=midi, start_el=0)
     # Match the audible part of the release. The OPM runs down in a straight
     # dB line, so its -20 dB point is a fifth of the stage. Type P.fm1's
-    # one-pole has a long, quiet tail; matching the tail would make the note
+    # one-pole has a long, quiet tail, matching the tail would make the note
     # seem to hang after the OPM has gone.
     opm_time = _opm_time_to(ticks, start_el=0, target_el=round(20.0 / _DB_PER_EL))
     aim = round(32767.0 * 10.0 ** (-20.0 / 20.0))
@@ -552,7 +552,7 @@ def _dt1_cents(dt1: int) -> int:
         return 0
     sign = -1 if dt1 & 4 else 1
     step = dt1 & 3
-    # The four small values per key-code group; middle C is group 15.
+    # The four small values per key-code group, middle C is group 15.
     row = (0, 8, 16, 22)
     base = 1299 * 4  # STEPTBL_O2[0] << 2, the middle-C phase step
     cents = 1200.0 * math.log2(1.0 + sign * row[step] / base)

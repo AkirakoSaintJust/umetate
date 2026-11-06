@@ -3,7 +3,7 @@
 /* FM-1 USB0 full-speed device controller, register level only.
  * The protocol (descriptors, EP0 requests,
  * MIDI / CDC / SysEx) is the driver src/usb.c, shared with the update loader
- * and the host tests; this header is every USB register access it makes.
+ * and the host tests, this header is every USB register access it makes.
  *
  *   fm1_usb_reset()        CON0 = CON1 = 0, pads detached; wait >= 20 ms
  *   fm1_usb_attach(ep0)    clock, EP DMA defaults, PHY on, D+ pull-up

@@ -4,10 +4,10 @@
 layer of the preset store, the SysEx envelope, and the CLI's export/import.
 
 The byte layouts are fixed here (little-endian); both the host tools and the
-device C store implement them. Every record is a self-validating unit — a `u8
-version` (`0xFF` = empty slot), a body, and a **CRC-32** (poly `0xEDB88320` —
-the platform's `crc32`) over version+body, so a corrupt record is skipped, never
-the whole bank. The SysEx envelope's **CRC-16-CCITT** (poly `0x1021`, init
+device C store implement them. Every record is a self-validating unit: a `u8
+version` (`0xFF` = empty slot), a body, and a **CRC-32** (poly `0xEDB88320`,
+the platform's `crc32`) over version+body, so a corrupt record is skipped rather
+than losing the whole bank. The SysEx envelope's **CRC-16-CCITT** (poly `0x1021`, init
 `0xFFFF`, no reflect) is here too.
 """
 
@@ -21,7 +21,7 @@ EMPTY = 0xFF
 # The preset store's logical slot counts: 128 single-part slots + 64 multi-patch
 # slots. Each bank is a contiguous byte array chunked across the flash slots at
 # record boundaries (a record never straddles a slot). The flash slot byte ceiling
-# is store.h `SLOT_MAX` = 16 372 B; the type-p-fm1 317 B part record spans the 128
+# is store.h `SLOT_MAX` = 16 372 B, the type-p-fm1 317 B part record spans the 128
 # parts over 3 flash slots (51 per slot), the 63 B multi record fits 64 in one
 # (roadmap §6.11.4).
 PART_SLOTS = 128
@@ -29,7 +29,7 @@ MULTI_SLOTS = 64
 
 
 def crc32(data: bytes | bytearray) -> int:
-    """CRC-32, poly 0xEDB88320, init 0xFFFFFFFF, reflected — the platform's crc32."""
+    """CRC-32, poly 0xEDB88320, init 0xFFFFFFFF, reflected, the platform's crc32."""
     c = 0xFFFFFFFF
     for b in data:
         c ^= b
@@ -39,7 +39,7 @@ def crc32(data: bytes | bytearray) -> int:
 
 
 def crc16(data: bytes | bytearray) -> int:
-    """CRC-16-CCITT, poly 0x1021, init 0xFFFF, no reflect — the SysEx envelope CRC."""
+    """CRC-16-CCITT, poly 0x1021, init 0xFFFF, no reflect, the SysEx envelope CRC."""
     c = 0xFFFF
     for b in data:
         c ^= b << 8
@@ -49,14 +49,14 @@ def crc16(data: bytes | bytearray) -> int:
 
 
 class PartPatch(TypedDict):
-    """One timbre — the part's own param block (a part patch)."""
+    """One timbre, the part's own param block (a part patch)."""
 
     name: str
     params: list[int]
 
 
 class MultiPatch(TypedDict):
-    """A composition — which part patch each part uses + routing/gain/timing."""
+    """A composition, which part patch each part uses + routing/gain/timing."""
 
     name: str
     part_slot: list[int]  # per-part part-patch slot index (EMPTY = none)

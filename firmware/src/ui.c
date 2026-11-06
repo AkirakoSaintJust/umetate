@@ -8,7 +8,7 @@
 
 #define UI_MAX_DEPTH 8u
 #define UI_MAX_WIDGETS 24u
-#define UI_ROW_H 16u          /* FONT_S glyph height; one row */
+#define UI_ROW_H 16u          /* FONT_S glyph height, one row */
 #define UI_COL_W 120u         /* a column (col 0 = full width) */
 #define UI_REDRAW_MS 33u      /* ~30 Hz */
 
@@ -94,7 +94,7 @@ static void ui_reset_page(void)
 
 void ui_init(const ui_tables *t)
 {
-    palette_set(0); /* load the default palette — C_LINE..C_HI (gfx.c) would stay black */
+    palette_set(0); /* load the default palette, C_LINE..C_HI (gfx.c) would stay black */
     if (t->n_params > UI_PARAM_MAX)
         return; /* a panel beyond the kit's param cap: not rendered (the generator checks too) */
     ui_t = t;
@@ -121,7 +121,7 @@ void ui_push(uint8_t ctx)
 /* switch to `ctx`, replacing the current non-home mode (EDIT/FX/GLO are siblings,
  * not a stack): pops back to home first, then pushes. From home it is a plain push.
  * Pressing the menu's *own* button again (ctx == top) advances to the next page
- * (wrapping) instead of re-opening at page 0 — item 21. */
+ * (wrapping) instead of re-opening at page 0 (item 21). */
 void ui_switch(uint8_t ctx)
 {
     if (ui_stack[ui_sp] == ctx) {
@@ -149,7 +149,7 @@ void ui_pop(void)
 void ui_pop_home(void)
 {
     if (!ui_sp) {
-        /* already home: advance to the next home page (wrapping) — item 56 */
+        /* already home: advance to the next home page (wrapping), item 56. */
         if (ui_ctx()->n_pages > 1u) {
             ui_pagei[0] = (uint8_t)((ui_pagei[0] + 1u) % ui_ctx()->n_pages);
             ui_reset_page();
@@ -238,7 +238,7 @@ static const ui_binding *ui_resolve(uint16_t source)
 }
 
 /* clamp a param's value to its [min, max] (the display scale's range, which the
- * DSP's set_param also enforces). A value must never sit outside its range — the
+ * DSP's set_param also enforces). A value must never sit outside its range. The
  * display forms assume it (an on/off that slid negative would read "on"). */
 static void ui_clamp_param(uint16_t p)
 {
@@ -506,7 +506,7 @@ static void ui_draw_label(const ui_widget *w)
 }
 
 /* the param id a widget reads: UI_OP_ROW/UI_ENVELOPE resolve through the selected
- * operator *and* the active part; UI_PART_ROW resolves through the active part. */
+ * operator *and* the active part, UI_PART_ROW resolves through the active part. */
 static uint16_t ui_widget_param(const ui_widget *w)
 {
     if (w->type == UI_PART_ROW && ui_t->part_param && w->param < ui_t->n_part_param)
@@ -692,7 +692,7 @@ static void ui_format(const ui_widget *w, char *out, uint32_t n)
 }
 
 /* a param row: the label in white, the value + unit right-aligned in the value
- * colour — the value is what changes, so it is the bright/high-contrast element
+ * colour. The value is what changes, so it is the bright/high-contrast element
  * and the label is the quiet white reference (the C_TEXT/C_HI roles). */
 static void ui_draw_value(const ui_widget *w)
 {
@@ -777,8 +777,8 @@ static void ui_draw_grid(const ui_widget *w)
 
 /* draw a DX rate/level envelope curve for 7 param ids (r1,r2,r3,r4,l1,l2,l3) into
  * the current canvas (wd x ht). Stage length = log2 of the one-pole time constant
- * (so the exponential rate curve is shown on a log scale — a linear length would
- * make every slow rate identical); the level height = fm1_level_gain[level]
+ * (so the exponential rate curve is shown on a log scale. A linear length would
+ * make every slow rate identical), the level height = fm1_level_gain[level]
  * (0.25 dB/step: 99 = max, 0 = silence). No cursor. */
 static void ui_env_curve(uint32_t wd, uint32_t ht, const uint16_t *p)
 {
@@ -872,7 +872,7 @@ static uint32_t ui_scope_channel(const ui_widget *w)
  * half of a level-99 operator's tap, so a normal patch fills most of the height
  * and a louder one soft-clips at the edge. */
 /* a scope sample -> the vertical pixel: a quarter-sine soft-clip (the existing
- * fm1_sin_q15 table). `shift` sets the knee — a sample of 2^(shift+8) fills the
+ * fm1_sin_q15 table). `shift` sets the knee. A sample of 2^(shift+8) fills the
  * widget and anything louder saturates at the edge, so the trace clips instead of
  * overshooting. The expansive low end keeps normal levels readable (a level-75
  * operator spans most of the widget). */
@@ -918,7 +918,7 @@ static void ui_draw_scope(const ui_widget *w)
 }
 
 /* the spectrogram: SCOPE_BINS linearly-spaced Goertzel bars (power-normalized),
- * log-free and integer — the ear hears power, and the harmonic series is visible. */
+ * log-free and integer. The ear hears power, and the harmonic series is visible. */
 static void ui_draw_spectro(const ui_widget *w)
 {
     uint32_t x, y, wd, ht, i;
@@ -938,7 +938,7 @@ static void ui_draw_spectro(const ui_widget *w)
 }
 
 /* the status readout: ALG <n>  OP <n>/<m>  [MUTE] (the widget's `param` is the
- * algorithm param; the operator + mute come from ui_selected_op + the mute table). */
+ * algorithm param, the operator + mute come from ui_selected_op + the mute table). */
 static void ui_draw_status(const ui_widget *w)
 {
     char s[32], t[12];
@@ -961,8 +961,8 @@ static void ui_draw_status(const ui_widget *w)
     t[3] = 0;
     ui_strcat(s, t);
     /* the mute flag is drawn in the warning colour (its text also says MUTE, so it
-     * is not conveyed by colour alone). Clear the full 2-line region, not just the
-     * font height, so a previous page's header is fully erased. */
+     * is not conveyed by colour alone). Clear the full 2-line region rather than
+     * the font height alone, so a previous page's header is fully erased. */
     cv_begin(wd, ht, C_BLACK);
     {
         int32_t end = cv_text(0, 0, &FONT_S, s, C_GRAY);
@@ -972,9 +972,9 @@ static void ui_draw_status(const ui_widget *w)
     cv_blit(x, y);
 }
 
-/* the 8 standard 4-op FM algorithms (ymfm s_algorithm_ops, with alg 3 replaced —
+/* the 8 standard 4-op FM algorithms (ymfm s_algorithm_ops, with alg 3 replaced).
  * see umetate/_tables.py `_ROUTING`): ALGO_MOD[alg][i] is the bitmask of operators
- * that phase-modulate operator i; ALGO_CAR[alg] is the carrier bitmask. */
+ * that phase-modulate operator i, ALGO_CAR[alg] is the carrier bitmask. */
 static const uint8_t ALGO_MOD[8][4] = {
     {0, 1, 2, 4},   /* 0: 1->2->3->4 */
     {0, 0, 3, 4},   /* 1: (1+2)->3->4 */
@@ -1042,7 +1042,7 @@ static void algo_graph(int32_t alg, int32_t ox, int32_t oy)
 }
 
 /* the algorithm param id for the active part (part-relative when the algorithm is
- * a per-part param; `part_stride` is 0 for a single-part/global algorithm). */
+ * a per-part param, `part_stride` is 0 for a single-part/global algorithm). */
 static uint16_t ui_alg_param(void)
 {
     return (uint16_t)(ui_t->alg + (uint32_t)ui_selected_part * ui_t->part_stride);
@@ -1061,7 +1061,7 @@ static void ui_draw_algo(const ui_widget *w)
 
 /* build the subheader prefix for `mode` into `s` (empty = no prefix): 0 = "OP N",
  * 1 = "PART N", 2 = "OP", 3 = "PART", 4 = plain, 5 = "PART n OP". N is the active
- * operator/part — dynamic, so the header title re-renders on a part/op switch. */
+ * operator/part, and it is dynamic, so the header title re-renders on a part/op switch. */
 static void ui_prefix_str(uint8_t mode, char *s)
 {
     char t[4];
@@ -1111,7 +1111,7 @@ static void ui_draw_subheader(const ui_widget *w)
 
 /* the always-visible header (rows 0-1, full width): the active part + operator,
  * the algorithm, the menu name, the page N/M, and every part's + operator's
- * mute/active state. Drawn every redraw; its value folds all of those into one
+ * mute/active state. Drawn every redraw, its value folds all of those into one
  * word (distinct bit fields, no overlap). */
 static int32_t ui_header_value(void)
 {
@@ -1154,7 +1154,7 @@ static void ui_draw_header(void)
 
     /* row 0 (one line): P1 P2 · op 1 2 3 4 · ALG<alg> · <menu> <page>/<n>. Parts +
      * operators are the white base text (selected = light blue, muted = red); ALG is
-     * pink; the menu + page is purple. */
+     * pink, the menu + page is purple. */
     x = 0;
     if (ui_t->n_part <= 4u) {
         for (i = 0; i < ui_t->n_part; i++) {
@@ -1551,7 +1551,7 @@ static void ui_draw_name_editor(void)
     uint32_t i;
     cv_begin(240u, 6u * UI_ROW_H, C_POPUP_BG);
     cv_text(6, 2, &FONT_S, title, C_POPUP_TXT);
-    /* the name: FONT_L, 15 fixed columns; the cursor char is the accent colour */
+    /* the name: FONT_L, 15 fixed columns, the cursor char is the accent colour */
     for (i = 0; i < UI_NAME_LEN - 1u; i++) {
         char c = ui_name[ui_name_which][i];
         s[0] = c ? c : ' ';

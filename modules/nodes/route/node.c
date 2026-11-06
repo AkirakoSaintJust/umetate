@@ -1,13 +1,14 @@
-/* 4-op FM algorithm router (audio rate): the four routing rows the patch consumes
-   — rows 1/2/3 (modulation into op2/op3/op4) and row 4 (the carrier mask) — each a
+/* 4-op FM algorithm router (audio rate): the four routing rows the patch consumes,
+   row 1/2/3 (modulation into op2/op3/op4) and row 4 (the carrier mask). Each is a
    weighted sum of the four delayed operator outputs, indexed by the `alg` control
    input (the selected algorithm, clamped to the 8 shipped routings). Row 0
    (modulation into op1) is all-zero and omitted.
 
-   Specialized: the 8 algorithms' weights are 0/1 (Q15 `0`/`32767` — `32768`, the
-   true "1.0", does not fit an int16 and would overflow the top Q15 value). So each
-   output is a selective sum — `fm1_q15_mul(x, 32767)` for a 1-weight, nothing for a
-   0-weight — instead of four runtime-table `fm1_route4` calls (16 multiplies + 16
+   Specialized: the 8 algorithms' weights are 0/1. In Q15, `32768`, the true
+   "1.0", does not fit an int16 and would overflow the top value, so a 1-weight is
+   `32767`. Each
+   output is a selective sum, `fm1_q15_mul(x, 32767)` for a 1-weight, nothing for a
+   0-weight, instead of four runtime-table `fm1_route4` calls (16 multiplies + 16
    table loads). Bit-exact: a 1-weight is the exact `32767` scale (the compiler
    folds the constant to a 32-bit shift/sub/add); a 0-weight term is exactly 0.
    `alg` is a block-constant scalar, so the switch is perfectly predicted.

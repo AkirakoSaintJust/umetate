@@ -56,7 +56,7 @@ These are the mistakes that cost time while building the mockup.
   every font change and update the body minimum height and the grid minimum
   heights together.
 - **Tag labels need real spacing.** Enlarging type without widening the knob cell
-  makes `ratio` and `detune` touch. Check the rendered label edges, not only the
+  makes `ratio` and `detune` touch. Check the rendered label edges as well as the
   dial centers.
 - **Hidden scrollbars can hide a layout bug.** The screenshot flag can hide the
   scrollbar. Verify scrollers in a normal browser profile.

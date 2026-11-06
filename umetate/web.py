@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
-"""`umetate web-build` / `web-serve` (docs/roadmap.md §12.7.2, P4-1).
+"""`umetate web-build` and `web-serve` (docs/roadmap.md §12.7.2, P4-1).
 
-`web-build` compiles the whole firmware (rib.c + the generated engine + the app)
-to a standalone `firmware.wasm` and writes the FM-1 emulator page (`index.html` +
-`worklet.js`, the 240x240 screen read back from the framebuffer). `web-serve` is a
-loopback static server. `build()`/`check_parity` prove the *engine* (host gcc vs
-wasm/node) output matches exactly — the CI parity check, now separate from the
-user-facing emulator build.
+`web-build` compiles the whole firmware (rib.c, the generated engine, and the
+app) to a standalone `firmware.wasm`. It writes the FM-1 emulator page with
+`index.html` and `worklet.js`, and the 240 by 240 screen is read back from the
+framebuffer. `web-serve` is a loopback static server. `build()` and
+`check_parity` prove the engine output matches between host gcc and wasm/node,
+which is the CI parity check, now separate from the user-facing emulator build.
 """
 
 from __future__ import annotations
@@ -78,11 +78,11 @@ _SEAM_FUNCS = (
 _INDEX_HTML = """\
 <!doctype html>
 <meta charset="utf-8">
-<title>umetate dsp.wasm — parity lab</title>
+<title>umetate dsp.wasm, parity lab</title>
 <style>
   body { background: #101410; color: #9f9; font: 14px monospace; }
   button { margin: 2px; padding: 4px 10px; font: 13px monospace; }
-  #keys button { width: 44px; height: 96px; }
+  #keys button { width: 44px, height: 96px, }
 </style>
 <button id="start">start</button>
 <button id="off" disabled>all notes off</button>
@@ -316,7 +316,10 @@ def build(patch: Patch, out: Path, name: str) -> int:
     elif shutil.which("emcc"):
         rc = subprocess.run(_emcc_args(name, host=True, out=out)).returncode
     else:
-        print("web-build: blocked — emcc not found (`umetate setup`)", file=sys.stderr)
+        print(
+            "web-build: blocked because emcc was not found. Run `umetate setup`.",
+            file=sys.stderr,
+        )
         return 1
 
     wasm = out / "dsp.wasm"
@@ -428,7 +431,10 @@ def build_app(synth_dir: Path, out: Path) -> int:
     elif shutil.which("emcc"):
         rc = subprocess.run(_emcc_app_args(name, out, host=True)).returncode
     else:
-        print("web-build: blocked — emcc not found (`umetate setup`)", file=sys.stderr)
+        print(
+            "web-build: blocked because emcc was not found. Run `umetate setup`.",
+            file=sys.stderr,
+        )
         return 1
 
     wasm = out / "firmware.wasm"
@@ -535,7 +541,7 @@ def serve_main(argv: list[str] | None = None) -> int:
     port: int = args.port
     if not (directory / "index.html").is_file():
         print(
-            "web-serve: nothing built — run `umetate web-build` first",
+            "web-serve: nothing built, run `umetate web-build` first",
             file=sys.stderr,
         )
         return 1
@@ -550,7 +556,7 @@ def serve_main(argv: list[str] | None = None) -> int:
                 httpd.serve_forever()
     except OSError as exc:
         print(
-            f"web-serve: cannot bind 127.0.0.1:{port} ({exc}) — is another "
+            f"web-serve: cannot bind 127.0.0.1:{port} ({exc}), is another "
             "web-serve running?",
             file=sys.stderr,
         )

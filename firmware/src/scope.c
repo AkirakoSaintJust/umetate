@@ -2,7 +2,7 @@
  * Copyright (C) 2026 P1Onken (umetate)
  *
  * The oscilloscope / spectrogram analysis core (docs/roadmap.md §6.10 planned
- * widgets). Pure integer (no float — the pi32v2 is soft-FP), runs on CPU0 in the
+ * widgets). Pure integer, because the pi32v2 is soft-FP, and runs on CPU0 in the
  * UI path, never in the audio callback.
  *
  *   scope_push()        the audio ISR stores the left channel (ch 0, one block).
@@ -11,7 +11,7 @@
  *   scope_spectrum[_ch]()  a Goertzel bank at linearly-spaced bins -> Q15 magnitudes.
  *
  * The snapshot is one-writer (the ISR/app) / one-reader (the UI), so there is no
- * locking; the UI may read a block mid-update and show a torn frame, which is
+ * locking, the UI may read a block mid-update and show a torn frame, which is
  * harmless for a display (a bounded, non-blocking "last block" snapshot).
  */
 #include "scope.h"
@@ -85,7 +85,7 @@ static int64_t scope_goertzel_power(uint32_t ch, uint32_t f, uint32_t fs)
     return (int64_t)s1 * s1 + (int64_t)s2 * s2 - (((int64_t)k * s1 * s2) >> 15);
 }
 
-/* integer log2 (the highest set bit): a log-power scale for the spectrogram —
+/* integer log2 (the highest set bit): a log-power scale for the spectrogram.
  * each step is 6 dB, which is how the ear hears power. Avoids the 64-bit division
  * that a linear `pw*32767/peak` normalization would need (no `__divdi3` on target). */
 static uint32_t scope_log2(uint64_t v)

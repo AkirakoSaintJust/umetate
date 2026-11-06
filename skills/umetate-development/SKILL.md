@@ -98,7 +98,7 @@ exact names are board-specific, always read the `BTN_*`/`ENC_*` enums in
 to the FM-1, the velocity keybed, 16 pads, 4 faders (+ bank), 8 encoders
 (+ bank), and the pitch/mod wheels.
 
-Record each control's **kind**, not just its name: a smooth analog *pot* (the
+Record each control's **kind** as well as its name: a smooth analog *pot* (the
 FM-1's `MASTER`) is volume and platform-owned, a detented *encoder* is a parameter
 control. Distinguish *dedicated* knobs (`ALGORITHM`, `PRESETS`) from *page-slot*
 knobs (`KNOB1–4`). Name collisions exist, the FM-1 has both a `SELECT` *knob* and
@@ -121,7 +121,7 @@ of asking the user to repeat them.
 - **Parameter manifest** must list every parameter: its flattened
   `<instance>.<param>` target, min/max/default, curve, unit, rate
   (`sample`/`block`), and whether it is `modulatable`. Give every parameter a
-  unit and a meaning, not just bounds (a 0..99 level, a Q15 fraction, a ratio, a
+  unit and a meaning as well as bounds (a 0..99 level, a Q15 fraction, a ratio, a
   rate in hertz). This is the source of the generated `params.json`.
 - **Tables** must name any wavetable/segments/spectrum/phase-map data (the
   `tables:` section → `const` XIP).
@@ -163,7 +163,7 @@ screen. LED/pad feedback, and the full control flow.
   every context (menu), its pages, and the *modes* within a page (a page whose
   widgets change under a hold/shift, or a multi-mode page). A fresh reader must be
   able to draw the screen for every state, this is the panel's *graphical UI
-  correspondence*, not just its bindings.
+  correspondence* as well as its bindings.
 - **Control flow:** name every transition, `push`/`pop`/`pop_home`/`next_page`/
   `prev_page`/`set_page`/`bank_next`/`bank_prev`, and which control triggers it.
   A fresh agent must be able to trace every button/encoder/key through every

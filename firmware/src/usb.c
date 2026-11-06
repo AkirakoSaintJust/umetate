@@ -3,7 +3,7 @@
 /* USB full-speed device on USB0: a class-compliant USB-MIDI interface.
  * All SIE traffic happens in usb_poll(), called from the TIMER5 ISR at 2 kHz,
  * so INDEX is never shared and no USB IRQ is needed. MIDI in goes to a ring
- * the audio ISR drains; MIDI out comes from a ring the audio ISR fills.
+ * the audio ISR drains, MIDI out comes from a ring the audio ISR fills.
  * SysEx F0 22 24 35 7D F7 (soft key) asks the main loop to enter UBOOT.
  * VID 0x1209 / PID 0x0001 is the pid.codes test id.
  * FELUCCA_CDC=1 adds a CDC-ACM serial function (IAD composite: EP2 notify,
@@ -19,7 +19,7 @@
  * setting). The engines stay at 44.1 kHz; at 48 kHz uac_tap48 resamples (a polyphase FIR 160 / 147, uac_fir.h:
  * 12 taps a phase, Q15, Felucca's 24 x Q30 made smaller) into the ring. 44.1 kHz, the rate until a host asks
  * for another, sends the samples as before, bit for bit. */
-#include "../hal/fm1_usb.h"   /* registers; relative, so the loader and the host tests find it too */
+#include "../hal/fm1_usb.h"   /* registers, relative, so the loader and the host tests find it too */
 #ifndef FELUCCA_CDC
 #define FELUCCA_CDC 0
 #endif
@@ -40,12 +40,12 @@ enum { S_FADDR = 0, S_POWER = 1, S_INTRTX1 = 2, S_INTRTX2 = 3, S_INTRRX1 = 4, S_
        S_COUNT0 = 22, S_RXCOUNT1 = 22, S_RXCOUNT2 = 23 };
 
 /* Full-speed bulk/interrupt endpoints carry at most 64 bytes. Every buffer, descriptor field and SIE MAXP
- * register below derives from these bounds; do not reintroduce a bare 64 or 0xFF in an endpoint path. */
+ * register below derives from these bounds, do not reintroduce a bare 64 or 0xFF in an endpoint path. */
 #define USB_EP_MAXPACKET 64u
 #define USB_EP2_MAXPACKET 8u
 
 /* the endpoint buffers are read / written by the USB DMA: 32-byte aligned (a guess on 2026-10-13 that did not
- * cure OberVave's MIDI IN babble, kept as harmless; the cure was building the app with -Os: keep -Os, see tools/build.py) */
+ * cure OberVave's MIDI IN babble, kept as harmless, the cure was building the app with -Os: keep -Os, see tools/build.py) */
 static uint8_t ep0buf[USB_EP_MAXPACKET + 4] __attribute__((aligned(32)));
 static uint8_t ep1tx[USB_EP_MAXPACKET] __attribute__((aligned(32)));
 static uint8_t ep1rx[USB_EP_MAXPACKET + 4] __attribute__((aligned(32)));
@@ -160,7 +160,7 @@ static struct {
 
 #if FELUCCA_OTA
 /* M-UPGRADE SysEx (ota.c): one received frame at a time (7-bit bytes between
- * F0 and F7; frames arriving while one is pending are dropped, the host
+ * F0 and F7, frames arriving while one is pending are dropped, the host
  * retries), and a TX ring of SysEx event packets sent before any MIDI. */
 static uint8_t sx_frame[640];
 static uint32_t sx_pos;
@@ -255,7 +255,7 @@ static const uint8_t CFG_DESC[] = {
 typedef char cfg_len_ok[sizeof CFG_DESC == CFG_LEN ? 1 : -1];
 #if FELUCCA_CDC
 /* SLOOP 2.4, after Felucca 1.0.3 (#67): menu USB SERIAL. ON presents the serial console as before (the
- * descriptors above, byte for byte); OFF, the default, presents the device as a FELUCCA_CDC=0 build does: class 0,
+ * descriptors above, byte for byte), OFF, the default, presents the device as a FELUCCA_CDC=0 build does: class 0,
  * no IAD, audio + MIDI only (the same bytes: tests/uac_test.c compares them). With the console, macOS 13-15 let
  * Apple's CDC composite driver take the device and the USB audio input never appears. The console is a developer
  * tool; the editor, the installer and the soft key use USB-MIDI. Read once, before usb_start (main.c: the settings
@@ -687,7 +687,7 @@ stall:
     sie_wr(S_CSR0, 0x60);
 }
 
-/* SysEx assembly: only short commands matter here; the app's frames go to the
+/* SysEx assembly: only short commands matter here, the app's frames go to the
  * framework's synth_sysex_feed (the same byte stream, the handler sorts them out) */
 static void sysex_byte(uint8_t b)
 {
@@ -1150,7 +1150,7 @@ static uint32_t uac_packet(uint32_t *d)
     return n;
 }
 
-/* TIMER5, 2 kHz, also nested in the render: the host takes one packet per 1 ms frame; queue the
+/* TIMER5, 2 kHz, also nested in the render: the host takes one packet per 1 ms frame, queue the
  * next one as soon as the last has gone (TxPktRdy clear). Not paced on SOF-pending (see usb_poll).
  * The ring is fed only while the host reads: it often selects alt 1 long before its first IN token,
  * and a recorder may stop reading without going back to alt 0 (a packet waiting > 20 ms). */

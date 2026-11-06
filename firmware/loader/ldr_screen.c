@@ -2,7 +2,7 @@
  * Copyright (C) 2026 zvenson (from OberVave; the Firmware Hub's look)
  * Copyright (C) 2026 illuminus5 (Skiff: the idea, a loader that draws, its 5 x 7 letters and the order of things) */
 /* The update loader's screen (loader.c; tests/ldr_screen_test.c). A unit whose install was cut off comes back to the
- * loader at every power-on and showed a black screen; now it says what it does, in the Firmware Hub's colours:
+ * loader at every power-on and showed a black screen, now it says what it does, in the Firmware Hub's colours:
  *   the firmware's name, big, in its colour, a thin line under it
  *   what happens (UPDATE MODE, WRITING, UPDATE FAILED) and what to do, white and grey
  *   20 segments: a light running to and fro while it waits (ldr_anim), the share written while it writes, the percent

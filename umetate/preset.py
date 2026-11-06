@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
-"""`umetate preset` — export/import the preset bank as SysEx (roadmap §6.11.4).
+"""`umetate preset`: export or import the preset bank as SysEx
+(roadmap §6.11.4).
 
-The host-side round-trip: a JSON bank (128 single parts + 64 multi patches) <-> a
-`.syx` stream of dump frames. The device transfer (MIDI) is the firmware's job
-(F7); here the `.syx` file is the exchange format.
+This is the host-side round trip. A JSON bank holds 128 single parts and 64 multi
+patches, and the `.syx` stream is a sequence of dump frames. The device transfer
+over MIDI is the firmware's job (F7). Here the `.syx` file is the exchange
+format.
 """
 
 from __future__ import annotations

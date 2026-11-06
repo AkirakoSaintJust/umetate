@@ -6,8 +6,8 @@ allocation.
 
 Pure emission (like `_backend`): every function returns C source lines. The
 synth-specific note→increment glue lives in `<name>_note_derived` (emitted by the
-backend); this module owns the allocation semantics — poly / mono (with
-`unison_count` stacked voices) — and
+backend); this module owns the allocation semantics, poly / mono (with
+`unison_count` stacked voices), and
 the per-voice base increment `voice_inc[v]` (note_to_inc × detune) that the
 note-derived increments scale. Portamento (glide) ramps `voice_inc[v]` toward
 `voice_target_inc[v]` at a constant rate (linear in the increment, no LUT); the
@@ -24,14 +24,14 @@ from ._ir import ParamEntry
 
 # The release tail: a released voice stays allocated (rendered with gate=0, so its
 # envelope runs the release stage) for up to this many control blocks before it is
-# freed for stealing. 8192 blocks ≈ 5.9 s at 44100/32 — long enough for the
+# freed for stealing. 8192 blocks ≈ 5.9 s at 44100/32, which is long enough for the
 # slowest DX rate (0 ≈ 5.7 s to −72 dB). The voice is silent (and steal-first)
-# once its envelope actually reaches zero; this only bounds the hold.
+# once its envelope actually reaches zero, this only bounds the hold.
 RELEASE_BLOCKS = 8192
 
 # (cname, default, friendly name, min, max, unit, display, curve) for the seven
 # universal voice-mode params. Multi-timbre: per-part arrays addressed through the
-# part index; the single-timbre fallback keeps them global scalars.
+# part index, the single-timbre fallback keeps them global scalars.
 MODE_PARAMS: tuple[tuple[str, int, str, int, int, str, str, str], ...] = (
     ("vm_mode", 0, "mode", 0, 1, "", "mode", "linear"),  # 0=poly 1=mono
     ("vm_unison_count", 1, "unison_count", 1, 8, "", "raw", "linear"),
@@ -160,7 +160,7 @@ def voice_state_fields(per_part: bool) -> list[tuple[str, str]]:
 def helpers(per_part: bool) -> list[str]:
     """Static helpers shared by note_on/note_off. `voice_mono_active` is emitted
     into the SRAM `.dsp_text` section (it is called from the note handlers that run
-    on the DSP core), so it must be `always_inline` — a compiler-chosen call would
+    on the DSP core), so it must be `always_inline`, a compiler-chosen call would
     branch from SRAM into the XIP `.text` section (rejected by build.py)."""
     if per_part:
         return [
@@ -312,7 +312,7 @@ def _note_on_ch_single(name: str) -> list[str]:
 
 def _note_on_ch_parts(name: str) -> list[str]:
     """The multitimbral routing: a note fires every matching part (channel +
-    keyzone), each allocating per its own voice mode — poly (one voice) or mono
+    keyzone), each allocating per its own voice mode, poly (one voice) or mono
     (the part's `unison_count` stacked voices, legato/priority/portamento)."""
     return [
         f"UMETATE_DSP_API void {name}_dsp_note_on_ch_s({name}_state *state, uint32_t note, uint32_t velocity, uint32_t channel) {{",

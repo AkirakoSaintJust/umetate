@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
-"""`umetate quick-check` — a fast, read-only presence/version probe (§12.8).
+"""`umetate quick-check`: a fast, read-only presence and version probe (§12.8).
 
-Reports each §5.5 layer; a missing toolchain is `blocked`, not `fail`. The deep
-verification (host tests + the checks) is `deep-check`, not here.
+It reports each §5.5 layer. A missing toolchain is `blocked` rather than `fail`.
+The deep verification is `deep-check`, not here.
 """
 
 from __future__ import annotations

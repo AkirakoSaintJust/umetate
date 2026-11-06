@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
-"""`umetate flash` — write a `.fwsc` to a device over USB-MIDI (docs §6.1, §8).
+"""`umetate flash`: write a `.fwsc` to a device over USB-MIDI (docs §6.1 and §8).
 
-Wraps the inherited `firmware/tools/fm1_install.py` (strangler-fig, not a rewrite).
-Gated: `--device` is required, the package is verified before any MIDI, and the
-installer's own confirmation still applies. Wrong model exits 6.
+It wraps the inherited `firmware/tools/fm1_install.py`, a strangler-fig
+arrangement rather than a rewrite. The command is gated. `--device` is required,
+the package is verified before any MIDI, and the installer's own confirmation
+still applies. A wrong model exits 6.
 """
 
 from __future__ import annotations
@@ -61,7 +62,7 @@ def flash(
 
     if not args.device:
         print(
-            "flash: refused — pass --device to write hardware (§8); a build, test or "
+            "flash: refused, pass --device to write hardware (§8); a build, test or "
             "edit is never permission to write.",
             file=sys.stderr,
         )
@@ -76,7 +77,7 @@ def flash(
     if verified is None:
         return 2
     product, model = verified
-    print(f"flash: {product} ({model}) verified; rollback: the stock .fwsc", file=out)
+    print(f"flash: {product} ({model}) verified. Rollback: the stock .fwsc.", file=out)
     for route in _ROUTES:
         print(f"flash: recovery: {route}", file=out)
 

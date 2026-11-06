@@ -2,17 +2,17 @@
  * Copyright (C) 2026 P1Onken (umetate)
  *
  * Dual-core DSP transport (docs/roadmap.md §12.1, synchronous one-job model).
- * Core 0 produces note events; core 1 renders each block as a job handed over
+ * Core 0 produces note events, core 1 renders each block as a job handed over
  * through hal/fm1_cpu1.h's mailbox. The shared state below lives in plain .bss,
- * 64-byte aligned, with csync barriers — the cores share the caches (fm1_cpu1.h),
- * so ordering is the only concern; there is no uncached alias on this chip.
+ * 64-byte aligned, with csync barriers, because the cores share the caches (fm1_cpu1.h),
+ * so ordering is the only concern, there is no uncached alias on this chip.
  *
  *   note queue    core 0 -> core 1   SPSC, 32-bit indices, acquire/release
  *   status        core 1 -> core 0   quiet / lit (single words)
  *   bend          core 0 -> core 1   shared value, single writer = core 0
  *
  * The ping-pong audio-block ring of §12.1 is deferred to P2-8 (the generator
- * transport); the synchronous model here renders straight into the ISR's buffer.
+ * transport), the synchronous model here renders straight into the ISR's buffer.
  */
 #pragma once
 #include <stdint.h>

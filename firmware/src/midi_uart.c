@@ -12,8 +12,8 @@
  * itself is in the ring: the reader then stays one byte behind, so each message
  * ends only with the next byte (a note-off held until the next note). Following
  * the content cannot drift. (Fix from Felucca [Salt] 0.9-salt14 by ChanceTheMaker,
- * found by keremimo on an FM-1 with an Akai MPC Sample; GPL-3.0.) */
-#include "../hal/fm1_uart.h"   /* registers; relative, so the host tests find it too */
+ * found by keremimo on an FM-1 with an Akai MPC Sample, GPL-3.0.) */
+#include "../hal/fm1_uart.h"   /* registers, relative, so the host tests find it too */
 
 #define UM_RING 128u
 #define UM_EMPTY 0xFDu         /* undefined MIDI realtime byte: never sent, marks unwritten slots */

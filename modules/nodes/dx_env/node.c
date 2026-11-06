@@ -2,8 +2,8 @@
    0..99 (the Yamaha scale). Each stage advances `level` toward its target by the
    rate's one-pole coefficient (`fm1_rate_coeff[r_eff]`, Q16), scaled by
    `rate_scale` (velocity -> envelope rate, Q15 unity 32768, always >= 0). A
-   key-follow factor `k` (Q15) pushes each rate toward 0 (slower) / 99 (faster) —
-   the effective rates are block-derived. Levels are total-level 0..99 -> Q15 gain
+   key-follow factor `k` (Q15) pushes each rate toward 0 (slower) or 99 (faster),
+   and the effective rates are block-derived. Levels are total-level 0..99 -> Q15 gain
    via `fm1_level_gain` (0.25 dB/step: 99 = max, 50 ≈ −12 dB, 0 = silence).
    `trigger` (default `voice_trig[v]`) resets to attack on a note-on edge, even
    mid-note (a voice steal). Stages: 0=attack (0->l1), 1=decay1 (l1->l2),

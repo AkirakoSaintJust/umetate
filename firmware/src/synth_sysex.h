@@ -5,15 +5,15 @@
  *   F0 00 21 1D <model> <cmd> <ver> <payload…> <crc16-lo> <crc16-hi> F7
  *
  * and the five commands (identity request, param dump, part-patch dump, multi-patch
- * dump, settings dump; responses echo the command with the high bit). The C mirror
+ * dump, settings dump, responses echo the command with the high bit). The C mirror
  * of `umetate/_sysex.py`. Feed the platform's SysEx byte stream with
- * `synth_sysex_feed`; call `synth_sysex_poll` from the main loop. Responses go out
+ * `synth_sysex_feed`, call `synth_sysex_poll` from the main loop. Responses go out
  * through the platform's `midi_send_sysex` (provided by the includer). */
 #pragma once
 #include <stdint.h>
 
 #define SYNTH_SX_MAX 1536u  /* a frame + a response fit (a 256-param part patch
-                             * is ~1206 bytes 7-bit packed); longer frames are dropped */
+                             * is ~1206 bytes 7-bit packed), longer frames are dropped */
 
 typedef struct {
     uint32_t model;          /* the firmware's SysEx model byte */

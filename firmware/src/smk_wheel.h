@@ -6,7 +6,7 @@
  * reading, the range grows to what the wheel has reached, a dead band of SMK_PW_DEAD around the centre.
  * While the wheel rests in the dead band the centre follows a slow drift, at most one step per SMK_PW_DRIFT_MS
  * (in time, not in calls: the main loop calls this thousands of times a second, and a centre that moves that
- * fast is dragged along by a slow touch of the wheel; the spring then brings the wheel back to its real rest,
+ * fast is dragged along by a slow touch of the wheel, the spring then brings the wheel back to its real rest,
  * outside the dragged dead band, and a bend stays on whatever track is selected). No hardware here: the host
  * tests (tests/smk_wheel_test.c) run it. */
 #pragma once

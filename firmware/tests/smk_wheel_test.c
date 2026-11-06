@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only (from genkigenki/sloop-fm1 smk37; OberVave: SMK_PW_ST 2) */
 /* SMK-37 Pro pitch wheel (src/smk_wheel.h): the bend is back to 0 once the wheel rests again, however
- * it was moved. v0.1 moved the centre by one count every 200 calls; the main loop calls it some 10 000 to
+ * it was moved. v0.1 moved the centre by one count every 200 calls, the main loop calls it some 10 000 to
  * 50 000 times a second, so a slow touch dragged the centre along, the spring brought the wheel back outside
  * the dragged dead band and a bend of several semitones stayed on, on whichever synth track was selected:
  * switching tracks took it off one track and put it on the next ("track 1 transposes when I change track"). */

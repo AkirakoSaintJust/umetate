@@ -35,7 +35,7 @@ static inline void *fl_far(void *p) { void *volatile q = p; return q; }
 #define T4_CNT          REG32(0x10804u)            /* TIMER4, 24 MHz free-running */
 
 #define FL_XIP(off)     FM1_XIP(off)              /* fm1_xip.h */
-#include "fm1_flash_map.h"                  /* FL_IN, FL_STORE_OK, FL_RANGE_OK, FL_GUARD, FL_JEDEC_OK; per board */
+#include "fm1_flash_map.h"                  /* FL_IN, FL_STORE_OK, FL_RANGE_OK, FL_GUARD, FL_JEDEC_OK, per board */
 
 typedef struct { uint32_t sfc_con, spi_con; } fl_saved_t;
 

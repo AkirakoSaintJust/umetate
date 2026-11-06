@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
-"""`umetate debrick` — name the recovery routes and their actual procedures.
+"""`umetate debrick`: name the recovery routes and their actual procedures.
 
-A route dispatcher, not a writer: `app-rescue`/`update-loader` recover through the
-boot chord + `umetate flash` (the `.fwsc` installer), so there is no separate host
-write here. The one distinct recovery write — `mask-rom`, a raw-NOR write over the
-USB_KEY dongle + `jl-uboot-tool` — is `blocked` (the dongle needs a USB solder).
+This is a route dispatcher, not a writer. `app-rescue` and `update-loader`
+recover through the boot chord and `umetate flash`, so there is no separate host
+write here. The one distinct recovery write, `mask-rom`, is a raw-NOR write over
+the USB_KEY dongle and `jl-uboot-tool`, and it is `blocked` because the dongle
+needs a USB solder.
 """
 
 from __future__ import annotations
@@ -43,7 +44,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     procedure, blocked = _ROUTES[str(args.route)]
-    print(f"debrick: {args.route} — {procedure}")
+    print(f"debrick: {args.route}. {procedure}")
     if blocked:
         print(
             "debrick: mask-rom is blocked (the USB_KEY dongle needs a USB solder)",

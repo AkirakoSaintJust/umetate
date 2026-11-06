@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
-"""`umetate scaffold` — generate a node/macro/patch/synth skeleton (§12.7.4).
+"""`umetate scaffold`: generate a node, macro, patch, or synth skeleton
+(§12.7.4).
 
-`--template T` copies a shipped example (e.g. `type-p-fm1`) instead of the empty
-skeleton. A generated `patch` is verified to build (generate + host compile); a
-generated `synth` is a complete minimal firmware (patch + panel + app glue) that
-`umetate build --synth` composes into sound out of the box.
+`--template T` copies a shipped example such as `type-p-fm1` instead of the empty
+skeleton. A generated `patch` is verified to build through generate and a host
+compile. A generated `synth` is a complete minimal firmware with a patch, a
+panel, and the app glue, and `umetate build --synth` composes it into sound out
+of the box.
 """
 
 from __future__ import annotations
@@ -76,8 +78,8 @@ def _write(directory: Path, name: str, data: object) -> None:
 
 
 # -----------------------------------------------------------------------------
-# `umetate scaffold synth` — a complete, minimal full firmware (the two-tier gap:
-# patch-level `scaffold patch` stops at a generator dogfood; `synth` adds the app
+# `umetate scaffold synth`, a complete, minimal full firmware (the two-tier gap:
+# patch-level `scaffold patch` stops at a generator dogfood, `synth` adds the app
 # glue so `umetate build --synth <dir>` produces sound out of the box).
 # -----------------------------------------------------------------------------
 
@@ -183,9 +185,9 @@ _SYNTH_APP_C = """/* SPDX-License-Identifier: GPL-3.0-only */
  * synth services. Included by src/rib.c in `umetate build --synth <dir>`.
  * Extend this file (and patch.json / panel.json) to shape the instrument.
  * The preset save/load/init/name flow and the modal popups are the framework's
- * synth_app.c; this file is the control map + the credits page.
+ * synth_app.c, this file is the control map + the credits page.
  * (No <string.h>: memset/memcpy/memcmp come from the platform's freestanding
- * libc.c, as in every synth — the pi32v2 toolchain has no libc headers.) */
+ * libc.c, as in every synth, because the pi32v2 toolchain has no libc headers.) */
 #include "dsp.h"
 #include "glue.h"
 #include "cc_map.h"
@@ -197,8 +199,8 @@ _SYNTH_APP_C = """/* SPDX-License-Identifier: GPL-3.0-only */
 #include "synth_runtime.h"
 #include "synth_app.h"
 
-/* the preset store's writable memory (flash = persistence; RAM = the working copy
- * reloaded each boot; .pool is the big-buffer region). */
+/* the preset store's writable memory (flash = persistence, RAM = the working copy
+ * reloaded each boot, .pool is the big-buffer region). */
 static uint8_t part_bank[PP_BANK(SYNTH_N_PARAMS)] __attribute__((section(".pool")));
 static uint8_t multi_bank[MP_BANK(SYNTH_N_PARTS)] __attribute__((section(".pool")));
 static uint8_t settings[ST_RECORD];
@@ -225,7 +227,7 @@ static void {name}_get_init(uint32_t i, uint16_t *id, int32_t *value)
     *value = {name}_init[i].value;
 }
 
-/* the app's action hooks (called by ui.c); the generic bodies are synth_app_* */
+/* the app's action hooks (called by ui.c), the generic bodies are synth_app_* */
 void ui_act_note_on(uint8_t note, uint8_t vel) { {name}_glue_note_on(note, vel); }
 void ui_act_note_off(uint8_t note) { {name}_glue_note_off(note); }
 void ui_act_set_step(uint8_t step) { (void)step; }
@@ -435,7 +437,7 @@ def _synth(name: str, out: Path) -> int:
 
 def _builds(patch: Patch) -> bool:
     """Does the patch generate + compile on the host? True when a local `cc` is
-    absent (the check is a host-toolchain nicety, not a gate) — e.g. Windows
+    absent (the check is a host-toolchain nicety, not a gate), e.g. Windows
     without WSL, where the Docker image holds the toolchain instead."""
     src = generate(patch)
     with tempfile.TemporaryDirectory() as tmp:
@@ -518,7 +520,7 @@ def _patch(name: str, out: Path, template: str | None) -> int:
     _write(out, "patch.json", patch)
     _write(out, "panel.json", panel)
     if _builds(patch):
-        print(f"scaffolded patch {out / 'patch.json'} (+ panel.json); it builds")
+        print(f"scaffolded patch {out / 'patch.json'} and panel.json. It builds.")
         return 0
     print("scaffold: the generated patch does not build", file=sys.stderr)
     return 1

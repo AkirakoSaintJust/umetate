@@ -12,7 +12,7 @@
 ## Player outcome
 
 - **What the player can do that they could not do before:** load Type P.fm1 in a
-  CLAP host, not only in a VST3 host, and automate the same 313 manifest
+  CLAP host as well as a VST3 host, and automate the same 313 manifest
   parameters with the same engine and preset banks.
 - **How it sounds or behaves:** identical to the VST3 build. The CLAP wrapper
   carries the same processor, editor, MIDI bridge and output rate bridge. The
@@ -156,8 +156,8 @@
   stereo, peak 0.609467.
 - The fresh `umetate-host-build:dawtest` image configures with JUCE and CLAP
   enabled and passes all 8 CTests, with `linux_daws` at 24.23 seconds.
-- `plugin_smoke` now proves a full 313-parameter state round trip, not only one
-  parameter.
+- `plugin_smoke` now proves a full 313-parameter state round trip, where the
+  earlier test covered one parameter.
 - The remaining warning is in the wrapper state loader, not in the processor.
 
 ## Risks and fallback

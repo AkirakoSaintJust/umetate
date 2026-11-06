@@ -67,7 +67,7 @@ static uint32_t sx_unpack7(const uint8_t *in, uint32_t n, uint32_t want, uint8_t
     return o;
 }
 
-/* parse: F0 00 21 1D model cmd ver payload… crc16 F7 -> 1 + the fields; 0 otherwise */
+/* parse: F0 00 21 1D model cmd ver payload… crc16 F7 -> 1 + the fields, 0 otherwise */
 static int sx_parse(const uint8_t *f, uint32_t n, uint32_t *model, uint32_t *cmd,
                     uint32_t *ver, const uint8_t **payload, uint32_t *pn)
 {

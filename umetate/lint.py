@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
-"""`umetate lint --c` — the C standing checks (§6.1, §12.8).
+"""`umetate lint --c`: the C standing checks (§6.1 and §12.8).
 
-Static, grep-based checks (clang-tidy is the deep AST pass, run separately): SEC-1
-MAXP bounds, SEC-2 UAC access, ROM-address constants, HAL-only MMIO, and no
-`double`/allocation in the DSP TU.
+These are static, grep-based checks. Clang-tidy is the deep AST pass and runs
+separately. The checks cover SEC-1 MAXP bounds, SEC-2 UAC access, ROM-address
+constants, HAL-only MMIO, and no `double` or allocation in the DSP translation
+unit.
 """
 
 from __future__ import annotations

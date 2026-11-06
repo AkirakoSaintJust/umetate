@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (C) 2026 P1Onken (umetate)
-"""`umetate lib` — list the shipped nodes + macros + templates (local, no registry).
+"""`umetate lib`: list the shipped nodes, macros, and templates. It is local and
+uses no registry.
 
-`markdown` prints the node library as a Markdown table generated from the
-manifests (the authoritative source — `docs/module-library.md` is the checked-in
-copy, so the roadmap's node table can never drift from the manifests). `generate`
-writes that file; `check` regenerates to memory and diffs (any drift is an error).
+`markdown` prints the node library as a table generated from the manifests, which
+are the authoritative source. `docs/module-library.md` is the checked-in copy,
+so the roadmap's node table cannot drift from the manifests. `generate` writes
+that file. `check` regenerates it in memory and diffs, and any drift is an error.
 """
 
 from __future__ import annotations

@@ -89,7 +89,8 @@ No hand-written `dsp.c`: `generate(patch)` emits `<synth>_dsp_*` from the patch
   12-waveform OPZ + OPL union (0–7 OPZ, 8–11 OPL-only).
   `FM1_MATH_INLINE`, so a `.dsp_text` call never goes XIP.
 - `FM1_MATH_INLINE int32_t fm1_route4(const int16_t *w, int32_t a, int32_t b,
-  int32_t c, int32_t d)` — `Σ a·w0 + b·w1 + c·w2 + d·w3` via `fm1_q15_mul`.
+  int32_t c, int32_t d)`, which computes `Σ a·w0 + b·w1 + c·w2 + d·w3` via
+  `fm1_q15_mul`.
 
 ## 3. Data layout
 

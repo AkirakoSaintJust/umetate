@@ -1,15 +1,15 @@
 # Worked example: Type P.fm1 (4-op Yamaha FM)
 
-This worked example puts the framework through a complete four-operator FM
-synth, the **type-p-fm1 program** in `docs/roadmap.md` §6.11 (the modules it
-shipped are documented in §6.9). The instrument follows the OPZ/DX21 lineage and
-includes per-operator feedback, eight runtime-selectable algorithms,
-rate/level envelopes, and 12 waveforms. It also has a per-part pitch LFO and a
-per-note pitch envelope, plus an amplitude LFO for each operator. It builds into
-a full
-firmware: **two independent timbres** (parts, channels 0/1), velocity, presets
-(128+64 + settings), SysEx, and MIDI CC/sustain/panic/bend, composed from the app
-glue `app.c` onto the frozen `rib.c` framework (`umetate build --synth`).
+Type P.fm1 is the worked example I built to put the framework through a complete
+four-operator FM synth. It is the **type-p-fm1 program** in `docs/roadmap.md`
+§6.11 (the modules it shipped are documented in §6.9). The instrument follows
+the OPZ/DX21 lineage and includes per-operator feedback, eight
+runtime-selectable algorithms, rate/level envelopes, and 12 waveforms. It also
+has a per-part pitch LFO and a per-note pitch envelope, plus an amplitude LFO for
+each operator. It builds into a full firmware with **two independent timbres**
+(parts, channels 0/1), velocity, presets (128+64 plus settings), SysEx, and MIDI
+CC, sustain, panic, and bend. The app glue `app.c` composes onto the frozen
+`rib.c` framework through `umetate build --synth`.
 
 ## 1. The synth
 

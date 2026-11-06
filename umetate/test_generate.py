@@ -182,7 +182,7 @@ VA_OSC: Patch = {
 }
 
 
-# `osc` with a non-sine waveform (6 = double half sine) — exercises fm1_sin_wave.
+# `osc` with a non-sine waveform (6 = double half sine), which exercises fm1_sin_wave.
 WAVEFORM: Patch = {
     "name": "waveform_test",
     "voices": 4,
@@ -203,7 +203,7 @@ WAVEFORM: Patch = {
     "global": {"nodes": [], "wires": []},
 }
 
-# `route4` (routing-matrix row, alg 7 additive = all carriers) + `mix4` — exercises
+# `route4` (routing-matrix row, alg 7 additive = all carriers) + `mix4`, which exercises
 # the runtime-algorithm primitive and the 4-input sum.
 ROUTE4_TEST: Patch = {
     "name": "route4_test",
@@ -476,7 +476,7 @@ FM_OP: Patch = {
 }
 
 # The phase-modulation contract. A rectified sine has a large DC mean: under PM the
-# carrier's *frequency* is unchanged (the DC is a constant phase offset); under the
+# carrier's *frequency* is unchanged (the DC is a constant phase offset), under the
 # old accumulating-FM phasor it detuned the carrier by the mean. The flat envelope
 # (l1=l2=l3, zero decay) keeps the test about the oscillator, not the EG.
 _PM_ENV: dict[str, int] = {
@@ -547,7 +547,7 @@ RELEASE_PATCH: Patch = {
 
 # A single operator with a per-note pitch envelope wired into its pitch. With
 # `on` = 1 and a +1-octave sustain (l1 = l2 = l3 = 32768), the carrier's
-# frequency doubles; with `on` = 0 the pitch envelope contributes nothing.
+# frequency doubles, with `on` = 0 the pitch envelope contributes nothing.
 _PENV: dict[str, int] = {
     "r1": 99,
     "r2": 0,
@@ -594,7 +594,7 @@ LPG_TEST: Patch = {
 }
 
 # the `dx_env` rate/level envelope (attack/decay1/decay2/sustain/release) driving a
-# VCA — non-silent while gated, then release to silence.
+# VCA, non-silent while gated, then release to silence.
 DX_ENV: Patch = {
     "name": "dx_env_test",
     "voices": 4,
@@ -654,7 +654,7 @@ TABLE_OSC: Patch = {
 }
 
 # the mip-mapped band-limited `osc` table: a phasor drives the square (waveform
-# 10); the phasor's `mip` selects the level whose top harmonic sits below Nyquist,
+# 10), the phasor's `mip` selects the level whose top harmonic sits below Nyquist,
 # so a high note drops the odd harmonics that would otherwise fold back and alias.
 OSC_TABLE_BL: Patch = {
     "name": "osc_table_bl",
@@ -790,7 +790,7 @@ PULSE_TEST: Patch = {
 
 # D23 modulation: a modulatable param gets a wired `<param>_mod` control input + a
 # `<param>_depth` param (effective value = base + mod·depth at block rate). `width`
-# on the band-limited `pulse` is modulatable; an LFO wired to `osc.width_mod` sweeps
+# on the band-limited `pulse` is modulatable, an LFO wired to `osc.width_mod` sweeps
 # the duty when `width_depth` is non-zero (and is inert when it is zero).
 MOD_PULSE_TEST: Patch = {
     "name": "mod_pulse_test",
@@ -1170,7 +1170,7 @@ static int64_t energy(void) {
 }
 int main(void) {
     /* every algorithm x every FX combo (0 = dry, 1 = filter, 2 = wavefolder, 3 = both)
-       must render non-silent — the algorithm switch and the post FX compose. */
+       must render non-silent, the algorithm switch and the post FX compose. */
     for (uint32_t alg = 0; alg < 8; alg++) {
         for (uint32_t fx = 0; fx < 4; fx++) {
             __NAME___dsp_reset();
@@ -1300,7 +1300,7 @@ VEL_RATE_PATCH: Patch = {
 # The retrigger contract: a note-on that *steals* a sounding voice must reset that
 # voice's envelope to attack (not continue the old note's envelope). Compare, for
 # the *same* note 72, a fresh attack ("fresh") against an attack after a steal
-# ("steal", note 60 first): with retrigger the two energies match; without it the
+# ("steal", note 60 first): with retrigger the two energies match, without it the
 # stolen note rides the old note's raised envelope and is much louder. One process
 # per mode (the engine's per-voice envelope/phase are static and shared).
 RETRIG_HARNESS = """\
@@ -1455,7 +1455,7 @@ int main(int argc, char **argv) {
 """
 
 # The portamento contract: a note change glides the pitch (constant rate) instead
-# of snapping. A single-voice sine steers from note 60 to note 72; with glide the
+# of snapping. A single-voice sine steers from note 60 to note 72, with glide the
 # average frequency over the window stays near 60 (few zero crossings), without it
 # the window is all note 72 (roughly twice the crossings). One process per
 # portamento value (the engine's static phase is shared).
@@ -1544,7 +1544,7 @@ int main(int argc, char **argv) {
 """
 
 # Per-part `level` (gain) and `delay` (onset offset): part 0 silent on channel 0
-# (level 0) but loud on channel 1; a part-0 note delayed 100 ms is silent over its
+# (level 0) but loud on channel 1, a part-0 note delayed 100 ms is silent over its
 # first 256 samples (still pending).
 LEVEL_DELAY_HARNESS = """\
 #include <stdio.h>
@@ -1590,7 +1590,7 @@ int main(void) {
 
 # The per-part voice-mode contract: the six mode params are per-part, so part 0
 # (mono) and part 1 (poly) allocate independently. Part 0's mono priority is
-# last-note; note_off takes over to the previous held note. Observed through
+# last-note, note_off takes over to the previous held note. Observed through
 # `dsp_lit` (the gated-note bitmask in a 27-note window).
 PARTS_MODE_HARNESS = """\
 #include <stdio.h>
@@ -1611,14 +1611,14 @@ int main(void) {
     __NAME___dsp_note_on_ch(70, 100, 1u);
     __NAME___dsp_note_on_ch(72, 100, 1u);
     uint32_t lit = __NAME___dsp_lit(60);
-    /* part 0: only note 64 (bit 4); part 1: 70 + 72 (bits 10, 12) */
+    /* part 0: only note 64 (bit 4), part 1: 70 + 72 (bits 10, 12) */
     if (lit != ((1u << 4) | (1u << 10) | (1u << 12))) {
         printf("FAIL: per-part mono/poly isolation (lit=%u)\\n", lit);
         return 1;
     }
     __NAME___dsp_note_off(64);
     lit = __NAME___dsp_lit(60);
-    /* part 0 mono takeover to 62 (bit 2); part 1 unchanged */
+    /* part 0 mono takeover to 62 (bit 2), part 1 unchanged */
     if (lit != ((1u << 2) | (1u << 10) | (1u << 12))) {
         printf("FAIL: per-part mono takeover (lit=%u)\\n", lit);
         return 1;
@@ -1955,7 +1955,7 @@ def _retrigger_on_steal(patch: Patch) -> tuple[bool, str]:
 
 def _voice_ceiling() -> tuple[bool, str]:
     """The polyphony ceiling + steal-policy contract: a 4-voice patch holding a 5th
-    note steals the *oldest* gated voice — the pool never grows past NVOICE.
+    note steals the *oldest* gated voice, the pool never grows past NVOICE.
     Observed through `dsp_lit` (the gated-note bitmask in a 27-note window)."""
     patch: Patch = {
         "name": "ceiling_test",
@@ -3100,7 +3100,7 @@ def _pm_semantics() -> tuple[bool, str]:
 
 def _release_tail() -> tuple[bool, str]:
     """note-off releases: after a key release the operator envelope keeps sounding
-    (a release tail) and decays to silence — not an instant cut. The first 64
+    (a release tail) and decays to silence, not an instant cut. The first 64
     frames after note-off must be non-silent; the last 2048 of an ~2.9 s release
     render must be near-silent (the release at r4 = 60 is ~1.9 s)."""
     src = generate(RELEASE_PATCH)
@@ -3314,7 +3314,7 @@ def _pulse_antialias() -> None:
 def _table_osc_antialias() -> None:
     """The mip-mapped band-limited `osc` table removes the folded harmonics a naive
     square produces at a high note: at C7 (2093 Hz) harmonic 11 sits above Nyquist
-    and folds to ~21077 Hz. The band-limited table (8 harmonics) has none of it —
+    and folds to ~21077 Hz. The band-limited table (8 harmonics) has none of it,
     only the (much weaker) Gibbs ringing of the truncation remains."""
     note = 96  # C7
     inc = 203840951  # note_to_inc(96) at 44.1 kHz
@@ -3346,7 +3346,7 @@ def _key_scale_works() -> None:
 
 def _triangle_bandlimited() -> None:
     """The polyBLEP triangle (integrated square) has the ideal odd-harmonic 1/n^2
-    spectrum — a band-limited triangle (unlike saw/square's 1/n, the triangle
+    spectrum, a band-limited triangle (unlike saw/square's 1/n, the triangle
     already rolls off fast, so the claim is the *correct* spectrum, not
     attenuation vs the naive triangle). The leaky integrator's note-on transient
     is skipped (measured over the steady-state tail)."""
@@ -3358,7 +3358,7 @@ def _triangle_bandlimited() -> None:
     peak = max(abs(x) for x in tail)
     assert 28000 <= peak <= 34000, f"triangle peak {peak} is not full-scale"
     print(f"ok: polyBLEP triangle peak {peak} (full-scale)")
-    # odd harmonics follow 1/n^2 (3 -> 1/9, 21 -> 1/441); a band-limited triangle
+    # odd harmonics follow 1/n^2 (3 -> 1/9, 21 -> 1/441), a band-limited triangle
     for h, expect in ((3, 1.0 / 9.0), (21, 1.0 / 441.0)):
         got = _goertzel(tail, f0 * h, fs) / _goertzel(tail, f0, fs)
         assert expect * 0.7 <= got <= expect * 1.3, (
@@ -3824,7 +3824,7 @@ def main() -> int:
         print("ok: sysex-layout pins the record geometry (10 params, 2 parts)")
 
     # the type-p-fm1 patch's per-part count + part-patch frame must fit the C caps
-    # (presets.h SYNTH_PARAM_MAX + synth_sysex.h SYNTH_SX_MAX); the key/velocity
+    # (presets.h SYNTH_PARAM_MAX + synth_sysex.h SYNTH_SX_MAX), the key/velocity
     # follow + per-part algorithm pushed it past the old 128/384.
     import re as _re
 
@@ -3939,7 +3939,7 @@ def main() -> int:
         print("ok: the cc header carries the per-param [min, max] ranges")
 
     # the patch-level `cc:` list limits the CC map (the type-p-fm1 patch's params
-    # overflow the CC space; it declares its surface — the global FX + part 0).
+    # overflow the CC space, it declares its surface, the global FX + part 0).
     cm_sub = generate_cc_map(ffm)
     if len(cm_sub["entries"]) == 58 and all(
         e["cc"] != 64 and not 120 <= e["cc"] <= 127 for e in cm_sub["entries"]
@@ -3975,7 +3975,7 @@ def main() -> int:
         failures += 1
 
     # feedback is per-operator only (opN.fb.level). The earlier carrier-feedback
-    # master (algo.car_fb → fb1..fb4, gated onto the carriers) was scrapped — its
+    # master (algo.car_fb → fb1..fb4, gated onto the carriers) was scrapped, its
     # nonzero default left a spurious feedback floor on every carrier. Assert the
     # leftover is gone: `algo` is now just the algorithm selector, and no carrier
     # gets a master feed.
@@ -3997,7 +3997,7 @@ def main() -> int:
     failures += 0 if ok else 1
 
     # control/audio separation: a control-only node runs once per block, never per
-    # sample — its ports are all `control`/`event`, no `audio`. A library node must
+    # sample, its ports are all `control`/`event`, no `audio`. A library node must
     # not smuggle an audio port into a control computation (or vice versa).
     lib = load_library(LIBRARY_ROOT)
     sep_ok = True
@@ -4212,7 +4212,7 @@ def main() -> int:
     failures += 0 if ok else 1
 
     # the pulse width is a settable param (default 0.5 = square), not a wireable
-    # control input — it must appear in the flattened param table with that default.
+    # control input, it must appear in the flattened param table with that default.
     width_params = [
         p for p in generate_params(PULSE_TEST)["params"] if p["name"].endswith(".width")
     ]
@@ -4222,7 +4222,7 @@ def main() -> int:
     else:
         print("ok: pulse width is a settable param (default 0.5)")
 
-    # the modulatable set is the continuous Q-format knobs — phase_dist.d /
+    # the modulatable set is the continuous Q-format knobs, phase_dist.d /
     # phase_shape.d (the phase-distortion bend), wavefolder.amount, and pulse.width.
     # Discrete indices (shape/waveform) are *not* modulatable (set via set_param).
     specs = load_library(LIBRARY_ROOT)
@@ -4382,7 +4382,7 @@ def main() -> int:
     except GenError as exc:
         print(f"ok: tap naming an input rejected ({exc})")
 
-    # the tap set must fit scope.h's SCOPE_CH (ch 0 + taps x parts); 12 distinct
+    # the tap set must fit scope.h's SCOPE_CH (ch 0 + taps x parts), 12 distinct
     # taps on a 1-part patch need 13 channels.
     many_taps: Patch = {
         "name": "tap_many",
@@ -4415,8 +4415,9 @@ def main() -> int:
     by_name = {p["name"]: p for p in params}
     lp = by_name.get("lp.cutoff")
     # `lp` is the last node in the two-op patch's graph, so its cutoff is the last
-    # *node* id; the seven universal voice-mode params (`vm_*`) are appended after
-    # it (robust against param additions to earlier nodes - e.g. osc.waveform).
+    # *node* id, the seven universal voice-mode params (`vm_*`) are appended after
+    # it (which keeps working when earlier nodes gain parameters, such as
+    # osc.waveform).
     n_mode = 7
     if lp is None or lp["id"] != len(params) - 1 - n_mode:
         print("FAIL: params.json does not map lp.cutoff to the last node id")

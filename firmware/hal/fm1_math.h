@@ -4,9 +4,9 @@
  * Fixed-point math contract + hardware acceleration (docs/roadmap.md P2-3).
  * Integer-first, "Q in the name" (dsp-study §6). Two parts:
  *
- *   1. Saturating Q arithmetic + the transcendental tables — integer only, safe
+ *   1. Saturating Q arithmetic + the transcendental tables. Integer only, safe
  *      to include anywhere (no float, no heap).
- *   2. The FFT (kiss_fft, float) — opt-in: define FM1_MATH_FFT in the one TU that
+ *   2. The FFT (kiss_fft, float), opt-in. Define FM1_MATH_FFT in the one TU that
  *      needs it (the DSP TU; the generator's live `ifft` node). Float stays out
  *      of every other object (the "no FP leaks" rule).
  *
@@ -23,7 +23,7 @@
 
 /* These helpers must inline into the hot loop: `.dsp_text` (SRAM) may not call into
  * XIP flash (a flash write would hang the core). `always_inline` makes the intent
- * non-negotiable — a `static inline` alone was not enough for the pi32v2 clang. */
+ * non-negotiable. A `static inline` alone was not enough for the pi32v2 clang. */
 #define FM1_MATH_INLINE static inline __attribute__((always_inline))
 
 /* --------------------------------------------------- saturating Q arithmetic */
@@ -76,10 +76,10 @@ FM1_MATH_INLINE int32_t fm1_madd_sat(int32_t acc, int32_t a, int32_t b, int shif
     return fm1_sat_add32(acc, p);
 }
 
-/* Robust one-pole toward `target`: level += (target - level) * coeff / 65536.
+/* A one-pole toward `target`: level += (target - level) * coeff / 65536.
  * When the rounded step is 0 (a small coeff times a small remaining delta) the
  * step is forced to ±1, so the envelope always converges to `target` instead of
- * stalling just short of it — the cause of "DECAY holds forever" at low rates. */
+ * stalling just short of it. That is the cause of "DECAY holds forever" at low rates. */
 FM1_MATH_INLINE int32_t fm1_onepole(int32_t level, int32_t target, int32_t coeff)
 {
     int32_t d = target - level;
@@ -119,7 +119,7 @@ FM1_MATH_INLINE int32_t fm1_cos(uint32_t phase) { return fm1_sin(phase + 0x40000
    0-8 are one 1024-sample table each; 9 (pulse) / 10 (square) / 11 (saw) are six
    band-limited tables each (harmonic counts 32..1) for the top-octave
    anti-aliasing. `fm1_wave_base[ws]` is ws's mip-0 offset; this helper reads the
-   richest (mip-0) table — the oscillator node adds the `mip` selected from its
+   richest (mip-0) table, the oscillator node adds the `mip` selected from its
    note's increment. */
 FM1_MATH_INLINE int32_t fm1_sin_wave(uint32_t phase, uint32_t ws)
 {
@@ -202,7 +202,7 @@ FM1_MATH_INLINE int32_t fm1_clamp16(int32_t v)
 /* 4-input weighted sum against a routing-matrix row (a `const int16_t *` of four
    0/1 Q15 weights): out = a*w0 + b*w1 + c*w2 + d*w3. The multiply stays (not a
    boolean select): the weights are runtime table data, so a select is a
-   data-dependent branch per term — measured slower than the straight-line MAC. */
+   data-dependent branch per term, measured slower than the straight-line MAC. */
 FM1_MATH_INLINE int32_t fm1_route4(const int16_t *w, int32_t a, int32_t b, int32_t c, int32_t d)
 {
     return fm1_q15_mul(a, w[0]) + fm1_q15_mul(b, w[1])
@@ -212,7 +212,7 @@ FM1_MATH_INLINE int32_t fm1_route4(const int16_t *w, int32_t a, int32_t b, int32
 /* fm1_exp2_q16[i] = 2^(-i/256) in Q16  (exponential decay: envelopes, note-to-inc).
  * fm1_log2_q16[i] = log2(1 + i/256) in Q16  (log-domain FM). Both indexed directly. */
 
-/* 2^(octave + semi/12 + cent/1200) in Q16 — the note-derived tuning ratio (the
+/* 2^(octave + semi/12 + cent/1200) in Q16: the note-derived tuning ratio (the
  * naive oscillator's octave/semi/cent knobs). `octave` -3..3, `semi` -11..11,
  * `cent` -100..100 (clamped; the octave part is an exact shift, the semitone and
  * cent parts are the fm1_semi_q16 / fm1_cent_q16 tables). */
@@ -263,10 +263,10 @@ FM1_MATH_INLINE int32_t fm1_poly_blep(uint32_t p, uint32_t inc, uint32_t inv_inc
 
 /* ------------------------------------------------------ ROM transcendentals */
 /* The pi32v2's on-chip ROM math (driver/cpu/wl82/asm/math.h, Apache-2.0): hardware
- * routines, NOT lookup tables. JieLi Q-notation — `aQ` is the input Q-format, `rQ`
+ * routines, NOT lookup tables. JieLi Q-notation: `aQ` is the input Q-format, `rQ`
  * the output's. The angle unit + exact Q mapping are the JieLi convention, pinned
  * when P2-8 emits coefficient computation (it has the SDK docs). Control-rate /
- * accuracy-sensitive use; the LUT fm1_sin above stays the per-sample hot loop. */
+ * accuracy-sensitive use, the LUT fm1_sin above stays the per-sample hot loop. */
 #if defined(UMETATE_TARGET)
 #include "jieli/math.h"
 #define fm1_cos_sin(a, aQ, rsin, rcos, rQ)  math_cos_sin(a, aQ, rsin, rcos, rQ)

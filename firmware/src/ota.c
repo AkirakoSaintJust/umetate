@@ -9,7 +9,7 @@
  *     loader at 0xE0000 (outside Felucca's store; SMK: 0xBB000), ask 0xE0000000 ("success"),
  *     then write the UPDATA_PARM record (flash 0xE4F00, SMK 0xBFF00, + RAM 0x01C7FD88) and
  *     reset. The SPL runs the loader, which installs the package.
- * Nothing is committed before the host's "success"; any failure erases the
+ * Nothing is committed before the host's "success", any failure erases the
  * staging area and Felucca carries on.
  *
  * The firmware (rib.c) and the host test supply these hooks:
