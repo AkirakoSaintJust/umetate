@@ -101,6 +101,19 @@ the stage time at the chosen point, not the whole curve.
 The measured algorithm cases in the mapping page land at 0.99 to 1.06 on the
 centroid with the current engine.
 
+The pitch LFO depth was measured on a plain sine at C7 with `PMD` 127:
+
+| `PMS` | OPM depth | Type P.fm1 depth |
+| --- | ---: | ---: |
+| 2 | 12 cents | 12 cents |
+| 4 | 48 cents | 50 cents |
+| 5 | 96 cents | 103 cents |
+
+The earlier mapping had a unit error here, 1/64 semitone read as 1/64 octave,
+which made the vibrato twelve times too deep. The corpus spectra still matched
+because the vibrato averaging hid it, but the A/B renders did not. The unit test
+now pins the expected depth.
+
 ## Risks and fallback
 
 - **Assumptions/open research:** the OPM envelope timing comes from the

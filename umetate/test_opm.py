@@ -146,7 +146,8 @@ def _convert_con3() -> None:
     assert value["op2.eg.l3.p0"] == 0
     assert value["op1_mute.p0"] == 0 and value["op4_mute.p0"] == 0
     assert value["pitch_wave.p0"] == 10, "an OPM square LFO maps to the square wave"
-    assert value["pitch_depth.p0"] > 0
+    # PMD 20 with PMS 4 and a square LFO is 5 units of 1/64 semitone, 7.8 cents.
+    assert value["pitch_depth.p0"] == 148
     assert warnings == ()
     print("ok: CON 3 remaps the graph, levels, ratio, feedback, and levels")
 

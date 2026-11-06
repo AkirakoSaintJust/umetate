@@ -56,7 +56,7 @@ level is ignored because the two engines have different output gains.
 | `KS` 0 to 3 | `opN_aenv_ks_lo.p0` and `opN_aenv_ks_hi.p0` | fitted over F3 to G5 |
 | `DT1` 0 to 7 | `opN_detune.p0` | measured at middle C, the OPM table is key-dependent |
 | `DT2` 0 to 3 | folded into `opN_ratio.p0` | exact ratio |
-| `PMS`, `AMS`, `AMD`, `PMD`, `LFRQ`, `WF` | pitch LFO and per-operator tremolo | measured rate law, approximate depth |
+| `PMS`, `AMS`, `AMD`, `PMD`, `LFRQ`, `WF` | pitch LFO and per-operator tremolo | measured rate law and pitch depth, approximate tremolo depth |
 | `NE`, `NFRQ` | no counterpart | none |
 | `PAN` | no per-voice counterpart | none |
 | `SLOT` | `opN_mute.p0` | only whole-operator muting |
@@ -368,11 +368,14 @@ the envelope stage times, but the spectrum will not be identical. That is
 expected. The two chips share a family resemblance, but they are different designs.
 
 The LFO mapping is the least exact part. `LFRQ` converts through the measured
-YM2151 rate law, so the rate is right. The Type P.fm1 pitch depth tops out at
-about 165 cents, so `PMS` 6 and 7 clamp, and the tremolo depth is a fraction of
-the gain rather than an attenuation in dB, so the average level can rise slightly
-where OPM only cuts. The converter warns on none of these because they are smooth
-approximations, not parse errors.
+YM2151 rate law, so the rate is right. `PMS` and `PMD` convert through the OPM
+1/64-semitone `PmValue` law. On a plain sine at C7 with `PMD` 127, the measured
+depth is 12 cents in both engines at `PMS` 2, 48 against 50 cents at `PMS` 4, and
+96 against 103 cents at `PMS` 5. The Type P.fm1 pitch depth tops out at about
+165 cents, so `PMS` 6 and 7 at a high `PMD` clamp, and the tremolo depth is a
+fraction of the gain rather than an attenuation in dB, so the average level can
+rise slightly where OPM only cuts. The converter warns on the clamp and leaves
+the smooth approximations alone.
 
 A ratio above 16.00 clamps to the Type P.fm1 maximum. `MUL` 15 with `DT2` 3 is
 25.98, which is the usual case. A patch that relies on the top of that range will

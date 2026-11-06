@@ -520,8 +520,9 @@ def _pitch_depth(pmd: int, pms: int, wf: int) -> int:
     if pmd == 0 or pms == 0:
         return 0
     peak = 128 if wf == 1 else 127
+    # `PmValue` is in 1/64 semitone steps, so one unit is 100/64 cents.
     units = ((peak * pmd * _PMS_MUL[pms]) >> 12) << _PMS_SHL[pms]
-    cents = units * (1200.0 / 64.0)
+    cents = units * (100.0 / 64.0)
     depth: int = round(32768.0 * (2.0 ** (cents / 1200.0) - 1.0))
     return max(0, min(3277, depth))
 
@@ -683,7 +684,7 @@ def convert_voice(
     values["pitch_rate.p0"] = rate
     values["pitch_depth.p0"] = _pitch_depth(voice.pmd, voice.pms, voice.wf)
     values["pitch_wave.p0"] = _WAVE_MAP[voice.wf]
-    if voice.pms >= 6 and voice.pmd > 0:
+    if values["pitch_depth.p0"] == 3277 and voice.pmd > 0:
         warnings.append("pitch LFO depth clamps at the Type P.fm1 maximum")
 
     if voice.ne:
