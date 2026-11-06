@@ -191,7 +191,7 @@ def main(argv: list[str] | None = None) -> int:
     conv.add_argument("--syx", help="also write a .syx bank stream here")
     conv.add_argument(
         "--synth",
-        help=f"the Type P.fm1 project dir (default: {_DEFAULT_SYNTH})",
+        help="the Type P.fm1 project dir (default: examples/type-p-fm1)",
     )
     conv.add_argument(
         "--start", type=int, default=0, help="first bank slot (default 0)"
