@@ -811,10 +811,9 @@ static void ui_draw_grid(const ui_widget *w)
 /* draw a DX rate/level envelope curve for 7 param ids (r1,r2,r3,r4,l1,l2,l3) into
  * the current canvas (wd x ht). Stage length = log2 of the one-pole time constant,
  * so the exponential rate curve is shown on a log scale (a linear length would
- * make every slow rate identical). The level height = fm1_level_gain[level]
- * (0.25 dB/step: 99 = max, 0 = silence). A bipolar envelope (the pitch envelope)
- * draws its levels around a centre line instead, with the Q15 level as the
- * signed distance from that line. No cursor. */
+ * make every slow rate identical). A unipolar level is drawn as its 0..99 value,
+ * which is the control scale the knobs show. A bipolar envelope (the pitch
+ * envelope) draws its Q15 semitone levels around a centre line instead. No cursor. */
 static void ui_env_curve(uint32_t wd, uint32_t ht, const uint16_t *p, int bipolar)
 {
     uint32_t i, cx;
@@ -847,21 +846,21 @@ static void ui_env_curve(uint32_t wd, uint32_t ht, const uint16_t *p, int bipola
         if (bipolar)
             lvl[i] = l < -32768 ? -32768 : (l > 32767 ? 32767 : l);
         else
-            lvl[i] = fm1_level_gain[l < 0 ? 0 : (l > 99 ? 99 : l)];
+            lvl[i] = l < 0 ? 0 : (l > 99 ? 99 : l);
     }
     lvl[3] = lvl[2];
     lvl[4] = 0;
     if (bipolar && span > 0)
         cv_line(0, mid, (int32_t)wd - 1, mid, C_LINE);   /* the zero line */
     px[0] = 0;
-    py[0] = bipolar ? mid : (int32_t)ht;
+    py[0] = bipolar ? mid : (int32_t)ht - 1;
     cx = 0;
     for (i = 0; i < 5; i++) {
         cx += (len[i] * wd) / total;
-        px[i + 1] = (int32_t)cx;
+        px[i + 1] = cx >= wd ? (int32_t)wd - 1 : (int32_t)cx;
         py[i + 1] = bipolar && span > 0
             ? mid - (lvl[i] * span) / 32768
-            : (int32_t)ht - (lvl[i] * (int32_t)ht) / 32768;
+            : (int32_t)ht - 1 - (lvl[i] * ((int32_t)ht - 1)) / 99;
     }
     for (i = 0; i < 5; i++)
         cv_line(px[i], py[i], px[i + 1], py[i + 1], C_AMB);   /* the curve: graph highlight */
