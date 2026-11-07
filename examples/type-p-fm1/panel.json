@@ -392,7 +392,7 @@
             { "type": "label", "row": 2, "span": 2, "text": "KEY SCALING" },
             { "type": "param_row", "row": 4, "param": "breakpoint", "text": "BREAKPOINT" },
             { "type": "param_row", "row": 5, "param": "key_sens_on", "text": "KEY SENS ON" },
-            { "type": "label", "row": 7, "text": "targets live in EDIT/FX/ENV" }
+            { "type": "label", "row": 7, "text": "targets are in EDIT/FX/ENV" }
           ]
         },
         {
@@ -400,7 +400,7 @@
           "widgets": [
             { "type": "label", "row": 2, "span": 2, "text": "VEL SENS" },
             { "type": "param_row", "row": 4, "param": "vel_sens_on", "text": "VEL SENS ON" },
-            { "type": "label", "row": 7, "text": "targets live in EDIT/FX/ENV" }
+            { "type": "label", "row": 7, "text": "targets are in EDIT/FX/ENV" }
           ]
         },
         {
