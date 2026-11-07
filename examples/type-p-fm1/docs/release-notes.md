@@ -7,7 +7,7 @@ Newest first.
 - Filters: FILTER 1 and FILTER 2 are now the 24 dB/oct liquid ladder. It has low-pass, band-pass and high-pass modes, a level-preserving resonance make-up, and a cutoff envelope that uses the whole range.
 - Resonance: the display reads 0.00 to 100.00 percent with an exponential taper. The top of the knob is the strongest stable resonance, and the curve gives fine control near it.
 - Cutoff: the top of the range stops at the ladder's stable coefficient ceiling, so the filter stays clean at every resonance.
-- Envelopes: an imported OPM voice can keep its very slow second decay. The converter shifts the decay 2 coefficient down by 2x, 4x or 8x when the OPM stage is slower than the slowest rate, so a long sustain stays long. Hand-made patches keep the normal rate knob.
+- Envelopes: decay 2 has its own rate curve. Rate 1 is the engine's slowest musical point and lines up with the OPM's slowest second decay, and the 99 steps cover the OPM's 31 with more resolution. A converted sustain that fades over half a minute keeps its length, subject to the one-pole floor near 22 seconds.
 - Pitch LFO: depth now reads 0.00 to 12.00 semitones as the peak deviation, with one-cent steps through the first semitone and the envelope-style detents above it.
 
 ## 1.0.3

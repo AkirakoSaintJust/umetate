@@ -1,6 +1,6 @@
 {
   "name": "dx_env",
-  "summary": "DX-style rate/level envelope: 4 rates + 3 levels, all 0..99 (the Yamaha scale), exponential one-pole per stage (attack → decay1 → decay2 → sustain → release). Q15 gain out. The rate is a one-pole coefficient from `fm1_rate_coeff[rate]` (a non-uniform Yamaha-style curve: 99 = instant ≈ 0.73 ms, 0 ≈ 7 s, ~5% finer per step at the slow end), a `rate_scale` control input (default unity) scales it, and `r3_slow` (0..3) shifts only decay 2 by 2x, 4x or 8x for the OPM's very slow sustain, velocity → envelope rate, `k` (key-follow) and `vk` (velocity-follow) factors (Q15) push the rates toward 0 (slower) / 99 (faster). Levels are total-level 0..99 → Q15 gain via `fm1_level_gain` (0.75 dB/step: 99 = max, 50 ≈ −37 dB, 0 = silence). A `trigger` event (default `voice_trig[v]`) resets to attack on every note-on edge, even mid-note (voice steal).",
+  "summary": "DX-style rate/level envelope: 4 rates + 3 levels, all 0..99 (the Yamaha scale), exponential one-pole per stage (attack → decay1 → decay2 → sustain → release). Q15 gain out. The rate is a one-pole coefficient from `fm1_rate_coeff[rate]` (a non-uniform Yamaha-style curve: 99 = instant ≈ 0.73 ms, 0 ≈ 7 s, ~5% finer per step at the slow end), a `rate_scale` control input (default unity) scales it, the decay 2 stage uses `fm1_rate_coeff_r3` whose rate 1 is the OPM's slowest D2R, velocity → envelope rate, `k` (key-follow) and `vk` (velocity-follow) factors (Q15) push the rates toward 0 (slower) / 99 (faster). Levels are total-level 0..99 → Q15 gain via `fm1_level_gain` (0.75 dB/step: 99 = max, 50 ≈ −37 dB, 0 = silence). A `trigger` event (default `voice_trig[v]`) resets to attack on every note-on edge, even mid-note (voice steal).",
   "ins": {
     "gate": { "rate": "event", "default": "voice_gate[v]" },
     "trigger": { "rate": "event", "default": "voice_trig[v]" },
@@ -11,8 +11,7 @@
   "outs": { "cv": "control" },
   "params": {
     "r1": "rate", "r2": "rate", "r3": "rate", "r4": "rate",
-    "l1": "level", "l2": "level", "l3": "level",
-    "r3_slow": { "kind": "int32", "default": "0" }
+    "l1": "level", "l2": "level", "l3": "level"
   },
   "state": { "stage": "uint32", "level": "q15", "r1_eff": "uint32", "r2_eff": "uint32", "r3_eff": "uint32", "r4_eff": "uint32" },
   "block_derived": {

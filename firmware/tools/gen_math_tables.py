@@ -71,6 +71,16 @@ def main() -> None:
         min(65536, max(0, round(65536.0 * 2.0 ** (-((99 - r) ** 0.5) / 0.75))))
         for r in range(100)
     ]
+    # The decay 2 range is rescaled. The OPM's slowest nonzero second decay
+    # (D2R 1) reaches -21 dB in about 28 s. The engine rate 1 is a coefficient
+    # of 3, which is the one-pole floor near 22 s, so rate 1 is the slowest
+    # musical point and lines up with D2R 1. Rate 0 is the extreme below it.
+    # From rate 2 the 98 steps cover the OPM's remaining 30 steps with about
+    # three engine steps per OPM step.
+    rate_coeff_r3 = [2, 3] + [
+        min(65536, max(1, round(4.0 * (16384.0 ** ((r - 2) / 97.0)))))
+        for r in range(2, 100)
+    ]
     # Yamaha total-level -> gain (Q15), 0.75 dB/step: 99 = 32767 (0 dB, maximum),
     # 50 ≈ −37 dB, 0 = silence. This is the OPM/OPP scale: the OPM `TL` register is
     # 0.75 dB per step, and the DX21/DX27/DX100 output level maps to it one step per
@@ -105,6 +115,8 @@ def main() -> None:
     h += c_array("int32_t", "fm1_detune_pitch", detune_pitch, 8)
     h += [""]
     h += c_array("int32_t", "fm1_rate_coeff", rate_coeff, 8)
+    h += [""]
+    h += c_array("int32_t", "fm1_rate_coeff_r3", rate_coeff_r3, 8)
     h += [""]
     h += c_array("int32_t", "fm1_level_gain", level_gain, 8)
     h += [""]

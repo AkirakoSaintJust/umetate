@@ -25,8 +25,7 @@
     "fb_vs": "fb_vs.amount",
     "aenv_vs": "eg_vs.amount",
     "r1": "eg.r1", "r2": "eg.r2", "r3": "eg.r3", "r4": "eg.r4",
-    "l1": "eg.l1", "l2": "eg.l2", "l3": "eg.l3",
-    "r3_slow": "eg.r3_slow"
+    "l1": "eg.l1", "l2": "eg.l2", "l3": "eg.l3"
   },
   "nodes": [
     { "id": "ph", "type": "phasor" },

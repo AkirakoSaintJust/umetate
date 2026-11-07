@@ -76,6 +76,13 @@ _RATE_COEFF = [
     min(65536, max(0, round(65536.0 * 2.0 ** (-((99 - r) ** 0.5) / 0.75))))
     for r in range(100)
 ]
+# The separate decay 2 curve. Rate 1 is the engine's slowest musical point and
+# lines up with the OPM's slowest nonzero D2R. Rate 0 is the extreme below it,
+# and the 99 steps cover the OPM's 31 with more resolution.
+_RATE_COEFF_R3 = [2, 3] + [
+    min(65536, max(1, round(4.0 * (16384.0 ** ((r - 2) / 97.0)))))
+    for r in range(2, 100)
+]
 _LEVEL_GAIN = [0] + [
     max(1, min(32767, round(32767.0 * 10.0 ** (-(99 - level) * 0.75 / 20.0))))
     for level in range(1, 100)
@@ -368,15 +375,21 @@ def _opm_time_to(ticks: Sequence[int], *, start_el: int, target_el: int) -> floa
     return (len(ticks) - 1) / _OPM_EG_HZ if ticks else 0.0
 
 
-def _fm1_time(rate: int, start_level: int, end_level: int, aim: int | None) -> float:
+def _fm1_time(
+    rate: int,
+    start_level: int,
+    end_level: int,
+    aim: int | None,
+    coeff_table: Sequence[int] = _RATE_COEFF,
+) -> float:
     """The time for one Type P.fm1 stage, with the engine's one-unit floor.
 
     `aim` is a gain value to reach on the way to `end_level`; None means the
     whole stage, which ends within 8 units of the target (where the engine
     snaps). The aim is clamped to the target so a request past the end is the
-    full stage.
+    full stage. `coeff_table` is the normal rate table, or the decay 2 curve.
     """
-    coeff = _RATE_COEFF[rate]
+    coeff = coeff_table[rate]
     gain = _LEVEL_GAIN[start_level]
     target = _LEVEL_GAIN[end_level]
     start_gain = gain
@@ -466,7 +479,6 @@ _DECAY_BIAS = 0
 
 _ATTACK_CACHE: dict[tuple[int, int, int], int] = {}
 _DECAY_CACHE: dict[tuple[int, int, int, str, int], int] = {}
-_DECAY_SLOW_CACHE: dict[tuple[int, int, int, str, int], int] = {}
 _RELEASE_CACHE: dict[tuple[int, int, int], int] = {}
 
 
@@ -526,44 +538,16 @@ def _decay_rate(d1l: int, rate: int, ks: int, kind: str, midi: int = 60) -> int:
         result = 0
     else:
         start_level, end_level, opm_time, aim = _decay_stage(d1l, rate, ks, kind, midi)
+        table = _RATE_COEFF_R3 if kind == "decay2" else _RATE_COEFF
         candidates = [
-            (r, _fm1_time(r, start_level, end_level, aim)) for r in range(100)
+            (r, _fm1_time(r, start_level, end_level, aim, table)) for r in range(100)
         ]
-        result = min(99, _nearest_rate(opm_time, candidates) + _DECAY_BIAS)
+        result = min(
+            99,
+            _nearest_rate(opm_time, candidates)
+            + (1 if kind == "decay2" else _DECAY_BIAS),
+        )
     _DECAY_CACHE[key] = result
-    return result
-
-
-def _decay_slow(
-    d1l: int, rate: int, ks: int, kind: str = "decay2", midi: int = 60
-) -> int:
-    """The `r3_slow` shift code for a decay 2 that is slower than rate 0.
-
-    The rate table bottoms out at rate 0. When the OPM stage is slower than
-    that, the stage coefficient is shifted down by 1, 2 or 3 bits, which is
-    2x, 4x or 8x slower. Code 0 is the normal path. A very slow OPM sustain
-    lands on code 1 or 2.
-    """
-    key = (d1l, rate, ks, kind, midi)
-    cached = _DECAY_SLOW_CACHE.get(key)
-    if cached is not None:
-        return cached
-    if rate == 0:
-        result = 0
-    else:
-        start_level, end_level, opm_time, aim = _decay_stage(d1l, rate, ks, kind, midi)
-        chosen = _decay_rate(d1l, rate, ks, kind, midi)
-        fm1_time = _fm1_time(chosen, start_level, end_level, aim)
-        if opm_time <= 0.0 or fm1_time >= opm_time:
-            result = 0
-        else:
-            ratio = fm1_time / opm_time
-            result = (
-                0 if ratio > 0.75 else 1 if ratio > 0.375 else 2 if ratio > 0.19 else 3
-            )
-            if chosen == 0 and result == 3:
-                result = 2  # a rate 0 shift by 3 would freeze the stage
-    _DECAY_SLOW_CACHE[key] = result
     return result
 
 
@@ -816,7 +800,6 @@ def convert_voice(
         r1 = _attack_rate(op.ar, op.ks)
         r2 = _decay_rate(op.d1l, op.d1r, op.ks, "decay1") if op.d1r else 99
         r3 = _decay_rate(op.d1l, op.d2r, op.ks, "decay2") if op.d2r else 99
-        r3_slow = _decay_slow(op.d1l, op.d2r, op.ks) if op.d2r else 0
         r4 = _release_rate(op.rr, op.ks)
         if index == 1:
             values["attack.p0"] = r1
@@ -826,7 +809,6 @@ def convert_voice(
             values[f"{prefix}.eg.r4.p0"] = r4
         values[f"{prefix}.eg.r2.p0"] = r2
         values[f"{prefix}.eg.r3.p0"] = r3
-        values[f"{prefix}.eg.r3_slow.p0"] = r3_slow
         values[f"{prefix}.eg.l1.p0"] = l1
         values[f"{prefix}.eg.l2.p0"] = l2
         values[f"{prefix}.eg.l3.p0"] = l3

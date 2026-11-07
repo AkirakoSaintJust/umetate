@@ -51,7 +51,7 @@ level is ignored because the two engines have different output gains.
 | `AR` | `attack.p0` or `opN.eg.r1.p0` | measured stage time |
 | `D1R` | `opN.eg.r2.p0` | measured stage time |
 | `D1L` | `opN.eg.l2.p0` | exact level conversion, 15 is silence |
-| `D2R` | `opN.eg.r3.p0` and `opN.eg.r3_slow.p0` | measured stage time, with a slow coefficient when the OPM is slower than rate 0 |
+| `D2R` | `opN.eg.r3.p0` | measured stage time on the decay 2 curve |
 | `RR` | `release.p0` or `opN.eg.r4.p0` | measured stage time |
 | `KS` 0 to 3 | `opN_aenv_ks_lo.p0` and `opN_aenv_ks_hi.p0` | fitted over F3 to G5 |
 | `DT1` 0 to 7 | `opN_detune.p0` | measured at middle C, the OPM table is key-dependent |
@@ -181,8 +181,8 @@ harmonic.
 ## Envelope
 
 The envelope fields map by job: `AR` to `attack` or `opN.eg.r1`, `D1R` to
-`opN.eg.r2`, `D1L` to `opN.eg.l2`, `D2R` to `opN.eg.r3` plus `opN.eg.r3_slow`,
-and `RR` to `release` or `opN.eg.r4`. The level conversion is exact. The attack
+`opN.eg.r2`, `D1L` to `opN.eg.l2`, `D2R` to `opN.eg.r3`, and `RR` to `release` or
+`opN.eg.r4`. The level conversion is exact. The attack
 target is `l1` 99, the first decay target is `l2 = 99 - 4*D1L` for `D1L` 0 to
 14, and the second decay runs to `l3` 0. `D1L` 15 is the special 93 dB step, so
 it maps to 0 rather than 39. When `D2R` is 0 the second decay holds `l2`, so
@@ -207,12 +207,11 @@ flattened into its quiet tail. The attack and the two decays share the same step
 | 14 to 23 | 6 dB |
 | 24 to 31 | 3 dB |
 
-When even rate 0 is too fast, as it is for `D2R` 1 and 2, the converter also
-sets `r3_slow` to shift the second decay coefficient down by 1, 2 or 3 bits,
-which is 2x, 4x or 8x slower. That touches only the second decay, so a sustain
-that takes half a minute in the OPM stays a sustain instead of snapping to rate
-0. The panel does not expose `r3_slow`, because it is an import detail. A
-hand-made patch keeps the default 0 and the normal rate knob.
+The second decay uses its own rate curve, `fm1_rate_coeff_r3`. Rate 1 is the
+engine's slowest musical point and lines up with `D2R` 1. The 99 steps cover the
+OPM's 31 with about three engine steps per OPM step, so a sustain that fades
+over half a minute in the OPM keeps its length instead of snapping to rate 0.
+The other stages keep the normal curve.
 
 The release matches the time to -20 dB.
 
@@ -238,7 +237,8 @@ slowest three attacks and the slowest two first decays hit the Type P.fm1 rate 0
 floor, so `AR` 1 to 3 and `D1R` 1 to 2 still arrive early. The last decibel of a
 slow stage takes 1.4 to 4 times the OPM time, so the tail beyond the chosen point
 is longer. A slow OPM first decay to a low `D1L` settles differently. The second
-decay does not hit the floor, because `r3_slow` stretches it.
+decay has its own curve, so rate 1 is the `D2R` 1 point, but the one-unit floor
+still sets a minimum near 22 s to -21 dB, a little short of the OPM's 28 s.
 
 OPM rates are key-scaled. The converter compares the OPM stage times two octaves
 either side of the breakpoint and fits the change onto the envelope key-follow
@@ -338,8 +338,8 @@ there.
 8. Set `op1_feedback.p0` from `FL`: 32767 for `FL` 7, and half for each step down
    the table above.
 9. Map the envelope levels with `l1=99`, `l2=99-4*D1L`, and `l3=0` when `D2R` is
-   running. Pick the rates from the measured stage times, and the second decay's
-   `r3_slow` from the same comparison, or let the converter do it.
+   running. Pick the rates from the measured stage times, using the decay 2
+   curve for the second decay, or let the converter do it.
 10. Play the same note through both patches and compare the first few harmonics.
     The useful goal is the same ratios, the same algorithm, and a similar
     brightness. The two synths will not null.

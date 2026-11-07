@@ -260,6 +260,8 @@ rates.
 | ENV KEY SCALE | A-ENV RATE KS LO | A-ENV RATE KS HI | P-ENV RATE KS LO | P-ENV RATE KS HI | The rate key-follow amounts. |
 | VEL SENS | A-ENV RATE VS | P-ENV RATE VS | | | The rate velocity-follow amounts. |
 
+Decay 2 rate 1 is the slowest musical point, and it lines up with the OPM's slowest second decay. The range has 99 steps, so a converted voice keeps more of its slow fade than the OPM's 31 steps would give.
+
 Both A-ENV pages are titled `A-ENV`, and both P-ENV pages are titled `P-ENV`. The
 row labels tell you which half you are on. The A-ENV pages follow the selected
 operator. The P-ENV pages are part-level.
