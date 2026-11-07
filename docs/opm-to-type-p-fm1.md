@@ -51,7 +51,7 @@ level is ignored because the two engines have different output gains.
 | `AR` | `attack.p0` or `opN.eg.r1.p0` | measured stage time |
 | `D1R` | `opN.eg.r2.p0` | measured stage time |
 | `D1L` | `opN.eg.l2.p0` | exact level conversion, 15 is silence |
-| `D2R` | `opN.eg.r3.p0` | measured stage time |
+| `D2R` | `opN.eg.r3.p0` and `opN.eg.r3_slow.p0` | measured stage time, with a slow coefficient when the OPM is slower than rate 0 |
 | `RR` | `release.p0` or `opN.eg.r4.p0` | measured stage time |
 | `KS` 0 to 3 | `opN_aenv_ks_lo.p0` and `opN_aenv_ks_hi.p0` | fitted over F3 to G5 |
 | `DT1` 0 to 7 | `opN_detune.p0` | measured at middle C, the OPM table is key-dependent |
@@ -181,11 +181,12 @@ harmonic.
 ## Envelope
 
 The envelope fields map by job: `AR` to `attack` or `opN.eg.r1`, `D1R` to
-`opN.eg.r2`, `D1L` to `opN.eg.l2`, `D2R` to `opN.eg.r3`, and `RR` to `release` or
-`opN.eg.r4`. The level conversion is exact. The attack target is `l1` 99, the first
-decay target is `l2 = 99 - 4*D1L` for `D1L` 0 to 14, and the second decay runs to
-`l3` 0. `D1L` 15 is the special 93 dB step, so it maps to 0 rather than 39. When
-`D2R` is 0 the second decay holds `l2`, so `l3` is `l2`.
+`opN.eg.r2`, `D1L` to `opN.eg.l2`, `D2R` to `opN.eg.r3` plus `opN.eg.r3_slow`,
+and `RR` to `release` or `opN.eg.r4`. The level conversion is exact. The attack
+target is `l1` 99, the first decay target is `l2 = 99 - 4*D1L` for `D1L` 0 to
+14, and the second decay runs to `l3` 0. `D1L` 15 is the special 93 dB step, so
+it maps to 0 rather than 39. When `D2R` is 0 the second decay holds `l2`, so
+`l3` is `l2`.
 
 The rates come from measured stage times, not a guessed table. The converter
 simulates the OPM envelope tables at the chip EG clock, 18.64 kHz, and the Type
@@ -205,6 +206,13 @@ flattened into its quiet tail. The attack and the two decays share the same step
 | 8 to 13 | 9 dB |
 | 14 to 23 | 6 dB |
 | 24 to 31 | 3 dB |
+
+When even rate 0 is too fast, as it is for `D2R` 1 and 2, the converter also
+sets `r3_slow` to shift the second decay coefficient down by 1, 2 or 3 bits,
+which is 2x, 4x or 8x slower. That touches only the second decay, so a sustain
+that takes half a minute in the OPM stays a sustain instead of snapping to rate
+0. The panel does not expose `r3_slow`, because it is an import detail. A
+hand-made patch keeps the default 0 and the normal rate knob.
 
 The release matches the time to -20 dB.
 
@@ -226,12 +234,11 @@ The curves still differ. An OPM decay is a straight line in dB. The Type P.fm1
 one-pole starts faster and eases into its target, and its one-unit floor sets a
 minimum speed at low gain. Across the table, `AR` 4 to 22 land within 0.83 to 1.01
 of the OPM time at the chosen point, and `D1R` 3 to 23 within 0.80 to 1.17. The
-slowest three attacks and the slowest two decays hit the Type P.fm1 rate 0 floor,
-so `AR` 1 to 3 and `D1R` 1 to 2 still arrive early. The last decibel of a slow
-stage takes 1.4 to 4 times the OPM time, so the tail beyond the chosen point is
-longer. A slow OPM decay to a low `D1L` settles differently, and a `D2R` stage
-that takes tens of seconds in OPM maps to the slowest Type P.fm1 rate and still
-arrives sooner.
+slowest three attacks and the slowest two first decays hit the Type P.fm1 rate 0
+floor, so `AR` 1 to 3 and `D1R` 1 to 2 still arrive early. The last decibel of a
+slow stage takes 1.4 to 4 times the OPM time, so the tail beyond the chosen point
+is longer. A slow OPM first decay to a low `D1L` settles differently. The second
+decay does not hit the floor, because `r3_slow` stretches it.
 
 OPM rates are key-scaled. The converter compares the OPM stage times two octaves
 either side of the breakpoint and fits the change onto the envelope key-follow
@@ -331,8 +338,8 @@ there.
 8. Set `op1_feedback.p0` from `FL`: 32767 for `FL` 7, and half for each step down
    the table above.
 9. Map the envelope levels with `l1=99`, `l2=99-4*D1L`, and `l3=0` when `D2R` is
-   running. Pick the rates from the measured stage times, or let the converter do
-   it.
+   running. Pick the rates from the measured stage times, and the second decay's
+   `r3_slow` from the same comparison, or let the converter do it.
 10. Play the same note through both patches and compare the first few harmonics.
     The useful goal is the same ratios, the same algorithm, and a similar
     brightness. The two synths will not null.

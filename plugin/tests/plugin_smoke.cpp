@@ -68,7 +68,7 @@ int main()
 {
     TypePFm1AudioProcessor processor;
 
-    check(kP1ParamCount == 313, "the manifest exposes 313 parameters");
+    check(kP1ParamCount == 324, "the manifest exposes 324 parameters");
     check(processor.getParameters().size() == kP1ParamCount,
           "the APVTS exposes every manifest parameter");
     check(processor.acceptsMidi() && !processor.producesMidi(),

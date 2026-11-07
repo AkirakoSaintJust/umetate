@@ -126,7 +126,7 @@ Two filters and a wavefolder, in series, then the output.
 
 ## Vibrato and pitch envelope
 
-- **Pitch LFO** is a vibrato. Rate sets the speed, depth sets the amount.
+- **Pitch LFO** is a vibrato. Rate sets the speed, depth sets the amount. The depth reads 0.00 to 12.00 st as the peak deviation, with one-cent steps through the first semitone and the envelope-style detents above it.
 - **Pitch envelope** bends the pitch of the whole voice over the course of a
   note, in semitones. It is a four-stage, rate-level, envelope like the operators' amplitude
   one, but it moves pitch instead of volume, and the levels are pitch offsets relative to the base, unmodified, note.
@@ -369,7 +369,7 @@ cover. The ranges are the ones the panel shows.
 | P-ENV RATE KS LO/HI | -100 to +100% | Key follow for the P-ENV rate. |
 | P-ENV RATE VS | -100 to +100% | Velocity follow for the P-ENV rate. |
 | P-LFO RATE | Hz | The vibrato speed. |
-| P-LFO DEPTH | amount | The vibrato amount. |
+| P-LFO DEPTH | 0.00 to 12.00 st | The peak vibrato amount. The first semitone steps in cents, the rest in envelope-style detents. |
 | P-LFO WAVE | 0 to 11 | The vibrato waveform. |
 
 #### Filter and wavefolder

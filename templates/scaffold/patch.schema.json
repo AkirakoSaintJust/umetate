@@ -41,8 +41,8 @@
         "curve": { "enum": ["linear", "log"] },
         "unit": { "type": "string" },
         "display": {
-          "enum": ["raw", "ratio", "pct", "pct_exp", "pct_inv", "onoff", "onoff_inv", "off_pct", "hz", "semi", "cent", "wave", "filter", "fold", "mode", "priority", "note", "porta"],
-          "description": "the on-screen form of the value (the panel's per-param display scale): raw = the integer; ratio = a Q16 multiplier (65536 = 1.00 base pitch); pct = 0..100% of [min,max]; pct_exp = 0.00..100.00% with an exponential taper (fine near max); pct_inv = inverted % (100% at min); onoff = off/on; off_pct = \"off\" at <= 0, else %; hz = a Q32 rate as N.N Hz; semi = a bipolar Q15 as +/-N.NN st. Default raw."
+          "enum": ["raw", "ratio", "pct", "pct_exp", "pct_inv", "onoff", "onoff_inv", "off_pct", "hz", "semi", "semi_fine", "semi_lfo", "cent", "wave", "filter", "fold", "mode", "priority", "note", "porta"],
+          "description": "the on-screen form of the value (the panel's per-param display scale): raw = the integer; ratio = a Q16 multiplier (65536 = 1.00 base pitch); pct = 0..100% of [min,max]; pct_exp = 0.00..100.00% with an exponential taper (fine near max); pct_inv = inverted % (100% at min); onoff = off/on; off_pct = \"off\" at <= 0, else %; hz = a Q32 rate as N.N Hz; semi = a bipolar Q15 as +/-N.NN st; semi_fine = the same form with sub-semitone detents; semi_lfo = a unipolar Q15 LFO depth as 0.00..12.00 st, with cent steps in the first semitone. Default raw."
         },
         "rate": { "enum": ["sample", "block"] },
         "modulatable": { "type": "boolean" }

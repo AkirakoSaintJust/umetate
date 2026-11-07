@@ -466,6 +466,7 @@ _DECAY_BIAS = 0
 
 _ATTACK_CACHE: dict[tuple[int, int, int], int] = {}
 _DECAY_CACHE: dict[tuple[int, int, int, str, int], int] = {}
+_DECAY_SLOW_CACHE: dict[tuple[int, int, int, str, int], int] = {}
 _RELEASE_CACHE: dict[tuple[int, int, int], int] = {}
 
 
@@ -489,6 +490,32 @@ def _attack_rate(ar: int, ks: int, midi: int = 60) -> int:
     return result
 
 
+def _decay_stage(
+    d1l: int, rate: int, ks: int, kind: str, midi: int
+) -> tuple[int, int, float, int | None]:
+    """The stage levels, the OPM time to the match point, and the aim gain."""
+    start_level = 99 if kind == "decay1" else _d1l_level(d1l)
+    end_level = _d1l_level(d1l) if kind == "decay1" else 0
+    span_db = (start_level - end_level) * 0.75
+    start_el = 0 if kind == "decay1" else 16 * _D1LTBL[d1l]
+    ticks = _opm_ticks(rate, kind, d1l=d1l, ks=ks, midi=midi, start_el=start_el)
+    drop = _MATCH_DB[min(31, max(0, rate))]
+    if span_db >= drop:
+        # Aim a little past the first few dB so the one-pole tail does not
+        # make the whole stage read long. A larger drop is a faster rate,
+        # at the cost of a faster early slope.
+        opm_time = _opm_time_to(
+            ticks,
+            start_el=start_el,
+            target_el=start_el + int(round(drop / _DB_PER_EL)),
+        )
+        aim = round(_LEVEL_GAIN[start_level] * 10.0 ** (-drop / 20.0))
+    else:
+        opm_time = (len(ticks) - 1) / _OPM_EG_HZ if ticks else 0.0
+        aim = None
+    return start_level, end_level, opm_time, aim
+
+
 def _decay_rate(d1l: int, rate: int, ks: int, kind: str, midi: int = 60) -> int:
     """The Type P.fm1 rate for a first or second OPM decay stage."""
     key = (d1l, rate, ks, kind, midi)
@@ -498,30 +525,45 @@ def _decay_rate(d1l: int, rate: int, ks: int, kind: str, midi: int = 60) -> int:
     if rate == 0:
         result = 0
     else:
-        start_level = 99 if kind == "decay1" else _d1l_level(d1l)
-        end_level = _d1l_level(d1l) if kind == "decay1" else 0
-        span_db = (start_level - end_level) * 0.75
-        start_el = 0 if kind == "decay1" else 16 * _D1LTBL[d1l]
-        ticks = _opm_ticks(rate, kind, d1l=d1l, ks=ks, midi=midi, start_el=start_el)
-        drop = _MATCH_DB[min(31, max(0, rate))]
-        if span_db >= drop:
-            # Aim a little past the first few dB so the one-pole tail does not
-            # make the whole stage read long. A larger drop is a faster rate,
-            # at the cost of a faster early slope.
-            opm_time = _opm_time_to(
-                ticks,
-                start_el=start_el,
-                target_el=start_el + int(round(drop / _DB_PER_EL)),
-            )
-            aim = round(_LEVEL_GAIN[start_level] * 10.0 ** (-drop / 20.0))
-        else:
-            opm_time = (len(ticks) - 1) / _OPM_EG_HZ if ticks else 0.0
-            aim = None
+        start_level, end_level, opm_time, aim = _decay_stage(d1l, rate, ks, kind, midi)
         candidates = [
             (r, _fm1_time(r, start_level, end_level, aim)) for r in range(100)
         ]
         result = min(99, _nearest_rate(opm_time, candidates) + _DECAY_BIAS)
     _DECAY_CACHE[key] = result
+    return result
+
+
+def _decay_slow(
+    d1l: int, rate: int, ks: int, kind: str = "decay2", midi: int = 60
+) -> int:
+    """The `r3_slow` shift code for a decay 2 that is slower than rate 0.
+
+    The rate table bottoms out at rate 0. When the OPM stage is slower than
+    that, the stage coefficient is shifted down by 1, 2 or 3 bits, which is
+    2x, 4x or 8x slower. Code 0 is the normal path. A very slow OPM sustain
+    lands on code 1 or 2.
+    """
+    key = (d1l, rate, ks, kind, midi)
+    cached = _DECAY_SLOW_CACHE.get(key)
+    if cached is not None:
+        return cached
+    if rate == 0:
+        result = 0
+    else:
+        start_level, end_level, opm_time, aim = _decay_stage(d1l, rate, ks, kind, midi)
+        chosen = _decay_rate(d1l, rate, ks, kind, midi)
+        fm1_time = _fm1_time(chosen, start_level, end_level, aim)
+        if opm_time <= 0.0 or fm1_time >= opm_time:
+            result = 0
+        else:
+            ratio = fm1_time / opm_time
+            result = (
+                0 if ratio > 0.75 else 1 if ratio > 0.375 else 2 if ratio > 0.19 else 3
+            )
+            if chosen == 0 and result == 3:
+                result = 2  # a rate 0 shift by 3 would freeze the stage
+    _DECAY_SLOW_CACHE[key] = result
     return result
 
 
@@ -569,7 +611,7 @@ def _pitch_depth(pmd: int, pms: int, wf: int) -> int:
     units = ((peak * pmd * _PMS_MUL[pms]) >> 12) << _PMS_SHL[pms]
     cents = units * (100.0 / 64.0)
     depth: int = round(32768.0 * (2.0 ** (cents / 1200.0) - 1.0))
-    return max(0, min(3277, depth))
+    return max(0, min(32767, depth))
 
 
 def _trem_depth(amd: int, ams: int, ame: int, wf: int) -> int:
@@ -740,7 +782,7 @@ def convert_voice(
     values["pitch_rate.p0"] = rate
     values["pitch_depth.p0"] = _pitch_depth(voice.pmd, voice.pms, voice.wf)
     values["pitch_wave.p0"] = _WAVE_MAP[voice.wf]
-    if values["pitch_depth.p0"] == 3277 and voice.pmd > 0:
+    if values["pitch_depth.p0"] == 32767 and voice.pmd > 0:
         warnings.append("pitch LFO depth clamps at the Type P.fm1 maximum")
 
     if voice.ne:
@@ -774,6 +816,7 @@ def convert_voice(
         r1 = _attack_rate(op.ar, op.ks)
         r2 = _decay_rate(op.d1l, op.d1r, op.ks, "decay1") if op.d1r else 99
         r3 = _decay_rate(op.d1l, op.d2r, op.ks, "decay2") if op.d2r else 99
+        r3_slow = _decay_slow(op.d1l, op.d2r, op.ks) if op.d2r else 0
         r4 = _release_rate(op.rr, op.ks)
         if index == 1:
             values["attack.p0"] = r1
@@ -783,6 +826,7 @@ def convert_voice(
             values[f"{prefix}.eg.r4.p0"] = r4
         values[f"{prefix}.eg.r2.p0"] = r2
         values[f"{prefix}.eg.r3.p0"] = r3
+        values[f"{prefix}.eg.r3_slow.p0"] = r3_slow
         values[f"{prefix}.eg.l1.p0"] = l1
         values[f"{prefix}.eg.l2.p0"] = l2
         values[f"{prefix}.eg.l3.p0"] = l3

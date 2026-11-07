@@ -126,7 +126,7 @@
     "op3_feedback": { "target": "op3.fb.level", "min": 0, "max": 32767, "curve": "linear", "display": "pct" },
     "op4_feedback": { "target": "op4.fb.level", "min": 0, "max": 32767, "curve": "linear", "display": "pct" },
     "pitch_rate":     { "target": "plfo.rate", "min": 0, "max": 20000000, "curve": "log", "display": "hz" },
-    "pitch_depth":    { "target": "plfo.depth", "min": 0, "max": 3277, "curve": "linear", "display": "pct" },
+    "pitch_depth":    { "target": "plfo.depth", "min": 0, "max": 32767, "curve": "linear", "display": "semi_lfo" },
     "pitch_wave":     { "target": "plfo.wave", "min": 0, "max": 11, "curve": "linear", "display": "wave" },
     "penv_on":       { "target": "penv.on", "min": 0, "max": 1, "curve": "linear", "display": "onoff" },
     "penv_r1":       { "target": "penv.r1", "min": 0, "max": 99, "curve": "linear" },

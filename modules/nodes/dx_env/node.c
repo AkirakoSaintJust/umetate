@@ -3,7 +3,9 @@
    the rate's one-pole coefficient (`fm1_rate_coeff[r_eff]`, Q16), scaled by
    `rate_scale`, which is velocity -> envelope rate (Q15 unity 32768, always
    >= 0), whilst a key-follow factor `k` (Q15) pushes each rate toward 0 (slower)
-   or 99 (faster) and the effective rates are block-derived. Levels are total-level
+   or 99 (faster) and the effective rates are block-derived. `r3_slow` (0..3)
+   shifts only the decay 2 coefficient (2x, 4x or 8x slower), so the OPM's very
+   slow sustain can be matched without slowing the other stages. Levels are total-level
    0..99 -> Q15 gain via `fm1_level_gain`. A stage ends when it is within 8 units
    of its target on the side it is moving toward, so a target above the current
    level runs up instead of snapping. A level of 99 is max and 0 is silence.
@@ -40,7 +42,8 @@ if (${state.stage} == 0u) {
 } else if (${state.stage} == 2u) {
     ${state.level} = fm1_onepole(${state.level},
         fm1_level_gain[${param.l3}],
-        fm1_q16_mul(fm1_rate_coeff[${state.r3_eff}], ${in.rate_scale} << 1));
+        fm1_q16_mul(fm1_rate_coeff[${state.r3_eff}] >> ${param.r3_slow},
+                    ${in.rate_scale} << 1));
     if (fm1_level_gain[${param.l3}] >= ${state.level}
             ? ${state.level} >= fm1_level_gain[${param.l3}] - 8
             : ${state.level} <= fm1_level_gain[${param.l3}] + 8) {

@@ -3677,12 +3677,15 @@ def main() -> int:
 
     # the INIT PATCH/PART defaults emit as a per-part-expanded init table
     hdr = generate_dsp_header(ffm)
+    ids = param_ids(ffm)
     if (
         "type_p_fm1_init_entry type_p_fm1_init[]" in hdr
         and "type_p_fm1_INIT_N" in hdr
-        and "{ 112u, 7 }" in hdr  # algorithm 7 (the additive algorithm)
-        and "{ 0u, 65536 }" in hdr  # op1 ratio, part 0
-        and "{ 134u, 65536 }" in hdr  # op1 ratio, part 1 (per-part expansion)
+        and f"{{ {ids['algorithm.p0']}u, 7 }}"
+        in hdr  # algorithm 7 (the additive algorithm)
+        and f"{{ {ids['op1_ratio.p0']}u, 65536 }}" in hdr  # op1 ratio, part 0
+        and f"{{ {ids['op1_ratio.p1']}u, 65536 }}"
+        in hdr  # op1 ratio, part 1 (per-part expansion)
     ):
         print("ok: the init: table emits (algorithm 7 + per-part op params)")
     else:

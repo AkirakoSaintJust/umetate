@@ -226,6 +226,7 @@ _DISPLAY = {
     "hz": "UI_DISP_HZ",
     "semi": "UI_DISP_SEMI",
     "semi_fine": "UI_DISP_SEMI_FINE",
+    "semi_lfo": "UI_DISP_SEMI_FINE",
     "cent": "UI_DISP_CENT",
     "wave": "UI_DISP_WAVE",
     "filter": "UI_DISP_FILTER",
@@ -280,6 +281,22 @@ def _semi_fine_landmarks(lo: int, hi: int) -> list[int]:
             num = k * 100 + (frac if k >= 0 else -frac)  # hundredths of a semitone
             mag = (abs(num) * _Q15_OCTAVE + 1199) // 1200  # away from zero
             v = mag if num >= 0 else -mag
+            if lo <= v <= hi:
+                vals.add(v)
+    return sorted(vals)
+
+
+def _semi_lfo_landmarks(lo: int, hi: int) -> list[int]:
+    """The P-ENV detents, with one-cent steps through the first semitone.
+
+    The first semitone is where a vibrato lives, so the knob gets all 100 cents
+    there. Above one semitone the 0.02, 0.05, 0.10, 0.30, 0.50 and 0.75 offsets
+    from `_semi_fine_landmarks` take over. Used for a unipolar LFO depth in
+    semitones, so 0 to 12 st uses the whole table."""
+    vals = set(_semi_fine_landmarks(lo, hi))
+    for cent in range(101):  # hundredths of a semitone, 0.00 to 1.00 st
+        mag = (cent * _Q15_OCTAVE + 599) // 1200  # away from zero
+        for v in (mag, -mag):
             if lo <= v <= hi:
                 vals.add(v)
     return sorted(vals)
@@ -699,6 +716,8 @@ def generate_panel(
             vals = _semi_landmarks(lo, hi)
         elif display == "semi_fine":
             vals = _semi_fine_landmarks(lo, hi)
+        elif display == "semi_lfo":
+            vals = _semi_lfo_landmarks(lo, hi)
         else:
             return "0", "0", "0"
         if not vals:

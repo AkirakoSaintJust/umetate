@@ -140,7 +140,7 @@ the global six to a per-part array.
 | attack | op1.eg.r1 | 0 | 99 | linear | | raw (0–99 rate) |
 | release | op1.eg.r4 | 0 | 99 | linear | | raw (0–99 rate) |
 | pitch_rate | plfo.rate | 0 | 20000000 | log | | hz |
-| pitch_depth | plfo.depth | 0 | 3277 | linear | | pct |
+| pitch_depth | plfo.depth | 0 | 32767 | linear | | semi_lfo (0.00–12.00 st) |
 | penv_on | penv.on | 0 | 1 | linear | | onoff (off/on) |
 | penv_r1 … penv_r4 | penv.rN | 0 | 99 | linear | | raw (0–99 rate) |
 | penv_l1 … penv_l3 | penv.lN | -32768 | 32767 | linear | | semi (±st) |
@@ -168,8 +168,8 @@ whilst `opN_feedback` is each operator's own self-modulation depth. The DX rates
 and the DX levels (`l1..l3`) are 0–99 → Q15 gain via `fm1_level_gain` (0.75 dB/step).
 `rate` is a Q32 phase increment per sample, `f · 2³² / 44100`, so ~97392 = 1 Hz,
 whilst `depth` is `depth/32768` in the use's units: octaves of vibrato for
-`pitch_depth` (273 ≈ ±10 cents), and a fraction of full amplitude for `trem_depth`
-(~16000 ≈ ±50%). `ratio` is the q16 frequency multiplier, `ratio/65536` = the
+`pitch_depth` (2731 ≈ ±1 st, and the display runs 0.00 to 12.00 st), and a
+fraction of full amplitude for `trem_depth` (~16000 ≈ ±50%). `ratio` is the q16 frequency multiplier, `ratio/65536` = the
 multiplier (65536 = 1.0, 32768 = 0.5), and the per-note pitch envelope (`penv`)
 retriggers on every note-on, releases on note-off, and is off by default. Its levels
 `l1..l3` are q15 pitch offsets (32768 = +1 octave, 2731 ≈ +1 semitone), and all of
